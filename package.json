@@ -19,10 +19,13 @@
     "test:editor": "node tests/editor-smoke.mjs",
     "test:extra": "node tests/extra-tools-smoke.mjs",
     "test:documents": "node tests/document-tools-smoke.mjs",
-    "test:security": "node tests/security-invoice-smoke.mjs"
+    "test:security": "node tests/security-invoice-smoke.mjs",
+    "test:advanced": "node tests/advanced-tools-smoke.mjs",
+    "test": "node tests/run-all.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
+    "@bwip-js/browser": "^4.11.4",
     "@fontsource-variable/manrope": "^5.3.0",
     "@fontsource-variable/space-grotesk": "^5.3.0",
     "@hookform/resolvers": "^5.7.1",
@@ -31,6 +34,7 @@
     "@shadcn/react": "^0.3.0",
     "@tesseract.js-data/deu": "^1.0.0",
     "@tesseract.js-data/eng": "^1.0.0",
+    "@zxing/library": "^0.23.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "^1.1.1",

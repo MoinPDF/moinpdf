@@ -1,9 +1,28 @@
 import {FileSearch,ScanText,Images,FileImage,Minimize2,Layers,Scissors,LayoutGrid,ListOrdered,Maximize,Grid2X2,Square,Crop,Type,PenLine,Stamp,Contrast,FileCheck2,FileX2,GitCompareArrows,Info,Paperclip,Split,Shuffle,BookOpen,Grid3X3,ScanLine,Scan,FlipHorizontal2,BadgeCheck,FilePenLine,MessageSquareOff,Blend,TextCursorInput,Eraser,ImagePlus,ClipboardPen,TextSelect,Bookmark,ImageDown} from 'lucide-react';
 import type {StudioTool} from './studio-engine';
 import {LockKeyhole,LockKeyholeOpen,ReceiptText,ClipboardCheck} from 'lucide-react';
+import {Workflow,FileInput,FileSpreadsheet,TextSearch,Camera,QrCode,Link,Files,FileSignature,Archive,FolderPen,TableOfContents} from 'lucide-react';
 export type WorkspaceTool=StudioTool|'inspect';
-export const groups=['Prüfen & finden','Erkennen & konvertieren','Seiten & Struktur','Bearbeiten & bereinigen'];
+export const groups=['Prüfen & finden','Erkennen & konvertieren','Seiten & Struktur','Bearbeiten & bereinigen','Stapel & Abläufe','Mit Dokumentenserver'];
 export const tools=[
+ {id:'batch',title:'Stapelverarbeitung',description:'Viele PDFs einzeln stempeln, nummerieren, schützen oder bereinigen. Ein ZIP mit allen Ergebnissen.',icon:Files,group:4,action:'Stapel verarbeiten',fresh:true},
+ {id:'workflows',title:'Arbeitsabläufe',description:'Mehrere Schritte verbinden: zum Beispiel OCR, Leerseiten entfernen und nummerieren. Abläufe speichern und wiederverwenden.',icon:Workflow,group:4,action:'Arbeitsablauf ausführen',fresh:true},
+ {id:'auto-rename',title:'Automatisch umbenennen',description:'Dateinamen aus Datum, Rechnungsnummer und Titel vorschlagen. Vorschläge prüfen und bearbeiten.',icon:FolderPen,group:4,action:'Namen vorschlagen',fresh:true},
+ {id:'smart-split',title:'Intelligent teilen',description:'PDFs anhand von Text, Lesezeichen, leeren Seiten oder QR-/Barcode-Trennblättern aufteilen.',icon:Split,group:2,action:'Trennstellen suchen',fresh:true},
+ {id:'table-export',title:'Tabelle zu Excel',description:'Tabellenbereiche mit Text oder OCR auslesen. Spalten und Werte korrigieren und als Excel oder CSV speichern.',icon:FileSpreadsheet,group:1,action:'Tabelle erkennen',fresh:true},
+ {id:'search-redact',title:'Suchen & schwärzen',description:'Suchbegriffe, Namen, E-Mail-Adressen und mögliche IBANs finden. Bereiche prüfen und dauerhaft aus der Ausgabe entfernen.',icon:TextSearch,group:3,action:'Fundstellen suchen',fresh:true},
+ {id:'visual-compare',title:'Visueller PDF-Vergleich',description:'Unterschiede in Scans, Bildern, Stempeln und Text farbig auf den Seiten sichtbar machen.',icon:GitCompareArrows,group:0,action:'Visuell vergleichen',fresh:true},
+ {id:'scan-enhance',title:'Scans verbessern',description:'Schieflagen korrigieren, Kontrast anheben und helle Hintergründe bereinigen. Mit Vorschau.',icon:ScanLine,group:1,action:'Scans verbessern',fresh:true},
+ {id:'cover-toc',title:'Deckblatt & Inhaltsverzeichnis',description:'Ein Deckblatt und ein klickbares Verzeichnis mit automatisch angepassten Seitenzahlen ergänzen.',icon:TableOfContents,group:2,action:'Verzeichnis erstellen',fresh:true},
+ {id:'mail-merge',title:'Serienformulare',description:'PDF-Formularfelder mit CSV- oder TSV-Datensätzen füllen. Ein individuelles PDF pro Zeile.',icon:ClipboardPen,group:4,action:'Serienformulare erstellen',fresh:true},
+ {id:'qr-barcode',title:'QR- & Barcodes',description:'Codes aus PDF-Seiten auslesen. QR, Code 128 oder EAN-13 erstellen und in PDFs platzieren.',icon:QrCode,group:3,action:'Codes bearbeiten',fresh:true},
+ {id:'link-editor',title:'Links bearbeiten',description:'Verweise auf Webseiten, E-Mails und PDF-Seiten hinzufügen, ändern und entfernen.',icon:Link,group:3,action:'Links speichern',fresh:true},
+ {id:'attachment-manager',title:'Anhänge verwalten',description:'Eingebettete Dateien hinzufügen, umbenennen, ersetzen und aus der Ausgabe entfernen.',icon:Paperclip,group:3,action:'Anhänge speichern',fresh:true},
+ {id:'camera-scan',title:'Kamera-Scanner',description:'Fotos aufnehmen, Dokumente perspektivisch entzerren und mehrere Seiten als PDF sammeln.',icon:Camera,group:1,action:'Scan erstellen',fresh:true},
+ {id:'office-pdf',title:'Office zu PDF',description:'Word, Excel und PowerPoint über deinen verbundenen LibreOffice-Server konvertieren.',icon:FileInput,group:5,action:'Office-Datei konvertieren',fresh:true},
+ {id:'pdfa',title:'PDF/A erstellen & prüfen',description:'Archivkopien erzeugen und mit veraPDF prüfen. Benötigt einen verbundenen Dokumentenserver.',icon:Archive,group:5,action:'PDF/A verarbeiten',fresh:true},
+ {id:'xrechnung-validate',title:'XRechnung vollständig validieren',description:'XSD- und Schematron-Prüfung mit KoSIT-Regeln und Prüfbericht über deinen Dokumentenserver.',icon:ClipboardCheck,group:5,action:'XRechnung validieren',fresh:true},
+ {id:'certificate-sign',title:'Zertifikatssignaturen',description:'PDFs mit einem PKCS#12-Zertifikat signieren und Signaturen prüfen. Benötigt deinen Dokumentenserver.',icon:FileSignature,group:5,action:'Signatur verarbeiten',fresh:true},
  {id:'protect',title:'PDF schützen',description:'PDFs mit AES-256 verschlüsseln. Öffnungspasswort und Berechtigungen festlegen.',icon:LockKeyhole,group:3,action:'PDF schützen',fresh:true},
  {id:'unlock',title:'PDF entsperren',description:'Mit bekanntem Passwort geöffnete PDFs als ungeschützte Kopie speichern.',icon:LockKeyholeOpen,group:3,action:'PDF entsperren',fresh:true},
  {id:'invoice-read',title:'E-Rechnung lesen',description:'UBL- und CII-Rechnungen aus XML oder PDF-Anhängen anzeigen. Als Lese-PDF, XML oder CSV speichern.',icon:ReceiptText,group:1,action:'E-Rechnung lesen',fresh:true},

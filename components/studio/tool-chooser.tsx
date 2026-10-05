@@ -12,7 +12,7 @@ import type {Source} from '@/lib/pdf-engine';
 type Props={sources:Source[];pageCount:number;locked:boolean;loading:boolean;dragOver:boolean;onChoose:(id:WorkspaceTool)=>void;onAdd:()=>void;onRemove:(id:string)=>void;onClear:()=>void};
 export function ToolChooser({sources,pageCount,locked,loading,dragOver,onChoose,onAdd,onRemove,onClear}:Props){
  const [query,setQuery]=useState(''),[category,setCategory]=useState('all');
- const categories=[['all','Alle'],['0','Prüfen'],['1','Umwandeln'],['2','Seiten'],['3','Bearbeiten']];
+ const categories=[['all','Alle'],['0','Prüfen'],['1','Umwandeln'],['2','Seiten'],['3','Bearbeiten'],['4','Stapel'],['5','Server']];
  const suggestions=useMemo(()=>suggestTools(query).slice(0,5),[query]);
  return <main className="tool-chooser">
   <header className="chooser-header">
@@ -31,7 +31,7 @@ export function ToolChooser({sources,pageCount,locked,loading,dragOver,onChoose,
    <div className="chooser-tools-heading"><h2>Alle Werkzeuge</h2><span>{tools.length}</span></div>
    <Tabs value={category} onValueChange={setCategory} className="chooser-categories"><TabsList aria-label="Werkzeugkategorien">{categories.map(([value,label])=><TabsTrigger key={value} value={value}>{label}</TabsTrigger>)}</TabsList>{categories.map(([value,label])=><TabsContent value={value} key={value}><nav className="chooser-tool-grid" aria-label={value==='all'?'Alle PDF-Werkzeuge':`Werkzeuge: ${label}`}>{tools.filter(tool=>value==='all'||tool.group===Number(value)).sort((a,b)=>a.group-b.group).map(tool=><button key={tool.id} disabled={locked} onClick={()=>onChoose(tool.id)} title={tool.description} className={`chooser-tool tone-${tool.group}`}><span><tool.icon size={27} strokeWidth={1.45}/></span><strong>{tool.title}</strong></button>)}</nav></TabsContent>)}</Tabs>
 
-   <p className="chooser-local"><ShieldCheck size={14}/>Deine Dokumente bleiben auf deinem Gerät.</p>
+   <p className="chooser-local"><ShieldCheck size={14}/>Browserwerkzeuge verarbeiten deine Dokumente auf deinem Gerät.</p>
   </section>
   {dragOver&&<div className="drop-overlay"><Plus size={60} strokeWidth={1}/><strong>Dateien hinzufügen.</strong><span>Einfach hier loslassen.</span></div>}
  </main>;

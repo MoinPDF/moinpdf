@@ -1,0 +1,64 @@
+import {PDFDocument} from 'pdf-lib';
+import {renderPage,sourcePages,pdfBlob,filenameStem,type Source} from './pdf-engine';
+import {checkAbort,type RunContext,type ExportFile} from './advanced-types';
+
+export const makeCanvas=(width:number,height:number)=>{const c=document.createElement('canvas');c.width=Math.max(1,Math.round(width));c.height=Math.max(1,Math.round(height));return c;};
+export type Point={x:number;y:number};
+export type ScanSettings={angle:number;autoDeskew:boolean;contrast:number;brightness:number;cleanup:number};
+export const scanDefaults:ScanSettings={angle:0,autoDeskew:true,contrast:20,brightness:5,cleanup:235};
+export function enhancePixels(data:Uint8ClampedArray,settings:Pick<ScanSettings,'contrast'|'brightness'|'cleanup'>){
+ const contrast=Math.max(.1,1+settings.contrast/100),bright=settings.brightness*2.55;
+ for(let i=0;i<data.length;i+=4){const gray=.299*data[i]+.587*data[i+1]+.114*data[i+2];const clean=gray>=settings.cleanup&&settings.cleanup<255;for(let c=0;c<3;c++)data[i+c]=clean?255:Math.max(0,Math.min(255,(data[i+c]-128)*contrast+128+bright));data[i+3]=255;}return data;
+}
+export function estimateSkew(data:Uint8ClampedArray,width:number,height:number){
+ const points:Point[]=[];for(let y=2;y<height-2;y+=2)for(let x=2;x<width-2;x+=2){const i=(y*width+x)*4;if((data[i]+data[i+1]+data[i+2])/3<115)points.push({x:x-width/2,y:y-height/2});}
+ if(points.length<80||points.length>width*height*.15)return 0;
+ const score=(angle:number)=>{const a=angle*Math.PI/180,bins=new Float64Array(Math.ceil(height+width*.2)+20),offset=bins.length/2;for(const p of points){const n=Math.round(p.y*Math.cos(a)+p.x*Math.sin(a)+offset);if(n>=0&&n<bins.length)bins[n]++;}return bins.reduce((n,v)=>n+v*v,0);};
+ let best=score(0),angle=0;const base=best;for(let n=-6;n<=6;n+=.25){const value=score(n);if(value>best){best=value;angle=n;}}return best>base*1.03?angle:0;
+}
+export function enhanceCanvas(original:HTMLCanvasElement,settings:ScanSettings){
+ let angle=settings.angle;if(settings.autoDeskew){const preview=makeCanvas(600,original.height/original.width*600);const p=preview.getContext('2d')!;p.drawImage(original,0,0,preview.width,preview.height);angle+=estimateSkew(p.getImageData(0,0,preview.width,preview.height).data,preview.width,preview.height);preview.width=preview.height=0;}
+ const rad=angle*Math.PI/180,c=makeCanvas(Math.abs(original.width*Math.cos(rad))+Math.abs(original.height*Math.sin(rad)),Math.abs(original.width*Math.sin(rad))+Math.abs(original.height*Math.cos(rad))),ctx=c.getContext('2d')!;
+ ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.translate(c.width/2,c.height/2);ctx.rotate(rad);ctx.drawImage(original,-original.width/2,-original.height/2);ctx.setTransform(1,0,0,1,0,0);const pixels=ctx.getImageData(0,0,c.width,c.height);enhancePixels(pixels.data,settings);ctx.putImageData(pixels,0,0);return{canvas:c,angle};
+}
+export async function enhancePdf(source:Source,settings:ScanSettings,ctx:RunContext):Promise<ExportFile>{
+ const doc=await PDFDocument.create(),angles:number[]=[];
+ for(const [i,page] of sourcePages(source).entries()){checkAbort(ctx.signal);const {canvas,width,height}=await renderPage(source,page,2400,ctx.signal);const out=enhanceCanvas(canvas,settings);try{const image=await doc.embedPng(out.canvas.toDataURL('image/png')),w=width*out.canvas.width/canvas.width,h=height*out.canvas.height/canvas.height;doc.addPage([w,h]).drawImage(image,{x:0,y:0,width:w,height:h});angles.push(out.angle);}finally{canvas.width=canvas.height=out.canvas.width=out.canvas.height=0;}ctx.report({percent:(i+1)/source.pdf.numPages*100,label:`Scan verbessern · Seite ${i+1}`});}
+ return{blob:pdfBlob(await doc.save()),filename:filenameStem(source.name)+'-verbessert.pdf',kind:'pdf',pages:doc.getPageCount(),note:`Neue Seitenbilder · Korrekturwinkel: ${angles.map(n=>n.toFixed(2)+'°').join(', ')}`};
+}
+export function differencePixels(a:Uint8ClampedArray,b:Uint8ClampedArray,tolerance=30){const out=new Uint8ClampedArray(a.length);let changed=0;for(let i=0;i<a.length;i+=4){const diff=Math.max(Math.abs(a[i]-b[i]),Math.abs(a[i+1]-b[i+1]),Math.abs(a[i+2]-b[i+2]))>tolerance;if(diff){changed++;const first=(a[i]+a[i+1]+a[i+2])<(b[i]+b[i+1]+b[i+2]);out[i]=first?235:5;out[i+1]=first?85:155;out[i+2]=first?75:170;}else{const gray=(a[i]+a[i+1]+a[i+2])/3;out[i]=out[i+1]=out[i+2]=Math.round(150+gray*.41);}out[i+3]=255;}return{pixels:out,percent:changed/(a.length/4)*100};}
+export async function compareVisual(first:Source,second:Source,tolerance:number,ctx:RunContext):Promise<ExportFile>{
+ const doc=await PDFDocument.create(),count=Math.max(first.pdf.numPages,second.pdf.numPages),stats:string[]=[];
+ for(let i=0;i<count;i++){checkAbort(ctx.signal);const ra=i<first.pdf.numPages?await renderPage(first,sourcePages(first)[i],1600,ctx.signal):null,rb=i<second.pdf.numPages?await renderPage(second,sourcePages(second)[i],1600,ctx.signal):null;const w=Math.max(ra?.width||0,rb?.width||0),h=Math.max(ra?.height||0,rb?.height||0),scale=1600/Math.max(w,h),ca=makeCanvas(w*scale,h*scale),cb=makeCanvas(w*scale,h*scale);
+  for(const [c,r] of [[ca,ra],[cb,rb]] as const){const context=c.getContext('2d')!;context.fillStyle='#fff';context.fillRect(0,0,c.width,c.height);if(r)context.drawImage(r.canvas,0,0,r.width*scale,r.height*scale);}
+  try{const a=ca.getContext('2d')!,b=cb.getContext('2d')!,diff=differencePixels(a.getImageData(0,0,ca.width,ca.height).data,b.getImageData(0,0,cb.width,cb.height).data,tolerance);const pixels=a.createImageData(ca.width,ca.height);pixels.data.set(diff.pixels);a.putImageData(pixels,0,0);const img=await doc.embedPng(ca.toDataURL('image/png'));const page=doc.addPage([w,h+32]);page.drawImage(img,{x:0,y:32,width:w,height:h});page.drawText(`Seite ${i+1}: ${diff.percent.toFixed(2)}% | Rot: Datei 1 | Tuerkis: Datei 2${!ra||!rb?' | Fehlende Seite':''}`,{x:12,y:12,size:9});stats.push(`Seite ${i+1}: ${diff.percent.toFixed(2)} %`);}finally{ca.width=ca.height=cb.width=cb.height=0;if(ra)ra.canvas.width=ra.canvas.height=0;if(rb)rb.canvas.width=rb.canvas.height=0;}ctx.report({percent:(i+1)/count*100,label:`Bildvergleich · Seite ${i+1}`});
+ }return{blob:pdfBlob(await doc.save()),filename:'Visueller-PDF-Vergleich.pdf',kind:'pdf',pages:count,note:stats.join(' · ')};
+}
+export async function barcodeCanvas(text:string,format:'qrcode'|'code128'|'ean13'){
+ if(!text.trim()||text.length>2000)throw new Error('Bitte 1 bis 2.000 Zeichen für den Code eingeben.');const {toCanvas}=await import('@bwip-js/browser');const c=makeCanvas(1,1);toCanvas(c,{bcid:format,text,scale:3,...(format==='qrcode'?{}:{height:16}),padding:4,includetext:format!=='qrcode',backgroundcolor:'FFFFFF'});return c;
+}
+export async function decodePageCodes(source:Source,index:number,ctx:RunContext){const {canvas}=await renderPage(source,sourcePages(source)[index],2400,ctx.signal);try{return await decodeCanvasCodes(canvas);}finally{canvas.width=canvas.height=0;}}
+export async function decodeCanvasCodes(canvas:HTMLCanvasElement){
+ const {QRCodeReader,MultiFormatOneDReader,DataMatrixReader,PDF417Reader,AztecCodeReader,RGBLuminanceSource,HybridBinarizer,BinaryBitmap,DecodeHintType,BarcodeFormat}=await import('@zxing/library');const result:{text:string;format:string}[]=[],seen=new Set<string>(),pixels=canvas.getContext('2d')!.getImageData(0,0,canvas.width,canvas.height).data,gray=new Uint8ClampedArray(canvas.width*canvas.height);
+ for(let i=0;i<gray.length;i++)gray[i]=Math.round(pixels[i*4]*.299+pixels[i*4+1]*.587+pixels[i*4+2]*.114);
+ const hints=new Map();hints.set(DecodeHintType.TRY_HARDER,true);const readers=[new QRCodeReader(),new MultiFormatOneDReader(hints),new DataMatrixReader(),new PDF417Reader(),new AztecCodeReader()];
+ for(let attempt=0;attempt<10;attempt++){try{const bitmap=new BinaryBitmap(new HybridBinarizer(new RGBLuminanceSource(gray,canvas.width,canvas.height)));let code;for(const reader of readers){try{code=reader.decode(bitmap,hints);break;}catch{/* A decoder miss is expected when another format or no code is present. */}}if(!code)break;const text=code.getText(),format=BarcodeFormat[code.getBarcodeFormat()];if(seen.has(text))break;seen.add(text);result.push({text,format});const points=code.getResultPoints();if(points.length<2)break;const x0=Math.max(0,Math.min(...points.map(p=>p.getX()))-50),x1=Math.min(canvas.width,Math.max(...points.map(p=>p.getX()))+50),y0=Math.max(0,Math.min(...points.map(p=>p.getY()))-50),y1=Math.min(canvas.height,Math.max(...points.map(p=>p.getY()))+50);for(let y=Math.floor(y0);y<y1;y++)gray.fill(255,y*canvas.width+Math.floor(x0),y*canvas.width+Math.ceil(x1));}catch{break;}}readers.forEach(reader=>reader.reset());return result;
+}
+export async function placeBarcode(source:Source,text:string,format:'qrcode'|'code128'|'ean13',pageIndexes:number[],rect:{x:number;y:number;w:number},ctx:RunContext):Promise<ExportFile>{
+ if(Object.values(rect).some(n=>!Number.isFinite(n))||rect.x<0||rect.y<0||rect.w<=0||rect.x+rect.w>1||rect.y>=1)throw new Error('Der Code muss vollständig innerhalb der Seite liegen.');
+ const doc=await PDFDocument.load(source.bytes),c=await barcodeCanvas(text,format),png=await doc.embedPng(c.toDataURL('image/png'));try{for(const i of pageIndexes){checkAbort(ctx.signal);const page=doc.getPage(i),pdfPage=await source.pdf.getPage(i+1),v=pdfPage.getViewport({scale:1}),width=v.width*rect.w,height=width*c.height/c.width;if(v.height*rect.y+height>v.height)throw new Error('Der Code passt an dieser Position nicht vollständig auf die Seite.');const {drawOnViewport}=await import('./advanced-documents');drawOnViewport(page,v,rect.x*v.width,rect.y*v.height,width,height,(position)=>page.drawImage(png,position));}}finally{c.width=c.height=0;}return{blob:pdfBlob(await doc.save()),filename:filenameStem(source.name)+'-mit-Code.pdf',kind:'pdf',pages:doc.getPageCount()};
+}
+// Eight-parameter projective transform, output rectangle -> source quadrilateral.
+export function homography(points:Point[],width:number,height:number){
+ if(points.length!==4)throw new Error('Vier Ecken werden benötigt.');const dest=[{x:0,y:0},{x:width,y:0},{x:width,y:height},{x:0,y:height}],rows:number[][]=[];
+ for(let i=0;i<4;i++){const {x,y}=dest[i],p=points[i];rows.push([x,y,1,0,0,0,-p.x*x,-p.x*y,p.x]);rows.push([0,0,0,x,y,1,-p.y*x,-p.y*y,p.y]);}
+ for(let i=0;i<8;i++){let pivot=i;for(let j=i+1;j<8;j++)if(Math.abs(rows[j][i])>Math.abs(rows[pivot][i]))pivot=j;[rows[i],rows[pivot]]=[rows[pivot],rows[i]];if(Math.abs(rows[i][i])<1e-9)throw new Error('Die Ecken bilden keinen gültigen Ausschnitt.');const value=rows[i][i];for(let k=i;k<9;k++)rows[i][k]/=value;for(let j=0;j<8;j++)if(j!==i){const factor=rows[j][i];for(let k=i;k<9;k++)rows[j][k]-=rows[i][k]*factor;}}
+ return rows.map(r=>r[8]);
+}
+export function perspectiveCanvas(source:HTMLCanvasElement,corners:Point[]){
+ const p=corners.map(c=>({x:c.x*source.width,y:c.y*source.height}));const cross=(a:Point,b:Point,c:Point)=>(b.x-a.x)*(c.y-b.y)-(b.y-a.y)*(c.x-b.x);if(p.some((v,i)=>cross(v,p[(i+1)%4],p[(i+2)%4])<=1))throw new Error('Ecken im Uhrzeigersinn setzen: links oben, rechts oben, rechts unten, links unten.');
+ const distance=(a:Point,b:Point)=>Math.hypot(a.x-b.x,a.y-b.y),w=Math.round(Math.max(distance(p[0],p[1]),distance(p[3],p[2]))),h=Math.round(Math.max(distance(p[0],p[3]),distance(p[1],p[2])));if(w<30||h<30)throw new Error('Bitte einen größeren Ausschnitt wählen.');const scale=Math.min(1,2400/Math.max(w,h)),out=makeCanvas(w*scale,h*scale),m=homography(p,out.width,out.height),original=source.getContext('2d')!.getImageData(0,0,source.width,source.height),ctx=out.getContext('2d')!,image=ctx.createImageData(out.width,out.height);
+ for(let y=0;y<out.height;y++)for(let x=0;x<out.width;x++){const denominator=m[6]*x+m[7]*y+1,sx=Math.max(0,Math.min(source.width-1,(m[0]*x+m[1]*y+m[2])/denominator)),sy=Math.max(0,Math.min(source.height-1,(m[3]*x+m[4]*y+m[5])/denominator)),x0=Math.floor(sx),y0=Math.floor(sy),x1=Math.min(source.width-1,x0+1),y1=Math.min(source.height-1,y0+1),fx=sx-x0,fy=sy-y0,at=(y*out.width+x)*4;for(let c=0;c<3;c++)image.data[at+c]=original.data[(y0*source.width+x0)*4+c]*(1-fx)*(1-fy)+original.data[(y0*source.width+x1)*4+c]*fx*(1-fy)+original.data[(y1*source.width+x0)*4+c]*(1-fx)*fy+original.data[(y1*source.width+x1)*4+c]*fx*fy;image.data[at+3]=255;}
+ ctx.putImageData(image,0,0);return out;
+}
+export async function photosPdf(images:string[],ctx:RunContext):Promise<ExportFile>{if(!images.length)throw new Error('Bitte mindestens eine Seite aufnehmen.');const doc=await PDFDocument.create();for(const [i,data] of images.entries()){checkAbort(ctx.signal);const image=await doc.embedJpg(data),w=595.28,h=w*image.height/image.width;doc.addPage([w,h]).drawImage(image,{x:0,y:0,width:w,height:h});ctx.report({percent:(i+1)/images.length*100,label:`Kameraseite ${i+1}`});}return{blob:pdfBlob(await doc.save()),filename:'Kamera-Scan.pdf',kind:'pdf',pages:images.length};}

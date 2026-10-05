@@ -1,12 +1,13 @@
 import type {DocumentTool} from './document-tools';
 import type {SpecialTool} from './special-tools';
+import {isAdvancedTool,isServerTool,type AdvancedTool,type ServerTool} from './advanced-types';
 import { PDFDocument, PDFName, StandardFonts, degrees, rgb, type PDFPage } from 'pdf-lib';
 import { runJob, openSource, renderPage, prepareSources, appendPage, filenameStem, pdfBlob, type Source, type PageItem, type ToolId, type JobOptions, type JobResult, type ProgressUpdate } from './pdf-engine';
 import {extraDefaults,isExtraTool,sourceOnlyTools,rasterTools,type ExtraTool,type ExtraOptions} from './extra-options';
 import {rasterTransform,runSourceTool,runExtraPdfTool} from './extra-tools';
 import {fontName,cssFont,wrapEditorText,hexColor,type FontFamily} from './editor-model';
 
-export type StudioTool = ToolId | ExtraTool | DocumentTool | SpecialTool | 'redact' | 'crop' | 'annotate' | 'sign' | 'metadata' | 'grayscale' | 'resize' | 'flatten' | 'nup' | 'edit-text' | 'erase' | 'insert-image';
+export type StudioTool = ToolId | ExtraTool | DocumentTool | SpecialTool | AdvancedTool | ServerTool | 'redact' | 'crop' | 'annotate' | 'sign' | 'metadata' | 'grayscale' | 'resize' | 'flatten' | 'nup' | 'edit-text' | 'erase' | 'insert-image';
 export type Rect = { x: number; y: number; w: number; h: number };
 export type Mark = Rect & { id: string; kind: 'redact' | 'highlight' | 'text' | 'signature' | 'erase' | 'image'; text?: string; fontScale?: number; image?: string; sourceRect?:Rect; fontFamily?:FontFamily; bold?:boolean; italic?:boolean; align?:'left'|'center'|'right'; color?:string; fill?:string; opacity?:number };
 export type Edits = { marks: Record<string, Mark[]>; crops: Record<string, Rect> };
@@ -126,6 +127,7 @@ export function removeDocumentMetadata(doc:PDFDocument) {
   for(const page of doc.getPages()) page.node.delete(PDFName.of('Metadata'));
 }
 export async function runStudioJob(tool:StudioTool,sources:Source[],pages:PageItem[],options:StudioOptions,edits:Edits,report:(p:ProgressUpdate)=>void,signal:AbortSignal):Promise<JobResult> {
+  if(isAdvancedTool(tool)||isServerTool(tool))throw new Error('Bitte dieses Werkzeug in seiner eigenen Arbeitsansicht öffnen.');
   if(['fill-form','create-form','bookmarks','protect','unlock','invoice-read','invoice-check'].includes(tool))throw new Error('Bitte dieses Werkzeug im Dokumenteditor öffnen.');
   if(!pages.length) throw new Error('Bitte wähle mindestens eine Seite aus.');
   check(signal);

@@ -1,0 +1,5 @@
+.env
+trust
+__pycache__
+test_*.py
+README.md

@@ -5,7 +5,7 @@ export function checkNewPassword(password:string){
  if(new TextEncoder().encode(password).length>127)throw new Error('Das Passwort darf höchstens 127 UTF-8-Bytes lang sein.');
  if(/[\x00-\x1f\x7f]/.test(password))throw new Error('Das Passwort darf keine Steuerzeichen enthalten.');
 }
-function workerJob(bytes:Uint8Array,operation:'encrypt'|'decrypt',settings:Partial<SecuritySettings>,signal?:AbortSignal):Promise<Uint8Array>{
+function workerJob(bytes:Uint8Array,operation:'encrypt'|'decrypt'|'rewrite',settings:Partial<SecuritySettings>,signal?:AbortSignal):Promise<Uint8Array>{
  if(signal?.aborted)return Promise.reject(new DOMException('Abgebrochen','AbortError'));
  return new Promise((resolve,reject)=>{
   const worker=new Worker('/workers/pdf-security.js');let settled=false;
@@ -25,3 +25,4 @@ export async function protectPdf(bytes:Uint8Array,settings:SecuritySettings,sign
  return workerJob(bytes,'encrypt',{...settings,ownerPassword},signal);
 }
 export function unlockPdf(bytes:Uint8Array,password:string,signal?:AbortSignal){return workerJob(bytes,'decrypt',{password},signal);}
+export function rewritePdf(bytes:Uint8Array,signal?:AbortSignal){return workerJob(bytes,'rewrite',{},signal);}

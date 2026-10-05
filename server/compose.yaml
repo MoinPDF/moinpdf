@@ -1,0 +1,36 @@
+services:
+  documents:
+    build: .
+    restart: unless-stopped
+    environment:
+      MOINPDF_API_KEY: ${MOINPDF_API_KEY:?API-Schluessel in .env eintragen}
+      MOINPDF_ORIGINS: ${MOINPDF_ORIGINS:?App-Adresse in .env eintragen}
+    read_only: true
+    tmpfs:
+      - /tmp:size=1g,mode=1777
+    volumes:
+      - ./trust:/trust:ro
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 2g
+    cpus: 2
+    pids_limit: 128
+    networks: [documents]
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      MOINPDF_DOMAIN: ${MOINPDF_DOMAIN:?Serverdomain in .env eintragen}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [documents, edge]
+networks:
+  documents:
+    internal: true
+  edge:
+volumes:
+  caddy_data:
+  caddy_config:
