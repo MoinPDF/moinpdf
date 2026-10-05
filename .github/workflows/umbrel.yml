@@ -1,0 +1,85 @@
+name: Native Umbrel installation
+
+on:
+  workflow_run:
+    workflows: [Publish Umbrel images]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      image_run_id:
+        description: Successful Publish Umbrel images run ID
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+  packages: read
+
+jobs:
+  umbrel:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id || inputs.image_run_id }}
+          pattern: umbrel-image-*
+          merge-multiple: true
+          path: image-reference
+      - name: Render exact published image references
+        run: |
+          python - <<'PY'
+          import json, pathlib, re
+          path = pathlib.Path('deploy/umbrel/denny-moinpdf/docker-compose.yml')
+          content = path.read_text()
+          for name in ('web', 'documents', 'translation'):
+              ref = json.loads(pathlib.Path(f'image-reference/{name}.json').read_text())
+              assert ref['platforms'] == ['linux/amd64', 'linux/arm64']
+              assert re.fullmatch(r'sha256:[0-9a-f]{64}', ref['digest'])
+              content = re.sub(rf'ghcr.io/dennysubke/moinpdf-{name}:[^\s]+', ref['image'] + '@' + ref['digest'], content)
+          path.write_text(content)
+          PY
+      - name: Prepare disposable Umbrel test host
+        run: |
+          # This runner is disposable. Free only preinstalled SDKs not used here.
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
+          python -m pip install playwright==1.55.0 pymupdf==1.28.2 requests==2.34.2
+          python -m playwright install --with-deps chromium
+          # Privilege is limited to the disposable OS test harness. No MoinPDF
+          # app container is privileged or has access to a Docker socket.
+          docker run -d --name moinpdf-umbrel-test --privileged --network host \
+            --cgroupns host --tmpfs /run --tmpfs /run/lock \
+            --volume /sys/fs/cgroup:/sys/fs/cgroup:rw \
+            --volume moinpdf-umbrel-test:/data \
+            ghcr.io/getumbrel/umbrelos:2.0.0 /sbin/init
+      - name: Install through Umbrel
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: bash tests/umbrel-install.sh
+      - name: Browser, protected app route, real translation and restart persistence
+        run: python tests/umbrel-smoke.py
+      - name: Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: umbrel-verification-amd64
+          path: umbrel-evidence/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Diagnostics
+        if: failure()
+        run: |
+          docker logs --tail 100 moinpdf-umbrel-test || true
+          docker exec moinpdf-umbrel-test docker ps -a || true
+          docker exec moinpdf-umbrel-test docker logs --tail 80 denny-moinpdf_web_1 || true
+          docker exec moinpdf-umbrel-test docker logs --tail 80 denny-moinpdf_translation-models_1 || true
+          docker exec moinpdf-umbrel-test docker logs --tail 80 denny-moinpdf_translation_1 || true
+      - name: Remove disposable test host
+        if: always()
+        run: |
+          docker rm -f moinpdf-umbrel-test || true
+          docker volume rm moinpdf-umbrel-test || true
