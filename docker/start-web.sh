@@ -1,6 +1,11 @@
 #!/bin/sh
 set -eu
-export MOINPDF_API_KEY="$(cat /run/moinpdf/api-key)"
+# platform supplies a stable per-install secret through exports.sh. Standalone
+# Compose keeps its existing persisted key file; neither is sent to the browser.
+if [ -z "${MOINPDF_API_KEY:-}" ]; then
+    MOINPDF_API_KEY="$(cat /run/moinpdf/api-key)"
+fi
+export MOINPDF_API_KEY
 test "${#MOINPDF_API_KEY}" -ge 32
 umask 077
 : > /tmp/access.caddy

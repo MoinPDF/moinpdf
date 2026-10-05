@@ -16,6 +16,7 @@ import time
 import uuid
 import zipfile
 from urllib.parse import urlsplit
+from urllib.request import urlopen
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -170,8 +171,10 @@ def health():
 
 @app.get("/v1/capabilities", dependencies=[Depends(authorize)])
 def capabilities():
+    translation = translation_status()
     return {"apiVersion": 1, "service": "MoinPDF Dokumentenserver", "limits": {"maxBytes": MAX_BYTES},
             "versions": versions(), "translationService": urlsplit(os.getenv('MOINPDF_TRANSLATE_URL','')).hostname,
+            "translationStatus": translation,
             "capabilities": {
                 "office": bool(office_binary()),
                 "pdfWord": importlib.util.find_spec("pdf2docx") is not None,
@@ -182,12 +185,28 @@ def capabilities():
                 "formDetect": importlib.util.find_spec("cv2") is not None,
                 "documentChecks": importlib.util.find_spec("pymupdf") is not None,
                 "dewarp": importlib.util.find_spec("cv2") is not None,
-                "translate": bool(os.getenv("MOINPDF_TRANSLATE_URL")),
+                "translate": translation == "ready",
                 "wordMerge": bool(office_binary() and importlib.util.find_spec("openpyxl")),
                 "zugferd": bool(MUSTANG.is_file() and shutil.which("java") and shutil.which("gs") and Path(VERAPDF).is_file() and ICC.is_file()),
                 "pdfa": bool(shutil.which("gs") and Path(VERAPDF).is_file() and ICC.is_file()),
                 "xrechnung": bool(shutil.which("java") and KOSIT.is_file() and SCENARIOS.is_file()),
                 "signatures": importlib.util.find_spec("pyhanko") is not None}}
+
+
+def translation_status():
+    base = os.getenv("MOINPDF_TRANSLATE_URL", "").rstrip("/")
+    if not base:
+        return "disabled"
+    # Normal converters remain usable during the first model download. Probe
+    # readiness instead of claiming translation works just because a URL exists.
+    try:
+        with urlopen(base + "/languages", timeout=2) as response:
+            languages = json.load(response)
+        available = {item["code"]: set(item["targets"]) for item in languages}
+        required = set(os.getenv("MOINPDF_TRANSLATE_LANGUAGES", "de,en,fr,es,it,nl,pl").split(","))
+        return "ready" if all(code in available and required <= available[code] for code in required) else "starting"
+    except (OSError, ValueError, KeyError, TypeError):
+        return "starting"
 
 
 @app.post("/v1/office", dependencies=[Depends(authorize)])
