@@ -6,6 +6,10 @@ on:
         description: Published MoinPDF web image with digest
         required: true
         default: ghcr.io/dennysubke/moinpdf-web:0.1.0-e82c50b8676d@sha256:cad1cfb17150bddccd7f72f36fec6db3cdcd1f7fa7cbe4f0ba110fd570fc0a5e
+      diagnostics:
+        description: Log caught browser errors in a disposable copy (not release validation)
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -31,6 +35,25 @@ jobs:
             sleep 1
           done
           exit 1
+      - name: Instrument caught errors in disposable browser assets
+        if: ${{ inputs.diagnostics }}
+        run: |
+          docker cp moinpdf-web-test:/srv/assets "$RUNNER_TEMP/web-assets"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+          for path in Path(os.environ['RUNNER_TEMP'], 'web-assets').glob('*.js'):
+              source = path.read_text()
+              if 'Vorschau nicht verfügbar' not in source:
+                  continue
+              source = source.replace('.catch(()=>{', '.catch((__moinpdfDebugError)=>{console.error(__moinpdfDebugError);')
+              source = source.replace('.catch(()=>', '.catch((__moinpdfDebugError)=>console.error(__moinpdfDebugError)||')
+              source = source.replace('catch{', 'catch(__moinpdfDebugError){console.error(__moinpdfDebugError);')
+              path.write_text(source)
+              subprocess.run(['docker', 'cp', str(path), 'moinpdf-web-test:/srv/assets/' + path.name], check=True)
+              print('Instrumented disposable asset:', path.name)
+          PY
       - name: PDF workspace
         run: python tests/published-web-smoke.py
       - name: Browser evidence
