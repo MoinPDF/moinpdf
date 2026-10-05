@@ -60,3 +60,5 @@ __pycache__/
 *.pyc
 
 !server/.env.example
+
+!.env.example

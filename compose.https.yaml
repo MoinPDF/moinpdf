@@ -1,0 +1,9 @@
+# Optional: direct HTTPS with a DNS name pointing to this machine.
+# docker compose -f compose.yaml -f compose.https.yaml up -d --build
+services:
+  app:
+    environment:
+      MOINPDF_SITE_ADDRESS: ${MOINPDF_DOMAIN:?Domain in .env eintragen}
+    ports:
+      - "${MOINPDF_BIND:-0.0.0.0}:80:8080"
+      - "${MOINPDF_BIND:-0.0.0.0}:443:8443"

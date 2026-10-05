@@ -21,7 +21,8 @@
     "test:documents": "node tests/document-tools-smoke.mjs",
     "test:security": "node tests/security-invoice-smoke.mjs",
     "test:advanced": "node tests/advanced-tools-smoke.mjs",
-    "test": "node tests/run-all.mjs"
+    "test": "node tests/run-all.mjs",
+    "build:selfhost": "node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

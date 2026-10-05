@@ -1,0 +1,51 @@
+{
+    admin off
+    http_port 8080
+    https_port 8443
+}
+
+http://127.0.0.1:8081 {
+    respond /health "ok" 200
+}
+
+{$MOINPDF_SITE_ADDRESS::8080} {
+    import /tmp/access.caddy
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+        X-Frame-Options SAMEORIGIN
+    }
+
+    # Cross-origin pages cannot submit jobs: HTML forms cannot set this header,
+    # and a cross-origin fetch preflight is rejected here (no CORS grant).
+    @invalidClient {
+        path /api/documents/*
+        not header X-MoinPDF-Client web
+    }
+    respond @invalidClient "API requests must originate from the PDF workplace." 403
+    @crossSite {
+        path /api/documents/*
+        header Sec-Fetch-Site cross-site
+    }
+    respond @crossSite "Cross-site requests are not accepted." 403
+
+    handle_path /api/documents/* {
+        request_body {
+            max_size 85MB
+        }
+        reverse_proxy documents:8080 {
+            header_up Authorization "Bearer {$MOINPDF_API_KEY}"
+            header_down Cache-Control no-store
+            transport http {
+                response_header_timeout 190s
+            }
+        }
+    }
+    handle {
+        root * /srv
+        @entry path / /index.html
+        header @entry Cache-Control "no-cache"
+        file_server
+    }
+}

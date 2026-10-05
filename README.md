@@ -2,6 +2,16 @@
 
 Deutschsprachiger PDF-Arbeitsplatz ohne Produktnamen. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 76 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 59 Werkzeuge verarbeiten Dokumente im Browser. 17 zusätzliche Ansichten verwenden auf ausdrücklichen Auftrag einen selbst betriebenen Dokumentenserver; ohne Serververbindung bleiben diese deaktiviert.
 
+## Komplett per Docker starten
+
+```bash
+git clone https://github.com/dennysubke/moinpdf.git
+cd moinpdf
+docker compose up -d --build
+```
+
+Dann **http://localhost:8080** bzw. **http://SERVER-IP:8080** öffnen. Der Compose-Aufbau im Hauptverzeichnis enthält die Web-App, sämtliche Dokumentenserver-Komponenten und LibreTranslate mit allen sieben angebotenen Übersetzungssprachen. Die Verbindung erfolgt automatisch; eine `.env` oder manuell einzutragende API-Schlüssel sind nicht erforderlich. Der erste Start lädt die Sprachmodelle und kann mehrere Minuten dauern. Voraussetzungen, HTTPS, optionaler Login, Updates und Fehlersuche: **[vollständige Docker-Anleitung](DOCKER.md)**.
+
 ## Ausbau: weitere 14 Werkzeuge
 
 Die Kategorien stehen auf einem einheitlichen Raster mit Symbol, Beschriftung und Anzahl. Auf schmalen Ansichten werden die Kategorien in gleichmäßige Reihen verteilt. „Alle“ gliedert die Werkzeuge zusätzlich nach Bereichen. „Stapel“ und „Server“ haben eigene dezente Farben. Über „Alle Werkzeuge“ ist die Übersicht auch ohne geöffnetes PDF erreichbar.
@@ -23,9 +33,9 @@ Die Kategorien stehen auf einem einheitlichen Raster mit Symbol, Beschriftung un
 | ZUGFeRD-Assistent | Server | PDF/A-3 und passende CII-XML verbinden; Mustang und veraPDF-Berichte, negative Befunde klar benannt |
 | Word-Serienbriefe | Server | DOCX mit {{Spaltenname}} und XLSX; bis 50 Datensätze, einzelne PDFs im ZIP |
 
-Die Serverwerkzeuge sind implementiert, benötigen aber eine verbundene und aktualisierte Serverinstallation. Die Übersetzung benötigt zusätzlich einen vom Betreiber eingerichteten LibreTranslate-Dienst. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
+Die Serverwerkzeuge sind implementiert, benötigen aber eine verbundene und aktualisierte Serverinstallation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
 
-Zusätzliche Tests: `node tests/size-split-smoke.mjs` sowie `python -m unittest server.test_service server.test_expansion server.test_extended_documents -v` mit installierten Serverkomponenten. Die Übersetzung wird mit einer lokalen HTTP-Testantwort auf Anfrageformat, Zielsprachenübergabe und Ausgabe geprüft; ein produktiver Übersetzungsdienst wurde nicht verbunden.
+Zusätzliche Tests: `node tests/size-split-smoke.mjs` sowie `python -m unittest server.test_service server.test_expansion server.test_extended_documents -v` mit installierten Serverkomponenten. Die Übersetzung wird mit einer lokalen HTTP-Testantwort auf Anfrageformat, Zielsprachenübergabe und Ausgabe geprüft; der Docker-Integrationsworkflow ergänzt einen echten LibreTranslate-Durchlauf.
 
 ## Die bisherigen 44 Werkzeuge
 

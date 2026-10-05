@@ -39,8 +39,22 @@ app = FastAPI(title="MoinPDF Dokumentenserver", docs_url=None, redoc_url=None)
 bearer = HTTPBearer(auto_error=False)
 
 
+def api_key():
+    # Standalone deployments keep the existing environment-key interface.
+    configured = os.getenv("MOINPDF_API_KEY", "")
+    if configured:
+        return configured
+    filename = os.getenv("MOINPDF_API_KEY_FILE", "")
+    if filename:
+        try:
+            return Path(filename).read_text().strip()
+        except OSError:
+            return ""
+    return ""
+
+
 def authorize(credentials: HTTPAuthorizationCredentials | None = Depends(bearer)):
-    expected = os.getenv("MOINPDF_API_KEY", "")
+    expected = api_key()
     if len(expected) < 32 or expected.startswith("HIER_"):
         raise HTTPException(503, "Der Server braucht einen API-Schlüssel mit mindestens 32 Zeichen.")
     actual = credentials.credentials if credentials else ""
@@ -51,7 +65,7 @@ def authorize(credentials: HTTPAuthorizationCredentials | None = Depends(bearer)
 @app.middleware("http")
 async def limit_request(request, call_next):
     if request.url.path.startswith('/v1/'):
-        expected = os.getenv('MOINPDF_API_KEY', '')
+        expected = api_key()
         if len(expected) < 32 or expected.startswith('HIER_'):
             return JSONResponse({'detail': 'Der Server braucht einen eigenen API-Schlüssel.'}, status_code=503)
         actual = request.headers.get('authorization', '')
@@ -106,7 +120,7 @@ def require_pdf(path: Path):
 
 def command(args: list[str], cwd: Path, accepted=(0,), timeout=TIMEOUT, extra_environment=None):
     """No shell; timeout terminates the whole subprocess group, including LibreOffice children."""
-    environment = {k: v for k, v in os.environ.items() if k not in {"MOINPDF_API_KEY", "MOINPDF_TRANSLATE_KEY", "MOINPDF_TRANSLATE_URL"}}
+    environment = {k: v for k, v in os.environ.items() if k not in {"MOINPDF_API_KEY", "MOINPDF_API_KEY_FILE", "MOINPDF_TRANSLATE_KEY", "MOINPDF_TRANSLATE_URL"}}
     if extra_environment:environment.update(extra_environment)
     environment.update(HOME=str(cwd), TMPDIR=str(cwd), JAVA_TOOL_OPTIONS="-Xmx768m")
     try:

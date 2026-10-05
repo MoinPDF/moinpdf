@@ -1,0 +1,123 @@
+name: moinpdf
+
+x-translation: &translation
+  image: moinpdf-translation:local
+  build: ./docker/translation
+  environment: &translation-environment
+    LT_LOAD_ONLY: de,en,fr,es,it,nl,pl
+    LT_HOST: 0.0.0.0
+    LT_PORT: "5000"
+    LT_THREADS: "2"
+    LT_DISABLE_WEB_UI: "true"
+    LT_CHAR_LIMIT: "2000"
+    ARGOS_CHUNK_TYPE: MINISBD
+  volumes:
+    - translation_models:/home/libretranslate/.local
+    - translation_cache:/home/libretranslate/.cache
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
+services:
+  initialize:
+    image: moinpdf-documents:local
+    build: ./server
+    user: "0:0"
+    command: [python, init_secret.py]
+    network_mode: none
+    read_only: true
+    volumes: [internal_key:/run/moinpdf]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      disable: true
+
+  translation-models:
+    <<: *translation
+    entrypoint: [/app/venv/bin/python, /opt/moinpdf/ensure_models.py]
+    restart: on-failure
+    networks: [download]
+    healthcheck:
+      disable: true
+
+  translation:
+    <<: *translation
+    restart: unless-stopped
+    init: true
+    depends_on:
+      translation-models:
+        condition: service_completed_successfully
+    networks: [documents]
+    healthcheck:
+      test: [CMD, /app/venv/bin/python, /opt/moinpdf/healthcheck.py]
+      interval: 15s
+      timeout: 6s
+      retries: 20
+      start_period: 120s
+    mem_limit: ${MOINPDF_TRANSLATION_MEMORY:-4g}
+    cpus: 2
+    pids_limit: 256
+
+  documents:
+    image: moinpdf-documents:local
+    build: ./server
+    restart: unless-stopped
+    init: true
+    depends_on:
+      initialize:
+        condition: service_completed_successfully
+      translation:
+        condition: service_healthy
+    environment:
+      MOINPDF_API_KEY_FILE: /run/moinpdf/api-key
+      MOINPDF_TRANSLATE_URL: http://translation:5000
+    read_only: true
+    tmpfs:
+      - /tmp:size=1g,mode=1777
+    volumes:
+      - internal_key:/run/moinpdf:ro
+      - ./server/trust:/trust:ro
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: ${MOINPDF_DOCUMENT_MEMORY:-2g}
+    cpus: 2
+    pids_limit: 256
+    networks: [documents]
+
+  app:
+    image: moinpdf-web:local
+    build: .
+    restart: unless-stopped
+    depends_on:
+      documents:
+        condition: service_healthy
+    environment:
+      MOINPDF_SITE_ADDRESS: ":8080"
+      MOINPDF_USERNAME: ${MOINPDF_USERNAME:-moinpdf}
+      MOINPDF_PASSWORD: ${MOINPDF_PASSWORD:-}
+    ports:
+      - "${MOINPDF_BIND:-0.0.0.0}:${MOINPDF_PORT:-8080}:8080"
+    read_only: true
+    tmpfs: [/tmp:mode=1777]
+    volumes:
+      - internal_key:/run/moinpdf:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    pids_limit: 64
+    networks: [documents, web]
+
+networks:
+  documents:
+    internal: true
+  download:
+  web:
+
+volumes:
+  internal_key:
+  translation_models:
+  translation_cache:
+  caddy_data:
+  caddy_config:

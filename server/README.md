@@ -1,5 +1,7 @@
 # MoinPDF-Dokumentenserver
 
+> **Für die vollständige App inklusive Übersetzungen:** `docker compose up -d --build` im Repository-Hauptverzeichnis ausführen. Siehe [Docker-Anleitung](../DOCKER.md). Die nachfolgende Anleitung betrifft ausschließlich einen separaten Dokumentenserver für eine bereits anderweitig gehostete Web-App.
+
 Die 59 Browserwerkzeuge verarbeiten Dateien lokal. 17 zusätzliche Werkzeugansichten können diesen separaten Server verwenden. Zu den bisherigen vier Funktionen kommen die unten beschriebenen 13 Erweiterungen:
 
 | Funktion | Verarbeitung | Ergebnis |
@@ -11,7 +13,7 @@ Die 59 Browserwerkzeuge verarbeiten Dateien lokal. 17 zusätzliche Werkzeugansic
 
 Die veröffentlichte App enthält **keinen vorinstallierten öffentlichen Dokumentenserver**. Eine eigene Serveradresse und ein API-Schlüssel müssen eingetragen werden. Eine Verbindung wird ohne Dokumentübertragung geprüft. Dateien werden erst nach dem ausdrücklichen Übertragungsauftrag gesendet.
 
-## Start mit Docker Compose
+## Separaten Dokumentenserver mit Docker Compose starten
 
 Voraussetzungen: Linux-Server mit Docker Compose, etwa 2 GB freiem RAM, eine auf diesen Server zeigende Domain und erreichbare Ports 80/443. Die bereitgestellte Compose-Datei betreibt Caddy mit HTTPS und hält den Dokumentencontainer in einem internen Netzwerk ohne ausgehenden Internetzugriff.
 
@@ -96,6 +98,6 @@ Druckqualität, Barrierefreiheit und Schwärzungsprüfung liefern technische Bef
 python -m unittest server.test_service server.test_expansion server.test_extended_documents -v
 ```
 
-Die Suite prüft echte Konverter und Dateiinhalte: DOCX-Text, EML/MSG-Anlagenbytes, PowerPoint-Seitenbilder, HTML-Text, OSD-Drehung, editierbare erkannte Felder, verdeckten Text, zu geringe Bildauflösung, Tags-Lücken, Kurvenkorrektur und zwei individuelle Serienbrief-PDFs. ZUGFeRD wird mit Mustang/veraPDF positiv geprüft; eine gewöhnliche PDF wird als nicht konform erkannt. Die Übersetzungsschnittstelle nutzt eine lokale HTTP-Testantwort, keinen verbundenen Produktivdienst. Docker selbst ist erst nach einem Build auf dem Zielsystem geprüft.
+Die Suite prüft echte Konverter und Dateiinhalte: DOCX-Text, EML/MSG-Anlagenbytes, PowerPoint-Seitenbilder, HTML-Text, OSD-Drehung, editierbare erkannte Felder, verdeckten Text, zu geringe Bildauflösung, Tags-Lücken, Kurvenkorrektur und zwei individuelle Serienbrief-PDFs. ZUGFeRD wird mit Mustang/veraPDF positiv geprüft; eine gewöhnliche PDF wird als nicht konform erkannt. Die Übersetzungsschnittstelle nutzt eine lokale HTTP-Testantwort, keinen verbundenen Produktivdienst. Der Workflow `../.github/workflows/docker.yml` baut und prüft zusätzlich den vollständigen Docker-Stack samt echter Übersetzung.
 
 Zusätzliche Abhängigkeiten und ihre Lizenzen beachten, insbesondere PyMuPDF/MuPDF (AGPL bzw. kommerzielle Lizenz); der optionale Dokumentenserver ist vom Browser-Bundle getrennt.
