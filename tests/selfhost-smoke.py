@@ -9,6 +9,9 @@ import requests
 base = os.getenv('MOINPDF_TEST_URL', 'http://app:8080')
 session = requests.Session()
 session.trust_env = False
+if os.getenv('MOINPDF_TEST_COOKIES'):
+    for cookie in json.loads(Path(os.environ['MOINPDF_TEST_COOKIES']).read_text()):
+        session.cookies.set(cookie['name'], cookie['value'], domain=cookie['domain'], path=cookie['path'])
 if os.getenv('MOINPDF_TEST_PASSWORD'):
     session.auth = (os.getenv('MOINPDF_TEST_USERNAME', 'moinpdf'), os.environ['MOINPDF_TEST_PASSWORD'])
 home = session.get(base + '/', timeout=10)
@@ -49,7 +52,7 @@ with pymupdf.open(stream=result.content, filetype='pdf') as document:
     assert 'Guten Morgen' in text, text
     assert 'good morning' in text.lower() and 'thank' in text.lower(), text
 
-office = Path('/repo/tests/fixtures/office/sample.docx')
+office = Path(os.getenv('MOINPDF_TEST_REPO', '/repo')) / 'tests/fixtures/office/sample.docx'
 with office.open('rb') as source:
     result = session.post(api + '/v1/office', files={'file': ('sample.docx', source)}, timeout=200)
 result.raise_for_status()

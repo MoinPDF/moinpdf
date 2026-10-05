@@ -1,6 +1,6 @@
 # Vollständige Installation mit Docker Compose
 
-Für **platform mit der Pages-App und vorhandenem Cloudflare-Tunnel** gibt es die konkrete Schrittfolge in [platform.md](platform.md). Das Pages-Paket enthält die Oberfläche; Dokumentenserver und Übersetzung laufen im Compose-Stack.
+Für die **native platform-App aus Denny's Community Store** und die direkte Veröffentlichung über Cloudflare Tunnel gibt es die Schrittfolge in [platform.md](platform.md). Das platform-Paket enthält Oberfläche, Dokumentenserver und Übersetzung; Pages und eine manuelle `.env` werden dafür nicht benötigt. Der folgende Abschnitt beschreibt weiterhin den unabhängigen Docker-Compose-Betrieb.
 
 Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den Dokumentenserver und LibreTranslate. Alle 76 Werkzeugansichten sind enthalten. Der Browser verbindet sich automatisch mit dem eigenen Dokumentenserver; Serveradressen und API-Schlüssel müssen nicht eingetragen werden. Die dokumentbezogenen Grenzen der einzelnen Werkzeuge gelten auch in Docker.
 
