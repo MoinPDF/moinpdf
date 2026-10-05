@@ -2,16 +2,6 @@
 set -euo pipefail
 test_container=moinpdf-umbrel-test
 
-# Systemd may give the daemon a different mount view from Docker's exec/archive
-# helpers. Keep fixture reads and writes in the daemon's own mount namespace.
-umbrel_fs() {
-    docker exec -i "$test_container" sh -ec '
-        main_pid="$(systemctl show -p MainPID --value umbrel)"
-        test "$main_pid" -gt 1
-        exec nsenter --mount --target "$main_pid" -- "$@"
-    ' sh "$@"
-}
-
 ready=false
 for attempt in $(seq 1 120); do
     if docker exec "$test_container" umbreld client user.exists.query >/dev/null 2>&1; then
@@ -27,58 +17,54 @@ fi
 docker exec "$test_container" umbreld client user.register.mutate \
     --name MoinPDF-CI --password synthetic-umbrel-ci-password >/dev/null
 
-# Use the data directory from the pinned Umbrel OS systemd service. Pull all
-# MoinPDF images anonymously, exactly as an end-user's Umbrel installation does.
-store_dir=""
-for attempt in $(seq 1 60); do
-    store_dir="$(umbrel_fs find /home/umbrel/umbrel/app-stores -maxdepth 1 -type d -name 'getumbrel-umbrel-apps-*' -print -quit 2>/dev/null || true)"
-    if [ -n "$store_dir" ]; then break; fi
-    sleep 5
+# Follow Umbrel's own integration-test approach: register a small HTTP Git
+# community repository via the public app-store API. Only the rendered app
+# package is served, on runner loopback; the private source repo is excluded.
+ci_store="${RUNNER_TEMP:-/tmp}/moinpdf-umbrel-ci-store"
+repository="$ci_store/repositories/umbrel-apps.git"
+mkdir -p "$repository"
+cp -R deploy/umbrel/denny-moinpdf "$repository/"
+printf 'id: denny\nname: MoinPDF CI\n' > "$repository/umbrel-app-store.yml"
+git -C "$repository" init --initial-branch=main --quiet
+git -C "$repository" add .
+git -C "$repository" -c user.name=MoinPDF-CI -c user.email=ci@example.invalid \
+    commit --quiet -m 'Exact published MoinPDF package'
+npm install --prefix "$ci_store" --ignore-scripts --no-audit --no-fund \
+    --save-exact node-git-server@1.0.0
+node tests/umbrel-git-server.cjs "$ci_store" > "$ci_store/server.log" 2>&1 &
+printf '%s\n' "$!" > "$ci_store/server.pid"
+for attempt in $(seq 1 30); do
+    if [ -s "$ci_store/url" ]; then break; fi
+    sleep 1
 done
-if [ -z "$store_dir" ]; then
-    echo 'The official Umbrel app-store clone was not ready within 5 minutes.' >&2
-    exit 1
-fi
-echo 'Umbrel app store is ready; installing the published package.'
-# Extract in the running OS namespace. Docker's archive/cp endpoint cannot
-# resolve directories under mounts created by Umbrel's systemd services.
-tar -C deploy/umbrel -cf - denny-moinpdf | \
-    umbrel_fs tar -xf - -C "$store_dir"
-umbrel_fs find "$store_dir/denny-moinpdf" -name .gitkeep -delete
-umbrel_fs chown -R 1000:1000 "$store_dir/denny-moinpdf"
-umbrel_fs test -s "$store_dir/denny-moinpdf/umbrel-app.yml"
-docker exec "$test_container" systemctl restart umbrel
-registry_ready=false
-for attempt in $(seq 1 60); do
-    if docker exec "$test_container" umbreld client appStore.registry.query > /tmp/umbrel-ci-registry.json 2>/dev/null && \
-        python -c 'import json; assert any(app["id"] == "denny-moinpdf" for store in json.load(open("/tmp/umbrel-ci-registry.json")) for app in store["apps"])' 2>/dev/null; then
-        registry_ready=true
-        break
-    fi
-    sleep 2
-done
-if [ "$registry_ready" != true ]; then
-    echo 'Umbrel did not discover the injected test package.' >&2
-    umbrel_fs ls -la "$store_dir/denny-moinpdf" || true
-    umbrel_fs cat "$store_dir/denny-moinpdf/umbrel-app.yml" || true
-    python - <<'PY'
+store_url="$(cat "$ci_store/url")"
+git ls-remote "$store_url" HEAD >/dev/null
+echo 'Registering the local CI community store through Umbrel.'
+timeout 180 docker exec "$test_container" umbreld client appStore.addRepository.mutate \
+    --url "$store_url"
+# Umbrel's CLI calls process.exit immediately after console.log. Redirect its
+# large JSON to a regular file inside the container so Node flushes it before
+# exit; direct Docker pipes otherwise truncate the registry at about 64 KiB.
+docker exec "$test_container" sh -ec \
+    'umbreld client appStore.registry.query > /tmp/moinpdf-ci-registry.json; cat /tmp/moinpdf-ci-registry.json' \
+    > /tmp/umbrel-ci-registry.json
+python - <<'PYREGISTRY'
 import json
-from pathlib import Path
-registry = json.loads(Path('/tmp/umbrel-ci-registry.json').read_text())
-print([{ 'store': store['meta'], 'app_count': len(store['apps']),
-         'moinpdf': [app for app in store['apps'] if 'moinpdf' in app.get('id', '')] }
-       for store in registry])
-PY
-    exit 1
-fi
+registry = json.load(open('/tmp/umbrel-ci-registry.json'))
+assert any(app['id'] == 'denny-moinpdf' for store in registry for app in store['apps']), [
+    {'store': store['meta'], 'apps': len(store['apps'])} for store in registry]
+PYREGISTRY
 echo 'MoinPDF is visible in the native Umbrel registry.'
-docker exec "$test_container" umbreld client apps.install.mutate --appId denny-moinpdf >/dev/null
+timeout 180 docker exec "$test_container" umbreld client apps.install.mutate --appId denny-moinpdf >/dev/null
 
 for attempt in $(seq 1 240); do
     docker exec "$test_container" umbreld client apps.state.query --appId denny-moinpdf > /tmp/umbrel-ci-state.json
     if python -c 'import json; assert json.load(open("/tmp/umbrel-ci-state.json"))["state"] == "ready"' 2>/dev/null; then
         echo 'Umbrel reports MoinPDF ready; browser and document workflows are checked next.'
         exit 0
+    fi
+    if [ "$((attempt % 6))" -eq 0 ]; then
+        python -c 'import json; print("Installation state:", json.load(open("/tmp/umbrel-ci-state.json"))["state"])'
     fi
     sleep 5
 done

@@ -77,6 +77,7 @@ jobs:
       - name: Diagnostics
         if: failure()
         run: |
+          cat "$RUNNER_TEMP/moinpdf-umbrel-ci-store/server.log" || true
           docker logs --tail 100 moinpdf-umbrel-test || true
           docker exec moinpdf-umbrel-test journalctl -u umbrel --no-pager -n 100 || true
           docker exec moinpdf-umbrel-test docker ps -a || true
@@ -86,5 +87,8 @@ jobs:
       - name: Remove disposable test host
         if: always()
         run: |
+          if [ -f "$RUNNER_TEMP/moinpdf-umbrel-ci-store/server.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/moinpdf-umbrel-ci-store/server.pid")" || true
+          fi
           docker rm -f moinpdf-umbrel-test || true
           docker volume rm moinpdf-umbrel-test || true
