@@ -5,7 +5,7 @@ on:
       image:
         description: Published MoinPDF web image with digest
         required: true
-        default: ghcr.io/dennysubke/moinpdf-web:0.1.0-e82c50b8676d@sha256:cad1cfb17150bddccd7f72f36fec6db3cdcd1f7fa7cbe4f0ba110fd570fc0a5e
+        default: ghcr.io/dennysubke/moinpdf-web:0.1.0-fbbf15ab048a@sha256:cbdf004d4b91eb4c4e4c8e9bece87fc326b1e89b1aaaa576cfc1361cfc248a0d
       diagnostics:
         description: Log caught browser errors in a disposable copy (not release validation)
         type: boolean
