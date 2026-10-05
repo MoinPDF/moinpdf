@@ -1,0 +1,45 @@
+name: Published web workspace
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Published MoinPDF web image with digest
+        required: true
+        default: ghcr.io/dennysubke/moinpdf-web:0.1.0-e82c50b8676d@sha256:cad1cfb17150bddccd7f72f36fec6db3cdcd1f7fa7cbe4f0ba110fd570fc0a5e
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install browser dependencies
+        run: |
+          pip install playwright==1.55.0 pymupdf==1.28.2
+          python -m playwright install --with-deps chromium
+      - name: Start the published web image
+        env:
+          WEB_IMAGE: ${{ inputs.image }}
+        run: |
+          docker run -d --name moinpdf-web-test -p 127.0.0.1:8785:8080 \
+            --cap-drop ALL --security-opt no-new-privileges \
+            -e MOINPDF_API_KEY=synthetic-browser-test-key-with-at-least-32-characters \
+            "$WEB_IMAGE"
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://localhost:8785/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: PDF workspace
+        run: python tests/published-web-smoke.py
+      - name: Browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-web-evidence
+          path: web-evidence
+          retention-days: 14
+      - name: Cleanup
+        if: always()
+        run: docker rm -f moinpdf-web-test || true
