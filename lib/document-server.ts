@@ -1,7 +1,7 @@
 import type {ServerTool,ExportFile} from './advanced-types';
 declare const __MOINPDF_SELF_HOSTED__: boolean;
 export const integratedDocumentServer = typeof __MOINPDF_SELF_HOSTED__ !== 'undefined' && __MOINPDF_SELF_HOSTED__ ? '/api/documents' : null;
-export type ServerCapabilities={apiVersion:1;service:string;translationService?:string|null;capabilities:Record<string,boolean>;versions?:Record<string,string>;limits?:{maxBytes:number}};
+export type ServerCapabilities={apiVersion:1;service:string;translationService?:string|null;translationStatus?:'ready'|'starting'|'disabled';capabilities:Record<string,boolean>;versions?:Record<string,string>;limits?:{maxBytes:number}};
 export function documentServerUrl(input:string){if(integratedDocumentServer&&input===integratedDocumentServer)return input;let url:URL;try{url=new URL(input.trim());}catch{throw new Error('Bitte eine vollständige Serveradresse eingeben.');}if(url.username||url.password||url.search||url.hash)throw new Error('Serveradresse ohne Zugangsdaten, Suchparameter oder Fragment eingeben.');if(url.protocol!=='https:'&&!(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)))throw new Error('Für den Dokumentenserver bitte HTTPS verwenden.');return url.href.replace(/\/$/,'');}
 async function call(base:string,token:string,path:string,signal:AbortSignal,body?:FormData){
  const integrated=!!integratedDocumentServer&&base===integratedDocumentServer;
