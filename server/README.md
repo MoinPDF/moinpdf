@@ -1,6 +1,6 @@
 # MoinPDF-Dokumentenserver
 
-Die 58 Browserwerkzeuge verarbeiten Dateien lokal. Vier zusätzliche Werkzeugansichten können diesen separaten Server verwenden:
+Die 59 Browserwerkzeuge verarbeiten Dateien lokal. 17 zusätzliche Werkzeugansichten können diesen separaten Server verwenden. Zu den bisherigen vier Funktionen kommen die unten beschriebenen 13 Erweiterungen:
 
 | Funktion | Verarbeitung | Ergebnis |
 | --- | --- | --- |
@@ -32,7 +32,7 @@ In der App ein Serverwerkzeug öffnen, `https://deine-serverdomain` und den Schl
 
 ## Prüfungen und Betriebsverhalten
 
-- Pro Auftrag wird ein eigenes temporäres Verzeichnis verwendet und anschließend gelöscht. Aufträge und Dateiinhalte werden nicht dauerhaft gespeichert. API-Schlüssel werden nicht an Konverter-Unterprozesse weitergegeben. Zertifikatspasswörter werden weder in Befehlszeilen noch in Berichten abgelegt.
+- Pro Auftrag wird ein eigenes temporäres Verzeichnis verwendet und anschließend gelöscht. Aufträge und Dateiinhalte werden nicht dauerhaft gespeichert. Der MoinPDF-API-Schlüssel wird nicht an Konverter-Unterprozesse weitergegeben. Nur der Übersetzungsauftrag erhält bei Bedarf den separat konfigurierten LibreTranslate-Schlüssel. Zertifikatspasswörter werden weder in Befehlszeilen noch in Berichten abgelegt.
 - Höchstens zwei gleichzeitige Dokumentenaufträge; native Konverter werden nach drei Minuten einschließlich Kindprozessen beendet. Dateigrenze 80 MB, Rechnungs-XML 10 MB, Zertifikat 2 MB. HTTP-Abbruch im Browser beendet zunächst das Warten; ein bereits gestarteter Serverauftrag läuft bis Abschluss oder Timeout weiter.
 - LibreOffice verwendet ein frisches Profil mit deaktivierten Makros. Der Container hat ein schreibgeschütztes Dateisystem, ein temporäres Arbeitsverzeichnis und keinen Internetzugriff. Office-Layout hängt unter anderem von den verfügbaren Schriften ab. Eigene lizenzierte Schriften können beim Image-Build ergänzt werden.
 - PDF/A gilt nur bei bestandenem veraPDF-Check als konform. Bei einem fehlgeschlagenen Check heißt die Ausgabedatei ausdrücklich `NICHT-PDF-A-konform.pdf`. Die neue Archivkopie kann Formulare, Anhänge, aktive Elemente und bestehende Signaturen verändern oder verlieren; die Originaldatei bleibt erhalten. Das Profil 3b allein erzeugt keine ZUGFeRD-Rechnung.
@@ -46,14 +46,15 @@ python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.lock.txt
 pip install httpx==0.28.1
-python -m unittest discover -s . -p 'test_*.py' -v
+cd ..
+python -m unittest server.test_service server.test_expansion server.test_extended_documents -v
 ```
 
 Native Integrationstests werden ausgeführt, wenn Java, Ghostscript und die in `MOINPDF_TOOLS` installierten Werkzeuge verfügbar sind. Für Office ist zusätzlich LibreOffice nötig; beide Aufrufnamen `libreoffice` und `soffice` werden unterstützt. Die Office-Prüfung konvertiert synthetische DOCX-, XLSX-, PPTX-, ODT-, ODS- und ODP-Dateien und liest jede PDF anschließend unabhängig ein. Fehlende native Komponenten werden als übersprungen gemeldet. Installation in einen lokalen Ordner:
 
 ```bash
-MOINPDF_TOOLS="$PWD/tools" python install_tools.py
-MOINPDF_TOOLS="$PWD/tools" python -m unittest discover -s . -p 'test_*.py' -v
+MOINPDF_TOOLS="$PWD/server/tools" python server/install_tools.py
+MOINPDF_TOOLS="$PWD/server/tools" python -m unittest server.test_service server.test_expansion server.test_extended_documents -v
 ```
 
 ## Versionen und Quellen
@@ -68,3 +69,33 @@ MOINPDF_TOOLS="$PWD/tools" python -m unittest discover -s . -p 'test_*.py' -v
 - [pyHanko: Signaturbibliothek](https://docs.pyhanko.eu/en/stable/lib-guide/signing.html)
 
 Die heruntergeladenen Programme unterliegen ihren jeweiligen Upstream-Lizenzen. Insbesondere die Ghostscript-Lizenz (AGPL) ist bei einer Weitergabe des Container-Images zu beachten. Lizenzdateien sind in den installierten Distributionen enthalten.
+
+
+## Erweiterte Werkzeuge
+
+Die aktuelle Serverversion ergänzt PDF→Word (pdf2docx), PDF→PowerPoint (python-pptx), EML/MSG→PDF (email/extract-msg und LibreOffice), statischen HTML-Import (MuPDF Story), Tesseract-OSD-Ausrichtung, Buchfalzkorrektur, Formularerkennung, Dokumentprüfungen, Word/Excel-Serienbriefe sowie ZUGFeRD (Mustang 2.26.0). Die App prüft jede Fähigkeit einzeln; nach dem Aktualisieren des Codes das Docker-Image neu bauen.
+
+Neue API-Routen:
+
+- `POST /v1/pdf-to-word`: PDF als `file`, Ergebnis DOCX; Layoutrekonstruktion, reine Scans werden mit OCR-Hinweis abgewiesen.
+- `POST /v1/email`: EML/MSG als `file`, `include_attachments=true|false`; PDF oder ZIP mit unveränderten Anlagen. Kein Laden externer E-Mail-Bilder.
+- `POST /v1/documents/{action}`: `powerpoint`, `html`, `orient`, `form`, `print`, `accessibility`, `redaction`, `dewarp`, `translate`; Datei und optionales JSON-Formularfeld `options`.
+- `POST /v1/word-merge`: DOCX als `file`, XLSX als `spreadsheet`; Platzhalter `{{Name}}` entsprechen dem Excel-Spaltennamen. Erste Tabelle, maximal 50 Datensätze und 50 Spalten. Formeln vorher in Werte umwandeln. Formatierung bleibt bei Platzhaltern über mehrere Word-Runs soweit möglich erhalten.
+- `POST /v1/zugferd/create`: PDF als `file`, passende CII-XML als `invoice`, Profil `E`, `B`, `T` oder `X`. Erst PDF/A-3-Konvertierung, dann Einbettung, Mustang- und veraPDF-Prüfung. Fehlerhafte Ergebnisse heißen ausdrücklich `NICHT-VALIDIERT-Rechnung.pdf`.
+- `POST /v1/zugferd/validate`: bestehende hybride PDF als `file`; ZIP mit maschinenlesbarem Gesamtergebnis und beiden Rohberichten.
+
+Druckqualität, Barrierefreiheit und Schwärzungsprüfung liefern technische Befunde, keine umfassende Freigabe. Schwärzungsprüfung durchsucht Text und Metadaten und erkennt mögliche spätere dunkle Vektor-Überdeckungen; sie untersucht keine alten Revisionen oder sämtliche Bild-/Anlageninhalte. Buchfalzkorrektur ist eine manuell einstellbare quadratische Spaltenverschiebung, keine allgemeine automatische 3D-Entzerrung. HTML wird ohne Skripte, CSS, Bilder und externe Ressourcen neu gesetzt.
+
+### Optional: eigener Übersetzungsdienst
+
+`MOINPDF_TRANSLATE_URL` verweist auf die Basisadresse eines selbst betriebenen LibreTranslate-Dienstes, optional `MOINPDF_TRANSLATE_KEY`. Ohne diese Einstellung bleibt Übersetzung deaktiviert. Der Hostname wird der App angezeigt, und die Freigabe nennt die Weitergabe des ausgelesenen Texts. Die Konfiguration akzeptiert keine vom Dokument vorgegebene Zieladresse. Das bestehende interne Docker-Netz bleibt unverändert: LibreTranslate muss im selben internen Netzwerk erreichbar sein. Die benötigten Sprachmodelle vorher im Übersetzungsdienst installieren. Schlüssel nur in der lokalen `.env` verwalten und nicht committen.
+
+### Prüfung der Erweiterungen
+
+```sh
+python -m unittest server.test_service server.test_expansion server.test_extended_documents -v
+```
+
+Die Suite prüft echte Konverter und Dateiinhalte: DOCX-Text, EML/MSG-Anlagenbytes, PowerPoint-Seitenbilder, HTML-Text, OSD-Drehung, editierbare erkannte Felder, verdeckten Text, zu geringe Bildauflösung, Tags-Lücken, Kurvenkorrektur und zwei individuelle Serienbrief-PDFs. ZUGFeRD wird mit Mustang/veraPDF positiv geprüft; eine gewöhnliche PDF wird als nicht konform erkannt. Die Übersetzungsschnittstelle nutzt eine lokale HTTP-Testantwort, keinen verbundenen Produktivdienst. Docker selbst ist erst nach einem Build auf dem Zielsystem geprüft.
+
+Zusätzliche Abhängigkeiten und ihre Lizenzen beachten, insbesondere PyMuPDF/MuPDF (AGPL bzw. kommerzielle Lizenz); der optionale Dokumentenserver ist vom Browser-Bundle getrennt.

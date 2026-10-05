@@ -1,7 +1,7 @@
-export const advancedToolIds = ['batch','workflows','auto-rename','smart-split','table-export','search-redact','visual-compare','scan-enhance','cover-toc','mail-merge','qr-barcode','link-editor','attachment-manager','camera-scan'] as const;
+export const advancedToolIds = ['split-size','batch','workflows','auto-rename','smart-split','table-export','search-redact','visual-compare','scan-enhance','cover-toc','mail-merge','qr-barcode','link-editor','attachment-manager','camera-scan'] as const;
 export type AdvancedTool = typeof advancedToolIds[number];
 export const isAdvancedTool = (id:string):id is AdvancedTool => (advancedToolIds as readonly string[]).includes(id);
-export const serverToolIds = ['office-pdf','pdfa','xrechnung-validate','certificate-sign'] as const;
+export const serverToolIds = ['pdf-powerpoint','html-pdf','auto-orient','book-dewarp','form-detect','redaction-check','print-check','accessibility-check','translate-pdf','zugferd-create','word-mail-merge','pdf-word','email-pdf','office-pdf','pdfa','xrechnung-validate','certificate-sign'] as const;
 export type ServerTool = typeof serverToolIds[number];
 export const isServerTool = (id:string):id is ServerTool => (serverToolIds as readonly string[]).includes(id);
 export type ExportFile = {blob:Blob;filename:string;kind:'pdf'|'zip'|'data';pages:number;note?:string};

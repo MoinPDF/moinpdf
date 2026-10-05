@@ -36,6 +36,8 @@ def install(root: Path):
             path.write_bytes(data)
             if name == "kosit":
                 (root / "validator.jar").write_bytes(data)
+            elif name == "mustang":
+                (root / "mustang.jar").write_bytes(data)
             elif name == "xrechnung":
                 extract(path, root / "xrechnung")
             else:

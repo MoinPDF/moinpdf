@@ -1,18 +1,18 @@
 'use client';
 import {useMemo,useState} from 'react';
-import {FileText,Plus,X,ShieldCheck,Trash2,LoaderCircle} from 'lucide-react';
+import {FileText,Plus,X,ShieldCheck,Trash2,LoaderCircle,LayoutGrid,FileSearch,RefreshCw,Layers,PenLine,Files,Server} from 'lucide-react';
 import {Command,CommandInput,CommandList,CommandItem} from '@/components/ui/command';
 import {Button} from '@/components/ui/button';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/tabs';
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
-import {tools,type WorkspaceTool} from '@/lib/tool-catalog';
+import {tools,groups,type WorkspaceTool} from '@/lib/tool-catalog';
 import {suggestTools} from '@/lib/tool-search';
 import type {Source} from '@/lib/pdf-engine';
 
 type Props={sources:Source[];pageCount:number;locked:boolean;loading:boolean;dragOver:boolean;onChoose:(id:WorkspaceTool)=>void;onAdd:()=>void;onRemove:(id:string)=>void;onClear:()=>void};
 export function ToolChooser({sources,pageCount,locked,loading,dragOver,onChoose,onAdd,onRemove,onClear}:Props){
  const [query,setQuery]=useState(''),[category,setCategory]=useState('all');
- const categories=[['all','Alle'],['0','Prüfen'],['1','Umwandeln'],['2','Seiten'],['3','Bearbeiten'],['4','Stapel'],['5','Server']];
+ const categories=[{value:'all',label:'Alle',icon:LayoutGrid},{value:'0',label:'Prüfen',icon:FileSearch},{value:'1',label:'Umwandeln',icon:RefreshCw},{value:'2',label:'Seiten',icon:Layers},{value:'3',label:'Bearbeiten',icon:PenLine},{value:'4',label:'Stapel',icon:Files},{value:'5',label:'Server',icon:Server}];
  const suggestions=useMemo(()=>suggestTools(query).slice(0,5),[query]);
  return <main className="tool-chooser">
   <header className="chooser-header">
@@ -29,7 +29,17 @@ export function ToolChooser({sources,pageCount,locked,loading,dragOver,onChoose,
     </CommandList>
    </Command>
    <div className="chooser-tools-heading"><h2>Alle Werkzeuge</h2><span>{tools.length}</span></div>
-   <Tabs value={category} onValueChange={setCategory} className="chooser-categories"><TabsList aria-label="Werkzeugkategorien">{categories.map(([value,label])=><TabsTrigger key={value} value={value}>{label}</TabsTrigger>)}</TabsList>{categories.map(([value,label])=><TabsContent value={value} key={value}><nav className="chooser-tool-grid" aria-label={value==='all'?'Alle PDF-Werkzeuge':`Werkzeuge: ${label}`}>{tools.filter(tool=>value==='all'||tool.group===Number(value)).sort((a,b)=>a.group-b.group).map(tool=><button key={tool.id} disabled={locked} onClick={()=>onChoose(tool.id)} title={tool.description} className={`chooser-tool tone-${tool.group}`}><span><tool.icon size={27} strokeWidth={1.45}/></span><strong>{tool.title}</strong></button>)}</nav></TabsContent>)}</Tabs>
+   <Tabs value={category} onValueChange={setCategory} className="chooser-categories">
+    <TabsList aria-label="Werkzeugkategorien" className="chooser-category-list">
+     {categories.map(({value,label,icon:Icon})=><TabsTrigger key={value} value={value} className={`chooser-category-chip${value==='all'?' category-all':''}`}><Icon size={18}/><span>{label}</span><small>{value==='all'?tools.length:tools.filter(t=>t.group===Number(value)).length}</small></TabsTrigger>)}
+    </TabsList>
+    {categories.map(({value,label})=><TabsContent value={value} key={value}>
+     {(value==='all'?groups.map((_,i)=>i):[Number(value)]).map(group=><section className="chooser-tool-section" key={group} aria-label={groups[group]}>
+      <div className="chooser-section-heading"><h3>{groups[group]}</h3>{group===5&&<span><Server size={13}/>Eigener Server</span>}</div>
+      <nav className="chooser-tool-grid" aria-label={`Werkzeuge: ${groups[group]}`}>{tools.filter(tool=>tool.group===group).map(tool=><button key={tool.id} disabled={locked} onClick={()=>onChoose(tool.id)} title={tool.description} className={`chooser-tool tone-${tool.group}`}><span><tool.icon size={27} strokeWidth={1.45}/></span><strong>{tool.title}</strong></button>)}</nav>
+     </section>)}
+    </TabsContent>)}
+   </Tabs>
 
    <p className="chooser-local"><ShieldCheck size={14}/>Browserwerkzeuge verarbeiten deine Dokumente auf deinem Gerät.</p>
   </section>

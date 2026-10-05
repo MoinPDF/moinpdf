@@ -2,6 +2,20 @@ import {tools,type WorkspaceTool} from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases:Record<WorkspaceTool,string[]>={
+ 'pdf-powerpoint':['PDF zu PowerPoint', 'PDF zu PPTX', 'PDF als Folien'],
+ 'html-pdf':['HTML zu PDF', 'Webseite zu PDF', 'Internetseite speichern'],
+ 'auto-orient':['Seiten automatisch ausrichten', 'auf dem Kopf', '180 Grad', 'automatisch drehen'],
+ 'book-dewarp':['Buchscans entzerren', 'Buchfalz', 'gebogene Textzeilen', 'Dewarp'],
+ 'form-detect':['Formularfelder erkennen', 'automatische Formularerkennung', 'Felder automatisch anlegen'],
+ 'redaction-check':['Schwärzungen prüfen', 'versteckten Text prüfen', 'Schwärzung kontrollieren'],
+ 'print-check':['Druckqualität prüfen', 'Druckvorstufe', 'Preflight', 'Bildauflösung dpi'],
+ 'accessibility-check':['Barrierefreiheit prüfen', 'PDF UA', 'Screenreader', 'Accessibility'],
+ 'translate-pdf':['PDF übersetzen', 'Übersetzung nebeneinander', 'Translate', 'Dokument übersetzen'],
+ 'zugferd-create':['ZUGFeRD erstellen', 'Factur X erstellen', 'ZUGFeRD validieren', 'hybride Rechnung erzeugen'],
+ 'word-mail-merge':['Word Serienbrief', 'Excel Serienbrief', 'Word Vorlage mit Excel füllen'],
+ 'split-size':['Nach Dateigröße teilen','PDF in 5 MB aufteilen','Upload Limit','maximale Dateigröße','nach MB trennen'],
+ 'pdf-word':['PDF zu Word','PDF in Word umwandeln','PDF zu DOCX','Layout in Word','bearbeitbare Word Datei'],
+ 'email-pdf':['E-Mails zu PDF','EML zu PDF','MSG zu PDF','Outlook Nachricht','Mail mit Anlagen'],
  batch:['Stapelverarbeitung','Batch','viele PDFs auf einmal','mehrere Dateien stempeln','Stapel schützen'],
  workflows:['Arbeitsabläufe','Workflow','Automatisierung','mehrere Schritte','Ablauf speichern','OCR Leerseiten nummerieren'],
  'auto-rename':['Automatisch umbenennen','Dateinamen','Rechnungsnummer als Dateiname','PDF benennen'],
@@ -32,7 +46,7 @@ const aliases:Record<WorkspaceTool,string[]>={
  erase:['Inhalte entfernen','wegradieren','radieren','Bild entfernen','Bereich löschen','Schrift entfernen','weißen Bereich','ausradieren'],
  'insert-image':['Bild einfügen','Logo einfügen','Bild platzieren','Grafik einsetzen','Foto auf Seite','Bild verschieben'],
  inspect:['prüfen','check','suchen','finden','durchsuchen','Fundstellen sammeln','doppelte Seiten finden','Duplikate erkennen','leere Seiten finden','Scans finden','Leerseiten erkennen'],
- ocr:['ocr','Text auslesen','Text erkennen','Text kopieren','Text extrahieren','Scan lesen','gescanntes Dokument','Texterkennung','durchsuchbar machen','durchsuchbare PDF','in Word umwandeln','Word Datei','docx','txt'],
+ ocr:['ocr','Text auslesen','Text erkennen','Text kopieren','Text extrahieren','Scan lesen','gescanntes Dokument','Texterkennung','durchsuchbar machen','durchsuchbare PDF','txt'],
  images:['Bilder zu PDF','Bild in PDF','Foto in PDF','Fotos zusammenfügen','JPG zu PDF','PNG zu PDF','JPEG in PDF'],
  'to-images':['PDF zu Bildern','PDF in Bild','PDF zu JPG','PDF zu PNG','als Bild speichern','als Foto speichern','Bilder exportieren','Bilddateien erzeugen'],
  compress:['komprimieren','verkleinern','kleiner machen','Dateigröße reduzieren','weniger MB','Speicher sparen','Email Anhang kleiner','zu groß'],
@@ -100,6 +114,9 @@ export function suggestTools(query:string){
   // Direction is material when converting: "PDF zu JPG" is not "JPG zu PDF".
   if(/(?:jpg|png|jpeg|bild|bilder|foto|fotos) (?:zu|in|als) (?:eine )?pdf/.test(normalized)&&tool.id==='images')score+=100;
   if(/pdf (?:zu|in|als) (?:ein |eine |einem )?(?:jpg|png|jpeg|bild|bilder|foto)/.test(normalized)&&tool.id==='to-images')score+=100;
+  if(/pdf (?:zu|in|als) (?:eine )?(?:word|docx)/.test(normalized)&&tool.id==='pdf-word')score+=100;
+  if(/pdf (?:zu|in|als) (?:eine )?(?:powerpoint|pptx|folien)/.test(normalized)&&tool.id==='pdf-powerpoint')score+=100;
+  if(/(?:word|docx|excel|xlsx|powerpoint|pptx) (?:zu|in|als) (?:eine )?pdf/.test(normalized)&&tool.id==='office-pdf')score+=100;
   return {...tool,score};
  }).filter(t=>t.score>=27).sort((a,b)=>b.score-a.score);
  return ranked.filter(tool=>tool.score>=Math.max(27,(ranked[0]?.score||0)*.62));

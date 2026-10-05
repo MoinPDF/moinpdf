@@ -4,7 +4,7 @@ import {File,FileText,Plus,Check,LoaderCircle} from 'lucide-react';
 
 export type ImportState={phase:'idle'|'reading'|'done';name:string;completed:number;total:number};
 
-export function UploadEntry({dragOver,loading,state,onOpen,onCamera,onOffice}:{dragOver:boolean;loading:boolean;state:ImportState;onOpen:()=>void;onCamera?:()=>void;onOffice?:()=>void}){
+export function UploadEntry({dragOver,loading,state,onOpen,onCamera,onOffice,onEmail,onTools}:{dragOver:boolean;loading:boolean;state:ImportState;onOpen:()=>void;onCamera?:()=>void;onOffice?:()=>void;onEmail?:()=>void;onTools?:()=>void}){
  const phase=state.phase==='idle'&&dragOver?'drag':state.phase;
  const id=useId().replace(/:/g,'');
  const paperId=`${id}-paper`,edgeId=`${id}-edge`,scanId=`${id}-scan`,maskId=`${id}-mask`;
@@ -38,7 +38,7 @@ export function UploadEntry({dragOver,loading,state,onOpen,onCamera,onOffice}:{d
     {loading&&<span className="upload-progress" role="progressbar" aria-label="Dateien öffnen" aria-valuenow={state.completed} aria-valuemin={0} aria-valuemax={Math.max(1,state.total)}><span style={{width:`${state.total?state.completed/state.total*100:0}%`}}/></span>}
    </span>
   </button>
-  <div className="upload-alternatives"><button disabled={loading} onClick={onCamera}>Kamera-Scanner</button><span>·</span><button disabled={loading} onClick={onOffice}>Office zu PDF</button></div>
+  <div className="upload-alternatives"><button disabled={loading} onClick={onCamera}>Kamera-Scanner</button><span>·</span><button disabled={loading} onClick={onOffice}>Office zu PDF</button><span>·</span><button disabled={loading} onClick={onEmail}>E-Mails zu PDF</button><span>·</span><button disabled={loading} onClick={onTools}>Alle Werkzeuge</button></div>
   <span className="sr-only" role="status" aria-live="polite">{loading?`${state.completed} von ${state.total} Dateien verarbeitet`:''}</span>
  </main>;
 }

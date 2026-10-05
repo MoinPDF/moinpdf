@@ -5,6 +5,8 @@ services:
     environment:
       MOINPDF_API_KEY: ${MOINPDF_API_KEY:?API-Schluessel in .env eintragen}
       MOINPDF_ORIGINS: ${MOINPDF_ORIGINS:?App-Adresse in .env eintragen}
+      MOINPDF_TRANSLATE_URL: ${MOINPDF_TRANSLATE_URL:-}
+      MOINPDF_TRANSLATE_KEY: ${MOINPDF_TRANSLATE_KEY:-}
     read_only: true
     tmpfs:
       - /tmp:size=1g,mode=1777

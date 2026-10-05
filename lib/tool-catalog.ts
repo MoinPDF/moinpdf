@@ -5,6 +5,21 @@ import {Workflow,FileInput,FileSpreadsheet,TextSearch,Camera,QrCode,Link,Files,F
 export type WorkspaceTool=StudioTool|'inspect';
 export const groups=['Prüfen & finden','Erkennen & konvertieren','Seiten & Struktur','Bearbeiten & bereinigen','Stapel & Abläufe','Mit Dokumentenserver'];
 export const tools=[
+ {id:'pdf-powerpoint',title:'PDF zu PowerPoint',description:'Jede PDF-Seite als maßgetreues Seitenbild auf eine PowerPoint-Folie übernehmen. Mit deinem Dokumentenserver.',icon:FileImage,group:5,action:'Verarbeiten',fresh:true},
+ {id:'html-pdf',title:'HTML & Webseiten zu PDF',description:'Gespeicherte HTML-Webseiten mit Überschriften und Tabellen als lesbare PDF setzen. Ohne Skripte und externe Ressourcen.',icon:FileInput,group:5,action:'Verarbeiten',fresh:true},
+ {id:'auto-orient',title:'Seiten automatisch ausrichten',description:'Verdrehte Textseiten erkennen und um 90, 180 oder 270 Grad korrigieren. Unsichere Seiten im Bericht kennzeichnen.',icon:ScanLine,group:5,action:'Verarbeiten',fresh:true},
+ {id:'book-dewarp',title:'Buchscans entzerren',description:'Gebogene Textzeilen am Buchfalz mit einstellbarer Kurvenkorrektur glätten. Neue Seitenbilder erzeugen.',icon:BookOpen,group:5,action:'Verarbeiten',fresh:true},
+ {id:'form-detect',title:'Formularfelder erkennen',description:'Leere Kästchen und Eingabelinien erkennen und als ausfüllbare Felder anlegen. Vorschläge anschließend prüfen.',icon:TextSelect,group:5,action:'Verarbeiten',fresh:true},
+ {id:'redaction-check',title:'Schwärzungen prüfen',description:'Nach weiterhin auslesbaren Begriffen und möglichen dunklen Überdeckungen suchen. Mit Befundbericht.',icon:TextSearch,group:5,action:'Verarbeiten',fresh:true},
+ {id:'print-check',title:'Druckqualität prüfen',description:'Bildauflösung, eingebettete Schriften und Seitenboxen prüfen. Hinweise für die Druckvorbereitung sammeln.',icon:FileCheck2,group:5,action:'Verarbeiten',fresh:true},
+ {id:'accessibility-check',title:'Barrierefreiheit prüfen',description:'Titel, Sprache, Tags, Textzugänglichkeit und Formularbeschriftungen auf technische Lücken prüfen.',icon:ClipboardCheck,group:5,action:'Verarbeiten',fresh:true},
+ {id:'translate-pdf',title:'PDF übersetzen',description:'Auslesbaren Text über deinen eigenen LibreTranslate-Dienst übersetzen. Original und Übersetzung nebeneinander exportieren.',icon:BookOpen,group:5,action:'Verarbeiten',fresh:true},
+ {id:'zugferd-create',title:'ZUGFeRD-Assistent',description:'Rechnungs-PDF und passende CII-XML zu einer hybriden Rechnung verbinden. Mit Mustang und veraPDF prüfen.',icon:ReceiptText,group:5,action:'Verarbeiten',fresh:true},
+ {id:'word-mail-merge',title:'Word-Serienbriefe',description:'DOCX-Vorlagen mit Excel-Datensätzen füllen. Für jede Zeile eine eigene PDF erstellen und im ZIP sammeln.',icon:Files,group:5,action:'Verarbeiten',fresh:true},
+
+ {id:'split-size',title:'Nach Dateigröße teilen',description:'Eine PDF in aufeinanderfolgende Teile innerhalb eines MB-Limits aufteilen. Jede Ausgabedatei wird nachgemessen.',icon:Split,group:2,action:'Teildateien berechnen',fresh:true},
+ {id:'pdf-word',title:'PDF zu Word',description:'Text, Tabellen und Bilder in eine bearbeitbare Word-Datei übertragen. Mit Layout-Rekonstruktion über deinen Dokumentenserver.',icon:FilePenLine,group:5,action:'Word-Datei erstellen',fresh:true},
+ {id:'email-pdf',title:'E-Mails zu PDF',description:'EML- und Outlook-MSG-Dateien mit Absender, Betreff und Nachricht als PDF speichern. Anlagen optional im ZIP beilegen.',icon:Files,group:5,action:'E-Mail konvertieren',fresh:true},
  {id:'batch',title:'Stapelverarbeitung',description:'Viele PDFs einzeln stempeln, nummerieren, schützen oder bereinigen. Ein ZIP mit allen Ergebnissen.',icon:Files,group:4,action:'Stapel verarbeiten',fresh:true},
  {id:'workflows',title:'Arbeitsabläufe',description:'Mehrere Schritte verbinden: zum Beispiel OCR, Leerseiten entfernen und nummerieren. Abläufe speichern und wiederverwenden.',icon:Workflow,group:4,action:'Arbeitsablauf ausführen',fresh:true},
  {id:'auto-rename',title:'Automatisch umbenennen',description:'Dateinamen aus Datum, Rechnungsnummer und Titel vorschlagen. Vorschläge prüfen und bearbeiten.',icon:FolderPen,group:4,action:'Namen vorschlagen',fresh:true},

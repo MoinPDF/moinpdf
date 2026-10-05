@@ -1,6 +1,31 @@
 # PDF-Arbeitsplatz
 
-Deutschsprachiger PDF-Arbeitsplatz ohne Produktnamen. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 62 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 58 Werkzeuge verarbeiten Dokumente im Browser. Vier zusätzliche Ansichten verwenden auf ausdrücklichen Auftrag einen selbst betriebenen Dokumentenserver; ohne Serververbindung bleiben diese deaktiviert.
+Deutschsprachiger PDF-Arbeitsplatz ohne Produktnamen. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 76 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 59 Werkzeuge verarbeiten Dokumente im Browser. 17 zusätzliche Ansichten verwenden auf ausdrücklichen Auftrag einen selbst betriebenen Dokumentenserver; ohne Serververbindung bleiben diese deaktiviert.
+
+## Ausbau: weitere 14 Werkzeuge
+
+Die Kategorien stehen auf einem einheitlichen Raster mit Symbol, Beschriftung und Anzahl. Auf schmalen Ansichten werden die Kategorien in gleichmäßige Reihen verteilt. „Alle“ gliedert die Werkzeuge zusätzlich nach Bereichen. „Stapel“ und „Server“ haben eigene dezente Farben. Über „Alle Werkzeuge“ ist die Übersicht auch ohne geöffnetes PDF erreichbar.
+
+| Werkzeug | Ausführung | Umfang |
+|---|---|---|
+| Nach Dateigröße teilen | Browser | Tatsächlich gemessene Bytes je PDF, vollständige Seitenreihenfolge, ZIP; zu große Einzelseiten werden gemeldet |
+| PDF zu Word | Server | Bearbeitbare DOCX aus Text, Tabellen und Bildern mit pdf2docx; Scans benötigen OCR |
+| PDF zu PowerPoint | Server | Eine gerenderte PDF-Seite je Folie; Seitenbilder statt editierbarer Einzelobjekte |
+| E-Mails zu PDF | Server | EML/MSG, Unicode-Kopfzeilen und Nachricht; unveränderte Anlagen mit eindeutigen Namen im ZIP |
+| HTML & Webseiten zu PDF | Server | Gespeicherte HTML-Dateien mit Überschriften und Tabellen; keine Skripte oder externen Ressourcen |
+| Seiten automatisch ausrichten | Server | Tesseract OSD, 90/180/270 Grad, Mindestvertrauen und seitenweiser Bericht |
+| Buchscans entzerren | Server | Einstellbare quadratische Spaltenkorrektur links/rechts, neue Seitenbilder |
+| Formularfelder erkennen | Server | Leere Rechtecke, Linien und Scan-Konturen; erzeugte Felder anschließend bearbeiten |
+| Schwärzungen prüfen | Server | Textsuche, Metadaten, verdächtige dunkle Vektor-Überdeckungen; keine Sicherheitsfreigabe |
+| Druckqualität prüfen | Server | Bildauflösung, Font-Einbettung, Seitenboxen; keine PDF/X-Zertifizierung |
+| Barrierefreiheit prüfen | Server | Technische Basisprüfung, kein PDF/UA-Konformitätsnachweis |
+| PDF übersetzen | Server + eigener LibreTranslate-Dienst | Auslesbarer Text und Übersetzung nebeneinander; bis 60.000 Zeichen |
+| ZUGFeRD-Assistent | Server | PDF/A-3 und passende CII-XML verbinden; Mustang und veraPDF-Berichte, negative Befunde klar benannt |
+| Word-Serienbriefe | Server | DOCX mit {{Spaltenname}} und XLSX; bis 50 Datensätze, einzelne PDFs im ZIP |
+
+Die Serverwerkzeuge sind implementiert, benötigen aber eine verbundene und aktualisierte Serverinstallation. Die Übersetzung benötigt zusätzlich einen vom Betreiber eingerichteten LibreTranslate-Dienst. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
+
+Zusätzliche Tests: `node tests/size-split-smoke.mjs` sowie `python -m unittest server.test_service server.test_expansion server.test_extended_documents -v` mit installierten Serverkomponenten. Die Übersetzung wird mit einer lokalen HTTP-Testantwort auf Anfrageformat, Zielsprachenübergabe und Ausgabe geprüft; ein produktiver Übersetzungsdienst wurde nicht verbunden.
 
 ## Die bisherigen 44 Werkzeuge
 
@@ -62,12 +87,12 @@ Der private GitHub-Branch `checkpoint-44-tools` enthält den vor diesen Erweiter
 
 Node.js 22.13 oder neuer und pnpm verwenden. Nach `pnpm install` einmal `node scripts/prepare-pdf-assets.mjs` ausführen. Das Skript kopiert PDF-Worker, Schriftressourcen, OCR-Worker und Sprachdaten aus den gesperrten npm-Abhängigkeiten nach `public/vendor`. Der Build wiederholt diesen Schritt. Im verwalteten Sites-Umfeld die vorgesehenen Setup-, Vorschau- und Build-Hilfen benutzen.
 
-- `pnpm test`: alle neun Browser-Testsuiten
+- `pnpm test`: alle zehn Browser-Testsuiten
 - `pnpm test:advanced`: zusätzliche Dateiformate, Suchschwärzung, echte Anhangsbereinigung, Linkkoordinaten, Workflows, Codes und Kameraperspektive
 - `pnpm test:pdf`: Reihenfolge, Drehungen, Seitenexport, ZIP, Nummerierung, Wasserzeichen und Eingabeprüfung
 - `pnpm test:studio`: echte PDF.js-Exporte und Textextraktion, Schwärzungs-Pixel, Zuschneidegrenzen, Textnotizen, N-up, Papierformate, Leerseiten, Graustufen, Fixieren, Metadaten und Abbruch. Normalisierte Drehungen werden pixelweise mit der Originalvorschau verglichen. Nutzt die optionale Node-Canvas-Abhängigkeit von PDF.js.
 - `pnpm test:check`: Textindex, Scan- und Leerseitenhinweise, Vorschau-Duplikate, gemischte Papierformate, Suche mit mehreren Begriffen, PDF aus Fundstellen und Abbruch
-- `pnpm test:tools`: alle 62 Werkzeugnamen, 56 natürliche Suchanfragen, Konvertierungsrichtung, Teilbegriffe und unbekannte Vorhaben
+- `pnpm test:tools`: alle 76 Werkzeugnamen, 71 natürliche Suchanfragen, Konvertierungsrichtung, Teilbegriffe und unbekannte Vorhaben
 - `pnpm test:editor`: Text entfernen/ersetzen, Bildplatzierung, Schriftvarianten, gedrehte und zugeschnittene Seiten
 - `pnpm test:extra`: zusätzliche Seitenwerkzeuge, Scanfilter, Anhänge, Metadaten und PDF-Vergleich
 - `pnpm test:documents`: Formularwerte und Felder, Lesezeichen, Bilderextraktion und Erhalt bestehender Dokumentfunktionen
