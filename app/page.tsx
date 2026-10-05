@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { UploadEntry, type ImportState } from '@/components/studio/upload-entry';
+import { LegalFooter } from '@/components/studio/legal-footer';
 import {DocumentWorkbench} from '@/components/studio/document-workbench';
 import {PasswordPrompt,type PasswordRequest} from '@/components/studio/password-prompt';
 import {SecurityWorkbench} from '@/components/studio/security-workbench';
@@ -41,7 +42,7 @@ import { runStudioJob, visualTools, emptyEdits, countEdits, makeBlankFile, norma
 
 const defaults:StudioOptions={...extraDefaults,language:'deu',forceOcr:false,imageFormat:'png',quality:'balanced',watermark:'ENTWURF',numberStart:1,pageSize:'a4',orientation:'portrait',perSheet:'2'};
 type Snapshot={pages:PageItem[];edits:Edits};
-export default function Home(){return <SidebarProvider className="studio-provider" style={{'--sidebar-width':'252px'} as CSSProperties}><Studio/></SidebarProvider>;}
+export default function Home(){return <div className="moinpdf-shell"><SidebarProvider className="studio-provider" style={{'--sidebar-width':'252px'} as CSSProperties}><Studio/></SidebarProvider><LegalFooter/></div>;}
 function Studio(){
  const {setOpenMobile}=useSidebar();
  const [sources,setSources]=useState<Source[]>([]),[pages,setPages]=useState<PageItem[]>([]),[edits,setEdits]=useState<Edits>(emptyEdits),[toolId,setToolId]=useState<WorkspaceTool>('inspect'),[options,setOptions]=useState<StudioOptions>(defaults);

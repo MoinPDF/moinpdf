@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,follow">
+  <meta name="description" content="Datenschutzhinweise zu MoinPDF: lokale Dokumentbearbeitung, Dokumentenserver, Übersetzungen und Browser-Speicher.">
+  <meta name="theme-color" content="#176c64">
+  <title>Datenschutzerklärung · MoinPDF</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/legal/legal.css">
+</head>
+<body>
+  <a class="legal-skip" href="#inhalt">Zum Inhalt</a>
+  <header class="legal-header">
+    <a class="legal-brand" href="/" aria-label="MoinPDF Startseite"><img src="/branding/moinpdf-logo.svg" width="680" height="225" alt="MoinPDF. Papierkram. Läuft."></a>
+    <a class="legal-back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Zur App</a>
+  </header>
+  <main class="legal-main">
+    <nav class="legal-nav" aria-label="Rechtliche Informationen"><a href="/impressum.html">Impressum</a><a href="/datenschutz.html" aria-current="page">Datenschutzerklärung</a></nav>
+    <article class="legal-card" id="inhalt">
+      <div class="legal-meta"><span>Datenschutz &amp; Verarbeitung</span><time datetime="2026-10-05">Stand: 5. Oktober 2026</time></div>
+      <h1>Datenschutz&shy;erklärung</h1>
+      <p class="legal-intro">Viele Werkzeuge arbeiten direkt auf deinem Gerät. Bei Serverwerkzeugen entscheidest du ausdrücklich, welche Dateien übertragen werden.</p>
+      <p class="legal-draft"><strong>Arbeitsstand für die Veröffentlichung:</strong> Diese Hinweise beschreiben die vorhandenen Funktionen. Angaben zum endgültigen Hosting, vorgeschalteten Diensten, deren Speicherfristen und dem E-Mail-Anbieter sind noch zu ergänzen. Die Erklärung ist insoweit noch nicht abschließend.</p>
+
+      <section id="verantwortlicher">
+        <h2>1. Verantwortlicher und Kontakt</h2>
+        <address><strong>Denny Wenke</strong><br>Am Eichenhof 13<br>28832 Achim<br>Deutschland</address>
+        <p>E-Mail für Datenschutzanfragen: <a href="mailto:denny@wenke.email">denny@wenke.email</a></p>
+        <p>Diese Anbieterangaben gelten für das von Denny Wenke betriebene Angebot. Bei einer unabhängig betriebenen Installation ist deren Betreiber für seine Verarbeitung verantwortlich und muss die Angaben entsprechend anpassen.</p>
+      </section>
+
+      <section id="lokale-verarbeitung">
+        <h2>2. Dokumente und lokale Bearbeitung</h2>
+        <p>Wenn du Dateien auswählst oder auf die Startseite ziehst, liest MoinPDF sie zunächst in deinem Browser ein. Verarbeitet werden die von dir ausgewählten Dokumentinhalte, Dateinamen, Metadaten sowie deine Bearbeitungseingaben. Dazu können personenbezogene und vertrauliche Angaben gehören.</p>
+        <p>Browserwerkzeuge wie Zusammenfügen, Teilen, Drehen, Texterkennung, Bildbearbeitung und das Erzeugen von Exportdateien arbeiten auf deinem Gerät. Diese Funktionen laden deine Dokumente nicht auf einen Dokumentenserver oder zu einem KI-Dienst hoch. Die benötigten Programmbibliotheken, Schriften und OCR-Sprachdateien werden zusammen mit MoinPDF bereitgestellt.</p>
+        <p>Geöffnete Dateien, Vorschauen, Bearbeitungsschritte und Ergebnisse liegen während der Sitzung im Arbeitsspeicher. Die App führt keine dauerhafte Dokumentablage in Cookies, localStorage oder IndexedDB. Beim Neuladen oder Schließen endet die Arbeitssitzung; Originaldateien und bereits heruntergeladene Ergebnisse auf deinem Gerät bleiben erhalten. Bewusst gespeicherte Arbeitsabläufe sind in Abschnitt 5 beschrieben.</p>
+        <p>Die Auswahl von Dokumenten und die Nutzung der Werkzeuge sind freiwillig. Ohne eine passende Datei kann das betreffende Werkzeug nicht arbeiten. Wenn du Unterlagen anderer Personen verwendest, musst du zur Verarbeitung berechtigt sein und die dafür erforderliche Rechtsgrundlage sicherstellen.</p>
+      </section>
+
+      <section id="dokumentenserver">
+        <h2>3. Dokumentenserver und Übersetzungen</h2>
+        <p>Bestimmte Werkzeuge benötigen einen Dokumentenserver, zum Beispiel Office-Konvertierungen, PDF/A, vollständige Rechnungsprüfungen und Zertifikatssignaturen. In der vollständigen Docker-Installation ist dieser Server integriert. In der separat gehosteten Web-App kann ein eigener Server verbunden werden. Die Prüfung der Verbindung übermittelt keine Dokumentdateien.</p>
+        <p>Erst wenn du die Übertragung für den jeweiligen Auftrag freigibst und die Verarbeitung startest, sendet die App die ausgewählte Datei und die benötigten Einstellungen an diesen Server. Je nach Werkzeug gehören auch Rechnungs-XML, E-Mail-Anlagen, Word-Vorlagen oder Excel-Tabellen dazu. Beim Signieren werden das ausgewählte Zertifikat einschließlich des enthaltenen privaten Schlüssels und das eingegebene Zertifikatspasswort für den Signaturauftrag übermittelt.</p>
+        <p>Für PDF-Übersetzungen gibt der Dokumentenserver den ausgelesenen Text an den konfigurierten Übersetzungsdienst weiter. Die vollständige Docker-Installation verwendet dafür ihren eigenen LibreTranslate-Dienst im internen Netzwerk. Bei einer separat konfigurierten Installation wird der verwendete Übersetzungsdienst in der Werkzeugansicht angezeigt.</p>
+        <p>Der mitgelieferte Server verwendet auftragsbezogene temporäre Arbeitsverzeichnisse und entfernt sie nach Ende der Verarbeitung auch bei regulär behandelten Fehlern. Er führt keine dauerhafte Dokumentablage. Die Docker-Volumes enthalten Betriebsdaten wie Sprachmodelle und interne Schlüssel, keine vorgesehenen Dokumentarchive. Das Abbrechen des Wartens im Browser beendet einen bereits gestarteten Serverauftrag nicht zwingend sofort.</p>
+        <p>Die technische Verarbeitung dient ausschließlich dem von dir gestarteten Auftrag. Soweit hierfür eigene personenbezogene Nutzerdaten zur Erbringung des angeforderten Dienstes erforderlich sind, ist Art. 6 Abs. 1 lit. b DSGVO die Rechtsgrundlage. Bei Dokumenten anderer Personen richten sich die Rollen und Rechtsgrundlagen nach dem jeweiligen Einsatz; eine Freigabe in der Oberfläche ersetzt weder deren Rechtsgrundlage noch eine gegebenenfalls erforderliche Vereinbarung zur Auftragsverarbeitung.</p>
+        <p>Für unabhängig betriebene Dokumenten- oder Übersetzungsserver gelten zusätzlich die Informationen ihrer Betreiber. Deren tatsächliche Speicherung und Weitergabe kann diese Web-App nicht kontrollieren.</p>
+      </section>
+
+      <section id="hosting">
+        <h2>4. Website-Aufruf, Hosting und Anmeldung</h2>
+        <p>Beim Aufruf der Website werden technisch notwendige Verbindungsdaten verarbeitet, insbesondere IP-Adresse, Zeitpunkt, angeforderte Adresse und technische Browserinformationen. Das ist von den lokal geöffneten Dokumenten zu unterscheiden. Zweck ist die Auslieferung der App, die Fehlerbehebung und der Schutz vor Missbrauch. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO; das berechtigte Interesse besteht in einem sicheren und funktionsfähigen Betrieb.</p>
+        <h3>Eigene Docker-Installation</h3>
+        <p>Die Web-App und ihre Dokumentendienste laufen auf dem vom Betreiber gewählten Server. Im mitgelieferten Dokumentenserver sind HTTP-Zugriffsprotokolle deaktiviert; der mitgelieferte Web-Proxy aktiviert kein eigenes HTTP-Zugriffsprotokoll. Technische Betriebs- und Fehlermeldungen können dennoch entstehen. Vorgeschaltete Dienste, etwa ein zusätzlicher Reverse Proxy oder Tunnel, können weitere Verbindungsdaten verarbeiten.</p>
+        <p>Bei aktiviertem Passwortschutz wird die Anmeldung vom Webserver geprüft. Der Browser kann die Zugangsdaten für die Sitzung vorhalten. Dokumentenaufträge werden nicht öffentlich als Archiv bereitgestellt.</p>
+        <h3>Bereitstellung über ChatGPT</h3>
+        <p>Die aus ChatGPT verlinkte Fassung wird über die Sites-Plattform von OpenAI bereitgestellt. Dabei können Plattform-, Anmelde- und Infrastrukturverarbeitung sowie hierfür erforderliche Cookies hinzukommen. Weitere Informationen zur Verarbeitung durch OpenAI stehen in dessen <a href="https://openai.com/policies/eu-privacy-policy/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung</a>. Die lokale Dokumentbearbeitung übermittelt ihre Dateien nicht allein aufgrund dieses Hostings an einen KI-Dienst.</p>
+        <p>Die konkret eingesetzten Hosting- und Infrastrukturpartner, Aufbewahrungsfristen und gegebenenfalls Übermittlungen außerhalb der EU bzw. des EWR müssen für den endgültigen öffentlichen Zugang noch festgehalten werden. Eine bestimmte Speicherfrist oder ausschließliche Verarbeitung in der EU wird hier daher nicht zugesagt.</p>
+      </section>
+
+      <section id="browser-speicher">
+        <h2>5. Browser-Speicher, Cookies und Analyse</h2>
+        <p>MoinPDF enthält keine eingebauten Werbe- oder Analyse-Tracker. Die Oberfläche benötigt keine dauerhaften eigenen Cookies. Technisch notwendige Cookies eines vorgeschalteten Anmelde- oder Hostingdienstes sind davon zu unterscheiden.</p>
+        <dl class="legal-storage">
+          <div><dt>Gespeicherte Arbeitsabläufe</dt><dd>Wenn du ausdrücklich „Ablauf speichern“ auswählst, speichert der Browser den Namen, die Arbeitsschritte und deren Einstellungen im localStorage unter „moinpdf.workflows.v1“. Dazu können selbst eingegebene Stempel- oder Wasserzeichentexte gehören. Dokumentdateien und Öffnungspasswörter werden nicht mitgespeichert. Die Einträge bleiben bis zum Entfernen des Ablaufs oder Löschen der Website-Daten erhalten.</dd></div>
+          <div><dt>Eigene Serveradresse</dt><dd>In der Betriebsart mit manuell verbundenem Dokumentenserver wird die bestätigte Serveradresse im localStorage unter „moinpdf.document-server“ gespeichert. Sie bleibt bis zum Überschreiben oder Löschen der Website-Daten erhalten. Der eingegebene API-Schlüssel und Zertifikatspasswörter bleiben im Arbeitsspeicher der Sitzung. Die integrierte Docker-Verbindung benötigt keinen solchen manuellen Eintrag.</dd></div>
+          <div><dt>Programm- und Sprachdateien</dt><dd>Der Browser kann Programmdateien im Cache und OCR-Sprachmodelle zusätzlich in IndexedDB zwischenspeichern. Dadurch müssen sie nicht bei jeder Texterkennung erneut geladen werden. Diese Zwischenspeicher enthalten keine von der App dort abgelegten Dokumentdateien. Sie können über die Browser-Einstellungen zu den Website-Daten gelöscht werden.</dd></div>
+        </dl>
+        <p>Diese Speicherzugriffe dienen den ausdrücklich gewünschten Funktionen. Soweit sie dafür unbedingt erforderlich sind, ist § 25 Abs. 2 Nr. 2 TDDDG maßgeblich. Personenbezogene Einstellungen werden zur Bereitstellung der angeforderten Funktion auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO verarbeitet. Nicht erforderliche Analyse- oder Werbezugriffe werden durch MoinPDF nicht ausgelöst.</p>
+      </section>
+
+      <section id="kamera-assistent">
+        <h2>6. Fotoauswahl und optionaler Browser-Assistent</h2>
+        <p>Der Kamera-Scanner verwendet die Foto- bzw. Dateiauswahl deines Geräts. Ein unterstützter Browser kann dabei die Kamera anbieten. Die ausgewählten Bilder werden zunächst lokal bearbeitet; die App startet keinen dauerhaften Kamera-Stream. Betriebssystem und Browser steuern die dafür notwendigen Berechtigungen.</p>
+        <p>Wenn du einen kompatiblen Browser-Assistenten verwendest, kann er über die bereitgestellte Schnittstelle Dateinamen, Seitenzahlen, ausgewählte Seiten, die Anzahl der Bearbeitungen und den Verarbeitungsstatus abfragen sowie Werkzeug und Seitenbereich auswählen. Diese Schnittstelle liefert keine Dokumentinhalte. Was ein von dir verwendeter Assistent darüber hinaus im Browser wahrnehmen oder verarbeiten kann, richtet sich nach dessen Berechtigungen, Anbieter und Einstellungen.</p>
+      </section>
+
+      <section id="kontakt">
+        <h2>7. Kontaktaufnahme</h2>
+        <p>Wenn du an <a href="mailto:denny@wenke.email">denny@wenke.email</a> schreibst, werden deine Absenderadresse, Nachricht und freiwillig mitgeteilten Angaben zur Bearbeitung des Anliegens verwendet. Bei vertraglichen oder vorvertraglichen Anfragen ist Art. 6 Abs. 1 lit. b DSGVO die Rechtsgrundlage, bei sonstigen Anfragen Art. 6 Abs. 1 lit. f DSGVO mit dem Interesse, dein Anliegen zu beantworten.</p>
+        <p>Nachrichten werden nur so lange benötigt, wie die Bearbeitung, Nachvollziehbarkeit des Anliegens oder gesetzliche Aufbewahrungspflichten es erfordern. Angaben zum tatsächlich eingesetzten E-Mail-Dienst, seinen Empfängern, Speicherfristen und möglichen Drittlandübermittlungen sind für die endgültige Fassung noch zu ergänzen. Bitte sende für technische Rückfragen möglichst anonymisierte Beispiele.</p>
+      </section>
+
+      <section id="rechte">
+        <h2>8. Deine Rechte</h2>
+        <p>Im gesetzlichen Umfang hast du Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Datenübertragbarkeit. Eine erteilte Einwilligung kannst du jederzeit für die Zukunft widerrufen; die Rechtmäßigkeit der vorherigen Verarbeitung bleibt davon unberührt.</p>
+        <p><strong>Widerspruch:</strong> Gegen eine Verarbeitung auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO kannst du aus Gründen deiner besonderen Situation Widerspruch einlegen. Wende dich dafür an die oben genannte Kontaktadresse.</p>
+        <p>Du kannst dich bei einer Datenschutzaufsichtsbehörde beschweren, insbesondere an deinem Aufenthaltsort, Arbeitsplatz oder am Ort eines vermuteten Verstoßes. Für den Betreiber in Niedersachsen ist der <a href="https://www.lfd.niedersachsen.de/startseite/wir_uber_uns/kontakt_und_anfahrt/kontakt-und-anreise-56182.html" target="_blank" rel="noopener noreferrer">Landesbeauftragte für den Datenschutz Niedersachsen</a> eine Anlaufstelle.</p>
+        <p>MoinPDF trifft keine automatisierten Entscheidungen mit rechtlicher oder ähnlich erheblicher Wirkung und erstellt keine Nutzerprofile. Technische Dokumentprüfungen und Übersetzungen sind Werkzeugergebnisse und ersetzen keine eigene Prüfung.</p>
+      </section>
+
+      <section class="legal-sources">
+        <h2>Gesetzliche Grundlagen</h2>
+        <p><a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj/deu" target="_blank" rel="noopener noreferrer">Datenschutz-Grundverordnung</a> · <a href="https://www.gesetze-im-internet.de/ttdsg/__25.html" target="_blank" rel="noopener noreferrer">§ 25 TDDDG</a></p>
+      </section>
+    </article>
+    <footer class="legal-footer"><span>© 2026 Denny Wenke</span><nav class="legal-nav" aria-label="Weitere rechtliche Informationen"><a href="/impressum.html">Impressum</a><a href="/datenschutz.html" aria-current="page">Datenschutzerklärung</a></nav></footer>
+  </main>
+</body>
+</html>

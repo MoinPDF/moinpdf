@@ -1,0 +1,74 @@
+/* Manrope is served locally; font license: /branding/LICENSES.txt. */
+@font-face {
+  font-family:'Manrope';
+  font-style:normal;
+  font-weight:200 800;
+  font-display:swap;
+  src:url('./manrope-latin-variable.woff2') format('woff2');
+}
+
+:root { color-scheme:light; --ink:#263c33; --muted:#60786c; --teal:#176c64; --line:#e2ebe4; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:#f8faf7; color:var(--ink); font:400 16px/1.8 Manrope,Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:var(--teal); text-underline-offset:4px; }
+a:hover { color:#118978; }
+a:focus-visible { outline:2px solid var(--teal); outline-offset:5px; border-radius:3px; }
+::selection { background:#e3f0d7; }
+.legal-skip { position:absolute; left:20px; top:-100px; z-index:1; padding:10px 16px; background:white; }
+.legal-skip:focus { top:12px; }
+.legal-header { display:flex; align-items:center; justify-content:space-between; gap:24px; width:min(100% - 48px,960px); margin:30px auto 24px; }
+.legal-brand { display:block; flex-shrink:0; }
+.legal-brand img { display:block; width:205px; height:auto; }
+.legal-back { display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border:1px solid var(--line); border-radius:12px; background:white; color:var(--teal); font-size:13px; text-decoration:none; white-space:nowrap; }
+.legal-back svg { width:16px; height:16px; }
+.legal-main { width:min(100% - 48px,880px); margin:0 auto; }
+.legal-nav { display:flex; align-items:center; flex-wrap:wrap; gap:8px 24px; font-size:13px; }
+.legal-nav a { color:var(--muted); text-decoration:none; padding:7px 0; font-weight:400; }
+.legal-nav a:hover { color:var(--teal); text-decoration:underline; }
+.legal-nav a[aria-current=page] { color:var(--teal); text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:7px; }
+.legal-main>.legal-nav { margin:0 6px 20px; }
+.legal-card { padding:clamp(24px,5vw,48px); background:white; border:1px solid var(--line); border-radius:22px; overflow-wrap:anywhere; }
+.legal-meta { display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; margin:0 0 16px; color:var(--muted); font-size:11px; letter-spacing:1.1px; text-transform:uppercase; }
+.legal-meta time { letter-spacing:0; text-transform:none; font-size:12px; }
+h1 { margin:0; color:#1d493f; font-size:clamp(1.8rem,4.5vw,2.5rem); line-height:1.25; font-weight:650; letter-spacing:-1px; }
+.legal-intro { margin:15px 0 0; color:var(--muted); }
+.legal-draft { margin:20px 0 0; padding-left:14px; border-left:2px solid #9fcab6; color:#5e756b; font-size:13px; line-height:1.75; }
+section { margin-top:32px; }
+section+section { padding-top:28px; border-top:1px solid var(--line); }
+h2 { margin:0 0 12px; font-size:18px; font-weight:650; line-height:1.5; letter-spacing:-.2px; }
+h3 { margin:20px 0 8px; font-size:15px; font-weight:650; }
+p { margin:0 0 14px; }
+p:last-child { margin-bottom:0; }
+address { font-style:normal; line-height:1.9; }
+strong { font-weight:650; }
+ul { padding-left:22px; margin:0 0 16px; }
+li+li { margin-top:8px; }
+.legal-storage { margin:0; }
+.legal-storage>div { padding:14px 0; border-bottom:1px solid var(--line); }
+.legal-storage>div:last-child { border:0; }
+.legal-storage dt { font-weight:600; }
+.legal-storage dd { margin:4px 0 0; color:#4e665a; }
+.legal-sources { font-size:13px; }
+.legal-sources h2 { font-size:15px; }
+.legal-footer { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px 20px; padding:24px 5px 32px; color:var(--muted); font-size:11px; }
+.legal-footer .legal-nav { font-size:12px; gap:8px 20px; }
+@media(max-width:560px) {
+  .legal-header { width:calc(100% - 36px); gap:14px; margin:22px auto; }
+  .legal-brand img { width:166px; }
+  .legal-back { gap:5px; padding:8px 10px; font-size:12px; }
+  .legal-main { width:calc(100% - 28px); }
+  .legal-card { padding:25px 22px; border-radius:17px; font-size:15px; }
+  .legal-main>.legal-nav { gap:8px 20px; margin-left:8px; }
+  .legal-meta { flex-direction:column; gap:6px; }
+  .legal-footer { padding-left:8px; padding-right:8px; }
+}
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+@media print {
+  body { background:white; color:black; font-size:11pt; }
+  .legal-header,.legal-nav,.legal-footer,.legal-skip { display:none; }
+  .legal-main { width:100%; }
+  .legal-card { border:0; padding:0; }
+  a { color:inherit; }
+  h1,h2,h3 { break-after:avoid; }
+}

@@ -71,6 +71,14 @@ docker compose -f compose.yaml -f compose.https.yaml up -d --build
 
 Danach `https://DEINE-DOMAIN` öffnen. Für nachfolgende Compose-Befehle dieselben beiden `-f`-Argumente verwenden. Zertifikate bleiben im Volume `caddy_data` gespeichert.
 
+## Impressum und Datenschutz
+
+Impressum und Datenschutzerklärung sind als kleine Links am unteren Rand jeder Werkzeugansicht erreichbar. Sie öffnen einen neuen Tab, damit die aktuelle Dokumentensitzung erhalten bleibt. Beide Seiten werden zusammen mit der App ausgeliefert und benötigen keine extern geladenen Schriften oder Skripte.
+
+Die Anbieterangaben in `public/impressum.html` und `public/datenschutz.html` beziehen sich auf Denny Wenkes Angebot. Betreiber einer eigenen unabhängigen Instanz müssen sie vor der Veröffentlichung anpassen. Die Datenschutzerklärung unterscheidet lokale Bearbeitung, Dokumentenaufträge und Übersetzungen sowie die tatsächlich verwendeten Browser-Speicher. Sie ist als Arbeitsstand gekennzeichnet: Zum endgültigen öffentlichen Betrieb fehlen noch die konkreten Hosting-/Proxy-/Tunnelanbieter, deren Speicherfristen sowie der E-Mail-Anbieter und mögliche Drittlandübermittlungen. Diese Angaben müssen dem tatsächlichen Betrieb entsprechen; ein erfolgreicher technischer Build ist keine rechtliche Freigabe.
+
+Gestaltung: `public/legal/legal.css`; Links in der App: `components/studio/legal-footer.tsx`. Nach Änderungen die Web-App mit `docker compose up -d --build` neu bauen.
+
 ## Updates, Neustart und Daten
 
 ```bash
