@@ -13,7 +13,6 @@ on:
 permissions:
   contents: read
   actions: read
-  packages: read
 
 jobs:
   umbrel:
@@ -53,12 +52,9 @@ jobs:
           docker run -d --name moinpdf-umbrel-test --privileged --network host \
             --cgroupns host --tmpfs /run --tmpfs /run/lock \
             --volume /sys/fs/cgroup:/sys/fs/cgroup:rw \
-            --volume moinpdf-umbrel-test:/data \
+            --volume moinpdf-umbrel-test:/home/umbrel/umbrel \
             ghcr.io/getumbrel/umbrelos:2.0.0 /sbin/init
       - name: Install through Umbrel
-        env:
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ github.actor }}
         run: bash tests/umbrel-install.sh
       - name: Browser, protected app route, real translation and restart persistence
         run: python tests/umbrel-smoke.py
@@ -74,6 +70,7 @@ jobs:
         if: failure()
         run: |
           docker logs --tail 100 moinpdf-umbrel-test || true
+          docker exec moinpdf-umbrel-test journalctl -u umbrel --no-pager -n 100 || true
           docker exec moinpdf-umbrel-test docker ps -a || true
           docker exec moinpdf-umbrel-test docker logs --tail 80 denny-moinpdf_web_1 || true
           docker exec moinpdf-umbrel-test docker logs --tail 80 denny-moinpdf_translation-models_1 || true

@@ -10,24 +10,26 @@ for attempt in $(seq 1 120); do
     fi
     sleep 5
 done
-test "$ready" = true
+if [ "$ready" != true ]; then
+    echo 'Umbrel did not become ready within 10 minutes.' >&2
+    exit 1
+fi
 docker exec "$test_container" umbreld client user.register.mutate \
     --name MoinPDF-CI --password synthetic-umbrel-ci-password >/dev/null
 
-# The registry packages may still be private before their initial public
-# release. Authenticate only this disposable daemon; never include credentials
-# in the app package, its data directories, logs, or test evidence.
-printf '%s' "$GHCR_TOKEN" | docker exec -i "$test_container" \
-    docker login ghcr.io --username "$GHCR_USER" --password-stdin >/dev/null
-unset GHCR_TOKEN
-
+# Use the data directory from the pinned Umbrel OS systemd service. Pull all
+# MoinPDF images anonymously, exactly as an end-user's Umbrel installation does.
 store_dir=""
 for attempt in $(seq 1 60); do
-    store_dir="$(docker exec "$test_container" sh -c 'find /data/app-stores -maxdepth 1 -type d -name "getumbrel-umbrel-apps-*" -print -quit' 2>/dev/null || true)"
+    store_dir="$(docker exec "$test_container" sh -c 'find /home/umbrel/umbrel/app-stores -maxdepth 1 -type d -name "getumbrel-umbrel-apps-*" -print -quit' 2>/dev/null || true)"
     if [ -n "$store_dir" ]; then break; fi
     sleep 5
 done
-test -n "$store_dir"
+if [ -z "$store_dir" ]; then
+    echo 'The official Umbrel app-store clone was not ready within 5 minutes.' >&2
+    exit 1
+fi
+echo 'Umbrel app store is ready; installing the published package.'
 docker cp deploy/umbrel/denny-moinpdf "$test_container:$store_dir/denny-moinpdf"
 docker exec "$test_container" find "$store_dir/denny-moinpdf" -name .gitkeep -delete
 docker exec "$test_container" chown -R 1000:1000 "$store_dir/denny-moinpdf"
