@@ -22,7 +22,8 @@
     "test:security": "node tests/security-invoice-smoke.mjs",
     "test:advanced": "node tests/advanced-tools-smoke.mjs",
     "test": "node tests/run-all.mjs",
-    "build:selfhost": "node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts"
+    "build:selfhost": "node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts",
+    "typecheck:selfhost": "tsc --project tsconfig.selfhost.json --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

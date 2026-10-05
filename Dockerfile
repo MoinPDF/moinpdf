@@ -8,10 +8,13 @@ RUN npm install --global pnpm@11.25.0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm run build:selfhost
+RUN pnpm run typecheck:selfhost && pnpm run build:selfhost
 
 FROM caddy:2.10.2-alpine
-RUN mkdir -p /data /config /srv && chown -R 10001:10001 /data /config /srv
+# We use unprivileged container ports. Remove the upstream binary's file
+# capability so it can execute with cap_drop: ALL and no-new-privileges.
+RUN setcap -r /usr/bin/caddy \
+    && mkdir -p /data /config /srv && chown -R 10001:10001 /data /config /srv
 COPY --from=build /app/dist/selfhost /srv
 COPY docker/Caddyfile /etc/caddy/Caddyfile
 COPY --chmod=755 docker/start-web.sh /usr/local/bin/start-web

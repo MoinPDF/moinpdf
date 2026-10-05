@@ -28,7 +28,6 @@ jobs:
         run: |
           docker build --target build -t moinpdf-browser-tests .
           docker run --rm moinpdf-browser-tests pnpm test
-          docker run --rm moinpdf-browser-tests node node_modules/typescript/bin/tsc --noEmit
       - name: Native document converters and key-file authentication
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
