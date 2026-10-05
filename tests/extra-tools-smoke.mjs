@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import {dirname} from 'node:path';
+import ts from 'typescript';
+import JSZip from 'jszip';
+import {PDFDocument,PDFName,PDFDict,StandardFonts,rgb} from 'pdf-lib';
+const require=createRequire(import.meta.url),pdfRequire=createRequire(require.resolve('pdfjs-dist/package.json'));
+const {createCanvas,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
+Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
+const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
+await mkdir('.sites-runtime',{recursive:true});
+for(const name of ['pdf-engine','studio-engine','extra-options','extra-tools','pdf-report','editor-model']){
+ const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-extra-test.mjs${q}`);
+ await writeFile(`.sites-runtime/${name}-extra-test.mjs`,code);
+}
+const {runStudioJob,emptyEdits}=await import('../.sites-runtime/studio-engine-extra-test.mjs');
+const {extraDefaults}=await import('../.sites-runtime/extra-options-extra-test.mjs');
+const {rasterTransform,splitGroups,safeAttachmentName}=await import('../.sites-runtime/extra-tools-extra-test.mjs');
+const {renderPage}=await import('../.sites-runtime/pdf-engine-extra-test.mjs');
+const proxies=[];
+async function source(bytes,name){const data=new Uint8Array(bytes),pdf=await pdfjs.getDocument({data:data.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);return{id:name,name,bytes:data,pdf,size:data.length,kind:'pdf'};}
+const items=s=>Array.from({length:s.pdf.numPages},(_,index)=>({id:s.id+index,sourceId:s.id,index,rotation:0,selected:true}));
+async function create(name,count){const doc=await PDFDocument.create(),font=await doc.embedFont(StandardFonts.Helvetica);doc.setTitle('Testtitel '+name);doc.setAuthor('Testautor');for(let i=0;i<count;i++){const page=doc.addPage([200,300]);page.drawText(name+'-'+(i+1),{font,size:16,x:20,y:260});page.drawRectangle({x:40,y:60,width:100,height:80,color:rgb(1,0,0)});}return doc;}
+const da=await create('A',8),db=await create('B',3);
+da.getPage(0).node.addAnnot(da.context.register(da.context.obj({Type:'Annot',Subtype:'Text',Rect:[10,10,20,20],Contents:'Note'})));
+da.getPage(0).node.addAnnot(da.context.register(da.context.obj({Type:'Annot',Subtype:'Link',Rect:[25,10,35,20]})));
+await da.attach(new TextEncoder().encode('<invoice>TEST</invoice>'),'../factur-x.xml',{mimeType:'application/xml'});
+const a=await source(await da.save(),'Mehr-Werkzeuge-Test-A.pdf'),b=await source(await db.save(),'Mehr-Werkzeuge-Test-B.pdf'),ap=items(a),bp=items(b);
+await writeFile('.sites-runtime/Mehr-Werkzeuge-Test-A.pdf',a.bytes);await writeFile('.sites-runtime/Mehr-Werkzeuge-Test-B.pdf',b.bytes);
+const defaults={...extraDefaults,language:'deu',forceOcr:false,imageFormat:'png',quality:'balanced',watermark:'TEST',numberStart:1,pageSize:'a4',orientation:'portrait',perSheet:'2'};
+const execute=(tool,pages=ap,options={},sources=[a,b],edits=emptyEdits(),signal=new AbortController().signal)=>runStudioJob(tool,sources,pages,{...defaults,...options},edits,()=>{},signal);
+const from=async result=>source(await result.blob.arrayBuffer(),result.filename);
+async function text(src,page=0){return(await(await src.pdf.getPage(page+1)).getTextContent()).items.filter(i=>'str'in i).map(i=>i.str).join(' ');}
+const pageOrder=async src=>Promise.all(Array.from({length:src.pdf.numPages},(_,i)=>text(src,i)));
+try{
+ const split=await execute('split-ranges',ap.slice(0,4),{splitMode:'ranges',splitRanges:'1-2; 4'}),zip=await JSZip.loadAsync(await split.blob.arrayBuffer()),parts=Object.values(zip.files).filter(f=>!f.dir);
+ assert.equal(parts.length,2);assert.equal((await PDFDocument.load(await parts[0].async('uint8array'))).getPageCount(),2);assert.match(await text(await source(await parts[1].async('uint8array'),'split-part.pdf')),/A-4/);
+ assert.deepEqual(splitGroups(5,{...extraDefaults,splitEvery:2}),[[0,1],[2,3],[4]]);
+ assert.throws(()=>splitGroups(4,{...extraDefaults,splitMode:'ranges',splitRanges:'1-9'}),/zwischen/);assert.throws(()=>splitGroups(4,{...extraDefaults,splitMode:'ranges',splitRanges:'1;'}),/Semikolons/);
+ const inter=await from(await execute('interleave',[...ap,...bp]));assert.deepEqual(await pageOrder(inter),['A-1','B-1','A-2','B-2','A-3','B-3','A-4','A-5','A-6','A-7','A-8']);
+ const rev=await from(await execute('interleave',[...ap.slice(0,3),...bp],{reverseSecond:true}));assert.deepEqual(await pageOrder(rev),['A-1','B-3','A-2','B-2','A-3','B-1']);
+ const booklet=await from(await execute('booklet'));assert.equal(booklet.pdf.numPages,4);assert.deepEqual(await pageOrder(booklet),['A-8 A-1','A-2 A-7','A-6 A-3','A-4 A-5']);
+ const padded=await from(await execute('booklet',ap.slice(0,5)));assert.equal(padded.pdf.numPages,4);assert.deepEqual(await pageOrder(padded),['A-1','A-2','A-3','A-4 A-5']);
+ const grid=await from(await execute('split-grid',[ap[0]],{tileLayout:'2x2'})),gridDoc=await PDFDocument.load(grid.bytes);assert.equal(grid.pdf.numPages,4);assert(gridDoc.getPages().every(p=>p.getWidth()===100&&p.getHeight()===150));
+ const bottomRight=(await renderPage(grid,{...items(grid)[3]},600)).canvas;const tilePixel=bottomRight.getContext('2d').getImageData(bottomRight.width*.2,bottomRight.height*.4,1,1).data;assert.deepEqual([...tilePixel].slice(0,3),[255,0,0],'Grid renders the correct lower-right crop');
+ const cropDoc=await PDFDocument.create(),cropPage=cropDoc.addPage([200,300]);cropPage.drawRectangle({x:40,y:60,width:100,height:80,color:rgb(1,0,0)});cropDoc.addPage([200,300]);const cropSource=await source(await cropDoc.save(),'Crop.pdf');
+ const cropped=await from(await execute('auto-crop',items(cropSource),{cropPadding:0},[cropSource]));const croppedPdf=await PDFDocument.load(cropped.bytes);assert(Math.abs(croppedPdf.getPage(0).getWidth()-100)<.5);assert(Math.abs(croppedPdf.getPage(0).getHeight()-80)<.5);assert.equal(croppedPdf.getPage(1).getWidth(),200);
+ const bw=await from(await execute('bilevel',[ap[0]]));assert.equal(await text(bw),'');const bwCanvas=(await renderPage(bw,items(bw)[0],600)).canvas;assert.deepEqual([...bwCanvas.getContext('2d').getImageData(bwCanvas.width*.5,bwCanvas.height*.65,1,1).data].slice(0,3),[0,0,0]);
+ const sample=createCanvas(2,1),ctx=sample.getContext('2d');ctx.fillStyle='#777777';ctx.fillRect(0,0,1,1);ctx.fillStyle='#cccccc';ctx.fillRect(1,0,1,1);rasterTransform('bilevel',defaults)(sample,2,1);assert.deepEqual([...ctx.getImageData(0,0,2,1).data],[0,0,0,255,255,255,255,255]);
+ const inverted=await from(await execute('invert',[ap[0]]));const inv=(await renderPage(inverted,items(inverted)[0],600)).canvas;assert.deepEqual([...inv.getContext('2d').getImageData(inv.width*.5,inv.height*.65,1,1).data].slice(0,3),[0,255,255]);
+ const stamp=await from(await execute('stamp',[ap[0]],{stampDate:'2026-10-05'}));assert.match(await text(stamp),/A-1/);assert.match(await text(stamp),/GEPRÜFT/);assert.match(await text(stamp),/05.10.2026/);
+ await assert.rejects(()=>execute('stamp',[ap[0]],{stampText:''}),/Stempeltext/);
+ const meta=await execute('edit-metadata',[ap[0]],{metaTitle:'Neuer Titel',metaAuthor:'Denny',metaSubject:'Test',metaKeywords:'eins, zwei'}),metaPdf=await PDFDocument.load(await meta.blob.arrayBuffer());assert.equal(metaPdf.getTitle(),'Neuer Titel');assert.equal(metaPdf.getAuthor(),'Denny');assert.equal(metaPdf.getSubject(),'Test');assert.equal(metaPdf.getKeywords(),'eins zwei');
+ const comments=await execute('remove-annotations',[ap[0]]),clean=await PDFDocument.load(await comments.blob.arrayBuffer()),annots=clean.getPage(0).node.Annots();assert.equal(annots.size(),1);assert(!clean.context.enumerateIndirectObjects().some(([,o])=>o instanceof PDFDict&&o.get(PDFName.of('Subtype'))?.toString()==='/Text'),'Removed comment dictionaries must not remain as orphan objects');assert.equal(annots.lookup(0,PDFDict).get(PDFName.of('Subtype')).toString(),'/Link');
+ const allAnnots=await execute('remove-annotations',[ap[0]],{removeLinks:true});assert.equal((await PDFDocument.load(await allAnnots.blob.arrayBuffer())).getPage(0).node.Annots().size(),0);
+ const overlay=await from(await execute('overlay',[...ap.slice(0,2),...bp]));assert.equal(overlay.pdf.numPages,2);assert.match(await text(overlay,0),/A-1.*B-1/);assert.match(await text(overlay,1),/A-2.*B-1/);
+ const behind=await from(await execute('overlay',[ap[0],bp[0]],{overlayLayer:'back'}));assert.match(await text(behind),/B-1.*A-1/);
+ const attachments=await execute('attachments',[ap[0]]),azip=await JSZip.loadAsync(await attachments.blob.arrayBuffer()),afiles=Object.values(azip.files).filter(f=>!f.dir);assert.equal(afiles.length,1);assert(!afiles[0].name.includes('../'));assert.equal(await afiles[0].async('string'),'<invoice>TEST</invoice>');assert(!safeAttachmentName('../../secret.xml').includes('/'));
+ await assert.rejects(()=>execute('attachments',bp,{},[b]),/keine eingebetteten/);
+ const info=await execute('pdf-info',[ap[0]]);assert.equal(info.kind,'report');assert(info.report.sections.some(s=>s.details?.some(d=>d.label==='Titel'&&d.value==='Testtitel A')));assert.match(await info.blob.text(),/Seite 8/);
+ const compare=await execute('compare',[ap[0],bp[0]]);assert.equal(compare.kind,'report');assert.equal(compare.report.stats[0].value,'1');assert(compare.report.sections[0].lines.some(l=>l.kind==='removed'&&l.text==='A-1'));assert(compare.report.sections[0].lines.some(l=>l.kind==='added'&&l.text==='B-1'));
+ const clone=await source(a.bytes,'Kopie.pdf'),same=await execute('compare',[ap[0],items(clone)[0]],{},[a,clone]);assert.equal(same.report.stats[1].value,'1');
+ const scanned=await execute('compare',[items(cropSource)[0],items(cropSource)[1]],{},[cropSource,await source(cropSource.bytes,'Scan-Kopie.pdf')]).catch(e=>e);assert(scanned instanceof Error,'Both chosen files need selected pages');
+ const scanCopy=await source(cropSource.bytes,'Scan-Copy.pdf'),noText=await execute('compare',[items(cropSource)[0],items(scanCopy)[0]],{},[cropSource,scanCopy]);assert.equal(noText.report.stats[2].value,'1');assert.equal(noText.report.stats[1].value,'0','Two scans without text must not be declared equal');
+ await assert.rejects(()=>execute('booklet',ap,{},[a],emptyEdits(),AbortSignal.abort()),/Abgebrochen/);
+ console.log('PASS: all 14 additional tools; split ranges and partial groups; duplex order; booklet padding; grid pixels; white-margin detection; binary/inverted pixels; dated stamps; metadata; annotation/link handling; overlay layers; ZIP attachment content and paths; complete source reports; changed/equal/unreadable text comparison; cancellation.');
+}finally{for(const proxy of proxies)await proxy.loadingTask.destroy();}

@@ -1,0 +1,6 @@
+'use client';
+import {FileSearch} from 'lucide-react';
+import type {PdfReport} from '@/lib/pdf-report';
+export function ReportView({report}:{report:PdfReport}){
+ return <div className="pdf-report"><div className="report-heading"><FileSearch size={24}/><h2>{report.title}</h2></div><p className="report-description">{report.description}</p><div className="report-stats">{report.stats.map(stat=><div key={stat.label}><strong>{stat.value}</strong><span>{stat.label}</span></div>)}</div><div className="report-sections">{report.sections.map((section,index)=><details key={index} open={section.status?section.status!=='Text gleich':index===0}><summary><span>{section.title}</span>{section.status&&<b className={section.status==='Text geändert'?'changed':section.status==='Text gleich'?'same':'incomplete'}>{section.status}</b>}</summary>{section.details&&<dl>{section.details.map((detail,i)=><div key={i}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}</dl>}{section.lines&&<div className="report-lines">{section.lines.map((line,i)=><div key={i} className={`report-line ${line.kind}`}><span aria-label={line.kind==='added'?'Hinzugefügt':line.kind==='removed'?'Entfernt':undefined}>{line.kind==='added'?'+':line.kind==='removed'?'−':line.kind==='note'?'!':''}</span><p>{line.text}</p></div>)}</div>}</details>)}</div></div>;
+}

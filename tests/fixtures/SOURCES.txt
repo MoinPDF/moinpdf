@@ -1,0 +1,5 @@
+Official KoSIT XRechnung test instances, retrieved 2026-10-05.
+Source: https://github.com/itplr-kosit/xrechnung-testsuite
+invoice-ubl.xml: src/test/business-cases/standard/01.01a-INVOICE_ubl.xml
+invoice-cii.xml: src/test/business-cases/standard/01.01a-INVOICE_uncefact.xml
+The fixtures are unchanged; license included in KOSIT-LICENSE.txt.
