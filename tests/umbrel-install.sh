@@ -30,7 +30,10 @@ if [ -z "$store_dir" ]; then
     exit 1
 fi
 echo 'Umbrel app store is ready; installing the published package.'
-docker cp deploy/umbrel/denny-moinpdf "$test_container:$store_dir/denny-moinpdf"
+# Extract in the running OS namespace. Docker's archive/cp endpoint cannot
+# resolve directories under mounts created by Umbrel's systemd services.
+tar -C deploy/umbrel -cf - denny-moinpdf | \
+    docker exec -i "$test_container" tar -xf - -C "$store_dir"
 docker exec "$test_container" find "$store_dir/denny-moinpdf" -name .gitkeep -delete
 docker exec "$test_container" chown -R 1000:1000 "$store_dir/denny-moinpdf"
 docker exec "$test_container" umbreld client appStore.registry.query > /tmp/umbrel-ci-registry.json

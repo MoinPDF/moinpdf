@@ -42,7 +42,7 @@ jobs:
           path.write_text(content)
           PY
       - name: Free disposable runner disk space
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: |
           # This runner is disposable. Free only preinstalled SDKs not used here.
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
