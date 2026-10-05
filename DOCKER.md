@@ -1,5 +1,7 @@
 # Vollständige Installation mit Docker Compose
 
+Für **Umbrel mit der Pages-App und vorhandenem Cloudflare-Tunnel** gibt es die konkrete Schrittfolge in [UMBREL.md](UMBREL.md). Das Pages-Paket enthält die Oberfläche; Dokumentenserver und Übersetzung laufen im Compose-Stack.
+
 Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den Dokumentenserver und LibreTranslate. Alle 76 Werkzeugansichten sind enthalten. Der Browser verbindet sich automatisch mit dem eigenen Dokumentenserver; Serveradressen und API-Schlüssel müssen nicht eingetragen werden. Die dokumentbezogenen Grenzen der einzelnen Werkzeuge gelten auch in Docker.
 
 ## Start
@@ -78,6 +80,8 @@ Impressum und Datenschutzerklärung sind als kleine Links am unteren Rand jeder 
 Die Anbieterangaben in `public/impressum.html` und `public/datenschutz.html` beziehen sich auf Denny Wenkes Angebot: eigener Server mit vorgeschaltetem Cloudflare und Kontaktpostfach bei Tuta (Tutao GmbH). Die Erklärung beschreibt lokale Bearbeitung, Serveraufträge und Übersetzungen, Browser-Speicher sowie die Verarbeitung durch diese Anbieter. Sie weist darauf hin, dass über Cloudflare übertragene Dokumentenaufträge einschließlich ihrer Inhalte dessen Infrastruktur durchlaufen. Betreiber einer unabhängigen Instanz müssen die Angaben an ihre eigene Bereitstellung anpassen.
 
 Vor dem öffentlichen Start die tatsächlichen Cloudflare-Schutzfunktionen, Sicherheits-Cookies, Protokolle und Löschregeln mit der Erklärung abgleichen. Die Standardkonfiguration aktiviert weder HTTP-Zugriffsprotokolle in Caddy noch im Dokumentenserver; Betriebs- und Fehlerprotokolle von Docker, dem Host und Cloudflare sind davon unabhängig. Deren Aufbewahrung begrenzen und dokumentieren. Erforderliche Vereinbarungen zur Auftragsverarbeitung mit den eingesetzten Dienstleistern prüfen; die Datenschutzerklärung ersetzt diese nicht. Falls ein zusätzlicher Rechenzentrums- oder Hostinganbieter eingesetzt wird, diesen ebenfalls berücksichtigen.
+
+Der Compose-Stack verwendet für alle fünf Dienste den Docker-Logtreiber `local` mit höchstens drei Protokolldateien zu jeweils 10 MB. Ältere Dateien werden bei der Rotation entfernt. Das begrenzt den Umfang, ist aber keine Löschung nach einer festen Anzahl von Tagen. Bereits gestartete Container übernehmen diese Änderung beim nächsten `docker compose up -d`; Protokolle von Pages, dem Tunnel und dem Umbrel-Host werden dadurch nicht geändert.
 
 Für Cloudflare den Transport bis zum eigenen Server absichern: bei einem öffentlichen HTTPS-Ursprung mit gültigem Zertifikat den Modus „Full (strict)“ verwenden, bei Cloudflare Tunnel eine entsprechend abgesicherte Verbindung zum lokalen Dienst. Dokumenten-API und Ergebnisse (`/api/documents/*`) nicht durch zusätzliche Cache-Regeln zwischenspeichern; der mitgelieferte Proxy setzt dort `Cache-Control: no-store`. Die App aktiviert keine externen Analyse-Tracker. Zusätzlich im Cloudflare-Konto eingeschaltete Analyse- oder Anmeldedienste müssen gesondert berücksichtigt werden.
 
