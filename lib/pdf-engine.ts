@@ -11,9 +11,11 @@ export type JobResult = { blob: Blob; filename: string; kind: 'pdf' | 'zip' | 'r
 export type ProgressUpdate = { percent: number; label: string };
 type Report = (progress: ProgressUpdate) => void;
 
-let pdfjsPromise: Promise<typeof import('pdfjs-dist')> | undefined;
+let pdfjsPromise: Promise<typeof import('pdfjs-dist/legacy/build/pdf.mjs')> | undefined;
+// Keep the renderer and local worker on PDF.js's polyfilled build. The modern
+// build needs APIs such as Map.getOrInsertComputed that older browsers lack.
 async function getPdfJs() {
-  pdfjsPromise ??= import('pdfjs-dist').then(pdfjs => {
+  pdfjsPromise ??= import('pdfjs-dist/legacy/build/pdf.mjs').then(pdfjs => {
     pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdf/pdf.worker.min.mjs';
     return pdfjs;
   });

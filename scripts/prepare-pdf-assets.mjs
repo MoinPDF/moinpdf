@@ -18,7 +18,7 @@ for (const lang of ['deu','eng']) {
   const dir = path.dirname(require.resolve(`@tesseract.js-data/${lang}/package.json`));
   await copyFile(path.join(dir,'4.0.0',`${lang}.traineddata.gz`),path.join(out,'languages',`${lang}.traineddata.gz`));
 }
-await copyFile(path.join(pdf,'build/pdf.worker.min.mjs'),path.join(out,'pdf/pdf.worker.min.mjs'));
+await copyFile(path.join(pdf,'legacy/build/pdf.worker.min.mjs'),path.join(out,'pdf/pdf.worker.min.mjs'));
 for (const dir of ['cmaps','standard_fonts','wasm']) await cp(path.join(pdf,dir),path.join(out,'pdf',dir),{recursive:true});
 await mkdir(path.join(out, 'licenses'), {recursive:true});
 await mkdir(path.join(out, 'qpdf'), {recursive:true});

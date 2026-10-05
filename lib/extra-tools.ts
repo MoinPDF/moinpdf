@@ -211,7 +211,7 @@ export async function runExtraPdfTool(tool:ExtraTool,doc:PDFDocument,sources:Sou
 
 // Export decoded image objects, independently of the page's drawing scale or clipping.
 export async function extractEmbeddedImages(sources:Source[],pages:PageItem[],notify:Notify,signal:AbortSignal):Promise<JobResult>{
- const {OPS,ImageKind}=await import('pdfjs-dist'),zip=new (await import('jszip')).default();
+ const {OPS,ImageKind}=await import('pdfjs-dist/legacy/build/pdf.mjs'),zip=new (await import('jszip')).default();
  let count=0,bytes=0,pixels=0,masks=0;const seenPages=new Set<string>();
  for(let n=0;n<pages.length;n++){
   check(signal);const item=pages[n],source=sources.find(s=>s.id===item.sourceId)!;
