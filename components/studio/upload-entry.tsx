@@ -1,6 +1,7 @@
 'use client';
 import {useId,type CSSProperties} from 'react';
 import {File,FileText,Plus,Check,LoaderCircle} from 'lucide-react';
+import './upload-entry.css';
 
 export type ImportState={phase:'idle'|'reading'|'done';name:string;completed:number;total:number};
 
@@ -8,7 +9,9 @@ export function UploadEntry({dragOver,loading,state,onOpen,onCamera,onOffice,onE
  const phase=state.phase==='idle'&&dragOver?'drag':state.phase;
  const id=useId().replace(/:/g,'');
  const paperId=`${id}-paper`,edgeId=`${id}-edge`,scanId=`${id}-scan`,maskId=`${id}-mask`;
- return <main className="upload-entry">
+ return <main className="upload-entry upload-entry-branded">
+  <div className="upload-entry-focus">
+  <img className="upload-entry-logo" src="/branding/moinpdf-logo.svg" width={680} height={225} alt="MoinPDF. Papierkram. Läuft." draggable={false}/>
   <button className={`upload-field is-${phase}`} onClick={onOpen} disabled={loading} aria-label="PDFs oder E-Rechnungen auswählen" aria-busy={loading}>
    <span className="upload-document-stage" aria-hidden="true">
     <span className="upload-document-float">
@@ -38,6 +41,7 @@ export function UploadEntry({dragOver,loading,state,onOpen,onCamera,onOffice,onE
     {loading&&<span className="upload-progress" role="progressbar" aria-label="Dateien öffnen" aria-valuenow={state.completed} aria-valuemin={0} aria-valuemax={Math.max(1,state.total)}><span style={{width:`${state.total?state.completed/state.total*100:0}%`}}/></span>}
    </span>
   </button>
+  </div>
   <div className="upload-alternatives"><button disabled={loading} onClick={onCamera}>Kamera-Scanner</button><span>·</span><button disabled={loading} onClick={onOffice}>Office zu PDF</button><span>·</span><button disabled={loading} onClick={onEmail}>E-Mails zu PDF</button><span>·</span><button disabled={loading} onClick={onTools}>Alle Werkzeuge</button></div>
   <span className="sr-only" role="status" aria-live="polite">{loading?`${state.completed} von ${state.total} Dateien verarbeitet`:''}</span>
  </main>;
