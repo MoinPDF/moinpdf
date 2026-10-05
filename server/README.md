@@ -49,7 +49,7 @@ pip install httpx==0.28.1
 python -m unittest discover -s . -p 'test_*.py' -v
 ```
 
-Native Integrationstests werden ausgeführt, wenn Java, Ghostscript und die in `MOINPDF_TOOLS` installierten Werkzeuge verfügbar sind. Für Office ist zusätzlich LibreOffice nötig. Fehlende native Komponenten werden als übersprungen gemeldet. Installation in einen lokalen Ordner:
+Native Integrationstests werden ausgeführt, wenn Java, Ghostscript und die in `MOINPDF_TOOLS` installierten Werkzeuge verfügbar sind. Für Office ist zusätzlich LibreOffice nötig; beide Aufrufnamen `libreoffice` und `soffice` werden unterstützt. Die Office-Prüfung konvertiert synthetische DOCX-, XLSX-, PPTX-, ODT-, ODS- und ODP-Dateien und liest jede PDF anschließend unabhängig ein. Fehlende native Komponenten werden als übersprungen gemeldet. Installation in einen lokalen Ordner:
 
 ```bash
 MOINPDF_TOOLS="$PWD/tools" python install_tools.py
@@ -61,6 +61,7 @@ MOINPDF_TOOLS="$PWD/tools" python -m unittest discover -s . -p 'test_*.py' -v
 `tools.lock.json` fixiert Download-URLs und SHA-256-Prüfsummen. Die Installation bricht bei einer abweichenden Prüfsumme ab. `requirements.lock.txt` hält die getesteten Python-Paketversionen fest. Upstream-Versionen und ihre Regeln sollten bewusst aktualisiert und erneut getestet werden.
 
 - [LibreOffice: PDF-Exportparameter](https://help.libreoffice.org/latest/en-US/text/shared/guide/pdf_params.html)
+- [LibreOffice: Programmaufruf und Parameter](https://help.libreoffice.org/latest/en-US/text/shared/guide/start_parameters.html)
 - [KoSIT: Validator und CLI](https://github.com/itplr-kosit/validator/blob/v1.6.3/docs/cli.md)
 - [KoSIT: XRechnung-Konfiguration](https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/tag/v2026-08-31)
 - [veraPDF: Installation](https://docs.verapdf.org/install/) und [Validierung](https://docs.verapdf.org/cli/validation/)

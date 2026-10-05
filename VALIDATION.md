@@ -31,13 +31,15 @@ In der Sites-Vorschau mit synthetischen Testdateien geprüft:
 
 ## Dokumentenserver
 
-`server/test_service.py`: sieben Tests, sechs bestanden, einer wegen fehlender nativer Komponente übersprungen.
+`server/test_service.py`: acht Tests bestanden, kein Test übersprungen. Bei der Wiederaufnahme am 5. Oktober wurde die vorhandene LibreOffice-Installation über ihren ebenfalls unterstützten Aufrufnamen `soffice` erkannt.
 
 - API-Authentifizierung, Anfrageprüfung und CORS einschließlich Preflight und fehlendem Schlüssel.
 - KoSIT 1.6.3 mit der XRechnung-Konfiguration 3.0.2 vom 31.08.2026: offizielle UBL-Testrechnung akzeptiert; eine formal wohlgeformte, inhaltlich ungültige Rechnung zurückgewiesen.
 - Ghostscript und veraPDF 1.30.2: Erzeugung und bestandene Validierung für PDF/A-1b, 2b und 3b; gewöhnliche PDF im PDF/A-Check zurückgewiesen.
 - Tatsächliche PKCS#12-Signatur mit eigens erzeugtem Testzertifikat; Integrität, fehlendes/konfiguriertes Zertifikatsvertrauen und manipulierte PDF unabhängig geprüft.
-- **Nicht ausgeführt:** native Office-Konvertierung. LibreOffice ist in dieser Entwicklungsumgebung nicht verfügbar; die Installation scheiterte an den Laufzeitberechtigungen. Dockerfile und Integrationstest sind vorhanden.
+- Native Office-Konvertierung für DOCX, XLSX, PPTX, ODT, ODS und ODP mit synthetischen Dateien: jede Ausgabe als PDF unabhängig eingelesen. Testtexte, Umlaute und Tabellenwerte wurden zusätzlich per Textextraktion überprüft. Die Prüfung lief mit LibreOfficeDev 26.8.0.0.alpha0; die im Docker-Image installierte Distribution ist damit noch nicht separat geprüft.
+- Fehlendes LibreOffice wird in der Funktionsübersicht und beim Verarbeitungsauftrag korrekt gemeldet.
+- Nach Änderungen am PDF/A-Profil, Zertifikat oder API-Schlüssel werden alte Ergebnisse und die Übertragungsfreigabe zurückgesetzt. TypeScript-Prüfung erfolgreich.
 - **Nicht ausgeführt:** vollständiger Docker-Compose-Build; hier steht kein Docker-Daemon zur Verfügung. Die verwendeten KoSIT- und veraPDF-Distributionen wurden separat installiert und ausgeführt.
 
 ## Noch erforderliche Inbetriebnahme

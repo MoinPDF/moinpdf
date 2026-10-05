@@ -144,16 +144,26 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(json.loads(zipfile.ZipFile(io.BytesIO(response.content)).read("Ergebnis.json"))["compliant"])
 
-    @unittest.skipUnless(shutil.which("libreoffice"), "LibreOffice nicht installiert")
+    @unittest.skipUnless(service.office_binary(), "LibreOffice nicht installiert")
     def test_office_real_conversion(self):
-        document = io.BytesIO()
-        with zipfile.ZipFile(document, "w") as z:
-            z.writestr("[Content_Types].xml", '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>')
-            z.writestr("_rels/.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>')
-            z.writestr("word/document.xml", '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>MoinPDF Office Test</w:t></w:r></w:p></w:body></w:document>')
-        response = self.post("/v1/office", files={"file": ("test.docx", document.getvalue())})
-        self.assertEqual(response.status_code, 200, response.text[:300])
-        self.assertTrue(response.content.startswith(b"%PDF"))
+        from pyhanko.pdf_utils.reader import PdfFileReader
+        fixtures = Path(__file__).resolve().parent.parent / "tests/fixtures/office"
+        for extension in ("docx", "xlsx", "pptx", "odt", "ods", "odp"):
+            with self.subTest(extension=extension):
+                document = fixtures / f"sample.{extension}"
+                response = self.post("/v1/office", files={"file": (document.name, document.read_bytes())})
+                self.assertEqual(response.status_code, 200, response.text[:300])
+                self.assertEqual(response.headers["content-type"], "application/pdf")
+                reader = PdfFileReader(io.BytesIO(response.content))
+                self.assertGreater(int(reader.root["/Pages"]["/Count"]), 0)
+
+    def test_office_missing_component(self):
+        with patch.object(service, "office_binary", return_value=None):
+            capabilities = self.client.get("/v1/capabilities", headers=self.headers).json()
+            self.assertFalse(capabilities["capabilities"]["office"])
+            response = self.post("/v1/office", files={"file": ("test.docx", b"synthetic")})
+            self.assertEqual(response.status_code, 503)
+            self.assertIn("LibreOffice", response.json()["detail"])
 
 
 if __name__ == "__main__":

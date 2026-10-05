@@ -139,6 +139,11 @@ def versions():
     return json.loads(path.read_text()) if path.exists() else {"tools": "nicht vollständig installiert"}
 
 
+def office_binary():
+    # Both command names are used by supported LibreOffice installations.
+    return shutil.which("libreoffice") or shutil.which("soffice")
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -148,7 +153,7 @@ def health():
 def capabilities():
     return {"apiVersion": 1, "service": "MoinPDF Dokumentenserver", "limits": {"maxBytes": MAX_BYTES},
             "versions": versions(), "capabilities": {
-                "office": bool(shutil.which("libreoffice")),
+                "office": bool(office_binary()),
                 "pdfa": bool(shutil.which("gs") and Path(VERAPDF).is_file() and ICC.is_file()),
                 "xrechnung": bool(shutil.which("java") and KOSIT.is_file() and SCENARIOS.is_file()),
                 "signatures": importlib.util.find_spec("pyhanko") is not None}}
@@ -159,6 +164,9 @@ def office(file: UploadFile = File(...)):
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods", ".odp"}:
         raise HTTPException(422, "Bitte eine unterstützte Office-Datei auswählen.")
+    executable = office_binary()
+    if not executable:
+        raise HTTPException(503, "LibreOffice ist auf dem Dokumentenserver nicht installiert.")
     with job() as directory:
         source = upload(file, directory / ("input" + suffix))
         profile = directory / "lo-profile" / "user"
@@ -166,7 +174,7 @@ def office(file: UploadFile = File(...)):
         # Disable macros and external link updates in this isolated, disposable profile.
         (profile / "registrymodifications.xcu").write_text('''<?xml version="1.0"?>
 <oor:items xmlns:oor="http://openoffice.org/2001/registry"><item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item><item oor:path="/org.openoffice.Office.Calc/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>2</value></prop></item></oor:items>''')
-        command(["libreoffice", f"-env:UserInstallation={(profile.parent).as_uri()}", "--headless", "--nologo", "--nodefault", "--norestore", "--convert-to", "pdf", "--outdir", str(directory), str(source)], directory)
+        command([executable, f"-env:UserInstallation={(profile.parent).as_uri()}", "--headless", "--nologo", "--nodefault", "--norestore", "--convert-to", "pdf", "--outdir", str(directory), str(source)], directory)
         output = directory / "input.pdf"
         if not output.is_file():
             raise HTTPException(422, "LibreOffice hat keine PDF erzeugt. Bitte Dateiformat und Datei prüfen.")
