@@ -2,7 +2,7 @@
 
 MoinPDF wird als **`denny-moinpdf`** in [Denny's Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store) paketiert. Das Paket enthält die Web-App, den Dokumentenserver und die lokale Übersetzung. Umbrel verwaltet Installation, Start, Stopp, Neustarts, Updates und die App-Daten. Eine Pages-Installation, ein ZIP-Import, eine eigene `.env` oder ein manueller Build auf Umbrel sind nicht erforderlich.
 
-## Installation nach Freigabe des Store-Pakets
+## Installation aus dem Community Store
 
 1. Im Umbrel App Store die Community-Stores öffnen und, falls noch nicht vorhanden, diesen Store hinzufügen:
 
@@ -15,7 +15,7 @@ MoinPDF wird als **`denny-moinpdf`** in [Denny's Umbrel Community Store](https:/
 4. Unter einem Serverwerkzeug den Status prüfen. Während des ersten Modelldownloads zeigt die App „Wird vorbereitet“ und aktualisiert den Status selbst. Die übrigen Werkzeuge sind bereits nutzbar.
 5. Eine Test-PDF öffnen, eine DOCX in PDF konvertieren und nach abgeschlossener Einrichtung ein kurzes Text-PDF übersetzen.
 
-Der Store-Eintrag darf erst freigegeben werden, wenn alle drei Image-Pakete öffentlich und ohne Registry-Anmeldung abrufbar sind. Ein Draft-Pull-Request allein macht die App noch nicht im Umbrel Store installierbar.
+Die drei Container-Pakete sind öffentlich und ohne GitHub-Anmeldung abrufbar. Der Store verwendet feste Image-Versionen mit Prüfsummen für Intel/AMD (`amd64`) und ARM (`arm64`).
 
 ## Zugriff und HTTPS
 
@@ -68,6 +68,6 @@ Vor der öffentlichen Nutzung auf dem tatsächlichen Umbrel die Installation, de
 
 `.github/workflows/publish-images.yml` baut die drei Images aus demselben Quellstand für beide Architekturen und veröffentlicht sie mit dem integrierten GitHub-Actions-Token. Zusätzliche Registry-Passwörter im Repository sind nicht nötig. Tags enthalten App-Version und Quell-Commit; die Workflow-Artefakte enthalten die zugehörigen Multiarch-Index-Digests.
 
-Beim **ersten** GHCR-Publish muss der Eigentümer die Pakete `moinpdf-web`, `moinpdf-documents` und `moinpdf-translation` in GitHub unter **Package settings → Change visibility → Public** öffentlich freigeben. Die Sichtbarkeit des Quellcode-Repositories muss dafür nicht geändert werden. Danach die anonyme Abrufbarkeit und beide Plattformen mit dem Umbrel-Linter prüfen, die Referenzen samt Digest im Store aktualisieren und erst dann den Store-Pull-Request freigeben.
+Die Pakete `moinpdf-web`, `moinpdf-documents` und `moinpdf-translation` sind bereits öffentlich freigegeben. Das Quellcode-Repository bleibt privat. Für neue Versionen die anonyme Abrufbarkeit und beide Plattformen mit dem Umbrel-Linter prüfen, den nativen Umbrel-Test ausführen und die Referenzen samt Digest im Store aktualisieren. Neu angelegte GHCR-Pakete benötigen beim ersten Publish weiterhin die Freigabe unter **Package settings → Change visibility → Public**.
 
 Quellen: [Umbrel-Paketierung](https://github.com/getumbrel/umbrel-apps/blob/master/.agents/skills/umbrel-package-app/SKILL.md), [GHCR-Paketsichtbarkeit](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility), [Cloudflare 524](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-524/).
