@@ -55,7 +55,27 @@ assert any(app['id'] == 'denny-moinpdf' for store in registry for app in store['
     {'store': store['meta'], 'apps': len(store['apps'])} for store in registry]
 PYREGISTRY
 echo 'MoinPDF is visible in the native Umbrel registry.'
-timeout 180 docker exec "$test_container" umbreld client apps.install.mutate --appId denny-moinpdf >/dev/null
+# This API waits for the full image download and installation. Allow the same
+# 20-minute budget as the install-state check, and report progress meanwhile.
+timeout 1200 docker exec "$test_container" umbreld client apps.install.mutate \
+    --appId denny-moinpdf > /tmp/umbrel-ci-install.log 2>&1 &
+install_pid=$!
+while kill -0 "$install_pid" 2>/dev/null; do
+    if timeout 30 docker exec "$test_container" umbreld client apps.state.query \
+        --appId denny-moinpdf > /tmp/umbrel-ci-state.json; then
+        python - <<'PYSTATE'
+import json
+state = json.load(open('/tmp/umbrel-ci-state.json'))
+print('Installation:', state.get('state'), 'progress:', state.get('progress', state.get('stateProgress')))
+PYSTATE
+    fi
+    sleep 15
+done
+if ! wait "$install_pid"; then
+    cat /tmp/umbrel-ci-install.log >&2
+    echo 'The native Umbrel installation failed or exceeded 20 minutes.' >&2
+    exit 1
+fi
 
 for attempt in $(seq 1 240); do
     docker exec "$test_container" umbreld client apps.state.query --appId denny-moinpdf > /tmp/umbrel-ci-state.json

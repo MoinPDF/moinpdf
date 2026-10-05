@@ -46,7 +46,7 @@ Keine Router-Portfreigabe ist für den Tunnel erforderlich. Eine Cloudflare-Rege
 
 - Ein separater, stabiler API-Schlüssel wird aus Umbrels App-Entropie abgeleitet und nur an Web-Proxy und Dokumentenserver übergeben.
 - Web-App, Dokumentenserver und Übersetzung laufen ohne Root-Rechte als UID/GID `1000:1000`.
-- Nur die Web-App hängt am üblichen Umbrel-Netz. Dokumentenserver und laufende Übersetzung befinden sich zusätzlich in einem eigenen internen Netz ohne Internetroute. Der separate Modell-Downloader hat Internetzugang und erhält keine Dokumente.
+- Web-App und Modell-Downloader hängen am üblichen Umbrel-Netz. Der Web-Proxy erreicht den Dokumentenserver über ein zusätzliches internes Netz. Dokumentenserver und laufende Übersetzung befinden sich ausschließlich in diesem internen Netz ohne Internetroute. Der Modell-Downloader erhält keine Dokumente.
 - Sprachmodelle, Übersetzungscache und Caddy-Daten liegen unter `${APP_DATA_DIR}/data/`; Neustarts und Updates behalten sie. Auf umbrelOS 2.0 kann dieser Datenbereich über Umbrel verschoben werden.
 - Unter `data/trust` können bei Bedarf eigene vertrauenswürdige CA-Zertifikate für die Signaturprüfung bereitgestellt werden. Ein eigenes Signaturzertifikat bleibt erforderlich, wenn Dokumente unterschrieben werden sollen.
 - Temporäre Dokumentenaufträge liegen im Arbeitsspeicher-Dateisystem des Dokumentenservers und werden nach der Verarbeitung entfernt. MoinPDF ist kein Dokumentenarchiv.
