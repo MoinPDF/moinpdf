@@ -33,6 +33,7 @@ with sync_playwright() as browser_api, tempfile.TemporaryDirectory() as temporar
     page.goto(origin)
     page.locator('img[src="/branding/moinpdf-logo.svg"]').wait_for(timeout=60000)
     page.screenshot(path=str(evidence / 'moinpdf-home.png'), full_page=True)
+    print('PASS: protected gateway and signed-in HTTP app page.', flush=True)
 
     # Open a real synthetic PDF in the browser before testing server jobs.
     pdf_path = Path(temporary) / 'umbrel-test.pdf'
@@ -42,6 +43,7 @@ with sync_playwright() as browser_api, tempfile.TemporaryDirectory() as temporar
     page.locator('input[type="file"]').first.set_input_files(str(pdf_path))
     page.get_by_text('umbrel-test.pdf', exact=True).first.wait_for(timeout=30000)
     page.screenshot(path=str(evidence / 'moinpdf-document.png'), full_page=True)
+    print('PASS: synthetic PDF opened in the browser; waiting for all language models.', flush=True)
 
     for attempt in range(180):
         response = context.request.get(origin + '/api/documents/v1/capabilities',
@@ -60,9 +62,16 @@ with sync_playwright() as browser_api, tempfile.TemporaryDirectory() as temporar
                        MOINPDF_TEST_REPO=str(Path.cwd()))
     subprocess.run(['python', 'tests/selfhost-smoke.py'], env=environment, check=True)
 
-    # Validate the HTTPS app route as well, using Umbrel's generated certificate.
+    # Umbrel deliberately uses distinct HTTP and __Host- HTTPS session cookies.
+    # Authenticate the HTTPS session through the real login endpoint as well.
+    https_login = context.request.post('https://localhost/trpc/user.login',
+                                       data={'password': 'synthetic-umbrel-ci-password'},
+                                       headers={'Origin': 'https://localhost'})
+    assert https_login.ok, 'Synthetic Umbrel user could not sign in over HTTPS'
+    # Validate the HTTPS app route using the disposable OS-generated certificate.
     page.goto('https://localhost:8785')
     page.locator('img[src="/branding/moinpdf-logo.svg"]').wait_for(timeout=30000)
+    print('PASS: signed-in HTTPS app page; checking restart persistence.', flush=True)
 
     umbrel('apps.restart.mutate', '--appId', 'denny-moinpdf')
     for attempt in range(60):
