@@ -23,5 +23,5 @@ export async function runPipeline(sources:Source[],workflow:SavedWorkflow,passwo
     const options={...workflowOptions,stampText:step.text||'GEPRÜFT',watermark:step.text||'ENTWURF',numberStart:step.number||1};const result=await runStudioJob(step.kind==='removeBlank'?'organize':step.kind,[current],pages,options,emptyEdits(),report,ctx.signal);bytes=new Uint8Array(await result.blob.arrayBuffer());if(owned)await owned.pdf.loadingTask.destroy();owned=undefined;current=await openSource(new File([new Uint8Array(bytes)],original.name,{type:'application/pdf'}));owned=current;
    }totalPages+=current.pdf.numPages;zip.file(names[i],bytes);
   }finally{if(owned)await owned.pdf.loadingTask.destroy();}
- }checkAbort(ctx.signal);return{blob:await zip.generateAsync({type:'blob',compression:'DEFLATE'}),filename:'PDF-Arbeitsablauf.zip',kind:'zip',pages:totalPages,note:`${sources.length} Dateien · ${steps.map(s=>stepLabels[s.kind]).join(' → ')}`};
+ }checkAbort(ctx.signal);return{blob:await zip.generateAsync({type:'blob',compression:'DEFLATE'}),filename:'PDF-Arbeitsablauf.zip',kind:'zip',pages:totalPages,note:`${sources.length} ${sources.length === 1 ? 'Datei' : 'Dateien'} · ${steps.map(s=>stepLabels[s.kind]).join(' → ')}`};
 }
