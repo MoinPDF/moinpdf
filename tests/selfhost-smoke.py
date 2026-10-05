@@ -11,7 +11,7 @@ session = requests.Session()
 session.trust_env = False
 if os.getenv('MOINPDF_TEST_COOKIES'):
     for cookie in json.loads(Path(os.environ['MOINPDF_TEST_COOKIES']).read_text()):
-        session.cookies.set(cookie['name'], cookie['value'], domain=cookie['domain'], path=cookie['path'])
+        session.cookies.set(cookie['name'], cookie['value'], domain='localhost.local' if cookie['domain'] == 'localhost' else cookie['domain'], path=cookie['path'])
 if os.getenv('MOINPDF_TEST_PASSWORD'):
     session.auth = (os.getenv('MOINPDF_TEST_USERNAME', 'moinpdf'), os.environ['MOINPDF_TEST_PASSWORD'])
 home = session.get(base + '/', timeout=10)
