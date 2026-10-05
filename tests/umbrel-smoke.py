@@ -7,7 +7,7 @@ import tempfile
 import time
 
 import pymupdf
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 origin = 'http://localhost:8785'
 evidence = Path('umbrel-evidence')
@@ -41,7 +41,16 @@ with sync_playwright() as browser_api, tempfile.TemporaryDirectory() as temporar
         document.new_page().insert_text((50, 60), 'MoinPDF on Umbrel - synthetic test')
         document.save(pdf_path)
     page.locator('input[type="file"]').first.set_input_files(str(pdf_path))
-    page.get_by_text('umbrel-test.pdf', exact=True).first.wait_for(timeout=30000)
+    page.get_by_role('heading', name='Was möchtest du tun?', exact=True).wait_for(timeout=30000)
+    expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
+    page.get_by_text('umbrel-test.pdf', exact=True).wait_for()
+    page.screenshot(path=str(evidence / 'moinpdf-tools.png'), full_page=True)
+    page.get_by_role('button', name='Seiten organisieren', exact=True).click()
+    page.get_by_role('tab', name='Dokument', exact=True).click()
+    preview = page.get_by_role('img', name='umbrel-test.pdf, Seite 1', exact=True)
+    preview.wait_for(timeout=30000)
+    expect(preview).to_have_js_property('complete', True)
+    assert preview.evaluate('(image) => image.naturalWidth > 0'), 'PDF preview did not render'
     page.screenshot(path=str(evidence / 'moinpdf-document.png'), full_page=True)
     print('PASS: synthetic PDF opened in the browser; waiting for all language models.', flush=True)
 
