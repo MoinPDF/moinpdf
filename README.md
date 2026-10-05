@@ -4,7 +4,7 @@ Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler
 
 ## Auf platform installieren
 
-Die native App **MoinPDF (`denny-moinpdf`)** wird für [Denny's Community Store](https://github.com/dennysubke/dennys-platform-app-store) bereitgestellt. Das Paket enthält Oberfläche, Dokumentenserver und Übersetzung und benötigt weder Pages noch eine manuelle `.env`. Installation, Freigabe über Cloudflare und der Veröffentlichungsstatus sind in [platform.md](platform.md) beschrieben.
+Die native App **MoinPDF (`denny-moinpdf`)** ist in [Denny's Community Store](https://github.com/dennysubke/dennys-platform-app-store) verfügbar. Das Paket enthält Oberfläche, Dokumentenserver und Übersetzung und benötigt weder Pages noch eine manuelle `.env`. Installation und Neustart wurden unter platformOS 2.0.0 auf `amd64` geprüft; Images für `arm64` sind ebenfalls verfügbar. Installation, Freigabe über Cloudflare und der genaue Prüfungsumfang sind in [platform.md](platform.md) beschrieben.
 
 ## Komplett per Docker starten
 
