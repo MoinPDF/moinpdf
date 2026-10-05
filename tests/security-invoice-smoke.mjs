@@ -49,6 +49,6 @@ try{
  const unicode=await protectPdf(bytes,{...settings,password:'Übermäßig-sicher-2026!'});assert((await open(unicode,'Übermäßig-sicher-2026!')).numPages>0);
  const second=await protectPdf(bytes,settings);assert.notDeepEqual(encrypted,second,'Encryption uses fresh randomness');
  assert.throws(()=>checkNewPassword('short'),/8 Zeichen/);assert.throws(()=>checkNewPassword('ö'.repeat(64)),/127/);await assert.rejects(()=>protectPdf(bytes,{...settings,ownerPassword:settings.password}),/unterschiedlich/);await assert.rejects(()=>protectPdf(bytes,settings,AbortSignal.abort()),/Abgebrochen/);
- await writeFile('/workspace/scratch/PDF-Passwort-Test.pdf',encrypted);await writeFile('/workspace/scratch/E-Rechnung-Leseansicht-Test.pdf',rendered);await writeFile('/workspace/scratch/E-Rechnung-Basischeck-Test.pdf',report);
+ await writeFile('.sites-runtime/PDF-Passwort-Test.pdf',encrypted);await writeFile('.sites-runtime/E-Rechnung-Leseansicht-Test.pdf',rendered);await writeFile('.sites-runtime/E-Rechnung-Basischeck-Test.pdf',report);
  console.log('PASS: official UBL/CII, credit notes, namespace isolation, dates and total mismatches, malformed/oversized/DTD XML, UTF-16, CSV injection protection, PDF text + unchanged XML roundtrip, AES-256 R6 independently read by PDF.js, wrong/owner/Unicode passwords, permission flags, preserved form/metadata/attachments, unique encryption randomness, input preservation and cancellation.');
 }finally{for(const p of proxies)await p.loadingTask.destroy();}

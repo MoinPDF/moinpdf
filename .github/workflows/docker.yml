@@ -22,6 +22,7 @@ jobs:
           docker compose config --quiet
           MOINPDF_DOMAIN=pdf.example.org docker compose -f compose.yaml -f compose.https.yaml config --quiet
       - name: Build all services
+        id: build
         run: docker compose build
       - name: Browser engine and TypeScript checks
         run: |
@@ -29,23 +30,29 @@ jobs:
           docker run --rm moinpdf-browser-tests pnpm test
           docker run --rm moinpdf-browser-tests node node_modules/typescript/bin/tsc --noEmit
       - name: Native document converters and key-file authentication
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           docker build --target test -t moinpdf-document-tests ./server
           docker run --rm --network none --read-only --tmpfs /tmp:mode=1777,size=1g \
             --volume "$PWD:/repo:ro" --workdir /repo moinpdf-document-tests \
             python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_key_file -v
       - name: Start complete stack with all seven languages
+        id: start
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: docker compose up -d --wait --wait-timeout 1800
       - name: Real HTTP proxy, assets, Office and PDF translation
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: |
           docker compose exec -T documents python -c "import urllib.request; print('Document server is running')"
           docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /repo/tests/selfhost-smoke.py
       - name: Models and credentials survive a restart
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: |
           docker compose stop
           docker compose up -d --wait --wait-timeout 180
           docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /repo/tests/selfhost-smoke.py
       - name: Optional login protects the app and API
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         env:
           MOINPDF_PASSWORD: synthetic-ci-password
         run: |
