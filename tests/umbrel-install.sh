@@ -14,6 +14,14 @@ if [ "$ready" != true ]; then
     echo 'Umbrel did not become ready within 10 minutes.' >&2
     exit 1
 fi
+docker exec "$test_container" docker info --format 'driver={{.Driver}} root={{.DockerRootDir}}'
+storage_driver="$(docker exec "$test_container" docker info --format '{{.Driver}}')"
+if [ "$storage_driver" = vfs ]; then
+    echo 'The disposable Docker host selected space-amplifying VFS storage; use a host supporting overlay storage.' >&2
+    exit 1
+fi
+df -h /
+docker exec "$test_container" df -h /var/lib/docker /var/lib/containerd /home/umbrel/umbrel
 docker exec "$test_container" umbreld client user.register.mutate \
     --name MoinPDF-CI --password synthetic-umbrel-ci-password >/dev/null
 
