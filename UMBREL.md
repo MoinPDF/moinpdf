@@ -1,6 +1,6 @@
 # MoinPDF als Umbrel-App
 
-MoinPDF wird als **`denny-moinpdf`** in [Denny's Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store) paketiert. Das Paket enthält die Web-App, den Dokumentenserver und die lokale Übersetzung. Umbrel verwaltet Installation, Start, Stopp, Neustarts, Updates und die App-Daten. Eine Pages-Installation, ein ZIP-Import, eine eigene `.env` oder ein manueller Build auf Umbrel sind nicht erforderlich.
+MoinPDF ist als **`denny-moinpdf`** in [Denny's Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store) verfügbar. Das Paket enthält die Web-App, den Dokumentenserver und die lokale Übersetzung. Umbrel verwaltet Installation, Start, Stopp, Neustarts, Updates und die App-Daten. Eine Pages-Installation, ein ZIP-Import, eine eigene `.env` oder ein manueller Build auf Umbrel sind nicht erforderlich.
 
 ## Installation aus dem Community Store
 
@@ -62,7 +62,9 @@ Die eingebundenen Seiten beschreiben **Denny Wenkes eigenen Betrieb mit eigenem 
 
 Updates über den Umbrel App Store installieren. Die Paketversion verweist auf geprüfte, mit Manifest-Digests festgelegte Images für `linux/amd64` und `linux/arm64`. Ein normales Update behält die App-Daten; eine Deinstallation kann sie löschen.
 
-Vor der öffentlichen Nutzung auf dem tatsächlichen Umbrel die Installation, den App-Start, eine Office-Konvertierung, eine Übersetzung und einen Neustart prüfen. Danach dieselben Aufträge über die öffentliche Domain testen. Ein erfolgreicher Docker-Test auf GitHub ersetzt diesen Umbrel- und Cloudflare-Verbindungstest nicht.
+Version `0.1.0` wurde in einer frischen, temporären **umbrelOS-2.0.0-Umgebung auf `amd64`** über einen Community Store installiert. Der [native Umbrel-Test](https://github.com/dennysubke/moinpdf/actions/runs/37389683418) prüft den geschützten App-Zugang, angemeldete HTTP- und HTTPS-Aufrufe, PDF-Import und gerenderte Seitenvorschau, echte Office-Konvertierung, eine Deutsch-Englisch-PDF-Übersetzung, die Bereitschaft aller sieben Sprachmodelle sowie Neustart und erhaltene Modelle. Die Testkonfiguration entspricht den ausgelieferten App-Dateien. Die Container werden ohne Registry-Anmeldung geladen. Der offizielle Umbrel-Linter mit Image-Prüfung meldet keine Fehler; die fünf beabsichtigten Hinweise betreffen das interne Netz und `no-new-privileges`.
+
+Für `arm64` wurden die veröffentlichten Image-Manifeste geprüft; ein nativer ARM-Lauf steht noch aus. Der physische Umbrel und die öffentliche Cloudflare-Verbindung des Betreibers waren nicht Teil des Tests. Vor der öffentlichen Nutzung auf dem eigenen Gerät einmal App-Start, Office-Konvertierung, Übersetzung und Neustart prüfen; danach dieselben Aufträge über die öffentliche Domain testen.
 
 ## Image-Veröffentlichung für den Store-Maintainer
 
