@@ -51,3 +51,13 @@
   }
   .upload-entry-branded .upload-alternatives>span { display:none; }
 }
+
+/* Keep the animated paper inside narrow phone viewports. */
+.upload-entry-focus,.upload-field { min-width:0; max-width:100%; }
+@media(max-width:600px) {
+ .upload-entry-branded .upload-field { padding:18px 8px 24px; }
+ .upload-entry-branded .upload-document-stage { width:min(248px,100%); height:auto; aspect-ratio:288/300; }
+ .upload-entry-branded .upload-document-float { height:auto; aspect-ratio:1; }
+ .upload-entry-branded .upload-document-stage::after { left:28%; width:45%; }
+ .upload-entry-branded .upload-description { max-width:100%; overflow-wrap:anywhere; }
+}

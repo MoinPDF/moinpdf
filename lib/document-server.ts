@@ -7,7 +7,15 @@ async function call(base:string,token:string,path:string,signal:AbortSignal,body
  const integrated=!!integratedDocumentServer&&base===integratedDocumentServer;
  if(!integrated&&!token.trim())throw new Error('Bitte den API-Schlüssel deines Dokumentenservers eingeben.');
  const headers:Record<string,string>=integrated?{'X-MoinPDF-Client':'web'}:{Authorization:`Bearer ${token.trim()}`};
- let response:Response;try{response=await fetch(documentServerUrl(base)+path,{method:body?'POST':'GET',headers,body,signal,credentials:integrated?'same-origin':'omit',redirect:'error'});}catch(e){if(signal.aborted)throw e;throw new Error(integrated?'Dein Dokumentenserver ist gerade nicht erreichbar. Bitte den Containerstatus prüfen und erneut verbinden.':'Der Dokumentenserver ist nicht erreichbar. Serveradresse, HTTPS und die freigegebene App-Adresse (CORS) prüfen.');}
+ signal.throwIfAborted();
+ const request=new AbortController(),cancel=()=>request.abort(signal.reason);
+ signal.addEventListener('abort',cancel,{once:true});
+ let timedOut=false;
+ const timer=setTimeout(()=>{timedOut=true;request.abort();},body?180000:12000);
+ let response:Response;
+ try{response=await fetch(documentServerUrl(base)+path,{method:body?'POST':'GET',headers,body,signal:request.signal,credentials:integrated?'same-origin':'omit',redirect:'error'});}
+ catch(e){if(signal.aborted)throw e;if(timedOut)throw new Error(body?'Die Verarbeitung dauert zu lange. Bitte versuche es mit einer kleineren Datei erneut.':'Die Funktion antwortet gerade nicht. Bitte versuche es gleich noch einmal.');throw new Error('Die Verbindung wurde unterbrochen. Bitte versuche es gleich noch einmal.');}
+ finally{clearTimeout(timer);signal.removeEventListener('abort',cancel);}
  if(!response.ok){const payload=await response.json().catch(()=>null) as {detail?:unknown}|null;throw new Error(typeof payload?.detail==='string'?payload.detail:response.status===401?'Der API-Schlüssel wurde nicht akzeptiert.':`Der Server meldet Fehler ${response.status}.`);}return response;
 }
 export async function serverCapabilities(base:string,token:string,signal:AbortSignal){const r=await call(base,token,'/v1/capabilities',signal),v=await r.json() as Partial<ServerCapabilities>;if(v.apiVersion!==1||!v.capabilities)throw new Error('Dieser Server unterstützt die benötigte MoinPDF-Schnittstelle nicht.');return v as ServerCapabilities;}

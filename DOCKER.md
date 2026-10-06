@@ -104,7 +104,7 @@ Dokumente und Ergebnisse werden nicht dauerhaft in Docker-Volumes gespeichert. S
 - **Erster Start wartet:** `docker compose logs -f translation-models`. Downloads können mehrere Minuten dauern; fehlgeschlagene Versuche werden wiederholt. Ohne Internet kann eine leere Installation nicht eingerichtet werden.
 - **Container beendet / Exit 137:** Speicherstatus und Docker-Desktop-RAM prüfen; verfügbare Ressourcen bzw. die beiden Speichergrenzen erhöhen.
 - **Port belegt:** `MOINPDF_PORT` in `.env` ändern, dann `docker compose up -d`.
-- **Serverfunktionen fehlen:** `docker compose logs documents` und `docker compose ps -a` prüfen; anschließend Images neu bauen und in der App „Verbindung erneut prüfen“ wählen.
+- **Serverfunktionen fehlen:** `docker compose logs documents` und `docker compose ps -a` prüfen; anschließend Images neu bauen und in der App „Erneut versuchen“ wählen.
 - **API-Aufruf liefert 403:** Die App setzt `X-MoinPDF-Client: web` automatisch. Direkte Aufrufe ohne diesen Header sowie browserseitige fremde Ursprünge werden am Web-Proxy abgewiesen. Ein öffentlicher Bearer-Schlüssel ist für diese Installation nicht vorgesehen.
 
 ## Automatische Prüfung
@@ -119,4 +119,4 @@ docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /rep
 
 Bei aktiviertem Login zusätzlich `--env MOINPDF_TEST_USERNAME=... --env MOINPDF_TEST_PASSWORD=...` übergeben. Diesen Test nur mit dem enthaltenen synthetischen Testmaterial verwenden.
 
-Die eigenständige Serverinstallation für die bereits gehostete Web-App bleibt unter [server/README.md](server/README.md) beschrieben. Sie ist eine separate Betriebsart. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.8.4](https://github.com/LibreTranslate/LibreTranslate/tree/v1.8.4); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).
+Die eigenständige Dokumenten-API bleibt unter [server/README.md](server/README.md) beschrieben. Die Benutzeroberfläche bietet ab 0.2.0 keine manuelle API-Verbindung mehr an; für sämtliche Konverter die vollständige Docker-/Umbrel-Ausgabe verwenden. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.8.4](https://github.com/LibreTranslate/LibreTranslate/tree/v1.8.4); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).

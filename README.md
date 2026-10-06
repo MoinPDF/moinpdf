@@ -1,6 +1,6 @@
 # MoinPDF – Papierkram. Läuft.
 
-Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler Übersetzung. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 76 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 59 Werkzeuge verarbeiten Dokumente im Browser. 17 zusätzliche Ansichten verwenden auf ausdrücklichen Auftrag einen selbst betriebenen Dokumentenserver; ohne Serververbindung bleiben diese deaktiviert.
+Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler Übersetzung. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 76 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 59 Werkzeuge verarbeiten Dokumente im Browser. 17 zusätzliche Ansichten nutzen in der vollständigen Docker-/Umbrel-Installation automatisch den integrierten Dokumentendienst. Die Verarbeitung startet mit dem jeweiligen Aktionsknopf; die Oberfläche benötigt weder Serveradresse noch API-Schlüssel. Die Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme.
 
 ## Auf Umbrel installieren
 
@@ -18,7 +18,7 @@ Dann **http://localhost:8080** bzw. **http://SERVER-IP:8080** öffnen. Der Compo
 
 ## Ausbau: weitere 14 Werkzeuge
 
-Die Kategorien stehen auf einem einheitlichen Raster mit Symbol, Beschriftung und Anzahl. Auf schmalen Ansichten werden die Kategorien in gleichmäßige Reihen verteilt. „Alle“ gliedert die Werkzeuge zusätzlich nach Bereichen. „Stapel“ und „Server“ haben eigene dezente Farben. Über „Alle Werkzeuge“ ist die Übersicht auch ohne geöffnetes PDF erreichbar.
+Die Kategorien stehen auf einem einheitlichen Raster mit Symbol, Beschriftung und Anzahl. Auf schmalen Ansichten werden die Kategorien in gleichmäßige Reihen verteilt. „Alle“ gliedert die Werkzeuge zusätzlich nach Bereichen. Alle Werkzeuge sind nach ihrer Aufgabe einsortiert. Nach dem PDF-Import sind die Zielformate Word, Excel, PowerPoint, Bilder und Text direkt erreichbar. Über „Alle Werkzeuge“ ist die Übersicht auch ohne geöffnetes PDF erreichbar.
 
 | Werkzeug | Ausführung | Umfang |
 |---|---|---|
@@ -37,7 +37,7 @@ Die Kategorien stehen auf einem einheitlichen Raster mit Symbol, Beschriftung un
 | ZUGFeRD-Assistent | Server | PDF/A-3 und passende CII-XML verbinden; Mustang und veraPDF-Berichte, negative Befunde klar benannt |
 | Word-Serienbriefe | Server | DOCX mit {{Spaltenname}} und XLSX; bis 50 Datensätze, einzelne PDFs im ZIP |
 
-Die Serverwerkzeuge sind implementiert, benötigen aber eine verbundene und aktualisierte Serverinstallation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
+Die erweiterten Konverter sind Teil der vollständigen Docker-/Umbrel-Installation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
 
 Zusätzliche Tests: `node tests/size-split-smoke.mjs` sowie `python -m unittest server.test_service server.test_expansion server.test_extended_documents -v` mit installierten Serverkomponenten. Die Übersetzung wird mit einer lokalen HTTP-Testantwort auf Anfrageformat, Zielsprachenübergabe und Ausgabe geprüft; der Docker-Integrationsworkflow ergänzt einen echten LibreTranslate-Durchlauf.
 
@@ -91,7 +91,7 @@ Dateien bleiben im Speicher der aktuellen Sitzung. Ergebnisse vor dem Schließen
 - Interne und externe PDF-Links hinzufügen, ändern und entfernen; Vorschau und Koordinaten unterstützen gedrehte Seiten.
 - Anhänge hinzufügen, ersetzen, umbenennen und entfernen; QPDF bereinigt nicht mehr referenzierte eingebettete Dateistreams.
 - Kamera-/Fotoscanner mit Vierpunkt-Perspektivkorrektur, Scanbereinigung und bis zu 50 gesammelten Seiten.
-- Vier **optionale Serverwerkzeuge**: Office zu PDF, PDF/A erzeugen/prüfen, vollständige KoSIT-XRechnung-Validierung und Zertifikatssignaturen. [Servereinrichtung und Grenzen](server/README.md).
+- Weitere Werkzeuge der **vollständigen Installation**: Office zu PDF, PDF/A erzeugen/prüfen, vollständige KoSIT-XRechnung-Validierung und Zertifikatssignaturen. [Servereinrichtung und Grenzen](server/README.md).
 
 ## Sicherungsstand
 
@@ -135,3 +135,9 @@ Browserprüfung: Mehrfachimport, neue Werkzeugauswahl, natürliche Suchanfrage m
 ## Bibliotheken
 
 PDF.js, Tesseract.js und deutsche/englische Sprachdaten (Apache-2.0), pdf-lib, JSZip und docx (MIT), Manrope und Space Grotesk (SIL Open Font License). Lizenztexte werden aus den Paketen unter `public/vendor/licenses` mitgeliefert. qpdf/WASM für Verschlüsselung, fontkit und Noto Sans für die E-Rechnungs-Leseansicht werden ebenfalls lokal ausgeliefert; zugehörige Lizenztexte liegen unter `public/vendor`. Für Codes kommen bwip-js und ZXing hinzu; ihre Lizenztexte werden ebenfalls mitgeliefert. Die Browserfunktionen verwenden lokal ausgelieferte Ressourcen.
+
+## Versionierung
+
+Die zentrale Versionsnummer steht in `package.json` und wird im Footer angezeigt.
+Änderungen je Version: [CHANGELOG.md](CHANGELOG.md). Docker-Images enthalten die
+Version und den Quellcode-Commit im Tag; Umbrel bindet die Images zusätzlich per Digest.

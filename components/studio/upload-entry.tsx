@@ -12,7 +12,7 @@ export function UploadEntry({dragOver,loading,state,onOpen,onCamera,onOffice,onE
  return <main className="upload-entry upload-entry-branded">
   <div className="upload-entry-focus">
   <img className="upload-entry-logo" src="/branding/moinpdf-logo.svg" width={680} height={225} alt="MoinPDF. Papierkram. Läuft." draggable={false}/>
-  <button className={`upload-field is-${phase}`} onClick={onOpen} disabled={loading} aria-label="PDFs oder E-Rechnungen auswählen" aria-busy={loading}>
+  <button className={`upload-field is-${phase}`} onClick={onOpen} disabled={loading} aria-label="PDF oder andere Datei auswählen" aria-busy={loading}>
    <span className="upload-document-stage" aria-hidden="true">
     <span className="upload-document-float">
      <FileText className="upload-document-icon" size={288} strokeWidth={.17} style={{'--paper-fill':`url(#${paperId})`,'--paper-edge':`url(#${edgeId})`} as CSSProperties}>
@@ -36,8 +36,8 @@ export function UploadEntry({dragOver,loading,state,onOpen,onCamera,onOffice,onE
     </span>
    </span>
    <span className="upload-field-inner">
-    <span className="upload-title" role="heading" aria-level={1}>{state.phase==='done'?'Alles bereit.':state.phase==='reading'?'Wird geöffnet …':dragOver?'Hier loslassen.':'PDFs hier ablegen.'}</span>
-    <span className="upload-description">{state.phase==='done'?`${state.completed} ${state.completed===1?'Datei geöffnet':'Dateien geöffnet'}`:state.phase==='reading'?state.name:dragOver?'Eine oder mehrere Dateien':'oder klicken · auch Rechnungs-XML'}</span>
+    <span className="upload-title" role="heading" aria-level={1}>{state.phase==='done'?'Alles bereit.':state.phase==='reading'?'Wird geöffnet …':dragOver?'Hier loslassen.':'Datei hier ablegen.'}</span>
+    <span className="upload-description">{state.phase==='done'?`${state.completed} ${state.completed===1?'Datei geöffnet':'Dateien geöffnet'}`:state.phase==='reading'?state.name:dragOver?'Eine oder mehrere Dateien':'oder antippen · PDF, Office, Bilder & E-Mails'}</span>
     {loading&&<span className="upload-progress" role="progressbar" aria-label="Dateien öffnen" aria-valuenow={state.completed} aria-valuemin={0} aria-valuemax={Math.max(1,state.total)}><span style={{width:`${state.total?state.completed/state.total*100:0}%`}}/></span>}
    </span>
   </button>

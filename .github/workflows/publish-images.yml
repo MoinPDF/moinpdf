@@ -2,8 +2,12 @@ name: Publish Umbrel images
 
 on:
   push:
-    branches: [codex/umbrel-app]
+    branches: [main, codex/umbrel-app]
     tags: [v*]
+    paths-ignore:
+      - '**/*.md'
+      - 'deploy/umbrel/**'
+      - 'tests/**'
   workflow_dispatch:
 
 permissions:

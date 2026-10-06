@@ -1,6 +1,6 @@
 {
-  "name": "pinkpdf",
-  "version": "0.1.0",
+  "name": "moinpdf",
+  "version": "0.2.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -24,7 +24,8 @@
     "test": "node tests/run-all.mjs",
     "build:selfhost": "node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts",
     "typecheck:selfhost": "tsc --project tsconfig.selfhost.json --noEmit",
-    "package:pages": "pnpm run build:selfhost && node scripts/package-pages.mjs"
+    "package:pages": "pnpm run build:selfhost && node scripts/package-pages.mjs",
+    "test:conversion": "node tests/conversion-smoke.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
