@@ -4,6 +4,13 @@ MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentral
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
 Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Digest.
 
+## 0.2.1 – 2026-10-06
+
+- Zusätzlichen Browserwerkzeuge-Hinweis samt Schildsymbol unter der Werkzeugliste entfernt.
+- Alle Werkzeuge direkt unter dem Suchfeld sichtbar; keine vorgeschaltete Schnellwahl
+  oder Kategoriekacheln mehr. Suche und bestehende Werkzeuge bleiben verfügbar.
+- Lange Werkzeugnamen umbrechen innerhalb der Kacheln, auch auf schmalen Smartphones.
+
 ## 0.2.0 – 2026-10-06
 
 - Footer auf kleinen Bildschirmen zentriert, umbrechende Links und eigene Versionszeile.
