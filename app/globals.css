@@ -345,7 +345,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible { outline:3px solid #
 .advanced-fields:disabled{pointer-events:none}.advanced-result{scroll-margin-top:24px}
 
 /* Equal category tiles keep batch and server tools aligned at every width. */
-.chooser-categories>[data-slot=tabs-list].chooser-category-list { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); width:100%; max-width:100%; height:auto; padding:6px; gap:5px; border:1px solid #e4ece1; border-radius:20px; background:#f5f8f2; }
+.chooser-categories>[data-slot=tabs-list].chooser-category-list { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); width:100%; max-width:100%; height:auto; padding:6px; gap:5px; border:1px solid #e4ece1; border-radius:20px; background:#f5f8f2; }
 .chooser-categories [data-slot=tabs-trigger].chooser-category-chip { display:flex; flex-wrap:wrap; align-content:center; height:74px; min-width:0; padding:10px 4px; gap:4px 6px; border-radius:14px; font-size:.875rem; line-height:1.25; white-space:normal; }
 .chooser-category-chip>svg { flex-basis:100%; height:18px; margin-bottom:3px; }
 .chooser-category-chip>small { font-size:.75rem; font-weight:400; color:#8b9a87; font-variant-numeric:tabular-nums; }
@@ -365,3 +365,13 @@ button:focus-visible,a:focus-visible,summary:focus-visible { outline:3px solid #
 @media(max-width:370px) { .chooser-categories>[data-slot=tabs-list].chooser-category-list { grid-template-columns:repeat(2,minmax(0,1fr)); }.chooser-categories [data-slot=tabs-trigger].chooser-category-chip { height:55px; }.chooser-category-chip>svg { flex-basis:auto; margin-bottom:0; } }
 
 .document-report{margin-top:24px;max-width:100%;overflow-wrap:anywhere}.document-report h3{font-size:20px;font-weight:600}.document-report>p{max-width:850px;margin:12px 0 20px;line-height:1.6}.document-report details{border:1px solid #dce7df;border-radius:12px;margin:10px 0;padding:14px 18px;background:#fff}.document-report summary{font-weight:500;cursor:pointer}.document-report dl{margin-top:12px}.document-report dl>div{display:grid;grid-template-columns:minmax(100px,180px) 1fr;gap:16px;padding:7px 0;border-top:1px solid #edf2ed;font-size:13px}.document-report dt{color:#657b70}.document-report dd{margin:0}.upload-alternatives{flex-wrap:wrap;justify-content:center;row-gap:10px}
+
+/* Primary conversion formats are one tap away after importing a PDF. */
+.quick-conversions { margin:30px auto 0; max-width:720px; }
+.quick-conversions h2 { text-align:center; color:#6e8578; font-size:13px; font-weight:500; margin-bottom:13px; }
+.quick-conversions>div { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; }
+.quick-conversions button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; min-width:0; min-height:72px; padding:12px 6px; border:1px solid #d9e9df; border-radius:14px; background:#f6fbf8; color:#176c64; }
+.quick-conversions button:hover { background:#eaf5ee; border-color:#99c5b3; }
+.quick-conversions strong { font-size:13px; font-weight:600; overflow-wrap:anywhere; }
+.quick-conversions span { font-size:11px; color:#789486; }
+@media(max-width:600px) { .quick-conversions>div { grid-template-columns:repeat(3,minmax(0,1fr)); } }

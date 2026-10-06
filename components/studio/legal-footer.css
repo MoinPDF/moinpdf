@@ -1,31 +1,43 @@
 .moinpdf-shell {
-  --legal-footer-height:56px;
+  --legal-footer-height:64px;
   display:flex;
   flex-direction:column;
+  width:100%;
+  min-width:0;
   min-height:100dvh;
 }
 
 .moinpdf-shell>.studio-provider {
-  flex:1;
+  flex:1 0 auto;
+  width:100%;
+  min-width:0;
   min-height:calc(100dvh - var(--legal-footer-height));
 }
 
 .moinpdf-shell .upload-entry,
 .moinpdf-shell .tool-chooser,
 .moinpdf-shell .document-workbench {
+  min-width:0;
   min-height:calc(100dvh - var(--legal-footer-height));
 }
 
 .moinpdf-legal-footer {
+  position:relative;
   display:flex;
+  flex-wrap:wrap;
   align-items:center;
   justify-content:center;
-  flex-shrink:0;
+  flex:0 0 auto;
+  width:100%;
+  min-width:0;
   min-height:var(--legal-footer-height);
-  padding:10px 20px max(10px,env(safe-area-inset-bottom));
+  gap:4px 24px;
+  margin:0;
+  padding:10px max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
   background:#fff;
   color:#61786f;
   font:400 .75rem/1.5 'Manrope Variable',Arial,sans-serif;
+  text-align:center;
 }
 
 .moinpdf-legal-footer nav {
@@ -33,12 +45,19 @@
   align-items:center;
   justify-content:center;
   flex-wrap:wrap;
-  gap:4px 13px;
+  min-width:0;
+  max-width:100%;
+  gap:0 18px;
 }
 
 .moinpdf-legal-footer a {
-  display:inline-block;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  max-width:100%;
   padding:7px 2px;
+  overflow-wrap:anywhere;
   font:inherit;
   letter-spacing:normal;
   color:inherit;
@@ -46,15 +65,14 @@
   text-underline-offset:4px;
 }
 
-.moinpdf-legal-footer a:hover {
-  color:#176c64;
-  text-decoration:underline;
-}
+.moinpdf-legal-footer a:hover { color:#176c64; text-decoration:underline; }
+.moinpdf-legal-footer a:focus-visible { border-radius:3px; outline:2px solid #176c64; outline-offset:3px; }
+.moinpdf-version { color:#7b8f86; white-space:nowrap; font-size:.6875rem; }
+.moinpdf-version>span { font-variant-numeric:tabular-nums; }
 
-.moinpdf-legal-footer a:focus-visible {
-  border-radius:3px;
-  outline:2px solid #176c64;
-  outline-offset:3px;
+@media(max-width:600px) {
+  .moinpdf-shell { --legal-footer-height:96px; }
+  .moinpdf-legal-footer { flex-direction:column; gap:0; padding-top:6px; }
+  .moinpdf-legal-footer nav { width:100%; column-gap:16px; }
+  .moinpdf-version { padding:2px 0 8px; }
 }
-
-.moinpdf-legal-footer nav>span { color:#8caaa0; }

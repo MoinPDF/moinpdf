@@ -1,29 +1,79 @@
 'use client';
-import {useEffect,useRef,useState} from 'react';
-import {ChevronLeft,Server,Check,Download,LoaderCircle,Plus} from 'lucide-react';
+import {useCallback,useEffect,useRef,useState} from 'react';
+import {ChevronLeft,Check,Download,FileText,LoaderCircle,Plus,RefreshCw} from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {tools} from '@/lib/tool-catalog';
-import {openSource,formatSize,type Source,type JobResult} from '@/lib/pdf-engine';
+import {tools,type WorkspaceTool} from '@/lib/tool-catalog';
+import {openSource,formatSize,MAX_BYTES,type Source,type JobResult} from '@/lib/pdf-engine';
 import type {ServerTool,ExportFile} from '@/lib/advanced-types';
 import {serverCapabilities,runServerJob,serverCapabilityKey,integratedDocumentServer,type ServerCapabilities} from '@/lib/document-server';
 import {ServerExtraFields,StructuredReport,initialExtraSettings,extraActions} from './server-extra-fields';
 import {Text,Choice,Field,Tick,PageStage,PageSelect} from './advanced-shared';
-export function ServerWorkbench({tool,sources,onBack,onAdd,onBusy,onUse}:{tool:ServerTool;sources:Source[];onBack:()=>void;onAdd:()=>void;onBusy:(busy:boolean)=>void;onUse:(result:JobResult)=>Promise<void>}){
- const integrated=!!integratedDocumentServer;
- const [base,setBase]=useState(integratedDocumentServer||''),[token,setToken]=useState(''),[capabilities,setCapabilities]=useState<ServerCapabilities|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[sourceId,setSourceId]=useState(sources[0]?.id||''),[file,setFile]=useState<File|null>(null),[cert,setCert]=useState<File|null>(null),[password,setPassword]=useState(''),[mode,setMode]=useState(tool==='certificate-sign'?'validate':'create'),[profile,setProfile]=useState(tool==='zugferd-create'?'E':'2b'),[extra,setExtra]=useState(initialExtraSettings),[spreadsheet,setSpreadsheet]=useState<File|null>(null),[attachments,setAttachments]=useState(true),[consent,setConsent]=useState(false),[result,setResult]=useState<ExportFile|null>(null),[report,setReport]=useState(''),[url,setUrl]=useState(''),[preview,setPreview]=useState<Source|null>(null),[page,setPage]=useState(0);
- const resultRef=useRef<HTMLElement>(null);const controller=useRef<AbortController|null>(null),info=tools.find(t=>t.id===tool)!,source=sources.find(s=>s.id===sourceId)||sources[0];const available=capabilities?.capabilities[serverCapabilityKey[tool]]===true;
+import './conversion-workbench.css';
+
+type Props={tool:ServerTool;sources:Source[];initialFile?:File|null;onBack:()=>void;onAdd:()=>void;onBusy:(busy:boolean)=>void;onUse:(result:JobResult)=>Promise<void>;onChoose:(tool:WorkspaceTool)=>void};
+
+export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,onUse,onChoose}:Props){
+ const localWord=!integratedDocumentServer&&tool==='pdf-word';
+ const [capabilities,setCapabilities]=useState<ServerCapabilities|null>(null);
+ const [status,setStatus]=useState<'checking'|'ready'|'unavailable'>(localWord?'ready':'checking');
+ const [busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [sourceId,setSourceId]=useState(sources[0]?.id||''),[file,setFile]=useState<File|null>(initialFile||null);
+ const [cert,setCert]=useState<File|null>(null),[password,setPassword]=useState('');
+ const [mode,setMode]=useState(tool==='certificate-sign'?'validate':'create'),[profile,setProfile]=useState(tool==='zugferd-create'?'E':'2b');
+ const [extra,setExtra]=useState(initialExtraSettings),[spreadsheet,setSpreadsheet]=useState<File|null>(null),[attachments,setAttachments]=useState(false);
+ const [result,setResult]=useState<ExportFile|null>(null),[report,setReport]=useState(''),[url,setUrl]=useState(''),[preview,setPreview]=useState<Source|null>(null),[page,setPage]=useState(0);
+ const resultRef=useRef<HTMLElement>(null),controller=useRef<AbortController|null>(null),connection=useRef<AbortController|null>(null);
+ const previousSources=useRef(sources.map(value=>value.id));
+ const info=tools.find(t=>t.id===tool)!,source=sources.find(s=>s.id===sourceId)||sources[0];
+ const available=localWord||capabilities?.capabilities[serverCapabilityKey[tool]]===true;
+ const fileInputTool=['office-pdf','email-pdf','html-pdf','word-mail-merge'].includes(tool);
+ const hasInput=fileInputTool?!!file:tool==='xrechnung-validate'?!!(file||source?.invoiceOriginal):!!source;
+ const completeInput=hasInput&&(tool!=='word-mail-merge'||!!spreadsheet)&&(tool!=='zugferd-create'||mode!=='create'||!!file)&&(tool!=='certificate-sign'||mode!=='sign'||!!cert);
+
+ const checkConnection=useCallback(async()=>{
+  if(!integratedDocumentServer){setStatus(localWord?'ready':'unavailable');return;}
+  connection.current?.abort();
+  const abort=new AbortController();connection.current=abort;setStatus('checking');
+  try{const value=await serverCapabilities(integratedDocumentServer,'',abort.signal);if(!abort.signal.aborted){setCapabilities(value);setStatus('ready');}}
+  catch{if(!abort.signal.aborted){setCapabilities(null);setStatus('unavailable');}}
+ },[localWord]);
+ useEffect(()=>{void checkConnection();return()=>{connection.current?.abort();controller.current?.abort();};},[checkConnection]);
+ useEffect(()=>{if(tool!=='translate-pdf'||capabilities?.translationStatus!=='starting')return;const timer=setInterval(()=>void checkConnection(),15000);return()=>clearInterval(timer);},[tool,capabilities?.translationStatus,checkConnection]);
+ useEffect(()=>{const added=sources.filter(value=>!previousSources.current.includes(value.id));if(added.length)setSourceId(added[added.length-1].id);previousSources.current=sources.map(value=>value.id);},[sources]);
+ useEffect(()=>{if(initialFile)setFile(initialFile);},[initialFile]);
+ useEffect(()=>{onBusy(busy);return()=>onBusy(false);},[busy,onBusy]);
+ useEffect(()=>{setResult(null);setReport('');setError('');},[tool,sourceId,file,mode,profile,cert,attachments,extra,spreadsheet]);
  useEffect(()=>{
-  const abort=new AbortController();
-  if(integratedDocumentServer){
-   serverCapabilities(integratedDocumentServer,'',abort.signal).then(v=>{if(!abort.signal.aborted){setCapabilities(v);setError('');}}).catch(e=>{if(!abort.signal.aborted)setError((e as Error).message);});
-  }else{try{setBase(localStorage.getItem('moinpdf.document-server')||'');}catch{}}
-  return()=>{abort.abort();controller.current?.abort();};
- },[]);useEffect(()=>{const server=integratedDocumentServer;if(!server||capabilities?.translationStatus!=='starting')return;const abort=new AbortController();const timer=setInterval(()=>{serverCapabilities(server,'',abort.signal).then(v=>{if(!abort.signal.aborted)setCapabilities(v);}).catch(()=>{});},15000);return()=>{clearInterval(timer);abort.abort();};},[capabilities?.translationStatus]);useEffect(()=>{onBusy(busy);return()=>onBusy(false);},[busy,onBusy]);useEffect(()=>{setResult(null);setReport('');setConsent(false);},[tool,sourceId,file,base,mode,profile,cert,token,attachments,extra,spreadsheet]);useEffect(()=>{if(!result){setUrl('');setPreview(null);return;}requestAnimationFrame(()=>resultRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));const u=URL.createObjectURL(result.blob);setUrl(u);setPage(0);let active=true,owned:Source|undefined;if(result.kind==='pdf')openSource(new File([result.blob],result.filename,{type:'application/pdf'})).then(value=>{owned=value;if(active)setPreview(value);else void value.pdf.loadingTask.destroy();}).catch(()=>{});return()=>{active=false;URL.revokeObjectURL(u);if(owned)void owned.pdf.loadingTask.destroy();};},[result]);
- async function run(action:(signal:AbortSignal)=>Promise<void>){if(controller.current)return;const abort=new AbortController();controller.current=abort;setBusy(true);setError('');try{await action(abort.signal);}catch(e){if(!abort.signal.aborted)setError((e as Error).message);}finally{setBusy(false);controller.current=null;}}
- const pick=(label:string,accept:string,onChange:(file:File|null)=>void)=><Field label={label}><input aria-label={label} type="file" accept={accept} onChange={e=>{onChange(e.target.files?.[0]||null);setConsent(false);}}/></Field>;
+  if(!result){setUrl('');setPreview(null);return;}
+  const frame=requestAnimationFrame(()=>resultRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
+  const objectUrl=URL.createObjectURL(result.blob);setUrl(objectUrl);setPage(0);
+  let active=true,owned:Source|undefined;
+  if(result.kind==='pdf')openSource(new File([result.blob],result.filename,{type:'application/pdf'})).then(value=>{owned=value;if(active)setPreview(value);else void value.pdf.loadingTask.destroy();}).catch(()=>{});
+  return()=>{active=false;cancelAnimationFrame(frame);URL.revokeObjectURL(objectUrl);if(owned)void owned.pdf.loadingTask.destroy();};
+ },[result]);
+
+ async function run(action:(signal:AbortSignal)=>Promise<void>){
+  if(controller.current)return;
+  const abort=new AbortController();controller.current=abort;setBusy(true);setError('');
+  try{await action(abort.signal);}catch(e){if(!abort.signal.aborted)setError((e as Error).message);}
+  finally{setBusy(false);controller.current=null;}
+ }
+ const pick=(label:string,accept:string,current:File|null,onChange:(value:File|null)=>void)=><div className="conversion-file-field">
+  <p>{label}</p><label className="conversion-file-picker"><FileText size={23}/><span>{current?<><strong>{current.name}</strong><small>{formatSize(current.size)} · Datei ändern</small></>:<strong>Datei auswählen</strong>}</span>
+   <input className="sr-only" aria-label={label} type="file" accept={accept} onChange={e=>{const next=e.target.files?.[0];if(!next)return;if(next.size>MAX_BYTES){setError('Bitte eine Datei mit höchstens 80 MB auswählen.');return;}onChange(next);e.target.value='';}}/>
+  </label>
+ </div>;
+
  async function process(signal:AbortSignal){
+  setResult(null);setReport('');
+  if(localWord){
+   if(!source)throw new Error('Bitte zuerst eine PDF auswählen.');
+   const {createTextWordFile}=await import('@/lib/word-export');
+   const out=await createTextWordFile(source,signal);if(!signal.aborted)setResult(out);return;
+  }
+  if(!integratedDocumentServer)throw new Error('Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.');
   const body=new FormData();let path='';
-  if(tool==='office-pdf'||tool==='email-pdf'||tool==='html-pdf'||tool==='word-mail-merge'){
+  if(fileInputTool){
    if(!file)throw new Error('Bitte zuerst eine Datei auswählen.');body.append('file',file);
    if(tool==='office-pdf')path='/v1/office';
    if(tool==='email-pdf'){path='/v1/email';body.append('include_attachments',String(attachments));}
@@ -33,22 +83,56 @@ export function ServerWorkbench({tool,sources,onBack,onAdd,onBusy,onUse}:{tool:S
    const xml=file||(source?.invoiceOriginal?new File([new Uint8Array(source.invoiceOriginal.bytes)],source.invoiceOriginal.name,{type:'application/xml'}):null);
    if(!xml)throw new Error('Bitte Rechnungs-XML auswählen.');body.append('file',xml);path='/v1/xrechnung/validate';
   }else{
-   if(!source)throw new Error('Bitte zuerst eine PDF öffnen.');
+   if(!source)throw new Error('Bitte zuerst eine PDF auswählen.');
    body.append('file',new Blob([new Uint8Array(source.bytes)],{type:'application/pdf'}),source.name);
    if(tool==='pdf-word')path='/v1/pdf-to-word';
    else if(extraActions[tool]){path='/v1/documents/'+extraActions[tool];body.append('options',JSON.stringify(extra));}
    else if(tool==='pdfa'){body.append('profile',profile);path=`/v1/pdfa/${mode}`;}
    else if(tool==='zugferd-create'){
     path=`/v1/zugferd/${mode}`;body.append('profile',profile);
-    if(mode==='create'){if(!file)throw new Error('Bitte die passende CII-Rechnungs-XML auswählen.');body.append('invoice',file);}
+    if(mode==='create'){if(!file)throw new Error('Bitte die passende Rechnungs-XML auswählen.');body.append('invoice',file);}
    }else if(tool==='certificate-sign'){
     path=`/v1/signatures/${mode}`;
-    if(mode==='sign'){if(!cert)throw new Error('Bitte eine PKCS#12-Datei auswählen.');body.append('certificate',cert);body.append('password',password);}
+    if(mode==='sign'){if(!cert)throw new Error('Bitte eine Zertifikatsdatei auswählen.');body.append('certificate',cert);body.append('password',password);}
    }
   }
-  setResult(null);setReport('');
-  try{const out=await runServerJob(base,token,path,body,signal);if(signal.aborted)return;setResult(out);if(out.blob.type.includes('json'))setReport(JSON.stringify(JSON.parse(await out.blob.text()),null,2));}finally{setPassword('');}
+  const limit=capabilities?.limits?.maxBytes||MAX_BYTES;
+  for(const value of body.values())if(value instanceof Blob&&value.size>limit)throw new Error(`Diese Datei ist zu groß. Erlaubt sind höchstens ${formatSize(limit)} pro Datei.`);
+  try{
+   const out=await runServerJob(integratedDocumentServer,'',path,body,signal);
+   if(signal.aborted)return;
+   setResult(out);if(out.blob.type.includes('json'))setReport(JSON.stringify(JSON.parse(await out.blob.text()),null,2));
+  }finally{setPassword('');}
  }
 
- return <main className="document-workbench advanced-workbench"><header className="workbench-header"><Button variant="ghost" disabled={busy} onClick={onBack}><ChevronLeft size={17}/>Alle Werkzeuge</Button><div className="advanced-actions"><Button variant="outline" disabled={busy} onClick={onAdd}><Plus size={16}/>PDF hinzufügen</Button><span className="device-tag"><Server size={14}/>DEIN DOKUMENTENSERVER</span></div></header><div className="workbench-title"><div><span className="studio-kicker">ERWEITERTE DOKUMENTENFUNKTIONEN</span><h1><info.icon/>{info.title}</h1><p>{info.description}</p></div></div><div className="advanced-grid"><section className="advanced-card"><h2>{integrated?'Dein Dokumentenserver':'Server verbinden'}</h2>{integrated?<><p>Deine Docker-Installation verbindet die Werkzeuge automatisch mit dem eigenen Dokumentenserver. Übersetzungen laufen ebenfalls auf deinem Server.</p><Button variant="outline" disabled={busy} onClick={()=>run(async signal=>setCapabilities(await serverCapabilities(base,'',signal)))}>Verbindung erneut prüfen</Button></>:<><p>Diese Funktion benötigt den zusätzlichen MoinPDF-Dokumentenserver. Die Browserwerkzeuge funktionieren unabhängig davon.</p><fieldset disabled={busy} className="advanced-fields"><Text label="Serveradresse" value={base} placeholder="https://pdf-server.example.de" onChange={v=>{setBase(v);setCapabilities(null);}}/><Text label="API-Schlüssel" value={token} type="password" onChange={v=>{setToken(v);setCapabilities(null);}}/><Button variant="outline" onClick={()=>run(async signal=>{const v=await serverCapabilities(base,token,signal);setCapabilities(v);try{localStorage.setItem('moinpdf.document-server',base);}catch{}})}>Verbindung und Funktionen prüfen</Button></fieldset><p className="fine-note">Nur die Serveradresse wird gespeichert. API-Schlüssel und Zertifikatspasswort bleiben für diese Sitzung im Arbeitsspeicher.</p></>}{capabilities?.translationStatus==='starting'&&<p role="status" className="fine-note">Die Übersetzung wird vorbereitet oder ist gerade nicht erreichbar. Beim ersten Start werden die Sprachmodelle automatisch geladen; das kann einige Minuten dauern. Die anderen Werkzeuge sind bereits nutzbar. Der Status aktualisiert sich automatisch.</p>}{capabilities&&<div className="server-capabilities"><p><Check size={16}/>{capabilities.service} verbunden</p>{Object.entries({powerpoint:'PDF zu PowerPoint',html:'HTML-Konvertierung',orient:'Seitenausrichtung',formDetect:'Formularerkennung',documentChecks:'Dokumentprüfungen',dewarp:'Buchscan-Korrektur',translate:'Übersetzung',wordMerge:'Word-Serienbriefe',zugferd:'ZUGFeRD mit Mustang',pdfWord:'PDF zu Word',email:'EML / MSG zu PDF',office:'Office-Konvertierung',pdfa:'PDF/A mit veraPDF',xrechnung:'KoSIT-Validierung',signatures:'Zertifikatssignaturen'}).map(([key,label])=><p key={key}><span>{label}</span><strong>{capabilities.capabilities[key]?'Bereit':key==='translate'&&capabilities.translationStatus==='starting'?'Wird vorbereitet':'Serverkomponente fehlt'}</strong></p>)}</div>}<p className="fine-note">Einrichtung und Docker-Konfiguration: <a href="https://github.com/dennysubke/moinpdf/tree/main/server" target="_blank" rel="noreferrer">Dokumentation im Repository</a></p></section><section className="advanced-card"><h2>Dokument verarbeiten</h2><fieldset disabled={busy} className="advanced-fields">{tool==='office-pdf'?pick('Office-Datei (.docx, .xlsx, .pptx, .odt, .ods, .odp)', '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp',setFile):tool==='html-pdf'?pick('Gespeicherte Webseite (.html oder .htm)','.html,.htm,text/html',setFile):tool==='word-mail-merge'?<>{pick('Word-Vorlage (.docx)','.docx',setFile)}{pick('Excel-Datentabelle (.xlsx)','.xlsx',setSpreadsheet)}</>:tool==='email-pdf'?pick('E-Mail (.eml oder .msg)','.eml,.msg,message/rfc822',setFile):tool==='xrechnung-validate'?<>{pick('XRechnung als XML','.xml,application/xml,text/xml',setFile)}{source?.invoiceOriginal&&<p>Alternativ wird die geöffnete XML-Datei verwendet: {source.invoiceOriginal.name}</p>}</>:<Choice label="PDF-Dokument" value={source?.id||''} onChange={setSourceId} items={sources.map(s=>[s.id,s.name])}/>}<ServerExtraFields tool={tool} value={extra} onChange={setExtra} translationService={capabilities?.translationService}/>{tool==='zugferd-create'&&<><Choice label="Aktion" value={mode} onChange={setMode} items={ [['create','Rechnungs-PDF und CII-XML verbinden'],['validate','Vorhandene hybride Rechnung prüfen']]}/>{mode==='create'&&<>{pick('Zur Rechnung passende CII-XML','.xml',setFile)}<Choice label="ZUGFeRD-Profil (passend zur XML)" value={profile} onChange={setProfile} items={ [['E','EN 16931'],['B','BASIC'],['T','EXTENDED'],['X','XRECHNUNG']]}/></>}<p className="fine-note">Erstellt eine PDF/A-3-Kopie und bettet die XML ein. Mustang und veraPDF prüfen die Ausgabe. Fehlgeschlagene Prüfungen werden im ZIP ausdrücklich markiert. Die sichtbare Rechnung und die XML müssen dieselben Rechnungsdaten enthalten; diese inhaltliche Übereinstimmung bitte selbst kontrollieren.</p></>}{tool==='pdf-word'&&<p className="fine-note">Text, Tabellen und Bilder werden für Word rekonstruiert. Komplexe Layouts können abweichen. Reine Scans zuerst mit „OCR &amp; Text“ durchsuchbar machen.</p>}{tool==='email-pdf'&&<><Tick label="Anlagen unverändert im ZIP beilegen" value={attachments} onChange={setAttachments}/><p className="fine-note">Die Nachricht wird als gut lesbarer Text mit Kopfzeilen gesetzt. Externe Bilder werden nicht geladen. Verschachtelte E-Mails bleiben als Anlage erhalten.</p></>}{tool==='pdfa'&&<><Choice label="Aktion" value={mode} onChange={setMode} items={ [['create','PDF/A erzeugen und anschließend prüfen'],['validate','Vorhandene PDF/A prüfen']]}/><Choice label="PDF/A-Profil" value={profile} onChange={setProfile} items={ [['1b','PDF/A-1b'],['2b','PDF/A-2b'],['3b','PDF/A-3b']]}/><p className="fine-note">Beim Erzeugen wird eine neue Archivkopie erstellt. Interaktive Elemente und Anhänge können entfallen. Der Export enthält PDF und veraPDF-Prüfbericht; ein fehlgeschlagener Check wird ausdrücklich ausgewiesen.</p></>}{tool==='certificate-sign'&&<><Choice label="Aktion" value={mode} onChange={setMode} items={ [['validate','Vorhandene Signaturen prüfen'],['sign','Mit Zertifikat signieren']]}/>{mode==='sign'&&<>{pick('PKCS#12-Zertifikat (.p12 oder .pfx)','.p12,.pfx',setCert)}<Text label="Zertifikatspasswort" type="password" value={password} onChange={setPassword}/></>}<p className="fine-note">Die Prüfung unterscheidet Integrität, Zertifikatsvertrauen und Änderungen am Dokument. Ohne Sperrlisten-/OCSP-Abfrage ist der aktuelle Sperrstatus nicht bestätigt. Es wird keine qualifizierte Signatur behauptet.</p></>}{tool==='xrechnung-validate'&&<p className="fine-note">Die Prüfung nutzt die auf deinem Server installierte KoSIT-XRechnung-Konfiguration. Der Bericht enthält die verwendete Version und die einzelnen Prüfergebnisse.</p>}<Tick label={`Für diesen Auftrag Datei${tool==='certificate-sign'&&mode==='sign'?', Zertifikat und Passwort':''} an meinen ${integrated?'eigenen':'eingetragenen'} Server übertragen.${tool==='translate-pdf'?' Der ausgelesene Text darf an den oben genannten Übersetzungsdienst weitergegeben werden.':''}`} value={consent} onChange={setConsent}/><Button disabled={!available||!consent} onClick={()=>run(process)}>An Server senden und verarbeiten</Button>{!available&&<p className="server-unavailable">{integrated?'Der Dokumentenserver wird geprüft. Falls die Verbindung fehlschlägt, bitte erneut prüfen.':'Noch nicht verfügbar: zuerst einen passenden Dokumentenserver verbinden.'}</p>}</fieldset></section></div>{busy&&<div className="advanced-progress" role="status"><LoaderCircle className="spin" size={18}/>Serverauftrag wird verarbeitet …<Button variant="ghost" onClick={()=>controller.current?.abort()}>Warten abbrechen</Button></div>}{error&&<p className="error-box" role="alert">{error}</p>}{result&&<section ref={resultRef} className="advanced-result"><div><h2>Serverergebnis</h2><p>{result.filename} · {formatSize(result.blob.size)}</p><Button asChild><a href={url} download={result.filename}><Download size={17}/>Ergebnis herunterladen</a></Button>{result.kind==='pdf'&&<Button variant="outline" onClick={()=>run(async()=>onUse({...result,kind:'pdf',inputSize:source?.size||0}))}>Ergebnis weiterbearbeiten</Button>}{report&&<StructuredReport raw={report}/>}</div>{preview&&<div className="advanced-result-preview"><PageSelect source={preview} page={page} onChange={setPage}/><PageStage source={preview} page={page}/></div>}</section>}</main>;
+ return <main className="document-workbench advanced-workbench conversion-workbench">
+  <header className="workbench-header"><Button variant="ghost" disabled={busy} onClick={onBack}><ChevronLeft size={17}/>Alle Werkzeuge</Button></header>
+  <div className="workbench-title"><div><span className="studio-kicker">DATEI REIN. ERGEBNIS RAUS.</span><h1><info.icon/>{info.title}</h1><p>{info.description}</p></div></div>
+  <ol className="conversion-steps" aria-label="Arbeitsschritte"><li className={hasInput?'is-complete':'is-current'}><span>{hasInput?<Check size={14}/>:1}</span>Datei auswählen</li><li className={busy?'is-current':''}><span>2</span>Verarbeiten</li><li className={result?'is-complete':''}><span>3</span>Herunterladen</li></ol>
+  <section className="advanced-card conversion-card" aria-label={info.title}>
+   <fieldset disabled={busy} className="advanced-fields conversion-fields">
+    {tool==='office-pdf'?pick('Word, Excel, PowerPoint oder OpenDocument','.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp',file,setFile)
+     :tool==='html-pdf'?pick('Gespeicherte Webseite (.html oder .htm)','.html,.htm,text/html',file,setFile)
+     :tool==='word-mail-merge'?<>{pick('Word-Vorlage (.docx)','.docx',file,setFile)}{pick('Excel-Datentabelle (.xlsx)','.xlsx',spreadsheet,setSpreadsheet)}</>
+     :tool==='email-pdf'?pick('E-Mail (.eml oder .msg)','.eml,.msg,message/rfc822',file,setFile)
+     :tool==='xrechnung-validate'?<>{pick('XRechnung als XML','.xml,application/xml,text/xml',file,setFile)}{source?.invoiceOriginal&&!file&&<p>Ausgewählt: {source.invoiceOriginal.name}</p>}</>
+     :sources.length>1?<Choice label="PDF-Dokument" value={source?.id||''} onChange={setSourceId} items={sources.map(s=>[s.id,s.name])}/>
+     :source?<div className="conversion-selected-file"><FileText size={25}/><div><strong>{source.name}</strong><span>{formatSize(source.size)} · {source.pdf.numPages} {source.pdf.numPages===1?'Seite':'Seiten'}</span></div><Button variant="ghost" onClick={onAdd}>Ändern</Button></div>
+     :<Button variant="outline" onClick={onAdd}><Plus size={17}/>PDF auswählen</Button>}
+    <ServerExtraFields tool={tool} value={extra} onChange={setExtra}/>
+    {tool==='pdf-word'&&<p className="fine-note">{localWord?'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.':'Text, Tabellen und Bilder werden für Word übernommen. Bei komplexen Layouts kann die Anordnung abweichen.'} Reine Scans zuerst mit <button className="conversion-text-link" onClick={()=>onChoose('ocr')}>OCR &amp; Text</button> auslesen.</p>}
+    {tool==='email-pdf'&&<><details className="conversion-options"><summary>Weitere Optionen</summary><Tick label="Anlagen zusätzlich in einer ZIP-Datei herunterladen" value={attachments} onChange={setAttachments}/></details><p className="fine-note">Die Nachricht wird mit Absender und Betreff als PDF gespeichert. Externe Bilder werden nicht geladen.</p></>}
+    {tool==='pdfa'&&<><Choice label="Aktion" value={mode} onChange={setMode} items={ [['create','Archiv-PDF erstellen und prüfen'],['validate','Vorhandene Archiv-PDF prüfen']]}/><details className="conversion-options"><summary>Weitere Optionen</summary><Choice label="PDF/A-Profil" value={profile} onChange={setProfile} items={ [['1b','PDF/A-1b'],['2b','PDF/A-2b'],['3b','PDF/A-3b']]}/></details><p className="fine-note">Du erhältst eine ZIP-Datei mit PDF und Prüfbericht. Interaktive Elemente und Anhänge können in der Archivkopie entfallen. Bitte den Bericht vor der Archivierung prüfen.</p></>}
+    {tool==='zugferd-create'&&<><Choice label="Aktion" value={mode} onChange={setMode} items={ [['create','PDF und Rechnungsdaten verbinden'],['validate','Vorhandene Rechnung prüfen']]}/>{mode==='create'&&<>{pick('Zur Rechnung passende CII-XML','.xml',file,setFile)}<Choice label="Rechnungsprofil" value={profile} onChange={setProfile} items={ [['E','EN 16931'],['B','BASIC'],['T','EXTENDED'],['X','XRECHNUNG']]}/></>}<p className="fine-note">Die sichtbare Rechnung und die XML müssen dieselben Rechnungsdaten enthalten. Das Ergebnis enthält einen Prüfbericht; fehlgeschlagene Prüfungen werden ausdrücklich markiert.</p></>}
+    {tool==='certificate-sign'&&<><Choice label="Aktion" value={mode} onChange={setMode} items={ [['validate','Signaturen prüfen'],['sign','Mit Zertifikat signieren']]}/>{mode==='sign'&&<>{pick('Zertifikat (.p12 oder .pfx)','.p12,.pfx',cert,setCert)}<Text label="Zertifikatspasswort" type="password" value={password} onChange={setPassword}/><p className="fine-note">Mit „Signieren“ werden auch das ausgewählte Zertifikat samt privatem Schlüssel und das Passwort für diesen Auftrag übertragen.</p></>}<p className="fine-note">Die Prüfung erfasst Integrität, Zertifikatsvertrauen und Änderungen. Der aktuelle Sperrstatus wird nicht abgefragt. Es wird keine qualifizierte Signatur bestätigt.</p></>}
+    <Button className="conversion-submit" disabled={busy||!available||!completeInput||status==='checking'} onClick={()=>run(process)}>{busy?<><LoaderCircle className="spin" size={18}/>Wird verarbeitet …</>:tool==='certificate-sign'?(mode==='sign'?'Signieren':'Signaturen prüfen'):info.action}</Button>
+    {status==='checking'&&<p className="conversion-status" role="status"><LoaderCircle className="spin" size={15}/>Wird vorbereitet …</p>}
+    {status!=='checking'&&!available&&<div className="conversion-unavailable" role="status"><p>{!integratedDocumentServer?'Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.':tool==='translate-pdf'&&capabilities?.translationStatus==='starting'?'Die Übersetzung wird noch vorbereitet. Bitte versuche es in wenigen Minuten erneut.':'Diese Funktion ist gerade nicht verfügbar. Bitte versuche es gleich noch einmal.'}</p>{integratedDocumentServer&&<Button variant="outline" onClick={()=>void checkConnection()}><RefreshCw size={15}/>Erneut versuchen</Button>}</div>}
+    {available&&!localWord&&<p className="conversion-privacy">Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen. Sie wird nicht dauerhaft gespeichert. <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">Datenschutz</a></p>}
+   </fieldset>
+  </section>
+  {busy&&<div className="advanced-progress" role="status"><LoaderCircle className="spin" size={18}/><span>Deine Datei wird verarbeitet …</span><Button variant="ghost" onClick={()=>controller.current?.abort()}>Abbrechen</Button></div>}
+  {error&&<p className="error-box" role="alert">{error}</p>}
+  {result&&<section ref={resultRef} className="advanced-result"><div><h2><Check size={22}/>Fertig.</h2><p>{result.filename} · {formatSize(result.blob.size)}</p>{result.note&&<p>{result.note}</p>}<Button asChild><a href={url||undefined} download={result.filename}><Download size={17}/>{result.filename.toLowerCase().endsWith('.docx')?'Word herunterladen':result.kind==='pdf'?'PDF herunterladen':result.kind==='zip'?'ZIP herunterladen':'Ergebnis herunterladen'}</a></Button>{result.kind==='pdf'&&<Button variant="outline" onClick={()=>run(async()=>onUse({...result,kind:'pdf',inputSize:source?.size||file?.size||0}))}>Ergebnis weiterbearbeiten</Button>}{report&&<StructuredReport raw={report}/>}</div>{preview&&<div className="advanced-result-preview"><PageSelect source={preview} page={page} onChange={setPage}/><PageStage source={preview} page={page}/></div>}</section>}
+ </main>;
 }

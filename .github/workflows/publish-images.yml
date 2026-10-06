@@ -2,8 +2,12 @@ name: Publish platform images
 
 on:
   push:
-    branches: [codex/platform-app]
+    branches: [main, codex/platform-app]
     tags: [v*]
+    paths-ignore:
+      - '**/*.md'
+      - 'deploy/platform/**'
+      - 'tests/**'
   workflow_dispatch:
 
 permissions:

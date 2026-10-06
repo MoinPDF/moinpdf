@@ -27,5 +27,12 @@ try {
   await hosted.serverCapabilities('https://external.example','a-test-key',signal);
   assert.equal(request.options.credentials,'omit');
   assert.equal(request.options.headers.Authorization,'Bearer a-test-key');
-  console.log('PASS: integrated connection, same-origin credentials, no exposed key, separate manual-server authentication.');
+  const originalTimer=globalThis.setTimeout;
+  try {
+    globalThis.setTimeout=(callback)=>originalTimer(callback,1);
+    globalThis.fetch=async(_url,options)=>new Promise((_resolve,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true}));
+    await assert.rejects(docker.serverCapabilities('/api/documents','',signal),/antwortet gerade nicht/);
+  } finally {globalThis.setTimeout=originalTimer;}
+  await assert.rejects(docker.serverCapabilities('/api/documents','',AbortSignal.abort()),{name:'AbortError'});
+  console.log('PASS: integrated authentication, same-origin credentials, bounded readiness checks and cancellation.');
 } finally { globalThis.fetch = originalFetch; }
