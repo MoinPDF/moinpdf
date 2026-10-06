@@ -12,7 +12,7 @@ MoinPDF ist als **`denny-moinpdf`** in [Denny's Umbrel Community Store](https://
 
 2. **MoinPDF** suchen und installieren. Mindestens **8 GB verfügbaren RAM und 20 GB freien Speicher** als Ausgangspunkt vorsehen. Die großen Konverter-Images und Sprachmodelle benötigen beim ersten Start Internetzugang und können mehrere Minuten laden.
 3. MoinPDF über das Symbol auf Umbrel öffnen. Der App-Port ist **8785**. Die Oberfläche verbindet sich automatisch mit dem Dokumentenserver; es muss kein API-Schlüssel in den Browser eingetragen werden.
-4. Unter einem Serverwerkzeug den Status prüfen. Während des ersten Modelldownloads zeigt die App „Wird vorbereitet“ und aktualisiert den Status selbst. Die übrigen Werkzeuge sind bereits nutzbar.
+4. Datei auswählen, Werkzeug oder Zielformat wählen und die Verarbeitung starten. Bei „PDF übersetzen“ kann nach der Erstinstallation kurz „Wird vorbereitet“ erscheinen; die übrigen Werkzeuge sind bereits nutzbar.
 5. Eine Test-PDF öffnen, eine DOCX in PDF konvertieren und nach abgeschlossener Einrichtung ein kurzes Text-PDF übersetzen.
 
 Die drei Container-Pakete sind öffentlich und ohne GitHub-Anmeldung abrufbar. Der Store verwendet feste Image-Versionen mit Prüfsummen für Intel/AMD (`amd64`) und ARM (`arm64`).
@@ -61,6 +61,8 @@ Die eingebundenen Seiten beschreiben **Denny Wenkes eigenen Betrieb mit eigenem 
 ## Updates und Prüfung auf dem Zielgerät
 
 Updates über den Umbrel App Store installieren. Die Paketversion verweist auf geprüfte, mit Manifest-Digests festgelegte Images für `linux/amd64` und `linux/arm64`. Ein normales Update behält die App-Daten; eine Deinstallation kann sie löschen.
+
+Version `0.2.0` aktualisiert die Web-Oberfläche. Die unveränderten Dokumenten- und Übersetzungsdienste bleiben auf den bereits geprüften Images mit festen Digests. Der [vollständige Docker-Installationstest für 0.2.0](https://github.com/dennysubke/moinpdf/actions/runs/37425281807) ist erfolgreich, einschließlich nativer Konverter, Übersetzung, Neustart und Zugriffsschutz. Der neue Web-Image-Index wurde für `amd64` und `arm64` geprüft. Die mobile Darstellung wurde in dieser Umgebung nicht visuell im Browser geprüft.
 
 Version `0.1.0` wurde in einer frischen, temporären **umbrelOS-2.0.0-Umgebung auf `amd64`** über einen Community Store installiert. Der [native Umbrel-Test](https://github.com/dennysubke/moinpdf/actions/runs/37389683418) prüft den geschützten App-Zugang, angemeldete HTTP- und HTTPS-Aufrufe, PDF-Import und gerenderte Seitenvorschau, echte Office-Konvertierung, eine Deutsch-Englisch-PDF-Übersetzung, die Bereitschaft aller sieben Sprachmodelle sowie Neustart und erhaltene Modelle. Die Testkonfiguration entspricht den ausgelieferten App-Dateien. Die Container werden ohne Registry-Anmeldung geladen. Der offizielle Umbrel-Linter mit Image-Prüfung meldet keine Fehler; die fünf beabsichtigten Hinweise betreffen das interne Netz und `no-new-privileges`.
 
