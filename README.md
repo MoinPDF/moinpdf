@@ -18,7 +18,7 @@ Dann **http://localhost:8080** bzw. **http://SERVER-IP:8080** öffnen. Der Compo
 
 ## Ausbau: weitere 14 Werkzeuge
 
-Die Kategorien stehen auf einem einheitlichen Raster mit Symbol, Beschriftung und Anzahl. Auf schmalen Ansichten werden die Kategorien in gleichmäßige Reihen verteilt. „Alle“ gliedert die Werkzeuge zusätzlich nach Bereichen. Alle Werkzeuge sind nach ihrer Aufgabe einsortiert. Nach dem PDF-Import sind die Zielformate Word, Excel, PowerPoint, Bilder und Text direkt erreichbar. Über „Alle Werkzeuge“ ist die Übersicht auch ohne geöffnetes PDF erreichbar.
+Alle Werkzeuge stehen direkt unter dem Suchfeld, nach ihrer Aufgabe gegliedert. Es gibt keine vorgeschaltete Schnellwahl oder Kategoriekacheln. Auf schmalen Ansichten brechen lange Werkzeugnamen innerhalb ihrer Kacheln um. Über „Alle Werkzeuge“ ist die Übersicht auch ohne geöffnetes PDF erreichbar.
 
 | Werkzeug | Ausführung | Umfang |
 |---|---|---|
