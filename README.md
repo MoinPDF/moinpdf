@@ -1,6 +1,30 @@
 # MoinPDF – Papierkram. Läuft.
 
-Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler Übersetzung. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 83 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 64 Werkzeuge verarbeiten Dokumente im Browser. 19 zusätzliche Ansichten nutzen in der vollständigen Docker-/Umbrel-Installation automatisch den integrierten Dokumentendienst. Die Verarbeitung startet mit dem jeweiligen Aktionsknopf; die Oberfläche benötigt weder Serveradresse noch API-Schlüssel. Die Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme und für die Wunschgrößen-Komprimierung eine lokale Optimierung ohne Bild-Downsampling.
+Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler Übersetzung. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 93 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 74 Werkzeuge verarbeiten Dokumente im Browser. 19 zusätzliche Ansichten nutzen in der vollständigen Docker-/Umbrel-Installation automatisch den integrierten Dokumentendienst. Die Verarbeitung startet mit dem jeweiligen Aktionsknopf; die Oberfläche benötigt weder Serveradresse noch API-Schlüssel. Die Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme und für die Wunschgrößen-Komprimierung eine lokale Optimierung ohne Bild-Downsampling.
+
+## Dokumente mit Fundstellen prüfen (0.4.0)
+
+Zehn zusätzliche Browserwerkzeuge verbinden Erkennung, Originalvorschau und Export:
+
+| Werkzeug | Umfang und Grenzen |
+| --- | --- |
+| Zahlenvergleich | Beträge, Daten, Prozentwerte und mögliche IBANs anhand ihrer Zeilenbeschriftung zuordnen. Mehrdeutige Zeilen bleiben ungeklärt. |
+| Belegfelder sammeln | Frei definierte Beschriftungen in mehreren Dateien suchen, Werte korrigieren und mit Fundstelle sowie Prüfstatus nach XLSX/CSV exportieren. |
+| Rechnung und XML abgleichen | Sichtbare Seiten per OCR lesen und ausgewählte Angaben mit eingebetteter UBL/CII vergleichen. Nicht erkannte Werte bleiben ungeklärt; keine Echtheitsprüfung. |
+| Dokumentlücken finden | Gedruckte Zählungen wie „Seite 3 von 7“ prüfen. Unterschiedliche Zählungen innerhalb einer Datei erfordern vorherige Trennung. |
+| OCR-Korrekturhilfe | Wörter mit OCR-Sicherheit und Ausschnitt prüfen, korrigierten TXT oder eine neue PDF mit korrigiertem Suchtext exportieren. Die sichtbaren Seiten bleiben Bilder. |
+| Pseudonymisierung | Explizit angegebene Begriffe über mehrere Dateien durch konsistente Platzhalter ersetzen. Alle Schreibvarianten angeben, Treffer kontrollieren. Nicht erkannte Angaben bleiben sichtbar. |
+| Anlagen verknüpfen | Verweise und Anlagenüberschriften erkennen, Ziele prüfen oder manuell wählen, zusammengeführte PDF mit internen Links erzeugen. Offene Verweise exportieren. |
+| Beste Scan-Seiten | Ähnlichkeit, Schärfe, Kontrast und Randinhalt bewerten, Auswahl pro Seite bestätigen, ergänzen und umsortieren. Originalseiten ohne erneute Bildkomprimierung übernehmen. |
+| Angebot/Auftrag/Rechnung | Einfache Positionszeilen erkennen, manuell korrigieren und Mengen/Preise/Beträge vergleichen. Einheit, Währung und Preisbasis vorher angleichen. |
+| Kommentare als Arbeitsliste | Echte PDF-Anmerkungen mit Autor, Seite und Textauszug lesen, Aufgaben bearbeiten und nach XLSX/CSV/Markdown exportieren. Eingebrannte Kommentare sind nicht auslesbar. |
+
+Diese Werkzeuge verarbeiten keine Dokumentdaten außerhalb des Browsers. OCR nutzt
+mitgelieferte deutsche und englische Sprachdaten und kann bei großen Stapeln länger
+dauern. Analyse und Scanvergleich sind auf insgesamt 400 Seiten begrenzt. Die
+Pseudonymisierung übernimmt keine Originaltextebene oder Dateianhänge; die vertrauliche
+Zuordnung ist nur als separater Export erhältlich. PDFs werden als neue Dateien
+ausgegeben. Geänderte PDFs erhalten keine gültige ursprüngliche digitale Signatur.
 
 ## Auf Umbrel installieren
 
@@ -101,12 +125,13 @@ Der private GitHub-Branch `checkpoint-44-tools` enthält den vor diesen Erweiter
 
 Node.js 22.13 oder neuer und pnpm verwenden. Nach `pnpm install` einmal `node scripts/prepare-pdf-assets.mjs` ausführen. Das Skript kopiert PDF-Worker, Schriftressourcen, OCR-Worker und Sprachdaten aus den gesperrten npm-Abhängigkeiten nach `public/vendor`. Der Build wiederholt diesen Schritt. Im verwalteten Sites-Umfeld die vorgesehenen Setup-, Vorschau- und Build-Hilfen benutzen.
 
-- `pnpm test`: alle zehn Browser-Testsuiten
+- `pnpm test`: alle 14 Browser-Testsuiten
+- `pnpm test:evidence`: zehn neue Werkzeuge mit tatsächlicher lokaler OCR, Gegenprüfung der PDF-Ausgaben, sichtbarer Pseudonymisierung, Linkzielen, Positionsvergleich und sicheren Exporten
 - `pnpm test:advanced`: zusätzliche Dateiformate, Suchschwärzung, echte Anhangsbereinigung, Linkkoordinaten, Workflows, Codes und Kameraperspektive
 - `pnpm test:pdf`: Reihenfolge, Drehungen, Seitenexport, ZIP, Nummerierung, Wasserzeichen und Eingabeprüfung
 - `pnpm test:studio`: echte PDF.js-Exporte und Textextraktion, Schwärzungs-Pixel, Zuschneidegrenzen, Textnotizen, N-up, Papierformate, Leerseiten, Graustufen, Fixieren, Metadaten und Abbruch. Normalisierte Drehungen werden pixelweise mit der Originalvorschau verglichen. Nutzt die optionale Node-Canvas-Abhängigkeit von PDF.js.
 - `pnpm test:check`: Textindex, Scan- und Leerseitenhinweise, Vorschau-Duplikate, gemischte Papierformate, Suche mit mehreren Begriffen, PDF aus Fundstellen und Abbruch
-- `pnpm test:tools`: alle 83 Werkzeugnamen, 79 natürliche Suchanfragen, Konvertierungsrichtung, Teilbegriffe und unbekannte Vorhaben
+- `pnpm test:tools`: alle 93 Werkzeugnamen, 89 natürliche Suchanfragen, Konvertierungsrichtung, Teilbegriffe und unbekannte Vorhaben
 - `pnpm test:editor`: Text entfernen/ersetzen, Bildplatzierung, Schriftvarianten, gedrehte und zugeschnittene Seiten
 - `pnpm test:extra`: zusätzliche Seitenwerkzeuge, Scanfilter, Anhänge, Metadaten und PDF-Vergleich
 - `pnpm test:documents`: Formularwerte und Felder, Lesezeichen, Bilderextraktion und Erhalt bestehender Dokumentfunktionen

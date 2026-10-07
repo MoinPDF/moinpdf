@@ -2,6 +2,16 @@ import {tools,type WorkspaceTool} from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases:Record<WorkspaceTool,string[]>={
+ 'number-compare':['Zahlenvergleich','geänderte Beträge finden','IBAN Änderungen vergleichen','Datumsangaben vergleichen','Zahlen zwischen Versionen'],
+ 'field-collector':['Belegfelder sammeln','viele Rechnungen nach Excel','Felder aus mehreren PDFs','Rechnungsnummern sammeln'],
+ 'invoice-visual-check':['Rechnung und XML abgleichen','sichtbare Rechnung vergleichen','XML weicht von PDF ab','ZUGFeRD Sichtprüfung'],
+ 'page-gaps':['Dokumentlücken finden','fehlende Seiten finden','Seite von Vollständigkeit','Seitenzählung prüfen'],
+ 'ocr-review':['OCR Korrekturhilfe','OCR Fehler korrigieren','unsichere Wörter prüfen','Texterkennung kontrollieren'],
+ 'pseudonymize':['Mehrere Dateien pseudonymisieren','Namen durch Platzhalter ersetzen','Person A Firma B','Pseudonyme'],
+ 'attachment-links':['Anlagen automatisch verknüpfen','Anlagenverweise verlinken','siehe Anlage','fehlende Anlagenverweise'],
+ 'best-scans':['Beste Scan Seiten kombinieren','beste Seiten aus mehreren Scans','Scanqualität auswählen'],
+ 'document-reconcile':['Angebot Auftrag Rechnung abgleichen','Positionen abgleichen','Mengen und Preise vergleichen'],
+ 'comment-export':['Kommentare als Arbeitsliste exportieren','Kommentare exportieren','Markierungen als Aufgaben','Anmerkungen sammeln'],
  'pdf-repair':['PDF reparieren','beschädigte PDF','defekte Datei','PDF öffnet nicht','kaputte PDF wiederherstellen','recover repair'],
  'optimize-pdf':['auf Wunschgröße komprimieren','Zielgröße','PDF auf 2 MB verkleinern','PDF auf 5 MB komprimieren','verlustfrei optimieren','Text behalten','Bilder verkleinern'],
  'scan-split':['Sammelscans trennen','Fotos auf einem Scan trennen','mehrere Belege auf einer Seite','Fotos automatisch zuschneiden','Scan in einzelne Bilder teilen'],
