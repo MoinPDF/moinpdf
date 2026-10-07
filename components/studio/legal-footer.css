@@ -5,6 +5,12 @@
   width:100%;
   min-width:0;
   min-height:100dvh;
+  background-color:#f8fcfa;
+  background-image:
+    radial-gradient(ellipse at 8% 8%,rgba(104,194,194,.20),transparent 55%),
+    radial-gradient(ellipse at 92% 88%,rgba(120,196,99,.18),transparent 56%),
+    linear-gradient(135deg,#fbfdfc 0%,#f6fbf9 55%,#f8fbf3 100%);
+  background-repeat:no-repeat;
 }
 
 .moinpdf-shell>.studio-provider {
@@ -12,6 +18,7 @@
   width:100%;
   min-width:0;
   min-height:calc(100dvh - var(--legal-footer-height));
+  background:transparent;
 }
 
 .moinpdf-shell .upload-entry,
@@ -19,6 +26,7 @@
 .moinpdf-shell .document-workbench {
   min-width:0;
   min-height:calc(100dvh - var(--legal-footer-height));
+  background:transparent;
 }
 
 .moinpdf-legal-footer {
@@ -34,7 +42,7 @@
   gap:4px 24px;
   margin:0;
   padding:10px max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
-  background:#fff;
+  background:transparent;
   color:#61786f;
   font:400 .75rem/1.5 'Manrope Variable',Arial,sans-serif;
   text-align:center;
