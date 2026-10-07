@@ -1,6 +1,6 @@
 {
   "name": "moinpdf",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -8,7 +8,7 @@
   "scripts": {
     "install:ci": "bash scripts/install-pnpm.sh",
     "dev": "node scripts/run-framework.mjs dev",
-    "build": "node scripts/prepare-pdf-assets.mjs && node scripts/run-framework.mjs build",
+    "build": "node --experimental-strip-types scripts/build-documentation.mjs && node scripts/prepare-pdf-assets.mjs && node scripts/run-framework.mjs build",
     "start": "node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js dev --config dist/server/wrangler.json --local --persist-to .wrangler/state --ip 127.0.0.1 --inspector-port 0",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
@@ -22,7 +22,7 @@
     "test:security": "node tests/security-invoice-smoke.mjs",
     "test:advanced": "node tests/advanced-tools-smoke.mjs",
     "test": "node tests/run-all.mjs",
-    "build:selfhost": "node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts",
+    "build:selfhost": "node --experimental-strip-types scripts/build-documentation.mjs && node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts",
     "typecheck:selfhost": "tsc --project tsconfig.selfhost.json --noEmit",
     "package:pages": "pnpm run build:selfhost && node scripts/package-pages.mjs",
     "test:conversion": "node tests/conversion-smoke.mjs",

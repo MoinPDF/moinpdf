@@ -2,6 +2,21 @@
 
 Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler Übersetzung. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 100 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 80 Werkzeuge verarbeiten Dokumente im Browser. 20 zusätzliche Ansichten nutzen in der vollständigen Docker-/Umbrel-Installation automatisch den integrierten Dokumentendienst. Die Verarbeitung startet mit dem jeweiligen Aktionsknopf; die Oberfläche benötigt weder Serveradresse noch API-Schlüssel. Die Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme und für die Wunschgrößen-Komprimierung eine lokale Optimierung ohne Bild-Downsampling.
 
+## Integrierte Dokumentation (0.5.2)
+
+Der Footer verlinkt vor Impressum und Datenschutz auf `/dokumentation.html`.
+Das Handbuch erklärt den Einstieg, die Bedienung, typische Arbeitsabläufe und alle
+100 Werkzeuge mit Eingaben, Arbeitsschritten, Ergebnissen und konkreten Grenzen.
+Die Werkzeuganleitungen lassen sich lokal durchsuchen, nach Kategorie filtern,
+direkt verlinken und als vollständiges Handbuch drucken. Inhalte und aufklappbare
+Anleitungen bleiben auch ohne JavaScript lesbar. Das Öffnen aus der App erfolgt
+in einem neuen Tab, damit vorhandene Arbeitsdokumente erhalten bleiben.
+
+Die gepflegten Inhalte liegen in `docs/tool-guides.mjs` und `docs/overview.mjs`.
+`node --experimental-strip-types scripts/build-documentation.mjs` erzeugt die
+statische Seite aus dem tatsächlichen Werkzeugkatalog und prüft Vollständigkeit
+sowie interne Verweise. Beide Produktionsbuilds führen diesen Schritt aus.
+
 ## Stabilitätskorrekturen (0.5.1)
 
 Abbrechen und Zeitlimits bleiben bis zum Ende eines Ergebnisdownloads wirksam.
