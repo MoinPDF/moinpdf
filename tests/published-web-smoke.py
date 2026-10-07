@@ -27,16 +27,24 @@ def no_overflow(page, context):
     dimensions = page.evaluate('({width:innerWidth, content:document.documentElement.scrollWidth})')
     assert dimensions['content'] <= dimensions['width'] + 2, f'Horizontal overflow in {context}: {dimensions}'
 
-def all_views(page, messages, context):
+def all_views(page, messages, context, empty=False):
     titles = page.locator('.chooser-tool strong').all_text_contents()
     assert len(titles) == len(set(titles)) == 100
     for title in titles:
         page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
+        if empty and page.locator('.upload-entry').is_visible():
+            # File-dependent classic tools deliberately return to the file picker.
+            expect(page.get_by_role('button', name='PDF oder andere Datei auswählen', exact=True)).to_be_visible()
+            assert not messages, f'JavaScript exception in {context} / {title}: {messages}'
+            no_overflow(page, context + ' / ' + title)
+            page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
+            chooser(page)
+            continue
         expect(page.locator('main h1')).to_have_text(title, timeout=30000)
         assert not messages, f'JavaScript exception in {context} / {title}: {messages}'
         no_overflow(page, context + ' / ' + title)
         back(page)
-    completed.append(f'{context}: all 100 tool views opened and returned without losing files')
+    completed.append(f'{context}: all 100 tool entries checked without losing files')
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
@@ -59,7 +67,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             assert response.ok, f'{label} link is broken'
         page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
         chooser(page)
-        all_views(page, errors, 'Desktop without input')
+        all_views(page, errors, 'Desktop without input', empty=True)
 
         pdf_path = Path(temporary) / 'moinpdf-ui-test.pdf'
         with pymupdf.open() as document:
