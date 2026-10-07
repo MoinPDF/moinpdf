@@ -4,6 +4,12 @@ MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentral
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
 Images tragen zusätzlich den Quellcode-Commit, Umbrel-Pakete einen festen Digest.
 
+## 0.2.3 – 2026-10-07
+
+- Dezenten Hintergrundverlauf in hellem Petrol und sanftem Grün ergänzt.
+  Der Verlauf zieht sich durch Startseite, Werkzeugübersicht und Arbeitsbereiche
+  bis zum Footer und passt sich der Bildschirmgröße an.
+
 ## 0.2.2 – 2026-10-07
 
 - Den MoinPDF-Schriftzug im Startseiten-Header durch die Buchstabenformen des
