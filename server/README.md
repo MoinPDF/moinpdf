@@ -118,3 +118,32 @@ und externe Ressourcen, weist verschlüsselte Archive/Inhalte zurück und
 extrahiert keine Archivpfade auf das Dateisystem. PDF-Links werden nicht übernommen.
 
 Test: `python -m unittest server.test_recovery -v`.
+
+## Lokales Hörbuch (0.5.0)
+
+`POST /v1/audio` nimmt ein authentifiziertes Multipart-Feld `request` mit JSON
+entgegen: `voice` (`thorsten` oder `kerstin`), `speed` (0,75–1,5), `sections`
+mit jeweils `title` und geprüftem Klartext `text`. Es werden keine Modellpfade,
+Download-URLs oder Original-PDFs angenommen. Ein Abschnitt ergibt WAV, mehrere
+ein ZIP mit nummerierten WAV-Dateien, `Kapitel.json` und `Hoerbuch.m3u8`.
+
+Grenzen: 20.000 Zeichen, 100 Abschnitte, 80 MiB PCM-Ausgabe, zwei gleichzeitige
+Dokumentenaufträge und 180 Sekunden Prozesslaufzeit. ONNX verwendet maximal zwei
+CPU-Threads je Auftrag. Die bestehende Prozessgruppenbegrenzung beendet auch
+Unterprozesse; alle Auftragsdateien liegen ausschließlich im temporären
+Auftragsverzeichnis. Ein Browserabbruch beendet den Abruf, der Serverauftrag
+läuft gegebenenfalls bis zum Abschluss oder Timeout weiter.
+
+Piper und seine Laufzeitabhängigkeiten sind in `requirements.lock.txt` gepinnt.
+`install_voices.py` lädt ausschließlich die unveränderlichen Revisionen aus
+`voices.lock.json` und verifiziert Modell, Konfiguration und Modellkarte. Beide
+deutschen Stimmen werden beim Imagebau installiert; der Dokumentendienst
+braucht zur Laufzeit keinen Internetzugang. Fehlende Modelle deaktivieren die
+Capability `speech`. `/v1/capabilities` nennt die verfügbaren `audioVoices` und
+die Text-/Abschnittsgrenzen. Lizenzinformationen: `AUDIO-NOTICES.md`.
+
+Lokaler Testaufbau: Python-Abhängigkeiten installieren, `MOINPDF_TOOLS` auf ein
+eigenes Testverzeichnis setzen, `python server/install_voices.py` ausführen und
+anschließend `python -m unittest server.test_audio -v`. Der Test erzeugt mit
+beiden Modellen echte WAV-Dateien, prüft Format, Signal und Tempo sowie einen
+authentifizierten Kapitel-ZIP-Export. Im Docker-Test läuft er ohne Netzwerk.

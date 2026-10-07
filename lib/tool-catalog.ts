@@ -2,9 +2,17 @@ import {FileSearch,ScanText,Images,FileImage,Minimize2,Layers,Scissors,LayoutGri
 import type {StudioTool} from './studio-engine';
 import {LockKeyhole,LockKeyholeOpen,ReceiptText,ClipboardCheck} from 'lucide-react';
 import {Workflow,FileInput,FileSpreadsheet,TextSearch,Camera,QrCode,Link,Files,FileSignature,Archive,FolderPen,TableOfContents} from 'lucide-react';
+import {CalendarDays,Calculator,ShieldCheck,Ruler,Headphones} from 'lucide-react';
 export type WorkspaceTool=StudioTool|'inspect';
 export const groups=['Prüfen & finden','Erkennen & konvertieren','Seiten & Struktur','Bearbeiten & bereinigen','Stapel & Abläufe'];
 export const tools=[
+ {id:'form-responses',title:'Formularrückläufe auswerten',description:'Ausgefüllte PDF-Formulare gemeinsam auslesen, Pflichtwerte prüfen und korrigierte Antworten als Excel oder CSV exportieren.',icon:ClipboardCheck,group:4,action:'Formularwerte auslesen',fresh:true},
+ {id:'chronology',title:'Dokumente chronologisch ordnen',description:'Datumsangaben im Inhalt finden, Reihenfolge prüfen und eine Dokumentenmappe mit anklickbarem Inhaltsverzeichnis erstellen.',icon:CalendarDays,group:2,action:'Daten suchen',fresh:true},
+ {id:'arithmetic-check',title:'PDF-Rechenprüfung',description:'Zahlenbereiche auswählen, Summanden korrigieren und die Summe mit einer angegebenen Gesamtsumme vergleichen.',icon:Calculator,group:0,action:'Zahlen übernehmen',fresh:true},
+ {id:'pdf-sanitize',title:'PDF-Sicherheitsbereinigung',description:'Skripte und riskante Aktionen entfernen. Anhänge, Kommentare und Dokumentmetadaten auf Wunsch ebenfalls bereinigen.',icon:ShieldCheck,group:3,action:'Inhalte prüfen',fresh:true},
+ {id:'pdf-layers',title:'PDF-Ebenen verwalten',description:'Schaltbare Ebenen ein- und ausblenden, die Ansicht prüfen und als neue PDF mit Seitenbildern festschreiben.',icon:Layers,group:3,action:'Ebenen laden',fresh:true},
+ {id:'pdf-measure',title:'PDF-Maßband',description:'Seiten anhand einer bekannten Strecke kalibrieren. Entfernungen und Flächen messen und als markierte PDF oder CSV speichern.',icon:Ruler,group:0,action:'Messpunkte setzen',fresh:true},
+ {id:'pdf-audio',title:'PDF als Hörbuch',description:'Text und OCR-Ergebnisse prüfen. Mit zwei lokalen deutschen Stimmen als WAV oder nach Seiten und Kapiteln als Audio-ZIP ausgeben.',icon:Headphones,group:1,action:'Vorlesetext vorbereiten',fresh:true},
  {id:'number-compare',title:'Zahlenvergleich',description:'Geänderte Beträge, Prozentwerte, Daten und IBANs zwischen zwei Fassungen mit Fundstellen anzeigen.',icon:GitCompareArrows,group:0,action:'Zahlen vergleichen',fresh:true},
  {id:'field-collector',title:'Belegfelder sammeln',description:'Eigene Felder aus mehreren PDFs auslesen, Werte am Original prüfen und gemeinsam nach Excel oder CSV exportieren.',icon:FileSpreadsheet,group:4,action:'Belegfelder sammeln',fresh:true},
  {id:'invoice-visual-check',title:'Rechnung und XML abgleichen',description:'Sichtbare Rechnungsangaben per OCR mit eingebetteter UBL- oder CII-XML vergleichen. Unklare Werte mit Fundstelle prüfen.',icon:ReceiptText,group:0,action:'Rechnung abgleichen',fresh:true},

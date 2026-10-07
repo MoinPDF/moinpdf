@@ -25,6 +25,10 @@ from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+if __package__:
+    from .audio_documents import voices_available, validate_request as validate_audio, MAX_CHARACTERS, MAX_SECTIONS
+else:
+    from audio_documents import voices_available, validate_request as validate_audio, MAX_CHARACTERS, MAX_SECTIONS
 
 MAX_BYTES = 80 * 1024 * 1024
 TIMEOUT = 180
@@ -172,10 +176,12 @@ def health():
 @app.get("/v1/capabilities", dependencies=[Depends(authorize)])
 def capabilities():
     translation = translation_status()
-    return {"apiVersion": 1, "service": "MoinPDF Dokumentenserver", "limits": {"maxBytes": MAX_BYTES},
+    voices = voices_available()
+    return {"apiVersion": 1, "service": "MoinPDF Dokumentenserver", "limits": {"maxBytes": MAX_BYTES, "audioCharacters": MAX_CHARACTERS, "audioSections": MAX_SECTIONS}, "audioVoices": voices,
             "versions": versions(), "translationService": urlsplit(os.getenv('MOINPDF_TRANSLATE_URL','')).hostname,
             "translationStatus": translation,
             "capabilities": {
+                "speech": len(voices) == 2,
                 "office": bool(office_binary()),
                 "pdfWord": importlib.util.find_spec("pdf2docx") is not None,
                 "email": bool(office_binary() and importlib.util.find_spec("extract_msg")),
@@ -193,6 +199,28 @@ def capabilities():
                 "pdfa": bool(shutil.which("gs") and Path(VERAPDF).is_file() and ICC.is_file()),
                 "xrechnung": bool(shutil.which("java") and KOSIT.is_file() and SCENARIOS.is_file()),
                 "signatures": importlib.util.find_spec("pyhanko") is not None}}
+
+
+@app.post('/v1/audio', dependencies=[Depends(authorize)])
+def audio_export(request: str = Form(...)):
+    if len(request) > 200000:
+        raise HTTPException(413, 'Der Hörbuchauftrag ist zu groß.')
+    try:
+        settings = validate_audio(json.loads(request))
+    except (ValueError, TypeError, KeyError):
+        raise HTTPException(422, 'Bitte Stimme, Tempo und 1 bis 100 nicht leere Abschnitte mit insgesamt höchstens 20.000 Zeichen prüfen.')
+    if len(voices_available()) != 2:
+        raise HTTPException(503, 'Die beiden lokalen Stimmen sind noch nicht installiert.')
+    with job() as directory:
+        (directory / 'request.json').write_text(json.dumps(settings, ensure_ascii=False))
+        code, _ = command([sys.executable, str(Path(__file__).with_name('audio_documents.py')), str(directory)], directory, accepted=(0, 2))
+        if code == 2:
+            raise HTTPException(422, 'Die Sprachausgabe konnte den Auftrag nicht vollständig verarbeiten. Bitte kürzere Abschnitte auswählen.')
+        if (directory / 'output.wav').is_file():
+            return result((directory / 'output.wav').read_bytes(), 'Hoerbuch.wav', 'audio/wav')
+        if (directory / 'output.zip').is_file():
+            return result((directory / 'output.zip').read_bytes(), 'Hoerbuch-Kapitel.zip', 'application/zip')
+        raise HTTPException(422, 'Es wurde keine vollständige Audioausgabe erzeugt.')
 
 
 def translation_status():

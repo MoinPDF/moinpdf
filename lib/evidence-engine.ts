@@ -87,7 +87,7 @@ export const ocrReason=(word:EvidenceWord,threshold:number)=>[
 export function ocrText(pages:EvidencePage[],corrections:Record<string,string>) {
   return pages.map(p=>`--- ${p.name}, Seite ${p.page+1} ---\n`+p.lines.map(l=>l.words.map(w=>corrections[`${p.sourceId}:${p.page}:${w.id}`]??w.text).join(' ')).join('\n')).join('\n\n');
 }
-async function embedFont(pdf:PDFDocument,fontBytes?:Uint8Array):Promise<PDFFont> {
+export async function embedFont(pdf:PDFDocument,fontBytes?:Uint8Array):Promise<PDFFont> {
   const fontkit=(await import('@pdf-lib/fontkit')).default;pdf.registerFontkit(fontkit);
   const bytes=fontBytes||await fetch('/vendor/invoice-font/NotoSans-Regular.ttf').then(r=>{if(!r.ok)throw new Error('Die lokale PDF-Schrift konnte nicht geladen werden.');return r.arrayBuffer();});
   if(!bytes)throw new Error('Die lokale PDF-Schrift konnte nicht geladen werden.');

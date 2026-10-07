@@ -9,10 +9,12 @@ import {serverCapabilities,runServerJob,serverCapabilityKey,integratedDocumentSe
 import {ServerExtraFields,StructuredReport,initialExtraSettings,extraActions} from './server-extra-fields';
 import {Text,Choice,Field,Tick,PageStage,PageSelect} from './advanced-shared';
 import './conversion-workbench.css';
+import {AudioWorkbench} from './audio-workbench';
 
 type Props={tool:ServerTool;sources:Source[];initialFile?:File|null;onBack:()=>void;onAdd:()=>void;onBusy:(busy:boolean)=>void;onUse:(result:JobResult)=>Promise<void>;onChoose:(tool:WorkspaceTool)=>void};
 
-export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,onUse,onChoose}:Props){
+export function ServerWorkbench(props:Props){return props.tool==='pdf-audio'?<AudioWorkbench {...props}/>:<StandardServerWorkbench {...props}/>;}
+function StandardServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,onUse,onChoose}:Props){
  const localWord=!integratedDocumentServer&&tool==='pdf-word';
  const localOptimize=!integratedDocumentServer&&tool==='optimize-pdf',localMode=localWord||localOptimize;
  const [capabilities,setCapabilities]=useState<ServerCapabilities|null>(null);
