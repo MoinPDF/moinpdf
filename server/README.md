@@ -101,3 +101,20 @@ python -m unittest server.test_service server.test_expansion server.test_extende
 Die Suite prüft echte Konverter und Dateiinhalte: DOCX-Text, EML/MSG-Anlagenbytes, PowerPoint-Seitenbilder, HTML-Text, OSD-Drehung, editierbare erkannte Felder, verdeckten Text, zu geringe Bildauflösung, Tags-Lücken, Kurvenkorrektur und zwei individuelle Serienbrief-PDFs. ZUGFeRD wird mit Mustang/veraPDF positiv geprüft; eine gewöhnliche PDF wird als nicht konform erkannt. Die Übersetzungsschnittstelle nutzt eine lokale HTTP-Testantwort, keinen verbundenen Produktivdienst. Der Workflow `../.github/workflows/docker.yml` baut und prüft zusätzlich den vollständigen Docker-Stack samt echter Übersetzung.
 
 Zusätzliche Abhängigkeiten und ihre Lizenzen beachten, insbesondere PyMuPDF/MuPDF (AGPL bzw. kommerzielle Lizenz); der optionale Dokumentenserver ist vom Browser-Bundle getrennt.
+
+## Komprimierung und EPUB (ab 0.3.0)
+
+`POST /v1/documents/optimize` akzeptiert PDF und `options` mit `targetMB`
+(0,05–80) sowie `optimizeMode` (`images` oder `lossless`). Die Verarbeitung
+startet für jede Qualitätsstufe vom Original. Text, Links und Formularfelder
+bleiben erhalten. Der Header `X-MoinPDF-Note` enthält einen URL-kodierten
+Ergebnistext einschließlich des tatsächlichen Zielgrößenstatus. Ein nicht
+erreichtes Ziel wird nicht als erfolgreicher Größenabgleich ausgegeben.
+
+`POST /v1/documents/ebook` akzeptiert ungeschützte `.epub`-Dateien bis 40 MB.
+`options`: `paper` (`a4`/`a5`) und `fontSize` (8–24 pt). Maximal 80 MB entpackt,
+1500 Archiveinträge und 200 Ausgabeseiten. Der isolierte Worker bereinigt aktive
+und externe Ressourcen, weist verschlüsselte Archive/Inhalte zurück und
+extrahiert keine Archivpfade auf das Dateisystem. PDF-Links werden nicht übernommen.
+
+Test: `python -m unittest server.test_recovery -v`.

@@ -5,7 +5,7 @@ export function checkNewPassword(password:string){
  if(new TextEncoder().encode(password).length>127)throw new Error('Das Passwort darf höchstens 127 UTF-8-Bytes lang sein.');
  if(/[\x00-\x1f\x7f]/.test(password))throw new Error('Das Passwort darf keine Steuerzeichen enthalten.');
 }
-function workerJob(bytes:Uint8Array,operation:'encrypt'|'decrypt'|'rewrite',settings:Partial<SecuritySettings>,signal?:AbortSignal):Promise<Uint8Array>{
+function workerJob(bytes:Uint8Array,operation:'encrypt'|'decrypt'|'rewrite'|'optimize',settings:Partial<SecuritySettings>&{jpegQuality?:number},signal?:AbortSignal):Promise<Uint8Array>{
  if(signal?.aborted)return Promise.reject(new DOMException('Abgebrochen','AbortError'));
  return new Promise((resolve,reject)=>{
   const worker=new Worker('/workers/pdf-security.js');let settled=false;
@@ -14,7 +14,7 @@ function workerJob(bytes:Uint8Array,operation:'encrypt'|'decrypt'|'rewrite',sett
   const timer=setTimeout(()=>finish(new Error('Die Verarbeitung hat zu lange gedauert. Bitte eine kleinere PDF versuchen.')),120000);
   signal?.addEventListener('abort',abort,{once:true});
   worker.onerror=()=>finish(new Error('Der lokale PDF-Prozessor konnte nicht gestartet werden. Bitte die Seite neu laden.'));
-  worker.onmessage=({data})=>{if(data.error)finish(data.error==='password'?new PdfPasswordError():new Error('Die PDF konnte nicht verarbeitet werden. Bitte eine unbeschädigte PDF verwenden.'));else finish(undefined,new Uint8Array(data.bytes));};
+  worker.onmessage=({data})=>{if(data.error)finish(data.error==='password'?new PdfPasswordError():new Error('Die PDF konnte nicht wiederhergestellt oder verarbeitet werden. Fehlende Dateiinhalte lassen sich nicht rekonstruieren.'));else finish(undefined,new Uint8Array(data.bytes));};
   const copy=bytes.slice();worker.postMessage({operation,bytes:copy,settings},[copy.buffer]);
  });
 }
@@ -26,3 +26,4 @@ export async function protectPdf(bytes:Uint8Array,settings:SecuritySettings,sign
 }
 export function unlockPdf(bytes:Uint8Array,password:string,signal?:AbortSignal){return workerJob(bytes,'decrypt',{password},signal);}
 export function rewritePdf(bytes:Uint8Array,signal?:AbortSignal){return workerJob(bytes,'rewrite',{},signal);}
+export function optimizePdf(bytes:Uint8Array,jpegQuality:number|undefined,signal?:AbortSignal){return workerJob(bytes,'optimize',{jpegQuality},signal);}

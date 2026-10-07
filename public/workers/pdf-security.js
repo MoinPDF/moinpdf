@@ -9,7 +9,7 @@ self.onmessage=async({data})=>{
   qpdf=await Module({locateFile:()=>'/vendor/qpdf/qpdf.wasm',print:()=>{},printErr:s=>{if(errors.length<4000)errors+=s+'\n';}});
   qpdf.FS.writeFile('/input.pdf',data.bytes);data.bytes.fill(0);
   const {password='',ownerPassword='',printing='full',copying=true,editing=true}=data.settings;
-  const args=data.operation==='encrypt'?['/input.pdf','--encrypt',`--user-password=${password}`,`--owner-password=${ownerPassword}`,'--bits=256',`--print=${printing}`,`--extract=${copying?'y':'n'}`,`--modify=${editing?'all':'none'}`,'--','/output.pdf']:data.operation==='rewrite'?['/input.pdf','--object-streams=generate','/output.pdf']:['/input.pdf',`--password=${password}`,'--decrypt','/output.pdf'];
+  const args=data.operation==='encrypt'?['/input.pdf','--encrypt',`--user-password=${password}`,`--owner-password=${ownerPassword}`,'--bits=256',`--print=${printing}`,`--extract=${copying?'y':'n'}`,`--modify=${editing?'all':'none'}`,'--','/output.pdf']:data.operation==='rewrite'?['/input.pdf','--object-streams=generate','/output.pdf']:data.operation==='optimize'?['/input.pdf','--object-streams=generate','--stream-data=compress','--recompress-flate','--compression-level=9',...(Number.isInteger(data.settings.jpegQuality)&&data.settings.jpegQuality>=30&&data.settings.jpegQuality<=95?['--optimize-images',`--jpeg-quality=${data.settings.jpegQuality}`]:[]),'/output.pdf']:['/input.pdf',`--password=${password}`,'--decrypt','/output.pdf'];
   const code=qpdf.callMain(args);args.fill('');data.settings={};
   if(code!==0&&code!==3)throw new Error(/invalid password|incorrect password/i.test(errors)?'password':'invalid');
   const bytes=qpdf.FS.readFile('/output.pdf').slice();

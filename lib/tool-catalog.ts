@@ -5,6 +5,13 @@ import {Workflow,FileInput,FileSpreadsheet,TextSearch,Camera,QrCode,Link,Files,F
 export type WorkspaceTool=StudioTool|'inspect';
 export const groups=['Prüfen & finden','Erkennen & konvertieren','Seiten & Struktur','Bearbeiten & bereinigen','Stapel & Abläufe'];
 export const tools=[
+ {id:'pdf-repair',title:'PDF reparieren',description:'Die Struktur beschädigter PDFs wiederherstellen. Direkter Upload auch ohne funktionierende Vorschau.',icon:FileCheck2,group:3,action:'PDF reparieren',fresh:true},
+ {id:'optimize-pdf',title:'PDF auf Wunschgröße komprimieren',description:'Verlustfrei optimieren oder Bilder verkleinern. Text und Formulare erhalten und die Zielgröße nachmessen.',icon:Minimize2,group:1,action:'PDF optimieren',fresh:true},
+ {id:'scan-split',title:'Sammelscans trennen',description:'Mehrere Fotos oder Belege auf einer Seite erkennen. Ausschnitte prüfen und als einzelne PDFs oder Bilder speichern.',icon:Scissors,group:2,action:'Ausschnitte erstellen',fresh:true},
+ {id:'pdf-markdown',title:'PDF zu Markdown',description:'Auslesbaren Text mit Überschriften und Seitenabschnitten als bearbeitbare Markdown-Datei ausgeben.',icon:FilePenLine,group:1,action:'Markdown erstellen',fresh:true},
+ {id:'pdf-html',title:'PDF zu HTML',description:'Auslesbaren Text als eigenständige, lesbare HTML-Datei mit Seitennavigation speichern.',icon:FileInput,group:1,action:'HTML erstellen',fresh:true},
+ {id:'pdf-epub',title:'PDF zu E-Book',description:'Auslesbaren Text als EPUB mit anpassbarer Schrift und Inhaltsverzeichnis exportieren.',icon:BookOpen,group:1,action:'EPUB erstellen',fresh:true},
+ {id:'ebook-pdf',title:'E-Book zu PDF',description:'Ungeschützte EPUB-Dateien in eine PDF mit wählbarer Schriftgröße und Seitenformat umwandeln.',icon:BookOpen,group:1,action:'PDF erstellen',fresh:true},
  {id:'pdf-powerpoint',title:'PDF zu PowerPoint',description:'Jede PDF-Seite als maßgetreues Seitenbild auf eine PowerPoint-Folie übernehmen.',icon:FileImage,group:1,action:'PowerPoint-Datei erstellen',fresh:true},
  {id:'html-pdf',title:'HTML & Webseiten zu PDF',description:'Gespeicherte HTML-Webseiten mit Überschriften und Tabellen als lesbare PDF setzen. Ohne Skripte und externe Ressourcen.',icon:FileInput,group:1,action:'PDF erstellen',fresh:true},
  {id:'auto-orient',title:'Seiten automatisch ausrichten',description:'Verdrehte Textseiten erkennen und um 90, 180 oder 270 Grad korrigieren. Unsichere Seiten im Bericht kennzeichnen.',icon:ScanLine,group:2,action:'Seiten ausrichten',fresh:true},

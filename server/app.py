@@ -15,7 +15,7 @@ import threading
 import time
 import uuid
 import zipfile
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, quote
 from urllib.request import urlopen
 from contextlib import contextmanager
 from pathlib import Path
@@ -181,6 +181,8 @@ def capabilities():
                 "email": bool(office_binary() and importlib.util.find_spec("extract_msg")),
                 "powerpoint": importlib.util.find_spec("pptx") is not None,
                 "html": importlib.util.find_spec("pymupdf") is not None,
+                "optimize": importlib.util.find_spec("pymupdf") is not None,
+                "ebook": importlib.util.find_spec("pymupdf") is not None,
                 "orient": bool(shutil.which("tesseract") and importlib.util.find_spec("pymupdf")),
                 "formDetect": importlib.util.find_spec("cv2") is not None,
                 "documentChecks": importlib.util.find_spec("pymupdf") is not None,
@@ -412,7 +414,7 @@ def validate_signatures(file: UploadFile = File(...)):
 
 @app.post('/v1/documents/{action}', dependencies=[Depends(authorize)])
 def extended_document(action: str, file: UploadFile = File(...), options: str = Form('{}')):
-    allowed={'powerpoint','html','orient','form','print','accessibility','redaction','dewarp','translate'}
+    allowed={'powerpoint','html','orient','form','print','accessibility','redaction','dewarp','translate','optimize','ebook'}
     if action not in allowed:
         raise HTTPException(404,'Unbekanntes Werkzeug.')
     try:
@@ -425,8 +427,10 @@ def extended_document(action: str, file: UploadFile = File(...), options: str = 
     with job() as directory:
         if action=='html' and Path(file.filename or '').suffix.lower() not in {'.html','.htm'}:
             raise HTTPException(422,'Bitte eine gespeicherte HTML-Webseite auswählen.')
-        source=upload(file,directory/('input.html' if action=='html' else 'input.pdf'))
-        if action!='html':require_pdf(source)
+        if action=='ebook' and Path(file.filename or '').suffix.lower()!='.epub':
+            raise HTTPException(422,'Bitte eine EPUB-Datei auswählen.')
+        source=upload(file,directory/('input.html' if action=='html' else 'input.epub' if action=='ebook' else 'input.pdf'),maximum=40*1024*1024 if action=='ebook' else MAX_BYTES)
+        if action not in {'html','ebook'}:require_pdf(source)
         (directory/'settings.json').write_text(json.dumps(settings))
         convert_worker(action,source,directory)
         if action in {'print','accessibility','redaction'}:
@@ -435,8 +439,12 @@ def extended_document(action: str, file: UploadFile = File(...), options: str = 
             return result((directory/'output.pptx').read_bytes(),'PDF-Folien.pptx','application/vnd.openxmlformats-officedocument.presentationml.presentation')
         if action=='orient':
             return archive({'Ausgerichtet.pdf':(directory/'output.pdf').read_bytes(),'Pruefbericht.json':(directory/'report.json').read_bytes()},'Ausrichtung-mit-Bericht.zip')
-        name={'html':'Webseite','form':'Erkannte-Formularfelder','dewarp':'Buchscan-entzerrt','translate':'Original-und-Uebersetzung'}[action]+'.pdf'
-        return result((directory/'output.pdf').read_bytes(),name,'application/pdf')
+        name={'html':'Webseite','form':'Erkannte-Formularfelder','dewarp':'Buchscan-entzerrt','translate':'Original-und-Uebersetzung','optimize':'PDF-optimiert','ebook':'E-Book'}[action]+'.pdf'
+        response=result((directory/'output.pdf').read_bytes(),name,'application/pdf')
+        if action=='optimize':
+            note=json.loads((directory/'result-note.json').read_text())['note']
+            response.headers['X-MoinPDF-Note']=quote(note)
+        return response
 
 
 @app.post('/v1/word-merge', dependencies=[Depends(authorize)])

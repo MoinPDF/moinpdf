@@ -14,8 +14,9 @@ type Props={tool:ServerTool;sources:Source[];initialFile?:File|null;onBack:()=>v
 
 export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,onUse,onChoose}:Props){
  const localWord=!integratedDocumentServer&&tool==='pdf-word';
+ const localOptimize=!integratedDocumentServer&&tool==='optimize-pdf',localMode=localWord||localOptimize;
  const [capabilities,setCapabilities]=useState<ServerCapabilities|null>(null);
- const [status,setStatus]=useState<'checking'|'ready'|'unavailable'>(localWord?'ready':'checking');
+ const [status,setStatus]=useState<'checking'|'ready'|'unavailable'>(localMode?'ready':'checking');
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const [sourceId,setSourceId]=useState(sources[0]?.id||''),[file,setFile]=useState<File|null>(initialFile||null);
  const [cert,setCert]=useState<File|null>(null),[password,setPassword]=useState('');
@@ -25,18 +26,18 @@ export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,on
  const resultRef=useRef<HTMLElement>(null),controller=useRef<AbortController|null>(null),connection=useRef<AbortController|null>(null);
  const previousSources=useRef(sources.map(value=>value.id));
  const info=tools.find(t=>t.id===tool)!,source=sources.find(s=>s.id===sourceId)||sources[0];
- const available=localWord||capabilities?.capabilities[serverCapabilityKey[tool]]===true;
- const fileInputTool=['office-pdf','email-pdf','html-pdf','word-mail-merge'].includes(tool);
+ const available=localMode||capabilities?.capabilities[serverCapabilityKey[tool]]===true;
+ const fileInputTool=['office-pdf','email-pdf','html-pdf','word-mail-merge','ebook-pdf'].includes(tool);
  const hasInput=fileInputTool?!!file:tool==='xrechnung-validate'?!!(file||source?.invoiceOriginal):!!source;
  const completeInput=hasInput&&(tool!=='word-mail-merge'||!!spreadsheet)&&(tool!=='zugferd-create'||mode!=='create'||!!file)&&(tool!=='certificate-sign'||mode!=='sign'||!!cert);
 
  const checkConnection=useCallback(async()=>{
-  if(!integratedDocumentServer){setStatus(localWord?'ready':'unavailable');return;}
+  if(!integratedDocumentServer){setStatus(localMode?'ready':'unavailable');return;}
   connection.current?.abort();
   const abort=new AbortController();connection.current=abort;setStatus('checking');
   try{const value=await serverCapabilities(integratedDocumentServer,'',abort.signal);if(!abort.signal.aborted){setCapabilities(value);setStatus('ready');}}
   catch{if(!abort.signal.aborted){setCapabilities(null);setStatus('unavailable');}}
- },[localWord]);
+ },[localMode]);
  useEffect(()=>{void checkConnection();return()=>{connection.current?.abort();controller.current?.abort();};},[checkConnection]);
  useEffect(()=>{if(tool!=='translate-pdf'||capabilities?.translationStatus!=='starting')return;const timer=setInterval(()=>void checkConnection(),15000);return()=>clearInterval(timer);},[tool,capabilities?.translationStatus,checkConnection]);
  useEffect(()=>{const added=sources.filter(value=>!previousSources.current.includes(value.id));if(added.length)setSourceId(added[added.length-1].id);previousSources.current=sources.map(value=>value.id);},[sources]);
@@ -66,6 +67,11 @@ export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,on
 
  async function process(signal:AbortSignal){
   setResult(null);setReport('');
+  if(localOptimize){
+   if(!source)throw new Error('Bitte zuerst eine PDF auswählen.');
+   const {optimizeBrowser}=await import('@/lib/pdf-recovery');
+   const out=await optimizeBrowser(source,extra.targetMB,extra.optimizeMode==='images',{signal,report:()=>{}});if(!signal.aborted)setResult(out);return;
+  }
   if(localWord){
    if(!source)throw new Error('Bitte zuerst eine PDF auswählen.');
    const {createTextWordFile}=await import('@/lib/word-export');
@@ -78,6 +84,7 @@ export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,on
    if(tool==='office-pdf')path='/v1/office';
    if(tool==='email-pdf'){path='/v1/email';body.append('include_attachments',String(attachments));}
    if(tool==='html-pdf')path='/v1/documents/html';
+   if(tool==='ebook-pdf'){path='/v1/documents/ebook';body.append('options',JSON.stringify(extra));}
    if(tool==='word-mail-merge'){if(!spreadsheet)throw new Error('Bitte eine Excel-Tabelle auswählen.');body.append('spreadsheet',spreadsheet);path='/v1/word-merge';}
   }else if(tool==='xrechnung-validate'){
    const xml=file||(source?.invoiceOriginal?new File([new Uint8Array(source.invoiceOriginal.bytes)],source.invoiceOriginal.name,{type:'application/xml'}):null);
@@ -112,6 +119,7 @@ export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,on
   <section className="advanced-card conversion-card" aria-label={info.title}>
    <fieldset disabled={busy} className="advanced-fields conversion-fields">
     {tool==='office-pdf'?pick('Word, Excel, PowerPoint oder OpenDocument','.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp',file,setFile)
+     :tool==='ebook-pdf'?pick('E-Book (.epub)','.epub,application/epub+zip',file,setFile)
      :tool==='html-pdf'?pick('Gespeicherte Webseite (.html oder .htm)','.html,.htm,text/html',file,setFile)
      :tool==='word-mail-merge'?<>{pick('Word-Vorlage (.docx)','.docx',file,setFile)}{pick('Excel-Datentabelle (.xlsx)','.xlsx',spreadsheet,setSpreadsheet)}</>
      :tool==='email-pdf'?pick('E-Mail (.eml oder .msg)','.eml,.msg,message/rfc822',file,setFile)
@@ -120,6 +128,7 @@ export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,on
      :source?<div className="conversion-selected-file"><FileText size={25}/><div><strong>{source.name}</strong><span>{formatSize(source.size)} · {source.pdf.numPages} {source.pdf.numPages===1?'Seite':'Seiten'}</span></div><Button variant="ghost" onClick={onAdd}>Ändern</Button></div>
      :<Button variant="outline" onClick={onAdd}><Plus size={17}/>PDF auswählen</Button>}
     <ServerExtraFields tool={tool} value={extra} onChange={setExtra}/>
+    {localOptimize&&<p className="fine-note">Die Verarbeitung erfolgt lokal. In dieser Ausgabe werden geeignete Bilder als JPEG komprimiert; ihre Auflösung bleibt unverändert. Die Docker-/Umbrel-Ausgabe kann zusätzlich die Bildauflösung reduzieren.</p>}
     {tool==='pdf-word'&&<p className="fine-note">{localWord?'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.':'Text, Tabellen und Bilder werden für Word übernommen. Bei komplexen Layouts kann die Anordnung abweichen.'} Reine Scans zuerst mit <button className="conversion-text-link" onClick={()=>onChoose('ocr')}>OCR &amp; Text</button> auslesen.</p>}
     {tool==='email-pdf'&&<><details className="conversion-options"><summary>Weitere Optionen</summary><Tick label="Anlagen zusätzlich in einer ZIP-Datei herunterladen" value={attachments} onChange={setAttachments}/></details><p className="fine-note">Die Nachricht wird mit Absender und Betreff als PDF gespeichert. Externe Bilder werden nicht geladen.</p></>}
     {tool==='pdfa'&&<><Choice label="Aktion" value={mode} onChange={setMode} items={ [['create','Archiv-PDF erstellen und prüfen'],['validate','Vorhandene Archiv-PDF prüfen']]}/><details className="conversion-options"><summary>Weitere Optionen</summary><Choice label="PDF/A-Profil" value={profile} onChange={setProfile} items={ [['1b','PDF/A-1b'],['2b','PDF/A-2b'],['3b','PDF/A-3b']]}/></details><p className="fine-note">Du erhältst eine ZIP-Datei mit PDF und Prüfbericht. Interaktive Elemente und Anhänge können in der Archivkopie entfallen. Bitte den Bericht vor der Archivierung prüfen.</p></>}
@@ -128,7 +137,7 @@ export function ServerWorkbench({tool,sources,initialFile,onBack,onAdd,onBusy,on
     <Button className="conversion-submit" disabled={busy||!available||!completeInput||status==='checking'} onClick={()=>run(process)}>{busy?<><LoaderCircle className="spin" size={18}/>Wird verarbeitet …</>:tool==='certificate-sign'?(mode==='sign'?'Signieren':'Signaturen prüfen'):info.action}</Button>
     {status==='checking'&&<p className="conversion-status" role="status"><LoaderCircle className="spin" size={15}/>Wird vorbereitet …</p>}
     {status!=='checking'&&!available&&<div className="conversion-unavailable" role="status"><p>{!integratedDocumentServer?'Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.':tool==='translate-pdf'&&capabilities?.translationStatus==='starting'?'Die Übersetzung wird noch vorbereitet. Bitte versuche es in wenigen Minuten erneut.':'Diese Funktion ist gerade nicht verfügbar. Bitte versuche es gleich noch einmal.'}</p>{integratedDocumentServer&&<Button variant="outline" onClick={()=>void checkConnection()}><RefreshCw size={15}/>Erneut versuchen</Button>}</div>}
-    {available&&!localWord&&<p className="conversion-privacy">Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen. Sie wird nicht dauerhaft gespeichert. <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">Datenschutz</a></p>}
+    {available&&!localMode&&<p className="conversion-privacy">Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen. Sie wird nicht dauerhaft gespeichert. <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">Datenschutz</a></p>}
    </fieldset>
   </section>
   {busy&&<div className="advanced-progress" role="status"><LoaderCircle className="spin" size={18}/><span>Deine Datei wird verarbeitet …</span><Button variant="ghost" onClick={()=>controller.current?.abort()}>Abbrechen</Button></div>}
