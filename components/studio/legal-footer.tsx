@@ -3,7 +3,8 @@ import {APP_VERSION} from '@/lib/version';
 
 export function LegalFooter() {
   return <footer className="moinpdf-legal-footer">
-    <nav aria-label="Rechtliche Informationen">
+    <nav aria-label="Dokumentation und Rechtliches">
+      <a href="/dokumentation.html" target="_blank" rel="noopener noreferrer">Dokumentation<span className="sr-only"> (neuer Tab)</span></a>
       <a href="/impressum.html" target="_blank" rel="noopener noreferrer">Impressum<span className="sr-only"> (neuer Tab)</span></a>
       <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">Datenschutzerklärung<span className="sr-only"> (neuer Tab)</span></a>
     </nav>
