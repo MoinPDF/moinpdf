@@ -55,6 +55,7 @@ jobs:
         env:
           MOINPDF_TEST_URL: http://localhost:8080
           MOINPDF_REQUIRE_SERVER: "1"
+          MOINPDF_TEST_NONLOCAL_HTTP: "1"
         run: |
           python -m pip install playwright==1.55.0 pymupdf==1.28.2
           python -m playwright install --with-deps chromium
