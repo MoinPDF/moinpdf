@@ -1,5 +1,5 @@
 .moinpdf-shell {
-  --legal-footer-height:96px;
+  --legal-footer-height:88px;
   display:flex;
   flex-direction:column;
   width:100%;
@@ -59,9 +59,9 @@
 
 .moinpdf-footer-mascot {
   display:block;
-  flex:0 0 32px;
-  width:32px;
-  height:32px;
+  flex:0 0 24px;
+  width:24px;
+  height:24px;
   object-fit:contain;
 }
 
