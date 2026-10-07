@@ -50,6 +50,23 @@ jobs:
           docker compose stop
           docker compose up -d --wait --wait-timeout 180
           docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /repo/tests/selfhost-smoke.py
+      - name: All tool views, desktop and mobile, PDF and audio downloads
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+          MOINPDF_REQUIRE_SERVER: "1"
+        run: |
+          python -m pip install playwright==1.55.0 pymupdf==1.28.2
+          python -m playwright install --with-deps chromium
+          python tests/published-web-smoke.py
+      - name: Retain browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: complete-ui-verification
+          path: web-evidence/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Optional login protects the app and API
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         env:
