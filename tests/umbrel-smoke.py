@@ -31,7 +31,7 @@ with sync_playwright() as browser_api, tempfile.TemporaryDirectory() as temporar
     assert login.ok, 'Synthetic Umbrel user could not sign in'
     page = context.new_page()
     page.goto(origin)
-    page.locator('img[src="/branding/moinpdf-logo.svg"]').wait_for(timeout=60000)
+    page.get_by_role('img', name='MoinPDF. Papierkram. Läuft.', exact=True).wait_for(timeout=60000)
     page.screenshot(path=str(evidence / 'moinpdf-home.png'), full_page=True)
     print('PASS: protected gateway and signed-in HTTP app page.', flush=True)
 
@@ -79,7 +79,7 @@ with sync_playwright() as browser_api, tempfile.TemporaryDirectory() as temporar
     assert https_login.ok, 'Synthetic Umbrel user could not sign in over HTTPS'
     # Validate the HTTPS app route using the disposable OS-generated certificate.
     page.goto('https://localhost:8785')
-    page.locator('img[src="/branding/moinpdf-logo.svg"]').wait_for(timeout=30000)
+    page.get_by_role('img', name='MoinPDF. Papierkram. Läuft.', exact=True).wait_for(timeout=30000)
     print('PASS: signed-in HTTPS app page; checking restart persistence.', flush=True)
 
     umbrel('apps.restart.mutate', '--appId', 'denny-moinpdf')
@@ -103,7 +103,7 @@ with sync_playwright() as browser_api, tempfile.TemporaryDirectory() as temporar
         raise AssertionError('Translation did not recover from the persisted models')
     subprocess.run(['python', 'tests/selfhost-smoke.py'], env=environment, check=True)
     page.goto(origin)
-    page.locator('img[src="/branding/moinpdf-logo.svg"]').wait_for(timeout=30000)
+    page.get_by_role('img', name='MoinPDF. Papierkram. Läuft.', exact=True).wait_for(timeout=30000)
     browser.close()
 
 (evidence / 'result.txt').write_text('PASS: umbrelOS 2.0.0 on amd64; fresh install through Umbrel, protected app gateway, signed-in browser, PDF upload, HTTP and HTTPS app routes, real Office and DE/EN translation, restart and persisted models. ARM runtime was not tested.\n')

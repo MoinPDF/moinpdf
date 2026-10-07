@@ -34,5 +34,20 @@ try {
     await assert.rejects(docker.serverCapabilities('/api/documents','',signal),/antwortet gerade nicht/);
   } finally {globalThis.setTimeout=originalTimer;}
   await assert.rejects(docker.serverCapabilities('/api/documents','',AbortSignal.abort()),{name:'AbortError'});
-  console.log('PASS: integrated authentication, same-origin credentials, bounded readiness checks and cancellation.');
+  // Headers can arrive before the download stalls. Keep timeout and cancellation
+  // active until the response body has actually been read.
+  try {
+    globalThis.fetch=async(_url,options)=>new Response(new ReadableStream({
+      start(controller){options.signal.addEventListener('abort',()=>controller.error(options.signal.reason),{once:true});}
+    }),{headers:{'content-type':'application/pdf'}});
+    const bounded=promise=>Promise.race([promise,new Promise((_,reject)=>originalTimer(()=>reject(new Error('Response body remained pending')),150))]);
+    const abort=new AbortController();
+    const pending=docker.runServerJob('/api/documents','','/v1/office',new FormData(),abort.signal);
+    originalTimer(()=>abort.abort(),5);
+    await assert.rejects(bounded(pending),{name:'AbortError'});
+    globalThis.setTimeout=callback=>originalTimer(callback,5);
+    await assert.rejects(bounded(docker.runServerJob('/api/documents','','/v1/office',new FormData(),signal)),/dauert zu lange/);
+    await assert.rejects(bounded(docker.serverCapabilities('/api/documents','',signal)),/antwortet gerade nicht/);
+  } finally {globalThis.setTimeout=originalTimer;}
+  console.log('PASS: integrated authentication, same-origin credentials, timeouts and cancellation through complete response-body downloads.');
 } finally { globalThis.fetch = originalFetch; }
