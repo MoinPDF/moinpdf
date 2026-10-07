@@ -3,7 +3,8 @@ import json
 import os
 from pathlib import Path
 import re
-import socket
+import ipaddress
+import subprocess
 import tempfile
 import wave
 import zipfile
@@ -14,7 +15,10 @@ from playwright.sync_api import expect, sync_playwright
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://localhost:8785')
 nonlocal_http = os.environ.get('MOINPDF_TEST_NONLOCAL_HTTP') == '1'
 if nonlocal_http:
-    origin = f'http://{socket.gethostbyname(socket.gethostname())}:8080'
+    addresses = subprocess.check_output(['hostname', '-I'], text=True).split()
+    host = next(value for value in addresses
+                if ipaddress.ip_address(value).version == 4 and not ipaddress.ip_address(value).is_loopback)
+    origin = f'http://{host}:8080'
 require_server = os.environ.get('MOINPDF_REQUIRE_SERVER') == '1'
 evidence = Path('web-evidence')
 evidence.mkdir(exist_ok=True)
