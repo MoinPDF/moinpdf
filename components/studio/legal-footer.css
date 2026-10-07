@@ -1,5 +1,5 @@
 .moinpdf-shell {
-  --legal-footer-height:72px;
+  --legal-footer-height:96px;
   display:flex;
   flex-direction:column;
   width:100%;
@@ -32,36 +32,36 @@
 .moinpdf-legal-footer {
   position:relative;
   display:flex;
-  flex-wrap:wrap;
+  flex-direction:column;
   align-items:center;
-  justify-content:space-between;
+  justify-content:center;
   flex:0 0 auto;
   width:100%;
   min-width:0;
   min-height:var(--legal-footer-height);
-  gap:4px 24px;
+  gap:0;
   margin:0;
   padding:10px max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
   background:transparent;
   color:#61786f;
   font:400 .75rem/1.5 'Manrope Variable',Arial,sans-serif;
-  text-align:left;
+  text-align:center;
 }
 
 .moinpdf-footer-brand {
   display:inline-flex;
   align-items:center;
   flex:0 0 auto;
-  gap:8px;
+  gap:6px;
   min-width:0;
   max-width:100%;
 }
 
 .moinpdf-footer-mascot {
   display:block;
-  flex:0 0 48px;
-  width:48px;
-  height:48px;
+  flex:0 0 32px;
+  width:32px;
+  height:32px;
   object-fit:contain;
 }
 
@@ -96,8 +96,6 @@
 .moinpdf-version>span { font-variant-numeric:tabular-nums; }
 
 @media(max-width:600px) {
-  .moinpdf-shell { --legal-footer-height:112px; }
-  .moinpdf-legal-footer { flex-direction:column; align-items:stretch; justify-content:center; gap:0; padding-top:6px; }
-  .moinpdf-legal-footer nav { order:-1; width:100%; column-gap:16px; text-align:center; }
-  .moinpdf-footer-brand { align-self:flex-start; }
+  .moinpdf-legal-footer { padding-top:6px; }
+  .moinpdf-legal-footer nav { width:100%; column-gap:16px; }
 }
