@@ -1,0 +1,46 @@
+.chooser-categories {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px;
+  max-width:720px;
+  margin:18px auto 0;
+}
+
+.chooser-category {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  max-width:100%;
+  padding:8px 14px;
+  border:1px solid #dce8df;
+  border-radius:999px;
+  background:rgba(255,255,255,.7);
+  color:#52705f;
+  font:500 .8125rem/1.4 'Manrope Variable',Arial,sans-serif;
+  text-align:center;
+}
+
+.chooser-category:not(:disabled):not([aria-pressed=true]):hover {
+  border-color:#a8cbbc;
+  background:#edf5ef;
+}
+
+.chooser-category[aria-pressed=true] {
+  border-color:#176c64;
+  background:#176c64;
+  color:#fff;
+}
+
+.chooser-category:focus-visible {
+  outline:2px solid #176c64;
+  outline-offset:3px;
+}
+
+.chooser-category:disabled { opacity:.5; }
+
+@media(max-width:520px) {
+  .chooser-categories { gap:6px; margin-top:16px; }
+  .chooser-category { padding:8px 11px; font-size:.75rem; }
+}
