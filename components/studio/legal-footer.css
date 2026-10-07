@@ -1,5 +1,5 @@
 .moinpdf-shell {
-  --legal-footer-height:88px;
+  --legal-footer-height:80px;
   display:flex;
   flex-direction:column;
   width:100%;
@@ -51,6 +51,8 @@
 .moinpdf-footer-brand {
   display:inline-flex;
   align-items:center;
+  justify-content:center;
+  align-self:center;
   flex:0 0 auto;
   gap:6px;
   min-width:0;
@@ -59,9 +61,9 @@
 
 .moinpdf-footer-mascot {
   display:block;
-  flex:0 0 24px;
-  width:24px;
-  height:24px;
+  flex:0 0 16px;
+  width:16px;
+  height:16px;
   object-fit:contain;
 }
 
@@ -92,7 +94,7 @@
 
 .moinpdf-legal-footer a:hover { color:#176c64; text-decoration:underline; }
 .moinpdf-legal-footer a:focus-visible { border-radius:3px; outline:2px solid #176c64; outline-offset:3px; }
-.moinpdf-version { color:#7b8f86; white-space:nowrap; font-size:.6875rem; }
+.moinpdf-version { color:#7b8f86; white-space:nowrap; font-size:.6875rem; line-height:1rem; }
 .moinpdf-version>span { font-variant-numeric:tabular-nums; }
 
 @media(max-width:600px) {

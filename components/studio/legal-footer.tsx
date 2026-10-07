@@ -8,7 +8,7 @@ export function LegalFooter() {
       <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">Datenschutzerklärung<span className="sr-only"> (neuer Tab)</span></a>
     </nav>
     <div className="moinpdf-footer-brand">
-      <img className="moinpdf-footer-mascot" src={`/branding/moinpdf-sailor.webp?v=${APP_VERSION}`} width={24} height={24} alt="" decoding="async" />
+      <img className="moinpdf-footer-mascot" src={`/branding/moinpdf-sailor.webp?v=${APP_VERSION}`} width={16} height={16} alt="" decoding="async" />
       <span className="moinpdf-version" aria-label={`MoinPDF Version ${APP_VERSION}`}>MoinPDF <span>v{APP_VERSION}</span></span>
     </div>
   </footer>;
