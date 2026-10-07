@@ -1,6 +1,8 @@
 """Run inside the documents service: exercise the real HTTP proxy and translator."""
 import json
+import io
 import os
+import wave
 from pathlib import Path
 
 import pymupdf
@@ -59,4 +61,14 @@ result.raise_for_status()
 assert result.content.startswith(b'%PDF-'), result.content[:80]
 assert 'content-disposition' in result.headers
 assert result.headers['cache-control'] == 'no-store'
-print('PASS: app, local assets, all server capabilities, request isolation, real German/English PDF translation and Office conversion.')
+
+audio = session.post(api + '/v1/audio', data={'request': json.dumps({
+    'voice': 'thorsten', 'speed': 1, 'sections': [{'title': 'Stimmprobe', 'text': 'Moin! Die lokale Sprachausgabe funktioniert.'}]
+})}, timeout=200)
+audio.raise_for_status()
+assert audio.headers['content-type'].startswith('audio/wav')
+assert audio.headers['cache-control'] == 'no-store'
+with wave.open(io.BytesIO(audio.content), 'rb') as wav:
+    assert wav.getframerate() == 22050 and wav.getnchannels() == 1
+    assert wav.getnframes() > 22050
+print('PASS: app, local assets, all server capabilities, request isolation, real German/English PDF translation, Office conversion and local speech through the authenticated HTTP proxy.')

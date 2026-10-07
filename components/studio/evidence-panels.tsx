@@ -36,17 +36,17 @@ function EvidencePreview({sources,focus}:{sources:Source[];focus?:EvidenceRef}) 
     <PageStage source={source} page={page} rects={active?.rects||[]}/>
   </aside>;
 }
-function RefButton({value,onFocus,label}:{value?:EvidenceRef;onFocus:(r:EvidenceRef)=>void;label?:string}) {
+export function RefButton({value,onFocus,label}:{value?:EvidenceRef;onFocus:(r:EvidenceRef)=>void;label?:string}) {
   return value?<Button type="button" size="sm" variant="outline" className="evidence-ref" onClick={()=>onFocus({...value})}>{label?label+' · ':''}{refLabel(value)}</Button>:null;
 }
-function EvidenceLayout({sources,focus,children}:{sources:Source[];focus?:EvidenceRef;children:ReactNode}) {
+export function EvidenceLayout({sources,focus,children}:{sources:Source[];focus?:EvidenceRef;children:ReactNode}) {
   return <div className="evidence-layout"><div className="evidence-controls">{children}</div><EvidencePreview sources={sources} focus={focus}/></div>;
 }
-function ReadOptions({ocr,setOcr}:{ocr:boolean;setOcr:(v:boolean)=>void}) {
+export function ReadOptions({ocr,setOcr}:{ocr:boolean;setOcr:(v:boolean)=>void}) {
   return <><Tick label="Alle sichtbaren Seiten per OCR lesen" value={ocr} onChange={setOcr}/><p className="fine-note">Standard: vorhandene Textebene lesen, reine Scanseiten per OCR. Die vollständige OCR liest sichtbare Inhalte unabhängig von der Textebene. Verdrehte Seiten bitte zuerst ausrichten. Verarbeitung auf deinem Gerät; große Stapel brauchen Zeit.</p></>;
 }
-function Coverage({pages}:{pages:EvidencePage[]}){return pages.length?<p className="workbench-notice" role="status">{coverage(pages)}</p>:null;}
-function ReportButtons({rows,name,run,busy}:{rows:string[][];name:string;run:PanelProps['run'];busy:boolean}) {
+export function Coverage({pages}:{pages:EvidencePage[]}){return pages.length?<p className="workbench-notice" role="status">{coverage(pages)}</p>:null;}
+export function ReportButtons({rows,name,run,busy}:{rows:string[][];name:string;run:PanelProps['run'];busy:boolean}) {
   return <div className="advanced-actions"><Button disabled={busy} onClick={()=>run(()=>exportRows(rows,name))}>Excel erstellen</Button><Button variant="outline" disabled={busy} onClick={()=>run(()=>exportRows(rows,name,'csv'))}>CSV erstellen</Button></div>;
 }
 function Findings({rows,onFocus,run,busy,ready,note='Die Ergebnisse beruhen auf erkannten Angaben. Unklare Zuordnungen und OCR-Werte bitte im Original prüfen.'}:{rows:Finding[];onFocus:(r:EvidenceRef)=>void;run:PanelProps['run'];busy:boolean;ready:boolean;note?:string}) {

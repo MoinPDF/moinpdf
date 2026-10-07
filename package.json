@@ -1,6 +1,6 @@
 {
   "name": "moinpdf",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -26,7 +26,8 @@
     "typecheck:selfhost": "tsc --project tsconfig.selfhost.json --noEmit",
     "package:pages": "pnpm run build:selfhost && node scripts/package-pages.mjs",
     "test:conversion": "node tests/conversion-smoke.mjs",
-    "test:evidence": "node tests/evidence-smoke.mjs"
+    "test:evidence": "node tests/evidence-smoke.mjs",
+    "test:century": "node tests/century-smoke.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

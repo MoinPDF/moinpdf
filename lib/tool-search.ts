@@ -2,6 +2,13 @@ import {tools,type WorkspaceTool} from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases:Record<WorkspaceTool,string[]>={
+ 'form-responses':['Formularrückläufe auswerten','ausgefüllte Formulare sammeln','Formularantworten Excel','Pflichtfelder prüfen'],
+ 'chronology':['Dokumente chronologisch ordnen','nach Datum sortieren','zeitliche Reihenfolge','chronologische Dokumentenmappe'],
+ 'arithmetic-check':['PDF-Rechenprüfung','Summe nachrechnen','Beträge addieren','Zahlenspalte prüfen'],
+ 'pdf-sanitize':['PDF-Sicherheitsbereinigung','JavaScript entfernen','aktive Inhalte entfernen','PDF von Skripten bereinigen'],
+ 'pdf-layers':['PDF-Ebenen verwalten','Layer ausblenden','Ebenen einschalten','Ebenenansicht exportieren'],
+ 'pdf-measure':['PDF-Maßband','Strecken messen','Fläche messen','Bauplan ausmessen','Maßstab kalibrieren'],
+ 'pdf-audio':['PDF als Hörbuch','PDF vorlesen','Audio aus PDF','PDF zu WAV','Sprachausgabe'],
  'number-compare':['Zahlenvergleich','geänderte Beträge finden','IBAN Änderungen vergleichen','Datumsangaben vergleichen','Zahlen zwischen Versionen'],
  'field-collector':['Belegfelder sammeln','viele Rechnungen nach Excel','Felder aus mehreren PDFs','Rechnungsnummern sammeln'],
  'invoice-visual-check':['Rechnung und XML abgleichen','sichtbare Rechnung vergleichen','XML weicht von PDF ab','ZUGFeRD Sichtprüfung'],
