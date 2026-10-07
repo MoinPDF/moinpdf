@@ -1,6 +1,6 @@
 {
   "name": "moinpdf",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -25,7 +25,8 @@
     "build:selfhost": "node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts",
     "typecheck:selfhost": "tsc --project tsconfig.selfhost.json --noEmit",
     "package:pages": "pnpm run build:selfhost && node scripts/package-pages.mjs",
-    "test:conversion": "node tests/conversion-smoke.mjs"
+    "test:conversion": "node tests/conversion-smoke.mjs",
+    "test:evidence": "node tests/evidence-smoke.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

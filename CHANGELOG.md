@@ -4,6 +4,29 @@ MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentral
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
 Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Digest.
 
+## 0.4.0 – 2026-10-07
+
+- Zehn neue Werkzeuge, insgesamt 93: Zahlenvergleich, Belegfelder sammeln,
+  Rechnung/XML-Abgleich, Dokumentlücken, OCR-Korrekturhilfe, Pseudonymisierung,
+  automatische Anlagenlinks, beste Scan-Seiten, Positionsabgleich und Kommentarlisten.
+- Gemeinsame Originalvorschau mit markierten Fundstellen und vergrößertem Ausschnitt.
+  Tabellenexporte kennzeichnen ungeprüfte, fehlende und mehrdeutige Angaben.
+- Zahlen und Positionen werden anhand ihrer Beschriftungen zugeordnet. Verschobene
+  Seiten sind möglich, doppelte oder unklare Beschriftungen bleiben Prüffälle.
+- Rechnung/XML-Abgleich liest sichtbare Seiten per lokaler OCR; eine abweichende
+  versteckte Textebene wird dafür nicht als sichtbarer Rechnungsinhalt verwendet.
+- OCR-Korrekturen erzeugen Suchtext hinter neuen Seitenbildern. Pseudonymisierte
+  Ausgaben enthalten nur bearbeitete Seitenbilder und neutrale Dateinamen; alte
+  Textebenen, Formulare, Metadaten und Anhänge werden nicht übernommen.
+- Anlagenziele und Scan-Seiten lassen sich vor dem Export kontrollieren und ändern.
+  Positionsvorschläge können ergänzt, korrigiert und erst danach verglichen werden.
+- Alle zehn Werkzeuge arbeiten im Browser mit lokal bereitgestellten Ressourcen.
+  Keine zusätzlichen Serverdienste, externen KI-Aufrufe oder API-Konten erforderlich.
+- Neue Tests prüfen tatsächliche OCR, sichtbare Pseudonymisierung, unabhängiges
+  Lesen der erzeugten PDFs, interne Linkziele und sichere Tabellen-/Kommentarimporte.
+  Die Erkennung bleibt eine kontrollierbare Hilfe und ist keine Vollständigkeits-
+  oder Echtheitsbestätigung.
+
 ## 0.3.0 – 2026-10-07
 
 - Sieben neue Werkzeuge, insgesamt 83: PDF-Reparatur, Komprimierung auf Wunschgröße,
