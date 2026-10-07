@@ -1,6 +1,7 @@
 'use client';
 import {useId,type CSSProperties} from 'react';
 import {File,FileText,Plus,Check,LoaderCircle} from 'lucide-react';
+import {APP_VERSION} from '@/lib/version';
 import './upload-entry.css';
 
 export type ImportState={phase:'idle'|'reading'|'done';name:string;completed:number;total:number};
@@ -11,7 +12,7 @@ export function UploadEntry({dragOver,loading,state,onOpen,onCamera,onOffice,onE
  const paperId=`${id}-paper`,edgeId=`${id}-edge`,scanId=`${id}-scan`,maskId=`${id}-mask`;
  return <main className="upload-entry upload-entry-branded">
   <div className="upload-entry-focus">
-  <img className="upload-entry-logo" src="/branding/moinpdf-logo.svg" width={680} height={225} alt="MoinPDF. Papierkram. Läuft." draggable={false}/>
+  <img className="upload-entry-logo" src={`/branding/moinpdf-logo.svg?v=${APP_VERSION}`} width={680} height={225} alt="MoinPDF. Papierkram. Läuft." draggable={false}/>
   <button className={`upload-field is-${phase}`} onClick={onOpen} disabled={loading} aria-label="PDF oder andere Datei auswählen" aria-busy={loading}>
    <span className="upload-document-stage" aria-hidden="true">
     <span className="upload-document-float">
