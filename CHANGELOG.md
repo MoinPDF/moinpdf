@@ -4,6 +4,25 @@ MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentral
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
 Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Digest.
 
+## 0.3.0 – 2026-10-07
+
+- Sieben neue Werkzeuge, insgesamt 83: PDF-Reparatur, Komprimierung auf Wunschgröße,
+  Sammelscans trennen, PDF zu Markdown/HTML/EPUB sowie EPUB zu PDF.
+- Reparatur akzeptiert Originaldateien ohne vorherige Vorschau. Rekonstruktion der
+  Dateistruktur, unabhängiger Parser als Rückfall und Prüfung jeder Ausgabeseite.
+  Nicht rekonstruierbare Dateien erhalten einen Fehler; Originale bleiben erhalten.
+- Komprimierung misst die echte Dateigröße, behält immer die kleinste Variante und
+  meldet unerreichbare Ziele ausdrücklich. Text, Links und Formulare bleiben erhalten.
+  Docker/platform kann Bildauflösung reduzieren; die Browser-Ausgabe nutzt QPDF.
+- Sammelscans: automatische Vorschläge anhand heller Zwischenräume, manuelle Rahmen,
+  Vorschau und Prüfung aller Ausschnitte vor dem ZIP mit einzelnen Bild-PDFs/PNG/JPG.
+- Markdown/HTML/EPUB als Textausgaben mit Seitenstruktur, gekennzeichneten Scanseiten
+  und EPUB-Inhaltsverzeichnis. Bilder und das Original-Layout werden nicht übernommen.
+- EPUB-Import im Dokumentenserver mit A4/A5, Schriftgröße, Größen-/Seitenlimits und
+  gesperrten aktiven/externalen Inhalten. Direkter EPUB-Upload öffnet den Konverter.
+- Regressionstests für Reparatur, Formulare, Zielgrößen, tatsächliche Ausschnitte,
+  sichere Exporte, EPUB-Rundlauf und die geschützten Server-Endpunkte.
+
 ## 0.2.8 – 2026-10-07
 
 - Kategorieauswahl unter der Werkzeugsuche wiederhergestellt: Alle, Prüfen,

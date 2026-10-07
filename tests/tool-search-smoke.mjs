@@ -11,6 +11,7 @@ const {tools}=await import('../.sites-runtime/tool-catalog-test.mjs');
 const {suggestTools}=await import('../.sites-runtime/tool-search-test.mjs');
 for(const tool of tools)assert.equal(suggestTools(tool.title)[0]?.id,tool.id,tool.title);
 const cases=[
+ ['PDF reparieren','pdf-repair'],['PDF auf 2 MB verkleinern','optimize-pdf'],['Sammelscans trennen','scan-split'],['PDF zu Markdown','pdf-markdown'],['PDF zu HTML','pdf-html'],['HTML zu PDF','html-pdf'],['PDF zu EPUB','pdf-epub'],['EPUB zu PDF','ebook-pdf'],
  ['PDF in 5 MB aufteilen','split-size'],['Word zu PDF','office-pdf'],['PDF zu PowerPoint','pdf-powerpoint'],['PowerPoint zu PDF','office-pdf'],['EML zu PDF','email-pdf'],['HTML zu PDF','html-pdf'],['Seiten automatisch ausrichten','auto-orient'],['Buchfalz','book-dewarp'],['Formularfelder erkennen','form-detect'],['Schwärzungen prüfen','redaction-check'],['Druckqualität prüfen','print-check'],['Barrierefreiheit prüfen','accessibility-check'],['PDF übersetzen','translate-pdf'],['ZUGFeRD erstellen','zugferd-create'],['Word Serienbrief','word-mail-merge'],
  ['Passwort setzen','protect'],['Passwort entfernen','unlock'],['XRechnung öffnen','invoice-read'],['Rechnungssummen prüfen','invoice-check'],['ZUGFeRD anzeigen','invoice-read'],['XML zu PDF','invoice-read'],
  ['PDF ausfüllbar machen','create-form'],['Formular ausfüllen','fill-form'],['Kapitelstruktur','bookmarks'],['Bilder extrahieren','extract-images'],['Fotos herauslösen','extract-images'],

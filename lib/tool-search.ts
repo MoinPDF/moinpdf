@@ -2,6 +2,13 @@ import {tools,type WorkspaceTool} from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases:Record<WorkspaceTool,string[]>={
+ 'pdf-repair':['PDF reparieren','beschädigte PDF','defekte Datei','PDF öffnet nicht','kaputte PDF wiederherstellen','recover repair'],
+ 'optimize-pdf':['auf Wunschgröße komprimieren','Zielgröße','PDF auf 2 MB verkleinern','PDF auf 5 MB komprimieren','verlustfrei optimieren','Text behalten','Bilder verkleinern'],
+ 'scan-split':['Sammelscans trennen','Fotos auf einem Scan trennen','mehrere Belege auf einer Seite','Fotos automatisch zuschneiden','Scan in einzelne Bilder teilen'],
+ 'pdf-markdown':['PDF zu Markdown','PDF als MD','Markdown exportieren'],
+ 'pdf-html':['PDF zu HTML','PDF als Webseite','PDF Text zu HTML'],
+ 'pdf-epub':['PDF zu E-Book','PDF zu EPUB','PDF als eBook','EPUB exportieren'],
+ 'ebook-pdf':['E-Book zu PDF','EPUB zu PDF','eBook in PDF umwandeln'],
  'pdf-powerpoint':['PDF zu PowerPoint', 'PDF zu PPTX', 'PDF als Folien'],
  'html-pdf':['HTML zu PDF', 'Webseite zu PDF', 'Internetseite speichern'],
  'auto-orient':['Seiten automatisch ausrichten', 'auf dem Kopf', '180 Grad', 'automatisch drehen'],
@@ -117,6 +124,10 @@ export function suggestTools(query:string){
   if(/pdf (?:zu|in|als) (?:eine )?(?:word|docx)/.test(normalized)&&tool.id==='pdf-word')score+=100;
   if(/pdf (?:zu|in|als) (?:eine )?(?:powerpoint|pptx|folien)/.test(normalized)&&tool.id==='pdf-powerpoint')score+=100;
   if(/(?:word|docx|excel|xlsx|powerpoint|pptx) (?:zu|in|als) (?:eine )?pdf/.test(normalized)&&tool.id==='office-pdf')score+=100;
+  if(/pdf (?:zu|in|als) (?:eine? )?(?:html|webseite)/.test(normalized)&&tool.id==='pdf-html')score+=100;
+  if(/(?:html|webseite) (?:zu|in|als) (?:eine? )?pdf/.test(normalized)&&tool.id==='html-pdf')score+=100;
+  if(/pdf (?:zu|in|als) (?:eine? )?(?:e book|ebook|epub)/.test(normalized)&&tool.id==='pdf-epub')score+=100;
+  if(/(?:e book|ebook|epub) (?:zu|in|als) (?:eine? )?pdf/.test(normalized)&&tool.id==='ebook-pdf')score+=100;
   return {...tool,score};
  }).filter(t=>t.score>=27).sort((a,b)=>b.score-a.score);
  return ranked.filter(tool=>tool.score>=Math.max(27,(ranked[0]?.score||0)*.62));

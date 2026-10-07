@@ -13,6 +13,8 @@ for(const ext of ['doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp'])asse
 assert.equal(conversionToolForFile('Nachricht.EML'),'email-pdf');
 assert.equal(conversionToolForFile('Nachricht.msg'),'email-pdf');
 assert.equal(conversionToolForFile('Seite.HTML'),'html-pdf');
+assert.equal(conversionToolForFile('Buch.EPUB'),'ebook-pdf');
+assert.equal(conversionToolForFile('Buch.epub.exe'),null);
 for(const name of ['Rechnung.pdf','Rechnung.xml','Scan.png','malicious.docx.exe','notes.docx.pdf'])assert.equal(conversionToolForFile(name),null);
 
 const {createTextWordFile}=await import('../.sites-runtime/word-export-test.mjs');
