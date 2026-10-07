@@ -44,6 +44,13 @@ try{
  }
  await writeFile('.sites-runtime/reading-roundtrip.epub',epub);
  await assert.rejects(()=>exportReading({...input,pdf:{numPages:1,getPage:async()=>({getTextContent:async()=>({items:[]})})}},'epub','','de',ctx),/OCR/);
+ const uuidDescriptor=Object.getOwnPropertyDescriptor(crypto,'randomUUID');
+ Object.defineProperty(crypto,'randomUUID',{configurable:true,value:undefined});
+ try {
+  const localEpub=await exportReading(input,'epub','Lokaler HTTP-Zugriff','de',ctx);
+  const archive=await JSZip.loadAsync(await localEpub.blob.arrayBuffer());
+  assert.match(await archive.file('EPUB/package.opf').async('string'),/urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/);
+ }finally{if(uuidDescriptor)Object.defineProperty(crypto,'randomUUID',uuidDescriptor);else delete crypto.randomUUID;}
  await assert.rejects(()=>exportReading(input,'html','','de',{...ctx,signal:AbortSignal.abort()}),{name:'AbortError'});
  // A wrong startxref is recoverable. Missing content is never manufactured.
  const damaged=Buffer.from(input.bytes).toString('latin1').replace(/startxref\s+\d+/, 'startxref\n1');

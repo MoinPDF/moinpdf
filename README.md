@@ -2,6 +2,15 @@
 
 Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler Übersetzung. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 100 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 80 Werkzeuge verarbeiten Dokumente im Browser. 20 zusätzliche Ansichten nutzen in der vollständigen Docker-/platform-Installation automatisch den integrierten Dokumentendienst. Die Verarbeitung startet mit dem jeweiligen Aktionsknopf; die Oberfläche benötigt weder Serveradresse noch API-Schlüssel. Die Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme und für die Wunschgrößen-Komprimierung eine lokale Optimierung ohne Bild-Downsampling.
 
+## Stabilitätskorrekturen (0.5.1)
+
+Abbrechen und Zeitlimits bleiben bis zum Ende eines Ergebnisdownloads wirksam.
+EPUB-Export, Messungen und manuell ergänzte Prüfpositionen funktionieren auch beim
+direkten HTTP-Aufruf im lokalen Netz. Die Browserprüfung durchläuft alle 100
+Werkzeuge auf Desktop und Smartphone, prüft Kategorien und Suche und liest echte
+PDF-, EPUB- und Hörbuchdownloads wieder ein. Der platform-Test erkennt das Logo
+unabhängig vom Versionsparameter seiner Adresse.
+
 ## 100 Werkzeuge (0.5.0)
 
 Sieben neue Arbeitsplätze ergänzen die vorhandenen 93:

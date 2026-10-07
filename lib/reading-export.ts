@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import type {Source} from './pdf-engine';
+import {uuid,type Source} from './pdf-engine';
 import type {ExportFile,RunContext} from './advanced-types';
 
 export type ReadingFormat='markdown'|'html'|'epub';
@@ -60,7 +60,7 @@ export async function exportReading(source:Source,format:ReadingFormat,title:str
    zip.file('EPUB/style.css',style);
    pages.forEach((lines,i)=>zip.file(`EPUB/page-${i+1}.xhtml`,xhtml(`${title} · Seite ${i+1}`,`<h1>Seite ${i+1}</h1>${body(lines)}`)));
    zip.file('EPUB/nav.xhtml',xhtml(title,`<nav epub:type="toc" id="toc"><h1>${escapeMarkup(title)}</h1><ol>${pages.map((_,i)=>`<li><a href="page-${i+1}.xhtml">Seite ${i+1}</a></li>`).join('')}</ol></nav>`));
-   zip.file('EPUB/package.opf',xml+`<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">urn:uuid:${crypto.randomUUID()}</dc:identifier><dc:title>${escapeMarkup(title)}</dc:title><dc:language>${language}</dc:language><meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z$/,'Z')}</meta></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="css" href="style.css" media-type="text/css"/>${pages.map((_,i)=>`<item id="p${i+1}" href="page-${i+1}.xhtml" media-type="application/xhtml+xml"/>`).join('')}</manifest><spine>${pages.map((_,i)=>`<itemref idref="p${i+1}"/>`).join('')}</spine></package>`);
+   zip.file('EPUB/package.opf',xml+`<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">urn:uuid:${uuid()}</dc:identifier><dc:title>${escapeMarkup(title)}</dc:title><dc:language>${language}</dc:language><meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z$/,'Z')}</meta></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="css" href="style.css" media-type="text/css"/>${pages.map((_,i)=>`<item id="p${i+1}" href="page-${i+1}.xhtml" media-type="application/xhtml+xml"/>`).join('')}</manifest><spine>${pages.map((_,i)=>`<itemref idref="p${i+1}"/>`).join('')}</spine></package>`);
    const bytes=await zip.generateAsync({type:'uint8array',compression:'DEFLATE'},()=>ctx.signal.throwIfAborted());
    blob=new Blob([new Uint8Array(bytes)],{type:'application/epub+zip'});
   }

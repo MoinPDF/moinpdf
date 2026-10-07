@@ -3,13 +3,18 @@ import json
 import os
 from pathlib import Path
 import re
+import socket
 import tempfile
 import wave
+import zipfile
 
 import pymupdf
 from playwright.sync_api import expect, sync_playwright
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://localhost:8785')
+nonlocal_http = os.environ.get('MOINPDF_TEST_NONLOCAL_HTTP') == '1'
+if nonlocal_http:
+    origin = f'http://{socket.gethostbyname(socket.gethostname())}:8080'
 require_server = os.environ.get('MOINPDF_REQUIRE_SERVER') == '1'
 evidence = Path('web-evidence')
 evidence.mkdir(exist_ok=True)
@@ -55,6 +60,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     page.on('pageerror', lambda error: errors.append(str(error)))
     try:
         page.goto(origin)
+        if nonlocal_http:
+            assert page.evaluate('isSecureContext') is False
+            assert page.evaluate('typeof crypto.randomUUID') == 'undefined'
         logo = page.get_by_role('img', name='MoinPDF. Papierkram. Läuft.', exact=True)
         expect(logo).to_be_visible()
         expect(logo).to_have_js_property('complete', True)
@@ -89,7 +97,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         assert total == 100
         categories.get_by_role('button', name='Alle', exact=True).click()
         chooser(page)
-        search = page.get_by_role('combobox', name='Was möchtest du tun?')
+        search = page.get_by_placeholder('Zum Beispiel: PDF kleiner machen …', exact=True)
         search.fill('PDF vorlesen')
         expect(page.get_by_role('option').first).to_contain_text('PDF als Hörbuch')
         search.fill('')
@@ -104,7 +112,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(preview).to_have_js_property('complete', True)
         assert preview.evaluate('(image) => image.naturalWidth > 0')
         page.get_by_role('button', name='Seiten speichern', exact=True).click()
-        expect(page.get_by_role('heading', name='Dein Ergebnis ist bereit.', exact=True)).to_be_visible()
+        expect(page.get_by_role('heading', name='Erledigt.', exact=True)).to_be_visible()
         with page.expect_download() as download:
             page.locator('a[download]').first.click()
         saved = Path(temporary) / 'organisiert.pdf'
@@ -114,6 +122,19 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             assert 'Moin aus dem Norden' in document[0].get_text()
             assert 'Zweite Seite' in document[1].get_text()
         completed.append('Real PDF preview and two-page PDF download independently read back')
+        back(page)
+
+        page.get_by_role('button', name='PDF zu E-Book', exact=True).click()
+        page.get_by_role('button', name='EPUB erstellen', exact=True).click()
+        expect(page.locator('.advanced-result')).to_be_visible()
+        with page.expect_download() as download:
+            page.locator('.advanced-result a[download]').click()
+        saved = Path(temporary) / 'buch.epub'
+        download.value.save_as(saved)
+        with zipfile.ZipFile(saved) as archive:
+            assert archive.read('mimetype') == b'application/epub+zip'
+            assert b'urn:uuid:' in archive.read('EPUB/package.opf')
+        completed.append('EPUB export on the same browser origin, including local HTTP')
         back(page)
 
         if require_server:
