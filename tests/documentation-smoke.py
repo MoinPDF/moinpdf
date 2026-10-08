@@ -65,7 +65,10 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         assert package.ok
         with zipfile.ZipFile(io.BytesIO(package.body())) as archive:
             assert archive.testzip() is None
-            assert len([name for name in archive.namelist() if name.endswith('.jpg')]) == 6
+            assert len([name for name in archive.namelist() if '/Banner/' in name and name.endswith('.jpg')]) == 6
+            logo = media.request.get(origin + media.locator('#logo a[download]').get_attribute('href'))
+            assert logo.ok and logo.body().startswith(b'\xff\xd8\xff')
+            assert archive.read('MoinPDF-Medienpaket/MoinPDF-Logo.jpg') == logo.body()
             for card in media.locator('.media-banner').all():
                 href = card.locator('a[download]').get_attribute('href')
                 assert archive.read('MoinPDF-Medienpaket/Banner/' + href.split('/')[-1]) == media.request.get(origin + href).body()

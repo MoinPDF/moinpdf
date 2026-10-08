@@ -42,6 +42,8 @@
 .media-brand-section p:not(.docs-eyebrow){font-size:13px;color:var(--muted)}
 .media-logo-preview{padding:28px 30px;background:#f3f8f2;border:1px solid #e1eade;border-radius:13px}
 .media-logo-preview img{display:block;width:100%;height:auto}
+.media-icon-preview{display:block;justify-self:center;width:min(100%,240px);border:1px solid #e1eade;border-radius:13px;overflow:hidden}
+.media-icon-preview img{display:block;width:100%;height:auto}
 .media-logo-size{margin-left:12px}
 .media-copy{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .media-copy>div{padding:25px 0}
