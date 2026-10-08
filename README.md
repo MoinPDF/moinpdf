@@ -2,6 +2,17 @@
 
 Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler Übersetzung. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 100 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 80 Werkzeuge verarbeiten Dokumente im Browser. 20 zusätzliche Ansichten nutzen in der vollständigen Docker-/Umbrel-Installation automatisch den integrierten Dokumentendienst. Die Verarbeitung startet mit dem jeweiligen Aktionsknopf; die Oberfläche benötigt weder Serveradresse noch API-Schlüssel. Die Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme und für die Wunschgrößen-Komprimierung eine lokale Optimierung ohne Bild-Downsampling.
 
+## Medienbereich (0.5.3)
+
+Der Footer öffnet `/medienbereich.html` in einem eigenen Tab. Sechs unveränderte
+Originalbanner stehen mit Vorschau, tatsächlichen Pixelmaßen und Einzel-Download
+bereit. Das Medienpaket enthält zusätzlich die SVG-Wortmarke, Kurzbeschreibungen
+und Nutzungshinweise. Die Seite funktioniert auch ohne JavaScript.
+
+`media/banner-catalog.json` enthält die Motive und SHA-256-Prüfsummen.
+`scripts/build-media.mjs` prüft die Originaldateien und erzeugt Seite, Textdateien
+und ein reproduzierbares ZIP-Paket bei jedem Sites- und Selfhosting-Build.
+
 ## Integrierte Dokumentation (0.5.2)
 
 Der Footer verlinkt vor Impressum und Datenschutz auf `/dokumentation.html`.

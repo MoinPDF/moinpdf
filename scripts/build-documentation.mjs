@@ -67,7 +67,7 @@ const html = `<!doctype html>
       <a class="docs-to-top" href="#docs-title">Zurück nach oben <span aria-hidden="true">↑</span></a>
     </main>
   </div>
-  <footer class="docs-footer"><nav aria-label="Dokumentation und Rechtliches"><a href="/dokumentation.html" aria-current="page">Dokumentation</a><a href="/impressum.html">Impressum</a><a href="/datenschutz.html">Datenschutzerklärung</a></nav><div class="docs-footer-brand"><img src="/branding/moinpdf-sailor.webp?v=${escape(version)}" width="16" height="16" alt=""><span>MoinPDF v${escape(version)}</span></div></footer>
+  <footer class="docs-footer"><nav aria-label="Informationen zu MoinPDF"><a href="/dokumentation.html" aria-current="page">Dokumentation</a><a href="/medienbereich.html">Medienbereich</a><a href="/impressum.html">Impressum</a><a href="/datenschutz.html">Datenschutzerklärung</a></nav><div class="docs-footer-brand"><img src="/branding/moinpdf-sailor.webp?v=${escape(version)}" width="16" height="16" alt=""><span>MoinPDF v${escape(version)}</span></div></footer>
 </body>
 </html>
 `;

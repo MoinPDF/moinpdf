@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - 'docs/**'
+      - 'media/**'
+      - 'public/media/**'
+      - 'public/medienbereich.html'
+      - 'scripts/build-media.mjs'
       - 'public/docs/**'
       - 'public/dokumentation.html'
       - 'public/impressum.html'
