@@ -1,0 +1,13 @@
+MoinPDF – Hinweise zum Medienpaket
+
+Stand: 8. Oktober 2026
+
+Die bereitgestellten Banner und die Wortmarke dürfen für redaktionelle Beiträge und zur Vorstellung oder Bewerbung von MoinPDF verwendet werden, etwa in Fachzeitschriften, auf Websites, in Newslettern und sozialen Medien. Bitte MoinPDF als Quelle nennen und bei Online-Beiträgen nach Möglichkeit auf die vorgestellte MoinPDF-Instanz verlinken.
+
+Motive und Schriftzüge bitte nicht verfälschen oder verzerren. Eine proportionale Skalierung ist möglich. Eine Nutzung als eigene Marke oder für fremde Produkte ist nicht umfasst.
+
+Die sechs Banner werden in ihrer Originalgröße als JPG bereitgestellt. Es erfolgt keine künstliche Vergrößerung. 1536 Pixel Breite entsprechen bei 300 dpi ungefähr 13 cm Druckbreite. Bitte die gewünschte Druckgröße mit der Redaktion abstimmen. Die Wortmarke liegt als skalierbare SVG mit transparentem Hintergrund vor; die Schrift ist in Pfade umgewandelt.
+
+Kontakt: Denny Wenke, denny@wenke.email
+
+Die Schriftlizenzen zur Wortmarke sind in Lizenzen-Wortmarke.txt enthalten.

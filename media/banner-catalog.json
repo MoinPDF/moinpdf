@@ -1,0 +1,56 @@
+[
+  {
+    "file": "moinpdf-leuchtturm.jpg",
+    "title": "Leuchtturm",
+    "caption": "Norddeutsch. Klar. Auf Kurs.",
+    "alt": "MoinPDF-Schriftzug vor dem Meer und einem beleuchteten Leuchtturm im Abendlicht.",
+    "sha256": "49ddb6e1ede384d9af818ef54c8bd612024a204ec7346de16293c9f095b44df0",
+    "width": 1536,
+    "height": 512
+  },
+  {
+    "file": "moinpdf-druckerbergung.jpg",
+    "title": "Druckerbergung",
+    "caption": "Papierkram an Land ziehen.",
+    "alt": "Ein Seemann im gelben Friesennerz zieht einen Drucker an einer Kette aus dem Hafen; links das MoinPDF-Logo.",
+    "sha256": "796c4878172bd9068392ce8a087e5176972b358c9aac94bbf4426003516aecef",
+    "width": 1536,
+    "height": 516
+  },
+  {
+    "file": "moinpdf-strandsegler.jpg",
+    "title": "Strandsegler",
+    "caption": "Mit Rückenwind durch den Papierkram.",
+    "alt": "Ein Seemann trinkt Kaffee in einem rollenden Strandkorb mit einem Segel aus Formularen; links das MoinPDF-Logo.",
+    "sha256": "e4b15e634381b1a61ae5e7f4871db158571624547344cfb7e3caa4deed1b63e9",
+    "width": 1536,
+    "height": 512
+  },
+  {
+    "file": "moinpdf-buero-robbe.jpg",
+    "title": "Büro-Robbe",
+    "caption": "Ein Stempel. Ein Fisch. Alles im Griff.",
+    "alt": "Eine Robbe mit Brille sitzt mit Stempel und Akten an einem Schreibtisch im Watt; links das MoinPDF-Logo.",
+    "sha256": "3e2e2172141f4514dbed3a382afa314f5a3c6b0f4fce1516c16370b2baa97c01",
+    "width": 1536,
+    "height": 512
+  },
+  {
+    "file": "moinpdf-papierwelle.jpg",
+    "title": "Papierwelle",
+    "caption": "Auf der Welle bleiben.",
+    "alt": "Illustration eines Seemanns, der mit einer Kaffeetasse auf einem grünen Hefter durch eine Welle aus Papier surft.",
+    "sha256": "c331dc6c7d444a8578c20c8a012b4882160c2042408d67dcc71436c1146b7822",
+    "width": 1536,
+    "height": 516
+  },
+  {
+    "file": "moinpdf-entspanntes-dokument.jpg",
+    "title": "Entspanntes Dokument",
+    "caption": "Papierkram macht Pause.",
+    "alt": "Ein lächelndes Dokument mit Sonnenbrille und Kaffeetasse liegt im Liegestuhl neben dem MoinPDF-Schriftzug.",
+    "sha256": "a6daaa2614439ea5abadeb368609a1956734f6bd55907184424c5ef0d34e95a3",
+    "width": 1536,
+    "height": 512
+  }
+]

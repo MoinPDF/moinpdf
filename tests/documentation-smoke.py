@@ -1,5 +1,7 @@
 """Exercise the published static manual and its connection to the actual app."""
 import json
+import io
+import zipfile
 from pathlib import Path
 import tempfile
 import time
@@ -32,7 +34,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
     try:
         page.goto(origin)
         footer = page.locator('.moinpdf-legal-footer')
-        assert [text.strip().split(' (')[0] for text in footer.locator('nav a').all_text_contents()] == ['Dokumentation', 'Impressum', 'Datenschutzerklärung']
+        assert [text.strip().split(' (')[0] for text in footer.locator('nav a').all_text_contents()] == ['Dokumentation', 'Medienbereich', 'Impressum', 'Datenschutzerklärung']
         pdf = Path(temp) / 'dokumentation-test.pdf'
         with pymupdf.open() as document:
             document.new_page().insert_text((50, 60), 'Arbeitsdokument bleibt erhalten.')
@@ -47,6 +49,36 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         expect(manual).to_have_title('Dokumentation · MoinPDF')
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
         completed.append('Footer order, new documentation tab and original PDF retained')
+        with context.expect_page() as popup:
+            footer.get_by_role('link', name='Medienbereich (neuer Tab)', exact=True).click()
+        media = popup.value
+        media.wait_for_load_state()
+        expect(media).to_have_title('Medienbereich · MoinPDF')
+        expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
+        expect(media.locator('.media-banner')).to_have_count(6)
+        for card in media.locator('.media-banner').all():
+            image = card.locator('img')
+            assert image.get_attribute('alt')
+            result = media.request.get(origin + card.locator('a[download]').get_attribute('href'))
+            assert result.ok and result.body().startswith(b'\xff\xd8\xff')
+        package = media.request.get(origin + media.locator('.media-actions a[download]').get_attribute('href'))
+        assert package.ok
+        with zipfile.ZipFile(io.BytesIO(package.body())) as archive:
+            assert archive.testzip() is None
+            assert len([name for name in archive.namelist() if name.endswith('.jpg')]) == 6
+            for card in media.locator('.media-banner').all():
+                href = card.locator('a[download]').get_attribute('href')
+                assert archive.read('MoinPDF-Medienpaket/Banner/' + href.split('/')[-1]) == media.request.get(origin + href).body()
+        for width in (1440, 390, 320):
+            media.set_viewport_size({'width': width, 'height': 900})
+            no_overflow(media)
+            media.screenshot(path=str(evidence / f'media-{width}.png'), full_page=True)
+            page.set_viewport_size({'width': width, 'height': 900})
+            no_overflow(page)
+        page.set_viewport_size({'width': 1440, 'height': 1000})
+        media.close()
+        completed.append('Media tab preserves PDF; six original JPEG downloads, matching ZIP and responsive footer')
+
         expect(manual.locator('.docs-tool')).to_have_count(100)
         expect(manual.locator('.docs-toc > a')).to_have_count(7)
         manual.evaluate('document.fonts.ready')
@@ -116,6 +148,10 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         plain.locator('#werkzeug-pdf-audio > summary').click()
         expect(plain.locator('#werkzeug-pdf-audio .docs-tool-body')).to_be_visible()
         expect(plain.locator('.docs-search-panel')).not_to_be_visible()
+        no_overflow(plain)
+        plain.goto(origin + '/medienbereich.html')
+        expect(plain.locator('.media-banner')).to_have_count(6)
+        expect(plain.locator('.media-actions a[download]')).to_be_visible()
         no_overflow(plain)
         nojs.close()
         assert not errors, errors

@@ -62,3 +62,6 @@ __pycache__/
 !server/.env.example
 
 !.env.example
+
+# Versioned media package is generated for both deployments.
+/public/media/MoinPDF-Medienpaket-*.zip
