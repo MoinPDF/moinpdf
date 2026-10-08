@@ -1,94 +1,56 @@
-# MoinPDF – Papierkram. Läuft.
+<p align="center">
+  <img src="public/media/banners/moinpdf-druckerbergung.jpg" alt="MoinPDF – Papierkram. Läuft. Ein Seemann im gelben Friesennerz zieht einen Drucker aus dem Hafen." width="100%">
+</p>
 
-Deutschsprachiger PDF-Arbeitsplatz mit integriertem Dokumentenserver und lokaler Übersetzung. Die weiße Startseite zeigt ein animiertes Dokument als Uploadfeld in Grün, Türkis und Hellblau sowie dezente Einstiege für Kamera und Office-Dateien. Beim Einlesen mehrerer Dateien animieren ein Scan-Effekt, ein Dateisymbol und ein Fortschrittsbalken den Import; reduzierte Bewegung wird berücksichtigt. Nach dem Import fragt eine eigene Ansicht „Was möchtest du tun?“. Die lokale Suche schlägt passende Werkzeuge auch anhand natürlicher Formulierungen vor; alle 100 Werkzeugansichten sind zusätzlich als beschriftete Symbole erreichbar. Erst die Auswahl öffnet den Arbeitsplatz. „Werkzeug wechseln“ führt ohne Verlust der Dokumente zurück. Auf großen Bildschirmen bleiben Navigation, Kopfzeile und Anwenden-Schaltfläche sichtbar; auf schmalen Bildschirmen liegen die Einstellungen unter dem Dokument. 80 Werkzeuge verarbeiten Dokumente im Browser. 20 zusätzliche Ansichten nutzen in der vollständigen Docker-/Umbrel-Installation automatisch den integrierten Dokumentendienst. Die Verarbeitung startet mit dem jeweiligen Aktionsknopf; die Oberfläche benötigt weder Serveradresse noch API-Schlüssel. Die Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme und für die Wunschgrößen-Komprimierung eine lokale Optimierung ohne Bild-Downsampling.
+<h1 align="center">MoinPDF</h1>
 
-## Medienbereich (0.5.4)
+<p align="center">
+  <strong>Dein PDF-Arbeitsplatz. Mit norddeutscher Gelassenheit.</strong><br>
+  Bearbeiten, erkennen, konvertieren und prüfen. In einer deutschsprachigen Oberfläche.
+</p>
 
-Der Footer öffnet `/medienbereich.html` in einem eigenen Tab. Sechs unveränderte
-Originalbanner stehen mit Vorschau, tatsächlichen Pixelmaßen und Einzel-Download
-bereit. Das bereitgestellte Original-Logo ist als JPG mit Vorschau und Download
-verfügbar. Das Medienpaket enthält alle Banner, das Logo, die SVG-Wortmarke,
-Kurzbeschreibungen ohne Werkzeuganzahl und Nutzungshinweise. Die Seite funktioniert auch ohne JavaScript.
+<p align="center">
+  <a href="#funktionen">Funktionen</a> ·
+  <a href="#schnellstart">Schnellstart</a> ·
+  <a href="#dokumentation">Dokumentation</a> ·
+  <a href="#medienbereich">Medienbereich</a> ·
+  <a href="#entwicklung">Entwicklung</a>
+</p>
 
-`media/banner-catalog.json` enthält die Motive und SHA-256-Prüfsummen.
-`scripts/build-media.mjs` prüft die Originaldateien und erzeugt Seite, Textdateien
-und ein reproduzierbares ZIP-Paket bei jedem Sites- und Selfhosting-Build.
+---
 
-## Integrierte Dokumentation (0.5.2)
+## Moin. Was möchtest du tun?
 
-Der Footer verlinkt vor Impressum und Datenschutz auf `/dokumentation.html`.
-Das Handbuch erklärt den Einstieg, die Bedienung, typische Arbeitsabläufe und alle
-100 Werkzeuge mit Eingaben, Arbeitsschritten, Ergebnissen und konkreten Grenzen.
-Die Werkzeuganleitungen lassen sich lokal durchsuchen, nach Kategorie filtern,
-direkt verlinken und als vollständiges Handbuch drucken. Inhalte und aufklappbare
-Anleitungen bleiben auch ohne JavaScript lesbar. Das Öffnen aus der App erfolgt
-in einem neuen Tab, damit vorhandene Arbeitsdokumente erhalten bleiben.
+PDFs zusammenfügen, einen Scan durchsuchbar machen oder Rechnungsangaben vergleichen: MoinPDF bringt die passenden Werkzeuge an einen gemeinsamen Arbeitsplatz. Ziehe deine Dateien ins Fenster und beschreibe, was du vorhast. Die Suche versteht auch Formulierungen wie „Seiten drehen“ oder „PDF kleiner machen“.
 
-Die gepflegten Inhalte liegen in `docs/tool-guides.mjs` und `docs/overview.mjs`.
-`node --experimental-strip-types scripts/build-documentation.mjs` erzeugt die
-statische Seite aus dem tatsächlichen Werkzeugkatalog und prüft Vollständigkeit
-sowie interne Verweise. Beide Produktionsbuilds führen diesen Schritt aus.
+Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installation ergänzt einen eigenen Dokumentenserver für aufwendige Konvertierungen, Prüfungen, Übersetzungen und Audioexporte.
 
-## Stabilitätskorrekturen (0.5.1)
+## Funktionen
 
-Abbrechen und Zeitlimits bleiben bis zum Ende eines Ergebnisdownloads wirksam.
-EPUB-Export, Messungen und manuell ergänzte Prüfpositionen funktionieren auch beim
-direkten HTTP-Aufruf im lokalen Netz. Die Browserprüfung durchläuft alle 100
-Werkzeuge auf Desktop und Smartphone, prüft Kategorien und Suche und liest echte
-PDF-, EPUB- und Hörbuchdownloads wieder ein. Der Umbrel-Test erkennt das Logo
-unabhängig vom Versionsparameter seiner Adresse.
-
-## 100 Werkzeuge (0.5.0)
-
-Sieben neue Arbeitsplätze ergänzen die vorhandenen 93:
-
-| Werkzeug | Verhalten und Ausgabe |
+| Vorhaben | Das bietet MoinPDF |
 | --- | --- |
-| Formularrückläufe auswerten | AcroForm-Felder mehrerer Dateien, Checkboxen und Auswahlwerte; Pflichtwertprüfung, Korrekturen mit Originalwert, Excel/CSV als Matrix oder Detailtabelle. XFA und reine Scans werden als unvollständig markiert. |
-| Dokumente chronologisch ordnen | Datumsfundstellen per Text/OCR, ausdrückliche Bestätigung, manuelle Reihenfolge, PDF mit anklickbarem Inhaltsverzeichnis und Lesezeichen; Formulare werden festgeschrieben. |
-| PDF-Rechenprüfung | Zahlenspalte markieren, Summanden korrigieren/abwählen, deutsches oder englisches Zahlenformat, exakte Dezimalrechnung mit bis zu sechs Nachkommastellen; markierte PDF mit Rechenprotokoll und CSV. |
-| PDF-Sicherheitsbereinigung | Aktive Aktionen, Skripte, XFA und Medien entfernen; Anhänge, Kommentare und Metadaten optional. Nicht mehr referenzierte Daten werden verworfen, die Ausgabe anschließend strukturell geprüft. Kein Virenscan. |
-| PDF-Ebenen verwalten | Echte optionale PDF-Ebenen mit Vorschau und gegenseitigen Ausschlüssen. Export der gewählten Ansicht als Seitenbilder; ausgeblendete Inhalte und ursprünglicher Suchtext werden nicht übernommen. |
-| PDF-Maßband | Referenzstrecke je Seite, Strecken und einfache Polygonflächen; selbst kreuzende Flächen werden abgelehnt. Beschriftete PDF mit Kalibrierungsprotokoll und CSV, einschließlich gedrehter Seiten. |
-| PDF als Hörbuch | Lokale OCR, bearbeitbarer Vorlesetext, Abschnitte nach Seiten oder Hauptlesezeichen; Thorsten/Kerstin, Sprechtempo und Stimmprobe. WAV oder Kapitel-ZIP mit Wiedergabeliste. Audioexport benötigt die vollständige Docker-/Umbrel-Installation. |
+| **Seiten in Ordnung bringen** | Zusammenfügen, teilen, drehen, sortieren, zuschneiden, nummerieren und mit Lesezeichen versehen. |
+| **PDFs bearbeiten** | Text ersetzen, Inhalte entfernen, Bilder und Notizen einfügen, markieren, schwärzen und Formulare bearbeiten. |
+| **Scans lesbar machen** | Deutsche und englische OCR, durchsuchbare PDFs, Scanverbesserung, Komprimierung und Kameraimport. |
+| **Dateien umwandeln** | Bilder, Text und Tabellen exportieren; mit Dokumentenserver auch Office-Dateien, E-Mails und weitere Formate konvertieren. |
+| **Dokumente prüfen** | Text- und Bildvergleich, Zahlenvergleich, Rechenprüfung, Dokumentlücken und Fundstellen im Original kontrollieren. |
+| **E-Rechnungen bearbeiten** | UBL/CII lesen und Rechnungsbild mit XML abgleichen; mit Dokumentenserver XRechnung validieren und den ZUGFeRD-Assistenten nutzen. |
+| **Wiederkehrendes erledigen** | Stapelverarbeitung, gespeicherte Abläufe, Belegfelder sammeln, Formularrückläufe auswerten und Dokumente chronologisch ordnen. |
+| **Mehr aus Dokumenten machen** | PDF-Maßband und Ebenenverwaltung; mit Dokumentenserver lokal übersetzen und als Hörbuch ausgeben. |
 
-Die Sprachausgabe verwendet fest installierte, mit SHA-256 geprüfte Modelle und
-arbeitet während der Verarbeitung ohne Cloud-Dienst. Nur der ausgewählte
-Vorlesetext geht an den integrierten Dokumentenserver. Maximal 20.000 Zeichen und
-100 Abschnitte pro Auftrag; maximal drei Minuten Laufzeit. Ein abgebrochener
-Browserabruf beendet einen bereits gestarteten Serverauftrag nicht sofort.
-Die Browser-Ausgabe kann Vorlesetext auch ohne Server als TXT speichern.
-Lizenzen und Modellversionen: [Audio-Hinweise](server/AUDIO-NOTICES.md).
+Die [Funktionsübersicht](docs/FUNKTIONEN.md) erklärt die Werkzeuge, Ausgabeformate und ihre Grenzen. Schrittfolgen für jedes Werkzeug findest du in der **Dokumentation** innerhalb der App.
 
-## Dokumente mit Fundstellen prüfen (0.4.0)
+## Vom Dokument zum Ergebnis
 
-Zehn zusätzliche Browserwerkzeuge verbinden Erkennung, Originalvorschau und Export:
+1. **Dateien ablegen.** PDFs, Bilder oder Rechnungs-XML importieren; Kamera- und Office-Import haben eigene Einstiege.
+2. **Vorhaben auswählen.** Die Frage „Was möchtest du tun?“ beantworten oder durch die Werkzeugkategorien stöbern.
+3. **Prüfen und anwenden.** Einstellungen und Vorschau kontrollieren, Ergebnis herunterladen oder direkt weiterbearbeiten.
 
-| Werkzeug | Umfang und Grenzen |
-| --- | --- |
-| Zahlenvergleich | Beträge, Daten, Prozentwerte und mögliche IBANs anhand ihrer Zeilenbeschriftung zuordnen. Mehrdeutige Zeilen bleiben ungeklärt. |
-| Belegfelder sammeln | Frei definierte Beschriftungen in mehreren Dateien suchen, Werte korrigieren und mit Fundstelle sowie Prüfstatus nach XLSX/CSV exportieren. |
-| Rechnung und XML abgleichen | Sichtbare Seiten per OCR lesen und ausgewählte Angaben mit eingebetteter UBL/CII vergleichen. Nicht erkannte Werte bleiben ungeklärt; keine Echtheitsprüfung. |
-| Dokumentlücken finden | Gedruckte Zählungen wie „Seite 3 von 7“ prüfen. Unterschiedliche Zählungen innerhalb einer Datei erfordern vorherige Trennung. |
-| OCR-Korrekturhilfe | Wörter mit OCR-Sicherheit und Ausschnitt prüfen, korrigierten TXT oder eine neue PDF mit korrigiertem Suchtext exportieren. Die sichtbaren Seiten bleiben Bilder. |
-| Pseudonymisierung | Explizit angegebene Begriffe über mehrere Dateien durch konsistente Platzhalter ersetzen. Alle Schreibvarianten angeben, Treffer kontrollieren. Nicht erkannte Angaben bleiben sichtbar. |
-| Anlagen verknüpfen | Verweise und Anlagenüberschriften erkennen, Ziele prüfen oder manuell wählen, zusammengeführte PDF mit internen Links erzeugen. Offene Verweise exportieren. |
-| Beste Scan-Seiten | Ähnlichkeit, Schärfe, Kontrast und Randinhalt bewerten, Auswahl pro Seite bestätigen, ergänzen und umsortieren. Originalseiten ohne erneute Bildkomprimierung übernehmen. |
-| Angebot/Auftrag/Rechnung | Einfache Positionszeilen erkennen, manuell korrigieren und Mengen/Preise/Beträge vergleichen. Einheit, Währung und Preisbasis vorher angleichen. |
-| Kommentare als Arbeitsliste | Echte PDF-Anmerkungen mit Autor, Seite und Textauszug lesen, Aufgaben bearbeiten und nach XLSX/CSV/Markdown exportieren. Eingebrannte Kommentare sind nicht auslesbar. |
+Über **„Werkzeug wechseln“** bleiben deine Arbeitsdokumente erhalten. Die Oberfläche passt sich an Desktop und Smartphone an. Lade Ergebnisse vor dem Schließen herunter: Die Dokumente liegen in der aktuellen Sitzung.
 
-Diese Werkzeuge verarbeiten keine Dokumentdaten außerhalb des Browsers. OCR nutzt
-mitgelieferte deutsche und englische Sprachdaten und kann bei großen Stapeln länger
-dauern. Analyse und Scanvergleich sind auf insgesamt 400 Seiten begrenzt. Die
-Pseudonymisierung übernimmt keine Originaltextebene oder Dateianhänge; die vertrauliche
-Zuordnung ist nur als separater Export erhältlich. PDFs werden als neue Dateien
-ausgegeben. Geänderte PDFs erhalten keine gültige ursprüngliche digitale Signatur.
+## Schnellstart
 
-## Auf Umbrel installieren
-
-Die native App **MoinPDF (`denny-moinpdf`)** ist in [Denny's Community Store](https://github.com/dennysubke/dennys-umbrel-app-store) verfügbar. Das Paket enthält Oberfläche, Dokumentenserver und Übersetzung und benötigt weder Pages noch eine manuelle `.env`. Installation und Neustart wurden unter umbrelOS 2.0.0 auf `amd64` geprüft; Images für `arm64` sind ebenfalls verfügbar. Installation, Freigabe über Cloudflare und der genaue Prüfungsumfang sind in [UMBREL.md](UMBREL.md) beschrieben.
-
-## Komplett per Docker starten
+Für die vollständige Installation brauchst du **Docker mit Compose v2**, Zugriff auf dieses Repository und Internet für den ersten Aufbau. Plane als Ausgangspunkt **8 GB verfügbaren RAM und 20 GB freien Speicherplatz** ein.
 
 ```bash
 git clone https://github.com/dennysubke/moinpdf.git
@@ -96,133 +58,60 @@ cd moinpdf
 docker compose up -d --build
 ```
 
-Dann **http://localhost:8080** bzw. **http://SERVER-IP:8080** öffnen. Der Compose-Aufbau im Hauptverzeichnis enthält die Web-App, sämtliche Dokumentenserver-Komponenten und LibreTranslate mit allen sieben angebotenen Übersetzungssprachen. Die Verbindung erfolgt automatisch; eine `.env` oder manuell einzutragende API-Schlüssel sind nicht erforderlich. Der erste Start lädt die Sprachmodelle und kann mehrere Minuten dauern. Voraussetzungen, HTTPS, optionaler Login, Updates und Fehlersuche: **[vollständige Docker-Anleitung](DOCKER.md)**.
+Öffne anschließend **[localhost:8080](http://localhost:8080)** oder die Adresse deines Servers auf Port `8080`.
 
-## Ausbau: weitere 14 Werkzeuge
+Web-App, Dokumentenserver und Übersetzungsdienst werden gemeinsam eingerichtet. Für den Standardstart sind keine manuelle `.env` und keine einzutragenden API-Schlüssel nötig. Beim ersten Start werden auch Sprachmodelle geladen; das kann mehrere Minuten dauern.
 
-Alle Werkzeuge stehen direkt unter dem Suchfeld, nach ihrer Aufgabe gegliedert. Es gibt keine vorgeschaltete Schnellwahl oder Kategoriekacheln. Auf schmalen Ansichten brechen lange Werkzeugnamen innerhalb ihrer Kacheln um. Über „Alle Werkzeuge“ ist die Übersicht auch ohne geöffnetes PDF erreichbar.
+**[Zur vollständigen Docker-Anleitung →](DOCKER.md)**  
+Dort findest du HTTPS, optionalen Login, Updates und Hilfe bei Startproblemen. Für eine öffentlich erreichbare Instanz sind auch die Hinweise zur Absicherung und zu den Betreiberangaben relevant.
 
-| Werkzeug | Ausführung | Umfang |
-|---|---|---|
-| Nach Dateigröße teilen | Browser | Tatsächlich gemessene Bytes je PDF, vollständige Seitenreihenfolge, ZIP; zu große Einzelseiten werden gemeldet |
-| PDF zu Word | Server | Bearbeitbare DOCX aus Text, Tabellen und Bildern mit pdf2docx; Scans benötigen OCR |
-| PDF zu PowerPoint | Server | Eine gerenderte PDF-Seite je Folie; Seitenbilder statt editierbarer Einzelobjekte |
-| E-Mails zu PDF | Server | EML/MSG, Unicode-Kopfzeilen und Nachricht; unveränderte Anlagen mit eindeutigen Namen im ZIP |
-| HTML & Webseiten zu PDF | Server | Gespeicherte HTML-Dateien mit Überschriften und Tabellen; keine Skripte oder externen Ressourcen |
-| Seiten automatisch ausrichten | Server | Tesseract OSD, 90/180/270 Grad, Mindestvertrauen und seitenweiser Bericht |
-| Buchscans entzerren | Server | Einstellbare quadratische Spaltenkorrektur links/rechts, neue Seitenbilder |
-| Formularfelder erkennen | Server | Leere Rechtecke, Linien und Scan-Konturen; erzeugte Felder anschließend bearbeiten |
-| Schwärzungen prüfen | Server | Textsuche, Metadaten, verdächtige dunkle Vektor-Überdeckungen; keine Sicherheitsfreigabe |
-| Druckqualität prüfen | Server | Bildauflösung, Font-Einbettung, Seitenboxen; keine PDF/X-Zertifizierung |
-| Barrierefreiheit prüfen | Server | Technische Basisprüfung, kein PDF/UA-Konformitätsnachweis |
-| PDF übersetzen | Server + eigener LibreTranslate-Dienst | Auslesbarer Text und Übersetzung nebeneinander; bis 60.000 Zeichen |
-| ZUGFeRD-Assistent | Server | PDF/A-3 und passende CII-XML verbinden; Mustang und veraPDF-Berichte, negative Befunde klar benannt |
-| Word-Serienbriefe | Server | DOCX mit {{Spaltenname}} und XLSX; bis 50 Datensätze, einzelne PDFs im ZIP |
+## Wo werden Dokumente verarbeitet?
 
-Die erweiterten Konverter sind Teil der vollständigen Docker-/Umbrel-Installation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
+**Browserwerkzeuge** verarbeiten Dokumentinhalte auf deinem Gerät. Die benötigten PDF-Bibliotheken, Schriften und OCR-Sprachdaten werden zusammen mit der App ausgeliefert.
 
-Zusätzliche Tests: `node tests/size-split-smoke.mjs` sowie `python -m unittest server.test_service server.test_expansion server.test_extended_documents -v` mit installierten Serverkomponenten. Die Übersetzung wird mit einer lokalen HTTP-Testantwort auf Anfrageformat, Zielsprachenübergabe und Ausgabe geprüft; der Docker-Integrationsworkflow ergänzt einen echten LibreTranslate-Durchlauf.
+**Serverwerkzeuge** übertragen die für den Auftrag benötigten Daten an den Dokumentenserver der verwendeten Instanz. In der vollständigen Installation laufen auch Übersetzung und Sprachausgabe auf dem eigenen Server. Vorgeschaltete Hosting- oder Proxy-Dienste können Teil des Übertragungswegs sein.
 
-## Die bisherigen 44 Werkzeuge
+Erkennung und Prüfberichte helfen bei der Kontrolle. Prüfe wichtige Ergebnisse am Original; Basisprüfungen ersetzen keinen vollständigen Konformitätsnachweis. Änderungen an einer PDF können bestehende digitale Signaturen ungültig machen. [Verhalten und Grenzen →](docs/FUNKTIONEN.md#verhalten-und-grenzen)
 
-- Check & Seitenfinder: dateiübergreifende Textsuche, lokale Scan-Erkennung, Trefferseiten als neue PDF; Hinweise auf Scan-Seiten, mögliche Leerseiten, optisch gleiche Seiten und unterschiedliche Papierformate
-- OCR & Text: Deutsch, Englisch, gemischte Sprachen; korrigierbarer Text neben PDF-Vorschau
-- Bilder zu PDF; PDF zu PNG/JPG im ZIP
-- Scan-Komprimierung
-- Zusammenfügen; einzelne Seiten als PDF im ZIP
-- Seiten organisieren: auswählen, sortieren, drehen, duplizieren, entfernen und Leerseiten ergänzen
-- Seitennummern
-- Seitenformat: DIN A4 oder US Letter, Hoch- und Querformat
-- Mehrere Seiten pro Blatt: 2 oder 4 Seiten
-- Schwärzen
-- Zuschneiden
-- Textnotizen und grüne Markierungen
-- Gezeichnete Unterschriften
-- Wasserzeichen
-- Graustufen
-- PDF fixieren (Seitenbilder)
-- Dokumentinfos entfernen
-- Text bearbeiten, Inhalte entfernen und Bilder einfügen
-- PDF-Informationen und Textvergleich zweier PDFs
-- In Abschnitte teilen, abwechselnd zusammenfügen, Broschüren und Seiten aufteilen
-- Weiße Ränder entfernen, Schwarzweiß-Scan und Farben umkehren
-- Stempel, Metadaten bearbeiten, Anmerkungen entfernen und PDFs überlagern
-- Dateianhänge und eingebettete Bilder extrahieren
-- Formulare ausfüllen und erstellen; Lesezeichen bearbeiten
-- PDF schützen (AES-256) und mit bekanntem Passwort entsperren
-- E-Rechnungen lesen und mit einem Basischeck prüfen; UBL, UBL-Gutschriften und CII aus XML oder eingebetteten PDF-Anhängen
+## Dokumentation
 
-PDFs, Rechnungs-XML, JPGs und PNGs lassen sich überall ins Fenster ziehen. Die Seitenreihenfolge wird per Drag-and-drop oder über Pfeile geändert. Visuelle Bereiche lassen sich direkt aufziehen beziehungsweise platzieren oder über Prozentwerte eingeben. Die letzten 30 Seiten- und Bereichsänderungen können rückgängig gemacht und wiederholt werden (Strg/⌘ + Z und Strg/⌘ + Umschalt + Z). Nach dem Hinzufügen oder Schließen von Dateien beginnt der Verlauf neu.
+In der App öffnet **„Dokumentation“** im Footer das durchsuchbare Handbuch. Es enthält den Einstieg, typische Abläufe und Anleitungen zu den einzelnen Werkzeugen. Es lässt sich nach Kategorien filtern und als vollständiges Handbuch drucken.
 
-Ergebnisse können als neue Arbeitsdokumente übernommen werden. OCR exportiert durchsuchbare PDF, TXT und DOCX (Text ohne Rekonstruktion des ursprünglichen Layouts). Seitenwerkzeuge übernehmen ausstehende visuelle Änderungen auf den ausgewählten Seiten. Die Arbeitsplätze für Formulare, Lesezeichen, Passwortschutz und E-Rechnungen verwenden die vollständige Quelldatei; Änderungen aus anderen Werkzeugen deshalb zuerst anwenden und als Arbeitsdokument übernehmen.
+| Du suchst … | Hier geht es weiter |
+| --- | --- |
+| Werkzeuge, Ausgabeformate und Grenzen | [Funktionsübersicht](docs/FUNKTIONEN.md) |
+| Installation, HTTPS, Login und Updates | [Docker-Anleitung](DOCKER.md) |
+| Installation auf Umbrel | [Umbrel-Anleitung](UMBREL.md) |
+| Eigenständige Dokumenten-API | [Dokumentenserver](server/README.md) |
+| Quellcode, Builds und Prüfungen | [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) |
+| Bisherige Versionsänderungen | [Changelog](CHANGELOG.md) |
 
-Dateien bleiben im Speicher der aktuellen Sitzung. Ergebnisse vor dem Schließen herunterladen. Obergrenzen: 80 MB Quelldateien und 200 Seiten. Umfangreiche OCR kann auf Mobilgeräten langsam sein.
+Die aktuelle Versionsnummer steht in [package.json](package.json).
 
-## 18 neue Werkzeugansichten
+## Medienbereich
 
-- Stapelverarbeitung und gespeicherte mehrstufige Arbeitsabläufe mit JSON-Import/-Export; Passwörter und Dokumente werden nicht in Abläufen gespeichert.
-- Automatische Dateinamenvorschläge aus Datum, Rechnungsnummer und Titel, mit bearbeitbarer Vorschau.
-- Trennen nach Text, Lesezeichen, leeren Seiten oder QR-/Barcode-Trennblättern, mit Abschnittsvorschau.
-- Tabellenbereiche zu Excel/CSV, OCR für Scans, manuelle Spaltengrenzen und bearbeitbare Zellen. XLSX speichert Werte als Text; CSV schützt vor Formelausführung.
-- Suche nach eigenen Begriffen/Namen, E-Mails und möglichen IBANs; bestätigte Fundstellen werden durch vollständigen Neuaufbau der Seitenbilder entfernt. Erkennung ist keine Vollständigkeitsgarantie.
-- Pixelbasierter PDF-Vergleich mit farbigen Unterschieden und prozentualem Anteil je Seite.
-- Scanverbesserung mit automatischer Schieflagenkorrektur, Kontrast, Helligkeit und Hintergrundbereinigung.
-- Deckblatt, klickbares Inhaltsverzeichnis und Lesezeichen mit angepassten Seitenzahlen.
-- Serienformulare aus CSV/TSV mit Feldzuordnung, benannten Einzelausgaben im ZIP und optionaler Fixierung.
-- QR, Code 128 und EAN-13 erzeugen und platzieren; verbreitete QR-/Barcodeformate auslesen.
-- Interne und externe PDF-Links hinzufügen, ändern und entfernen; Vorschau und Koordinaten unterstützen gedrehte Seiten.
-- Anhänge hinzufügen, ersetzen, umbenennen und entfernen; QPDF bereinigt nicht mehr referenzierte eingebettete Dateistreams.
-- Kamera-/Fotoscanner mit Vierpunkt-Perspektivkorrektur, Scanbereinigung und bis zu 50 gesammelten Seiten.
-- Weitere Werkzeuge der **vollständigen Installation**: Office zu PDF, PDF/A erzeugen/prüfen, vollständige KoSIT-XRechnung-Validierung und Zertifikatssignaturen. [Servereinrichtung und Grenzen](server/README.md).
+**Papierkram. In Szene gesetzt.**
 
-## Sicherungsstand
+<p>
+  <a href="public/media/banners/moinpdf-leuchtturm.jpg"><img src="public/media/banners/moinpdf-leuchtturm.jpg" alt="MoinPDF am Meer vor einem beleuchteten Leuchtturm." width="49%"></a>
+  <a href="public/media/banners/moinpdf-buero-robbe.jpg"><img src="public/media/banners/moinpdf-buero-robbe.jpg" alt="Eine Büro-Robbe mit Brille, Stempel und Akten im Watt." width="49%"></a>
+</p>
 
-Der private GitHub-Branch `checkpoint-44-tools` enthält den vor diesen Erweiterungen gesicherten Stand. `main` enthält die Erweiterungen. Die Sites-Quellhistorie wird zusätzlich vom Hosting geführt.
+Für alle, die MoinPDF teilen: Im **Medienbereich** der App findest du Banner, Logo, Wortmarke und Kurzbeschreibungen mit Vorschau und Downloads. Das Medienpaket bündelt die Materialien als ZIP.
 
-## Entwicklung und Prüfung
+[Alle Bannermotive](public/media/banners) · [Logo](public/media/moinpdf-logo.jpg) · [Wortmarke](public/branding/moinpdf-logo.svg) · [Nutzungshinweise](public/media/moinpdf-nutzung.txt)
 
-Node.js 22.13 oder neuer und pnpm verwenden. Nach `pnpm install` einmal `node scripts/prepare-pdf-assets.mjs` ausführen. Das Skript kopiert PDF-Worker, Schriftressourcen, OCR-Worker und Sprachdaten aus den gesperrten npm-Abhängigkeiten nach `public/vendor`. Der Build wiederholt diesen Schritt. Im verwalteten Sites-Umfeld die vorgesehenen Setup-, Vorschau- und Build-Hilfen benutzen.
+## Entwicklung
 
-- `pnpm test`: alle 15 Browser-Testsuiten
-- `pnpm test:evidence`: zehn neue Werkzeuge mit tatsächlicher lokaler OCR, Gegenprüfung der PDF-Ausgaben, sichtbarer Pseudonymisierung, Linkzielen, Positionsvergleich und sicheren Exporten
-- `pnpm test:century`: Formularrückläufe, bestätigte Chronologie, exakte Summen, versteckte Skript-/Anhangsentfernung, echte Ebenenpixel, Messungen bei vier Seitendrehungen und Hörbuchkapitel
-- `python -m unittest server.test_audio -v`: echte Spracherzeugung mit beiden installierten Modellen, Tempovergleich, WAV/ZIP, Authentifizierung, Eingabegrenzen und temporäre Dateibereinigung
-- `pnpm test:advanced`: zusätzliche Dateiformate, Suchschwärzung, echte Anhangsbereinigung, Linkkoordinaten, Workflows, Codes und Kameraperspektive
-- `pnpm test:pdf`: Reihenfolge, Drehungen, Seitenexport, ZIP, Nummerierung, Wasserzeichen und Eingabeprüfung
-- `pnpm test:studio`: echte PDF.js-Exporte und Textextraktion, Schwärzungs-Pixel, Zuschneidegrenzen, Textnotizen, N-up, Papierformate, Leerseiten, Graustufen, Fixieren, Metadaten und Abbruch. Normalisierte Drehungen werden pixelweise mit der Originalvorschau verglichen. Nutzt die optionale Node-Canvas-Abhängigkeit von PDF.js.
-- `pnpm test:check`: Textindex, Scan- und Leerseitenhinweise, Vorschau-Duplikate, gemischte Papierformate, Suche mit mehreren Begriffen, PDF aus Fundstellen und Abbruch
-- `pnpm test:tools`: alle 100 Werkzeugnamen, 96 natürliche Suchanfragen, Konvertierungsrichtung, Teilbegriffe und unbekannte Vorhaben
-- `pnpm test:editor`: Text entfernen/ersetzen, Bildplatzierung, Schriftvarianten, gedrehte und zugeschnittene Seiten
-- `pnpm test:extra`: zusätzliche Seitenwerkzeuge, Scanfilter, Anhänge, Metadaten und PDF-Vergleich
-- `pnpm test:documents`: Formularwerte und Felder, Lesezeichen, Bilderextraktion und Erhalt bestehender Dokumentfunktionen
-- `pnpm test:security`: AES-256 mit unabhängigem PDF.js-Leser, falsche und Unicode-Passwörter, Berechtigungen, Formulare/Anhänge sowie UBL/CII, XML-Fehler, Summen, Exporte und unveränderte Rechnungs-XML
-- `pnpm exec tsc --noEmit` und Produktionsbuild
+MoinPDF verwendet unter anderem React, TypeScript, PDF.js, pdf-lib und Tesseract.js. Der Dokumentenserver ergänzt Werkzeuge wie LibreOffice, Ghostscript, KoSIT, veraPDF und LibreTranslate.
 
-Browserprüfung: Mehrfachimport, neue Werkzeugauswahl, natürliche Suchanfrage mit Enter-Auswahl, Aufruf per Symbol, Rückkehr bei erhaltenen Dokumenten und mobiler Auswahlseite ohne horizontales Scrollen; drei Trefferseiten aus zwei Dateien einschließlich einer per OCR erkannten Scan-Seite, Treffer-PDF mit drei Seiten, Duplikate abwählen und Rückgängig, Rückkehr zur reinen Uploadfläche; Schwärzen, Ergebnisübernahme, Rückgängig/Wiederholen, Zeichnen und Einfügen einer Testunterschrift, OCR mit ausstehenden Änderungen und PDF/Text-Vergleich; Smartphone-Breite von 390 CSS-Pixeln mit einklappender Werkzeugleiste und Duplizieren. Export-PDFs werden zusätzlich direkt in der App geöffnet. Die automatisierte Browserumgebung beschränkt Blob-Downloads; die heruntergeladenen Dateien werden deshalb über die Engine-Tests statt über den Browser-Downloadkanal geprüft.
+Der [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) beschreibt Einrichtung, Projektstruktur und Tests. Hinweise auf Fehler und Ideen sind in den [GitHub Issues](https://github.com/dennysubke/moinpdf/issues) willkommen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
 
-## Verhalten und Grenzen
+Lizenzhinweise zu mitgelieferten Bibliotheken, Schriften und Sprachmodellen sind im [Entwicklungsleitfaden](docs/ENTWICKLUNG.md#bibliotheken-und-lizenzhinweise) verlinkt.
 
-- Check und Seitenfinder prüfen importierte Seiten. Für ausstehende visuelle Änderungen zuerst das Ergebnis anwenden und weiterbearbeiten. Die Scan-Erkennung im Seitenfinder erstellt nur einen lokalen Suchindex; für eine dauerhaft durchsuchbare PDF das OCR-Werkzeug verwenden. Kommagetrennte Suchbegriffe werden als Oder-Suche behandelt, jeweils ab zwei Zeichen.
-- Leerseiten- und Duplikaterkennung sind Hinweise anhand von Text, Seitenbild und Seitengröße. Kleine Unterschiede können in der Vorschau fehlen. Abwählen entfernt Seiten nur aus der Exportauswahl und kann rückgängig gemacht werden.
+---
 
-- Schwärzungen werden zuletzt in die gerenderten Pixel der betroffenen Seiten eingerechnet. Die neue Seite enthält ausschließlich dieses geänderte Bild; ursprüngliche Seitenobjekte und Textebenen werden nicht übernommen. Andere Seiten bleiben unverändert. Ergebnis vor der Weitergabe prüfen.
-- Zugeschnittene Seiten werden aus dem ausgeschnittenen Pixelbereich neu erzeugt. Inhalte außerhalb dieses Bereichs werden entfernt. Schwärzen, Zuschneiden, Graustufen und Fixieren begrenzen die längste Rasterseite auf 2800 Pixel; die maximale Skalierung beträgt 4,2.
-- Textnotizen, Markierungen und Unterschriften erhalten vorhandenen Text, sofern auf derselben Seite kein Rasterwerkzeug angewendet wird. Unterschriften sind eingefügte Bilder, keine Zertifikatssignaturen. Textnotizen unterstützen lateinische Schrift einschließlich Umlauten. Vor dem Drehen visuelle Änderungen anwenden und das Ergebnis weiterbearbeiten.
-- Entfernen der Dokumentinfos löscht das Info-Wörterbuch sowie Dokument- und Seiten-XMP. Sichtbare Inhalte, Kommentare, Bilder und eingebettete Objektdaten werden damit nicht anonymisiert.
-- OCR übernimmt vorhandenen Text ab 20 Nicht-Leerzeichen. Für gemischte Text- und Scanbereiche „Alle Seiten neu erkennen“ aktivieren. Korrekturen im Textfeld betreffen TXT, DOCX und Zwischenablage; die OCR-PDF enthält das ursprüngliche Erkennungsergebnis.
-- Scan-Komprimierung erzeugt Bildseiten und entfernt dabei kopierbaren Text, Links und Formularfunktionen. Eine kleinere Datei ist nicht garantiert.
-- Exporte erzeugen neue Dateien. Seitenbasierte Exporte können Formularfelder fixieren und dokumentweite Funktionen wie Lesezeichen verlieren. Die Werkzeuge für Formulare und Lesezeichen erhalten die jeweils anderen Dokumentfunktionen; PDF schützen/entsperren erhält Seiten, Formulare, Lesezeichen und Anhänge. Vorhandene digitale Signaturen können durch Änderungen ungültig werden.
-- Geschützte PDFs werden nach Passwortabfrage lokal entschlüsselt. Öffnungsschutz verwendet AES-256; Druck-, Kopier- und Bearbeitungsregeln hängen zusätzlich vom PDF-Programm ab. Passwörter werden nicht dauerhaft gespeichert.
-- E-Rechnungen: höchstens 5 MB je XML und 2.000 Positionen. Der Basischeck prüft grundlegende Angaben, Datums-/Zahlenformate und ausgewählte Summen, aber keine vollständige XSD-, EN-16931-, KoSIT-, Peppol- oder PDF/A-Konformität. Nicht berechenbare Positionen werden als Hinweis ausgewiesen. Zahlungsbedingungen bleiben auch ohne separate Bankangaben sichtbar. Lese-PDF und Prüfbericht enthalten die unveränderte XML als Anhang; sie sind keine zertifizierten ZUGFeRD- oder PDF/A-Dateien.
-- Ressourcen und OCR-Sprachdaten kommen vom gleichen Ursprung. Hosting-Zugriffe und die Hosting-Anmeldung sind unabhängig von der lokalen Dokumentverarbeitung.
-- Optionale WebMCP-Werkzeuge registrieren sich nur, wenn `document.modelContext` verfügbar ist. Im HTTP-Vorschau-Browser fehlt diese Schnittstelle; die UI funktioniert unabhängig davon.
-
-## Bibliotheken
-
-PDF.js, Tesseract.js und deutsche/englische Sprachdaten (Apache-2.0), pdf-lib, JSZip und docx (MIT), Manrope und Space Grotesk (SIL Open Font License). Lizenztexte werden aus den Paketen unter `public/vendor/licenses` mitgeliefert. qpdf/WASM für Verschlüsselung, fontkit und Noto Sans für die E-Rechnungs-Leseansicht werden ebenfalls lokal ausgeliefert; zugehörige Lizenztexte liegen unter `public/vendor`. Für Codes kommen bwip-js und ZXing hinzu; ihre Lizenztexte werden ebenfalls mitgeliefert. Die Browserfunktionen verwenden lokal ausgelieferte Ressourcen.
-
-## Versionierung
-
-Die zentrale Versionsnummer steht in `package.json` und wird im Footer angezeigt.
-Änderungen je Version: [CHANGELOG.md](CHANGELOG.md). Docker-Images enthalten die
-Version und den Quellcode-Commit im Tag; Umbrel bindet die Images zusätzlich per Digest.
+<p align="center">
+  <img src="public/branding/moinpdf-sailor.webp" alt="Der MoinPDF-Seemann im gelben Friesennerz." width="64"><br>
+  <strong>Papierkram. Läuft.</strong>
+</p>
