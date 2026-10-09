@@ -47,7 +47,9 @@ const html = `<!doctype html>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="MoinPDF vorstellen: sechs Banner, das Logo, die Wortmarke und Kurztexte für Presse, Fachzeitschriften, Websites und Newsletter. Originaldateien einzeln oder im Medienpaket herunterladen.">
   <meta name="theme-color" content="#176c64"><title>Medienbereich · MoinPDF</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.png?v=43c33290ac2f" type="image/png" sizes="256x256">
+  <link rel="shortcut icon" href="/favicon.ico?v=43c33290ac2f">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=43c33290ac2f" sizes="180x180">
   <link rel="stylesheet" href="/docs/documentation.css?v=${escape(version)}">
   <link rel="stylesheet" href="/media/media.css?v=${escape(version)}">
 </head>
