@@ -22,9 +22,15 @@ for (const banner of catalogue) {
   banners.push({...banner,width,height,size:formatSize(bytes.length)});
   add(`Banner/${banner.file}`,bytes);
 }
+const videoFile = 'moinpdf-drucker-ueber-bord.mp4';
+const videoPoster = 'moinpdf-drucker-ueber-bord.jpg';
+const video = await readFile(new URL(`public/media/videos/${videoFile}`,root));
+if (video.subarray(4,8).toString() !== 'ftyp') throw new Error('Invalid MoinPDF promotional video.');
+await readFile(new URL(`public/media/videos/${videoPoster}`,root));
+add('Video/MoinPDF-Drucker-ueber-Bord.mp4',video);
 const short = 'MoinPDF ist ein deutschsprachiger PDF-Arbeitsplatz zum Bearbeiten, Prüfen und Umwandeln von Dokumenten. Papierkram. Läuft.';
 const description = 'MoinPDF bündelt vielseitige Werkzeuge für die tägliche Arbeit mit PDFs und anderen Dokumenten. Dazu gehören Zusammenführen, Teilen, Texterkennung, Seitenbearbeitung, Formulare und verschiedene Konvertierungen. Viele Werkzeuge verarbeiten Dateien direkt im Browser. Eine integrierte Dokumentation erklärt die einzelnen Werkzeuge, ihre Ergebnisse und ihre Grenzen.';
-const usage = `MoinPDF – Hinweise zum Medienpaket\n\nStand: 8. Oktober 2026\n\nDie bereitgestellten Banner, das Logo und die Wortmarke dürfen für redaktionelle Beiträge und zur Vorstellung oder Bewerbung von MoinPDF verwendet werden, etwa in Fachzeitschriften, auf Websites, in Newslettern und sozialen Medien. Bitte MoinPDF als Quelle nennen und bei Online-Beiträgen nach Möglichkeit auf die vorgestellte MoinPDF-Instanz verlinken.\n\nMotive und Schriftzüge bitte nicht verfälschen oder verzerren. Eine proportionale Skalierung ist möglich. Eine Nutzung als eigene Marke oder für fremde Produkte ist nicht umfasst.\n\nDie sechs Banner werden in ihrer Originalgröße als JPG bereitgestellt. Es erfolgt keine künstliche Vergrößerung. 1536 Pixel Breite entsprechen bei 300 dpi ungefähr 13 cm Druckbreite. Bitte die gewünschte Druckgröße mit der Redaktion abstimmen. Das Logo liegt als JPG in der Originalgröße 1536 × 1536 Pixel mit hellem Hintergrund vor. Die Wortmarke liegt als skalierbare SVG mit transparentem Hintergrund vor; die Schrift ist in Pfade umgewandelt.\n\nKontakt: Denny Wenke, denny@wenke.email\n\nDie Schriftlizenzen zur Wortmarke sind in Lizenzen-Wortmarke.txt enthalten.\n`;
+const usage = `MoinPDF – Hinweise zum Medienpaket\n\nStand: 8. Oktober 2026\n\nDie bereitgestellten Banner, der Werbeclip, das Logo und die Wortmarke dürfen für redaktionelle Beiträge und zur Vorstellung oder Bewerbung von MoinPDF verwendet werden, etwa in Fachzeitschriften, auf Websites, in Newslettern und sozialen Medien. Bitte MoinPDF als Quelle nennen und bei Online-Beiträgen nach Möglichkeit auf die vorgestellte MoinPDF-Instanz verlinken.\n\nMotive und Schriftzüge bitte nicht verfälschen oder verzerren. Eine proportionale Skalierung ist möglich. Eine Nutzung als eigene Marke oder für fremde Produkte ist nicht umfasst.\n\nDie sechs Banner werden in ihrer Originalgröße als JPG bereitgestellt. Es erfolgt keine künstliche Vergrößerung. 1536 Pixel Breite entsprechen bei 300 dpi ungefähr 13 cm Druckbreite. Bitte die gewünschte Druckgröße mit der Redaktion abstimmen. Das Logo liegt als JPG in der Originalgröße 1536 × 1536 Pixel mit hellem Hintergrund vor. Die Wortmarke liegt als skalierbare SVG mit transparentem Hintergrund vor; die Schrift ist in Pfade umgewandelt.\n\nDer Werbeclip „Drucker über Bord?“ liegt als MP4 mit Ton vor: 15 Sekunden, 1280 × 720 Pixel, Querformat 16:9. Er ist im Ordner Video enthalten und kann auch einzeln im Medienbereich heruntergeladen werden.\n\nKontakt: Denny Wenke, denny@wenke.email\n\nDie Schriftlizenzen zur Wortmarke sind in Lizenzen-Wortmarke.txt enthalten.\n`;
 await mkdir(new URL('public/media/',root),{recursive:true});
 const text = `MoinPDF – Kurzbeschreibung\nStand: 8. Oktober 2026\n\nKURZ\n${short}\n\nAUSFÜHRLICHER\n${description}\n\nKONTAKT\nDenny Wenke\ndenny@wenke.email\n`;
 await writeFile(new URL('public/media/moinpdf-kurzbeschreibung.txt',root),text);
@@ -40,28 +46,36 @@ add('Nutzung.txt',usage);
 const zipName = `MoinPDF-Medienpaket-${version}.zip`;
 const archive = await zip.generateAsync({type:'nodebuffer',compression:'DEFLATE',compressionOptions:{level:6},platform:'UNIX'});
 await writeFile(new URL(`public/media/${zipName}`,root),archive);
+const archiveRevision = createHash('sha256').update(archive).digest('hex').slice(0,12);
+const styleRevision = createHash('sha256').update(await readFile(new URL('public/media/media.css',root))).digest('hex').slice(0,12);
 const downloadIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M4 16v4h16v-4"/></svg>';
 const html = `<!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="MoinPDF vorstellen: sechs Banner, das Logo, die Wortmarke und Kurztexte für Presse, Fachzeitschriften, Websites und Newsletter. Originaldateien einzeln oder im Medienpaket herunterladen.">
+  <meta name="description" content="MoinPDF vorstellen: Werbeclip, Banner, Logo, Wortmarke und Kurztexte für deinen Beitrag. Video direkt ansehen und Originaldateien einzeln oder im Medienpaket herunterladen.">
   <meta name="theme-color" content="#176c64"><title>Medienbereich · MoinPDF</title>
   <link rel="icon" href="/favicon.png?v=43c33290ac2f" type="image/png" sizes="256x256">
   <link rel="shortcut icon" href="/favicon.ico?v=43c33290ac2f">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=43c33290ac2f" sizes="180x180">
   <link rel="stylesheet" href="/docs/documentation.css?v=${escape(version)}">
-  <link rel="stylesheet" href="/media/media.css?v=${escape(version)}">
+  <link rel="stylesheet" href="/media/media.css?v=${escape(version)}-${styleRevision}">
 </head>
 <body class="media-page">
   <a class="docs-skip" href="#inhalt">Zum Inhalt</a>
   <header class="docs-header"><a class="docs-brand" href="/" aria-label="MoinPDF Startseite"><img src="/branding/moinpdf-logo.svg" alt="MoinPDF. Papierkram. Läuft." width="680" height="225"></a><a class="docs-back" href="/"><span aria-hidden="true">←</span> Zur App</a></header>
   <main class="media-main" id="inhalt">
     <section class="media-hero" aria-labelledby="media-title">
-      <div><p class="docs-eyebrow">Für alle, die MoinPDF teilen</p><h1 id="media-title">Medienbereich</h1><p class="docs-lead">MoinPDF vorstellen? Hier findest du Banner, das Logo, die Wortmarke und Kurztexte für deinen Beitrag. Einzeln herunterladen oder alles zusammen mitnehmen.</p><div class="media-actions"><a class="docs-primary" href="/media/${escape(zipName)}" download>${downloadIcon} Medienpaket herunterladen</a><span class="media-file-meta">ZIP · ${formatSize(archive.length)}</span></div><p class="media-package-detail">6 Originalbanner, Logo, SVG-Wortmarke, Kurzbeschreibung und Nutzungshinweise.</p></div>
-      <aside class="media-hero-note"><span class="media-note-number">Moin.</span><p>Gute Werkzeuge.<br>Ein bisschen Küste.<br>Weniger Papierkram.</p><a href="#banner">Zu den Motiven <span aria-hidden="true">↓</span></a></aside>
+      <div><p class="docs-eyebrow">Für alle, die MoinPDF teilen</p><h1 id="media-title">Medienbereich</h1><p class="docs-lead">MoinPDF vorstellen? Hier findest du unseren Werbeclip, Banner, das Logo, die Wortmarke und Kurztexte für deinen Beitrag. Einzeln herunterladen oder alles zusammen mitnehmen.</p><div class="media-actions"><a class="docs-primary" href="/media/${escape(zipName)}?v=${archiveRevision}" download>${downloadIcon} Medienpaket herunterladen</a><span class="media-file-meta">ZIP · ${formatSize(archive.length)}</span></div><p class="media-package-detail">Werbeclip, 6 Originalbanner, Logo, SVG-Wortmarke, Kurzbeschreibung und Nutzungshinweise.</p></div>
     </section>
-    <nav class="media-section-nav" aria-label="Im Medienbereich"><a href="#banner">Banner <span>06</span></a><a href="#logo">Logo &amp; Wortmarke</a><a href="#kurzbeschreibung">Kurzbeschreibung</a><a href="#nutzung">Nutzung &amp; Kontakt</a></nav>
+    <nav class="media-section-nav" aria-label="Im Medienbereich"><a href="#werbeclip">Werbeclip <span>15 s</span></a><a href="#banner">Banner <span>06</span></a><a href="#logo">Logo &amp; Wortmarke</a><a href="#kurzbeschreibung">Kurzbeschreibung</a><a href="#nutzung">Nutzung &amp; Kontakt</a></nav>
+    <section class="media-section" id="werbeclip" aria-labelledby="video-title">
+      <div class="media-heading"><div><p class="docs-eyebrow">Papierkram. In Bewegung.</p><h2 id="video-title">Drucker über Bord?</h2></div><p>Unser Werbeclip zum Anschauen und Teilen.</p></div>
+      <div class="media-video">
+        <video controls playsinline preload="none" width="1280" height="720" poster="/media/videos/${videoPoster}" aria-label="MoinPDF-Werbeclip: Drucker über Bord?" aria-describedby="video-description"><source src="/media/videos/${videoFile}" type="video/mp4">Dein Browser kann dieses Video nicht abspielen. <a href="/media/videos/${videoFile}" download="MoinPDF-Drucker-ueber-Bord.mp4">Werbeclip als MP4 herunterladen</a>.</video>
+        <div class="media-video-details"><div><p id="video-description">Der Drucker macht jetzt Meer. Den Papierkram macht MoinPDF.</p><p class="media-file-meta">MP4 mit Ton · 15 Sekunden · 1280 × 720 px · 16:9 · ${formatSize(video.length)}</p></div><a class="media-download" href="/media/videos/${videoFile}" download="MoinPDF-Drucker-ueber-Bord.mp4">${downloadIcon} Video herunterladen</a></div>
+      </div>
+    </section>
     <section class="media-section" id="banner" aria-labelledby="banner-title">
       <div class="media-heading"><div><p class="docs-eyebrow">Papierkram. In Szene gesetzt.</p><h2 id="banner-title">Banner zum Mitnehmen</h2></div><p>JPG in Originalgröße.<br>Vorschau anklicken, um das Motiv groß zu öffnen.</p></div>
       <div class="media-gallery">${banners.map((b,i)=>`<article class="media-banner"><a class="media-preview" href="/media/banners/${escape(b.file)}" target="_blank" rel="noopener noreferrer" aria-label="${escape(b.title)} in Originalgröße öffnen (neuer Tab)"><img src="/media/banners/${escape(b.file)}" width="${b.width}" height="${b.height}" alt="${escape(b.alt)}" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"><span class="media-preview-hint" aria-hidden="true">Original ansehen ↗</span></a><div class="media-banner-body"><div class="media-banner-title"><span class="media-index">${String(i+1).padStart(2,'0')}</span><div><h3>${escape(b.title)}</h3><p>${escape(b.caption)}</p></div></div><div class="media-banner-bottom"><span class="media-file-meta">JPG · ${b.width} × ${b.height} px · ${b.size}</span><a class="media-download" href="/media/banners/${escape(b.file)}" download aria-label="${escape(b.title)} als JPG herunterladen">${downloadIcon} JPG laden</a></div></div></article>`).join('\n')}
@@ -78,4 +92,4 @@ const html = `<!doctype html>
 </html>
 `;
 await writeFile(new URL('public/medienbereich.html',root),html);
-console.log(`Media area built: ${banners.length} unchanged original banners and ${formatSize(archive.length)} media package (v${version}).`);
+console.log(`Media area built: 15-second video, ${banners.length} unchanged original banners and ${formatSize(archive.length)} media package (v${version}).`);

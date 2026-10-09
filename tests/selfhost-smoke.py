@@ -2,6 +2,7 @@
 import json
 import io
 import os
+import re
 import wave
 from pathlib import Path
 
@@ -19,6 +20,25 @@ if os.getenv('MOINPDF_TEST_PASSWORD'):
 home = session.get(base + '/', timeout=10)
 home.raise_for_status()
 assert 'id="root"' in home.text and '/assets/' in home.text
+repo = Path(os.getenv('MOINPDF_TEST_REPO', '/repo'))
+version = json.loads((repo / 'package.json').read_text())['version']
+media = session.get(base + '/medienbereich.html', timeout=10)
+media.raise_for_status()
+assert f'MoinPDF v{version}' in media.text, 'Docker media page is older than the release'
+assert 'media-hero-note' not in media.text
+assert 'no-cache' in media.headers.get('cache-control', '')
+video_path = re.search(r'<source src="([^\"]+)" type="video/mp4"', media.text).group(1)
+for path in ('/favicon.png', '/favicon.ico', '/apple-touch-icon.png', video_path):
+    asset = session.get(base + path, timeout=30)
+    asset.raise_for_status()
+    assert asset.content == (repo / 'public' / path.lstrip('/')).read_bytes(), path
+    if not path.endswith('.mp4'):
+        assert 'no-cache' in asset.headers.get('cache-control', ''), path
+assert '/favicon.png?v=' in home.text and '/favicon.png?v=' in media.text
+video_range = session.get(base + video_path, headers={'Range': 'bytes=0-31'}, timeout=10)
+assert video_range.status_code == 206 and len(video_range.content) == 32
+assert video_range.content[4:8] == b'ftyp'
+assert video_range.headers['content-type'].startswith('video/mp4')
 for path in ['/vendor/pdf/pdf.worker.min.mjs', '/vendor/ocr/worker.min.js',
              '/vendor/languages/deu.traineddata.gz', '/vendor/languages/eng.traineddata.gz',
              '/vendor/qpdf/qpdf.wasm', '/vendor/invoice-font/NotoSans-Regular.ttf']:

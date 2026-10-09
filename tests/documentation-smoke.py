@@ -56,6 +56,13 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         expect(media).to_have_title('Medienbereich · MoinPDF')
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
         expect(media.locator('.media-banner')).to_have_count(6)
+        video = media.locator('video')
+        expect(video).to_have_count(1)
+        video.evaluate('(element) => element.load()')
+        media.wait_for_function('document.querySelector("video").readyState >= 1')
+        assert video.evaluate('(element) => Math.abs(element.duration - 15) < 0.2 && element.videoWidth === 1280 && element.videoHeight === 720')
+        clip = media.request.get(origin + media.locator('.media-video a[download]').last.get_attribute('href'))
+        assert clip.ok and clip.body()[4:8] == b'ftyp'
         for card in media.locator('.media-banner').all():
             image = card.locator('img')
             assert image.get_attribute('alt')
@@ -65,6 +72,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         assert package.ok
         with zipfile.ZipFile(io.BytesIO(package.body())) as archive:
             assert archive.testzip() is None
+            assert archive.read('MoinPDF-Medienpaket/Video/MoinPDF-Drucker-ueber-Bord.mp4') == clip.body()
             assert len([name for name in archive.namelist() if '/Banner/' in name and name.endswith('.jpg')]) == 6
             logo = media.request.get(origin + media.locator('#logo a[download]').get_attribute('href'))
             assert logo.ok and logo.body().startswith(b'\xff\xd8\xff')
@@ -72,9 +80,13 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
             for card in media.locator('.media-banner').all():
                 href = card.locator('a[download]').get_attribute('href')
                 assert archive.read('MoinPDF-Medienpaket/Banner/' + href.split('/')[-1]) == media.request.get(origin + href).body()
-        for width in (1440, 390, 320):
+        for width in (1920, 1440, 768, 390, 320):
             media.set_viewport_size({'width': width, 'height': 900})
             no_overflow(media)
+            if width >= 768:
+                hero = media.locator('.media-hero').bounding_box()
+                content = media.locator('.media-hero > div').bounding_box()
+                assert content['width'] >= min(800, hero['width']) - 1
             media.screenshot(path=str(evidence / f'media-{width}.png'), full_page=True)
             page.set_viewport_size({'width': width, 'height': 900})
             no_overflow(page)
