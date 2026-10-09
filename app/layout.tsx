@@ -7,8 +7,9 @@ export const metadata: Metadata = {
   title: "PDFs bearbeiten",
   description: "PDFs bearbeiten, zusammenfügen, teilen und Text aus Scans erkennen. Direkt im Browser, ohne Dokumenten-Upload.",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: {url: "/favicon.png?v=43c33290ac2f", type: "image/png", sizes: "256x256"},
+    shortcut: "/favicon.ico?v=43c33290ac2f",
+    apple: {url: "/apple-touch-icon.png?v=43c33290ac2f", sizes: "180x180"},
   },
 };
 
