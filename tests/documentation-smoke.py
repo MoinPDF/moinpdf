@@ -26,7 +26,8 @@ def no_overflow(page):
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
-    browser = api.chromium.launch()
+    # The GitHub Ubuntu runner includes Chrome with H.264/AAC support for the MP4.
+    browser = api.chromium.launch(channel='chrome')
     context = browser.new_context(viewport={'width': 1440, 'height': 1000}, reduced_motion='reduce')
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
@@ -58,6 +59,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         expect(media.locator('.media-banner')).to_have_count(6)
         video = media.locator('video')
         expect(video).to_have_count(1)
+        assert video.evaluate('(element) => element.canPlayType(\'video/mp4; codecs="avc1.64001f, mp4a.40.2"\')'), 'Test browser must support the supplied H.264/AAC video'
         # The public page intentionally uses preload=none. Opt in for this check.
         video.evaluate('(element) => { element.preload = "metadata"; element.load(); }')
         media.wait_for_function('document.querySelector("video").readyState >= 1 || document.querySelector("video").error')
