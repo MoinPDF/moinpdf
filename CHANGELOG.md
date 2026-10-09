@@ -4,6 +4,13 @@ MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentral
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
 Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Digest.
 
+## 0.5.9 – 2026-10-10
+
+- Werbeclip „Drucker über Bord?“ mit Vorschau, Download und Medienpaket auch in der Docker- und platform-Ausgabe.
+- Medienbereich mit einspaltigem Einstieg ohne abgesetzten „Moin.“-Block auf großen Bildschirmen.
+- Offizielles Favicon und jüngste Dokumentationstexte im aktualisierten platform-Release.
+- HTML-Seiten und Favicons werden nach Updates erneut validiert; ausgelieferte Medien werden in den Installationstests geprüft.
+
 ## 0.4.0 – 2026-10-07
 
 - Zehn neue Werkzeuge, insgesamt 93: Zahlenvergleich, Belegfelder sammeln,

@@ -45,7 +45,8 @@ http://127.0.0.1:8081 {
 		}
 		handle {
 			root * /srv
-			@entry path / /index.html
+			# Revalidate entry pages and icons after an image update.
+			@entry path / *.html /favicon.ico /favicon.png /favicon.svg /apple-touch-icon.png
 			header @entry Cache-Control "no-cache"
 			file_server
 		}
