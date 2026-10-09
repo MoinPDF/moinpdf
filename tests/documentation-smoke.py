@@ -58,8 +58,10 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         expect(media.locator('.media-banner')).to_have_count(6)
         video = media.locator('video')
         expect(video).to_have_count(1)
-        video.evaluate('(element) => element.load()')
-        media.wait_for_function('document.querySelector("video").readyState >= 1')
+        # The public page intentionally uses preload=none. Opt in for this check.
+        video.evaluate('(element) => { element.preload = "metadata"; element.load(); }')
+        media.wait_for_function('document.querySelector("video").readyState >= 1 || document.querySelector("video").error')
+        assert video.evaluate('(element) => element.error === null'), video.evaluate('(element) => element.error?.message')
         assert video.evaluate('(element) => Math.abs(element.duration - 15) < 0.2 && element.videoWidth === 1280 && element.videoHeight === 720')
         clip = media.request.get(origin + media.locator('.media-video a[download]').last.get_attribute('href'))
         assert clip.ok and clip.body()[4:8] == b'ftyp'
