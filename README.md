@@ -88,19 +88,6 @@ In der App öffnet **„Dokumentation“** im Footer das durchsuchbare Handbuch.
 
 Die aktuelle Versionsnummer steht in [package.json](package.json).
 
-## Medienbereich
-
-**Papierkram. In Szene gesetzt.**
-
-<p>
-  <a href="public/media/banners/moinpdf-leuchtturm.jpg"><img src="public/media/banners/moinpdf-leuchtturm.jpg" alt="MoinPDF am Meer vor einem beleuchteten Leuchtturm." width="49%"></a>
-  <a href="public/media/banners/moinpdf-buero-robbe.jpg"><img src="public/media/banners/moinpdf-buero-robbe.jpg" alt="Eine Büro-Robbe mit Brille, Stempel und Akten im Watt." width="49%"></a>
-</p>
-
-Für alle, die MoinPDF teilen: Im **Medienbereich** der App findest du Banner, Logo, Wortmarke und Kurzbeschreibungen mit Vorschau und Downloads. Das Medienpaket bündelt die Materialien als ZIP.
-
-[Alle Bannermotive](public/media/banners) · [Logo](public/media/moinpdf-logo.jpg) · [Wortmarke](public/branding/moinpdf-logo.svg) · [Nutzungshinweise](public/media/moinpdf-nutzung.txt)
-
 ## Entwicklung
 
 MoinPDF verwendet unter anderem React, TypeScript, PDF.js, pdf-lib und Tesseract.js. Der Dokumentenserver ergänzt Werkzeuge wie LibreOffice, Ghostscript, KoSIT, veraPDF und LibreTranslate.
