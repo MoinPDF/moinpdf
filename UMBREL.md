@@ -1,6 +1,6 @@
 # MoinPDF als Umbrel-App
 
-MoinPDF ist als **`denny-moinpdf`** in [Denny's Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store) verfügbar. Das Paket enthält die Web-App, den Dokumentenserver und die lokale Übersetzung. Umbrel verwaltet Installation, Start, Stopp, Neustarts, Updates und die App-Daten. Eine Pages-Installation, ein ZIP-Import, eine eigene `.env` oder ein manueller Build auf Umbrel sind nicht erforderlich.
+MoinPDF ist als **`denny-moinpdf`** in [dem Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store) verfügbar. Das Paket enthält die Web-App, den Dokumentenserver und die lokale Übersetzung. Umbrel verwaltet Installation, Start, Stopp, Neustarts, Updates und die App-Daten. Eine Pages-Installation, ein ZIP-Import, eine eigene `.env` oder ein manueller Build auf Umbrel sind nicht erforderlich.
 
 ## Installation aus dem Community Store
 
@@ -56,7 +56,7 @@ Der Dienst `translation-models` darf mit `Exited (0)` enden: Das bedeutet, dass 
 
 ## Impressum, Datenschutz und E-Mail
 
-Die eingebundenen Seiten beschreiben **Denny Wenkes eigenen Betrieb mit eigenem Server, Cloudflare und Tuta**. Andere Betreiber müssen diese Angaben vor einer öffentlichen Bereitstellung anpassen. Tatsächlich eingesetzte zusätzliche Anmeldedienste, Statistiken und Aufbewahrungsregeln berücksichtigen. Tuta bleibt das externe Kontaktpostfach; MoinPDF benötigt weder SMTP-Zugangsdaten noch einen Mail-Container. Die DNS-Einträge des Postfachs müssen für diese Installation nicht verändert werden.
+Die eingebundenen Seiten beschreiben **die ursprüngliche MoinPDF-Instanz mit eigenem Server, Cloudflare und Tuta**. Andere Betreiber müssen diese Angaben vor einer öffentlichen Bereitstellung anpassen. Tatsächlich eingesetzte zusätzliche Anmeldedienste, Statistiken und Aufbewahrungsregeln berücksichtigen. Tuta bleibt das externe Kontaktpostfach; MoinPDF benötigt weder SMTP-Zugangsdaten noch einen Mail-Container. Die DNS-Einträge des Postfachs müssen für diese Installation nicht verändert werden.
 
 ## Updates und Prüfung auf dem Zielgerät
 

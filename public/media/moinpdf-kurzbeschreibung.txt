@@ -1,5 +1,5 @@
 MoinPDF – Kurzbeschreibung
-Stand: 8. Oktober 2026
+Stand: 10. Oktober 2026
 
 KURZ
 MoinPDF ist ein deutschsprachiger PDF-Arbeitsplatz zum Bearbeiten, Prüfen und Umwandeln von Dokumenten. Papierkram. Läuft.
@@ -8,5 +8,5 @@ AUSFÜHRLICHER
 MoinPDF bündelt vielseitige Werkzeuge für die tägliche Arbeit mit PDFs und anderen Dokumenten. Dazu gehören Zusammenführen, Teilen, Texterkennung, Seitenbearbeitung, Formulare und verschiedene Konvertierungen. Viele Werkzeuge verarbeiten Dateien direkt im Browser. Eine integrierte Dokumentation erklärt die einzelnen Werkzeuge, ihre Ergebnisse und ihre Grenzen.
 
 KONTAKT
-Denny Wenke
-denny@wenke.email
+MoinPDF
+ahoi@moinpdf.de

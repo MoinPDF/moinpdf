@@ -105,7 +105,9 @@ Für alle, die MoinPDF teilen: Im **Medienbereich** der App findest du Banner, L
 
 MoinPDF verwendet unter anderem React, TypeScript, PDF.js, pdf-lib und Tesseract.js. Der Dokumentenserver ergänzt Werkzeuge wie LibreOffice, Ghostscript, KoSIT, veraPDF und LibreTranslate.
 
-Der [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) beschreibt Einrichtung, Projektstruktur und Tests. Hinweise auf Fehler und Ideen sind in den [GitHub Issues](https://github.com/dennysubke/moinpdf/issues) willkommen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
+Der [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) beschreibt Einrichtung, Projektstruktur und Tests. Allgemeine Fragen und Pressekontakt: [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de). Datenschutzanfragen: [post@moinpdf.de](mailto:post@moinpdf.de).
+
+Hinweise auf Fehler und Ideen sind in den [GitHub Issues](https://github.com/dennysubke/moinpdf/issues) willkommen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
 
 Lizenzhinweise zu mitgelieferten Bibliotheken, Schriften und Sprachmodellen sind im [Entwicklungsleitfaden](docs/ENTWICKLUNG.md#bibliotheken-und-lizenzhinweise) verlinkt.
 
