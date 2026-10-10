@@ -1,6 +1,7 @@
 name: Documentation and footer
 on:
   push:
+    branches: [main]
     paths:
       - 'docs/**'
       - 'media/**'
