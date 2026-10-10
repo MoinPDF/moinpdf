@@ -1,5 +1,6 @@
 """Exercise the published static manual and its connection to the actual app."""
 import json
+import os
 import io
 import zipfile
 from pathlib import Path
@@ -9,7 +10,7 @@ import urllib.request
 import pymupdf
 from playwright.sync_api import sync_playwright, expect
 
-origin = 'http://127.0.0.1:8765'
+origin = os.environ.get('MOINPDF_DOCUMENTATION_URL', 'http://127.0.0.1:8765').rstrip('/')
 evidence = Path('documentation-evidence')
 evidence.mkdir(exist_ok=True)
 completed, errors = [], []
@@ -161,6 +162,19 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
             manual.goto(origin + path)
             expect(manual.locator('main > nav a').first).to_have_text('Dokumentation')
             assert manual.request.get(origin + '/dokumentation.html').ok
+            for width in (1440, 390, 320):
+                manual.set_viewport_size({'width': width, 'height': 1000 if width == 1440 else 844})
+                no_overflow(manual)
+                card = manual.locator('.legal-card')
+                expect(card).to_be_visible()
+                assert card.evaluate('(element) => getComputedStyle(element).color') == 'rgb(33, 62, 54)'
+                expect(manual.locator('a[href="mailto:post@moinpdf.de"]').first).to_be_visible()
+                if path == '/datenschutz.html':
+                    address = manual.locator('address')
+                    contact = manual.locator('address + p')
+                    assert contact.bounding_box()['y'] - address.bounding_box()['y'] - address.bounding_box()['height'] >= 24
+                manual.screenshot(path=str(evidence / f'{Path(path).stem}-{width}.png'), full_page=True)
+        completed.append('Legal pages at 1440, 390 and 320 px: no overflow, green text, contacts and address spacing')
         nojs = browser.new_context(java_script_enabled=False, viewport={'width':390,'height':844})
         plain = nojs.new_page()
         plain.goto(origin + '/dokumentation.html')

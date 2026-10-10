@@ -11,6 +11,7 @@ on:
       - 'public/dokumentation.html'
       - 'public/impressum.html'
       - 'public/datenschutz.html'
+      - 'public/legal/**'
       - 'components/studio/legal-footer*'
       - 'scripts/build-documentation.mjs'
       - 'lib/tool-catalog.ts'

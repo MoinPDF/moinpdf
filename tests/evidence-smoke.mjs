@@ -12,16 +12,16 @@ Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(nam
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 // The same Tesseract engine and bundled languages; adapt only browser canvas/worker transport for Node.
 globalThis.__evidenceOcr={PSM,async createWorker(languages,oem,options){
-  const worker=await createWorker(languages,oem,{langPath:resolve('public/vendor/languages'),cachePath:resolve('.sites-runtime'),logger:options.logger});
+  const worker=await createWorker(languages,oem,{langPath:resolve('public/vendor/languages'),cachePath:resolve('.cache'),logger:options.logger});
   const recognize=worker.recognize.bind(worker);worker.recognize=(canvas,...args)=>recognize(canvas.toBuffer('image/png'),...args);return worker;
 }};
-await mkdir('.sites-runtime',{recursive:true});
+await mkdir('.cache',{recursive:true});
 for(const name of ['pdf-engine','editor-model','document-tools','advanced-types','table-data','evidence-model','evidence-engine']) {
   let code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-evidence-test.mjs${q}`);
   if(name==='evidence-engine')code=code.replace("import('tesseract.js')",'Promise.resolve(globalThis.__evidenceOcr)');
-  await writeFile(`.sites-runtime/${name}-evidence-test.mjs`,code);
+  await writeFile(`.cache/${name}-evidence-test.mjs`,code);
 }
-const model=await import('../.sites-runtime/evidence-model-evidence-test.mjs'),engine=await import('../.sites-runtime/evidence-engine-evidence-test.mjs');
+const model=await import('../.cache/evidence-model-evidence-test.mjs'),engine=await import('../.cache/evidence-engine-evidence-test.mjs');
 const ctx={signal:new AbortController().signal,report:()=>{}},proxies=[];
 async function source(bytes,name='Test.pdf') {
   const data=new Uint8Array(bytes),pdf=await pdfjs.getDocument({data:data.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);

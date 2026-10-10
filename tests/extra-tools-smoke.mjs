@@ -9,15 +9,15 @@ const require=createRequire(import.meta.url),pdfRequire=createRequire(require.re
 const {createCanvas,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
-await mkdir('.sites-runtime',{recursive:true});
+await mkdir('.cache',{recursive:true});
 for(const name of ['pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model']){
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-extra-test.mjs${q}`);
- await writeFile(`.sites-runtime/${name}-extra-test.mjs`,code);
+ await writeFile(`.cache/${name}-extra-test.mjs`,code);
 }
-const {runStudioJob,emptyEdits}=await import('../.sites-runtime/studio-engine-extra-test.mjs');
-const {extraDefaults}=await import('../.sites-runtime/extra-options-extra-test.mjs');
-const {rasterTransform,splitGroups,safeAttachmentName}=await import('../.sites-runtime/extra-tools-extra-test.mjs');
-const {renderPage}=await import('../.sites-runtime/pdf-engine-extra-test.mjs');
+const {runStudioJob,emptyEdits}=await import('../.cache/studio-engine-extra-test.mjs');
+const {extraDefaults}=await import('../.cache/extra-options-extra-test.mjs');
+const {rasterTransform,splitGroups,safeAttachmentName}=await import('../.cache/extra-tools-extra-test.mjs');
+const {renderPage}=await import('../.cache/pdf-engine-extra-test.mjs');
 const proxies=[];
 async function source(bytes,name){const data=new Uint8Array(bytes),pdf=await pdfjs.getDocument({data:data.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);return{id:name,name,bytes:data,pdf,size:data.length,kind:'pdf'};}
 const items=s=>Array.from({length:s.pdf.numPages},(_,index)=>({id:s.id+index,sourceId:s.id,index,rotation:0,selected:true}));
@@ -27,7 +27,7 @@ da.getPage(0).node.addAnnot(da.context.register(da.context.obj({Type:'Annot',Sub
 da.getPage(0).node.addAnnot(da.context.register(da.context.obj({Type:'Annot',Subtype:'Link',Rect:[25,10,35,20]})));
 await da.attach(new TextEncoder().encode('<invoice>TEST</invoice>'),'../factur-x.xml',{mimeType:'application/xml'});
 const a=await source(await da.save(),'Mehr-Werkzeuge-Test-A.pdf'),b=await source(await db.save(),'Mehr-Werkzeuge-Test-B.pdf'),ap=items(a),bp=items(b);
-await writeFile('.sites-runtime/Mehr-Werkzeuge-Test-A.pdf',a.bytes);await writeFile('.sites-runtime/Mehr-Werkzeuge-Test-B.pdf',b.bytes);
+await writeFile('.cache/Mehr-Werkzeuge-Test-A.pdf',a.bytes);await writeFile('.cache/Mehr-Werkzeuge-Test-B.pdf',b.bytes);
 const defaults={...extraDefaults,language:'deu',forceOcr:false,imageFormat:'png',quality:'balanced',watermark:'TEST',numberStart:1,pageSize:'a4',orientation:'portrait',perSheet:'2'};
 const execute=(tool,pages=ap,options={},sources=[a,b],edits=emptyEdits(),signal=new AbortController().signal)=>runStudioJob(tool,sources,pages,{...defaults,...options},edits,()=>{},signal);
 const from=async result=>source(await result.blob.arrayBuffer(),result.filename);

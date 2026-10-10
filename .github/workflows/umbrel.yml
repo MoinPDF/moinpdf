@@ -1,4 +1,5 @@
 name: Native Umbrel installation
+run-name: Native Umbrel images ${{ github.event.workflow_run.id || inputs.image_run_id }}
 
 on:
   workflow_run:
@@ -20,24 +21,37 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id || inputs.image_run_id }}
           pattern: umbrel-image-*
           merge-multiple: true
-          path: image-reference
+          path: ${{ runner.temp }}/image-reference
+      - name: Resolve the source of all three images
+        id: images
+        run: |
+          python - <<'PYTHON'
+          import json, os, pathlib, re
+          root = pathlib.Path(os.environ['RUNNER_TEMP'], 'image-reference')
+          refs = [json.loads((root / f'{name}.json').read_text()) for name in ('web', 'documents', 'translation')]
+          sources = {ref['source'] for ref in refs}
+          assert len(sources) == 1 and re.fullmatch(r'[0-9a-f]{40}', next(iter(sources)))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('source=' + next(iter(sources)) + '\n')
+          PYTHON
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.images.outputs.source }}
       - name: Render exact published image references
         run: |
           python - <<'PY'
-          import json, pathlib, re
+          import json, os, pathlib, re, subprocess
           path = pathlib.Path('deploy/umbrel/denny-moinpdf/docker-compose.yml')
           content = path.read_text()
           for name in ('web', 'documents', 'translation'):
-              ref = json.loads(pathlib.Path(f'image-reference/{name}.json').read_text())
+              ref = json.loads(pathlib.Path(os.environ['RUNNER_TEMP'], 'image-reference', f'{name}.json').read_text())
+              assert ref['source'] == subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
               assert ref['platforms'] == ['linux/amd64', 'linux/arm64']
               assert re.fullmatch(r'sha256:[0-9a-f]{64}', ref['digest'])
               content = re.sub(rf'ghcr.io/dennysubke/moinpdf-{name}:[^\s]+', ref['image'] + '@' + ref['digest'], content)

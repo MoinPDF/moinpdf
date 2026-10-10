@@ -8,20 +8,20 @@ const require=createRequire(import.meta.url),pdfRequire=createRequire(require.re
 const {createCanvas,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
-await mkdir('.sites-runtime',{recursive:true});
+await mkdir('.cache',{recursive:true});
 for(const name of ['pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model']){
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-editor-test.mjs${q}`);
- await writeFile(`.sites-runtime/${name}-editor-test.mjs`,code);
+ await writeFile(`.cache/${name}-editor-test.mjs`,code);
 }
-const {runStudioJob,emptyEdits}=await import('../.sites-runtime/studio-engine-editor-test.mjs');
-const {readTextTargets,wrapEditorText}=await import('../.sites-runtime/editor-model-editor-test.mjs');
-const {renderPage}=await import('../.sites-runtime/pdf-engine-editor-test.mjs');
+const {runStudioJob,emptyEdits}=await import('../.cache/studio-engine-editor-test.mjs');
+const {readTextTargets,wrapEditorText}=await import('../.cache/editor-model-editor-test.mjs');
+const {renderPage}=await import('../.cache/pdf-engine-editor-test.mjs');
 const proxies=[];
 async function source(bytes,name){const data=new Uint8Array(bytes),pdf=await pdfjs.getDocument({data:data.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);return{id:name,name,bytes:data,pdf,size:data.length,kind:'pdf'};}
 const d=await PDFDocument.create(),font=await d.embedFont(StandardFonts.Helvetica);
 d.setTitle('SECRET 4815');const p=d.addPage([400,560]);p.drawText('SECRET 4815',{font,size:20,x:40,y:420});p.drawText('Original footer',{font,size:14,x:40,y:60});p.drawRectangle({x:40,y:240,width:100,height:60,color:rgb(.1,.6,.7)});d.addPage([400,560]).drawText('UNCHANGED PAGE',{font,size:20,x:40,y:420});
 const src=await source(await d.save(),'Editor-Test.pdf'),pages=[0,1].map(index=>({id:'p'+index,sourceId:src.id,index,rotation:0,selected:true}));
-await writeFile('.sites-runtime/Editor-Test.pdf',src.bytes);
+await writeFile('.cache/Editor-Test.pdf',src.bytes);
 const options={language:'deu',forceOcr:false,imageFormat:'png',quality:'balanced',watermark:'TEST',numberStart:1,pageSize:'a4',orientation:'portrait',perSheet:'2'};
 const run=(tool,marks,selected=pages)=>runStudioJob(tool,[src],selected,options,{marks:{p0:marks},crops:{}},()=>{},new AbortController().signal);
 const from=async r=>source(await r.blob.arrayBuffer(),r.filename);

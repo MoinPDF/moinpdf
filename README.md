@@ -25,6 +25,15 @@ PDFs zusammenfügen, einen Scan durchsuchbar machen oder Rechnungsangaben vergle
 
 Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installation ergänzt einen eigenen Dokumentenserver für aufwendige Konvertierungen, Prüfungen, Übersetzungen und Audioexporte.
 
+## Ein Blick in die App
+
+<p align="center">
+  <img src="docs/screenshots/desktop.png" alt="MoinPDF-Startseite auf einem Desktop-Bildschirm" width="72%">
+  <img src="docs/screenshots/mobile-documentation.png" alt="Die integrierte MoinPDF-Dokumentation auf einem Smartphone" width="24%">
+</p>
+
+Startseite am Desktop und Dokumentation auf dem Smartphone.
+
 ## Funktionen
 
 | Vorhaben | Das bietet MoinPDF |
@@ -85,6 +94,7 @@ In der App öffnet **„Dokumentation“** im Footer das durchsuchbare Handbuch.
 | Eigenständige Dokumenten-API | [Dokumentenserver](server/README.md) |
 | Quellcode, Builds und Prüfungen | [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) |
 | Bisherige Versionsänderungen | [Changelog](CHANGELOG.md) |
+| Freigegebene Versionen und Image-Nachweise | [Releases](https://github.com/dennysubke/moinpdf/releases) |
 
 Die aktuelle Versionsnummer steht in [package.json](package.json).
 
@@ -107,9 +117,9 @@ MoinPDF verwendet unter anderem React, TypeScript, PDF.js, pdf-lib und Tesseract
 
 Der [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) beschreibt Einrichtung, Projektstruktur und Tests. Allgemeine Fragen und Pressekontakt: [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de). Datenschutzanfragen: [post@moinpdf.de](mailto:post@moinpdf.de).
 
-Hinweise auf Fehler und Ideen sind in den [GitHub Issues](https://github.com/dennysubke/moinpdf/issues) willkommen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
+Hinweise auf Fehler und Ideen bitte an [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de) senden. Wer Zugriff auf dieses private Repository hat, kann auch die [GitHub Issues](https://github.com/dennysubke/moinpdf/issues) nutzen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
 
-Lizenzhinweise zu mitgelieferten Bibliotheken, Schriften und Sprachmodellen sind im [Entwicklungsleitfaden](docs/ENTWICKLUNG.md#bibliotheken-und-lizenzhinweise) verlinkt.
+Der [Lizenzstatus](LICENSE), [Sicherheitshinweise](SECURITY.md) und [Hinweise für Beiträge](CONTRIBUTING.md) ergänzen die Projektdokumentation. Lizenzhinweise zu mitgelieferten Bibliotheken, Schriften und Sprachmodellen sind im [Entwicklungsleitfaden](docs/ENTWICKLUNG.md#bibliotheken-und-lizenzhinweise) verlinkt.
 
 ---
 

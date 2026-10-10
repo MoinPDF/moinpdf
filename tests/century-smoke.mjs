@@ -10,12 +10,12 @@ const {createCanvas,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
 globalThis.Worker=class {constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
-await mkdir('.sites-runtime',{recursive:true});
+await mkdir('.cache',{recursive:true});
 for(const name of ['pdf-engine','editor-model','document-tools','advanced-types','table-data','evidence-model','evidence-engine','century-model','century-engine','advanced-documents','pdf-security','pdf-sanitize']) {
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-century-test.mjs${q}`);
- await writeFile(`.sites-runtime/${name}-century-test.mjs`,code);
+ await writeFile(`.cache/${name}-century-test.mjs`,code);
 }
-const m=await import('../.sites-runtime/century-model-century-test.mjs'),e=await import('../.sites-runtime/century-engine-century-test.mjs'),safety=await import('../.sites-runtime/pdf-sanitize-century-test.mjs'),evidence=await import('../.sites-runtime/evidence-engine-century-test.mjs'),evidenceModel=await import('../.sites-runtime/evidence-model-century-test.mjs');
+const m=await import('../.cache/century-model-century-test.mjs'),e=await import('../.cache/century-engine-century-test.mjs'),safety=await import('../.cache/pdf-sanitize-century-test.mjs'),evidence=await import('../.cache/evidence-engine-century-test.mjs'),evidenceModel=await import('../.cache/evidence-model-century-test.mjs');
 const ctx={signal:new AbortController().signal,report:()=>{}},proxies=[],fontBytes=new Uint8Array(await readFile('public/vendor/invoice-font/NotoSans-Regular.ttf'));
 async function source(bytes,name='Test.pdf'){const data=new Uint8Array(bytes),pdf=await pdfjs.getDocument({data:data.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);return{id:crypto.randomUUID(),name,bytes:data,pdf,size:data.length,kind:'pdf'};}
 async function textPdf(lines,name='Test.pdf'){const d=await PDFDocument.create(),font=await d.embedFont(StandardFonts.Helvetica),p=d.addPage([595,842]);lines.forEach((line,i)=>p.drawText(line,{x:60,y:760-i*45,size:15,font}));return source(await d.save(),name);}

@@ -1,0 +1,23 @@
+MoinPDF — Lizenzstatus
+
+Dieses Repository enthält keine pauschale Open-Source-Lizenz für sämtliche
+Projektdateien. Für Dateien ohne ausdrücklich angegebene Lizenz wird durch
+die Bereitstellung dieses Repositorys keine allgemeine Erlaubnis zur
+Weiterverwendung, Änderung oder Weiterverbreitung des Quellcodes erteilt.
+Anfragen dazu: ahoi@moinpdf.de.
+
+Ausdrücklich lizenzierte Dateien und Komponenten unterliegen ausschließlich
+ihren jeweiligen Lizenzbedingungen. Deren Rechte werden durch diesen Hinweis
+nicht eingeschränkt. Das gilt insbesondere für die dokumentierten
+Drittanbieterkomponenten und für server/audio_documents.py unter
+GPL-3.0-or-later.
+
+Die Lizenzhinweise und vollständigen Lizenztexte mitgelieferter Komponenten
+sind zu beachten. Verweise finden sich in docs/ENTWICKLUNG.md,
+server/AUDIO-NOTICES.md und public/branding/LICENSES.txt. Die Nutzungsbedingungen
+für die bereitgestellten Pressematerialien stehen in
+public/media/moinpdf-nutzung.txt.
+
+Dieser Hinweis dokumentiert den bestehenden Lizenzstatus. Er ändert keine
+bereits ausdrücklich eingeräumten Rechte und erklärt das Gesamtprojekt
+nicht zu Open Source.

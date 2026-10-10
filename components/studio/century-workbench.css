@@ -1,2 +1,94 @@
-.century-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.3rem;align-items:start}.century-columns>.advanced-card{min-width:0}.century-number-row{border-bottom:1px solid var(--border,#dce8e4);padding:1rem 0;display:flex;flex-wrap:wrap;gap:.65rem;align-items:end}.century-number-row .advanced-field{flex:1;min-width:12rem}.century-number-row .advanced-tick{width:100%}.century-page-image{display:block;width:100%;height:auto;border:1px solid #dce8e4;background:white}.century-measure-surface{position:relative;cursor:crosshair;background:white;border:1px solid #dce8e4;overflow:hidden;touch-action:manipulation}.century-measure-surface>svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.century-measure-surface>div{width:100%;height:100%}.century-measure-surface canvas{width:100%;height:100%;object-fit:contain}.century-audio-text{width:100%;min-height:10rem;resize:vertical}.century-audio-output audio{width:100%;margin:1rem 0}.century-audio-output{scroll-margin-top:6rem}.century-columns .advanced-actions{margin-top:.8rem}.century-columns .advanced-card h2{margin-bottom:1rem}@media(max-width:900px){.century-columns{grid-template-columns:minmax(0,1fr)}.century-measure-surface{max-height:none}}
-.century-measure-surface>.page-preview{position:absolute;inset:0;min-height:0;width:100%;height:100%}.century-measure-surface>.page-preview img{width:100%;height:100%;max-height:none;object-fit:contain}
+.century-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.3rem;
+  align-items: start;
+}
+.century-columns > .advanced-card {
+  min-width: 0;
+}
+.century-number-row {
+  border-bottom: 1px solid var(--border, #dce8e4);
+  padding: 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: end;
+}
+.century-number-row .advanced-field {
+  flex: 1;
+  min-width: 12rem;
+}
+.century-number-row .advanced-tick {
+  width: 100%;
+}
+.century-page-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid #dce8e4;
+  background: white;
+}
+.century-measure-surface {
+  position: relative;
+  cursor: crosshair;
+  background: white;
+  border: 1px solid #dce8e4;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+.century-measure-surface > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.century-measure-surface > div {
+  width: 100%;
+  height: 100%;
+}
+.century-measure-surface canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.century-audio-text {
+  width: 100%;
+  min-height: 10rem;
+  resize: vertical;
+}
+.century-audio-output audio {
+  width: 100%;
+  margin: 1rem 0;
+}
+.century-audio-output {
+  scroll-margin-top: 6rem;
+}
+.century-columns .advanced-actions {
+  margin-top: 0.8rem;
+}
+.century-columns .advanced-card h2 {
+  margin-bottom: 1rem;
+}
+@media (max-width: 900px) {
+  .century-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .century-measure-surface {
+    max-height: none;
+  }
+}
+.century-measure-surface > .page-preview {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+.century-measure-surface > .page-preview img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+}

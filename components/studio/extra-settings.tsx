@@ -1,33 +1,383 @@
 'use client';
-import {Input} from '@/components/ui/input';
-import {Select,SelectTrigger,SelectContent,SelectItem,SelectValue} from '@/components/ui/select';
-import {Switch} from '@/components/ui/switch';
-import {Slider} from '@/components/ui/slider';
-import {Button} from '@/components/ui/button';
-import {resolvePair,rasterTools,type ExtraTool} from '@/lib/extra-options';
-import type {StudioOptions} from '@/lib/studio-engine';
-import type {Source} from '@/lib/pdf-engine';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { resolvePair, rasterTools, type ExtraTool } from '@/lib/extra-options';
+import type { StudioOptions } from '@/lib/studio-engine';
+import type { Source } from '@/lib/pdf-engine';
 
-export function ExtraSettings({tool,sources,selectedCount,options,locked,onChange}:{tool:ExtraTool;sources:Source[];selectedCount:number;options:StudioOptions;locked:boolean;onChange:(patch:Partial<StudioOptions>)=>void}){
- const choice=(key:keyof StudioOptions,label:string,items:[string,string][])=> <label className="field"><span>{label}</span><Select value={String(options[key])} onValueChange={v=>onChange({[key]:v})} disabled={locked}><SelectTrigger aria-label={label}><SelectValue/></SelectTrigger><SelectContent>{items.map(([value,text])=><SelectItem key={value} value={value}>{text}</SelectItem>)}</SelectContent></Select></label>;
- const [first,second]=resolvePair(sources,options),paired=['compare','interleave','overlay'].includes(tool);
- const pairSelect=(position:'firstSource'|'secondSource',label:string,value:string)=> <label className="field"><span>{label}</span><Select value={value} onValueChange={v=>onChange({[position]:v})} disabled={locked||sources.length<2}><SelectTrigger aria-label={label}><SelectValue placeholder="Zweite Datei hinzufügen"/></SelectTrigger><SelectContent>{sources.filter(s=>position==='firstSource'||s.id!==first?.id).map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select></label>;
- return <div className="extra-settings">
-  {paired&&<>{pairSelect('firstSource',tool==='overlay'?'Basisdatei':'Datei A',first?.id||'')}{pairSelect('secondSource',tool==='overlay'?'Vorlage':'Datei B',second?.id||'')}{sources.length<2&&<p className="notice">Öffne oben eine zweite Datei, um dieses Werkzeug zu verwenden.</p>}<p className="fine-note">Verarbeitet die ausgewählten Seiten dieser beiden Dateien in ihrer aktuellen Reihenfolge.</p></>}
-  {tool==='compare'&&<div className="notice">Vergleicht vorhandenen Text. Bilder, Layout und reine Scanänderungen werden nicht geprüft. Scans zuerst mit „OCR & Text“ auslesen und die Ergebnisse öffnen.</div>}
-  {tool==='interleave'&&<><label className="switch-field"><span>Datei B rückwärts<small>Für umgekehrt gescannte Rückseiten</small></span><Switch aria-label="Datei B rückwärts" checked={options.reverseSecond} disabled={locked} onCheckedChange={v=>onChange({reverseSecond:v})}/></label><p className="fine-note">Reihenfolge: A1, B1, A2, B2 … Zusätzliche Seiten werden am Ende angehängt.</p></>}
-  {tool==='split-ranges'&&<>{choice('splitMode','Aufteilung',[['every','Nach Seitenanzahl'],['ranges','Eigene Seitenbereiche']])}{options.splitMode==='every'?<label className="field"><span>Seiten pro Datei</span><Input aria-label="Seiten pro Datei" type="number" min={1} max={200} value={Number.isNaN(options.splitEvery)?'':options.splitEvery} onChange={e=>onChange({splitEvery:parseInt(e.target.value,10)})} disabled={locked}/></label>:<label className="field"><span>Bereiche, mit Semikolon getrennt</span><Input aria-label="Seitenbereiche" placeholder="1-3; 4-6; 7,9" value={options.splitRanges} maxLength={1200} onChange={e=>onChange({splitRanges:e.target.value})} disabled={locked}/></label>}<p className="fine-note">Die Nummern beziehen sich auf die {selectedCount} ausgewählten Seiten. Jeder Abschnitt wird eine eigene PDF im ZIP. Bei eigenen Bereichen werden nur die genannten Seiten exportiert.</p></>}
-  {tool==='booklet'&&<>{choice('pageSize','Papierformat',[['a4','DIN A4'],['letter','US Letter']])}<div className="notice">Beidseitig im Querformat drucken, an der kurzen Kante wenden und mittig falten. Fehlende Seiten werden bis zum nächsten Vielfachen von vier als Leerseiten ergänzt.</div></>}
-  {tool==='split-grid'&&<>{choice('tileLayout','Raster pro Seite',[['2x1','2 Ausschnitte nebeneinander'],['1x2','2 Ausschnitte untereinander'],['2x2','4 Ausschnitte · 2 × 2'],['3x3','9 Ausschnitte · 3 × 3']])}<p className="fine-note">Ausgabe von links nach rechts, dann von oben nach unten. Maximal 200 Ausgabeseiten. Die Ausschnitte werden visuell beschnitten; zum sicheren Entfernen vertraulicher Inhalte „Schwärzen“ nutzen.</p></>}
-  {tool==='auto-crop'&&<><label className="field"><span>Rand behalten <b>{options.cropPadding} mm</b></span><Slider aria-label="Rand in Millimetern" value={[options.cropPadding]} min={0} max={20} step={1} onValueChange={v=>onChange({cropPadding:v[0]})} disabled={locked}/></label><p className="fine-note">Erkennt nahezu weiße Außenränder. Flecken oder farbige Hintergründe können die Erkennung begrenzen. Vollständig weiße Seiten behalten ihr Format.</p></>}
-  {tool==='bilevel'&&<><label className="field"><span>Schwellenwert <b>{options.threshold}</b></span><Slider aria-label="Schwellenwert" value={[options.threshold]} min={40} max={240} step={1} onValueChange={v=>onChange({threshold:v[0]})} disabled={locked}/></label><p className="fine-note">Höhere Werte machen mehr Bildbereiche schwarz. Das Ergebnis enthält ausschließlich schwarze und weiße Pixel.</p></>}
-  {rasterTools.includes(tool)&&<div className="notice">Erstellt neue Seitenbilder. Kopierbarer Text, Links und interaktive Felder werden nicht übernommen. Bei Bedarf danach OCR anwenden.</div>}
-  {tool==='stamp'&&<><label className="field"><span>Stempeltext</span><Input aria-label="Stempeltext" value={options.stampText} maxLength={60} onChange={e=>onChange({stampText:e.target.value})} disabled={locked}/></label><div className="stamp-presets">{['GEPRÜFT','EINGEGANGEN','BEZAHLT'].map(text=><Button key={text} variant="outline" size="sm" disabled={locked} onClick={()=>onChange({stampText:text})}>{text}</Button>)}</div><label className="field"><span>Datum · optional</span><Input aria-label="Stempeldatum" type="date" value={options.stampDate} onInput={e=>onChange({stampDate:e.currentTarget.value})} onChange={e=>onChange({stampDate:e.target.value})} disabled={locked}/></label>{choice('stampPosition','Position',[['top-right','Oben rechts'],['top-left','Oben links'],['bottom-right','Unten rechts'],['bottom-left','Unten links']])}{choice('stampColor','Stempelfarbe',[['teal','Türkis'],['green','Grün'],['red','Rot']])}<p className="fine-note">Der Stempel liegt sichtbar über dem Dokument. Bestehende Texte bleiben kopierbar.</p></>}
-  {tool==='edit-metadata'&&<>{([['metaTitle','Titel'],['metaAuthor','Autor'],['metaSubject','Betreff'],['metaKeywords','Stichwörter, mit Komma getrennt']] as const).map(([key,label])=><label className="field" key={key}><span>{label}</span><Input aria-label={label} value={options[key]} maxLength={1000} onChange={e=>onChange({[key]:e.target.value})} disabled={locked}/></label>)}<p className="fine-note">Diese Angaben gelten für die neu erstellte PDF. Leere Felder werden geleert. Die sichtbaren Dokumentinhalte ändern sich dadurch nicht.</p></>}
-  {tool==='remove-annotations'&&<><label className="switch-field"><span>Auch Links entfernen</span><Switch aria-label="Auch Links entfernen" checked={options.removeLinks} disabled={locked} onCheckedChange={v=>onChange({removeLinks:v})}/></label><p className="fine-note">Entfernt echte PDF-Anmerkungen, etwa Kommentare oder Hervorhebungen. Bereits fest in den Inhalt eingebrannte Markierungen bleiben erhalten. Ausgefüllte Formularwerte werden als feste Inhalte übernommen.</p></>}
-  {tool==='overlay'&&<>{choice('overlayLayer','Vorlage platzieren',[['front','Vor den Inhalt'],['back','Hinter den Inhalt']])}<label className="field"><span>Deckkraft der Vorlage <b>{options.overlayOpacity} %</b></span><Slider aria-label="Deckkraft der Vorlage" value={[options.overlayOpacity]} min={5} max={100} step={5} onValueChange={v=>onChange({overlayOpacity:v[0]})} disabled={locked}/></label><p className="fine-note">Die erste ausgewählte Vorlagenseite wird proportional auf jede ausgewählte Basisseite gelegt. Ein weißer Seitenhintergrund der Basis kann eine dahinterliegende Vorlage verdecken.</p></>}
-  {tool==='extract-images'&&<div className="notice">Exportiert eingebettete Rasterbilder in ihrer dekodierten Auflösung als PNG. Jedes Bild einmal pro ausgewählter Originalseite. Vektorgrafiken und reine Bildmasken sind keine eigenständigen Fotos. Die Ausgabe bezieht sich auf die Originalinhalte.</div>}
-  {tool==='attachments'&&<div className="notice">Liest eingebettete Dateien aus den Original-PDFs mit ausgewählten Seiten. Dazu können XML-Dateien bei ZUGFeRD-Rechnungen gehören. Keine Prüfung der Rechnungsdaten; Bilder auf der Seite sind keine Dateianhänge.</div>}
-  {tool==='pdf-info'&&<p className="fine-note">Erstellt einen lesbaren Bericht über die gesamten Originaldateien, aus denen Seiten ausgewählt sind. Der Bericht lässt sich als TXT speichern.</p>}
- </div>;
+export function ExtraSettings({
+  tool,
+  sources,
+  selectedCount,
+  options,
+  locked,
+  onChange,
+}: {
+  tool: ExtraTool;
+  sources: Source[];
+  selectedCount: number;
+  options: StudioOptions;
+  locked: boolean;
+  onChange: (patch: Partial<StudioOptions>) => void;
+}) {
+  const choice = (key: keyof StudioOptions, label: string, items: [string, string][]) => (
+    <label className="field">
+      <span>{label}</span>
+      <Select
+        value={String(options[key])}
+        onValueChange={(v) => onChange({ [key]: v })}
+        disabled={locked}
+      >
+        <SelectTrigger aria-label={label}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {items.map(([value, text]) => (
+            <SelectItem key={value} value={value}>
+              {text}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </label>
+  );
+  const [first, second] = resolvePair(sources, options),
+    paired = ['compare', 'interleave', 'overlay'].includes(tool);
+  const pairSelect = (position: 'firstSource' | 'secondSource', label: string, value: string) => (
+    <label className="field">
+      <span>{label}</span>
+      <Select
+        value={value}
+        onValueChange={(v) => onChange({ [position]: v })}
+        disabled={locked || sources.length < 2}
+      >
+        <SelectTrigger aria-label={label}>
+          <SelectValue placeholder="Zweite Datei hinzufügen" />
+        </SelectTrigger>
+        <SelectContent>
+          {sources
+            .filter((s) => position === 'firstSource' || s.id !== first?.id)
+            .map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.name}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+    </label>
+  );
+  return (
+    <div className="extra-settings">
+      {paired && (
+        <>
+          {pairSelect(
+            'firstSource',
+            tool === 'overlay' ? 'Basisdatei' : 'Datei A',
+            first?.id || '',
+          )}
+          {pairSelect('secondSource', tool === 'overlay' ? 'Vorlage' : 'Datei B', second?.id || '')}
+          {sources.length < 2 && (
+            <p className="notice">Öffne oben eine zweite Datei, um dieses Werkzeug zu verwenden.</p>
+          )}
+          <p className="fine-note">
+            Verarbeitet die ausgewählten Seiten dieser beiden Dateien in ihrer aktuellen
+            Reihenfolge.
+          </p>
+        </>
+      )}
+      {tool === 'compare' && (
+        <div className="notice">
+          Vergleicht vorhandenen Text. Bilder, Layout und reine Scanänderungen werden nicht geprüft.
+          Scans zuerst mit „OCR & Text“ auslesen und die Ergebnisse öffnen.
+        </div>
+      )}
+      {tool === 'interleave' && (
+        <>
+          <label className="switch-field">
+            <span>
+              Datei B rückwärts<small>Für umgekehrt gescannte Rückseiten</small>
+            </span>
+            <Switch
+              aria-label="Datei B rückwärts"
+              checked={options.reverseSecond}
+              disabled={locked}
+              onCheckedChange={(v) => onChange({ reverseSecond: v })}
+            />
+          </label>
+          <p className="fine-note">
+            Reihenfolge: A1, B1, A2, B2 … Zusätzliche Seiten werden am Ende angehängt.
+          </p>
+        </>
+      )}
+      {tool === 'split-ranges' && (
+        <>
+          {choice('splitMode', 'Aufteilung', [
+            ['every', 'Nach Seitenanzahl'],
+            ['ranges', 'Eigene Seitenbereiche'],
+          ])}
+          {options.splitMode === 'every' ? (
+            <label className="field">
+              <span>Seiten pro Datei</span>
+              <Input
+                aria-label="Seiten pro Datei"
+                type="number"
+                min={1}
+                max={200}
+                value={Number.isNaN(options.splitEvery) ? '' : options.splitEvery}
+                onChange={(e) => onChange({ splitEvery: parseInt(e.target.value, 10) })}
+                disabled={locked}
+              />
+            </label>
+          ) : (
+            <label className="field">
+              <span>Bereiche, mit Semikolon getrennt</span>
+              <Input
+                aria-label="Seitenbereiche"
+                placeholder="1-3; 4-6; 7,9"
+                value={options.splitRanges}
+                maxLength={1200}
+                onChange={(e) => onChange({ splitRanges: e.target.value })}
+                disabled={locked}
+              />
+            </label>
+          )}
+          <p className="fine-note">
+            Die Nummern beziehen sich auf die {selectedCount} ausgewählten Seiten. Jeder Abschnitt
+            wird eine eigene PDF im ZIP. Bei eigenen Bereichen werden nur die genannten Seiten
+            exportiert.
+          </p>
+        </>
+      )}
+      {tool === 'booklet' && (
+        <>
+          {choice('pageSize', 'Papierformat', [
+            ['a4', 'DIN A4'],
+            ['letter', 'US Letter'],
+          ])}
+          <div className="notice">
+            Beidseitig im Querformat drucken, an der kurzen Kante wenden und mittig falten. Fehlende
+            Seiten werden bis zum nächsten Vielfachen von vier als Leerseiten ergänzt.
+          </div>
+        </>
+      )}
+      {tool === 'split-grid' && (
+        <>
+          {choice('tileLayout', 'Raster pro Seite', [
+            ['2x1', '2 Ausschnitte nebeneinander'],
+            ['1x2', '2 Ausschnitte untereinander'],
+            ['2x2', '4 Ausschnitte · 2 × 2'],
+            ['3x3', '9 Ausschnitte · 3 × 3'],
+          ])}
+          <p className="fine-note">
+            Ausgabe von links nach rechts, dann von oben nach unten. Maximal 200 Ausgabeseiten. Die
+            Ausschnitte werden visuell beschnitten; zum sicheren Entfernen vertraulicher Inhalte
+            „Schwärzen“ nutzen.
+          </p>
+        </>
+      )}
+      {tool === 'auto-crop' && (
+        <>
+          <label className="field">
+            <span>
+              Rand behalten <b>{options.cropPadding} mm</b>
+            </span>
+            <Slider
+              aria-label="Rand in Millimetern"
+              value={[options.cropPadding]}
+              min={0}
+              max={20}
+              step={1}
+              onValueChange={(v) => onChange({ cropPadding: v[0] })}
+              disabled={locked}
+            />
+          </label>
+          <p className="fine-note">
+            Erkennt nahezu weiße Außenränder. Flecken oder farbige Hintergründe können die Erkennung
+            begrenzen. Vollständig weiße Seiten behalten ihr Format.
+          </p>
+        </>
+      )}
+      {tool === 'bilevel' && (
+        <>
+          <label className="field">
+            <span>
+              Schwellenwert <b>{options.threshold}</b>
+            </span>
+            <Slider
+              aria-label="Schwellenwert"
+              value={[options.threshold]}
+              min={40}
+              max={240}
+              step={1}
+              onValueChange={(v) => onChange({ threshold: v[0] })}
+              disabled={locked}
+            />
+          </label>
+          <p className="fine-note">
+            Höhere Werte machen mehr Bildbereiche schwarz. Das Ergebnis enthält ausschließlich
+            schwarze und weiße Pixel.
+          </p>
+        </>
+      )}
+      {rasterTools.includes(tool) && (
+        <div className="notice">
+          Erstellt neue Seitenbilder. Kopierbarer Text, Links und interaktive Felder werden nicht
+          übernommen. Bei Bedarf danach OCR anwenden.
+        </div>
+      )}
+      {tool === 'stamp' && (
+        <>
+          <label className="field">
+            <span>Stempeltext</span>
+            <Input
+              aria-label="Stempeltext"
+              value={options.stampText}
+              maxLength={60}
+              onChange={(e) => onChange({ stampText: e.target.value })}
+              disabled={locked}
+            />
+          </label>
+          <div className="stamp-presets">
+            {['GEPRÜFT', 'EINGEGANGEN', 'BEZAHLT'].map((text) => (
+              <Button
+                key={text}
+                variant="outline"
+                size="sm"
+                disabled={locked}
+                onClick={() => onChange({ stampText: text })}
+              >
+                {text}
+              </Button>
+            ))}
+          </div>
+          <label className="field">
+            <span>Datum · optional</span>
+            <Input
+              aria-label="Stempeldatum"
+              type="date"
+              value={options.stampDate}
+              onInput={(e) => onChange({ stampDate: e.currentTarget.value })}
+              onChange={(e) => onChange({ stampDate: e.target.value })}
+              disabled={locked}
+            />
+          </label>
+          {choice('stampPosition', 'Position', [
+            ['top-right', 'Oben rechts'],
+            ['top-left', 'Oben links'],
+            ['bottom-right', 'Unten rechts'],
+            ['bottom-left', 'Unten links'],
+          ])}
+          {choice('stampColor', 'Stempelfarbe', [
+            ['teal', 'Türkis'],
+            ['green', 'Grün'],
+            ['red', 'Rot'],
+          ])}
+          <p className="fine-note">
+            Der Stempel liegt sichtbar über dem Dokument. Bestehende Texte bleiben kopierbar.
+          </p>
+        </>
+      )}
+      {tool === 'edit-metadata' && (
+        <>
+          {(
+            [
+              ['metaTitle', 'Titel'],
+              ['metaAuthor', 'Autor'],
+              ['metaSubject', 'Betreff'],
+              ['metaKeywords', 'Stichwörter, mit Komma getrennt'],
+            ] as const
+          ).map(([key, label]) => (
+            <label className="field" key={key}>
+              <span>{label}</span>
+              <Input
+                aria-label={label}
+                value={options[key]}
+                maxLength={1000}
+                onChange={(e) => onChange({ [key]: e.target.value })}
+                disabled={locked}
+              />
+            </label>
+          ))}
+          <p className="fine-note">
+            Diese Angaben gelten für die neu erstellte PDF. Leere Felder werden geleert. Die
+            sichtbaren Dokumentinhalte ändern sich dadurch nicht.
+          </p>
+        </>
+      )}
+      {tool === 'remove-annotations' && (
+        <>
+          <label className="switch-field">
+            <span>Auch Links entfernen</span>
+            <Switch
+              aria-label="Auch Links entfernen"
+              checked={options.removeLinks}
+              disabled={locked}
+              onCheckedChange={(v) => onChange({ removeLinks: v })}
+            />
+          </label>
+          <p className="fine-note">
+            Entfernt echte PDF-Anmerkungen, etwa Kommentare oder Hervorhebungen. Bereits fest in den
+            Inhalt eingebrannte Markierungen bleiben erhalten. Ausgefüllte Formularwerte werden als
+            feste Inhalte übernommen.
+          </p>
+        </>
+      )}
+      {tool === 'overlay' && (
+        <>
+          {choice('overlayLayer', 'Vorlage platzieren', [
+            ['front', 'Vor den Inhalt'],
+            ['back', 'Hinter den Inhalt'],
+          ])}
+          <label className="field">
+            <span>
+              Deckkraft der Vorlage <b>{options.overlayOpacity} %</b>
+            </span>
+            <Slider
+              aria-label="Deckkraft der Vorlage"
+              value={[options.overlayOpacity]}
+              min={5}
+              max={100}
+              step={5}
+              onValueChange={(v) => onChange({ overlayOpacity: v[0] })}
+              disabled={locked}
+            />
+          </label>
+          <p className="fine-note">
+            Die erste ausgewählte Vorlagenseite wird proportional auf jede ausgewählte Basisseite
+            gelegt. Ein weißer Seitenhintergrund der Basis kann eine dahinterliegende Vorlage
+            verdecken.
+          </p>
+        </>
+      )}
+      {tool === 'extract-images' && (
+        <div className="notice">
+          Exportiert eingebettete Rasterbilder in ihrer dekodierten Auflösung als PNG. Jedes Bild
+          einmal pro ausgewählter Originalseite. Vektorgrafiken und reine Bildmasken sind keine
+          eigenständigen Fotos. Die Ausgabe bezieht sich auf die Originalinhalte.
+        </div>
+      )}
+      {tool === 'attachments' && (
+        <div className="notice">
+          Liest eingebettete Dateien aus den Original-PDFs mit ausgewählten Seiten. Dazu können
+          XML-Dateien bei ZUGFeRD-Rechnungen gehören. Keine Prüfung der Rechnungsdaten; Bilder auf
+          der Seite sind keine Dateianhänge.
+        </div>
+      )}
+      {tool === 'pdf-info' && (
+        <p className="fine-note">
+          Erstellt einen lesbaren Bericht über die gesamten Originaldateien, aus denen Seiten
+          ausgewählt sind. Der Bericht lässt sich als TXT speichern.
+        </p>
+      )}
+    </div>
+  );
 }

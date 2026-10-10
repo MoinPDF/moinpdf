@@ -1,0 +1,17 @@
+name: Verbesserung vorschlagen
+description: Ein konkretes Vorhaben oder eine Verbesserung beschreiben
+title: "Idee: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Was möchtest du erledigen?
+      description: Beschreibe den Anwendungsfall und was dabei derzeit fehlt.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Dein Vorschlag
+    validations:
+      required: true

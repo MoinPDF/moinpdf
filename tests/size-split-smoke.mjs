@@ -3,11 +3,11 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import ts from 'typescript';
 import JSZip from 'jszip';
 import {PDFDocument,PDFName,StandardFonts} from 'pdf-lib';
-await mkdir('.sites-runtime',{recursive:true});
+await mkdir('.cache',{recursive:true});
 let code=ts.transpileModule(await readFile('lib/size-split.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
 code=code.replace(/import .* from '.\/advanced-types';/,"const checkAbort=signal=>{if(signal?.aborted)throw new Error('Abgebrochen');};").replace(/import .* from '.\/pdf-engine';/,"const filenameStem=name=>name.replace(/\\.pdf$/i,'');");
-await writeFile('.sites-runtime/size-split-test.mjs',code);
-const {splitBySize,sizeSplitZip}=await import('../.sites-runtime/size-split-test.mjs');
+await writeFile('.cache/size-split-test.mjs',code);
+const {splitBySize,sizeSplitZip}=await import('../.cache/size-split-test.mjs');
 const input=await PDFDocument.create(),font=await input.embedFont(StandardFonts.Helvetica);
 for(let i=0;i<7;i++){const page=input.addPage();page.drawText('Seite '+(i+1),{font});const payload=new Uint8Array(19000+i*1100);crypto.getRandomValues(payload);page.node.set(PDFName.of('TestPageId'),input.context.obj(i+1));page.node.set(PDFName.of('TestPayload'),input.context.register(input.context.stream(payload)));}
 const bytes=await input.save(),ctx={signal:new AbortController().signal,report:()=>{}},limit=50000,parts=await splitBySize(bytes,limit,ctx);

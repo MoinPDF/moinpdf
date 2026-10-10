@@ -27,6 +27,8 @@ jobs:
       - name: Browser engine and TypeScript checks
         run: |
           docker build --target build -t moinpdf-browser-tests .
+          docker run --rm moinpdf-browser-tests pnpm run lint
+          docker run --rm moinpdf-browser-tests pnpm run format:check
           docker run --rm moinpdf-browser-tests pnpm test
       - name: Native document converters and key-file authentication
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -60,12 +62,15 @@ jobs:
           python -m pip install playwright==1.55.0 pymupdf==1.28.2
           python -m playwright install --with-deps chromium
           python tests/published-web-smoke.py
+          MOINPDF_DOCUMENTATION_URL=http://localhost:8080 python tests/documentation-smoke.py
       - name: Retain browser evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: complete-ui-verification
-          path: web-evidence/
+          path: |
+            web-evidence/
+            documentation-evidence/
           if-no-files-found: ignore
           retention-days: 14
       - name: Optional login protects the app and API

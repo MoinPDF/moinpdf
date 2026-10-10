@@ -1,0 +1,34 @@
+name: Fehler melden
+description: Ein Problem nachvollziehbar beschreiben
+title: "Fehler: "
+body:
+  - type: markdown
+    attributes:
+      value: "Bitte nur künstliche Beispieldaten verwenden. Sicherheitslücken vertraulich an post@moinpdf.de melden."
+  - type: input
+    id: version
+    attributes:
+      label: MoinPDF-Version
+      description: Steht im Footer der App.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser und Installation
+      placeholder: Zum Beispiel Firefox, Docker oder Umbrel
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Schritte zum Fehler
+      description: Werkzeug, Dateiformat, ungefähre Größe und Schritte angeben.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Erwartetes und tatsächliches Ergebnis
+    validations:
+      required: true

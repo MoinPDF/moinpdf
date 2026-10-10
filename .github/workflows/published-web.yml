@@ -3,7 +3,6 @@ on:
   workflow_dispatch:
     inputs:
       image:
-        description: Published MoinPDF web image with digest
         required: true
         default: ghcr.io/dennysubke/moinpdf-web:0.1.0-fbbf15ab048a@sha256:cbdf004d4b91eb4c4e4c8e9bece87fc326b1e89b1aaaa576cfc1361cfc248a0d
       diagnostics:
@@ -26,6 +25,9 @@ jobs:
         env:
           WEB_IMAGE: ${{ inputs.image }}
         run: |
+          if [ -z "$WEB_IMAGE" ]; then
+            WEB_IMAGE="$(python -c "import re,pathlib; print(re.search(r'ghcr.io/dennysubke/moinpdf-web:[^\\s]+', pathlib.Path('deploy/umbrel/denny-moinpdf/docker-compose.yml').read_text()).group(0))")"
+          fi
           docker run -d --name moinpdf-web-test -p 127.0.0.1:8785:8080 \
             --cap-drop ALL --security-opt no-new-privileges \
             -e MOINPDF_API_KEY=synthetic-browser-test-key-with-at-least-32-characters \

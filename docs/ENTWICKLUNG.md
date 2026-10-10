@@ -12,7 +12,7 @@ node scripts/prepare-pdf-assets.mjs
 pnpm dev
 ```
 
-Das Vorbereitungsskript kopiert PDF-Worker, Schriftressourcen, OCR-Worker und Sprachdaten aus den installierten Abhängigkeiten nach `public/vendor`. Die Produktionsbuilds wiederholen diesen Schritt. Im verwalteten Sites-Umfeld gelten die vorgesehenen Setup-, Vorschau- und Build-Hilfen.
+Das Vorbereitungsskript kopiert PDF-Worker, Schriftressourcen, OCR-Worker und Sprachdaten aus den installierten Abhängigkeiten nach `public/vendor`. Die Produktionsbuilds wiederholen diesen Schritt. Der Entwicklungsserver verwendet dieselbe React-Oberfläche wie die eigenständige Installation.
 
 ## Builds
 
@@ -20,7 +20,7 @@ Das Vorbereitungsskript kopiert PDF-Worker, Schriftressourcen, OCR-Worker und Sp
 | --- | --- |
 | `pnpm run build:selfhost` | Statischer Web-Build unter `dist/selfhost`. |
 | `pnpm run package:pages` | Selfhosting-Build mit anschließendem Pages-Paket. |
-| `pnpm run build` | Build für die verwaltete Hosting-Umgebung. |
+| `pnpm run build` | Regulärer Produktionsbuild der eigenständigen Web-App. |
 | `pnpm run typecheck:selfhost` | Typprüfung der eigenständigen Web-App. |
 
 Der statische Web-Build allein enthält keinen laufenden Dokumentenserver. Die [vollständige Docker-Installation](../DOCKER.md) verbindet die Web-App mit Dokumentenserver und Übersetzungsdienst.
@@ -56,7 +56,7 @@ Die folgenden Prüfungen decken Dokumentverarbeitung und Ausgaben ab. Serverprü
 - `pnpm test:extra`: zusätzliche Seitenwerkzeuge, Scanfilter, Anhänge, Metadaten und PDF-Vergleich
 - `pnpm test:documents`: Formularwerte und Felder, Lesezeichen, Bilderextraktion und Erhalt bestehender Dokumentfunktionen
 - `pnpm test:security`: AES-256 mit unabhängigem PDF.js-Leser, falsche und Unicode-Passwörter, Berechtigungen, Formulare/Anhänge sowie UBL/CII, XML-Fehler, Summen, Exporte und unveränderte Rechnungs-XML
-- `pnpm exec tsc --noEmit` und Produktionsbuild
+- `pnpm run typecheck:selfhost`, `pnpm run lint`, `pnpm run format:check` und Produktionsbuild
 
 Weitere Konverterprüfungen:
 
@@ -91,9 +91,18 @@ Der Build prüft die Originaldateien und erzeugt Medienseite, Textdateien und ei
 
 ## Bibliotheken und Lizenzhinweise
 
+Der projektweite [Lizenzstatus](../LICENSE) erteilt keine pauschale Open-Source-Freigabe. Ausdrücklich lizenzierte Dateien und Drittanbieterkomponenten behalten ihre bestehenden Rechte und Hinweise.
+
+
 PDF.js, Tesseract.js und deutsche/englische Sprachdaten (Apache-2.0), pdf-lib, JSZip und docx (MIT), Manrope und Space Grotesk (SIL Open Font License). Lizenztexte werden aus den Paketen unter `public/vendor/licenses` mitgeliefert. qpdf/WASM für Verschlüsselung, fontkit und Noto Sans für die E-Rechnungs-Leseansicht werden ebenfalls lokal ausgeliefert; zugehörige Lizenztexte liegen unter `public/vendor`. Für Codes kommen bwip-js und ZXing hinzu; ihre Lizenztexte werden ebenfalls mitgeliefert. Die Browserfunktionen verwenden lokal ausgelieferte Ressourcen.
 
 Schriftlizenzen der Wortmarke: [public/branding/LICENSES.txt](../public/branding/LICENSES.txt). Modellversionen und Lizenzen der Sprachausgabe: [server/AUDIO-NOTICES.md](../server/AUDIO-NOTICES.md). Weitere Serverkomponenten sind in der [Serverdokumentation](../server/README.md) beschrieben.
+
+## Formatierung und Wartung
+
+`pnpm run format` formatiert die gepflegten Anwendungsdateien. `pnpm run format:check` prüft dieselben Dateien ohne Änderungen. ESLint prüft TypeScript und Hook-Regeln; Warnungen zu schrittweisen Verbesserungen bleiben im Prüfprotokoll sichtbar. Dokumentverarbeitung wird durch echte Ausgabetests abgesichert.
+
+Dependabot schlägt Aktualisierungen für JavaScript, Python, Container und GitHub Actions vor. Aktualisierungen werden nicht automatisch gemergt. Rückmeldungen und Beiträge sind in [CONTRIBUTING.md](../CONTRIBUTING.md) beschrieben.
 
 ## Versionierung
 
@@ -102,3 +111,21 @@ Die zentrale Versionsnummer steht in [package.json](../package.json) und wird im
 ---
 
 [Zur README](../README.md) · [Funktionen und Grenzen](FUNKTIONEN.md) · [Docker-Anleitung](../DOCKER.md)
+
+
+## Eine Version veröffentlichen
+
+1. Versionsnummer und Changelog aktualisieren und die Änderungen auf `main` prüfen lassen.
+2. Der vollständige Docker-Lauf muss erfolgreich sein. Erst danach startet
+   `Publish Umbrel images` für genau diesen Quellstand.
+3. Den automatisch folgenden nativen Umbrel-Test abwarten. Er verwendet die
+   drei Image-Artefakte dieses Veröffentlichungslaufs.
+4. Die neuen Image-Referenzen samt Digest im Umbrel-Paket eintragen, beide
+   Store-Einträge abgleichen und den abschließenden Docker-Prüflauf abwarten.
+5. Unter Actions den Workflow **Publish verified release** auf `main` starten.
+   Als `image_run_id` die ID des zugehörigen erfolgreichen Image-Laufs angeben.
+   Der Workflow prüft Quellstand, Tests und Image-Referenzen, bevor er den
+   Versions-Tag und das Release erstellt. Bestehende Releases werden nicht überschrieben.
+
+Zwischen Image-Build und Release dürfen sich nur die Umbrel-Paketdateien ändern.
+Änderungen am übrigen Quellcode benötigen einen neuen geprüften Image-Build.

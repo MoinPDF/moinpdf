@@ -1,25 +1,50 @@
 name: Publish Umbrel images
 
 on:
-  push:
-    branches: [main, codex/umbrel-app]
-    tags: [v*]
-    paths-ignore:
-      - '**/*.md'
-      - 'deploy/umbrel/**'
-      - 'tests/**'
+  workflow_run:
+    workflows: [Complete Docker installation]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
   packages: write
 
 concurrency:
-  group: publish-images-${{ github.ref }}
+  group: publish-images-${{ github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: false
 
 jobs:
+  verified:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      source: ${{ steps.verify.outputs.source }}
+    steps:
+      - name: Require successful complete verification for this exact main commit
+        id: verify
+        uses: actions/github-script@v7
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        with:
+          script: |
+            const sha = process.env.SOURCE_SHA;
+            if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error('Invalid source commit');
+            const {data} = await github.rest.actions.listWorkflowRuns({
+              ...context.repo, workflow_id: 'docker.yml', head_sha: sha,
+              branch: 'main', event: 'push', status: 'success', per_page: 100,
+            });
+            if (!data.workflow_runs.some(run => run.head_sha === sha && run.conclusion === 'success')) {
+              throw new Error('A successful complete Docker verification on main is required');
+            }
+            core.setOutput('source', sha);
   image:
+    needs: verified
     name: ${{ matrix.name }} (amd64 and arm64)
     runs-on: ubuntu-24.04
     timeout-minutes: 75
@@ -35,6 +60,8 @@ jobs:
             context: ./docker/translation
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verified.outputs.source }}
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
@@ -45,7 +72,7 @@ jobs:
       - name: Exact source image tag
         id: tag
         env:
-          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_SHA: ${{ needs.verified.outputs.source }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           IMAGE_NAME: ${{ matrix.name }}
         run: |
@@ -63,7 +90,7 @@ jobs:
           build-args: MOINPDF_UID=1000
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ needs.verified.outputs.source }}
             org.opencontainers.image.title=MoinPDF ${{ matrix.name }}
           cache-from: type=gha,scope=umbrel-${{ matrix.name }}
           cache-to: type=gha,mode=min,scope=umbrel-${{ matrix.name }}
@@ -72,11 +99,12 @@ jobs:
           IMAGE: ${{ steps.tag.outputs.image }}
           DIGEST: ${{ steps.build.outputs.digest }}
           IMAGE_NAME: ${{ matrix.name }}
+          SOURCE_SHA: ${{ needs.verified.outputs.source }}
         run: |
           docker buildx imagetools inspect "$IMAGE@$DIGEST" --raw > index.json
           jq -e 'any(.manifests[]; .platform.os == "linux" and .platform.architecture == "amd64") and any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")' index.json
           mkdir -p image-reference
-          jq -n --arg image "$IMAGE" --arg digest "$DIGEST" --arg source "$GITHUB_SHA" '{image:$image,digest:$digest,source:$source,platforms:["linux/amd64","linux/arm64"]}' > "image-reference/${IMAGE_NAME}.json"
+          jq -n --arg image "$IMAGE" --arg digest "$DIGEST" --arg source "$SOURCE_SHA" '{image:$image,digest:$digest,source:$source,platforms:["linux/amd64","linux/arm64"]}' > "image-reference/${IMAGE_NAME}.json"
           echo "### ${IMAGE_NAME}" >> "$GITHUB_STEP_SUMMARY"
           echo "$IMAGE@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
