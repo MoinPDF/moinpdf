@@ -67,7 +67,7 @@ python -m unittest server.test_service server.test_expansion server.test_extende
 
 Die automatisierten Browserprüfungen decken unter anderem Mehrfachimport, Werkzeugauswahl, Suche, mobile Darstellung, Ergebnisübernahme und Dokumentexporte ab. Die Engine-Tests lesen erzeugte Dateien zusätzlich unabhängig ein und prüfen je nach Werkzeug Text, Seiten, Bildpixel, Links oder Formularfelder.
 
-Die Übersetzung wird in den Servertests mit einer lokalen HTTP-Testantwort auf Anfrageformat, Zielsprachenübergabe und Ausgabe geprüft. Der [Docker-Integrationsworkflow](../.github/workflows/docker.yml) ergänzt einen echten LibreTranslate-Durchlauf. Weitere Workflows prüfen [Dokumentation und Footer](../.github/workflows/documentation.yml), [die veröffentlichte Web-App](../.github/workflows/published-web.yml) und [die platform-Installation](../.github/workflows/platform.yml).
+Die Übersetzung wird in den Servertests mit einer lokalen HTTP-Testantwort auf Anfrageformat, Zielsprachenübergabe und Ausgabe geprüft. Der [Docker-Integrationsworkflow](../.github/workflows/docker.yml) ergänzt einen echten LibreTranslate-Durchlauf. Weitere Workflows prüfen [Dokumentation und Footer](../.github/workflows/documentation.yml) und [die veröffentlichte Web-App](../.github/workflows/published-web.yml).
 
 ## Handbuch pflegen
 
@@ -106,7 +106,7 @@ Dependabot schlägt Aktualisierungen für JavaScript, Python, Container und GitH
 
 ## Versionierung
 
-Die zentrale Versionsnummer steht in [package.json](../package.json) und wird im Footer angezeigt. Versionsänderungen sind in [CHANGELOG.md](../CHANGELOG.md) dokumentiert. Docker-Images enthalten Version und Quellcode-Commit im Tag; die platform-Pakete binden Images zusätzlich per Digest.
+Die zentrale Versionsnummer steht in [package.json](../package.json) und wird im Footer angezeigt. Versionsänderungen sind in [CHANGELOG.md](../CHANGELOG.md) dokumentiert. Docker-Images enthalten Version und Quellcode-Commit im Tag. Veröffentlichte Releases enthalten zusätzlich die unveränderlichen Image-Referenzen mit Digest.
 
 ---
 
@@ -117,15 +117,18 @@ Die zentrale Versionsnummer steht in [package.json](../package.json) und wird im
 
 1. Versionsnummer und Changelog aktualisieren und die Änderungen auf `main` prüfen lassen.
 2. Der vollständige Docker-Lauf muss erfolgreich sein. Erst danach startet
-   `Publish platform images` für genau diesen Quellstand.
-3. Den automatisch folgenden nativen platform-Test abwarten. Er verwendet die
-   drei Image-Artefakte dieses Veröffentlichungslaufs.
-4. Die neuen Image-Referenzen samt Digest im platform-Paket eintragen, beide
-   Store-Einträge abgleichen und den abschließenden Docker-Prüflauf abwarten.
-5. Unter Actions den Workflow **Publish verified release** auf `main` starten.
-   Als `image_run_id` die ID des zugehörigen erfolgreichen Image-Laufs angeben.
-   Der Workflow prüft Quellstand, Tests und Image-Referenzen, bevor er den
-   Versions-Tag und das Release erstellt. Bestehende Releases werden nicht überschrieben.
+   **Publish Docker images** für genau diesen Quellstand.
+3. Den erfolgreichen Abschluss aller drei Images für amd64 und arm64 abwarten.
+   Die Artefakte `docker-image-web`, `docker-image-documents` und
+   `docker-image-translation` enthalten Tags, Digests, Quellstand und Plattformen.
+4. Unter Actions **Publish verified release** auf `main` starten und als
+   `image_run_id` die ID des erfolgreichen Image-Laufs angeben. Der Workflow
+   verlangt identische Quellstände, bestandene Docker-Prüfungen, vollständige
+   Image-Referenzen und einen Changelog für die aktuelle Version. Anschließend
+   erstellt er Tag und Release samt Image-Nachweisen. Bestehende Releases werden
+   nicht überschrieben.
 
-Zwischen Image-Build und Release dürfen sich nur die platform-Paketdateien ändern.
-Änderungen am übrigen Quellcode benötigen einen neuen geprüften Image-Build.
+Zwischen Image-Build und Release darf sich der Quellstand nicht ändern.
+Weitere Änderungen benötigen einen neuen geprüften Image-Build.
+Installationspakete für externe Plattformen werden außerhalb dieses Repositorys
+gepflegt und verwenden die freigegebenen, per Digest festgelegten Images.

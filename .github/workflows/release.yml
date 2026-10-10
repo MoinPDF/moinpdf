@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       image_run_id:
-        description: Successful Publish platform images run ID
+        description: Successful Publish Docker images run ID
         required: true
 permissions:
   contents: read
@@ -26,10 +26,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.image_run_id }}
-          pattern: platform-image-*
+          pattern: docker-image-*
           merge-multiple: true
           path: ${{ runner.temp }}/image-reference
-      - name: Verify tests, source, pinned images and release version
+      - name: Verify tests, exact image source and release version
         id: verify
         uses: actions/github-script@v7
         env:
@@ -38,7 +38,6 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const cp = require('child_process');
             const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
             if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid version');
             const runId = Number(process.env.IMAGE_RUN_ID);
@@ -49,18 +48,14 @@ jobs:
             const refs = names.map(name => JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'image-reference', name + '.json'), 'utf8')));
             const source = refs[0].source;
             if (!/^[0-9a-f]{40}$/.test(source) || refs.some(ref => ref.source !== source)) throw new Error('Mixed image sources');
-            const compose = fs.readFileSync('deploy/platform/denny-moinpdf/docker-compose.yml', 'utf8');
+            if (source !== context.sha) throw new Error('Release source must exactly match the tested image source');
             for (let index = 0; index < refs.length; index++) {
               const ref = refs[index];
               const prefix = `ghcr.io/${context.repo.owner.toLowerCase()}/moinpdf-${names[index]}:${version}-${source.slice(0, 12)}`;
-              if (ref.image !== prefix || !/^sha256:[0-9a-f]{64}$/.test(ref.digest) || !compose.includes(ref.image + '@' + ref.digest)) throw new Error('Manifest must pin the verified images for this version');
+              if (ref.image !== prefix || !/^sha256:[0-9a-f]{64}$/.test(ref.digest) || JSON.stringify(ref.platforms) !== JSON.stringify(['linux/amd64', 'linux/arm64'])) throw new Error('Image reference must match this release version and both platforms');
             }
-            const differences = cp.execFileSync('git', ['diff', '--name-only', source, context.sha], {encoding: 'utf8'}).trim().split('\n').filter(Boolean);
-            if (differences.some(file => !file.startsWith('deploy/platform/'))) throw new Error('App source differs from the tested images');
             const {data: dockerRuns} = await github.rest.actions.listWorkflowRuns({...context.repo, workflow_id: 'docker.yml', head_sha: context.sha, status: 'success', per_page: 100});
             if (!dockerRuns.workflow_runs.some(run => run.head_sha === context.sha && run.conclusion === 'success')) throw new Error('Missing successful Docker verification of the release source');
-            const {data: nativeRuns} = await github.rest.actions.listWorkflowRuns({...context.repo, workflow_id: 'platform.yml', status: 'success', per_page: 100});
-            if (!nativeRuns.workflow_runs.some(run => run.display_title === 'Native platform images ' + runId && run.conclusion === 'success')) throw new Error('Missing native verification of these exact published images');
             const heading = `## ${version} `;
             const section = fs.readFileSync('CHANGELOG.md', 'utf8').split(heading)[1];
             if (!section) throw new Error('Missing changelog');

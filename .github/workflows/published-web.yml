@@ -4,7 +4,7 @@ on:
     inputs:
       image:
         required: true
-        default: ghcr.io/dennysubke/moinpdf-web:0.1.0-fbbf15ab048a@sha256:cbdf004d4b91eb4c4e4c8e9bece87fc326b1e89b1aaaa576cfc1361cfc248a0d
+        default: ghcr.io/dennysubke/moinpdf-web:0.5.11-1208475cdfb0@sha256:ef99a512c3860d3507b9124d7aa6de379f524575e3504d2b9248eaab6fa02524
       diagnostics:
         description: Log caught browser errors in a disposable copy (not release validation)
         type: boolean
@@ -25,9 +25,7 @@ jobs:
         env:
           WEB_IMAGE: ${{ inputs.image }}
         run: |
-          if [ -z "$WEB_IMAGE" ]; then
-            WEB_IMAGE="$(python -c "import re,pathlib; print(re.search(r'ghcr.io/dennysubke/moinpdf-web:[^\\s]+', pathlib.Path('deploy/platform/denny-moinpdf/docker-compose.yml').read_text()).group(0))")"
-          fi
+          : "${WEB_IMAGE:?Supply a published MoinPDF web image with its digest}"
           docker run -d --name moinpdf-web-test -p 127.0.0.1:8785:8080 \
             --cap-drop ALL --security-opt no-new-privileges \
             -e MOINPDF_API_KEY=synthetic-browser-test-key-with-at-least-32-characters \

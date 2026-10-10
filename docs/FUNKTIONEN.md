@@ -98,7 +98,7 @@ Werkzeuge für Formulare, Dokumentenmappen, Messungen und Audio:
 | PDF-Sicherheitsbereinigung | Aktive Aktionen, Skripte, XFA und Medien entfernen; Anhänge, Kommentare und Metadaten optional. Nicht mehr referenzierte Daten werden verworfen, die Ausgabe anschließend strukturell geprüft. Kein Virenscan. |
 | PDF-Ebenen verwalten | Echte optionale PDF-Ebenen mit Vorschau und gegenseitigen Ausschlüssen. Export der gewählten Ansicht als Seitenbilder; ausgeblendete Inhalte und ursprünglicher Suchtext werden nicht übernommen. |
 | PDF-Maßband | Referenzstrecke je Seite, Strecken und einfache Polygonflächen; selbst kreuzende Flächen werden abgelehnt. Beschriftete PDF mit Kalibrierungsprotokoll und CSV, einschließlich gedrehter Seiten. |
-| PDF als Hörbuch | Lokale OCR, bearbeitbarer Vorlesetext, Abschnitte nach Seiten oder Hauptlesezeichen; Thorsten/Kerstin, Sprechtempo und Stimmprobe. WAV oder Kapitel-ZIP mit Wiedergabeliste. Audioexport benötigt die vollständige Docker-/platform-Installation. |
+| PDF als Hörbuch | Lokale OCR, bearbeitbarer Vorlesetext, Abschnitte nach Seiten oder Hauptlesezeichen; Thorsten/Kerstin, Sprechtempo und Stimmprobe. WAV oder Kapitel-ZIP mit Wiedergabeliste. Audioexport benötigt die vollständige Docker-Installation. |
 
 Die Sprachausgabe verwendet fest installierte, mit SHA-256 geprüfte Modelle und
 arbeitet während der Verarbeitung ohne Cloud-Dienst. Nur der ausgewählte
@@ -129,7 +129,7 @@ Alle Werkzeuge stehen direkt unter dem Suchfeld, nach ihrer Aufgabe gegliedert. 
 | ZUGFeRD-Assistent | Server | PDF/A-3 und passende CII-XML verbinden; Mustang und veraPDF-Berichte, negative Befunde klar benannt |
 | Word-Serienbriefe | Server | DOCX mit {{Spaltenname}} und XLSX; bis 50 Datensätze, einzelne PDFs im ZIP |
 
-Die erweiterten Konverter sind Teil der vollständigen Docker-/platform-Installation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
+Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
 
 ## Verhalten und Grenzen
 

@@ -1,4 +1,4 @@
-name: Publish platform images
+name: Publish Docker images
 
 on:
   workflow_run:
@@ -92,8 +92,8 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ needs.verified.outputs.source }}
             org.opencontainers.image.title=MoinPDF ${{ matrix.name }}
-          cache-from: type=gha,scope=platform-${{ matrix.name }}
-          cache-to: type=gha,mode=min,scope=platform-${{ matrix.name }}
+          cache-from: type=gha,scope=moinpdf-${{ matrix.name }}
+          cache-to: type=gha,mode=min,scope=moinpdf-${{ matrix.name }}
       - name: Verify published platform index and record immutable reference
         env:
           IMAGE: ${{ steps.tag.outputs.image }}
@@ -109,6 +109,6 @@ jobs:
           echo "$IMAGE@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
-          name: platform-image-${{ matrix.name }}
+          name: docker-image-${{ matrix.name }}
           path: image-reference/
           retention-days: 30

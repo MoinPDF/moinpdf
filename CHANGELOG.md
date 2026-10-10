@@ -2,11 +2,16 @@
 
 MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentrale
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
-Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Digest.
+Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen festen Digest.
+
+## Unveröffentlicht
+
+- Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
+- Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
 ## 0.5.11 – 2026-10-10
 
-- Eigenständige Entwicklungs- und Build-Konfiguration für die Docker-/platform-Ausgabe.
+- Eigenständige Entwicklungs- und Build-Konfiguration für die Docker-Ausgabe.
 - Quellcode einheitlich formatiert; ESLint und Formatprüfung in der Integration.
 - Container-Veröffentlichung an den erfolgreichen vollständigen Prüflauf gekoppelt.
 - Mobile Prüfungen für Impressum und Datenschutz ergänzt.
@@ -15,16 +20,16 @@ Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Dig
 
 ## 0.5.10 – 2026-10-10
 
-- Web- und platform-Ausgabe auf denselben aktuellen Stand gebracht.
+- Web- und Docker-Ausgabe auf denselben aktuellen Stand gebracht.
 - Kontakt über ahoi@moinpdf.de, Datenschutzanfragen über post@moinpdf.de; persönliche Angaben auf die erforderlichen Anbieter- und Verantwortlichenangaben beschränkt.
 - Kontakt- und Anbietertexte vereinheitlicht und die Kontaktkarte im Medienbereich bereinigt.
 - Kompaktes Layout von Impressum und Datenschutz mit grüner Schrift und einer Leerzeile zwischen Anschrift und E-Mail.
 
 ## 0.5.9 – 2026-10-10
 
-- Werbeclip „Drucker über Bord?“ mit Vorschau, Download und Medienpaket auch in der Docker- und platform-Ausgabe.
+- Werbeclip „Drucker über Bord?“ mit Vorschau, Download und Medienpaket auch in der Docker-Ausgabe.
 - Medienbereich mit einspaltigem Einstieg ohne abgesetzten „Moin.“-Block auf großen Bildschirmen.
-- Offizielles Favicon und jüngste Dokumentationstexte im aktualisierten platform-Release.
+- Offizielles Favicon und jüngste Dokumentationstexte im aktualisierten Docker-Release.
 - HTML-Seiten und Favicons werden nach Updates erneut validiert; ausgelieferte Medien werden in den Installationstests geprüft.
 
 ## 0.4.0 – 2026-10-07
@@ -59,7 +64,7 @@ Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Dig
   Nicht rekonstruierbare Dateien erhalten einen Fehler; Originale bleiben erhalten.
 - Komprimierung misst die echte Dateigröße, behält immer die kleinste Variante und
   meldet unerreichbare Ziele ausdrücklich. Text, Links und Formulare bleiben erhalten.
-  Docker/platform kann Bildauflösung reduzieren; die Browser-Ausgabe nutzt QPDF.
+  Docker kann Bildauflösung reduzieren; die Browser-Ausgabe nutzt QPDF.
 - Sammelscans: automatische Vorschläge anhand heller Zwischenräume, manuelle Rahmen,
   Vorschau und Prüfung aller Ausschnitte vor dem ZIP mit einzelnen Bild-PDFs/PNG/JPG.
 - Markdown/HTML/EPUB als Textausgaben mit Seitenstruktur, gekennzeichneten Scanseiten
@@ -129,11 +134,11 @@ Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Dig
 - E-Mails standardmäßig direkt als PDF; Anlagen optional als ZIP.
 - Verbindungsprüfungen und Verarbeitungsanfragen mit Zeitbegrenzung.
 - Browser-Ausgabe: PDF-Text direkt als echte DOCX exportieren; Layout und Bilder
-  werden dabei nicht übernommen. Die Docker-/platform-Ausgabe nutzt weiterhin die
+  werden dabei nicht übernommen. Die Docker-Ausgabe nutzt weiterhin die
   vorhandene Konvertierung mit Layout-Rekonstruktion. Weitere native Konverter
-  benötigen die vollständige Docker-/platform-Installation.
+  benötigen die vollständige Docker-Installation.
 
 ## 0.1.0 – 2026-10-05
 
-- Erste vollständige Docker- und platform-Ausgabe mit PDF-Werkzeugen,
+- Erste vollständige Docker-Ausgabe mit PDF-Werkzeugen,
   integriertem Dokumentendienst und lokaler Übersetzung.

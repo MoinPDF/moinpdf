@@ -16,7 +16,7 @@ body:
     id: environment
     attributes:
       label: Browser und Installation
-      placeholder: Zum Beispiel Firefox, Docker oder platform
+      placeholder: Zum Beispiel Firefox, Chromium oder Docker Compose
     validations:
       required: true
   - type: textarea

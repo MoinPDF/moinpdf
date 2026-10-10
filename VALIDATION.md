@@ -15,7 +15,6 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 | Oberfläche | Alle Werkzeugansichten auf Desktop und Mobilgerät, PDF-/EPUB-/Audio-Downloads |
 | Dokumentation und Medien | Suche, Kategorien, Druck, Downloads, Video, keine horizontalen Überläufe und erhaltene Arbeitsdateien |
 | Rechtsseiten | 1440, 390 und 320 Pixel, grüne Schrift, Kontaktlinks und Abstand zwischen Anschrift und E-Mail |
-| platform | Frische platformOS-2.0.0-Installation auf amd64, geschützter HTTP-/HTTPS-Zugang, Vorschau, Konvertierung, Übersetzung und Neustart |
 | Container | Plattform-Indizes für amd64 und arm64 sowie feste Digests |
 
 [Aktuelle Prüfläufe](https://github.com/dennysubke/moinpdf/actions) und ihre
@@ -36,11 +35,11 @@ eigene Prüfläufe; dieser historische Nachweis gilt nicht automatisch für `mai
   ARM-Lauf ist damit nicht nachgewiesen.
 - Browserprüfungen laufen unter Chromium. Andere Browser und konkrete
   Smartphones können abweichendes Verhalten zeigen.
-- Die persönliche platform-Installation und ihre öffentliche Domain müssen
+- Die eigene Serverinstallation und ihre öffentliche Domain müssen
   separat mit künstlichen Testdokumenten geprüft werden.
 - Große oder ungewöhnliche Dokumente können Konvertergrenzen erreichen.
   Ergebnisse am Original kontrollieren.
-- Docker und platform enthalten den Dokumentenserver. Serveradresse und
+- Die vollständige Docker-Installation enthält den Dokumentenserver. Serveradresse und
   API-Schlüssel werden nicht manuell im Browser eingetragen.
 - Ein statischer Web-Build allein stellt keinen laufenden Dokumentenserver
   bereit; `/api/documents/*` benötigt die zugehörige Serverinstallation.

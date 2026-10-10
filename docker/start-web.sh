@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
-# platform supplies a stable per-install secret through exports.sh. Standalone
-# Compose keeps its existing persisted key file; neither is sent to the browser.
+# Use an injected per-install secret or the persisted Compose key file.
+# The credential stays on the server and is never sent to the browser.
 if [ -z "${MOINPDF_API_KEY:-}" ]; then
     MOINPDF_API_KEY="$(cat /run/moinpdf/api-key)"
 fi

@@ -15,7 +15,7 @@ an den in [SECURITY.md](SECURITY.md) genannten vertraulichen Kontakt.
 
 Einrichtung und Befehle stehen in [docs/ENTWICKLUNG.md](docs/ENTWICKLUNG.md).
 Versionsnummern werden zentral in `package.json` gepflegt. Vor einer neuen
-Version den Changelog ergänzen und das platform-Paket abgleichen.
+Version den Changelog ergänzen und die Docker-Veröffentlichung prüfen.
 
 Bitte keine privaten Dokumente, Passwörter, Zertifikatsschlüssel oder lokale
 Laufzeitdaten einchecken. Die vorhandenen Lizenzhinweise sind zu erhalten.

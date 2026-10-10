@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-# platform must finish starting the app while the separate downloader prepares
+# The app can finish starting while the separate downloader prepares
 # models. This service stays on the private, internal network throughout.
 marker="${HOME}/.local/share/moinpdf/ready-models.json"
 if [ ! -s "$marker" ]; then

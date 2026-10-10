@@ -90,7 +90,6 @@ In der App öffnet **„Dokumentation“** im Footer das durchsuchbare Handbuch.
 | --- | --- |
 | Werkzeuge, Ausgabeformate und Grenzen | [Funktionsübersicht](docs/FUNKTIONEN.md) |
 | Installation, HTTPS, Login und Updates | [Docker-Anleitung](DOCKER.md) |
-| Installation auf platform | [platform-Anleitung](platform.md) |
 | Eigenständige Dokumenten-API | [Dokumentenserver](server/README.md) |
 | Quellcode, Builds und Prüfungen | [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) |
 | Bisherige Versionsänderungen | [Changelog](CHANGELOG.md) |

@@ -1,8 +1,6 @@
 # Vollständige Installation mit Docker Compose
 
-Für die **native platform-App aus dem Community Store** und die direkte Veröffentlichung über Cloudflare Tunnel gibt es die Schrittfolge in [platform.md](platform.md). Das platform-Paket enthält Oberfläche, Dokumentenserver und Übersetzung; Pages und eine manuelle `.env` werden dafür nicht benötigt. Der folgende Abschnitt beschreibt weiterhin den unabhängigen Docker-Compose-Betrieb.
-
-Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den Dokumentenserver und LibreTranslate. Alle 76 Werkzeugansichten sind enthalten. Der Browser verbindet sich automatisch mit dem eigenen Dokumentenserver; Serveradressen und API-Schlüssel müssen nicht eingetragen werden. Die dokumentbezogenen Grenzen der einzelnen Werkzeuge gelten auch in Docker.
+Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den Dokumentenserver und LibreTranslate. Alle Werkzeugansichten sind enthalten. Der Browser verbindet sich automatisch mit dem eigenen Dokumentenserver; Serveradressen und API-Schlüssel müssen nicht eingetragen werden. Die dokumentbezogenen Grenzen der einzelnen Werkzeuge gelten auch in Docker.
 
 ## Start
 
@@ -81,7 +79,7 @@ Die Anbieterangaben in `public/impressum.html` und `public/datenschutz.html` bez
 
 Vor dem öffentlichen Start die tatsächlichen Cloudflare-Schutzfunktionen, Sicherheits-Cookies, Protokolle und Löschregeln mit der Erklärung abgleichen. Die Standardkonfiguration aktiviert weder HTTP-Zugriffsprotokolle in Caddy noch im Dokumentenserver; Betriebs- und Fehlerprotokolle von Docker, dem Host und Cloudflare sind davon unabhängig. Deren Aufbewahrung begrenzen und dokumentieren. Erforderliche Vereinbarungen zur Auftragsverarbeitung mit den eingesetzten Dienstleistern prüfen; die Datenschutzerklärung ersetzt diese nicht. Falls ein zusätzlicher Rechenzentrums- oder Hostinganbieter eingesetzt wird, diesen ebenfalls berücksichtigen.
 
-Der Compose-Stack verwendet für alle fünf Dienste den Docker-Logtreiber `local` mit höchstens drei Protokolldateien zu jeweils 10 MB. Ältere Dateien werden bei der Rotation entfernt. Das begrenzt den Umfang, ist aber keine Löschung nach einer festen Anzahl von Tagen. Bereits gestartete Container übernehmen diese Änderung beim nächsten `docker compose up -d`; Protokolle von Pages, dem Tunnel und dem platform-Host werden dadurch nicht geändert.
+Der Compose-Stack verwendet für alle fünf Dienste den Docker-Logtreiber `local` mit höchstens drei Protokolldateien zu jeweils 10 MB. Ältere Dateien werden bei der Rotation entfernt. Das begrenzt den Umfang, ist aber keine Löschung nach einer festen Anzahl von Tagen. Bereits gestartete Container übernehmen diese Änderung beim nächsten `docker compose up -d`; Protokolle anderer Dienste, des Tunnels und des Hosts werden dadurch nicht geändert.
 
 Für Cloudflare den Transport bis zum eigenen Server absichern: bei einem öffentlichen HTTPS-Ursprung mit gültigem Zertifikat den Modus „Full (strict)“ verwenden, bei Cloudflare Tunnel eine entsprechend abgesicherte Verbindung zum lokalen Dienst. Dokumenten-API und Ergebnisse (`/api/documents/*`) nicht durch zusätzliche Cache-Regeln zwischenspeichern; der mitgelieferte Proxy setzt dort `Cache-Control: no-store`. Die App aktiviert keine externen Analyse-Tracker. Zusätzlich im Cloudflare-Konto eingeschaltete Analyse- oder Anmeldedienste müssen gesondert berücksichtigt werden.
 
@@ -119,4 +117,4 @@ docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /rep
 
 Bei aktiviertem Login zusätzlich `--env MOINPDF_TEST_USERNAME=... --env MOINPDF_TEST_PASSWORD=...` übergeben. Diesen Test nur mit dem enthaltenen synthetischen Testmaterial verwenden.
 
-Die eigenständige Dokumenten-API bleibt unter [server/README.md](server/README.md) beschrieben. Die Benutzeroberfläche bietet ab 0.2.0 keine manuelle API-Verbindung mehr an; für sämtliche Konverter die vollständige Docker-/platform-Ausgabe verwenden. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.8.4](https://github.com/LibreTranslate/LibreTranslate/tree/v1.8.4); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).
+Die eigenständige Dokumenten-API bleibt unter [server/README.md](server/README.md) beschrieben. Die Benutzeroberfläche bietet ab 0.2.0 keine manuelle API-Verbindung mehr an; für sämtliche Konverter die vollständige Docker-Ausgabe verwenden. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.8.4](https://github.com/LibreTranslate/LibreTranslate/tree/v1.8.4); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).

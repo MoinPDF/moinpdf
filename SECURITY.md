@@ -17,7 +17,7 @@ und keine garantierte Reaktionszeit.
 
 - Aktualisierungen zunächst mit künstlichen Dokumenten prüfen.
 - Öffentlich erreichbare Instanzen bewusst absichern; Hinweise in
-  [DOCKER.md](DOCKER.md) und [platform.md](platform.md) beachten.
+  [DOCKER.md](DOCKER.md) beachten.
 - Dokumente und Zugangsdaten nicht in Fehlerberichte oder Build-Artefakte aufnehmen.
 - Die Container und Sprachmodelle gemäß den festgelegten Versionen beziehen.
 
