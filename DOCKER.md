@@ -4,7 +4,7 @@ Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den 
 
 ## Start
 
-Voraussetzungen: Docker Engine mit Compose v2 oder Docker Desktop, Internet beim ersten Aufbau sowie ausreichend Speicher. Für den vollständigen Stack sind **8 GB verfügbarer RAM und 20 GB freier Plattenplatz** als Ausgangspunkt vorgesehen. Die Containergrenzen sind in `.env.example` anpassbar. Die Installation baut lokal; es werden keine privaten Container-Registry-Zugangsdaten benötigt. Für das private GitHub-Repository brauchst du den üblichen GitHub-Zugriff.
+Voraussetzungen: Docker Engine mit Compose v2 oder Docker Desktop, Internet beim ersten Aufbau sowie ausreichend Speicher. Für den vollständigen Stack sind **8 GB verfügbarer RAM und 20 GB freier Plattenplatz** als Ausgangspunkt vorgesehen. Die Containergrenzen sind in `.env.example` anpassbar. Die Installation baut lokal; es werden keine privaten Container-Registry-Zugangsdaten benötigt. Der Quellcode ist öffentlich; zum Klonen des Repositorys ist keine GitHub-Anmeldung erforderlich.
 
 ```bash
 git clone https://github.com/MoinPDF/moinpdf.git

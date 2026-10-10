@@ -94,7 +94,7 @@ MoinPDF verwendet unter anderem React, TypeScript, PDF.js, pdf-lib und Tesseract
 
 Der [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) beschreibt Einrichtung, Projektstruktur und Tests. Allgemeine Fragen und Pressekontakt: [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de). Datenschutzanfragen: [post@moinpdf.de](mailto:post@moinpdf.de).
 
-Hinweise auf Fehler und Ideen bitte an [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de) senden. Wer Zugriff auf dieses private Repository hat, kann auch die [GitHub Issues](https://github.com/MoinPDF/moinpdf/issues) nutzen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
+Hinweise auf Fehler und Ideen bitte an [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de) senden. Du kannst auch die [GitHub Issues](https://github.com/MoinPDF/moinpdf/issues) nutzen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
 
 Der [Lizenzstatus](LICENSE), [Sicherheitshinweise](SECURITY.md) und [Hinweise für Beiträge](CONTRIBUTING.md) ergänzen die Projektdokumentation. Lizenzhinweise zu mitgelieferten Bibliotheken, Schriften und Sprachmodellen sind im [Entwicklungsleitfaden](docs/ENTWICKLUNG.md#bibliotheken-und-lizenzhinweise) verlinkt.
 
