@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "types": ["node", "vite/client"],
-    "tsBuildInfoFile": ".sites-runtime/selfhost.tsbuildinfo"
+    "tsBuildInfoFile": ".cache/selfhost.tsbuildinfo"
   },
   "include": ["selfhost/**/*.tsx", "vite.selfhost.config.ts"],
   "exclude": ["node_modules", "dist"]

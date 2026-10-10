@@ -4,11 +4,20 @@ MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentral
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
 Images tragen zusätzlich den Quellcode-Commit, platform-Pakete einen festen Digest.
 
+## 0.5.11 – 2026-10-10
+
+- Eigenständige Entwicklungs- und Build-Konfiguration für die Docker-/platform-Ausgabe.
+- Quellcode einheitlich formatiert; ESLint und Formatprüfung in der Integration.
+- Container-Veröffentlichung an den erfolgreichen vollständigen Prüflauf gekoppelt.
+- Mobile Prüfungen für Impressum und Datenschutz ergänzt.
+- Dokumentation, Rückmeldewege, Lizenzstatus und Wartungshinweise aktualisiert.
+- Veralteten Cookie-Hinweis und den nicht öffentlich erreichbaren Supportlink korrigiert.
+
 ## 0.5.10 – 2026-10-10
 
 - Web- und platform-Ausgabe auf denselben aktuellen Stand gebracht.
 - Kontakt über ahoi@moinpdf.de, Datenschutzanfragen über post@moinpdf.de; persönliche Angaben auf die erforderlichen Anbieter- und Verantwortlichenangaben beschränkt.
-- Hinweise auf die Erstellungsplattform aus der Oberfläche entfernt und die Kontaktkarte im Medienbereich bereinigt.
+- Kontakt- und Anbietertexte vereinheitlicht und die Kontaktkarte im Medienbereich bereinigt.
 - Kompaktes Layout von Impressum und Datenschutz mit grüner Schrift und einer Leerzeile zwischen Anschrift und E-Mail.
 
 ## 0.5.9 – 2026-10-10

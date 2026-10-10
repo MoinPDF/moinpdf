@@ -1,103 +1,126 @@
 .moinpdf-shell {
-  --legal-footer-height:80px;
-  display:flex;
-  flex-direction:column;
-  width:100%;
-  min-width:0;
-  min-height:100dvh;
-  background-color:#f8fcfa;
+  --legal-footer-height: 80px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+  background-color: #f8fcfa;
   background-image:
-    radial-gradient(ellipse at 8% 8%,rgba(104,194,194,.20),transparent 55%),
-    radial-gradient(ellipse at 92% 88%,rgba(120,196,99,.18),transparent 56%),
-    linear-gradient(135deg,#fbfdfc 0%,#f6fbf9 55%,#f8fbf3 100%);
-  background-repeat:no-repeat;
+    radial-gradient(ellipse at 8% 8%, rgba(104, 194, 194, 0.2), transparent 55%),
+    radial-gradient(ellipse at 92% 88%, rgba(120, 196, 99, 0.18), transparent 56%),
+    linear-gradient(135deg, #fbfdfc 0%, #f6fbf9 55%, #f8fbf3 100%);
+  background-repeat: no-repeat;
 }
 
-.moinpdf-shell>.studio-provider {
-  flex:1 0 auto;
-  width:100%;
-  min-width:0;
-  min-height:calc(100dvh - var(--legal-footer-height));
-  background:transparent;
+.moinpdf-shell > .studio-provider {
+  flex: 1 0 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100dvh - var(--legal-footer-height));
+  background: transparent;
 }
 
 .moinpdf-shell .upload-entry,
 .moinpdf-shell .tool-chooser,
 .moinpdf-shell .document-workbench {
-  min-width:0;
-  min-height:calc(100dvh - var(--legal-footer-height));
-  background:transparent;
+  min-width: 0;
+  min-height: calc(100dvh - var(--legal-footer-height));
+  background: transparent;
 }
 
 .moinpdf-legal-footer {
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  flex:0 0 auto;
-  width:100%;
-  min-width:0;
-  min-height:var(--legal-footer-height);
-  gap:0;
-  margin:0;
-  padding:10px max(16px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));
-  background:transparent;
-  color:#61786f;
-  font:400 .75rem/1.5 'Manrope Variable',Arial,sans-serif;
-  text-align:center;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--legal-footer-height);
+  gap: 0;
+  margin: 0;
+  padding: 10px max(16px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  background: transparent;
+  color: #61786f;
+  font:
+    400 0.75rem/1.5 'Manrope Variable',
+    Arial,
+    sans-serif;
+  text-align: center;
 }
 
 .moinpdf-footer-brand {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  align-self:center;
-  flex:0 0 auto;
-  gap:6px;
-  min-width:0;
-  max-width:100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .moinpdf-footer-mascot {
-  display:block;
-  flex:0 0 16px;
-  width:16px;
-  height:16px;
-  object-fit:contain;
+  display: block;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 .moinpdf-legal-footer nav {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-wrap:wrap;
-  min-width:0;
-  max-width:100%;
-  gap:0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+  gap: 0 18px;
 }
 
 .moinpdf-legal-footer a {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-height:44px;
-  max-width:100%;
-  padding:7px 2px;
-  overflow-wrap:anywhere;
-  font:inherit;
-  letter-spacing:normal;
-  color:inherit;
-  text-decoration:none;
-  text-underline-offset:4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 7px 2px;
+  overflow-wrap: anywhere;
+  font: inherit;
+  letter-spacing: normal;
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 4px;
 }
 
-.moinpdf-legal-footer a:hover { color:#176c64; text-decoration:underline; }
-.moinpdf-legal-footer a:focus-visible { border-radius:3px; outline:2px solid #176c64; outline-offset:3px; }
-.moinpdf-version { color:#7b8f86; white-space:nowrap; font-size:.6875rem; line-height:1rem; }
-.moinpdf-version>span { font-variant-numeric:tabular-nums; }
+.moinpdf-legal-footer a:hover {
+  color: #176c64;
+  text-decoration: underline;
+}
+.moinpdf-legal-footer a:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid #176c64;
+  outline-offset: 3px;
+}
+.moinpdf-version {
+  color: #7b8f86;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+.moinpdf-version > span {
+  font-variant-numeric: tabular-nums;
+}
 
-@media(max-width:600px) {
-  .moinpdf-legal-footer { padding-top:6px; }
-  .moinpdf-legal-footer nav { width:100%; column-gap:16px; }
+@media (max-width: 600px) {
+  .moinpdf-legal-footer {
+    padding-top: 6px;
+  }
+  .moinpdf-legal-footer nav {
+    width: 100%;
+    column-gap: 16px;
+  }
 }

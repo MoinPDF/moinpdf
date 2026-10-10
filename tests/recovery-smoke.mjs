@@ -14,16 +14,16 @@ Object.defineProperty(Object.getPrototypeOf(createCanvas(1,1)).constructor,'name
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
 globalThis.Worker=class{constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
-await mkdir('.sites-runtime',{recursive:true});
+await mkdir('.cache',{recursive:true});
 for(const name of ['reading-export','pdf-recovery','pdf-security','pdf-engine','scan-split']){
  let code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-recovery-test.mjs${q}`);
  if(name==='pdf-engine')code=code.replace("'/vendor/pdf/pdf.worker.min.mjs'",JSON.stringify(assets+'/legacy/build/pdf.worker.mjs')).replace("'/vendor/pdf/standard_fonts/'",JSON.stringify(assets+'/standard_fonts/'));
- await writeFile(`.sites-runtime/${name}-recovery-test.mjs`,code);
+ await writeFile(`.cache/${name}-recovery-test.mjs`,code);
 }
-const {exportReading}=await import('../.sites-runtime/reading-export-recovery-test.mjs');
-const {repairFile,optimizeBrowser}=await import('../.sites-runtime/pdf-recovery-recovery-test.mjs');
-const {detectScanRegions,exportScanRegions}=await import('../.sites-runtime/scan-split-recovery-test.mjs');
-const {optimizePdf}=await import('../.sites-runtime/pdf-security-recovery-test.mjs');
+const {exportReading}=await import('../.cache/reading-export-recovery-test.mjs');
+const {repairFile,optimizeBrowser}=await import('../.cache/pdf-recovery-recovery-test.mjs');
+const {detectScanRegions,exportScanRegions}=await import('../.cache/scan-split-recovery-test.mjs');
+const {optimizePdf}=await import('../.cache/pdf-security-recovery-test.mjs');
 const ctx={signal:new AbortController().signal,report:()=>{}},opened=[];
 async function source(bytes,name='Grüße.pdf'){const data=new Uint8Array(bytes),pdf=await pdfjs.getDocument({data:data.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;opened.push(pdf);return{id:crypto.randomUUID(),name,bytes:data,size:data.length,pdf,kind:'pdf'};}
 try{
@@ -42,7 +42,7 @@ try{
    assert.equal((await zip.file('EPUB/package.opf').async('string')).match(/<itemref /g).length,2);
   }
  }
- await writeFile('.sites-runtime/reading-roundtrip.epub',epub);
+ await writeFile('.cache/reading-roundtrip.epub',epub);
  await assert.rejects(()=>exportReading({...input,pdf:{numPages:1,getPage:async()=>({getTextContent:async()=>({items:[]})})}},'epub','','de',ctx),/OCR/);
  const uuidDescriptor=Object.getOwnPropertyDescriptor(crypto,'randomUUID');
  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:undefined});

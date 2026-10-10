@@ -9,13 +9,13 @@ const require=createRequire(import.meta.url),pdfRequire=createRequire(require.re
 const {createCanvas,loadImage,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
-await mkdir('.sites-runtime',{recursive:true});
+await mkdir('.cache',{recursive:true});
 for(const name of ['pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model','document-tools']){
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-document-test.mjs${q}`);
- await writeFile(`.sites-runtime/${name}-document-test.mjs`,code);
+ await writeFile(`.cache/${name}-document-test.mjs`,code);
 }
-const {readDocumentDraft,saveDocumentDraft,newFormField,writeBookmarks,moveBookmark,indentBookmark}=await import('../.sites-runtime/document-tools-document-test.mjs');
-const {extractEmbeddedImages}=await import('../.sites-runtime/extra-tools-document-test.mjs');
+const {readDocumentDraft,saveDocumentDraft,newFormField,writeBookmarks,moveBookmark,indentBookmark}=await import('../.cache/document-tools-document-test.mjs');
+const {extractEmbeddedImages}=await import('../.cache/extra-tools-document-test.mjs');
 const proxies=[];
 async function source(bytes,name='Formular-Test.pdf'){const data=new Uint8Array(bytes),pdf=await pdfjs.getDocument({data:data.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);return{id:name,name,bytes:data,pdf,size:data.length,kind:'pdf'};}
 const execute=(s,d,t='fill-form',flatten=false)=>saveDocumentDraft(s,d,t,flatten,new AbortController().signal);
@@ -32,7 +32,7 @@ const list=form.createOptionList('Unterlagen');list.setOptions(['Rechnung','Bele
 const canvas=createCanvas(12,8),ctx=canvas.getContext('2d');ctx.fillStyle='#64bfc3';ctx.fillRect(0,0,6,8);ctx.fillStyle='#9dd345';ctx.fillRect(6,0,6,8);ctx.clearRect(9,5,3,3);
 const png=await doc.embedPng(canvas.toBuffer('image/png'));page.drawImage(png,{x:400,y:600,width:72,height:48});page.drawImage(png,{x:400,y:500,width:36,height:24});doc.getPage(1).drawImage(png,{x:60,y:60,width:72,height:48});
 writeBookmarks(doc,[{id:'a',title:'Formular',page:0,depth:0,open:true,targetChanged:true},{id:'b',title:'Gedrehte Seite',page:1,depth:1,open:true,targetChanged:true},{id:'c',title:'Anhang',page:2,depth:0,open:true,targetChanged:true}]);
-const original=await source(await doc.save());await writeFile('.sites-runtime/PDF-Formular-Test.pdf',original.bytes);
+const original=await source(await doc.save());await writeFile('.cache/PDF-Formular-Test.pdf',original.bytes);
 try{
  const draft=await readDocumentDraft(original);assert.equal(draft.fields.length,6);assert.equal(draft.bookmarks.length,3);assert.equal(draft.fields.find(f=>f.name==='Kontakt').widgets.length,2);assert.equal(draft.fields.find(f=>f.name==='Referenz').readOnly,true);
  const filled=structuredClone(draft);for(const f of filled.fields){if(f.name==='Name')f.value='Jörg Müller';if(f.name==='Bestaetigung')f.value=true;if(f.name==='Bereich')f.value='Betrieb';if(f.name==='Kontakt')f.value='Telefon';if(f.name==='Unterlagen')f.value=['Beleg','Vertrag'];if(f.name==='Referenz')f.value='DARF NICHT GEÄNDERT WERDEN';}
@@ -44,7 +44,7 @@ try{
  const createdResult=await execute(original,created,'create-form'),createdSource=await source(await createdResult.blob.arrayBuffer(),'Neue-Felder.pdf'),createdDraft=await readDocumentDraft(createdSource);assert.equal(createdDraft.fields.length,12);
  for(let i=0;i<4;i++){const f=createdDraft.fields.find(f=>f.name==='Neu_'+i);assert(f.required);const actual=f.widgets[0].rect;for(const key of Object.keys(expected))assert(Math.abs(actual[key]-expected[key])<.001,`rotation ${i*90}, ${key}: ${actual[key]} vs ${expected[key]}`);}
  const createdDoc=await PDFDocument.load(createdSource.bytes);assert.equal(createdDoc.getForm().getDropdown(newDrop.name).getSelected()[0],'Ja');assert(createdDoc.getForm().getCheckBox(newCheck.name).isChecked());
- await writeFile('.sites-runtime/PDF-Neue-Felder-Test.pdf',createdSource.bytes);
+ await writeFile('.cache/PDF-Neue-Felder-Test.pdf',createdSource.bytes);
  const flat=await execute(original,filled,'fill-form',true),flatDoc=await PDFDocument.load(await flat.blob.arrayBuffer());assert.equal(flatDoc.getForm().getFields().length,0);assert(flatDoc.catalog.get(PDFName.of('Outlines')));const flatSource=await source(await flat.blob.arrayBuffer(),'Fixiert.pdf'),text=(await(await flatSource.pdf.getPage(1)).getTextContent()).items.filter(i=>'str'in i).map(i=>i.str).join(' ');assert.match(text,/Jörg Müller/);
  const deleted=structuredClone(draft);deleted.fields[0].deleted=true;assert.equal((await PDFDocument.load(await(await execute(original,deleted,'create-form')).blob.arrayBuffer())).getForm().getFields().length,5);
  const changed=structuredClone(draft);changed.bookmarks[0].title='Übersicht';changed.bookmarks[1].page=3;changed.bookmarks[1].targetChanged=true;changed.bookmarks[1].open=false;const bookResult=await execute(original,changed,'bookmarks'),bookSource=await source(await bookResult.blob.arrayBuffer(),'Kapitel.pdf'),outline=await bookSource.pdf.getOutline();assert.equal(outline[0].title,'Übersicht');assert.equal(await bookSource.pdf.getPageIndex(outline[0].items[0].dest[0]),3);assert.equal((await PDFDocument.load(bookSource.bytes)).getForm().getFields().length,6,'Bookmarks preserve interactive forms');

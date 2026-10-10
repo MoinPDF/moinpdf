@@ -1,42 +1,425 @@
 'use client';
-import {Bold,Italic,AlignLeft,AlignCenter,AlignRight,Copy,Undo2,ImagePlus,Plus,MousePointer2,ScanLine,Eraser,Settings2} from 'lucide-react';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {Textarea} from '@/components/ui/textarea';
-import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/components/ui/select';
-import type {Mark} from '@/lib/studio-engine';
-import {fitRect,type EditorAction,type FontFamily} from '@/lib/editor-model';
+import {
+  Bold,
+  Italic,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Copy,
+  Undo2,
+  ImagePlus,
+  Plus,
+  MousePointer2,
+  ScanLine,
+  Eraser,
+  Settings2,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import type { Mark } from '@/lib/studio-engine';
+import { fitRect, type EditorAction, type FontFamily } from '@/lib/editor-model';
 
-type ToolbarProps={tool:string;action:EditorAction;disabled:boolean;onAction:(value:EditorAction)=>void;onNewText:()=>void;onImage:()=>void;onErase:()=>void};
-export function EditorToolbar({tool,action,disabled,onAction,onNewText,onImage,onErase}:ToolbarProps){
- return <div className="editor-toolbar" role="toolbar" aria-label="Bearbeitungswerkzeuge">
-  {tool==='edit-text'&&<><Button variant={action==='pick'?'secondary':'ghost'} aria-pressed={action==='pick'} disabled={disabled} onClick={()=>onAction('pick')}><MousePointer2 size={16}/>Text auswählen</Button><Button variant={action==='replace-area'?'secondary':'ghost'} aria-pressed={action==='replace-area'} disabled={disabled} onClick={()=>onAction('replace-area')}><ScanLine size={16}/>Bereich ersetzen</Button><Button variant="ghost" disabled={disabled} onClick={onNewText}><Plus size={16}/>Neuer Text</Button></>}
-  {tool==='erase'&&<><Button variant={action==='erase'?'secondary':'ghost'} aria-pressed={action==='erase'} disabled={disabled} onClick={()=>onAction('erase')}><Eraser size={16}/>Bereich markieren</Button><Button variant="ghost" disabled={disabled} onClick={onErase}><Plus size={16}/>Bereich per Eingabe</Button></>}
-  {tool==='insert-image'&&<Button variant="ghost" disabled={disabled} onClick={onImage}><ImagePlus size={16}/>Bild auswählen</Button>}
-  <Button className="editor-settings-jump" variant="outline" onClick={()=>document.getElementById('editor-settings')?.scrollIntoView({behavior:'smooth',block:'start'})}><Settings2 size={16}/>Einstellungen</Button><span>Ziehen · Größe am Eckpunkt ändern</span>
- </div>;
+type ToolbarProps = {
+  tool: string;
+  action: EditorAction;
+  disabled: boolean;
+  onAction: (value: EditorAction) => void;
+  onNewText: () => void;
+  onImage: () => void;
+  onErase: () => void;
+};
+export function EditorToolbar({
+  tool,
+  action,
+  disabled,
+  onAction,
+  onNewText,
+  onImage,
+  onErase,
+}: ToolbarProps) {
+  return (
+    <div className="editor-toolbar" role="toolbar" aria-label="Bearbeitungswerkzeuge">
+      {tool === 'edit-text' && (
+        <>
+          <Button
+            variant={action === 'pick' ? 'secondary' : 'ghost'}
+            aria-pressed={action === 'pick'}
+            disabled={disabled}
+            onClick={() => onAction('pick')}
+          >
+            <MousePointer2 size={16} />
+            Text auswählen
+          </Button>
+          <Button
+            variant={action === 'replace-area' ? 'secondary' : 'ghost'}
+            aria-pressed={action === 'replace-area'}
+            disabled={disabled}
+            onClick={() => onAction('replace-area')}
+          >
+            <ScanLine size={16} />
+            Bereich ersetzen
+          </Button>
+          <Button variant="ghost" disabled={disabled} onClick={onNewText}>
+            <Plus size={16} />
+            Neuer Text
+          </Button>
+        </>
+      )}
+      {tool === 'erase' && (
+        <>
+          <Button
+            variant={action === 'erase' ? 'secondary' : 'ghost'}
+            aria-pressed={action === 'erase'}
+            disabled={disabled}
+            onClick={() => onAction('erase')}
+          >
+            <Eraser size={16} />
+            Bereich markieren
+          </Button>
+          <Button variant="ghost" disabled={disabled} onClick={onErase}>
+            <Plus size={16} />
+            Bereich per Eingabe
+          </Button>
+        </>
+      )}
+      {tool === 'insert-image' && (
+        <Button variant="ghost" disabled={disabled} onClick={onImage}>
+          <ImagePlus size={16} />
+          Bild auswählen
+        </Button>
+      )}
+      <Button
+        className="editor-settings-jump"
+        variant="outline"
+        onClick={() =>
+          document
+            .getElementById('editor-settings')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      >
+        <Settings2 size={16} />
+        Einstellungen
+      </Button>
+      <span>Ziehen · Größe am Eckpunkt ändern</span>
+    </div>
+  );
 }
-export function EditorPanel({tool,mark,marks,width,disabled,onPatch,onRemove,onSelect,onDuplicate,onNewText,onImage}:{tool:string;mark?:Mark;marks:Mark[];width:number;disabled:boolean;onPatch:(id:string,patch:Partial<Mark>)=>void;onRemove:(id:string)=>void;onSelect:(id:string)=>void;onDuplicate:()=>void;onNewText:()=>void;onImage:()=>void}){
- const patch=(v:Partial<Mark>)=>{if(mark)onPatch(mark.id,v);};
- function geometry(key:'x'|'y'|'w'|'h',value:string){if(!mark||value==='')return;const n=Number(value)/100;if(!Number.isFinite(n))return;let next={...mark,[key]:n};if(key==='x')next.x=Math.min(1-mark.w,n);if(key==='y')next.y=Math.min(1-mark.h,n);if((mark.kind==='image'||mark.kind==='signature')&&(key==='w'||key==='h')){if(key==='w')next.h=n*mark.h/mark.w;else next.w=n*mark.w/mark.h;const scale=Math.min(1,(1-next.x)/next.w,(1-next.y)/next.h);next.w*=scale;next.h*=scale;}patch(fitRect(next));}
- return <div className="editor-panel" id="editor-settings">
-  {!mark&&<div className="editor-empty">{tool==='edit-text'?<><p>Wähle eine Textstelle auf der Seite oder markiere einen Bereich, den du ersetzen möchtest.</p><Button variant="outline" disabled={disabled} onClick={onNewText}><Plus size={16}/>Neues Textfeld</Button></>:tool==='insert-image'?<><p>PNG, JPG oder WebP auswählen oder direkt auf die Seite ziehen.</p><Button variant="outline" disabled={disabled} onClick={onImage}><ImagePlus size={16}/>Bild auswählen</Button></>:<p>Ziehe einen Rahmen um den Inhalt. Die Füllfarbe und die genauen Maße kannst du danach anpassen.</p>}</div>}
-  {mark&&<>
-   <div className="editor-selection-label">{mark.kind==='text'?(mark.sourceRect?'TEXT ERSETZEN':'TEXTFELD'):mark.kind==='erase'?'INHALT ENTFERNEN':mark.kind==='image'?'EINGEFÜGTES BILD':'AUSGEWÄHLTE MARKIERUNG'}</div>
-   {mark.kind==='text'&&<>
-    <label className="field"><span>{mark.sourceRect?'Ersatztext':'Text'}</span><Textarea aria-label="Textinhalt" value={mark.text||''} maxLength={1500} onChange={e=>patch({text:e.target.value})} disabled={disabled} placeholder={mark.sourceRect?'Leer lassen, um den Text zu entfernen':'Dein Text'} className="editor-text-input"/></label>
-    <div className="editor-font-row"><label className="field"><span>Ersatzschrift</span><Select value={mark.fontFamily||'sans'} onValueChange={v=>patch({fontFamily:v as FontFamily})} disabled={disabled}><SelectTrigger aria-label="Schriftart"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="sans">Helvetica / Arial</SelectItem><SelectItem value="serif">Times</SelectItem><SelectItem value="mono">Courier</SelectItem></SelectContent></Select></label><label className="field"><span>Größe · pt</span><Input aria-label="Textgröße in Punkt" type="number" min={1} max={96} step={1} value={Math.round((mark.fontScale||.028)*width*10)/10} onChange={e=>{const n=Number(e.target.value);if(n>=1&&n<=96)patch({fontScale:n/width});}} disabled={disabled}/></label></div>
-    <div className="editor-format-bar"><Button variant={mark.bold?'secondary':'ghost'} size="icon" aria-label="Fett" aria-pressed={!!mark.bold} disabled={disabled} onClick={()=>patch({bold:!mark.bold})}><Bold size={17}/></Button><Button variant={mark.italic?'secondary':'ghost'} size="icon" aria-label="Kursiv" aria-pressed={!!mark.italic} disabled={disabled} onClick={()=>patch({italic:!mark.italic})}><Italic size={17}/></Button><span/>{([['left',AlignLeft,'Linksbündig'],['center',AlignCenter,'Zentriert'],['right',AlignRight,'Rechtsbündig']] as const).map(([value,Icon,label])=><Button key={value} variant={(mark.align||'left')===value?'secondary':'ghost'} size="icon" aria-label={label} aria-pressed={(mark.align||'left')===value} disabled={disabled} onClick={()=>patch({align:value})}><Icon size={17}/></Button>)}</div>
-    <label className="editor-color"><span>Textfarbe</span><Input aria-label="Textfarbe" type="color" value={mark.color||'#222222'} onInput={e=>patch({color:e.currentTarget.value})} onChange={e=>patch({color:e.target.value})} disabled={disabled}/></label>
-   </>}
-   {(mark.kind==='erase'||mark.sourceRect)&&<label className="editor-color"><span>Füllfarbe des entfernten Bereichs</span><Input aria-label="Füllfarbe" type="color" value={mark.fill||'#ffffff'} onInput={e=>patch({fill:e.currentTarget.value})} onChange={e=>patch({fill:e.target.value})} disabled={disabled}/></label>}
-   {(mark.kind==='image'||mark.kind==='signature')&&<label className="field"><span>Deckkraft · {Math.round((mark.opacity??1)*100)} %</span><Input aria-label="Bilddeckkraft" type="range" min={10} max={100} step={5} value={(mark.opacity??1)*100} onChange={e=>patch({opacity:Number(e.target.value)/100})} disabled={disabled}/></label>}
-   <div className="editor-geometry">{(['x','y','w','h'] as const).map(key=><label className="field" key={key}><span>{{x:'Links %',y:'Oben %',w:'Breite %',h:'Höhe %'}[key]}</span><Input aria-label={{x:'Objekt links',y:'Objekt oben',w:'Objektbreite',h:'Objekthöhe'}[key]} type="number" min={key==='x'||key==='y'?0:1} max={100} step={.5} value={Math.round(mark[key]*1000)/10} onChange={e=>geometry(key,e.target.value)} disabled={disabled}/></label>)}</div>
-   {mark.sourceRect&&<p className="fine-note">Der ursprüngliche Bereich bleibt an seiner Stelle entfernt, auch wenn du das Textfeld verschiebst.</p>}
-   <div className="editor-object-actions">{mark.kind==='text'&&mark.sourceRect&&<Button variant="outline" disabled={disabled||!mark.text} onClick={()=>patch({text:''})}>Nur Text entfernen</Button>}{mark.kind!=='erase'&&<Button variant="outline" disabled={disabled} onClick={onDuplicate}><Copy size={15}/>Duplizieren</Button>}<Button variant="ghost" disabled={disabled} onClick={()=>onRemove(mark.id)}><Undo2 size={15}/>{mark.sourceRect||mark.kind==='erase'?'Änderung verwerfen':'Objekt entfernen'}</Button></div>
-  </>}
-  {marks.length>0&&<div className="editor-object-list"><span>OBJEKTE AUF DIESER SEITE</span>{marks.map((m,i)=><button key={m.id} className={mark?.id===m.id?'selected':''} disabled={disabled} onClick={()=>onSelect(m.id)}>{String(i+1).padStart(2,'0')} · {m.kind==='text'?(m.text?.slice(0,38)||'Text entfernt'):({erase:'Entfernter Bereich',image:'Bild',signature:'Unterschrift',redact:'Schwärzung',highlight:'Markierung'}[m.kind])}</button>)}</div>}
-  {(tool==='edit-text'||tool==='erase')&&<div className="notice editor-export-note">Entfernte Inhalte werden aus neuen Seitenbildern gelöscht. Auf betroffenen Seiten entfallen ursprünglicher kopierbarer Text, Links und Formularfelder. Neuer Text bleibt kopierbar, sofern du die Seite nicht zusätzlich schwärzt, zuschneidest oder als Bild exportierst. Ersatzschriften und farbige Hintergründe bitte in der Vorschau prüfen.</div>}
-  {tool==='insert-image'&&<p className="fine-note">Bis 8 MB pro Bild. Bilder lassen sich verschieben und proportional skalieren. Der vorhandene PDF-Text bleibt erhalten.</p>}
- </div>;
+export function EditorPanel({
+  tool,
+  mark,
+  marks,
+  width,
+  disabled,
+  onPatch,
+  onRemove,
+  onSelect,
+  onDuplicate,
+  onNewText,
+  onImage,
+}: {
+  tool: string;
+  mark?: Mark;
+  marks: Mark[];
+  width: number;
+  disabled: boolean;
+  onPatch: (id: string, patch: Partial<Mark>) => void;
+  onRemove: (id: string) => void;
+  onSelect: (id: string) => void;
+  onDuplicate: () => void;
+  onNewText: () => void;
+  onImage: () => void;
+}) {
+  const patch = (v: Partial<Mark>) => {
+    if (mark) onPatch(mark.id, v);
+  };
+  function geometry(key: 'x' | 'y' | 'w' | 'h', value: string) {
+    if (!mark || value === '') return;
+    const n = Number(value) / 100;
+    if (!Number.isFinite(n)) return;
+    const next = { ...mark, [key]: n };
+    if (key === 'x') next.x = Math.min(1 - mark.w, n);
+    if (key === 'y') next.y = Math.min(1 - mark.h, n);
+    if ((mark.kind === 'image' || mark.kind === 'signature') && (key === 'w' || key === 'h')) {
+      if (key === 'w') next.h = (n * mark.h) / mark.w;
+      else next.w = (n * mark.w) / mark.h;
+      const scale = Math.min(1, (1 - next.x) / next.w, (1 - next.y) / next.h);
+      next.w *= scale;
+      next.h *= scale;
+    }
+    patch(fitRect(next));
+  }
+  return (
+    <div className="editor-panel" id="editor-settings">
+      {!mark && (
+        <div className="editor-empty">
+          {tool === 'edit-text' ? (
+            <>
+              <p>
+                Wähle eine Textstelle auf der Seite oder markiere einen Bereich, den du ersetzen
+                möchtest.
+              </p>
+              <Button variant="outline" disabled={disabled} onClick={onNewText}>
+                <Plus size={16} />
+                Neues Textfeld
+              </Button>
+            </>
+          ) : tool === 'insert-image' ? (
+            <>
+              <p>PNG, JPG oder WebP auswählen oder direkt auf die Seite ziehen.</p>
+              <Button variant="outline" disabled={disabled} onClick={onImage}>
+                <ImagePlus size={16} />
+                Bild auswählen
+              </Button>
+            </>
+          ) : (
+            <p>
+              Ziehe einen Rahmen um den Inhalt. Die Füllfarbe und die genauen Maße kannst du danach
+              anpassen.
+            </p>
+          )}
+        </div>
+      )}
+      {mark && (
+        <>
+          <div className="editor-selection-label">
+            {mark.kind === 'text'
+              ? mark.sourceRect
+                ? 'TEXT ERSETZEN'
+                : 'TEXTFELD'
+              : mark.kind === 'erase'
+                ? 'INHALT ENTFERNEN'
+                : mark.kind === 'image'
+                  ? 'EINGEFÜGTES BILD'
+                  : 'AUSGEWÄHLTE MARKIERUNG'}
+          </div>
+          {mark.kind === 'text' && (
+            <>
+              <label className="field">
+                <span>{mark.sourceRect ? 'Ersatztext' : 'Text'}</span>
+                <Textarea
+                  aria-label="Textinhalt"
+                  value={mark.text || ''}
+                  maxLength={1500}
+                  onChange={(e) => patch({ text: e.target.value })}
+                  disabled={disabled}
+                  placeholder={
+                    mark.sourceRect ? 'Leer lassen, um den Text zu entfernen' : 'Dein Text'
+                  }
+                  className="editor-text-input"
+                />
+              </label>
+              <div className="editor-font-row">
+                <label className="field">
+                  <span>Ersatzschrift</span>
+                  <Select
+                    value={mark.fontFamily || 'sans'}
+                    onValueChange={(v) => patch({ fontFamily: v as FontFamily })}
+                    disabled={disabled}
+                  >
+                    <SelectTrigger aria-label="Schriftart">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sans">Helvetica / Arial</SelectItem>
+                      <SelectItem value="serif">Times</SelectItem>
+                      <SelectItem value="mono">Courier</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </label>
+                <label className="field">
+                  <span>Größe · pt</span>
+                  <Input
+                    aria-label="Textgröße in Punkt"
+                    type="number"
+                    min={1}
+                    max={96}
+                    step={1}
+                    value={Math.round((mark.fontScale || 0.028) * width * 10) / 10}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (n >= 1 && n <= 96) patch({ fontScale: n / width });
+                    }}
+                    disabled={disabled}
+                  />
+                </label>
+              </div>
+              <div className="editor-format-bar">
+                <Button
+                  variant={mark.bold ? 'secondary' : 'ghost'}
+                  size="icon"
+                  aria-label="Fett"
+                  aria-pressed={!!mark.bold}
+                  disabled={disabled}
+                  onClick={() => patch({ bold: !mark.bold })}
+                >
+                  <Bold size={17} />
+                </Button>
+                <Button
+                  variant={mark.italic ? 'secondary' : 'ghost'}
+                  size="icon"
+                  aria-label="Kursiv"
+                  aria-pressed={!!mark.italic}
+                  disabled={disabled}
+                  onClick={() => patch({ italic: !mark.italic })}
+                >
+                  <Italic size={17} />
+                </Button>
+                <span />
+                {(
+                  [
+                    ['left', AlignLeft, 'Linksbündig'],
+                    ['center', AlignCenter, 'Zentriert'],
+                    ['right', AlignRight, 'Rechtsbündig'],
+                  ] as const
+                ).map(([value, Icon, label]) => (
+                  <Button
+                    key={value}
+                    variant={(mark.align || 'left') === value ? 'secondary' : 'ghost'}
+                    size="icon"
+                    aria-label={label}
+                    aria-pressed={(mark.align || 'left') === value}
+                    disabled={disabled}
+                    onClick={() => patch({ align: value })}
+                  >
+                    <Icon size={17} />
+                  </Button>
+                ))}
+              </div>
+              <label className="editor-color">
+                <span>Textfarbe</span>
+                <Input
+                  aria-label="Textfarbe"
+                  type="color"
+                  value={mark.color || '#222222'}
+                  onInput={(e) => patch({ color: e.currentTarget.value })}
+                  onChange={(e) => patch({ color: e.target.value })}
+                  disabled={disabled}
+                />
+              </label>
+            </>
+          )}
+          {(mark.kind === 'erase' || mark.sourceRect) && (
+            <label className="editor-color">
+              <span>Füllfarbe des entfernten Bereichs</span>
+              <Input
+                aria-label="Füllfarbe"
+                type="color"
+                value={mark.fill || '#ffffff'}
+                onInput={(e) => patch({ fill: e.currentTarget.value })}
+                onChange={(e) => patch({ fill: e.target.value })}
+                disabled={disabled}
+              />
+            </label>
+          )}
+          {(mark.kind === 'image' || mark.kind === 'signature') && (
+            <label className="field">
+              <span>Deckkraft · {Math.round((mark.opacity ?? 1) * 100)} %</span>
+              <Input
+                aria-label="Bilddeckkraft"
+                type="range"
+                min={10}
+                max={100}
+                step={5}
+                value={(mark.opacity ?? 1) * 100}
+                onChange={(e) => patch({ opacity: Number(e.target.value) / 100 })}
+                disabled={disabled}
+              />
+            </label>
+          )}
+          <div className="editor-geometry">
+            {(['x', 'y', 'w', 'h'] as const).map((key) => (
+              <label className="field" key={key}>
+                <span>{{ x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key]}</span>
+                <Input
+                  aria-label={
+                    { x: 'Objekt links', y: 'Objekt oben', w: 'Objektbreite', h: 'Objekthöhe' }[key]
+                  }
+                  type="number"
+                  min={key === 'x' || key === 'y' ? 0 : 1}
+                  max={100}
+                  step={0.5}
+                  value={Math.round(mark[key] * 1000) / 10}
+                  onChange={(e) => geometry(key, e.target.value)}
+                  disabled={disabled}
+                />
+              </label>
+            ))}
+          </div>
+          {mark.sourceRect && (
+            <p className="fine-note">
+              Der ursprüngliche Bereich bleibt an seiner Stelle entfernt, auch wenn du das Textfeld
+              verschiebst.
+            </p>
+          )}
+          <div className="editor-object-actions">
+            {mark.kind === 'text' && mark.sourceRect && (
+              <Button
+                variant="outline"
+                disabled={disabled || !mark.text}
+                onClick={() => patch({ text: '' })}
+              >
+                Nur Text entfernen
+              </Button>
+            )}
+            {mark.kind !== 'erase' && (
+              <Button variant="outline" disabled={disabled} onClick={onDuplicate}>
+                <Copy size={15} />
+                Duplizieren
+              </Button>
+            )}
+            <Button variant="ghost" disabled={disabled} onClick={() => onRemove(mark.id)}>
+              <Undo2 size={15} />
+              {mark.sourceRect || mark.kind === 'erase' ? 'Änderung verwerfen' : 'Objekt entfernen'}
+            </Button>
+          </div>
+        </>
+      )}
+      {marks.length > 0 && (
+        <div className="editor-object-list">
+          <span>OBJEKTE AUF DIESER SEITE</span>
+          {marks.map((m, i) => (
+            <button
+              key={m.id}
+              className={mark?.id === m.id ? 'selected' : ''}
+              disabled={disabled}
+              onClick={() => onSelect(m.id)}
+            >
+              {String(i + 1).padStart(2, '0')} ·{' '}
+              {m.kind === 'text'
+                ? m.text?.slice(0, 38) || 'Text entfernt'
+                : {
+                    erase: 'Entfernter Bereich',
+                    image: 'Bild',
+                    signature: 'Unterschrift',
+                    redact: 'Schwärzung',
+                    highlight: 'Markierung',
+                  }[m.kind]}
+            </button>
+          ))}
+        </div>
+      )}
+      {(tool === 'edit-text' || tool === 'erase') && (
+        <div className="notice editor-export-note">
+          Entfernte Inhalte werden aus neuen Seitenbildern gelöscht. Auf betroffenen Seiten
+          entfallen ursprünglicher kopierbarer Text, Links und Formularfelder. Neuer Text bleibt
+          kopierbar, sofern du die Seite nicht zusätzlich schwärzt, zuschneidest oder als Bild
+          exportierst. Ersatzschriften und farbige Hintergründe bitte in der Vorschau prüfen.
+        </div>
+      )}
+      {tool === 'insert-image' && (
+        <p className="fine-note">
+          Bis 8 MB pro Bild. Bilder lassen sich verschieben und proportional skalieren. Der
+          vorhandene PDF-Text bleibt erhalten.
+        </p>
+      )}
+    </div>
+  );
 }

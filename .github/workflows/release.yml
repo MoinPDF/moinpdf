@@ -1,0 +1,83 @@
+name: Publish verified release
+on:
+  workflow_dispatch:
+    inputs:
+      image_run_id:
+        description: Successful Publish platform images run ID
+        required: true
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.image_run_id }}
+          pattern: platform-image-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/image-reference
+      - name: Verify tests, source, pinned images and release version
+        id: verify
+        uses: actions/github-script@v7
+        env:
+          IMAGE_RUN_ID: ${{ inputs.image_run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const cp = require('child_process');
+            const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+            if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid version');
+            const runId = Number(process.env.IMAGE_RUN_ID);
+            if (!Number.isSafeInteger(runId) || runId <= 0) throw new Error('Invalid image run');
+            const {data: imageRun} = await github.rest.actions.getWorkflowRun({...context.repo, run_id: runId});
+            if (imageRun.path !== '.github/workflows/publish-images.yml' || imageRun.conclusion !== 'success') throw new Error('Images must come from the successful image workflow');
+            const names = ['web', 'documents', 'translation'];
+            const refs = names.map(name => JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'image-reference', name + '.json'), 'utf8')));
+            const source = refs[0].source;
+            if (!/^[0-9a-f]{40}$/.test(source) || refs.some(ref => ref.source !== source)) throw new Error('Mixed image sources');
+            const compose = fs.readFileSync('deploy/platform/denny-moinpdf/docker-compose.yml', 'utf8');
+            for (let index = 0; index < refs.length; index++) {
+              const ref = refs[index];
+              const prefix = `ghcr.io/${context.repo.owner.toLowerCase()}/moinpdf-${names[index]}:${version}-${source.slice(0, 12)}`;
+              if (ref.image !== prefix || !/^sha256:[0-9a-f]{64}$/.test(ref.digest) || !compose.includes(ref.image + '@' + ref.digest)) throw new Error('Manifest must pin the verified images for this version');
+            }
+            const differences = cp.execFileSync('git', ['diff', '--name-only', source, context.sha], {encoding: 'utf8'}).trim().split('\n').filter(Boolean);
+            if (differences.some(file => !file.startsWith('deploy/platform/'))) throw new Error('App source differs from the tested images');
+            const {data: dockerRuns} = await github.rest.actions.listWorkflowRuns({...context.repo, workflow_id: 'docker.yml', head_sha: context.sha, status: 'success', per_page: 100});
+            if (!dockerRuns.workflow_runs.some(run => run.head_sha === context.sha && run.conclusion === 'success')) throw new Error('Missing successful Docker verification of the release source');
+            const {data: nativeRuns} = await github.rest.actions.listWorkflowRuns({...context.repo, workflow_id: 'platform.yml', status: 'success', per_page: 100});
+            if (!nativeRuns.workflow_runs.some(run => run.display_title === 'Native platform images ' + runId && run.conclusion === 'success')) throw new Error('Missing native verification of these exact published images');
+            const heading = `## ${version} `;
+            const section = fs.readFileSync('CHANGELOG.md', 'utf8').split(heading)[1];
+            if (!section) throw new Error('Missing changelog');
+            const notes = section.split('\n').slice(1).join('\n').split('\n## ')[0].trim();
+            fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'release-notes.md'), notes + '\n\nGeprüfter Quellstand: `' + context.sha + '`\nContainer-Quellstand: `' + source + '`\n');
+            core.setOutput('tag', 'v' + version);
+      - name: Create the version tag and release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.verify.outputs.tag }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo 'This version already has a release; existing releases are not overwritten.'
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" --target "$RELEASE_SHA" \
+            --title "MoinPDF $RELEASE_TAG" --notes-file "$RUNNER_TEMP/release-notes.md" \
+            "$RUNNER_TEMP/image-reference/"*.json

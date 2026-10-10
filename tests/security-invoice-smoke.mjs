@@ -10,10 +10,10 @@ const require=createRequire(import.meta.url),pdfRequire=createRequire(require.re
 const {DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');Object.assign(globalThis,{DOMMatrix,Path2D,ImageData});
 globalThis.DOMParser=class{parseFromString(xml,type){try{return new DOMParser({onError:()=>{throw Error('XML');}}).parseFromString(xml,type);}catch{return new DOMParser().parseFromString('<parsererror/>',type);}}};
 globalThis.Worker=class {constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
-await mkdir('.sites-runtime',{recursive:true});
-for(const name of ['pdf-security','invoice-engine'])await writeFile(`.sites-runtime/${name}-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
-const {protectPdf,unlockPdf,checkNewPassword,PdfPasswordError}=await import('../.sites-runtime/pdf-security-test.mjs');
-const {parseInvoice,checkInvoice,invoiceFromBytes,invoicePdf,invoiceEntries,invoiceCsv,invoiceCheckText}=await import('../.sites-runtime/invoice-engine-test.mjs');
+await mkdir('.cache',{recursive:true});
+for(const name of ['pdf-security','invoice-engine'])await writeFile(`.cache/${name}-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const {protectPdf,unlockPdf,checkNewPassword,PdfPasswordError}=await import('../.cache/pdf-security-test.mjs');
+const {parseInvoice,checkInvoice,invoiceFromBytes,invoicePdf,invoiceEntries,invoiceCsv,invoiceCheckText}=await import('../.cache/invoice-engine-test.mjs');
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json')),proxies=[];
 async function open(bytes,password){const task=pdfjs.getDocument({data:bytes.slice(),password,standardFontDataUrl:assets+'/standard_fonts/'});try{const pdf=await task.promise;proxies.push(pdf);return pdf;}catch(e){await task.destroy();throw e;}}
 const ubl=await readFile('tests/fixtures/invoice-ubl.xml','utf8'),cii=await readFile('tests/fixtures/invoice-cii.xml','utf8');
@@ -49,6 +49,6 @@ try{
  const unicode=await protectPdf(bytes,{...settings,password:'Übermäßig-sicher-2026!'});assert((await open(unicode,'Übermäßig-sicher-2026!')).numPages>0);
  const second=await protectPdf(bytes,settings);assert.notDeepEqual(encrypted,second,'Encryption uses fresh randomness');
  assert.throws(()=>checkNewPassword('short'),/8 Zeichen/);assert.throws(()=>checkNewPassword('ö'.repeat(64)),/127/);await assert.rejects(()=>protectPdf(bytes,{...settings,ownerPassword:settings.password}),/unterschiedlich/);await assert.rejects(()=>protectPdf(bytes,settings,AbortSignal.abort()),/Abgebrochen/);
- await writeFile('.sites-runtime/PDF-Passwort-Test.pdf',encrypted);await writeFile('.sites-runtime/E-Rechnung-Leseansicht-Test.pdf',rendered);await writeFile('.sites-runtime/E-Rechnung-Basischeck-Test.pdf',report);
+ await writeFile('.cache/PDF-Passwort-Test.pdf',encrypted);await writeFile('.cache/E-Rechnung-Leseansicht-Test.pdf',rendered);await writeFile('.cache/E-Rechnung-Basischeck-Test.pdf',report);
  console.log('PASS: official UBL/CII, credit notes, namespace isolation, dates and total mismatches, malformed/oversized/DTD XML, UTF-16, CSV injection protection, PDF text + unchanged XML roundtrip, AES-256 R6 independently read by PDF.js, wrong/owner/Unicode passwords, permission flags, preserved form/metadata/attachments, unique encryption randomness, input preservation and cancellation.');
 }finally{for(const p of proxies)await p.loadingTask.destroy();}

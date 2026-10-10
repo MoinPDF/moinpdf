@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import ts from 'typescript';
-await mkdir('.sites-runtime',{recursive:true});
+await mkdir('.cache',{recursive:true});
 for(const name of ['tool-catalog','tool-search']){
  const source=await readFile(`lib/${name}.ts`,'utf8');
  const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace("'./tool-catalog'","'./tool-catalog-test.mjs'");
- await writeFile(`.sites-runtime/${name}-test.mjs`,code);
+ await writeFile(`.cache/${name}-test.mjs`,code);
 }
-const {tools}=await import('../.sites-runtime/tool-catalog-test.mjs');
-const {suggestTools}=await import('../.sites-runtime/tool-search-test.mjs');
+const {tools}=await import('../.cache/tool-catalog-test.mjs');
+const {suggestTools}=await import('../.cache/tool-search-test.mjs');
 for(const tool of tools)assert.equal(suggestTools(tool.title)[0]?.id,tool.id,tool.title);
 const cases=[
  ['ausgefüllte Formulare sammeln','form-responses'],['nach Datum sortieren','chronology'],['Summe nachrechnen','arithmetic-check'],['JavaScript entfernen','pdf-sanitize'],['Layer ausblenden','pdf-layers'],['Bauplan ausmessen','pdf-measure'],['PDF vorlesen','pdf-audio'],
