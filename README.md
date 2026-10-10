@@ -5,8 +5,8 @@
 <h1 align="center">MoinPDF</h1>
 
 <p align="center">
-  <strong>Dein PDF-Arbeitsplatz. Mit norddeutscher Gelassenheit.</strong><br>
-  Bearbeiten, erkennen, konvertieren und prüfen. In einer deutschsprachigen Oberfläche.
+  <strong>Dein PDF-Arbeitsplatz.</strong><br>
+  Bearbeiten, erkennen, konvertieren und prüfen.
 </p>
 
 <p align="center">
@@ -24,15 +24,6 @@
 PDFs zusammenfügen, einen Scan durchsuchbar machen oder Rechnungsangaben vergleichen: MoinPDF bringt die passenden Werkzeuge an einen gemeinsamen Arbeitsplatz. Ziehe deine Dateien ins Fenster und beschreibe, was du vorhast. Die Suche versteht auch Formulierungen wie „Seiten drehen“ oder „PDF kleiner machen“.
 
 Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installation ergänzt einen eigenen Dokumentenserver für aufwendige Konvertierungen, Prüfungen, Übersetzungen und Audioexporte.
-
-## Ein Blick in die App
-
-<p align="center">
-  <img src="docs/screenshots/desktop.png" alt="MoinPDF-Startseite auf einem Desktop-Bildschirm" width="72%">
-  <img src="docs/screenshots/mobile-documentation.png" alt="Die integrierte MoinPDF-Dokumentation auf einem Smartphone" width="24%">
-</p>
-
-Startseite am Desktop und Dokumentation auf dem Smartphone.
 
 ## Funktionen
 
