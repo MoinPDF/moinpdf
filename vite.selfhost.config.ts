@@ -3,7 +3,7 @@ import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
 
 // The PDF workplace is a client application. This build needs no hosting SDK,
-// Cloudflare worker, database, or ChatGPT session at runtime.
+// Cloudflare worker, database, or external account session at runtime.
 const root = fileURLToPath(new URL('.', import.meta.url));
 export default defineConfig({
   root: fileURLToPath(new URL('./selfhost', import.meta.url)),
