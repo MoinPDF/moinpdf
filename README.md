@@ -62,7 +62,7 @@ Die [Funktionsübersicht](docs/FUNKTIONEN.md) erklärt die Werkzeuge, Ausgabefor
 Für die vollständige Installation brauchst du **Docker mit Compose v2**, Zugriff auf dieses Repository und Internet für den ersten Aufbau. Plane als Ausgangspunkt **8 GB verfügbaren RAM und 20 GB freien Speicherplatz** ein.
 
 ```bash
-git clone https://github.com/dennysubke/moinpdf.git
+git clone https://github.com/MoinPDF/moinpdf.git
 cd moinpdf
 docker compose up -d --build
 ```
@@ -93,7 +93,7 @@ In der App öffnet **„Dokumentation“** im Footer das durchsuchbare Handbuch.
 | Eigenständige Dokumenten-API | [Dokumentenserver](server/README.md) |
 | Quellcode, Builds und Prüfungen | [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) |
 | Bisherige Versionsänderungen | [Changelog](CHANGELOG.md) |
-| Freigegebene Versionen und Image-Nachweise | [Releases](https://github.com/dennysubke/moinpdf/releases) |
+| Freigegebene Versionen und Image-Nachweise | [Releases](https://github.com/MoinPDF/moinpdf/releases) |
 
 Die aktuelle Versionsnummer steht in [package.json](package.json).
 
@@ -116,7 +116,7 @@ MoinPDF verwendet unter anderem React, TypeScript, PDF.js, pdf-lib und Tesseract
 
 Der [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) beschreibt Einrichtung, Projektstruktur und Tests. Allgemeine Fragen und Pressekontakt: [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de). Datenschutzanfragen: [post@moinpdf.de](mailto:post@moinpdf.de).
 
-Hinweise auf Fehler und Ideen bitte an [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de) senden. Wer Zugriff auf dieses private Repository hat, kann auch die [GitHub Issues](https://github.com/dennysubke/moinpdf/issues) nutzen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
+Hinweise auf Fehler und Ideen bitte an [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de) senden. Wer Zugriff auf dieses private Repository hat, kann auch die [GitHub Issues](https://github.com/MoinPDF/moinpdf/issues) nutzen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
 
 Der [Lizenzstatus](LICENSE), [Sicherheitshinweise](SECURITY.md) und [Hinweise für Beiträge](CONTRIBUTING.md) ergänzen die Projektdokumentation. Lizenzhinweise zu mitgelieferten Bibliotheken, Schriften und Sprachmodellen sind im [Entwicklungsleitfaden](docs/ENTWICKLUNG.md#bibliotheken-und-lizenzhinweise) verlinkt.
 

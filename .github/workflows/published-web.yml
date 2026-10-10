@@ -4,13 +4,15 @@ on:
     inputs:
       image:
         required: true
-        default: ghcr.io/dennysubke/moinpdf-web:0.5.11-1208475cdfb0@sha256:ef99a512c3860d3507b9124d7aa6de379f524575e3504d2b9248eaab6fa02524
+        description: Published MoinPDF web image including its @sha256 digest
+        type: string
       diagnostics:
         description: Log caught browser errors in a disposable copy (not release validation)
         type: boolean
         default: false
 permissions:
   contents: read
+  packages: read
 jobs:
   browser:
     runs-on: ubuntu-24.04
@@ -21,6 +23,12 @@ jobs:
         run: |
           pip install playwright==1.55.0 pymupdf==1.28.2
           python -m playwright install --with-deps chromium
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Start the published web image
         env:
           WEB_IMAGE: ${{ inputs.image }}

@@ -17,14 +17,14 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 | Rechtsseiten | 1440, 390 und 320 Pixel, grüne Schrift, Kontaktlinks und Abstand zwischen Anschrift und E-Mail |
 | Container | Plattform-Indizes für amd64 und arm64 sowie feste Digests |
 
-[Aktuelle Prüfläufe](https://github.com/dennysubke/moinpdf/actions) und ihre
+[Aktuelle Prüfläufe](https://github.com/MoinPDF/moinpdf/actions) und ihre
 Artefakte sind für Personen mit Repository-Zugriff einsehbar. Die Ausführung
 beschreibt [docs/ENTWICKLUNG.md](docs/ENTWICKLUNG.md).
 
 ## Belegter Ausgangsstand
 
 Version **0.5.10**, Commit `d0f89fe4dd6c5fab1cacbf0a92164f7b8dd10326`,
-bestand den [Docker-Lauf vom 10. Oktober 2026](https://github.com/dennysubke/moinpdf/actions/runs/38061075375):
+bestand den [Docker-Lauf vom 10. Oktober 2026](https://github.com/MoinPDF/moinpdf/actions/runs/38061075375):
 15 Browser-Engine-Suiten, 33 Servertests, alle 100 Werkzeugansichten,
 Konvertierung, Übersetzung, Neustart und Zugriffsschutz. Neue Versionen erhalten
 eigene Prüfläufe; dieser historische Nachweis gilt nicht automatisch für `main`.

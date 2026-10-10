@@ -91,7 +91,7 @@
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dennysubke/moinpdf.git"
+    "url": "https://github.com/MoinPDF/moinpdf.git"
   },
   "bugs": {
     "email": "ahoi@moinpdf.de"
