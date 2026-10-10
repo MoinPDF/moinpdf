@@ -53,6 +53,8 @@ li+li { margin-top:8px; }
 .legal-sources h2 { font-size:15px; }
 .legal-footer { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px 20px; padding:24px 5px 32px; color:var(--muted); font-size:11px; }
 .legal-footer .legal-nav { font-size:12px; gap:8px 20px; }
+.legal-privacy { --ink:#000; --muted:#000; --teal:#000; }
+.legal-privacy :is(h1,.legal-draft,.legal-storage dd,a:hover) { color:var(--ink); }
 @media(max-width:560px) {
   .legal-header { width:calc(100% - 36px); gap:14px; margin:22px auto; }
   .legal-brand img { width:166px; }
