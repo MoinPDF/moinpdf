@@ -13,7 +13,7 @@ compressed-rtf==1.0.7
 cryptography==50.0.2
 defusedxml==0.7.1
 easygui==0.98.3
-ebcdic==1.1.1
+ebcdic==2.0.1
 et_xmlfile==2.0.0
 extract-msg==0.55.0
 fastapi==0.135.2
