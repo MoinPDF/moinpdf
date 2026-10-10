@@ -4,6 +4,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Match the seven-day package age required by pnpm-workspace.yaml.
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 3
     groups:
       compatible-updates:
