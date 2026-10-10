@@ -10,29 +10,32 @@
   <link rel="icon" href="/favicon.png?v=43c33290ac2f" type="image/png" sizes="256x256">
   <link rel="shortcut icon" href="/favicon.ico?v=43c33290ac2f">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=43c33290ac2f" sizes="180x180">
-  <link rel="stylesheet" href="/legal/legal.css?v=2489fb7c49ef">
+  <link rel="stylesheet" href="/docs/documentation.css?v=44df8e2ea437">
+  <link rel="stylesheet" href="/legal/legal.css?v=b25012bd011a">
 </head>
-<body class="legal-privacy">
-  <a class="legal-skip" href="#inhalt">Zum Inhalt</a>
-  <header class="legal-header">
-    <a class="legal-brand" href="/" aria-label="MoinPDF Startseite"><img src="/branding/moinpdf-logo.svg" width="680" height="225" alt="MoinPDF. Papierkram. Läuft."></a>
-    <a class="legal-back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Zur App</a>
+<body class="legal-page">
+  <a class="docs-skip" href="#inhalt">Zum Inhalt</a>
+  <header class="docs-header">
+    <a class="docs-brand" href="/" aria-label="MoinPDF Startseite"><img src="/branding/moinpdf-logo.svg" width="680" height="225" alt="MoinPDF. Papierkram. Läuft."></a>
+    <a class="docs-back" href="/"><span aria-hidden="true">←</span> Zur App</a>
   </header>
   <main class="legal-main">
     <nav class="legal-nav" aria-label="Informationen zu MoinPDF"><a href="/dokumentation.html">Dokumentation</a><a href="/medienbereich.html">Medienbereich</a><a href="/impressum.html">Impressum</a><a href="/datenschutz.html" aria-current="page">Datenschutzerklärung</a></nav>
-    <article class="legal-card" id="inhalt">
-      <div class="legal-meta"><span>Datenschutz &amp; Verarbeitung</span><time datetime="2026-10-10">Stand: 10. Oktober 2026</time></div>
+    <article class="legal-content" id="inhalt">
+      <header class="docs-hero">
+      <div class="legal-meta"><p class="docs-eyebrow">Datenschutz &amp; Verarbeitung</p><time datetime="2026-10-10">Stand: 10. Oktober 2026</time></div>
       <h1>Datenschutz&shy;erklärung</h1>
-      <p class="legal-intro">Viele Werkzeuge arbeiten direkt auf deinem Gerät. Bei Serverwerkzeugen entscheidest du ausdrücklich, welche Dateien übertragen werden.</p>
+      <p class="docs-lead">Viele Werkzeuge arbeiten direkt auf deinem Gerät. Bei Serverwerkzeugen entscheidest du ausdrücklich, welche Dateien übertragen werden.</p>
+      </header>
 
-      <section id="verantwortlicher">
+      <section class="docs-section" id="verantwortlicher">
         <h2>1. Verantwortlicher und Kontakt</h2>
         <address><strong>Denny Wenke</strong><br>Am Eichenhof 13<br>28832 Achim<br>Deutschland</address>
         <p>E-Mail für Datenschutzanfragen: <a href="mailto:post@moinpdf.de">post@moinpdf.de</a></p>
         <p>Diese Anbieterangaben gelten für das MoinPDF-Angebot des oben genannten Verantwortlichen. Bei einer unabhängig betriebenen Installation ist deren Betreiber für seine Verarbeitung verantwortlich und muss die Angaben entsprechend anpassen.</p>
       </section>
 
-      <section id="lokale-verarbeitung">
+      <section class="docs-section" id="lokale-verarbeitung">
         <h2>2. Dokumente und lokale Bearbeitung</h2>
         <p>Wenn du Dateien auswählst oder auf die Startseite ziehst, liest MoinPDF sie zunächst in deinem Browser ein. Verarbeitet werden die von dir ausgewählten Dokumentinhalte, Dateinamen, Metadaten sowie deine Bearbeitungseingaben. Dazu können personenbezogene und vertrauliche Angaben gehören.</p>
         <p>Browserwerkzeuge wie Zusammenfügen, Teilen, Drehen, Texterkennung, Bildbearbeitung und das Erzeugen von Exportdateien arbeiten auf deinem Gerät. Diese Funktionen laden deine Dokumente nicht auf einen Dokumentenserver oder zu einem KI-Dienst hoch. Die benötigten Programmbibliotheken, Schriften und OCR-Sprachdateien werden zusammen mit MoinPDF bereitgestellt.</p>
@@ -40,7 +43,7 @@
         <p>Die Auswahl von Dokumenten und die Nutzung der Werkzeuge sind freiwillig. Ohne eine passende Datei kann das betreffende Werkzeug nicht arbeiten. Wenn du Unterlagen anderer Personen verwendest, musst du zur Verarbeitung berechtigt sein und die dafür erforderliche Rechtsgrundlage sicherstellen.</p>
       </section>
 
-      <section id="dokumentenserver">
+      <section class="docs-section" id="dokumentenserver">
         <h2>3. Dokumentenserver und Übersetzungen</h2>
         <p>Bestimmte Werkzeuge benötigen einen Dokumentenserver, zum Beispiel Office-Konvertierungen, PDF/A, vollständige Rechnungsprüfungen und Zertifikatssignaturen. In der vollständigen Docker-Installation ist dieser Server integriert. Die Verbindung erfolgt automatisch. Nutzer müssen keine Serveradresse oder Zugangsschlüssel eintragen. In einer Ausgabe ohne integrierten Dokumentendienst stehen nur die dort angebotenen lokalen Funktionen zur Verfügung. Die Prüfung der Verbindung übermittelt keine Dokumentdateien.</p>
         <p>Erst wenn du die Verarbeitung mit dem jeweiligen Aktionsknopf startest, sendet die App die ausgewählte Datei und die benötigten Einstellungen an diesen Server. Je nach Werkzeug gehören auch Rechnungs-XML, E-Mail-Anlagen, Word-Vorlagen oder Excel-Tabellen dazu. Beim Signieren werden das ausgewählte Zertifikat einschließlich des enthaltenen privaten Schlüssels und das eingegebene Zertifikatspasswort für den Signaturauftrag übermittelt.</p>
@@ -51,7 +54,7 @@
         <p>Für unabhängig betriebene Dokumenten- oder Übersetzungsserver gelten zusätzlich die Informationen ihrer Betreiber. Deren tatsächliche Speicherung und Weitergabe kann diese Web-App nicht kontrollieren.</p>
       </section>
 
-      <section id="hosting">
+      <section class="docs-section" id="hosting">
         <h2>4. Website-Aufruf, Hosting und Anmeldung</h2>
         <p>Beim Aufruf der Website werden technisch notwendige Verbindungsdaten verarbeitet, insbesondere IP-Adresse, Zeitpunkt, angeforderte Adresse und technische Browserinformationen. Das ist von den lokal geöffneten Dokumenten zu unterscheiden. Zweck ist die Auslieferung der App, die Fehlerbehebung und der Schutz vor Missbrauch. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO; das berechtigte Interesse besteht in einem sicheren und funktionsfähigen Betrieb.</p>
         <h3>Eigener Server</h3>
@@ -64,7 +67,7 @@
         <p>Die Aufbewahrung von Verbindungs- und Sicherheitsdaten hängt vom Dienst, seinen Einstellungen und dem Verarbeitungszweck ab. Cloudflare nennt insbesondere die Erforderlichkeit für den Dienst und seine Sicherheit sowie gesetzliche Verpflichtungen als Kriterien. Das Ende eines Dokumentenauftrags löscht daher nicht automatisch sämtliche Verbindungsdaten bei Cloudflare. Weitere Angaben enthält die <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Datenschutzerklärung von Cloudflare</a>; Informationen zu Sicherheits-Cookies stehen in Abschnitt 5.</p>
       </section>
 
-      <section id="browser-speicher">
+      <section class="docs-section" id="browser-speicher">
         <h2>5. Browser-Speicher, Cookies und Analyse</h2>
         <p>MoinPDF enthält keine eingebauten Werbe- oder Analyse-Tracker. Die Oberfläche benötigt keine dauerhaften eigenen Cookies. Technisch notwendige Cookies eines vorgeschalteten Anmelde- oder Hostingdienstes sind davon zu unterscheiden.</p>
         <p>Abhängig von den aktivierten Schutzfunktionen kann Cloudflare Sicherheits-Cookies setzen, etwa „__cf_bm“ zur Bot-Erkennung oder „cf_clearance“ zum Merken einer bestandenen Sicherheitsprüfung. „__cf_bm“ läuft nach 30 Minuten ohne Aktivität ab; die Gültigkeit von „cf_clearance“ hängt von der konfigurierten Schutzfunktion ab. Soweit der Zugriff für die sichere Bereitstellung unbedingt erforderlich ist, erfolgt er auf Grundlage von § 25 Abs. 2 Nr. 2 TDDDG; die Verarbeitung personenbezogener Sicherheitsdaten stützt sich auf Art. 6 Abs. 1 lit. f DSGVO. Einzelheiten erläutert Cloudflares <a href="https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/" target="_blank" rel="noopener noreferrer">Übersicht zu Sicherheits-Cookies</a>.</p>
@@ -76,13 +79,13 @@
         <p>Diese Speicherzugriffe dienen den ausdrücklich gewünschten Funktionen. Soweit sie dafür unbedingt erforderlich sind, ist § 25 Abs. 2 Nr. 2 TDDDG maßgeblich. Personenbezogene Einstellungen werden zur Bereitstellung der angeforderten Funktion auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO verarbeitet. Nicht erforderliche Analyse- oder Werbezugriffe werden durch MoinPDF nicht ausgelöst.</p>
       </section>
 
-      <section id="kamera-assistent">
+      <section class="docs-section" id="kamera-assistent">
         <h2>6. Fotoauswahl und optionaler Browser-Assistent</h2>
         <p>Der Kamera-Scanner verwendet die Foto- bzw. Dateiauswahl deines Geräts. Ein unterstützter Browser kann dabei die Kamera anbieten. Die ausgewählten Bilder werden zunächst lokal bearbeitet; die App startet keinen dauerhaften Kamera-Stream. Betriebssystem und Browser steuern die dafür notwendigen Berechtigungen.</p>
         <p>Wenn du einen kompatiblen Browser-Assistenten verwendest, kann er über die bereitgestellte Schnittstelle Dateinamen, Seitenzahlen, ausgewählte Seiten, die Anzahl der Bearbeitungen und den Verarbeitungsstatus abfragen sowie Werkzeug und Seitenbereich auswählen. Diese Schnittstelle liefert keine Dokumentinhalte. Was ein von dir verwendeter Assistent darüber hinaus im Browser wahrnehmen oder verarbeiten kann, richtet sich nach dessen Berechtigungen, Anbieter und Einstellungen.</p>
       </section>
 
-      <section id="kontakt">
+      <section class="docs-section" id="kontakt">
         <h2>7. Kontaktaufnahme</h2>
         <p>Wenn du an <a href="mailto:ahoi@moinpdf.de">ahoi@moinpdf.de</a> oder bei Datenschutzanfragen an <a href="mailto:post@moinpdf.de">post@moinpdf.de</a> schreibst, werden deine Absenderadresse, Nachricht und freiwillig mitgeteilten Angaben zur Bearbeitung des Anliegens verwendet. Bei vertraglichen oder vorvertraglichen Anfragen ist Art. 6 Abs. 1 lit. b DSGVO die Rechtsgrundlage, bei sonstigen Anfragen Art. 6 Abs. 1 lit. f DSGVO mit dem Interesse, dein Anliegen zu beantworten.</p>
         <p>Die E-Mail-Kommunikation wird über Tuta abgewickelt. Anbieter ist die Tutao GmbH, Deisterstr. 17a, 30449 Hannover, Deutschland. Tuta verarbeitet die E-Mail-Kommunikation zur Zustellung und Bereitstellung des Postfachs und speichert die Daten nach eigenen Angaben in Rechenzentren in Deutschland. MoinPDF sendet bearbeitete Dokumente nicht automatisch an diese Kontaktadressen.</p>
@@ -90,7 +93,7 @@
         <p>Nachrichten werden so lange aufbewahrt, wie sie zur Bearbeitung des Anliegens, zur Wahrung berechtigter Nachweisinteressen oder zur Erfüllung gesetzlicher Aufbewahrungspflichten erforderlich sind. Nach Wegfall dieser Zwecke werden sie gelöscht. Tuta bewahrt Mailserver-Protokolle mit Absender- und Empfängeradressen sowie Verbindungszeit nach eigener Datenschutzerklärung höchstens sieben Tage auf. Einzelheiten stehen in der <a href="https://tuta.com/de/privacy-policy" target="_blank" rel="noopener noreferrer">Datenschutzerklärung von Tuta</a>. Bitte sende für technische Rückfragen möglichst anonymisierte Beispiele.</p>
       </section>
 
-      <section id="rechte">
+      <section class="docs-section" id="rechte">
         <h2>8. Deine Rechte</h2>
         <p>Im gesetzlichen Umfang hast du Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Datenübertragbarkeit. Eine erteilte Einwilligung kannst du jederzeit für die Zukunft widerrufen; die Rechtmäßigkeit der vorherigen Verarbeitung bleibt davon unberührt.</p>
         <p><strong>Widerspruch:</strong> Gegen eine Verarbeitung auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO kannst du aus Gründen deiner besonderen Situation Widerspruch einlegen. Wende dich dafür an <a href="mailto:post@moinpdf.de">post@moinpdf.de</a>.</p>
@@ -98,12 +101,12 @@
         <p>MoinPDF trifft keine automatisierten Entscheidungen mit rechtlicher oder ähnlich erheblicher Wirkung und erstellt keine Nutzerprofile. Technische Dokumentprüfungen und Übersetzungen sind Werkzeugergebnisse und ersetzen keine eigene Prüfung.</p>
       </section>
 
-      <section class="legal-sources">
+      <section class="docs-section legal-sources">
         <h2>Gesetzliche Grundlagen</h2>
         <p><a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj/deu" target="_blank" rel="noopener noreferrer">Datenschutz-Grundverordnung</a> · <a href="https://www.gesetze-im-internet.de/ttdsg/__25.html" target="_blank" rel="noopener noreferrer">§ 25 TDDDG</a></p>
       </section>
     </article>
-    <footer class="legal-footer"><span>© 2026 MoinPDF</span><nav class="legal-nav" aria-label="Informationen zu MoinPDF"><a href="/dokumentation.html">Dokumentation</a><a href="/medienbereich.html">Medienbereich</a><a href="/impressum.html">Impressum</a><a href="/datenschutz.html" aria-current="page">Datenschutzerklärung</a></nav></footer>
   </main>
+  <footer class="docs-footer"><nav aria-label="Informationen zu MoinPDF"><a href="/dokumentation.html">Dokumentation</a><a href="/medienbereich.html">Medienbereich</a><a href="/impressum.html">Impressum</a><a href="/datenschutz.html" aria-current="page">Datenschutzerklärung</a></nav><div class="docs-footer-brand"><img src="/branding/moinpdf-sailor.webp" width="16" height="16" alt=""><span>© 2026 MoinPDF</span></div></footer>
 </body>
 </html>
