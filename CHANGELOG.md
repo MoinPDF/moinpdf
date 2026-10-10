@@ -4,6 +4,13 @@ MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentral
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
 Images tragen zusätzlich den Quellcode-Commit, Umbrel-Pakete einen festen Digest.
 
+## 0.5.10 – 2026-10-10
+
+- Web- und Umbrel-Ausgabe auf denselben aktuellen Stand gebracht.
+- Kontakt über ahoi@moinpdf.de, Datenschutzanfragen über post@moinpdf.de; persönliche Angaben auf die erforderlichen Anbieter- und Verantwortlichenangaben beschränkt.
+- Hinweise auf die Erstellungsplattform aus der Oberfläche entfernt und die Kontaktkarte im Medienbereich bereinigt.
+- Kompaktes Layout von Impressum und Datenschutz mit grüner Schrift und einer Leerzeile zwischen Anschrift und E-Mail.
+
 ## 0.5.9 – 2026-10-10
 
 - Werbeclip „Drucker über Bord?“ mit Vorschau, Download und Medienpaket auch in der Docker- und Umbrel-Ausgabe.
