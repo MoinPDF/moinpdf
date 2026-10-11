@@ -49,10 +49,12 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button',name='Lokaler PDF-Assistent',exact=True).click()
         page.get_by_label('Lokale Modelldatei',exact=True).set_input_files(str(model))
         expect(page.get_by_text('Modelldatei geprüft. Die Inferenz beginnt mit deiner Frage.',exact=True)).to_be_visible(timeout=180000)
+        print('Model checksum verified; testing a documented fact.', flush=True)
         page.get_by_label('Frage zu den geöffneten Dokumenten',exact=True).fill('Welche Projektnummer steht im Dokument? Antworte mit der Nummer.')
         page.get_by_role('button',name='Frage lokal beantworten',exact=True).click()
         result = page.get_by_role('region',name='Antwort des lokalen Assistenten',exact=True)
-        expect(result).to_be_visible(timeout=360000)
+        expect(result.or_(page.get_by_role('alert'))).to_be_visible(timeout=360000)
+        assert result.is_visible(), page.get_by_role('alert').inner_text()
         expect(result).to_contain_text('7429')
         assert 1 <= result.locator('blockquote').count() <= 3
         assert '7429' in ' '.join(result.locator('blockquote').all_inner_texts())
@@ -61,6 +63,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         saved = Path(temporary) / 'antwort.json'
         download.value.save_as(saved)
         answer = json.loads(saved.read_text())
+        print('Grounded answer: '+json.dumps(answer,ensure_ascii=False), flush=True)
         assert not answer['abstain'] and answer['citations'][0]['page'] == 0
         assert '7429' in answer['answer']
         assert any('/vendor/llm/wllama.wasm' in url for url in requests)
@@ -71,7 +74,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         # An absent fact must still produce an abstention after the supported answer.
         page.get_by_label('Frage zu den geöffneten Dokumenten',exact=True).fill('Wie hoch ist die monatliche Miete?')
         page.get_by_role('button',name='Frage lokal beantworten',exact=True).click()
-        expect(result).to_be_visible(timeout=360000)
+        expect(result.or_(page.get_by_role('alert'))).to_be_visible(timeout=360000)
+        assert result.is_visible(), page.get_by_role('alert').inner_text()
         expect(result).to_contain_text('Keine belegte Antwort')
         assert result.locator('blockquote').count() == 0
         assert not external, external
@@ -86,6 +90,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.get_by_text('Modelldatei und Laufzeit entladen.',exact=True)).to_be_visible()
         print('PASS: real Qwen CPU inference, verified quote/JSON provenance, absent-fact abstention, app-only network, cancellation and unload in production Chromium.')
     except BaseException:
+        print('Visible model test failure: '+page.locator('body').inner_text()[:6000],flush=True)
         page.screenshot(path=str(evidence/'local-assistant-failure.png'),full_page=True)
         (evidence/'local-assistant-failure.txt').write_text(page.locator('body').inner_text()+'\n'+repr(errors)+'\n'+repr(external))
         raise
