@@ -51,7 +51,7 @@ export function useDocumentIndex(sources: Source[], pages: PageItem[]) {
             );
             if (ctrl.signal.aborted) return;
             cache.current.set(key, row);
-          } catch (err) {
+          } catch {
             if (ctrl.signal.aborted) return;
             const source = currentSources.find((s) => s.id === page.sourceId)!;
             cache.current.set(key, {
@@ -118,7 +118,7 @@ export function useDocumentIndex(sources: Source[], pages: PageItem[]) {
         setProgress,
         ctrl.signal,
       );
-    } catch (err) {
+    } catch {
       if (!ctrl.signal.aborted)
         setError('Die Texterkennung konnte nicht abgeschlossen werden. Bitte erneut versuchen.');
     } finally {

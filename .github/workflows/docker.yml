@@ -61,9 +61,11 @@ jobs:
       - name: Browser engine and TypeScript checks
         run: |
           docker build --target build -t moinpdf-browser-tests .
+          docker run --rm moinpdf-browser-tests pnpm audit
           docker run --rm moinpdf-browser-tests pnpm run lint
           docker run --rm moinpdf-browser-tests pnpm run format:check
           docker run --rm moinpdf-browser-tests pnpm test
+          docker run --rm moinpdf-browser-tests node tests/release-workflow-smoke.mjs
       - name: Native document converters and key-file authentication
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |

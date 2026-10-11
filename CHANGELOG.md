@@ -9,6 +9,25 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.9.2 – 2026-10-11
+
+- Sicherheitsaktualisierung von Vite und transitiven Abhängigkeiten. Die
+  Abhängigkeitsprüfung meldet für den freigegebenen Lockfile keine bekannten
+  Schwachstellen; die Docker-Prüfung kontrolliert dies vor jeder Freigabe erneut.
+- Alle 37 ESLint-Warnungen behoben, einschließlich vollständiger Abhängigkeiten
+  der Seitenvorschau und typisierter eingebetteter Bilddaten. Neue Warnungen
+  lassen die Prüfung fehlschlagen.
+- Spezialwerkzeuge werden erst beim Öffnen geladen. Der Haupt-JavaScript-Baustein
+  wird dadurch deutlich kleiner; Werkzeugwechsel zeigen einen zugänglichen
+  Ladezustand.
+- Datenschutzhinweise für den lokalen Dokument-Assistenten, den bewusst
+  geöffneten externen Modelldownload und den optionalen Modellspeicher ergänzt.
+- Prüfübersicht auf 24 Engine-Suiten, 56 Servertests und 112 Werkzeuge aktualisiert;
+  Ausbaugrenzen anhand aktueller Office-, XFA- und PDF/X-Prüfungen präzisiert.
+- Versionen werden nach erfolgreichen Docker-Tests und veröffentlichten Images
+  automatisch erstellt. Quellstand, Version, beide Architekturen und aktuelle
+  Hauptversion müssen zusammenpassen; vorhandene Releases werden nicht ersetzt.
+
 ## 0.9.1 – 2026-10-11
 
 - XFA-Erkennung erfolgt vor jedem Zugriff auf die gewöhnliche Formular-API.

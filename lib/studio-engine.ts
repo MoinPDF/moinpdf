@@ -1,7 +1,7 @@
 import type { DocumentTool } from './document-tools';
 import type { SpecialTool } from './special-tools';
 import { isAdvancedTool, isServerTool, type AdvancedTool, type ServerTool } from './advanced-types';
-import { PDFDocument, PDFName, StandardFonts, degrees, rgb, type PDFPage } from 'pdf-lib';
+import { PDFDocument, PDFName, degrees, rgb, type PDFPage } from 'pdf-lib';
 import {
   runJob,
   openSource,

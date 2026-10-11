@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
-import { LoaderCircle, PenLine, Trash2, Undo2 } from 'lucide-react';
+import { LoaderCircle, PenLine, Trash2 } from 'lucide-react';
 import { MarkLayers } from './editor-canvas';
 import { Button } from '@/components/ui/button';
 import { renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
@@ -36,7 +36,12 @@ export function PagePreview({
           .then(async () => {
             if (!active) return;
             try {
-              const { canvas } = await renderPage(source, page, small ? 270 : 1200, cancel.signal);
+              const { canvas } = await renderPage(
+                source,
+                { index: page.index, rotation: page.rotation },
+                small ? 270 : 1200,
+                cancel.signal,
+              );
               const blob = await new Promise<Blob | null>((r) =>
                 canvas.toBlob(r, 'image/jpeg', 0.88),
               );
@@ -59,7 +64,7 @@ export function PagePreview({
       observer.disconnect();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [source, page.id, page.rotation, small]);
+  }, [source, page.index, page.rotation, small]);
   return (
     <div ref={holder} className={`page-preview ${small ? 'small' : ''}`}>
       {image ? (
@@ -114,7 +119,7 @@ export function PageCanvas({
     const ctrl = new AbortController();
     setUrl('');
     setError(false);
-    renderPage(source, page, 1600, ctrl.signal)
+    renderPage(source, { index: page.index, rotation: page.rotation }, 1600, ctrl.signal)
       .then(async ({ canvas, width, height }) => {
         const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.92));
         canvas.width = canvas.height = 0;
@@ -132,7 +137,7 @@ export function PageCanvas({
       ctrl.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [source, page.id, page.rotation]);
+  }, [source, page.index, page.rotation]);
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       if (entries[0]) setDisplayWidth(entries[0].contentRect.width);

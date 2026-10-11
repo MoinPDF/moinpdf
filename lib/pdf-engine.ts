@@ -218,7 +218,7 @@ export function sourcePages(source: Source): PageItem[] {
 }
 export async function renderPage(
   source: Source,
-  item: PageItem,
+  item: PageItem | Pick<PageItem, 'index' | 'rotation'>,
   maxSide = 360,
   signal?: AbortSignal,
 ) {

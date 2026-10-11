@@ -8,9 +8,9 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 
 | Bereich | Umfang |
 | --- | --- |
-| Quellcode | TypeScript, ESLint und einheitliche Formatierung |
-| Browser-Engines | 15 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
-| Dokumentenserver | Native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung und Audio |
+| Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
+| Browser-Engines | 24 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| Dokumentenserver | 56 Tests: native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit und Langzeitsignaturen |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und Mobilgerät, PDF-/EPUB-/Audio-Downloads |
 | Dokumentation und Medien | Suche, Kategorien, Druck, Downloads, Video, keine horizontalen Überläufe und erhaltene Arbeitsdateien |
@@ -23,11 +23,12 @@ beschreibt [docs/ENTWICKLUNG.md](docs/ENTWICKLUNG.md).
 
 ## Belegter Ausgangsstand
 
-Version **0.5.10**, Commit `d0f89fe4dd6c5fab1cacbf0a92164f7b8dd10326`,
-bestand den [Docker-Lauf vom 10. Oktober 2026](https://github.com/MoinPDF/moinpdf/actions/runs/38061075375):
-15 Browser-Engine-Suiten, 33 Servertests, alle 100 Werkzeugansichten,
-Konvertierung, Übersetzung, Neustart und Zugriffsschutz. Neue Versionen erhalten
-eigene Prüfläufe; dieser historische Nachweis gilt nicht automatisch für `main`.
+Version **0.9.1**, Commit `b488a9ce0358ce54fb3030e1b66bc8d20b3b04e4`,
+bestand den [Docker-Lauf vom 11. Oktober 2026](https://github.com/MoinPDF/moinpdf/actions/runs/38149865248):
+24 Browser-Engine-Suiten, 56 Servertests, alle 112 Werkzeugansichten,
+Konvertierung, Übersetzung, Neustart, Zugriffsschutz und echte lokale
+Modellinferenz. Neue Versionen erhalten eigene Prüfläufe; dieser Nachweis gilt
+nicht automatisch für spätere Änderungen an `main`.
 
 ## Grenzen und Prüfung beim Betreiber
 

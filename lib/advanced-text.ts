@@ -11,7 +11,7 @@ import {
 import { readTextTargets, type TextTarget } from './editor-model';
 import { readDocumentDraft } from './document-tools';
 import { inspectPage } from './document-check';
-import { emptyEdits, runStudioJob, type StudioOptions } from './studio-engine';
+import { emptyEdits, type StudioOptions } from './studio-engine';
 import { extraDefaults } from './extra-options';
 import {
   checkAbort,

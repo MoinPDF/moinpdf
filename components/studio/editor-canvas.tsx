@@ -113,7 +113,7 @@ export function EditorCanvas({
     setTargets([]);
     setLoadingText(true);
     setError('');
-    renderPage(source, page, 1800, cancel.signal)
+    renderPage(source, { index: page.index, rotation: page.rotation }, 1800, cancel.signal)
       .then(async ({ canvas, width, height }) => {
         const blob = await new Promise<Blob | null>((resolve) =>
           canvas.toBlob(resolve, 'image/png'),
@@ -129,7 +129,7 @@ export function EditorCanvas({
       .catch(() => {
         if (live) setError('Diese Seite konnte nicht angezeigt werden.');
       });
-    readTextTargets(source, page)
+    readTextTargets(source, { index: page.index, rotation: page.rotation })
       .then((value) => {
         if (live) setTargets(value.targets);
       })
@@ -144,7 +144,7 @@ export function EditorCanvas({
       cancel.abort();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [source, page.id, page.rotation, onDimensions]);
+  }, [source, page.index, page.rotation, onDimensions]);
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       if (entries[0]) setDisplayWidth(entries[0].contentRect.width);
@@ -237,7 +237,8 @@ export function EditorCanvas({
   }
   function pick(target: TextTarget) {
     if (disabled) return;
-    const { id, text, fontSize, family, ...r } = target;
+    const { text, fontSize, family, x, y, w, h } = target;
+    const r = { x, y, w, h };
     onMark({
       ...r,
       id: uid(),

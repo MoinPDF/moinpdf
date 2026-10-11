@@ -17,13 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import {
-  duplicateGroups,
-  findPages,
-  excerpt,
-  searchTerms,
-  type PageIndex,
-} from '@/lib/document-check';
+import { duplicateGroups, findPages, excerpt, searchTerms } from '@/lib/document-check';
 import type { PageItem } from '@/lib/pdf-engine';
 import type { DocumentIndex } from './use-document-index';
 type Filter = 'all' | 'scan' | 'blank' | 'duplicates' | 'formats';
@@ -56,7 +50,7 @@ export function DocumentCheck({
     edited = new Set(editedPageIds);
   const duplicates = useMemo(
     () => duplicateGroups(rows.filter((r) => !editedPageIds.includes(r.pageId))),
-    [rows, editedPageIds.join('|')],
+    [rows, editedPageIds],
   );
   const duplicateIds = new Set(duplicates.flatMap((g) => g.map((p) => p.pageId))),
     blanks = rows.filter((r) => r.blank && !edited.has(r.pageId)),
