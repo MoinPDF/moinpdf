@@ -2,16 +2,16 @@
 
 > **Für die vollständige App inklusive Übersetzungen:** `docker compose up -d --build` im Repository-Hauptverzeichnis ausführen. Siehe [Docker-Anleitung](../DOCKER.md). Die nachfolgende Anleitung betrifft ausschließlich einen separaten Dokumentenserver für eine bereits anderweitig gehostete Web-App.
 
-Die 59 Browserwerkzeuge verarbeiten Dateien lokal. 17 zusätzliche Werkzeugansichten können diesen separaten Server verwenden. Zu den bisherigen vier Funktionen kommen die unten beschriebenen 13 Erweiterungen:
+Viele Werkzeuge verarbeiten Dateien lokal im Browser. Dieser Server ergänzt die unten beschriebenen Konvertierungen und Prüfungen:
 
 | Funktion | Verarbeitung | Ergebnis |
 | --- | --- | --- |
-| Office zu PDF | LibreOffice (Word, Excel, PowerPoint, OpenDocument) | PDF |
+| Office zu PDF | LibreOffice (Word, Excel, PowerPoint, OpenDocument, Pages, Visio, Publisher) | PDF |
 | PDF/A erzeugen und prüfen | Ghostscript und veraPDF, Profile 1b/2b/3b | Archivkopie + XML-Prüfbericht + JSON im ZIP |
 | XRechnung vollständig validieren | KoSIT 1.6.3, XRechnung-Konfiguration 3.0.2 vom 31.08.2026 | Vollständiger XSD-/Schematron-Bericht im ZIP |
 | Zertifikatssignaturen | pyHanko, PKCS#12 und Prüfung bestehender Signaturen | Signierte PDF bzw. JSON-Bericht |
 
-Die veröffentlichte App enthält **keinen vorinstallierten öffentlichen Dokumentenserver**. Eine eigene Serveradresse und ein API-Schlüssel müssen eingetragen werden. Eine Verbindung wird ohne Dokumentübertragung geprüft. Dateien werden erst nach dem ausdrücklichen Übertragungsauftrag gesendet.
+Die vollständige Docker-Installation verbindet Web-App und Dokumentenserver automatisch. Bei einer separat gehosteten Web-App ohne konfigurierten Serverproxy werden Serveradresse und API-Schlüssel eingetragen. Eine Verbindung wird ohne Dokumentübertragung geprüft. Dateien werden erst mit dem jeweiligen Verarbeitungsauftrag gesendet.
 
 ## Separaten Dokumentenserver mit Docker Compose starten
 
@@ -39,7 +39,8 @@ In der App ein Serverwerkzeug öffnen, `https://deine-serverdomain` und den Schl
 - LibreOffice verwendet ein frisches Profil mit deaktivierten Makros. Der Container hat ein schreibgeschütztes Dateisystem, ein temporäres Arbeitsverzeichnis und keinen Internetzugriff. Office-Layout hängt unter anderem von den verfügbaren Schriften ab. Eigene lizenzierte Schriften können beim Image-Build ergänzt werden.
 - PDF/A gilt nur bei bestandenem veraPDF-Check als konform. Bei einem fehlgeschlagenen Check heißt die Ausgabedatei ausdrücklich `NICHT-PDF-A-konform.pdf`. Die neue Archivkopie kann Formulare, Anhänge, aktive Elemente und bestehende Signaturen verändern oder verlieren; die Originaldatei bleibt erhalten. Das Profil 3b allein erzeugt keine ZUGFeRD-Rechnung.
 - KoSIT wendet die vollständig installierte Szenariokonfiguration an. Akzeptanz und Version stehen in `Ergebnis.json`, alle Einzelregeln im unveränderten XML-Bericht. DTDs und externe XML-Entitäten werden abgelehnt.
-- Die Signaturprüfung unterscheidet kryptografische Integrität, Dokumentänderungen und Zertifikatsvertrauen. Eigene vertrauenswürdige CA-Zertifikate können als PEM-Dateien in `trust/` abgelegt werden. Ohne konfigurierte Vertrauensanker wird keine Kette als vertrauenswürdig bestätigt. Kein Online-OCSP, keine aktuelle Sperrlistenabfrage, kein qualifizierter Status und kein vertrauenswürdiger Zeitstempeldienst werden behauptet. Die erzeugte Zertifikatssignatur enthält keinen externen Zeitstempel.
+- Die Signaturprüfung unterscheidet kryptografische Integrität, Dokumentänderungen, Zertifikatsvertrauen, Widerruf und Zeitstempel. Eigene vertrauenswürdige CA-Zertifikate liegen als PEM in `trust/`, Sperrnachweise als DER-Dateien mit Endung `.crl` oder `.ocsp` in `trust/revocation/`. Eingebettete DSS-Nachweise werden ebenfalls geprüft. Fehlende oder abgelaufene Nachweise begründen kein Vertrauen; es gibt keine automatische Netzabfrage an Zertifikatsadressen. Ein qualifizierter Signaturstatus wird nicht bestätigt.
+- Das Basisprofil signiert ohne externen Zeitstempel. PAdES-T, -LT und -LTA sowie die Erneuerung einer LTA-Zeitstempelkette benötigen explizite Vertrauensanker, passende Sperrnachweise und `MOINPDF_TSA_URL` mit HTTPS; optional authentifiziert `MOINPDF_TSA_BEARER` den Betreiber beim Zeitstempeldienst. Der Betreiber muss dessen gezielte Erreichbarkeit aus dem isolierten Netz einrichten. Das Setzen der URL öffnet das Containernetz nicht. Fehlgeschlagene Signatur-, Zeitstempel- oder Langzeitprüfungen blockieren die erweiterte Ausgabe.
 
 ## Lokale Entwicklung und Tests
 
@@ -49,7 +50,8 @@ python3 -m venv .venv
 pip install -r requirements.lock.txt
 pip install httpx==0.28.1
 cd ..
-python -m unittest server.test_service server.test_expansion server.test_extended_documents -v
+python tests/fetch-office-fixtures.py
+python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats -v
 ```
 
 Native Integrationstests werden ausgeführt, wenn Java, Ghostscript und die in `MOINPDF_TOOLS` installierten Werkzeuge verfügbar sind. Für Office ist zusätzlich LibreOffice nötig; beide Aufrufnamen `libreoffice` und `soffice` werden unterstützt. Die Office-Prüfung konvertiert synthetische DOCX-, XLSX-, PPTX-, ODT-, ODS- und ODP-Dateien und liest jede PDF anschließend unabhängig ein. Fehlende native Komponenten werden als übersprungen gemeldet. Installation in einen lokalen Ordner:
@@ -80,6 +82,7 @@ Die aktuelle Serverversion ergänzt PDF→Word (pdf2docx), PDF→PowerPoint (pyt
 Neue API-Routen:
 
 - `POST /v1/pdf-to-word`: PDF als `file`, Ergebnis DOCX; Layoutrekonstruktion, reine Scans werden mit OCR-Hinweis abgewiesen.
+- `POST /v1/office` unterstützt zusätzlich Pages 4/5, VSD/VSDX und Publisher. Umbenannte Textdateien und Archive ohne passende Dokumentstruktur werden abgewiesen. Echte Beispieldateien werden über gepinnte LibreOffice-Testdaten geprüft; komplexe Layouts bleiben von der LibreOffice-Unterstützung und den installierten Schriften abhängig.
 - `POST /v1/email`: EML/MSG als `file`, `include_attachments=true|false`; PDF oder ZIP mit unveränderten Anlagen. Kein Laden externer E-Mail-Bilder.
 - `POST /v1/documents/{action}`: `powerpoint`, `html`, `orient`, `form`, `print`, `accessibility`, `redaction`, `dewarp`, `translate`; Datei und optionales JSON-Formularfeld `options`.
 - `POST /v1/word-merge`: DOCX als `file`, XLSX als `spreadsheet`; Platzhalter `{{Name}}` entsprechen dem Excel-Spaltennamen. Erste Tabelle, maximal 50 Datensätze und 50 Spalten. Formeln vorher in Werte umwandeln. Formatierung bleibt bei Platzhaltern über mehrere Word-Runs soweit möglich erhalten.

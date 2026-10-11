@@ -125,7 +125,7 @@ def require_pdf(path: Path):
 
 def command(args: list[str], cwd: Path, accepted=(0,), timeout=TIMEOUT, extra_environment=None):
     """No shell; timeout terminates the whole subprocess group, including LibreOffice children."""
-    environment = {k: v for k, v in os.environ.items() if k not in {"MOINPDF_API_KEY", "MOINPDF_API_KEY_FILE", "MOINPDF_TRANSLATE_KEY", "MOINPDF_TRANSLATE_URL"}}
+    environment = {k: v for k, v in os.environ.items() if k not in {"MOINPDF_API_KEY", "MOINPDF_API_KEY_FILE", "MOINPDF_TRANSLATE_KEY", "MOINPDF_TRANSLATE_URL", "MOINPDF_TSA_BEARER"}}
     if extra_environment:environment.update(extra_environment)
     environment.update(HOME=str(cwd), TMPDIR=str(cwd), JAVA_TOOL_OPTIONS="-Xmx768m")
     try:
