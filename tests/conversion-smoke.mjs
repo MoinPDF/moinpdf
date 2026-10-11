@@ -9,7 +9,7 @@ for(const name of ['import-routing','word-export']){
  await writeFile(`.cache/${name}-test.mjs`,ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
 }
 const {conversionToolForFile}=await import('../.cache/import-routing-test.mjs');
-for(const ext of ['doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp'])assert.equal(conversionToolForFile(`Büro.${ext.toUpperCase()}`),'office-pdf');
+for(const ext of ['doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp','pages','vsd','vsdx','pub'])assert.equal(conversionToolForFile(`Büro.${ext.toUpperCase()}`),'office-pdf');
 assert.equal(conversionToolForFile('Nachricht.EML'),'email-pdf');
 assert.equal(conversionToolForFile('Nachricht.msg'),'email-pdf');
 assert.equal(conversionToolForFile('Seite.HTML'),'html-pdf');

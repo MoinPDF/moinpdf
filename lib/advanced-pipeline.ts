@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import { openSource, sourcePages, extractPageText, type Source } from './pdf-engine';
 import { runStudioJob, emptyEdits } from './studio-engine';
 import { inspectPage } from './document-check';
-import { protectPdf } from './pdf-security';
+import { protectPdf, linearizePdf } from './pdf-security';
 import { workflowOptions } from './advanced-text';
 import { checkAbort, uniqueNames, type RunContext, type ExportFile } from './advanced-types';
 
@@ -16,6 +16,14 @@ export const stepLabels = {
   grayscale: 'Graustufen',
   compress: 'Scans komprimieren',
   protect: 'Passwortschutz',
+  'remove-annotations': 'Kommentare entfernen',
+  'auto-crop': 'Weiße Ränder beschneiden',
+  bilevel: 'Schwarzweiß',
+  invert: 'Farben invertieren',
+  resize: 'Auf A4 einpassen',
+  nup: 'Zwei Seiten pro Blatt',
+  flatten: 'Als Seitenbilder festschreiben',
+  linearize: 'Schnelle Webansicht',
 };
 export type StepKind = keyof typeof stepLabels;
 export type WorkflowCondition = {
@@ -126,6 +134,50 @@ export async function conditionMatches(
     }
   return condition.operator === 'notContains' ? !found : found;
 }
+export async function applyWorkflowAction(
+  source: Source,
+  step: WorkflowAction,
+  password: string,
+  ctx: RunContext,
+): Promise<Uint8Array> {
+  checkAbort(ctx.signal);
+  if (step.kind === 'protect')
+    return protectPdf(
+      source.bytes,
+      { password, printing: 'full', copying: true, editing: true },
+      ctx.signal,
+    );
+  if (step.kind === 'linearize') return linearizePdf(source.bytes, ctx.signal);
+  let pages = sourcePages(source);
+  if (step.kind === 'removeBlank') {
+    const keep = [];
+    for (const [index, page] of pages.entries()) {
+      if (!(await inspectPage(source, page, index, ctx.signal)).blank) keep.push(page);
+      ctx.report({ percent: ((index + 1) / pages.length) * 100, label: `Seite ${index + 1}` });
+    }
+    if (!keep.length)
+      throw new Error(
+        `${source.name}: Alle Seiten wurden als leer erkannt. Bitte den Schritt „Leerseiten entfernen“ prüfen.`,
+      );
+    pages = keep;
+  }
+  const options = {
+    ...workflowOptions,
+    stampText: step.text || 'GEPRÜFT',
+    watermark: step.text || 'ENTWURF',
+    numberStart: step.number || 1,
+  };
+  const result = await runStudioJob(
+    step.kind === 'removeBlank' ? 'organize' : step.kind,
+    [source],
+    pages,
+    options,
+    emptyEdits(),
+    ctx.report,
+    ctx.signal,
+  );
+  return new Uint8Array(await result.blob.arrayBuffer());
+}
 export async function runPipeline(
   sources: Source[],
   workflow: SavedWorkflow,
@@ -162,43 +214,8 @@ export async function runPipeline(
             percent: ((i + (j + p.percent / 100) / steps.length) / sources.length) * 100,
             label: `${i + 1}/${sources.length} · ${stepLabels[step.kind]} · ${p.label}`,
           });
-        let pages = sourcePages(current);
-        if (step.kind === 'protect') {
-          bytes = await protectPdf(
-            bytes,
-            { password, printing: 'full', copying: true, editing: true },
-            ctx.signal,
-          );
-          continue;
-        }
-        if (step.kind === 'removeBlank') {
-          const keep = [];
-          for (const [n, page] of pages.entries()) {
-            if (!(await inspectPage(current, page, n, ctx.signal)).blank) keep.push(page);
-            report({ percent: ((n + 1) / pages.length) * 100, label: `Seite ${n + 1}` });
-          }
-          if (!keep.length)
-            throw new Error(
-              `${original.name}: Alle Seiten wurden als leer erkannt. Bitte den Schritt „Leerseiten entfernen“ prüfen.`,
-            );
-          pages = keep;
-        }
-        const options = {
-          ...workflowOptions,
-          stampText: step.text || 'GEPRÜFT',
-          watermark: step.text || 'ENTWURF',
-          numberStart: step.number || 1,
-        };
-        const result = await runStudioJob(
-          step.kind === 'removeBlank' ? 'organize' : step.kind,
-          [current],
-          pages,
-          options,
-          emptyEdits(),
-          report,
-          ctx.signal,
-        );
-        bytes = new Uint8Array(await result.blob.arrayBuffer());
+        bytes = await applyWorkflowAction(current, step, password, { signal: ctx.signal, report });
+        if (step.kind === 'protect') continue;
         if (owned) await owned.pdf.loadingTask.destroy();
         owned = undefined;
         current = await openSource(

@@ -14,12 +14,16 @@ import {
   saveProject,
   loadProject,
   deleteProject,
+  loadProjectArchive,
+  importProjectArchive,
+  type ProjectArchive,
   type ProjectMeta,
   type ProjectState,
   type ProjectSource,
 } from '@/lib/local-projects';
 import { openSource, filenameStem, downloadBlob, type Source } from '@/lib/pdf-engine';
 import { decodeProjectFile, encodeProjectFile, validateOpenedProject } from '@/lib/project-archive';
+import { isProjectArchive, encodeProjectArchive, decodeProjectArchive } from '@/lib/project-bundle';
 import './project-manager.css';
 export function ProjectManager({
   sources,
@@ -66,12 +70,7 @@ export function ProjectManager({
       'Projektdatei heruntergeladen. Sie enthält diesen Arbeitsstand einschließlich Rückgängig-Verlauf.',
     );
   };
-  const restore = async (
-    name: string,
-    data: ProjectSource[],
-    snapshot: ProjectState,
-    projectId?: string,
-  ) => {
+  const openSnapshot = async (data: ProjectSource[], snapshot: ProjectState) => {
     const opened: Source[] = [];
     try {
       for (const s of data) {
@@ -91,6 +90,21 @@ export function ProjectManager({
         });
       }
       validateOpenedProject(snapshot, opened);
+      return opened;
+    } catch (e) {
+      for (const s of opened) await s.pdf.loadingTask.destroy();
+      throw e;
+    }
+  };
+  const restore = async (
+    name: string,
+    data: ProjectSource[],
+    snapshot: ProjectState,
+    projectId?: string,
+    archive?: ProjectArchive,
+  ) => {
+    const opened = await openSnapshot(data, snapshot);
+    try {
       // Validate all files before changing local projects or replacing a session.
       if (sources.length)
         await saveProject(
@@ -99,7 +113,11 @@ export function ProjectManager({
           sources,
           state,
         );
-      const restoredId = projectId || (await saveProject(name, undefined, opened, snapshot));
+      const restoredId =
+        projectId ||
+        (archive
+          ? await importProjectArchive(archive)
+          : await saveProject(name, undefined, opened, snapshot));
       onRestore(opened, snapshot);
       setIdentity({ id: restoredId, name });
       setOpen(false);
@@ -189,7 +207,7 @@ export function ProjectManager({
             <input
               ref={importInput}
               type="file"
-              accept=".moinpdf,application/vnd.moinpdf.project"
+              accept=".moinpdf,application/vnd.moinpdf.project,application/vnd.moinpdf.archive"
               className="sr-only"
               aria-label="MoinPDF-Projektdatei"
               disabled={working || locked}
@@ -198,8 +216,19 @@ export function ProjectManager({
                 e.target.value = '';
                 if (file)
                   void job(async () => {
-                    const imported = await decodeProjectFile(file);
-                    await restore(imported.name, imported.sources, imported.state);
+                    if (await isProjectArchive(file)) {
+                      const archive = await decodeProjectArchive(file);
+                      // Validate every retained PDF/history before committing any imported version.
+                      for (const version of archive.versions.slice(1)) {
+                        const checked = await openSnapshot(version.sources, version.state);
+                        for (const source of checked) await source.pdf.loadingTask.destroy();
+                      }
+                      const latest = archive.versions[0];
+                      await restore(archive.name, latest.sources, latest.state, undefined, archive);
+                    } else {
+                      const imported = await decodeProjectFile(file);
+                      await restore(imported.name, imported.sources, imported.state);
+                    }
                   });
               }}
             />
@@ -208,11 +237,12 @@ export function ProjectManager({
             Bewusstes Speichern in diesem Browser, ohne Upload. Die gespeicherten PDFs liegen
             unverschlüsselt im Browserspeicher – auch zuvor entsperrte Dateien. Beim Löschen der
             Browserdaten können Projekte verloren gehen. Eine .moinpdf-Projektdatei überträgt den
-            gewählten Stand auf einen anderen Browser oder Computer. Sie enthält auch Originale,
-            frühere Bearbeitungen und gegebenenfalls entsperrte PDFs unverschlüsselt. Zum
-            Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden. Einstellungen und
-            Zwischenergebnisse der Spezialwerkzeuge gehören erst nach „Ergebnis übernehmen“ zum
-            Projekt.
+            gewählten Stand auf einen anderen Browser oder Computer. Das Gesamtarchiv umfasst alle
+            bis zu fünf gespeicherten Stände; beim Import entsteht ein neues Projekt. Beide
+            enthalten auch Originale, frühere Bearbeitungen und gegebenenfalls entsperrte PDFs
+            unverschlüsselt. Zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden.
+            Einstellungen und Zwischenergebnisse der Spezialwerkzeuge gehören erst nach „Ergebnis
+            übernehmen“ zum Projekt.
           </p>
           {notice && <p role="status">{notice}</p>}
           {working && <p role="status">Arbeitsstand wird verarbeitet …</p>}
@@ -224,6 +254,25 @@ export function ProjectManager({
                   {p.name}
                   {current === p.id ? ' · aktiv' : ''}
                 </h3>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={working || locked}
+                  onClick={() =>
+                    job(async () => {
+                      const archive = await loadProjectArchive(p.id);
+                      downloadBlob(
+                        await encodeProjectArchive(archive),
+                        filenameStem(p.name + '.moinpdf') + '-gesamt.moinpdf',
+                      );
+                      setNotice(
+                        `Gesamtarchiv mit ${archive.versions.length} gespeicherten Arbeitsständen heruntergeladen.`,
+                      );
+                    })
+                  }
+                >
+                  Gesamtes Projektarchiv herunterladen
+                </Button>
                 {p.versions.map((v, i) => (
                   <div className="project-version" key={v.id}>
                     <span>

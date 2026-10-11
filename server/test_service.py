@@ -2,6 +2,7 @@ import io
 import json
 import os
 import shutil
+import sys
 import tempfile
 import unittest
 import zipfile
@@ -104,7 +105,10 @@ class ServiceTests(unittest.TestCase):
         with patch.dict(os.environ, {"MOINPDF_TRUST_ROOTS": self.temporary.name}):
             trusted = self.post("/v1/signatures/validate", files={"file": ("signed.pdf", response.content)}).json()
         self.assertTrue(trusted["signatures"][0]["trustedChain"])
-        self.assertIn("Nicht online", trusted["revocationStatus"])
+        self.assertEqual(trusted["documentTimestamps"], 0)
+        self.assertIsNone(trusted["signatures"][0]["signatureTimestamp"])
+        self.assertEqual(trusted["signatures"][0]["longTerm"]["indication"], "NOT_APPLICABLE")
+        self.assertEqual(trusted["qualifiedSignatureStatus"], "Nicht geprüft")
         tampered = response.content.replace(b"MoinPDF test", b"MoinPDF fake")
         invalid = self.post("/v1/signatures/validate", files={"file": ("tampered.pdf", tampered)})
         self.assertEqual(invalid.status_code, 200)
@@ -114,6 +118,12 @@ class ServiceTests(unittest.TestCase):
         response = self.post("/v1/signatures/validate")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["signatures"], [])
+
+    def test_converter_processes_do_not_inherit_service_credentials(self):
+        names = ('MOINPDF_API_KEY', 'MOINPDF_API_KEY_FILE', 'MOINPDF_TRANSLATE_KEY', 'MOINPDF_TRANSLATE_URL', 'MOINPDF_TSA_BEARER')
+        with patch.dict(os.environ, {name: 'synthetic-value' for name in names}), tempfile.TemporaryDirectory() as temporary:
+            _, output = service.command([sys.executable, '-c', 'import os,json; print(json.dumps([name for name in '+repr(names)+' if name in os.environ]))'], Path(temporary))
+        self.assertEqual(json.loads(output), [])
 
     @unittest.skipUnless(service.KOSIT.is_file() and service.SCENARIOS.is_file(), "KoSIT/Regelpaket nicht installiert")
     def test_kosit_real_rules(self):

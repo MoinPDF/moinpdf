@@ -2143,10 +2143,29 @@ function Studio() {
               )}
               {toolId === 'ocr' && (
                 <>
+                  <label className="switch-field">
+                    <span>
+                      Sprachen automatisch ermitteln
+                      <small>Pro Scan-Seite; benötigt zusätzlich etwa 600 MB Arbeitsspeicher</small>
+                    </span>
+                    <Switch
+                      aria-label="Sprachen automatisch ermitteln"
+                      checked={!!options.autoLanguage}
+                      disabled={locked}
+                      onCheckedChange={(v) => setOptions((old) => ({ ...old, autoLanguage: v }))}
+                    />
+                  </label>
+                  {options.autoLanguage && (
+                    <p className="fine-note">
+                      Eine mehrsprachige OCR-Probe und ein lokaler statistischer Sprachvergleich
+                      wählen bis zu acht Modelle. Kurze, verrauschte oder mehrdeutige Texte werden
+                      zur manuellen Auswahl zurückgewiesen.
+                    </p>
+                  )}
                   <OcrLanguagePicker
                     label="Erkennungssprache"
                     value={options.language}
-                    disabled={locked}
+                    disabled={locked || !!options.autoLanguage}
                     onChange={(language) => setOptions((old) => ({ ...old, language }))}
                   />
                   {renderChoice('ocrLayout', 'Seitenaufbau', ocrLayouts)}

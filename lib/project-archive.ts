@@ -134,6 +134,7 @@ const options = z
       }),
     ocrLayout: z.enum(['3', '4', '6', '7', '11']),
     forceOcr: z.boolean(),
+    autoLanguage: z.boolean().optional(),
     imageFormat: z.enum(['png', 'jpg', 'webp', 'tiff', 'bmp']),
     quality: short,
     watermark: short,
@@ -165,7 +166,7 @@ const options = z
   })
   .partial()
   .strict();
-const stateSchema = snapshot.extend({
+export const projectStateSchema = snapshot.extend({
   options,
   history: z.array(snapshot).max(100),
   future: z.array(snapshot).max(100),
@@ -183,7 +184,7 @@ const manifestSchema = z
   .object({
     name: z.string().trim().min(1).max(100),
     created: z.number().int().nonnegative(),
-    state: stateSchema,
+    state: projectStateSchema,
     sources: z
       .array(
         z
@@ -223,7 +224,7 @@ async function checksum(bytes: Uint8Array, signal?: AbortSignal) {
   check(signal);
   return (crc ^ 0xffffffff) >>> 0;
 }
-function validateReferences(
+export function validateProjectReferences(
   state: ProjectState,
   sources: ProjectSource[],
   counts?: Map<string, number>,
@@ -256,7 +257,7 @@ function validateReferences(
   }
 }
 export function validateOpenedProject(state: ProjectState, sources: Source[]) {
-  validateReferences(state, sources, new Map(sources.map((s) => [s.id, s.pdf.numPages])));
+  validateProjectReferences(state, sources, new Map(sources.map((s) => [s.id, s.pdf.numPages])));
 }
 export async function encodeProjectFile(
   name: string,
@@ -265,7 +266,7 @@ export async function encodeProjectFile(
   signal?: AbortSignal,
 ) {
   check(signal);
-  validateReferences(state, sources);
+  validateProjectReferences(state, sources);
   const manifest = manifestSchema.safeParse({
     name,
     created: Date.now(),
@@ -372,7 +373,7 @@ export async function decodeProjectFile(file: Blob, signal?: AbortSignal) {
   if (offset !== bytes.length || bytes.length - headerSize - length > maxDocuments)
     throw new Error('Die Projektdatei enthält unerwartete Daten.');
   const state = manifest.state as ProjectState;
-  validateReferences(state, sources);
+  validateProjectReferences(state, sources);
   check(signal);
   return { name: manifest.name, created: manifest.created, sources, state };
 }

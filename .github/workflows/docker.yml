@@ -13,6 +13,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  local-model:
+    name: Local model in production browser
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the production web image
+        run: |
+          docker build -t moinpdf-model-test .
+          docker run -d --name moinpdf-model-test -p 8080:8080 \
+            -e MOINPDF_API_KEY=synthetic-local-model-test-key-00000000 moinpdf-model-test
+          curl --fail --retry 20 --retry-all-errors --retry-delay 1 http://localhost:8080/ -o /dev/null
+      - name: Install browser test runtime
+        run: |
+          python -m pip install playwright==1.55.0 pymupdf==1.28.2
+          python -m playwright install --with-deps chromium
+      - name: Real local language model with offline document questions
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+        run: python tests/local-assistant-browser.py
+      - name: Retain local model evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-model-verification
+          path: web-evidence/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Diagnostics and cleanup
+        if: always()
+        run: |
+          docker logs --tail 50 moinpdf-model-test || true
+          docker rm -f moinpdf-model-test || true
   compose:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -34,10 +67,11 @@ jobs:
       - name: Native document converters and key-file authentication
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
+          python tests/fetch-office-fixtures.py
           docker build --target test -t moinpdf-document-tests ./server
           docker run --rm --network none --read-only --tmpfs /tmp:mode=1777,size=1g \
             --volume "$PWD:/repo:ro" --workdir /repo moinpdf-document-tests \
-            python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible -v
+            python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats -v
       - name: Start complete stack with all seven languages
         id: start
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -53,6 +87,11 @@ jobs:
           docker compose stop
           docker compose up -d --wait --wait-timeout 180
           docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /repo/tests/selfhost-smoke.py
+      - name: Install browser test runtime
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: |
+          python -m pip install playwright==1.55.0 pymupdf==1.28.2
+          python -m playwright install --with-deps chromium
       - name: All tool views, desktop and mobile, PDF and audio downloads
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         env:
@@ -60,8 +99,6 @@ jobs:
           MOINPDF_REQUIRE_SERVER: "1"
           MOINPDF_TEST_NONLOCAL_HTTP: "1"
         run: |
-          python -m pip install playwright==1.55.0 pymupdf==1.28.2
-          python -m playwright install --with-deps chromium
           python tests/published-web-smoke.py
           MOINPDF_DOCUMENTATION_URL=http://localhost:8080 python tests/documentation-smoke.py
       - name: Retain browser evidence

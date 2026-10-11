@@ -2,7 +2,7 @@ FROM python:3.12-slim-bookworm AS runtime
 ARG MOINPDF_UID=10001
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 MOINPDF_TOOLS=/opt/moinpdf-tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-17-jre-headless libreoffice-writer libreoffice-calc libreoffice-impress \
+    openjdk-17-jre-headless libreoffice-writer libreoffice-calc libreoffice-impress libreoffice-draw \
     ghostscript tesseract-ocr tesseract-ocr-osd fonts-dejavu fonts-liberation ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /service
@@ -10,7 +10,7 @@ COPY requirements.txt requirements.lock.txt ./
 RUN pip install --no-cache-dir -r requirements.lock.txt
 COPY install_tools.py tools.lock.json install_voices.py voices.lock.json speech-sources.lock.json AUDIO-NOTICES.md Dockerfile ./
 RUN python install_tools.py && python install_voices.py && useradd --uid ${MOINPDF_UID} --no-create-home moinpdf
-COPY app.py accessible_documents.py convert_documents.py extended_documents.py recovery_documents.py audio_documents.py init_secret.py ./
+COPY app.py accessible_documents.py convert_documents.py extended_documents.py expansion_documents.py tag_documents.py signature_documents.py recovery_documents.py audio_documents.py init_secret.py ./
 USER ${MOINPDF_UID}:${MOINPDF_UID}
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"

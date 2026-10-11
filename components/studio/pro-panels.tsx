@@ -1,45 +1,47 @@
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Choice, Text, NumberField, type PanelProps } from './advanced-shared';
+import { Choice, Text, Tick, NumberField, type PanelProps } from './advanced-shared';
 import {
-  batesPdfs,
-  batesText,
-  pageLabels,
-  rotateFreely,
-  continuousPage,
-  posterPages,
   linearizeSources,
   structuredExport,
-  packagePdfs,
   type ProTool,
   type LabelRule,
-  type BatesOptions,
+  type BatesRule,
+  type PosterPrint,
 } from '@/lib/pro-tools';
+import { runProJob, type ProJob } from '@/lib/pro-job';
+import { BatesRules, defaultBatesRule } from './bates-rules';
+import { OperationPreview } from './operation-preview';
 
 export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { tool: ProTool }) {
-  const [template, setTemplate] = useState('AKTE-{nummer} · {seite}/{seiten}'),
-    [start, setStart] = useState(1),
-    [padding, setPadding] = useState(6),
-    [size, setSize] = useState(10);
-  const [position, setPosition] = useState<BatesOptions['position']>('bottom-right'),
-    [angle, setAngle] = useState(15),
+  const [batesRules, setBatesRules] = useState<BatesRule[]>([{ ...defaultBatesRule }]),
+    [start, setStart] = useState(1);
+  const [print, setPrint] = useState<PosterPrint>({
+    paper: 'a4',
+    landscape: false,
+    margin: 18,
+    marks: true,
+  });
+  const [angle, setAngle] = useState(15),
     [width, setWidth] = useState(595),
     [gap, setGap] = useState(12);
   const [columns, setColumns] = useState(2),
     [rows, setRows] = useState(2),
     [overlap, setOverlap] = useState(10);
   const [rules, setRules] = useState<LabelRule[]>([{ page: 1, style: 'D', prefix: '', start: 1 }]);
-  const save = async (
-    bytes: Uint8Array,
-    suffix: string,
-    pages = source.pdf.numPages,
-    note?: string,
-  ) =>
-    packagePdfs(
-      [{ name: source.name.replace(/\.pdf$/i, '') + suffix + '.pdf', bytes, pages }],
-      note,
-    );
+  const job: ProJob | null =
+    tool === 'bates'
+      ? { kind: tool, options: { ...batesRules[0], start, rules: batesRules } }
+      : tool === 'page-labels'
+        ? { kind: tool, rules }
+        : tool === 'rotate-free'
+          ? { kind: tool, angle }
+          : tool === 'continuous-page'
+            ? { kind: tool, width, gap }
+            : tool === 'poster-print'
+              ? { kind: tool, columns, rows, overlap: (overlap * 72) / 25.4, print }
+              : null;
   const structureNote =
     'Seiteninhalt bleibt als Text und Vektorgrafik erhalten. Interaktive Formulare werden festgeschrieben; Links, Anhänge, Lesezeichen und ursprüngliche Signaturen werden bei diesem Seitenneuaufbau nicht übernommen.';
   const actions = {
@@ -55,48 +57,15 @@ export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { to
     <section className="advanced-card">
       {tool === 'bates' && (
         <>
-          <p>
-            {sources.length} Dateien werden in der geöffneten Reihenfolge nummeriert. Die
-            Nummerierung läuft über alle Dateien weiter.
-          </p>
-          <Text label="Vorlage" value={template} onChange={setTemplate} />
-          <p className="fine-note">
-            Platzhalter: {'{nummer}'}, {'{seite}'}, {'{seiten}'}, {'{datei}'}
-          </p>
+          <p>{sources.length} Dateien werden in der geöffneten Reihenfolge nummeriert.</p>
           <NumberField
-            label="Startnummer"
+            label="Globale Startnummer"
             value={start}
-            onChange={setStart}
             min={0}
             max={999999999}
+            onChange={setStart}
           />
-          <NumberField
-            label="Ziffernstellen"
-            value={padding}
-            onChange={setPadding}
-            min={1}
-            max={12}
-          />
-          <NumberField label="Schriftgröße (pt)" value={size} onChange={setSize} min={6} max={40} />
-          <Choice
-            label="Position"
-            value={position}
-            onChange={(v) => setPosition(v as typeof position)}
-            items={[
-              ['top-left', 'Oben links'],
-              ['top-center', 'Oben mittig'],
-              ['top-right', 'Oben rechts'],
-              ['bottom-left', 'Unten links'],
-              ['bottom-center', 'Unten mittig'],
-              ['bottom-right', 'Unten rechts'],
-            ]}
-          />
-          <p aria-live="polite">
-            Vorschau:{' '}
-            <strong>
-              {batesText(template, start, padding, 1, source.pdf.numPages, source.name)}
-            </strong>
-          </p>
+          <BatesRules rules={batesRules} onChange={setBatesRules} />
         </>
       )}
       {tool === 'page-labels' && (
@@ -222,9 +191,39 @@ export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { to
             min={0}
             max={25}
           />
+          <Choice
+            label="Druckpapier"
+            value={print.paper}
+            onChange={(v) => setPrint((p) => ({ ...p, paper: v as PosterPrint['paper'] }))}
+            items={[
+              ['a4', 'DIN A4'],
+              ['a3', 'DIN A3'],
+              ['letter', 'US Letter'],
+              ['source', 'Kacheln in Originalgröße'],
+            ]}
+          />
+          <Tick
+            label="Querformat"
+            value={print.landscape}
+            onChange={(v) => setPrint((p) => ({ ...p, landscape: v }))}
+          />
+          <NumberField
+            label="Druckrand (mm)"
+            value={(print.margin * 25.4) / 72}
+            min={0}
+            max={25}
+            step={0.1}
+            onChange={(v) => setPrint((p) => ({ ...p, margin: (v * 72) / 25.4 }))}
+          />
+          <Tick
+            label="Schnittmarken im Rand"
+            value={print.marks}
+            onChange={(v) => setPrint((p) => ({ ...p, marks: v }))}
+          />
           <p>
-            Ausgabe: {source.pdf.numPages * columns * rows} Kacheln, jeweils zeilenweise von links
-            oben. Im Druckdialog die gewünschte Papiergröße wählen.
+            Ausgabe: {source.pdf.numPages * columns * rows} Blätter, zeilenweise von links oben.
+            Inhalt wird proportional auf das gewählte Raster skaliert. Mit 100 % / tatsächlicher
+            Größe drucken.
           </p>
         </>
       )}
@@ -247,30 +246,11 @@ export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { to
         disabled={busy}
         onClick={() =>
           run(async (ctx) => {
-            if (tool === 'bates')
-              return batesPdfs(sources, { template, start, padding, size, position }, ctx);
-            if (tool === 'page-labels')
-              return save(await pageLabels(source.bytes, rules), '-Seitenbezeichnungen');
-            if (tool === 'rotate-free')
-              return save(
-                await rotateFreely(source.bytes, angle, ctx),
-                '-gedreht',
-                source.pdf.numPages,
-                structureNote,
-              );
-            if (tool === 'continuous-page')
-              return save(
-                await continuousPage(sources, width, gap, ctx),
-                '-Langseite',
-                1,
-                structureNote,
-              );
-            if (tool === 'poster-print')
-              return save(
-                await posterPages(source.bytes, columns, rows, (overlap * 72) / 25.4, ctx),
-                '-Poster',
-                source.pdf.numPages * columns * rows,
-                structureNote,
+            if (job)
+              return runProJob(
+                tool === 'bates' || tool === 'continuous-page' ? sources : [source],
+                job,
+                ctx,
               );
             if (tool === 'linearize') return linearizeSources(sources, ctx);
             return structuredExport(sources, ctx);
@@ -279,6 +259,37 @@ export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { to
       >
         {actions[tool]}
       </Button>
+      {job && (
+        <OperationPreview
+          busy={busy}
+          version={JSON.stringify({ job, ids: sources.map((s) => s.id), selected: source.id })}
+          build={(signal) =>
+            runProJob(
+              job.kind === 'continuous-page' ? sources : [source],
+              job.kind === 'bates'
+                ? {
+                    ...job,
+                    options: {
+                      ...job.options,
+                      start:
+                        job.options.start +
+                        sources
+                          .slice(
+                            0,
+                            Math.max(
+                              0,
+                              sources.findIndex((s) => s.id === source.id),
+                            ),
+                          )
+                          .reduce((n, s) => n + s.pdf.numPages, 0),
+                    },
+                  }
+                : job,
+              { signal, report: () => {} },
+            )
+          }
+        />
+      )}
     </section>
   );
 }

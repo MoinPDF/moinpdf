@@ -36,4 +36,26 @@ for (const name of ['@embedpdf/pdfium', 'utif', '@bwip-js/browser', '@zxing/libr
     if (/^(LICENSE|OFL|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',`${name.replaceAll('/', '-')}-${file}`));
   }
 }
+await mkdir(path.join(out,'images'),{recursive:true});
+for(const file of ['libheif.js','libheif.wasm'])await copyFile(path.join('node_modules/libheif-js/libheif-wasm',file),path.join(out,'images',file));
+await copyFile('node_modules/ag-psd/dist/bundle.js',path.join(out,'images/ag-psd.js'));
+await copyFile('node_modules/ag-psd/LICENSE',path.join(out,'licenses/ag-psd-LICENSE'));
+await copyFile('node_modules/libheif-js/LICENSE',path.join(out,'licenses/libheif-js-LICENSE'));
+await copyFile('node_modules/libheif-js/libheif-wasm/LICENSE',path.join(out,'licenses/libheif-WASM-LICENSE'));
+await mkdir(path.join(out,'llm'),{recursive:true});
+await copyFile('node_modules/@wllama/wllama/esm/wasm/wllama.wasm',path.join(out,'llm/wllama.wasm'));
+await copyFile('node_modules/@wllama/wllama/LICENCE',path.join(out,'licenses/wllama-LICENCE'));
+const psdRequire=createRequire(require.resolve('ag-psd'));
+for(const name of ['base64-js','pako']) {
+  const dir=path.dirname(psdRequire.resolve(name+'/package.json'));
+  for(const file of await readdir(dir)) if(/^(LICENSE|LICENCE|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',name+'-'+file));
+}
 console.log('Local PDF and OCR assets prepared.');
+const francRequire=createRequire(require.resolve('franc'));
+const trigramDir=path.dirname(francRequire.resolve('trigram-utils'));
+const trigramRequire=createRequire(path.join(trigramDir,'package.json'));
+for(const name of ['trigram-utils','n-gram','collapse-white-space']) {
+  const dir=name==='trigram-utils'?trigramDir:path.dirname(trigramRequire.resolve(name));
+  for(const file of await readdir(dir)) if(/^(LICENSE|LICENCE|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',name+'-'+file));
+}
+await copyFile('public/component-notices/franc-LICENSE.txt',path.join(out,'licenses/franc-LICENSE.txt'));

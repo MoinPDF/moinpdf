@@ -99,7 +99,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         media.close()
         completed.append('Media tab preserves PDF; six original JPEG downloads, matching ZIP and responsive footer')
 
-        expect(manual.locator('.docs-tool')).to_have_count(108)
+        expect(manual.locator('.docs-tool')).to_have_count(112)
         expect(manual.locator('.docs-toc > a')).to_have_count(7)
         manual.evaluate('document.fonts.ready')
         no_overflow(manual)
@@ -118,11 +118,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
             categories.get_by_role('button', name=name, exact=True).click()
             expect(manual.locator('.docs-tool-group:visible')).to_have_count(1)
             total += manual.locator('.docs-tool:visible').count()
-        assert total == 108
+        assert total == 112
         categories.get_by_role('button', name='Prüfen', exact=True).click()
         search.fill('CSV')
         assert manual.locator('.docs-tool:visible').count() > 0
-        completed.append('All 108 guides, accent-insensitive search, empty state, reset and five category filters')
+        completed.append('All 112 guides, accent-insensitive search, empty state, reset and five category filters')
 
         manual.goto(origin + '/dokumentation.html#werkzeug-pdf-audio')
         audio = manual.locator('#werkzeug-pdf-audio')
@@ -148,7 +148,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         search = manual.get_by_role('searchbox')
         search.fill('Rechenprüfung')
         manual.evaluate('window.dispatchEvent(new Event("beforeprint"))')
-        expect(manual.locator('.docs-tool[open]:visible')).to_have_count(108)
+        expect(manual.locator('.docs-tool[open]:visible')).to_have_count(112)
         manual.pdf(path=str(evidence / 'handbuch-druckprobe.pdf'), print_background=True)
         manual.evaluate('window.dispatchEvent(new Event("afterprint"))')
         expect(search).to_have_value('Rechenprüfung')

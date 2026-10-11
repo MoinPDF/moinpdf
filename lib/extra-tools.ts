@@ -173,7 +173,7 @@ export async function runSourceTool(
     const { first, second, a, b } = selectedPair(sources, pages, options),
       total = Math.max(a.length, b.length);
     if (options.compareMode === 'content') {
-      const { compareContent } = await import('./content-compare');
+      const { compareContent, comparisonPage } = await import('./content-compare');
       const left: { number: number; text: string }[] = [],
         right: { number: number; text: string }[] = [];
       let done = 0;
@@ -185,13 +185,40 @@ export async function runSourceTool(
         for (const index of selected) {
           check(signal);
           const page = pages[index];
-          const text = await extractPageText(source, page);
+          const pdfPage = await source.pdf.getPage(page.index + 1),
+            view = pdfPage.getViewport({
+              scale: 1,
+              rotation: (pdfPage.rotate + page.rotation) % 360,
+            }),
+            content = await pdfPage.getTextContent(),
+            v = view.transform;
+          const layout = comparisonPage(
+            page.index + 1,
+            content.items
+              .filter((part): part is Extract<typeof part, { str: string }> => 'str' in part)
+              .map((part) => {
+                const t = part.transform,
+                  dx = v[0] * t[0] + v[2] * t[1],
+                  dy = v[1] * t[0] + v[3] * t[1],
+                  h = Math.hypot(v[0] * t[2] + v[2] * t[3], v[1] * t[2] + v[3] * t[3]);
+                return {
+                  text: part.str,
+                  x: v[0] * t[4] + v[2] * t[5] + v[4],
+                  y: v[1] * t[4] + v[3] * t[5] + v[5] - h * 0.85,
+                  w: part.width,
+                  h,
+                  upright: dx > 0 && Math.abs(Math.atan2(dy, dx)) < 0.04,
+                };
+              }),
+            view.width,
+          );
+          const text = layout.text;
           characters += text.length;
           if (characters > 2_000_000)
             throw new Error(
               'Der Inhaltsvergleich unterstützt zwei Millionen Textzeichen je Datei. Bitte weniger Seiten auswählen.',
             );
-          output.push({ number: page.index + 1, text });
+          output.push(layout);
           notify({
             percent: (++done / (a.length + b.length)) * 55,
             label: `Text aus ${source.name} · Seite ${page.index + 1} lesen …`,

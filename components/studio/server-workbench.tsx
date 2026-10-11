@@ -31,6 +31,7 @@ import './conversion-workbench.css';
 import { AudioWorkbench } from './audio-workbench';
 import { AccessibleEditor, initialAccessibleDocument } from './accessible-editor';
 import { validateAccessibleDocument } from '@/lib/accessible-document';
+import { TagRepairEditor, tagRepairRequest, type TagRepair } from './tag-repair-editor';
 
 type Props = {
   tool: ServerTool;
@@ -78,6 +79,9 @@ function StandardServerWorkbench({
   const [uaMode, setUaMode] = useState('basic'),
     [uaProfile, setUaProfile] = useState('ua1'),
     [uaDocument, setUaDocument] = useState(initialAccessibleDocument);
+  const [signLevel, setSignLevel] = useState('basic');
+  const [tagRepair, setTagRepair] = useState<TagRepair | null>(null);
+  useEffect(() => setTagRepair(null), [sourceId, sources]);
   const [extra, setExtra] = useState(initialExtraSettings),
     [spreadsheet, setSpreadsheet] = useState<File | null>(null),
     [attachments, setAttachments] = useState(false);
@@ -98,7 +102,9 @@ function StandardServerWorkbench({
       tool === 'accessibility-check' && uaMode !== 'basic'
         ? uaMode === 'create'
           ? 'pdfuaCreate'
-          : 'pdfuaValidate'
+          : uaMode === 'repair'
+            ? 'pdfuaRepair'
+            : 'pdfuaValidate'
         : serverCapabilityKey[tool]
     ] === true;
   const fileInputTool = [
@@ -118,6 +124,7 @@ function StandardServerWorkbench({
           : !!source;
   const completeInput =
     hasInput &&
+    (tool !== 'accessibility-check' || uaMode !== 'repair' || !!tagRepair) &&
     (tool !== 'word-mail-merge' || !!spreadsheet) &&
     (tool !== 'zugferd-create' || mode !== 'create' || !!file) &&
     (tool !== 'certificate-sign' || mode !== 'sign' || !!cert);
@@ -185,6 +192,8 @@ function StandardServerWorkbench({
     uaMode,
     uaProfile,
     uaDocument,
+    tagRepair,
+    signLevel,
   ]);
   useEffect(() => {
     if (!result) {
@@ -344,6 +353,11 @@ function StandardServerWorkbench({
       else if (tool === 'accessibility-check' && uaMode === 'validate') {
         path = '/v1/pdfua/validate';
         body.append('profile', uaProfile);
+      } else if (tool === 'accessibility-check' && uaMode === 'repair') {
+        if (!tagRepair) throw new Error('Bitte zuerst den Strukturbaum laden und bearbeiten.');
+        path = '/v1/pdfua/repair';
+        body.append('changes', JSON.stringify(tagRepairRequest(tagRepair)));
+        body.append('profile', uaProfile);
       } else if (extraActions[tool]) {
         path = '/v1/documents/' + extraActions[tool];
         body.append('options', JSON.stringify(extra));
@@ -363,6 +377,7 @@ function StandardServerWorkbench({
           if (!cert) throw new Error('Bitte eine Zertifikatsdatei auswählen.');
           body.append('certificate', cert);
           body.append('password', password);
+          body.append('level', signLevel);
         }
       }
     }
@@ -419,8 +434,8 @@ function StandardServerWorkbench({
         <fieldset disabled={busy} className="advanced-fields conversion-fields">
           {tool === 'office-pdf' ? (
             pick(
-              'Word, Excel, PowerPoint oder OpenDocument',
-              '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp',
+              'Office, Pages, Visio oder Publisher',
+              '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.pages,.vsd,.vsdx,.pub',
               file,
               setFile,
             )
@@ -477,6 +492,7 @@ function StandardServerWorkbench({
                   ['basic', 'Technische Basisprüfung'],
                   ['validate', 'PDF/UA mit veraPDF prüfen'],
                   ['create', 'Strukturiertes PDF neu erstellen'],
+                  ['repair', 'Vorhandene Tags bei gleichem Layout reparieren'],
                 ]}
               />
               {uaMode === 'basic' && (
@@ -485,7 +501,7 @@ function StandardServerWorkbench({
                   veraPDF prüfen“ wählen.
                 </p>
               )}
-              {uaMode === 'validate' && (
+              {['validate', 'repair'].includes(uaMode) && (
                 <>
                   <Choice
                     label="PDF/UA-Prüfprofil"
@@ -501,6 +517,15 @@ function StandardServerWorkbench({
                     Alternativtexte und Bedienbarkeit zusätzlich manuell prüfen.
                   </p>
                 </>
+              )}
+              {uaMode === 'repair' && (
+                <TagRepairEditor
+                  source={source}
+                  value={tagRepair}
+                  onChange={setTagRepair}
+                  run={run}
+                  available={available}
+                />
               )}
               {uaMode === 'create' && (
                 <AccessibleEditor
@@ -622,10 +647,31 @@ function StandardServerWorkbench({
                 items={[
                   ['validate', 'Signaturen prüfen'],
                   ['sign', 'Mit Zertifikat signieren'],
+                  ...(capabilities?.signatureLevels?.lta
+                    ? [['renew', 'Langzeit-Zeitstempel erneuern'] as [string, string]]
+                    : []),
                 ]}
               />
               {mode === 'sign' && (
                 <>
+                  <Choice
+                    label="Signaturprofil"
+                    value={signLevel}
+                    onChange={setSignLevel}
+                    items={(['basic', 'timestamp', 'lt', 'lta'] as const)
+                      .filter(
+                        (level) => level === 'basic' || capabilities?.signatureLevels?.[level],
+                      )
+                      .map((level) => [
+                        level,
+                        {
+                          basic: 'PAdES-B: Zertifikatssignatur',
+                          timestamp: 'PAdES-T: mit geprüftem Zeitstempel',
+                          lt: 'PAdES-LT: mit eingebetteten Sperrnachweisen',
+                          lta: 'PAdES-LTA: mit Langzeit-Zeitstempel',
+                        }[level],
+                      ])}
+                  />
                   {pick('Zertifikat (.p12 oder .pfx)', '.p12,.pfx', cert, setCert)}
                   <Text
                     label="Zertifikatspasswort"
@@ -640,8 +686,12 @@ function StandardServerWorkbench({
                 </>
               )}
               <p className="fine-note">
-                Die Prüfung erfasst Integrität, Zertifikatsvertrauen und Änderungen. Der aktuelle
-                Sperrstatus wird nicht abgefragt. Es wird keine qualifizierte Signatur bestätigt.
+                Integrität, Zertifikatsvertrauen, Sperrnachweise und Zeitstempel werden getrennt
+                geprüft. CRL-/OCSP-Nachweise werden offline aus der PDF und dem konfigurierten
+                Nachweisspeicher gelesen; fehlende Nachweise ergeben kein Vertrauensurteil. Für neue
+                Zeitstempel wird der konfigurierte Zeitstempeldienst kontaktiert. Langzeitprofile
+                erscheinen nach dessen Einrichtung durch den Betreiber. Es wird keine qualifizierte
+                Signatur bestätigt.
               </p>
             </>
           )}
@@ -658,13 +708,17 @@ function StandardServerWorkbench({
             ) : tool === 'accessibility-check' ? (
               uaMode === 'create' ? (
                 'PDF/UA erstellen und prüfen'
+              ) : uaMode === 'repair' ? (
+                'Tags reparieren und PDF/UA prüfen'
               ) : uaMode === 'validate' ? (
                 'PDF/UA prüfen'
               ) : (
                 info.action
               )
             ) : tool === 'certificate-sign' ? (
-              mode === 'sign' ? (
+              mode === 'renew' ? (
+                'Langzeit-Zeitstempel erneuern'
+              ) : mode === 'sign' ? (
                 'Signieren'
               ) : (
                 'Signaturen prüfen'

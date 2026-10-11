@@ -34,6 +34,7 @@ export type JobOptions = {
   language: string;
   ocrLayout?: string;
   forceOcr: boolean;
+  autoLanguage?: boolean;
   imageFormat: string;
   quality: string;
   watermark: string;
@@ -315,6 +316,7 @@ export async function runJob(
   };
   signal.addEventListener('abort', stop, { once: true });
   const texts: string[] = [];
+  const languageNotes: string[] = [];
   const zip =
     tool === 'split' || tool === 'to-images' ? new (await import('jszip')).default() : null;
   let currentIndex = 0;
@@ -334,11 +336,33 @@ export async function runJob(
           texts.push(nativeText);
           await appendPage(doc, loaded, item);
         } else {
+          let selectedLanguage = options.language;
+          if (options.autoLanguage) {
+            await worker?.terminate();
+            worker = undefined;
+            report({
+              percent: (i / pages.length) * 100,
+              label: `Sprachprobe mit 21 Modellen · Seite ${i + 1}`,
+            });
+            const preview = await renderPage(source, item, 1800, signal);
+            try {
+              const { probeOcrLanguages } = await import('./ocr-language-probe');
+              const languages = await probeOcrLanguages(preview.canvas, signal);
+              selectedLanguage = languages.join('+');
+              languageNotes.push(`Seite ${i + 1}: ${selectedLanguage}`);
+              report({
+                percent: (i / pages.length) * 100,
+                label: `Erkannte Sprachmodelle: ${selectedLanguage}`,
+              });
+            } finally {
+              preview.canvas.width = preview.canvas.height = 0;
+            }
+          }
           if (!worker) {
             report({ percent: (i / pages.length) * 100, label: 'Texterkennung wird geladen …' });
             const { createWorker, PSM } = await import('tesseract.js');
             const { parseOcrLanguages } = await import('./ocr-languages');
-            const creating = createWorker(parseOcrLanguages(options.language), 1, {
+            const creating = createWorker(parseOcrLanguages(selectedLanguage), 1, {
               workerPath: '/vendor/ocr/worker.min.js',
               corePath: '/vendor/ocr',
               langPath: '/vendor/languages',
@@ -487,6 +511,14 @@ export async function runJob(
       blob,
       filename: `${stem}-${suffix[tool]}.pdf`,
       kind: 'pdf',
+      ...(languageNotes.length
+        ? {
+            note:
+              'Automatische Sprachwahl: ' +
+              languageNotes.join('; ') +
+              '. Statistische Vorschläge und OCR-Ergebnis bitte prüfen; kurze oder uneindeutige Texte benötigen eine manuelle Auswahl.',
+          }
+        : {}),
       ...(tool === 'ocr'
         ? {
             text: texts

@@ -2,12 +2,37 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+  'svg-export': {
+    input:'Eine PDF und der integrierte Dokumentenserver.',
+    steps:['PDF öffnen und „PDF zu Vektor-SVG“ wählen.','Gewünschtes Dokument auswählen.','SVG-Dateien exportieren und die ZIP-Datei entpacken.'],
+    output:'Eine eigenständige SVG je PDF-Seite. Text erscheint als Vektorkontur, vorhandene Fotos bleiben eingebettete Bilder.',
+    note:'Höchstens 20 MB pro SVG und 80 MB insgesamt. Schriftkonturen sind nicht als Text bearbeitbar. Komplexe Transparenzen im Zielprogramm prüfen.',
+  },
+  'font-outlines': {
+    input:'Eine PDF und der integrierte Dokumentenserver.',
+    steps:['„Schriften in Pfade“ öffnen.','Die passende PDF auswählen.','Schriftkonturen erstellen und das Ergebnis vor der Weitergabe prüfen.'],
+    output:'Eine neue PDF mit Text als festen Vektorkonturen.',
+    note:'Der Text ist danach nicht auswählbar oder durchsuchbar. Formulare, Tags, Links, Anhänge und digitale Signaturen werden nicht garantiert übernommen.',
+  },
+  'flatten-layers': {
+    input:'Eine PDF mit der gewünschten anfänglichen Ebenensichtbarkeit und der Dokumentenserver.',
+    steps:['Unter „PDF-Ebenen“ gewünschte Ebenen ein- oder ausblenden und das Ergebnis übernehmen.','„Ebenen dauerhaft reduzieren“ öffnen.','Die feste Ansicht erzeugen, herunterladen und auf vollständigen Inhalt prüfen.'],
+    output:'Eine neue PDF aus den anfänglich sichtbaren Ebenen. Ausgeblendete Ebeneninhalte sind entfernt.',
+    note:'Die Ebenen sind danach nicht mehr einzeln schaltbar. Text und Vektoren bleiben soweit vom Konverter unterstützt erhalten; Formulare, Tags, Links, Anhänge und Signaturen werden nicht garantiert übernommen.',
+  },
+  'local-assistant': {
+    input:'Eine oder mehrere PDFs sowie die verlinkte Qwen2.5-0.5B-GGUF-Modelldatei mit etwa 409 MB.',
+    steps:['Modelldatei über den angegebenen Link herunterladen und lokal auswählen.','Optional die geprüfte Modelldatei für spätere Sitzungen speichern.','Eine konkrete Frage stellen und „Frage lokal beantworten“ wählen.','Jedes Zitat über die Fundstellenanzeige im Original kontrollieren.'],
+    output:'Lokal erzeugte Antwort mit überprüften Originalzitaten und einer JSON-Datei zum Herunterladen.',
+    note:'Fragen und Dokumente verlassen das Gerät nicht. Das Modell verwendet ausgewählte Passagen und kann Inhalte falsch auslegen. Zitate werden gegen ausgelesenen Text geprüft, bei OCR zusätzlich das Seitenbild kontrollieren. Fehlende oder erfundene Zitate sperren die Antwort. Zusätzlicher Arbeitsspeicher ist nötig; auf kleinen Geräten kann die Inferenz langsam sein.',
+  },
+
   'native-objects': guide('Eine PDF mit vorhandenen Text-, Bild- oder Grafikobjekten.', [
     'Für Einzelobjekte: Seitenobjekte laden, Objekt wählen und Text in Originalschrift ändern oder Bild/Grafik verschieben, drehen, skalieren und ersetzen.',
     'Für Absätze: oben „Absatz mit automatischem Umbruch“ wählen, Textobjekte laden, gewünschte Objekte ankreuzen und „Auswahl als Absatz laden“ verwenden. Textreihenfolge kontrollieren.',
-    'Text, Noto Sans oder eigene statische TrueType-Schrift, Größe, Abstand, Ausrichtung und Farbe einstellen. Den neuen Bereich aufziehen oder seine Prozentwerte ändern.',
-    'Absatzvorschau berechnen und danach exportieren. Bei Überlauf den Bereich vergrößern oder Text beziehungsweise Schrift anpassen. Für weitere Bearbeitung das Ergebnis übernehmen.',
-  ], 'PDF mit echten bearbeiteten Textobjekten und eingebetteter Absatzschrift; übriger Text und Grafiken bleiben erhalten.', 'Absätze ersetzen ausgewählte ganze Textobjekte einer Seite mit einheitlicher Formatierung. Keine Textbearbeitung innerhalb verschachtelter Gruppen, kein seitenübergreifender Umbruch oder komplexe Schriftformung. Fehlende Zeichen und Überlauf werden gemeldet. Überschneidungen mit ungewählten Objekten manuell prüfen. Löschen ist keine Sicherheitsbereinigung; Signaturen und vorhandene Barrierefreiheits-Tags erneut prüfen.'),
+    'Text, Noto Sans oder eigene statische TrueType-Schrift, Größe, Abstand, Ausrichtung und Farbe einstellen. Für unterschiedliche Formatierungen Text markieren und „Markierten Text anders formatieren“ wählen. Den Textbereich aufziehen oder seine Prozentwerte ändern.',
+    'Absatzvorschau berechnen und danach exportieren. Bei Überlauf den Bereich vergrößern oder Folgeseiten einschalten. Bis zu 19 neue Seiten werden direkt nach der bearbeiteten Seite eingefügt. Für weitere Bearbeitung das Ergebnis übernehmen.',
+  ], 'PDF mit bearbeiteten Textobjekten, gemischten Absatzformatierungen und bei Bedarf neuen Folgeseiten; übrige Seiten bleiben erhalten.', 'Absätze ersetzen ausgewählte ganze Textobjekte. Bis zu 32 getrennte Formatbereiche mit eigener Größe, Farbe oder statischer TrueType-Schrift. Ligaturen und kombinierende Zeichen werden geformt; nicht unterstützte Leserichtungen, fehlende Zeichen und Überlauf werden abgewiesen. Keine Unterobjektbearbeitung verschachtelter Gruppen. Überschneidungen mit ungewählten Objekten in der Vorschau prüfen. Löschen ist keine Sicherheitsbereinigung; Signaturen und vorhandene Barrierefreiheits-Tags erneut prüfen.'),
   'bates': guide('Eine oder mehrere PDFs in der gewünschten Dateireihenfolge.', [
     'Öffne alle Dateien, die fortlaufend gekennzeichnet werden sollen.',
     'Wähle Vorlage, Startnummer, Ziffernstellen, Schriftgröße und Position. Platzhalter: {nummer}, {seite}, {seiten} und {datei}. Prüfe die Textvorschau.',
@@ -371,7 +396,8 @@ export const guides = {
     'Prüfe die Trefferseiten, passe die Auswahl an und speichere die Auswahl als PDF.'
   ], 'Dokumentenübersicht und neue PDF aus ausgewählten beziehungsweise gefundenen Seiten.', 'Leerseiten und Duplikate sind Hinweise, keine automatische Löschentscheidung. Der lokale Suchindex macht die Original-PDF nicht dauerhaft durchsuchbar; dafür „OCR & Text“ verwenden. Ausstehende Änderungen zuerst anwenden, wenn sie Grundlage der Prüfung sein sollen.'),
   'ocr': guide('Gescannte PDFs, Bilder oder PDFs mit unzureichendem Suchtext.', [
-    'Wähle die Seiten und eine der 21 Erkennungssprachen. Über „Sprachen kombinieren“ sind bis zu vier Sprachen gleichzeitig möglich. Wähle den Seitenaufbau und erzwinge OCR nur, wenn vorhandener Text neu erkannt werden soll.',
+    'Wähle die Seiten und eine der 21 Erkennungssprachen. Über „Sprachen kombinieren“ sind bis zu acht Sprachen gleichzeitig möglich. Wähle den Seitenaufbau und erzwinge OCR nur, wenn vorhandener Text neu erkannt werden soll.',
+    'Optional „Sprachen automatisch ermitteln“ aktivieren. Eine lokale Probe wählt pro Scan-Seite passende Modelle. Kurze, unscharfe oder mehrdeutige Texte erfordern eine manuelle Auswahl; die Probe braucht zusätzlichen Arbeitsspeicher.',
     'Starte die Erkennung und vergleiche den Text mit der Seitenvorschau. Korrigiere insbesondere Zahlen, Namen und Lesereihenfolge.',
     'Speichere eine durchsuchbare PDF, TXT oder DOCX. Übernimm die PDF als Arbeitsdokument, wenn weitere textbasierte Werkzeuge folgen sollen.'
   ], 'PDF mit Suchtext oder Textausgabe als TXT/DOCX.', 'DOCX enthält den erkannten Text ohne Rekonstruktion des ursprünglichen Layouts. Handschrift, Spalten und unscharfe Scans sind besonders fehleranfällig. Große OCR-Aufträge können auf Smartphones länger dauern.'),

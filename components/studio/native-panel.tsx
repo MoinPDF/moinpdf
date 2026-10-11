@@ -17,6 +17,8 @@ import {
 } from '@/lib/native-pdf';
 import { packagePdfs } from '@/lib/pro-tools';
 import { NativeParagraphPanel } from './native-paragraph-panel';
+import { NativeObjectHandles } from './native-object-handles';
+import { OperationPreview } from './operation-preview';
 
 async function replacementImage(file: File) {
   if (file.size > 20 * 1024 * 1024)
@@ -77,6 +79,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
     [dy, setDy] = useState(0),
     [scale, setScale] = useState(100),
     [rotation, setRotation] = useState(0),
+    [order, setOrder] = useState<'unchanged' | 'front' | 'back'>('unchanged'),
     [image, setImage] = useState<File | null>(null);
   const [find, setFind] = useState(''),
     [replace, setReplace] = useState('');
@@ -89,6 +92,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
     setDy(0);
     setScale(100);
     setRotation(0);
+    setOrder('unchanged');
     setImage(null);
   };
   const save = async (changes: NativeChange[], signal: AbortSignal) =>
@@ -201,6 +205,16 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
               min={-360}
               max={360}
             />
+            <Choice
+              label="Zeichenreihenfolge"
+              value={order}
+              onChange={(v) => setOrder(v as typeof order)}
+              items={[
+                ['unchanged', 'Unverändert'],
+                ['front', 'Ganz nach vorn'],
+                ['back', 'Ganz nach hinten'],
+              ]}
+            />
             <Button
               disabled={busy}
               onClick={() =>
@@ -214,6 +228,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
                         dy: dy / 100,
                         scale: scale / 100,
                         rotation,
+                        ...(order === 'unchanged' ? {} : { order }),
                         ...(image ? { image: await replacementImage(image) } : {}),
                       },
                     ],
@@ -263,19 +278,64 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
           </>
         )}
         <p className="fine-note">
-          Die Vorschau markiert das Originalobjekt. Jede Ausgabe basiert auf der geöffneten Datei;
-          für weitere Änderungen „Ergebnis übernehmen“ verwenden. Bearbeitet werden einzelne
-          Textobjekte. Für mehrere Texte und automatischen Umbruch oben „Absatz“ wählen. Fehlende
-          Zeichen in eingebetteten Schriften werden gemeldet. Inhalte in Objektgruppen sind hier
-          gemeinsam bearbeitbar. Das Löschen ist keine Sicherheitsbereinigung.
+          Objekte in der Vorschau auswählen; am Rahmen verschieben, am Eckpunkt skalieren und am
+          runden Griff drehen. Die Pfeiltasten bedienen den fokussierten Griff. Jede Ausgabe basiert
+          auf der geöffneten Datei; für weitere Änderungen „Ergebnis übernehmen“ verwenden.
+          Bearbeitet werden einzelne Textobjekte. Für mehrere Texte und automatischen Umbruch oben
+          „Absatz“ wählen. Fehlende Zeichen in eingebetteten Schriften werden gemeldet. Inhalte in
+          Objektgruppen sind hier gemeinsam bearbeitbar. Das Löschen ist keine
+          Sicherheitsbereinigung.
         </p>
       </section>
       <section className="advanced-card">
-        <PageStage
-          source={source}
-          page={page}
-          rects={object ? [{ ...object, label: labels[object.type] }] : []}
-        />
+        <PageStage source={source} page={page}>
+          <NativeObjectHandles
+            objects={objects}
+            object={object}
+            value={{ dx, dy, scale, rotation }}
+            disabled={busy}
+            onSelect={select}
+            onChange={(v) => {
+              setDx(v.dx);
+              setDy(v.dy);
+              setScale(v.scale);
+              setRotation(v.rotation);
+            }}
+          />
+        </PageStage>
+        {object && (
+          <OperationPreview
+            busy={busy}
+            version={JSON.stringify({
+              page,
+              selected,
+              text,
+              dx,
+              dy,
+              scale,
+              rotation,
+              order,
+              image: image && [image.name, image.size, image.lastModified],
+            })}
+            build={async (signal) =>
+              save(
+                [
+                  {
+                    index: selected,
+                    ...(object.type === 'text' ? { text } : {}),
+                    dx: dx / 100,
+                    dy: dy / 100,
+                    scale: scale / 100,
+                    rotation,
+                    ...(order === 'unchanged' ? {} : { order }),
+                    ...(image ? { image: await replacementImage(image) } : {}),
+                  },
+                ],
+                signal,
+              )
+            }
+          />
+        )}
       </section>
     </div>
   );

@@ -1,4 +1,5 @@
 export const advancedToolIds = [
+  'local-assistant',
   'native-objects',
   'bates',
   'page-labels',
@@ -48,6 +49,9 @@ export type AdvancedTool = (typeof advancedToolIds)[number];
 export const isAdvancedTool = (id: string): id is AdvancedTool =>
   (advancedToolIds as readonly string[]).includes(id);
 export const serverToolIds = [
+  'svg-export',
+  'font-outlines',
+  'flatten-layers',
   'pdf-audio',
   'optimize-pdf',
   'ebook-pdf',

@@ -53,6 +53,11 @@ def html_pdf(source,directory):
 def powerpoint(source,directory):
     from pptx import Presentation
     from pptx.util import Inches
+    mode=settings(directory).get('powerpointMode','image')
+    if mode == 'editable':
+        from expansion_documents import editable_powerpoint
+        return editable_powerpoint(source,directory)
+    if mode != 'image':raise ValueError('Unbekannter Folienmodus.')
     deck=Presentation();deck.slide_width=Inches(13.333);deck.slide_height=Inches(7.5)
     with open_pdf(source) as pdf:
         if len(pdf)>100:raise ValueError('Für Folien bitte höchstens 100 PDF-Seiten verwenden.')
@@ -231,10 +236,23 @@ def translate(source,directory):
     if not re.fullmatch(r'[a-z]{2,3}',target) or not re.fullmatch(r'auto|[a-z]{2,3}',language):raise ValueError('Ungültige Sprache.')
     endpoint=os.environ.get('MOINPDF_TRANSLATE_URL','').rstrip('/')
     if not endpoint:raise ValueError('Auf dem Server ist noch kein eigener LibreTranslate-Dienst eingerichtet.')
+    mode=options.get('translationLayout','parallel')
+    if mode not in {'parallel','original'}:raise ValueError('Unbekannte Übersetzungsanordnung.')
     rows=[];total=0
     session=requests.Session();session.trust_env=False
+    def request_translation(chunk):
+        payload={'q':chunk,'source':language,'target':target,'format':'text'}
+        if os.environ.get('MOINPDF_TRANSLATE_KEY'):payload['api_key']=os.environ['MOINPDF_TRANSLATE_KEY']
+        response=session.post(endpoint+'/translate',json=payload,timeout=30,allow_redirects=False)
+        if response.status_code!=200:raise ValueError('Der Übersetzungsdienst hat den Auftrag nicht angenommen. Sprachen und Dienstkonfiguration prüfen.')
+        translated=response.json().get('translatedText')
+        if not isinstance(translated,str):raise ValueError('Der Übersetzungsdienst hat keinen übersetzten Text geliefert.')
+        return translated
     try:
         with open_pdf(source) as pdf:
+            if mode == 'original':
+                from expansion_documents import translate_original
+                return translate_original(pdf,directory,request_translation,options.get('minimumFontSize',8))
             for number,page in enumerate(pdf,1):
                 text=page.get_text(sort=True).strip();total+=len(text)
                 if total>60000:raise ValueError('Bitte höchstens 60.000 Textzeichen pro Übersetzung verwenden.')
@@ -242,12 +260,7 @@ def translate(source,directory):
                 # Short paired rows remain readable and can flow across page boundaries.
                 for start in range(0,len(text),1500):
                     chunk=text[start:start+1500]
-                    payload={'q':chunk,'source':language,'target':target,'format':'text'}
-                    if os.environ.get('MOINPDF_TRANSLATE_KEY'):payload['api_key']=os.environ['MOINPDF_TRANSLATE_KEY']
-                    response=session.post(endpoint+'/translate',json=payload,timeout=30,allow_redirects=False)
-                    if response.status_code!=200:raise ValueError('Der Übersetzungsdienst hat den Auftrag nicht angenommen. Sprachen und Dienstkonfiguration prüfen.')
-                    translated=response.json().get('translatedText')
-                    if not isinstance(translated,str):raise ValueError('Der Übersetzungsdienst hat keinen übersetzten Text geliefert.')
+                    translated=request_translation(chunk)
                     rows.append(f'<tr><td><b>Seite {number}</b><p>{html.escape(chunk)}</p></td><td>{html.escape(translated)}</td></tr>')
         story_pdf('<h1>Original und Übersetzung</h1><p>Maschinelle Übersetzung – bitte prüfen.</p><table><tr><th>Original</th><th>Übersetzung</th></tr>'+''.join(rows)+'</table>',directory/'output.pdf')
     finally:session.close()

@@ -1,60 +1,59 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 11. Oktober 2026, Entwicklungsversion 0.8.1.
+Stand: 11. Oktober 2026, Version 0.9.0.
 
-Dieser Stand umfasst drei implementierte Etappen. Eine größere Zahl von
-Werkzeugen allein belegt keinen Gesamtsieg im Produktvergleich. Die folgende
-Liste trennt nutzbare Erweiterungen von verbleibender Arbeit.
+Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
+22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
+Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
-| Bereich | In dieser Etappe umgesetzt | Verbleibende Arbeit |
+| Bereich | Umgesetzt | Verbleibende Arbeit |
 | --- | --- | --- |
-| 1. Nativer Texteditor | Originalobjekte ändern; zusätzlicher Absatzeditor ersetzt mehrere Textobjekte, bricht automatisch um, bettet Noto Sans/eigene statische TTF ein; Vorschau, Glyphen- und Überlaufprüfung | Mehrere Formatierungen innerhalb eines Absatzes, komplexe Schriftformung, seitenübergreifender Textfluss und verschachtelte Objektgruppen |
-| 2. Bilder und Grafiken | Vorhandene Objekte bewegen, drehen, skalieren und löschen; Bilddaten ersetzen | Unterobjekte verschachtelter Gruppen einzeln bearbeiten, direkte Griffpunkte in der Vorschau |
-| 3. Lokales Office zu PDF | ZetaOffice-Größe/Verteilung geprüft; kleinere DOCX-WASM-Alternative mit echten Dokumenten getestet und wegen Bild-, Tabellen- und Zeichenfehlern verworfen; Serverkonvertierung bleibt verfügbar | Verlässlichen lokal ausgelieferten Laufzeitkern integrieren; konkrete Befunde in [BROWSER-OFFICE.md](BROWSER-OFFICE.md) |
-| 4. PDF zu Office | Bestehende Konvertierungen bleiben erhalten | Bearbeitbare Folien und zuverlässigere Layout-/Tabellenrekonstruktion |
-| 5. OCR | 21 lokale Sprachmodelle; bis zu vier frei gewählte Sprachen gemeinsam in OCR und Scan-Suche; fünf Einstellungen zum Seitenaufbau | Automatische Spracherkennung; mehr als vier gleichzeitige Sprachen |
-| 6. Importformate | WebP, BMP, mehrseitige TIFF und eigenständige SVG zusätzlich zu bisherigen Formaten | HEIC, Pages, Visio, Publisher und PSD; SVG-Import erhält hier ein Seitenbild, keine editierbaren Vektoren |
-| 7. Exportformate | WebP, TIFF, BMP sowie JSON mit Text und Positionen | Echter Vektor-SVG-Export |
-| 8. Arbeitsabläufe | Wenn-/Sonst-Schritte nach Dateiname, vorhandenen Texten oder Seitenzahl; Speichern/Import/Export; Entscheidungsprotokoll | Freies Knotendiagramm, verschachtelte Verzweigungen und weitere Schrittarten |
-| 9. XFA | Bestehende Erkennung und Hinweise | Dynamische XFA-Anzeige, Bearbeitung und verlässlicher Export |
-| 10. Ebenen | Namen, Ebenenliste und anfängliche Sichtbarkeit speichern; Ebenen bleiben schaltbar, Text und Vektoren erhalten | Ebeneninhalte erstellen/verschieben, Ebenen dauerhaft entfernen und Zeichenreihenfolge bearbeiten |
-| 11. Nummerierung | Dateiübergreifende Bates-Zählung, Vorlagen für Kopf-/Fußzeilen, interne Seitenbezeichnungen | Mehrere gleichzeitig unterschiedliche Kopf-/Fußzeilen und komplexe Abschnittsregeln |
-| 12. Signaturen | Bestehende Zertifikatssignaturen | Vertrauenswürdige Zeitstempel, Widerrufsprüfung und vollständige Langzeitvalidierung |
-| 13. Seitenwerkzeuge | Beliebige Winkel, lange Seite, Posterdruck mit Überlappung | Vorschau direkt bei Parameteränderung und weitere Druckvorlagen |
-| 14. Optimierung | QPDF-Linearisierung für schnelle Webansicht | Vollständiges Einbetten fehlender Schriften und Umwandlung von Schrift in Pfade |
-| 15. Vektorerhaltende Schwärzung | PDFium-Grundlage mit Tests für Textbereiche und Bilddaten | Zusätzliche Sicherheitsfälle und Integration in das Schwärzwerkzeug; vorhandene sichere Raster-Schwärzung bleibt der freigegebene Weg |
-| 16. Barrierefreiheit | veraPDF-Prüfung PDF/UA-1/-2; Struktureditor für neue A4-Dokumente mit Überschriften, Lesereihenfolge und Alternativtext; PDF/UA-1-Ausgabe nur nach bestandener Maschinenprüfung | Bestehende PDF-Tags bei erhaltenem Layout reparieren; Tabellen und Formulare strukturiert übernehmen; manuelle Prüfung bleibt erforderlich |
-| 17. Druckvorbereitung | Bestehende Prüfung und neuer Posterdruck | Farbmanagement, Beschnitt, Schriftenkorrekturen und validierter PDF/X-Export |
-| 18. Übersetzung | Bestehende Übersetzung | Originaltreue Platzierung übersetzter Absätze und Umgang mit Textüberlauf |
-| 19. Dokumentvergleich | Pixel-/Text-/Zahlenvergleich; zusätzlicher Inhaltsmodus mit Zuordnung über Seiten hinweg, Wortänderungen, Verschiebungen und Hinweisen auf Mehrdeutigkeit | Layout- und spaltenbewusste Absatzrekonstruktion; seitenübergreifend umbrochene Sätze; fachliche Bedeutungsprüfung |
-| 20. Lokaler Assistent | Bestehende Suche und neuer strukturierter Export als Grundlage | Lokales Sprachmodell, quellengebundene Antworten und überprüfbare Zitate |
-| 21. Große Dateien | Neuer PDFium-Worker kann abgebrochen werden; Arbeitsspeicher wird nach Aufträgen freigegeben | Durchgängige Worker-Verarbeitung, Streaming und belegbare höhere Dateigrenzen; aktuell weiterhin 80 MB/200 Seiten |
-| 22. Lokale Projekte | IndexedDB-Projekte mit fünf Arbeitsständen; übertragbare .moinpdf-Datei für einen gewählten Stand samt Dateien, Editor, Formularen, Lesezeichen und Rückgängig-Verlauf | Einstellungen und nicht übernommene Ergebnisse aller Spezialwerkzeuge separat speichern; gesamtes Projektarchiv mit mehreren gespeicherten Ständen |
+| 1. Nativer Texteditor | Originalobjekte und Absätze; bis zu 32 Formatbereiche mit Schrift, Größe und Farbe; Ligaturen und kombinierende Zeichen; automatische zusätzliche Folgeseiten; echte Vorschau und Überlaufprüfung | Rechts-nach-links-Schrift und beliebige komplexe Leserichtungen; Unterobjekte verschachtelter Gruppen |
+| 2. Bilder und Grafiken | Objekte bewegen, drehen, skalieren, ersetzen, löschen und in ihrer Zeichenreihenfolge ändern; direkte Griffpunkte mit Tastaturbedienung | Einzelne Unterobjekte verschachtelter Gruppen |
+| 3. Lokales Office zu PDF | LibreOffice auf dem eigenen Dokumentenserver; alternative Browserkerne geprüft | Zuverlässiger, verteilbarer Browserkern für Word, Excel und PowerPoint; konkrete Hindernisse in [BROWSER-OFFICE.md](BROWSER-OFFICE.md) |
+| 4. PDF zu Office | Word-Rekonstruktion, Tabellenexport und bearbeitbare PowerPoint-Textfelder mit Stil und Position | Allgemeine originalgetreue Rekonstruktion komplexer Tabellen und Layouts |
+| 5. OCR | 21 lokal ausgelieferte Modelle; bis zu acht gemeinsam; automatische Sprachprobe pro Scan-Seite mit bewusster Ablehnung kurzer oder unklarer Texte | Vollständige Spracherkennung bei Handschrift, sehr kurzen Texten und beliebigem Sprachmix wird nicht garantiert |
+| 6. Importformate | HEIC/HEIF und PSD im lokalen Worker, WebP, BMP, mehrseitige TIFF, SVG; Pages 4/5, Visio und Publisher über LibreOffice; Integritäts-, Format- und Größenprüfungen | SVG-Import wird als Bildseite übernommen; PSD-Ebenen werden nicht als editierbare PDF-Ebenen importiert |
+| 7. Exportformate | WebP, TIFF, BMP, JSON mit Positionen und echter SVG-Vektorexport | SVG-Vektorexport benötigt den Dokumentenserver |
+| 8. Arbeitsabläufe | Frei angeordnete Knoten, verschachtelte Ja/Nein-Zweige, mehrere Schrittarten, Import/Export und Entscheidungsprotokoll; Prüfung auf Schleifen und unerreichbare Knoten | Durchgängig im Hintergrund laufende Verarbeitung großer Stapel |
+| 9. XFA | Erkennung und verständliche Hinweise bei nicht unterstützten Formularen | Dynamische XFA-Anzeige, Bearbeitung und verlässlicher Export |
+| 10. Ebenen | Namen und Sichtbarkeit bearbeiten; dauerhaftes Reduzieren der sichtbaren Ebenen; Zeichenreihenfolge von Seitenobjekten | Ebeneninhalte erstellen und beliebige Objekte zwischen Ebenen verschieben |
+| 11. Nummerierung | Dateiübergreifende Bates-Zählung, mehrere unabhängige Kopf-/Fußzeilenregeln, Seitenbereiche und interne Seitenbezeichnungen; Überlappungsprüfung | Beliebige verschachtelte Abschnittsstrukturen |
+| 12. Signaturen | PAdES-T/LT/LTA, strenge Offline-Widerrufsprüfung, eingebettete DSS-Nachweise und Erneuerung von Dokumentzeitstempeln | Betreiber muss Zeitstempeldienst, kontrollierte Erreichbarkeit, Vertrauensanker und Sperrnachweise bereitstellen; qualifizierter Status wird nicht behauptet |
+| 13. Seitenwerkzeuge | Freie Winkel, lange Seiten, Posterdruck auf wählbarem Papier mit Rand und Überlappung; abbrechbare Vorschau bei Parameteränderungen | Weitere frei gestaltbare Druckvorlagen |
+| 14. Optimierung | QPDF-Linearisierung und Umwandeln vorhandener Schriftkonturen in Vektorpfade | Fehlende Originalschriften ohne passende, lizenzierte Schriftdateien rekonstruieren |
+| 15. Vektorerhaltende Schwärzung | PDFium-Grundlage für Text- und Bildbereiche mit Tests; freigegebene Schwärzung baut Seitenbilder vollständig neu auf | Sicherheitsfreigabe einer vektorerhaltenden Schwärzung für beliebige PDF-Strukturen |
+| 16. Barrierefreiheit | PDF/UA-Prüfung, neuer Struktureditor und Reparatur vorhandener Tags mit Alternativtexten, Tabellenköpfen, Feldbezeichnungen und Lesereihenfolge; Seiteninhalt bleibt bei Tag-Reparatur erhalten; Ausgabe nach bestandener veraPDF-Prüfung | Beliebige ungetaggte PDFs automatisch originalgetreu strukturieren; menschliche Prüfung bleibt notwendig |
+| 17. Druckvorbereitung | Technische Druckprüfung, Seitenanpassung, Randbeschnitt und Posterdruck | Vollständiges Farbmanagement und unabhängig validierter PDF/X-Export |
+| 18. Übersetzung | Übersetzte Absätze an Originalpositionen, Erhalt von Hintergrund und Links, Abbruch vor Ausgabe bei Textüberlauf | Beliebige komplexe Layouts, Schrift- und Spracherhaltung |
+| 19. Dokumentvergleich | Spaltenbewusste Lesereihenfolge, seitenübergreifende Sätze, Wortänderungen und Verschiebungen; Hinweise auf geänderte Beträge, Verneinungen und Pflichtwörter | Allgemeine fachliche Bedeutungsprüfung; komplexe Tabellen und mehr als zwei Spalten manuell prüfen |
+| 20. Lokaler Assistent | CPU-Sprachmodell auf dem eigenen Gerät, geprüfte Modelldatei, Auswahl passender Textstellen, unveränderte Originalzitate, Sperre unbelegter Zahlen, JSON-Export, Abbruch und Entladen | Keine Vollständigkeits- oder Wahrheitsgarantie; Zahlenprüfung ist konservativ und verlangt das Originalformat, Text und Zusammenhang weiterhin an den Originalfundstellen prüfen |
+| 21. Große Dateien | PDFium-, Bilddecoder-, Prüfsummen- und Seitenwerkzeug-Worker; Abbruch und Speicherfreigabe | Durchgängiges Streaming und höhere belegte Dateigrenzen; weiterhin 80 MB und 200 Seiten |
+| 22. Lokale Projekte | Unveränderliche fünf Arbeitsstände, vollständiges Archiv mit deduplizierten Binärdaten, SHA-256-Prüfungen, atomarer Import und Wiederherstellung | Noch nicht übernommene Ergebnisse sämtlicher Spezialwerkzeuge automatisch mitspeichern |
 
-## Prüfung
+## Prüfung und Freigabe
 
-21 Engine-Testsuiten. Absatztests lesen echte Unicode-Schriften, mehrere ersetzte Originalobjekte, Textumbruch und Grenzen bei allen Seitendrehungen zurück. Sechs zusätzliche Serverprüfungen umfassen echte LibreOffice-PDF/UA-Ausgabe mit veraPDF, Bildbeschreibungen, Titel, Tags, fehlerhafte Aufträge und gesperrte PDF-Ausgaben bei fehlgeschlagener Validierung. Projektdateien werden einschließlich Formularen, Rechnungs-XML und Verlauf zurückgelesen; beschädigte und unzulässige Daten werden abgewiesen. Inhaltsvergleiche prüfen eingefügte/verschobene Seiten, Wortänderungen, Negationen, wiederholte Absätze und unklare Zuordnungen. Neue Prüfungen lesen bearbeitete PDFs unabhängig mit
-PDF.js, kontrollieren Seitenkoordinaten bei allen rechtwinkligen Drehungen und
-CropBox-Offsets, erhaltene Texte, entfernte Originaltexte, geänderte Bildpixel,
-echte QPDF-Linearisierung, TIFF/BMP-Pixel und lokale Projektversionen. Alle 21 ausgelieferten Sprachmodelle werden offline initialisiert; Französisch und eine kombinierte deutsch-englisch-französisch-spanische Erkennung werden mit tatsächlichen Erkennungsaufträgen geprüft.
-Typprüfung, Linter, Formatprüfung und beide Produktionsbuilds gehören zur
-Freigabe. Interaktive Browserprüfungen laufen in der Docker-CI auf Desktop und
-Smartphone. Version 0.8.0 hat einschließlich Absatzvorschau/Export/Überlauf und
-strukturierter PDF/UA-Ausgabe den [vollständigen Durchlauf](https://github.com/MoinPDF/moinpdf/actions/runs/38127214620)
-bestanden. Die [Docker-Images für amd64 und arm64](https://github.com/MoinPDF/moinpdf/actions/runs/38128260965)
-sind für den Quellstand `1b19dc8c64e89f6c4b2e80cdbab3caf94521b16f` veröffentlicht.
+Die 24 Engine-Testsuiten lesen erzeugte PDFs unabhängig zurück. Dazu gehören
+Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
+Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
+Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche
+sortiert und auf vollständigen Texterhalt geprüft.
 
-Die Korrektur 0.8.1 entfernt veraltete PDF/UA-Ergebnisse nach Änderungen am Entwurf,
-am Prüfprofil oder an der Aktion. Die ergänzte Browserprüfung kontrolliert den
-erneuten Export und liest Inhalt und Metadaten unabhängig zurück. Für die
-Freigabe dieses neuen Quellstands ist dessen eigener vollständiger CI-Lauf nötig;
-die bestandenen Prüfungen von 0.8.0 ersetzen ihn nicht.
+Serverprüfungen umfassen reale LibreOffice-Eingaben, SVG/Vektoren, bearbeitbare
+Folien, Übersetzungsüberlauf, veraPDF und synthetische CA/TSA/CRL-Nachweise für
+Langzeitsignaturen. Ein bestandener synthetischer Test ersetzt keine
+Produktionskonfiguration des Zeitstempeldienstes.
+
+Die Freigabe verlangt Typprüfung, Formatprüfung, Linter, Produktionsbuild und
+vollständige Docker-CI. Browserprüfungen testen alle Werkzeugansichten auf Desktop
+und Smartphone, Downloads, gemischte Absatzformatierung, neue Folgeseiten,
+Projekttransfer, acht OCR-Sprachen sowie echte lokale Modellinferenz. Jeder neue
+Quellstand erhält einen eigenen Prüflauf. Unfertige oder fehlgeschlagene Prüfungen
+werden nicht durch ältere erfolgreiche Läufe ersetzt.
 
 ## Komponenten und Lizenzen
 
-PDFium wird über `@embedpdf/pdfium@2.15.1` eingesetzt. Der Wrapper steht unter
-MIT, der PDFium-Kern unter Apache-2.0 mit weiteren Drittanbieterhinweisen.
-Die mitgelieferten `LICENSE`- und `LICENSE.pdfium`-Dateien werden vollständig
-unter `/vendor/licenses/` ausgeliefert. TIFF verwendet UTIF; Sprachdateien
-stammen aus den gepinnten Tesseract-Datenpaketen. Diese Ergänzungen ändern
-nicht die Lizenz des MoinPDF-Projekts.
+PDFium 2.15.1, OCR-Sprachmodelle, Decoder, Modelllaufzeit und statistische
+Sprachwahl werden mit ihren Komponentenhinweisen ausgeliefert. Details und
+zugehörige Lizenztexte: [Komponentenhinweise](../public/component-notices/README.txt).
+Diese Ergänzungen ändern nicht die Lizenz des MoinPDF-Projekts.
