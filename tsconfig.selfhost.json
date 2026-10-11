@@ -4,6 +4,6 @@
     "types": ["node", "vite/client"],
     "tsBuildInfoFile": ".cache/selfhost.tsbuildinfo"
   },
-  "include": ["selfhost/**/*.tsx", "vite.selfhost.config.ts"],
+  "include": ["selfhost/**/*.tsx", "workers/**/*.ts", "vite.selfhost.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

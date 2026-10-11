@@ -1,8 +1,7 @@
 import {batesPdfs,pageLabels,rotateFreely,continuousPage,posterPages,packagePdfs} from '../lib/pro-tools';
-import type {Source} from '../lib/pdf-engine';
 import type {ProJob} from '../lib/pro-job';
 self.onmessage=async ({data}:{data:{sources:{id:string;name:string;bytes:Uint8Array;pages:number}[];job:ProJob}})=>{
-  const sources=data.sources.map(s=>({...s,pdf:{numPages:s.pages}})) as Source[];
+  const sources=data.sources.map(s=>({...s,pdf:{numPages:s.pages}}));
   const source=sources[0],job=data.job;
   const ctx={signal:new AbortController().signal,report:(progress:{percent:number;label:string})=>self.postMessage({progress})};
   try {

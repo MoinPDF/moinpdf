@@ -110,7 +110,8 @@ export function batesText(
       })[key]!,
   );
 }
-export async function batesPdfs(sources: Source[], options: BatesOptions, ctx: RunContext) {
+type PageDataSource = Pick<Source, 'bytes' | 'name'> & { pdf: { numPages: number } };
+export async function batesPdfs(sources: PageDataSource[], options: BatesOptions, ctx: RunContext) {
   bounded(options.start, 0, 999999999, 'Startnummer', true);
   const rules = options.rules ?? [
     { ...options, from: 1, to: 0, parity: 'all', skipFirst: 0, numberOffset: 0, sectionStart: 1 },
@@ -339,7 +340,7 @@ export async function rotateFreely(bytes: Uint8Array, angle: number, ctx: RunCon
   return out.save();
 }
 export async function continuousPage(
-  sources: Source[],
+  sources: Pick<Source, 'bytes'>[],
   width: number,
   gap: number,
   ctx: RunContext,

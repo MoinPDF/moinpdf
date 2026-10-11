@@ -26,6 +26,8 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
   und getrennte, überprüfte Größenbudgets für den Browser-Build eingeführt.
 - Neue Regressionstests prüfen entfernte Projektinhalte, leere Seitenlisten,
   Projektwechsel und die mobile Projektauswahl.
+- Die reguläre Typprüfung erfasst auch Hintergrundprozesse; Seitenwerkzeuge
+  verwenden darin ausdrücklich die tatsächlich verfügbaren PDF-Daten.
 
 ## 0.9.2 – 2026-10-11
 
