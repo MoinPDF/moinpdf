@@ -225,21 +225,21 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
 
         transfer.get_by_role('button', name='OCR & Text', exact=True).click()
         transfer.get_by_role('button', name='Sprachen kombinieren', exact=True).click()
-        for language in ('Englisch', 'Französisch', 'Spanisch'):
+        for language in ('Englisch', 'Französisch', 'Spanisch', 'Italienisch', 'Portugiesisch', 'Niederländisch', 'Polnisch'):
             transfer.get_by_role('checkbox', name=language, exact=True).check()
-        expect(transfer.get_by_role('checkbox', name='Italienisch', exact=True)).to_be_disabled()
-        transfer.get_by_role('switch').check()
+        expect(transfer.get_by_role('checkbox', name='Tschechisch', exact=True)).to_be_disabled()
+        transfer.get_by_role('switch').last.check()
         transfer.get_by_role('button', name='Text erkennen', exact=True).click()
         expect(transfer.get_by_role('heading', name='Erledigt.', exact=True)).to_be_visible(timeout=180000)
         with transfer.expect_download() as download:
             transfer.locator('a[download]').first.click()
-        ocr_pdf = Path(temporary) / 'vier-sprachen.pdf'
+        ocr_pdf = Path(temporary) / 'acht-sprachen.pdf'
         download.value.save_as(ocr_pdf)
         with pymupdf.open(ocr_pdf) as document:
             assert len(document) == 2
             assert 'Moin' in document[0].get_text()
             assert 'Zweite' in document[1].get_text()
-        completed.append('Four OCR languages selected in the real UI and used by production workers; searchable PDF independently read back')
+        completed.append('Eight OCR languages selected in the real UI and used by production workers; searchable PDF independently read back')
         back(transfer)
 
         changed_pdf = Path(temporary) / 'neue-fassung.pdf'

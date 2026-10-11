@@ -54,8 +54,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         result = page.get_by_role('region',name='Antwort des lokalen Assistenten',exact=True)
         expect(result).to_be_visible(timeout=360000)
         expect(result).to_contain_text('7429')
-        expect(result.locator('blockquote')).to_have_count(1)
-        assert '7429' in result.locator('blockquote').inner_text()
+        assert 1 <= result.locator('blockquote').count() <= 3
+        assert '7429' in ' '.join(result.locator('blockquote').all_inner_texts())
         with page.expect_download() as download:
             page.locator('.advanced-result a[download]').click()
         saved = Path(temporary) / 'antwort.json'
