@@ -78,6 +78,8 @@ services:
         condition: service_healthy
     environment:
       MOINPDF_API_KEY_FILE: /run/moinpdf/api-key
+      MOINPDF_TSA_URL: ${MOINPDF_TSA_URL:-}
+      MOINPDF_TSA_BEARER: ${MOINPDF_TSA_BEARER:-}
       MOINPDF_TRANSLATE_URL: http://translation:5000
     read_only: true
     tmpfs:

@@ -257,29 +257,37 @@ export async function importProjectArchive(archive: ProjectArchive) {
   try {
     const tx = d.transaction(['projects', 'versions', 'documents'], 'readwrite'),
       done = completed(tx);
-    const versions = archive.versions.map((version) => {
-      const vid = id(),
-        sourceKeys = version.sources.map((s) => pid + ':' + vid + ':' + s.id);
-      version.sources.forEach((s, index) =>
-        tx.objectStore('documents').put({ ...s, key: sourceKeys[index], projectId: pid }),
-      );
-      tx.objectStore('versions').put({
-        id: vid,
-        projectId: pid,
-        created: version.created,
-        sourceIds: version.sources.map((s) => s.id),
-        sourceKeys,
-        state: version.state,
-      } satisfies ProjectVersion);
-      return { id: vid, created: version.created, pages: version.state.pages.length };
-    });
-    tx.objectStore('projects').put({
-      id: pid,
-      name: archive.name,
-      updated: archive.updated,
-      versions,
-    } satisfies ProjectMeta);
-    await done;
+    try {
+      const versions = archive.versions.map((version) => {
+        const vid = id(),
+          sourceKeys = version.sources.map((s) => pid + ':' + vid + ':' + s.id);
+        version.sources.forEach((s, index) =>
+          tx.objectStore('documents').put({ ...s, key: sourceKeys[index], projectId: pid }),
+        );
+        tx.objectStore('versions').put({
+          id: vid,
+          projectId: pid,
+          created: version.created,
+          sourceIds: version.sources.map((s) => s.id),
+          sourceKeys,
+          state: version.state,
+        } satisfies ProjectVersion);
+        return { id: vid, created: version.created, pages: version.state.pages.length };
+      });
+      tx.objectStore('projects').put({
+        id: pid,
+        name: archive.name,
+        updated: archive.updated,
+        versions,
+      } satisfies ProjectMeta);
+      await done;
+    } catch (error) {
+      try {
+        tx.abort();
+      } catch {}
+      await done.catch(() => {});
+      throw error;
+    }
     return pid;
   } finally {
     d.close();

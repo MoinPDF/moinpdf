@@ -11,6 +11,7 @@ export type ServerCapabilities = {
   translationStatus?: 'ready' | 'starting' | 'disabled';
   capabilities: Record<string, boolean>;
   versions?: Record<string, string>;
+  signatureLevels?: Record<string, boolean>;
   audioVoices?: { id: string; label: string; language: string }[];
   limits?: { maxBytes: number; audioCharacters?: number; audioSections?: number };
 };
@@ -105,6 +106,9 @@ export async function serverCapabilities(base: string, token: string, signal: Ab
   return v as ServerCapabilities;
 }
 export const serverCapabilityKey: Record<ServerTool, string> = {
+  'svg-export': 'svg',
+  'font-outlines': 'vectorRewrite',
+  'flatten-layers': 'vectorRewrite',
   'pdf-audio': 'speech',
   'optimize-pdf': 'optimize',
   'ebook-pdf': 'ebook',

@@ -13,6 +13,9 @@ export type ExtraSettings = {
   optimizeMode: string;
   fontSize: number;
   paper: string;
+  powerpointMode: string;
+  translationLayout: string;
+  minimumFontSize: number;
 };
 export const initialExtraSettings: ExtraSettings = {
   confidence: 15,
@@ -26,8 +29,14 @@ export const initialExtraSettings: ExtraSettings = {
   optimizeMode: 'images',
   fontSize: 12,
   paper: 'a4',
+  powerpointMode: 'image',
+  translationLayout: 'parallel',
+  minimumFontSize: 8,
 };
 export const extraActions: Partial<Record<ServerTool, string>> = {
+  'svg-export': 'svg',
+  'font-outlines': 'font-outlines',
+  'flatten-layers': 'flatten-layers',
   'optimize-pdf': 'optimize',
   'ebook-pdf': 'ebook',
   'pdf-powerpoint': 'powerpoint',
@@ -116,11 +125,44 @@ export function ServerExtraFields({
           </p>
         </>
       )}
-      {tool === 'pdf-powerpoint' && (
+      {tool === 'svg-export' && (
         <p className="fine-note">
-          Eine Folie je PDF-Seite, proportional auf 16:9 eingepasst. Seiten sind Bilder; Text ist in
-          PowerPoint nicht einzeln editierbar. Höchstens 100 Seiten.
+          ZIP mit einer SVG je Seite. Text wird als Kontur gespeichert; vorhandene Fotos bleiben
+          eingebettete Bilder. Höchstens 20 MB je SVG und 80 MB insgesamt.
         </p>
+      )}
+      {tool === 'font-outlines' && (
+        <p className="fine-note">
+          Text wird zu Vektorkonturen und ist danach nicht mehr auswählbar oder durchsuchbar. Das
+          Ergebnis ist eine neue PDF; Formulare, Tags, Links und digitale Signaturen werden nicht
+          garantiert übernommen.
+        </p>
+      )}
+      {tool === 'flatten-layers' && (
+        <p className="fine-note">
+          Verwendet die anfängliche Ebenensichtbarkeit der ausgewählten PDF. Diese zuerst unter
+          „PDF-Ebenen“ einstellen und das Ergebnis übernehmen. Ausgeblendete Ebeneninhalte werden
+          entfernt. Das Ergebnis ist eine neue PDF; Formulare, Tags, Links und digitale Signaturen
+          werden nicht garantiert übernommen.
+        </p>
+      )}
+      {tool === 'pdf-powerpoint' && (
+        <>
+          <Choice
+            label="Folieninhalt"
+            value={value.powerpointMode}
+            onChange={(v) => set('powerpointMode', v)}
+            items={[
+              ['image', 'Seitenbild'],
+              ['editable', 'Bearbeitbarer Text mit Grafikhintergrund'],
+            ]}
+          />
+          <p className="fine-note">
+            Eine Folie je PDF-Seite, höchstens 100 Seiten. Im Textmodus bleiben Texte einzeln
+            bearbeitbar; Grafiken bilden einen Bildhintergrund. Schriften müssen auf dem Zielgerät
+            verfügbar sein. Gedrehte Textobjekte benötigen den Seitenbild-Modus.
+          </p>
+        </>
       )}
       {tool === 'html-pdf' && (
         <p className="fine-note">
@@ -234,9 +276,29 @@ export function ServerExtraFields({
             onChange={(v) => set('target', v)}
             items={languages}
           />
+          <Choice
+            label="Anordnung der Übersetzung"
+            value={value.translationLayout}
+            onChange={(v) => set('translationLayout', v)}
+            items={[
+              ['parallel', 'Original und Übersetzung nebeneinander'],
+              ['original', 'Absätze an ursprünglichen Positionen'],
+            ]}
+          />
+          {value.translationLayout === 'original' && (
+            <NumberField
+              label="Kleinste Schriftgröße (pt)"
+              value={value.minimumFontSize}
+              min={6}
+              max={18}
+              onChange={(v) => set('minimumFontSize', v)}
+            />
+          )}
           <p className="fine-note">
-            Originaltext und Übersetzung werden nebeneinander ausgegeben. Höchstens 60.000 Zeichen;
-            maschinelle Übersetzungen bitte vor Verwendung prüfen.
+            Höchstens 60.000 Zeichen; maschinelle Übersetzungen bitte prüfen. Im Original-Layout
+            bleiben Bilder und Grafiken erhalten. Absätze verwenden eine einheitliche Ersatzschrift;
+            bei Textüberlauf oder überlappenden/gedrehten Textbereichen wird keine unvollständige
+            PDF ausgegeben.
           </p>
         </>
       )}

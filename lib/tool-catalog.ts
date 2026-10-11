@@ -135,6 +135,36 @@ export const tools = [
     fresh: true,
   },
   {
+    id: 'svg-export',
+    title: 'PDF zu Vektor-SVG',
+    description:
+      'Jede PDF-Seite als eigenständige SVG-Datei exportieren. Vektorgrafiken und Schriftkonturen bleiben scharf.',
+    icon: FileImage,
+    group: 1,
+    action: 'SVG-Dateien exportieren',
+    fresh: true,
+  },
+  {
+    id: 'font-outlines',
+    title: 'Schriften in Pfade',
+    description:
+      'Schriftzeichen als feste Vektorkonturen exportieren, unabhängig von installierten Schriften.',
+    icon: FileCheck2,
+    group: 3,
+    action: 'Schriftkonturen erstellen',
+    fresh: true,
+  },
+  {
+    id: 'flatten-layers',
+    title: 'Ebenen dauerhaft reduzieren',
+    description:
+      'Die anfänglich sichtbaren Ebenen als feste PDF-Ansicht speichern und ausgeblendete Ebenen entfernen.',
+    icon: Layers,
+    group: 3,
+    action: 'Ebenen reduzieren',
+    fresh: true,
+  },
+  {
     id: 'structured-export',
     title: 'PDF zu strukturiertem JSON',
     description:
@@ -388,7 +418,8 @@ export const tools = [
   {
     id: 'pdf-powerpoint',
     title: 'PDF zu PowerPoint',
-    description: 'Jede PDF-Seite als maßgetreues Seitenbild auf eine PowerPoint-Folie übernehmen.',
+    description:
+      'PDF-Seiten als Folienbilder oder mit einzeln bearbeitbaren Textobjekten auf PowerPoint-Folien übernehmen.',
     icon: FileImage,
     group: 1,
     action: 'PowerPoint-Datei erstellen',

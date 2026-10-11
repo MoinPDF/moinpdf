@@ -177,7 +177,8 @@ def health():
 def capabilities():
     translation = translation_status()
     voices = voices_available()
-    return {"apiVersion": 1, "service": "MoinPDF Dokumentenserver", "limits": {"maxBytes": MAX_BYTES, "audioCharacters": MAX_CHARACTERS, "audioSections": MAX_SECTIONS}, "audioVoices": voices,
+    signature_advanced = os.getenv("MOINPDF_TSA_URL", "").startswith("https://") and any(Path(os.getenv("MOINPDF_TRUST_ROOTS", "/trust")).glob("*.pem"))
+    return {"apiVersion": 1, "service": "MoinPDF Dokumentenserver", "limits": {"maxBytes": MAX_BYTES, "audioCharacters": MAX_CHARACTERS, "audioSections": MAX_SECTIONS}, "audioVoices": voices, "signatureLevels": {"basic": True, "timestamp": signature_advanced, "lt": signature_advanced, "lta": signature_advanced},
             "versions": versions(), "translationService": urlsplit(os.getenv('MOINPDF_TRANSLATE_URL','')).hostname,
             "translationStatus": translation,
             "capabilities": {
@@ -185,6 +186,8 @@ def capabilities():
                 "office": bool(office_binary()),
                 "pdfWord": importlib.util.find_spec("pdf2docx") is not None,
                 "email": bool(office_binary() and importlib.util.find_spec("extract_msg")),
+                "svg": importlib.util.find_spec("pymupdf") is not None,
+                "vectorRewrite": bool(shutil.which("gs") and importlib.util.find_spec("pymupdf")),
                 "powerpoint": importlib.util.find_spec("pptx") is not None,
                 "html": importlib.util.find_spec("pymupdf") is not None,
                 "optimize": importlib.util.find_spec("pymupdf") is not None,
@@ -193,6 +196,7 @@ def capabilities():
                 "formDetect": importlib.util.find_spec("cv2") is not None,
                 "documentChecks": importlib.util.find_spec("pymupdf") is not None,
                 "pdfuaValidate": bool(Path(VERAPDF).is_file() and shutil.which("java")),
+                "pdfuaRepair": bool(Path(VERAPDF).is_file() and shutil.which("java") and importlib.util.find_spec("pyhanko")),
                 "pdfuaCreate": bool(Path(VERAPDF).is_file() and shutil.which("java") and office_binary()),
                 "dewarp": importlib.util.find_spec("cv2") is not None,
                 "translate": translation == "ready",
@@ -433,6 +437,39 @@ def create_pdfua(request: UploadFile = File(...)):
         return response
 
 
+@app.post('/v1/pdfua/structure', dependencies=[Depends(authorize)])
+def inspect_pdfua_structure(file: UploadFile = File(...)):
+    with job() as directory:
+        source=upload(file,directory/'input.pdf');require_pdf(source)
+        convert_worker('tag-structure',source,directory)
+        return result((directory/'report.json').read_bytes(),'PDF-Struktur.json','application/json')
+
+
+@app.post('/v1/pdfua/repair', dependencies=[Depends(authorize)])
+def repair_pdfua_structure(file: UploadFile = File(...), changes: str = Form(...), profile: str = Form('ua1')):
+    if len(changes)>1024*1024:
+        raise HTTPException(422,'Der Tag-Auftrag überschreitet 1 MB.')
+    try:
+        request=json.loads(changes)
+        if not isinstance(request,dict):raise ValueError()
+    except ValueError:
+        raise HTTPException(422,'Ungültiger Tag-Auftrag.')
+    with job() as directory:
+        source=upload(file,directory/'input.pdf');require_pdf(source)
+        (directory/'settings.json').write_text(json.dumps(request))
+        convert_worker('tag-repair',source,directory)
+        output=directory/'output.pdf'
+        if output.stat().st_size>MAX_BYTES:raise HTTPException(422,'Das Ergebnis überschreitet 80 MB.')
+        summary,raw=pdfua_report(output,profile,directory)
+        files=pdfua_files(summary,raw)
+        files['Manuell-pruefen.txt']=(summary['note']+'\nDas ursprüngliche Seitenlayout bleibt erhalten. Die fachliche Richtigkeit der bearbeiteten Tags, Tabellenbeziehungen, Formularbeschreibungen und Lesereihenfolge muss geprüft werden.').encode()
+        files['Aenderungen.json']=(directory/'changes.json').read_bytes()
+        if summary['technicalPassed']:files['PDF-UA-repariert-technisch-geprueft.pdf']=output.read_bytes()
+        response=archive(files,'PDF-UA-Reparatur.zip' if summary['technicalPassed'] else 'PDF-UA-Reparatur-Pruefung-fehlgeschlagen.zip')
+        response.headers['X-MoinPDF-Note']=quote(('Technische PDF/UA-Prüfung bestanden; reparierte PDF und Bericht enthalten. ' if summary['technicalPassed'] else 'Prüfung nicht bestanden; ausschließlich Berichte, keine PDF ausgegeben. ')+summary['note'])
+        return response
+
+
 @app.post("/v1/xrechnung/validate", dependencies=[Depends(authorize)])
 def validate_invoice(file: UploadFile = File(...)):
     with job() as directory:
@@ -457,7 +494,7 @@ def validate_invoice(file: UploadFile = File(...)):
 
 
 @app.post("/v1/signatures/sign", dependencies=[Depends(authorize)])
-def sign_pdf(file: UploadFile = File(...), certificate: UploadFile = File(...), password: str = Form("")):
+def sign_pdf(file: UploadFile = File(...), certificate: UploadFile = File(...), password: str = Form(""), level: str = Form("basic")):
     from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
     from pyhanko.sign import signers
     with job() as directory:
@@ -468,51 +505,42 @@ def sign_pdf(file: UploadFile = File(...), certificate: UploadFile = File(...), 
             signer = signers.SimpleSigner.load_pkcs12(str(key), passphrase=password.encode())
             if signer is None:
                 raise ValueError("key unavailable")
-            with source.open("rb") as stream:
-                writer = IncrementalPdfFileWriter(stream)
-                metadata = signers.PdfSignatureMetadata(field_name="MoinPDF_" + uuid.uuid4().hex[:12])
-                signed = signers.PdfSigner(metadata, signer=signer).sign_pdf(writer).getvalue()
+            signatures=importlib.import_module((__package__+'.' if __package__ else '')+'signature_documents')
+            roots,crls,ocsps=signatures.configured_evidence()
+            signed=signatures.sign_bytes(source.read_bytes(),signer,level,roots,crls,ocsps,signatures.configured_timestamper() if level!='basic' else None)
             return result(signed, "Zertifikat-signiert.pdf", "application/pdf")
         except Exception:
-            raise HTTPException(422, "Signieren fehlgeschlagen. Zertifikat, Passwort und PDF-Berechtigungen prüfen.")
+            raise HTTPException(422, "Signieren fehlgeschlagen. Zertifikat, Passwort, PDF-Berechtigungen sowie bei Zeitstempeln Vertrauensanker, Sperrnachweise und Zeitstempeldienst prüfen.")
 
 
 @app.post("/v1/signatures/validate", dependencies=[Depends(authorize)])
 def validate_signatures(file: UploadFile = File(...)):
-    from pyhanko.pdf_utils.reader import PdfFileReader
-    from pyhanko.sign.validation import validate_pdf_signature
-    from pyhanko.keys import load_certs_from_pemder
-    from pyhanko_certvalidator import ValidationContext
-    trust_path = Path(os.getenv("MOINPDF_TRUST_ROOTS", "/trust"))
-    roots = list(load_certs_from_pemder([str(p) for p in trust_path.glob("*.pem")])) if trust_path.is_dir() else []
+    signatures=importlib.import_module((__package__+'.' if __package__ else '')+'signature_documents')
     with job() as directory:
-        source = upload(file, directory / "input.pdf")
-        require_pdf(source)
-        reports = []
+        source=upload(file,directory/'input.pdf');require_pdf(source)
         try:
-            with source.open("rb") as stream:
-                reader = PdfFileReader(stream)
-                for signature in reader.embedded_regular_signatures:
-                    vc = ValidationContext(trust_roots=roots, allow_fetching=False, revocation_mode="soft-fail")
-                    status = validate_pdf_signature(signature, signer_validation_context=vc)
-                    reports.append({"field": signature.field_name, "signer": status.signing_cert.subject.human_friendly,
-                                    "intact": status.intact, "cryptographicallyValid": status.valid,
-                                    "trustedChain": status.trusted, "revoked": status.revoked,
-                                    "coverage": status.coverage.name if status.coverage else None,
-                                    "documentChangesAllowed": status.docmdp_ok,
-                                    "modificationLevel": status.modification_level.name if status.modification_level else None,
-                                    "summary": status.summary()})
+            report=signatures.validate_bytes(source.read_bytes(),*signatures.configured_evidence())
         except Exception:
-            raise HTTPException(422, "Die Signaturen konnten nicht ausgewertet werden. Bitte eine unbeschädigte, unverschlüsselte PDF verwenden.")
-        report = {"engine": "pyHanko", "signatures": reports, "trustRootsConfigured": len(roots),
-                  "revocationStatus": "Nicht online geprüft. Keine OCSP-/Sperrlistenabfrage.",
-                  "qualifiedSignatureStatus": "Nicht geprüft", "note": "Eine intakte Signatur allein bestätigt weder Zertifikatsvertrauen noch den aktuellen Sperrstatus."}
-        return result(json.dumps(report, ensure_ascii=False, indent=2).encode(), "Signaturpruefung.json", "application/json")
+            raise HTTPException(422,'Die Signaturen konnten nicht vollständig ausgewertet werden. PDF und Vertrauenskonfiguration prüfen.')
+        return result(json.dumps(report,ensure_ascii=False,indent=2).encode(),'Signaturpruefung.json','application/json')
+
+
+@app.post('/v1/signatures/renew', dependencies=[Depends(authorize)])
+def renew_signatures(file: UploadFile = File(...)):
+    signatures=importlib.import_module((__package__+'.' if __package__ else '')+'signature_documents')
+    with job() as directory:
+        source=upload(file,directory/'input.pdf');require_pdf(source)
+        try:
+            data=signatures.renew_bytes(source.read_bytes(),*signatures.configured_evidence(),signatures.configured_timestamper())
+        except Exception:
+            raise HTTPException(422,'Die Langzeitsignatur konnte nicht erneuert und bestätigt werden. Vorhandene LTA-Signatur, Zeitstempeldienst, Vertrauensanker und Sperrnachweise prüfen.')
+        if len(data)>MAX_BYTES:raise HTTPException(422,'Das signierte Ergebnis überschreitet 80 MB.')
+        return result(data,'Langzeitsignatur-erneuert.pdf','application/pdf')
 
 
 @app.post('/v1/documents/{action}', dependencies=[Depends(authorize)])
 def extended_document(action: str, file: UploadFile = File(...), options: str = Form('{}')):
-    allowed={'powerpoint','html','orient','form','print','accessibility','redaction','dewarp','translate','optimize','ebook'}
+    allowed={'powerpoint','html','orient','form','print','accessibility','redaction','dewarp','translate','optimize','ebook','svg','font-outlines','flatten-layers'}
     if action not in allowed:
         raise HTTPException(404,'Unbekanntes Werkzeug.')
     try:
@@ -533,13 +561,15 @@ def extended_document(action: str, file: UploadFile = File(...), options: str = 
         convert_worker(action,source,directory)
         if action in {'print','accessibility','redaction'}:
             return result((directory/'report.json').read_bytes(),{'print':'Druckqualitaet','accessibility':'Barrierefreiheit','redaction':'Schwaerzungspruefung'}[action]+'.json','application/json')
+        if action=='svg':
+            return result((directory/'output.zip').read_bytes(),'PDF-Vektorseiten.zip','application/zip')
         if action=='powerpoint':
             return result((directory/'output.pptx').read_bytes(),'PDF-Folien.pptx','application/vnd.openxmlformats-officedocument.presentationml.presentation')
         if action=='orient':
             return archive({'Ausgerichtet.pdf':(directory/'output.pdf').read_bytes(),'Pruefbericht.json':(directory/'report.json').read_bytes()},'Ausrichtung-mit-Bericht.zip')
-        name={'html':'Webseite','form':'Erkannte-Formularfelder','dewarp':'Buchscan-entzerrt','translate':'Original-und-Uebersetzung','optimize':'PDF-optimiert','ebook':'E-Book'}[action]+'.pdf'
+        name={'html':'Webseite','form':'Erkannte-Formularfelder','dewarp':'Buchscan-entzerrt','translate':'Original-und-Uebersetzung','optimize':'PDF-optimiert','ebook':'E-Book','font-outlines':'Schriftkonturen','flatten-layers':'Ebenen-reduziert'}[action]+'.pdf'
         response=result((directory/'output.pdf').read_bytes(),name,'application/pdf')
-        if action=='optimize':
+        if action in {'optimize','font-outlines','flatten-layers'}:
             note=json.loads((directory/'result-note.json').read_text())['note']
             response.headers['X-MoinPDF-Note']=quote(note)
         return response

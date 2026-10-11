@@ -131,8 +131,10 @@ if __name__ == '__main__':
     try:
         import extended_documents as extra
         import recovery_documents as recovery
+        import expansion_documents as expansion
+        import tag_documents as tags
         actions={'word':word,'email':email_pdf,'powerpoint':extra.powerpoint,'html':extra.html_pdf,'orient':extra.orient,'form':extra.form_detect,'print':extra.print_check,'accessibility':extra.accessibility,'redaction':extra.redaction_check,'dewarp':extra.dewarp,'translate':extra.translate,'word-merge':extra.word_merge}
-        actions.update({'optimize': recovery.optimize, 'ebook': recovery.ebook})
+        actions.update({'optimize': recovery.optimize, 'ebook': recovery.ebook, 'svg':expansion.svg_export, 'font-outlines':expansion.font_outlines, 'flatten-layers':expansion.flatten_layers, 'tag-structure':tags.inspect_tags, 'tag-repair':tags.repair_tags})
         actions[sys.argv[1]](Path(sys.argv[2]), directory)
     except ValueError as error:
         (directory / 'conversion-error.json').write_text(json.dumps({'detail': str(error)}))
