@@ -95,10 +95,23 @@ export function ExtraSettings({
         </>
       )}
       {tool === 'compare' && (
-        <div className="notice">
-          Vergleicht vorhandenen Text. Bilder, Layout und reine Scanänderungen werden nicht geprüft.
-          Scans zuerst mit „OCR & Text“ auslesen und die Ergebnisse öffnen.
-        </div>
+        <>
+          {choice('compareMode', 'Vergleichsart', [
+            ['pages', 'Seiten an gleicher Position'],
+            ['content', 'Inhalte über Seiten hinweg'],
+          ])}
+          <div className="notice">
+            Vergleicht vorhandenen Text. Bilder, Layout und reine Scanänderungen werden nicht
+            geprüft. Scans zuerst mit „OCR & Text“ auslesen und die Ergebnisse öffnen.
+          </div>
+          {options.compareMode === 'content' && (
+            <p className="fine-note">
+              Ordnet Textblöcke unabhängig von ihrer Seitenposition zu. Zeigt verschobene Inhalte
+              und Änderungen auf Wortebene. Mehrfach vorkommende oder unklare Zuordnungen bitte
+              prüfen.
+            </p>
+          )}
+        </>
       )}
       {tool === 'interleave' && (
         <>

@@ -29,6 +29,7 @@ export type ExtraOptions = {
   firstSource: string;
   secondSource: string;
   reverseSecond: boolean;
+  compareMode?: 'pages' | 'content';
   splitMode: 'every' | 'ranges';
   splitEvery: number;
   splitRanges: string;
@@ -51,6 +52,7 @@ export const extraDefaults: ExtraOptions = {
   firstSource: '',
   secondSource: '',
   reverseSecond: false,
+  compareMode: 'pages',
   splitMode: 'every',
   splitEvery: 2,
   splitRanges: '',

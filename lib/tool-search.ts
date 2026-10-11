@@ -587,6 +587,9 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'zwei Versionen',
     'Änderungen vergleichen',
     'Vertragsvergleich',
+    'Inhaltsvergleich',
+    'verschobene Absätze',
+    'verschobene Seiten',
   ],
   'pdf-info': [
     'Informationen anzeigen',

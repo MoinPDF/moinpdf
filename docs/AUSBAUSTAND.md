@@ -1,8 +1,8 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 11. Oktober 2026, Entwicklungsversion 0.6.0.
+Stand: 11. Oktober 2026, Entwicklungsversion 0.7.0.
 
-Dieser Ausbau ist die erste implementierte Etappe. Eine größere Zahl von
+Dieser Stand umfasst zwei implementierte Etappen. Eine größere Zahl von
 Werkzeugen allein belegt keinen Gesamtsieg im Produktvergleich. Die folgende
 Liste trennt nutzbare Erweiterungen von verbleibender Arbeit.
 
@@ -12,7 +12,7 @@ Liste trennt nutzbare Erweiterungen von verbleibender Arbeit.
 | 2. Bilder und Grafiken | Vorhandene Objekte bewegen, drehen, skalieren und löschen; Bilddaten ersetzen | Unterobjekte verschachtelter Gruppen einzeln bearbeiten, direkte Griffpunkte in der Vorschau |
 | 3. Lokales Office zu PDF | Technische und Lizenzprüfung; bestehende Serverkonvertierung bleibt verfügbar | Einen reproduzierbar gebauten, lokal ausgelieferten LibreOffice-WASM-Laufzeitkern integrieren; die JavaScript-Brücke allein genügt nicht |
 | 4. PDF zu Office | Bestehende Konvertierungen bleiben erhalten | Bearbeitbare Folien und zuverlässigere Layout-/Tabellenrekonstruktion |
-| 5. OCR | 21 lokale Sprachmodelle, Deutsch/Englisch kombiniert, fünf Einstellungen zum Seitenaufbau | Automatische Spracherkennung und beliebige Sprachkombinationen |
+| 5. OCR | 21 lokale Sprachmodelle; bis zu vier frei gewählte Sprachen gemeinsam in OCR und Scan-Suche; fünf Einstellungen zum Seitenaufbau | Automatische Spracherkennung; mehr als vier gleichzeitige Sprachen |
 | 6. Importformate | WebP, BMP, mehrseitige TIFF und eigenständige SVG zusätzlich zu bisherigen Formaten | HEIC, Pages, Visio, Publisher und PSD; SVG-Import erhält hier ein Seitenbild, keine editierbaren Vektoren |
 | 7. Exportformate | WebP, TIFF, BMP sowie JSON mit Text und Positionen | Echter Vektor-SVG-Export |
 | 8. Arbeitsabläufe | Wenn-/Sonst-Schritte nach Dateiname, vorhandenen Texten oder Seitenzahl; Speichern/Import/Export; Entscheidungsprotokoll | Freies Knotendiagramm, verschachtelte Verzweigungen und weitere Schrittarten |
@@ -26,20 +26,19 @@ Liste trennt nutzbare Erweiterungen von verbleibender Arbeit.
 | 16. Barrierefreiheit | Bestehende Prüfungen | Struktureditor, Lesereihenfolge, Alternativtexte und validierter PDF/UA-Export |
 | 17. Druckvorbereitung | Bestehende Prüfung und neuer Posterdruck | Farbmanagement, Beschnitt, Schriftenkorrekturen und validierter PDF/X-Export |
 | 18. Übersetzung | Bestehende Übersetzung | Originaltreue Platzierung übersetzter Absätze und Umgang mit Textüberlauf |
-| 19. Dokumentvergleich | Bestehender Pixel-/Text-/Zahlenvergleich | Robuste inhaltliche Zuordnung verschobener Absätze und Seiten |
+| 19. Dokumentvergleich | Pixel-/Text-/Zahlenvergleich; zusätzlicher Inhaltsmodus mit Zuordnung über Seiten hinweg, Wortänderungen, Verschiebungen und Hinweisen auf Mehrdeutigkeit | Layout- und spaltenbewusste Absatzrekonstruktion; seitenübergreifend umbrochene Sätze; fachliche Bedeutungsprüfung |
 | 20. Lokaler Assistent | Bestehende Suche und neuer strukturierter Export als Grundlage | Lokales Sprachmodell, quellengebundene Antworten und überprüfbare Zitate |
 | 21. Große Dateien | Neuer PDFium-Worker kann abgebrochen werden; Arbeitsspeicher wird nach Aufträgen freigegeben | Durchgängige Worker-Verarbeitung, Streaming und belegbare höhere Dateigrenzen; aktuell weiterhin 80 MB/200 Seiten |
-| 22. Lokale Projekte | IndexedDB-Projekte mit fünf Arbeitsständen; Dateien, Seiten, Editor, Formulare, Lesezeichen und Rückgängig-Verlauf wiederherstellen | Projektdatei für Übertragung zwischen Browsern; Einstellungen aller Spezialwerkzeuge separat speichern |
+| 22. Lokale Projekte | IndexedDB-Projekte mit fünf Arbeitsständen; übertragbare .moinpdf-Datei für einen gewählten Stand samt Dateien, Editor, Formularen, Lesezeichen und Rückgängig-Verlauf | Einstellungen und nicht übernommene Ergebnisse aller Spezialwerkzeuge separat speichern; gesamtes Projektarchiv mit mehreren gespeicherten Ständen |
 
 ## Prüfung
 
-18 Engine-Testsuiten. Neue Prüfungen lesen bearbeitete PDFs unabhängig mit
+20 Engine-Testsuiten. Projektdateien werden einschließlich Formularen, Rechnungs-XML und Verlauf zurückgelesen; beschädigte und unzulässige Daten werden abgewiesen. Inhaltsvergleiche prüfen eingefügte/verschobene Seiten, Wortänderungen, Negationen, wiederholte Absätze und unklare Zuordnungen. Neue Prüfungen lesen bearbeitete PDFs unabhängig mit
 PDF.js, kontrollieren Seitenkoordinaten bei allen rechtwinkligen Drehungen und
 CropBox-Offsets, erhaltene Texte, entfernte Originaltexte, geänderte Bildpixel,
-echte QPDF-Linearisierung, TIFF/BMP-Pixel und lokale Projektversionen. Alle 21 ausgelieferten Sprachmodelle werden offline initialisiert; Französisch wird mit einem tatsächlichen Erkennungsauftrag geprüft.
+echte QPDF-Linearisierung, TIFF/BMP-Pixel und lokale Projektversionen. Alle 21 ausgelieferten Sprachmodelle werden offline initialisiert; Französisch und eine kombinierte deutsch-englisch-französisch-spanische Erkennung werden mit tatsächlichen Erkennungsaufträgen geprüft.
 Typprüfung, Linter, Formatprüfung und beide Produktionsbuilds gehören zur
-Freigabe. Eine interaktive Browserprüfung ist in dieser Arbeitsumgebung nicht
-verfügbar; sie bleibt vor einer uneingeschränkten Oberflächenfreigabe offen.
+Freigabe. Interaktive Browserprüfungen laufen in der Docker-CI auf Desktop und Smartphone. Die erste Etappe hat den vollständigen Durchlauf bestanden. Die zweite erweitert ihn um Projekttransfer zwischen getrennten Browserkontexten, vier OCR-Sprachen und den Inhaltsvergleich; der aktuelle CI-Status ist vor Freigabe zu prüfen.
 
 ## Komponenten und Lizenzen
 

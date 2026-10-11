@@ -1,7 +1,15 @@
 'use client';
+import { useState } from 'react';
 import { FileSearch } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { PdfReport } from '@/lib/pdf-report';
 export function ReportView({ report }: { report: PdfReport }) {
+  const [showSame, setShowSame] = useState(false),
+    [limit, setLimit] = useState(100);
+  const unchanged = (s: PdfReport['sections'][number]) =>
+    s.status?.startsWith('Text gleich') && !s.status.includes('verschoben');
+  const hasSame = report.sections.some(unchanged);
+  const sections = showSame ? report.sections : report.sections.filter((s) => !unchanged(s));
   return (
     <div className="pdf-report">
       <div className="report-heading">
@@ -17,20 +25,39 @@ export function ReportView({ report }: { report: PdfReport }) {
           </div>
         ))}
       </div>
+      {hasSame && (
+        <label className="report-filter">
+          <input
+            type="checkbox"
+            checked={showSame}
+            onChange={(e) => {
+              setShowSame(e.target.checked);
+              setLimit(100);
+            }}
+          />
+          Unveränderte Textblöcke ebenfalls anzeigen
+        </label>
+      )}
+      {hasSame && !sections.length && (
+        <p>
+          Keine Textänderungen in den auslesbaren Inhalten gefunden. Unveränderte Texte kannst du
+          oben einblenden.
+        </p>
+      )}
       <div className="report-sections">
-        {report.sections.map((section, index) => (
+        {sections.slice(0, limit).map((section, index) => (
           <details
             key={index}
-            open={section.status ? section.status !== 'Text gleich' : index === 0}
+            open={section.status ? !section.status.startsWith('Text gleich') : index === 0}
           >
             <summary>
               <span>{section.title}</span>
               {section.status && (
                 <b
                   className={
-                    section.status === 'Text geändert'
+                    section.status.startsWith('Text geändert')
                       ? 'changed'
-                      : section.status === 'Text gleich'
+                      : section.status.startsWith('Text gleich')
                         ? 'same'
                         : 'incomplete'
                   }
@@ -78,6 +105,12 @@ export function ReportView({ report }: { report: PdfReport }) {
           </details>
         ))}
       </div>
+      {sections.length > limit && (
+        <Button variant="outline" onClick={() => setLimit((old) => old + 100)}>
+          Weitere {Math.min(100, sections.length - limit)} Einträge anzeigen ({limit} von{' '}
+          {sections.length})
+        </Button>
+      )}
     </div>
   );
 }

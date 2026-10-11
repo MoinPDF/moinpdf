@@ -1,6 +1,7 @@
 'use client';
 import { ProjectManager } from '@/components/studio/project-manager';
-import { ocrLanguages, ocrLayouts } from '@/lib/ocr-languages';
+import { ocrLayouts } from '@/lib/ocr-languages';
+import { OcrLanguagePicker } from '@/components/studio/ocr-language-picker';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import {
   FileText,
@@ -2120,7 +2121,12 @@ function Studio() {
               )}
               {toolId === 'inspect' && (
                 <>
-                  {renderChoice('language', 'Sprache für Scan-Suche', ocrLanguages)}
+                  <OcrLanguagePicker
+                    label="Sprache für Scan-Suche"
+                    value={options.language}
+                    disabled={locked}
+                    onChange={(language) => setOptions((old) => ({ ...old, language }))}
+                  />
                   <div className="check-howto">
                     <span>01</span>
                     <p>Begriff eingeben und über alle geöffneten Dateien suchen.</p>
@@ -2137,7 +2143,12 @@ function Studio() {
               )}
               {toolId === 'ocr' && (
                 <>
-                  {renderChoice('language', 'Erkennungssprache', ocrLanguages)}
+                  <OcrLanguagePicker
+                    label="Erkennungssprache"
+                    value={options.language}
+                    disabled={locked}
+                    onChange={(language) => setOptions((old) => ({ ...old, language }))}
+                  />
                   {renderChoice('ocrLayout', 'Seitenaufbau', ocrLayouts)}
                   <label className="switch-field">
                     <span>
@@ -2533,12 +2544,15 @@ function Studio() {
                 mit dem Start der jeweiligen Verarbeitung wird die ausgewählte Datei übertragen.
                 Beim bloßen Auswählen eines Dokuments erfolgt kein Upload.
               </p>
-              <h3>Nur für diese Sitzung</h3>
+              <h3>Sitzung und gespeicherte Projekte</h3>
               <p>
-                Dokumente und Änderungen bleiben im Arbeitsspeicher. Lade Ergebnisse herunter, bevor
-                du die Seite neu lädst oder schließt. Die Website und Sprachpakete werden vom
-                Hostinganbieter geladen; dabei entstehen übliche Zugriffsdaten. Es gibt keine
-                eigenen Analyse- oder Werbetracker.
+                Ohne Speichern bleiben Dokumente und Änderungen im Arbeitsspeicher. Über „Projekte“
+                kannst du bis zu fünf Arbeitsstände lokal im Browser speichern und eine Projektdatei
+                herunterladen. Diese enthält Originale und den Bearbeitungsverlauf unverschlüsselt,
+                auch zuvor entsperrte PDFs. Projekte lassen sich in der App löschen; auch das
+                Löschen der Browserdaten entfernt sie. Ungespeicherte Änderungen gehen beim Neuladen
+                verloren. Die Website und Sprachpakete werden vom Hostinganbieter geladen; dabei
+                entstehen übliche Zugriffsdaten. Es gibt keine eigenen Analyse- oder Werbetracker.
               </p>
               <h3>Vorlagen und Einstellungen</h3>
               <p>

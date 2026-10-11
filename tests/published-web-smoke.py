@@ -149,12 +149,91 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_label('Projektname', exact=True).fill('Browser-Testprojekt')
         page.get_by_role('button', name='Projekt speichern', exact=True).click()
         expect(page.get_by_text('Arbeitsstand gespeichert.', exact=True)).to_be_visible()
+        with page.expect_download() as download:
+            page.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
+        project_file = Path(temporary) / 'projekt.moinpdf'
+        download.value.save_as(project_file)
+        assert project_file.read_bytes().startswith(b'MOINPDF-PROJECT\n')
         page.reload(wait_until='networkidle')
         page.get_by_role('button', name='Projekte', exact=True).click()
         page.get_by_role('button', name='Öffnen', exact=True).first.click()
         chooser(page)
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
         completed.append('IndexedDB project survives reload and restores the complete PDF session')
+
+        transfer = browser.new_page(viewport={'width': 1440, 'height': 1000}, accept_downloads=True)
+        transfer.set_default_timeout(30000)
+        transfer.on('pageerror', lambda error: errors.append('Project transfer: ' + str(error)))
+        transfer.goto(origin)
+        transfer.get_by_role('button', name='Projekte', exact=True).click()
+        expect(transfer.get_by_text('Noch keine gespeicherten Projekte.', exact=True)).to_be_visible()
+        transfer.get_by_label('MoinPDF-Projektdatei', exact=True).set_input_files(str(project_file))
+        chooser(transfer)
+        expect(transfer.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
+        transfer.get_by_role('button', name='Seiten organisieren', exact=True).click()
+        transfer.get_by_role('button', name='Seiten speichern', exact=True).click()
+        expect(transfer.get_by_role('heading', name='Erledigt.', exact=True)).to_be_visible()
+        with transfer.expect_download() as download:
+            transfer.locator('a[download]').first.click()
+        transferred_pdf = Path(temporary) / 'projekt-wiederhergestellt.pdf'
+        download.value.save_as(transferred_pdf)
+        with pymupdf.open(transferred_pdf) as document:
+            assert len(document) == 2
+            assert 'Moin aus dem Norden' in document[0].get_text()
+            assert 'Zweite Seite' in document[1].get_text()
+        back(transfer)
+        corrupt_file = Path(temporary) / 'beschaedigt.moinpdf'
+        corrupt = bytearray(project_file.read_bytes())
+        corrupt[-1] ^= 1
+        corrupt_file.write_bytes(corrupt)
+        transfer.get_by_role('button', name='Projekte', exact=True).click()
+        transfer.get_by_label('MoinPDF-Projektdatei', exact=True).set_input_files(str(corrupt_file))
+        expect(transfer.get_by_text('Die Projektdatei ist beschädigt oder unvollständig.', exact=True)).to_be_visible()
+        transfer.keyboard.press('Escape')
+        expect(transfer.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
+        completed.append('Portable project downloads, imports into a fresh browser context, independently exports identical PDF content; damaged import keeps current session')
+
+        transfer.get_by_role('button', name='OCR & Text', exact=True).click()
+        transfer.get_by_role('button', name='Sprachen kombinieren', exact=True).click()
+        for language in ('Englisch', 'Französisch', 'Spanisch'):
+            transfer.get_by_role('checkbox', name=language, exact=True).check()
+        expect(transfer.get_by_role('checkbox', name='Italienisch', exact=True)).to_be_disabled()
+        transfer.get_by_role('switch').check()
+        transfer.get_by_role('button', name='Text erkennen', exact=True).click()
+        expect(transfer.get_by_role('heading', name='Erledigt.', exact=True)).to_be_visible(timeout=180000)
+        with transfer.expect_download() as download:
+            transfer.locator('a[download]').first.click()
+        ocr_pdf = Path(temporary) / 'vier-sprachen.pdf'
+        download.value.save_as(ocr_pdf)
+        with pymupdf.open(ocr_pdf) as document:
+            assert len(document) == 2
+            assert 'Moin' in document[0].get_text()
+            assert 'Zweite' in document[1].get_text()
+        completed.append('Four OCR languages selected in the real UI and used by production workers; searchable PDF independently read back')
+        back(transfer)
+
+        changed_pdf = Path(temporary) / 'neue-fassung.pdf'
+        with pymupdf.open() as document:
+            for text in ('Neu hinzugefügtes Deckblatt.', 'Moin aus dem Norden. Rechnung vom 07.10.2026.', 'Zweite Seite. Betrag 30,50 Euro.'):
+                document.new_page().insert_text((50, 60), text)
+            document.save(changed_pdf)
+        transfer.locator('input[type="file"]').first.set_input_files(str(changed_pdf))
+        chooser(transfer)
+        transfer.get_by_role('button', name='PDFs vergleichen', exact=True).click()
+        transfer.get_by_role('combobox', name='Vergleichsart', exact=True).click()
+        transfer.get_by_role('option', name='Inhalte über Seiten hinweg', exact=True).click()
+        transfer.get_by_role('button', name='Text vergleichen', exact=True).click()
+        expect(transfer.get_by_role('heading', name='PDF-Inhaltsvergleich', exact=True)).to_be_visible()
+        with transfer.expect_download() as download:
+            transfer.locator('a[download]').first.click()
+        comparison = Path(temporary) / 'vergleich.txt'
+        download.value.save_as(comparison)
+        comparison_text = comparison.read_text(encoding='utf-8-sig')
+        assert 'A: Seite 1 · B: Seite 2' in comparison_text
+        assert '30,50' in comparison_text and '25,50' in comparison_text
+        transfer.screenshot(path=str(evidence / 'content-comparison.png'), full_page=True)
+        completed.append('Content comparison in production UI matches an inserted cover, reports changed amounts and exports complete TXT')
+        transfer.close()
 
         page.get_by_role('button', name='PDF zu E-Book', exact=True).click()
         page.get_by_role('button', name='EPUB erstellen', exact=True).click()
@@ -190,6 +269,15 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.screenshot(path=str(evidence / 'mobile-tools.png'), full_page=True)
         all_views(page, errors, 'Mobile with PDF')
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
+        page.get_by_role('button', name='Projekte', exact=True).click()
+        expect(page.get_by_role('button', name='Projektdatei herunterladen', exact=True)).to_be_visible()
+        no_overflow(page, 'mobile project transfer')
+        page.screenshot(path=str(evidence / 'mobile-projects.png'), full_page=True)
+        page.keyboard.press('Escape')
+        page.get_by_role('button', name='OCR & Text', exact=True).click()
+        page.get_by_role('button', name='Sprachen kombinieren', exact=True).click()
+        no_overflow(page, 'mobile OCR languages')
+        back(page)
         assert not errors, errors
         print('PASS: ' + '; '.join(completed), flush=True)
     finally:

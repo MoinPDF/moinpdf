@@ -172,6 +172,52 @@ export async function runSourceTool(
   if (tool === 'compare') {
     const { first, second, a, b } = selectedPair(sources, pages, options),
       total = Math.max(a.length, b.length);
+    if (options.compareMode === 'content') {
+      const { compareContent } = await import('./content-compare');
+      const left: { number: number; text: string }[] = [],
+        right: { number: number; text: string }[] = [];
+      let done = 0;
+      for (const [source, selected, output] of [
+        [first, a, left],
+        [second, b, right],
+      ] as const) {
+        let characters = 0;
+        for (const index of selected) {
+          check(signal);
+          const page = pages[index];
+          const text = await extractPageText(source, page);
+          characters += text.length;
+          if (characters > 2_000_000)
+            throw new Error(
+              'Der Inhaltsvergleich unterstützt zwei Millionen Textzeichen je Datei. Bitte weniger Seiten auswählen.',
+            );
+          output.push({ number: page.index + 1, text });
+          notify({
+            percent: (++done / (a.length + b.length)) * 55,
+            label: `Text aus ${source.name} · Seite ${page.index + 1} lesen …`,
+          });
+          await tick();
+        }
+      }
+      const report = await compareContent(
+        left,
+        right,
+        { before: first.name, after: second.name },
+        signal,
+        (p) =>
+          notify({
+            percent: 55 + p * 45,
+            label: p === 1 ? 'Vergleich fertig' : 'Textblöcke zuordnen …',
+          }),
+      );
+      check(signal);
+      return reportResult(
+        report,
+        'PDF-Inhaltsvergleich.txt',
+        a.length + b.length,
+        first.size + second.size,
+      );
+    }
     const report: PdfReport = {
       title: 'PDF-Textvergleich',
       description: `A: ${first.name}\nB: ${second.name}\nVerglichen wird auslesbarer Text in der Reihenfolge der ausgewählten Seiten. Bilder, Layout und reine Scanänderungen werden nicht geprüft.`,

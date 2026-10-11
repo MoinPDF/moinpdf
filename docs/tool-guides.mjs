@@ -368,7 +368,7 @@ export const guides = {
     'Prüfe die Trefferseiten, passe die Auswahl an und speichere die Auswahl als PDF.'
   ], 'Dokumentenübersicht und neue PDF aus ausgewählten beziehungsweise gefundenen Seiten.', 'Leerseiten und Duplikate sind Hinweise, keine automatische Löschentscheidung. Der lokale Suchindex macht die Original-PDF nicht dauerhaft durchsuchbar; dafür „OCR & Text“ verwenden. Ausstehende Änderungen zuerst anwenden, wenn sie Grundlage der Prüfung sein sollen.'),
   'ocr': guide('Gescannte PDFs, Bilder oder PDFs mit unzureichendem Suchtext.', [
-    'Wähle die Seiten und stelle Deutsch, Englisch oder die gemischte Erkennung ein. Erzwinge OCR nur, wenn vorhandener Text ersetzt oder neu erkannt werden soll.',
+    'Wähle die Seiten und eine der 21 Erkennungssprachen. Über „Sprachen kombinieren“ sind bis zu vier Sprachen gleichzeitig möglich. Wähle den Seitenaufbau und erzwinge OCR nur, wenn vorhandener Text neu erkannt werden soll.',
     'Starte die Erkennung und vergleiche den Text mit der Seitenvorschau. Korrigiere insbesondere Zahlen, Namen und Lesereihenfolge.',
     'Speichere eine durchsuchbare PDF, TXT oder DOCX. Übernimm die PDF als Arbeitsdokument, wenn weitere textbasierte Werkzeuge folgen sollen.'
   ], 'PDF mit Suchtext oder Textausgabe als TXT/DOCX.', 'DOCX enthält den erkannten Text ohne Rekonstruktion des ursprünglichen Layouts. Handschrift, Spalten und unscharfe Scans sind besonders fehleranfällig. Große OCR-Aufträge können auf Smartphones länger dauern.'),
@@ -474,9 +474,9 @@ export const guides = {
   ], 'PDF ohne die entfernten Titel-, Autor-, Betreff-, Stichwort-, Ersteller-, Datums- und XMP-Dokumentinfos.', 'Sichtbare Namen, Kommentare, Bilder, Anhänge und eingebettete Objektdaten werden dadurch nicht anonymisiert. Prüfe diese bei Bedarf mit den passenden Bearbeitungswerkzeugen.'),
   'compare': guide('Zwei PDF-Fassungen mit auslesbarem Text.', [
     'Öffne beide Dateien und wähle Datei A und Datei B.',
-    'Starte den seitenweisen Textvergleich und lies die hervorgehobenen Änderungen.',
+    'Wähle „Seiten an gleicher Position“ oder „Inhalte über Seiten hinweg“. Der Inhaltsmodus ordnet Textblöcke auch nach eingefügten oder verschobenen Seiten zu und zeigt Änderungen auf Wortebene.',
     'Prüfe die betreffenden Stellen im Original. Bei Scans zuerst OCR ausführen und die Ergebnisse öffnen.'
-  ], 'Textvergleich mit hervorgehobenen Änderungen.', 'Bilder, Layout und reine Scanänderungen werden nicht geprüft. Für diese Fälle nutze „Visueller PDF-Vergleich“; für Beträge und Kennnummern eignet sich ergänzend „Zahlenvergleich“.'),
+  ], 'Vergleichsbericht mit Änderungen, Fundseiten und vollständigem TXT-Download. Unveränderte Textblöcke lassen sich einblenden.', 'Die Zuordnung nutzt vorhandenen Text, keine KI-Bedeutungsprüfung. Mehrfach vorkommende und uneindeutige Texte bitte prüfen; unsichere Treffer bleiben als entfernt/hinzugefügt sichtbar. Leerzeichen und Zeilenumbrüche werden vereinheitlicht. Pro Datei bis zu 200 Seiten, zwei Millionen Textzeichen und 5.000 Textblöcke. Bilder, Layout und reine Scanänderungen werden nicht geprüft. Für diese Fälle nutze „Visueller PDF-Vergleich“; für Beträge und Kennnummern eignet sich ergänzend „Zahlenvergleich“.'),
   'pdf-info': guide('Eine oder mehrere geöffnete PDFs.', [
     'Wähle Seiten aus den Dateien, zu denen du Informationen benötigst.',
     'Erstelle den Bericht über die vollständigen zugehörigen Originaldateien.',

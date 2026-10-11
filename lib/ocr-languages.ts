@@ -29,3 +29,16 @@ export const ocrLayouts: [string, string][] = [
   ['11', 'Verstreuter Text'],
   ['7', 'Eine Textzeile'],
 ];
+export const individualOcrLanguages = ocrLanguages.filter(([code]) => !code.includes('+'));
+export const MAX_OCR_LANGUAGES = 4;
+export function parseOcrLanguages(value: string): string[] {
+  const codes = typeof value === 'string' ? value.split('+') : [];
+  if (
+    !codes.length ||
+    codes.length > MAX_OCR_LANGUAGES ||
+    new Set(codes).size !== codes.length ||
+    codes.some((code) => !individualOcrLanguages.some(([allowed]) => code === allowed))
+  )
+    throw new Error('Bitte eine bis vier der verfügbaren OCR-Sprachen auswählen.');
+  return codes;
+}

@@ -971,7 +971,7 @@ export const tools = [
     id: 'compare',
     title: 'PDFs vergleichen',
     description:
-      'Auslesbaren Text zweier Dateien seitenweise vergleichen. Änderungen werden hervorgehoben.',
+      'Texte seitenweise oder über Seiten hinweg vergleichen. Verschobene Textblöcke und geänderte Wörter erkennen.',
     icon: GitCompareArrows,
     group: 0,
     action: 'Text vergleichen',

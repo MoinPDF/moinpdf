@@ -46,7 +46,7 @@ PDFs, Rechnungs-XML und unterstützte Bildformate lassen sich überall ins Fenst
 
 Ergebnisse können als neue Arbeitsdokumente übernommen werden. OCR exportiert durchsuchbare PDF, TXT und DOCX (Text ohne Rekonstruktion des ursprünglichen Layouts). Seitenwerkzeuge übernehmen ausstehende visuelle Änderungen auf den ausgewählten Seiten. Die Arbeitsplätze für Formulare, Lesezeichen, Passwortschutz und E-Rechnungen verwenden die vollständige Quelldatei; Änderungen aus anderen Werkzeugen deshalb zuerst anwenden und als Arbeitsdokument übernehmen.
 
-Über „Projekte“ lassen sich Dateien und Arbeitsstände einschließlich Editorverlauf, Formularen und Lesezeichen lokal wiederherstellen (letzte fünf gespeicherte Stände). Speicherung erfolgt unverschlüsselt im Browserspeicher; beim Projektwechsel wird die aktuelle Sitzung davor gesichert. Zwischenergebnisse eigenständiger Spezialwerkzeuge erst übernehmen. Wichtige Ergebnisse zusätzlich herunterladen. Obergrenzen: 80 MB Quelldateien und 200 Seiten. Umfangreiche OCR kann auf Mobilgeräten langsam sein.
+Über „Projekte“ lassen sich Dateien und Arbeitsstände einschließlich Editorverlauf, Formularen und Lesezeichen lokal wiederherstellen (letzte fünf gespeicherte Stände). Speicherung erfolgt unverschlüsselt im Browserspeicher; beim Projektwechsel wird die aktuelle Sitzung davor gesichert. Zwischenergebnisse eigenständiger Spezialwerkzeuge erst übernehmen. Ein gewählter Stand lässt sich als unverschlüsselte `.moinpdf`-Projektdatei einschließlich Originalen und Verlauf übertragen. Dafür „Projektdatei herunterladen“ beziehungsweise „Projektdatei öffnen“ verwenden. Projektdateien sind keine bereinigten Ergebnis-PDFs. Obergrenzen: 80 MB Quelldateien und 200 Seiten. Umfangreiche OCR kann auf Mobilgeräten langsam sein.
 
 ## Stapel, Abläufe und weitere Dateiformate
 
@@ -154,3 +154,17 @@ Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die 
 ---
 
 [Zur README](../README.md) · [Installation](../DOCKER.md) · [Entwicklung](ENTWICKLUNG.md)
+
+
+## Ergänzungen in 0.7.0
+
+- **OCR und Scan-Suche:** Bis zu vier der 21 lokal ausgelieferten Sprachen kombinieren.
+  Keine automatische Spracherkennung; mehr Sprachen benötigen mehr Arbeitsspeicher.
+- **PDFs vergleichen:** Neben dem seitenweisen Vergleich gibt es „Inhalte über
+  Seiten hinweg“. Der Bericht zeigt Wortänderungen, Fundseiten und verschobene
+  Textblöcke. Doppelte oder uneindeutige Zuordnungen sind gekennzeichnet; Bilder
+  und Formatierung bleiben Aufgabe des visuellen Vergleichs. Der TXT-Export
+  enthält alle Einträge, auch die in der Oberfläche ausgeblendeten.
+- **Projektdateien:** Ein Arbeitsstand mit Rückgängig-Verlauf, Quellen und
+  Rechnungs-XML, bis zu 80 MB Dokumentdaten und 20 MB Bearbeitungsdaten. Vorhandene
+  PDFs werden beim Import tatsächlich geöffnet und Seitenverweise geprüft.

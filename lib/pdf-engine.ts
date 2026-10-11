@@ -337,7 +337,8 @@ export async function runJob(
           if (!worker) {
             report({ percent: (i / pages.length) * 100, label: 'Texterkennung wird geladen …' });
             const { createWorker, PSM } = await import('tesseract.js');
-            const creating = createWorker(options.language, 1, {
+            const { parseOcrLanguages } = await import('./ocr-languages');
+            const creating = createWorker(parseOcrLanguages(options.language), 1, {
               workerPath: '/vendor/ocr/worker.min.js',
               corePath: '/vendor/ocr',
               langPath: '/vendor/languages',

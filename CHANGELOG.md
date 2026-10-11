@@ -9,6 +9,25 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.7.0 – 2026-10-11
+
+- Übertragbare `.moinpdf`-Projektdateien für den aktuellen oder einen gespeicherten
+  Arbeitsstand, einschließlich Originaldateien, Rechnungs-XML, Seiten, Editor,
+  Formularen, Lesezeichen und Rückgängig-Verlauf. Import als eigenes Projekt;
+  vorhandene Sitzung wird vor dem Wechsel lokal gesichert.
+- Größen-, Integritäts-, Daten- und Seitenverweisprüfung beim Import. Die
+  Projektdatei ist unverschlüsselt und enthält auch Originale und frühere
+  Bearbeitungen; zum Weitergeben fertiger Dokumente die Ergebnis-PDF verwenden.
+- OCR und Scan-Suche kombinieren bis zu vier der 21 mitgelieferten Sprachen.
+  Prüfung durch tatsächliche Erkennung eines viersprachigen Scans.
+- Neuer Inhaltsmodus in „PDFs vergleichen“: Textblöcke über Seitengrenzen hinweg
+  zuordnen, eingefügte Seiten berücksichtigen und Wortänderungen sowie
+  Verschiebungen ausweisen. Unklare und wiederholte Zuordnungen bleiben sichtbar.
+- Vergleichsberichte blenden unveränderten Text auf Wunsch ein und zeigen große
+  Berichte schrittweise; der TXT-Download enthält weiterhin alle Einträge.
+- 20 Engine-Testsuiten sowie zusätzliche Browserabläufe für Projekttransfer,
+  vier OCR-Sprachen und den Inhaltsvergleich. Weiterhin 108 Werkzeuge.
+
 ## 0.6.0 – 2026-10-11
 
 - Acht neue Browserwerkzeuge: Originalobjekte bearbeiten, Bates-Nummerierung,

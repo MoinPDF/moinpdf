@@ -10,7 +10,7 @@ const {createCanvas,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model']){
+for(const name of ['ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model']){
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-extra-test.mjs${q}`);
  await writeFile(`.cache/${name}-extra-test.mjs`,code);
 }
@@ -61,6 +61,11 @@ try{
  const info=await execute('pdf-info',[ap[0]]);assert.equal(info.kind,'report');assert(info.report.sections.some(s=>s.details?.some(d=>d.label==='Titel'&&d.value==='Testtitel A')));assert.match(await info.blob.text(),/Seite 8/);
  const compare=await execute('compare',[ap[0],bp[0]]);assert.equal(compare.kind,'report');assert.equal(compare.report.stats[0].value,'1');assert(compare.report.sections[0].lines.some(l=>l.kind==='removed'&&l.text==='A-1'));assert(compare.report.sections[0].lines.some(l=>l.kind==='added'&&l.text==='B-1'));
  const clone=await source(a.bytes,'Kopie.pdf'),same=await execute('compare',[ap[0],items(clone)[0]],{},[a,clone]);assert.equal(same.report.stats[1].value,'1');
+ const beforeDoc=await PDFDocument.create(),afterDoc=await PDFDocument.create();
+ for(const [doc,lines] of [[beforeDoc,['Der vereinbarte Preis beträgt 120,00 Euro.','Die Zahlung erfolgt innerhalb von dreissig Tagen.']],[afterDoc,['Dieses Deckblatt wurde neu eingefügt.','Der vereinbarte Preis beträgt 145,00 Euro.','Die Zahlung erfolgt innerhalb von dreissig Tagen.']]])for(const line of lines)doc.addPage([500,300]).drawText(line,{x:20,y:260,size:12});
+ const beforeSource=await source(await beforeDoc.save(),'Vorher.pdf'),afterSource=await source(await afterDoc.save(),'Nachher.pdf');
+ const content=await execute('compare',[...items(beforeSource),...items(afterSource)],{compareMode:'content'},[beforeSource,afterSource]);
+ assert.equal(content.filename,'PDF-Inhaltsvergleich.txt');assert.equal(content.report.stats[0].value,'1');assert.equal(content.report.stats[1].value,'1');assert.match(await content.blob.text(),/A: Seite 1 · B: Seite 2/);assert.match(await content.blob.text(),/145,00/);
  const scanned=await execute('compare',[items(cropSource)[0],items(cropSource)[1]],{},[cropSource,await source(cropSource.bytes,'Scan-Kopie.pdf')]).catch(e=>e);assert(scanned instanceof Error,'Both chosen files need selected pages');
  const scanCopy=await source(cropSource.bytes,'Scan-Copy.pdf'),noText=await execute('compare',[items(cropSource)[0],items(scanCopy)[0]],{},[cropSource,scanCopy]);assert.equal(noText.report.stats[2].value,'1');assert.equal(noText.report.stats[1].value,'0','Two scans without text must not be declared equal');
  await assert.rejects(()=>execute('booklet',ap,{},[a],emptyEdits(),AbortSignal.abort()),/Abgebrochen/);

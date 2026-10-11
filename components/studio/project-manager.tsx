@@ -1,5 +1,5 @@
 'use client';
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,8 +16,10 @@ import {
   deleteProject,
   type ProjectMeta,
   type ProjectState,
+  type ProjectSource,
 } from '@/lib/local-projects';
-import { openSource, type Source } from '@/lib/pdf-engine';
+import { openSource, filenameStem, downloadBlob, type Source } from '@/lib/pdf-engine';
+import { decodeProjectFile, encodeProjectFile, validateOpenedProject } from '@/lib/project-archive';
 import './project-manager.css';
 export function ProjectManager({
   sources,
@@ -39,6 +41,7 @@ export function ProjectManager({
     [projects, setProjects] = useState<ProjectMeta[]>([]),
     [notice, setNotice] = useState(''),
     [deleteId, setDeleteId] = useState('');
+  const importInput = useRef<HTMLInputElement>(null);
   const name = identity.name,
     current = identity.id,
     setName = (name: string) => setIdentity((old) => ({ ...old, name })),
@@ -56,6 +59,55 @@ export function ProjectManager({
     }
   };
   const refresh = async () => setProjects(await listProjects());
+  const download = async (name: string, data: ProjectSource[], snapshot: ProjectState) => {
+    const blob = await encodeProjectFile(name, data, snapshot);
+    downloadBlob(blob, filenameStem(name + '.moinpdf') + '.moinpdf');
+    setNotice(
+      'Projektdatei heruntergeladen. Sie enthält diesen Arbeitsstand einschließlich Rückgängig-Verlauf.',
+    );
+  };
+  const restore = async (
+    name: string,
+    data: ProjectSource[],
+    snapshot: ProjectState,
+    projectId?: string,
+  ) => {
+    const opened: Source[] = [];
+    try {
+      for (const s of data) {
+        const loaded = await openSource(
+          new File([new Uint8Array(s.bytes)], filenameStem(s.name) + '.pdf', {
+            type: 'application/pdf',
+          }),
+        );
+        opened.push({
+          ...loaded,
+          id: s.id,
+          name: s.name,
+          kind: s.kind,
+          size: s.size,
+          wasEncrypted: s.wasEncrypted,
+          invoiceOriginal: s.invoiceOriginal,
+        });
+      }
+      validateOpenedProject(snapshot, opened);
+      // Validate all files before changing local projects or replacing a session.
+      if (sources.length)
+        await saveProject(
+          current ? identity.name : 'Automatische Sicherung vor Projektwechsel',
+          current,
+          sources,
+          state,
+        );
+      const restoredId = projectId || (await saveProject(name, undefined, opened, snapshot));
+      onRestore(opened, snapshot);
+      setIdentity({ id: restoredId, name });
+      setOpen(false);
+    } catch (e) {
+      for (const s of opened) await s.pdf.loadingTask.destroy();
+      throw e;
+    }
+  };
   return (
     <>
       <Button
@@ -119,12 +171,48 @@ export function ProjectManager({
               Als neues Projekt
             </Button>
           </div>
+          <div className="project-actions">
+            <Button
+              variant="outline"
+              disabled={working || locked || !sources.length}
+              onClick={() => job(() => download(name, sources, state))}
+            >
+              Projektdatei herunterladen
+            </Button>
+            <Button
+              variant="outline"
+              disabled={working || locked}
+              onClick={() => importInput.current?.click()}
+            >
+              Projektdatei öffnen
+            </Button>
+            <input
+              ref={importInput}
+              type="file"
+              accept=".moinpdf,application/vnd.moinpdf.project"
+              className="sr-only"
+              aria-label="MoinPDF-Projektdatei"
+              disabled={working || locked}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file)
+                  void job(async () => {
+                    const imported = await decodeProjectFile(file);
+                    await restore(imported.name, imported.sources, imported.state);
+                  });
+              }}
+            />
+          </div>
           <p className="fine-note">
             Bewusstes Speichern in diesem Browser, ohne Upload. Die gespeicherten PDFs liegen
             unverschlüsselt im Browserspeicher – auch zuvor entsperrte Dateien. Beim Löschen der
-            Browserdaten können Projekte verloren gehen. Wichtige Ergebnisse zusätzlich
-            herunterladen. Einstellungen und Zwischenergebnisse der Spezialwerkzeuge gehören erst
-            nach „Ergebnis übernehmen“ zum Projekt.
+            Browserdaten können Projekte verloren gehen. Eine .moinpdf-Projektdatei überträgt den
+            gewählten Stand auf einen anderen Browser oder Computer. Sie enthält auch Originale,
+            frühere Bearbeitungen und gegebenenfalls entsperrte PDFs unverschlüsselt. Zum
+            Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden. Einstellungen und
+            Zwischenergebnisse der Spezialwerkzeuge gehören erst nach „Ergebnis übernehmen“ zum
+            Projekt.
           </p>
           {notice && <p role="status">{notice}</p>}
           {working && <p role="status">Arbeitsstand wird verarbeitet …</p>}
@@ -148,56 +236,26 @@ export function ProjectManager({
                       disabled={working || locked}
                       onClick={() =>
                         job(async () => {
-                          // Protect the current unsaved session before replacing it.
-                          const saved = await loadProject(v.id),
-                            opened: Source[] = [];
-                          if (sources.length)
-                            await saveProject(
-                              current ? name : 'Automatische Sicherung vor Projektwechsel',
-                              current,
-                              sources,
-                              state,
-                            );
-                          try {
-                            for (const s of saved.sources) {
-                              const loaded = await openSource(
-                                new File(
-                                  [new Uint8Array(s.bytes)],
-                                  s.name.replace(/\.[^.]+$/, '') + '.pdf',
-                                  {
-                                    type: 'application/pdf',
-                                  },
-                                ),
-                              );
-                              opened.push({
-                                ...loaded,
-                                id: s.id,
-                                name: s.name,
-                                kind: s.kind,
-                                size: s.size,
-                                wasEncrypted: s.wasEncrypted,
-                                invoiceOriginal: s.invoiceOriginal,
-                              });
-                            }
-                            if (
-                              saved.version.state.pages.some(
-                                (x) =>
-                                  x.index >= opened.find((s) => s.id === x.sourceId)!.pdf.numPages,
-                              )
-                            )
-                              throw new Error('Ungültige Seitenzahl im Projekt.');
-                            onRestore(opened, saved.version.state);
-                            setCurrent(p.id);
-                            setName(p.name);
-                            setOpen(false);
-                          } catch (e) {
-                            for (const s of opened) await s.pdf.loadingTask.destroy();
-                            throw e;
-                          }
+                          const saved = await loadProject(v.id);
+                          await restore(p.name, saved.sources, saved.version.state, p.id);
                         })
                       }
                     >
                       Öffnen
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={working || locked}
+                      aria-label={`Arbeitsstand ${i + 1} von ${p.name} herunterladen`}
+                      onClick={() =>
+                        job(async () => {
+                          const saved = await loadProject(v.id);
+                          await download(p.name, saved.sources, saved.version.state);
+                        })
+                      }
+                    >
+                      Herunterladen
                     </Button>
                   </div>
                 ))}
