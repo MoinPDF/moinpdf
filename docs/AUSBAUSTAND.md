@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 11. Oktober 2026, Version 0.9.1.
+Stand: 11. Oktober 2026, Version 0.9.2.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
@@ -57,3 +57,29 @@ PDFium 2.15.1, OCR-Sprachmodelle, Decoder, Modelllaufzeit und statistische
 Sprachwahl werden mit ihren Komponentenhinweisen ausgeliefert. Details und
 zugehörige Lizenztexte: [Komponentenhinweise](../public/component-notices/README.txt).
 Diese Ergänzungen ändern nicht die Lizenz des MoinPDF-Projekts.
+
+## Nachprüfung von XFA und Druckstandards (11. Oktober 2026)
+
+Die eingesetzte PDF.js-Version 6.3.289 kann reine dynamische XFA-Formulare
+anzeigen und einfache Eingaben über `annotationStorage` in Datensatzpakete
+zurückschreiben. Das ist keine vollständige XFA-Laufzeit: XFA als einzelner
+Stream wird beim Speichern ausdrücklich nicht unterstützt; Mischformulare,
+JavaScript, Berechnungen und dynamische Aktionen sind nicht vollständig
+abgedeckt. Vor einer Erweiterung ist deshalb ein eigener, begrenzter Modus mit
+Ablehnung nicht unterstützter Formulare und unabhängiger Rückleseprüfung nötig.
+Die vorhandenen Schutzsperren bleiben aktiv, damit keine XFA-Daten verloren gehen.
+
+Primärquellen zum eingesetzten Versionsstand:
+[Dokumenterkennung](https://github.com/mozilla/pdf.js/blob/v6.3.289/src/core/document.js),
+[Speicherung](https://github.com/mozilla/pdf.js/blob/v6.3.289/src/core/worker.js),
+[Eingabeschicht](https://github.com/mozilla/pdf.js/blob/v6.3.289/src/display/xfa_layer.js).
+
+Ein CMYK-Profil allein belegt keine PDF/X-Konformität. veraPDF unterstützt
+[PDF/A und PDF/UA](https://docs.verapdf.org/validation/), kein vollständiges
+PDF/X-Prüfprofil. Auch der untersuchte freie Validator
+[pdf0](https://github.com/mgilbir/pdf0/blob/main/docs/validators.md) beschreibt
+seine PDF/X-Prüfung als begrenzt. Eine Freigabe als validiertes PDF/X braucht
+weiterhin einen vollständigen unabhängigen Validator. Das unverändert
+weitergebbare [ICC-Profil CGATS21_CRPC6](https://registry.color.org/profile-registry/CGATS21_CRPC6)
+wäre für die zugehörige Druckbedingung nutzbar, ersetzt aber weder Farbmanagement
+noch Konformitätsprüfung. Daher wurde kein ungesicherter PDF/X-Export ergänzt.

@@ -1,5 +1,9 @@
 name: Publish verified release
 on:
+  workflow_run:
+    workflows: [Publish Docker images]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       image_run_id:
@@ -13,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   release:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -25,7 +29,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ inputs.image_run_id }}
+          run-id: ${{ github.event.workflow_run.id || inputs.image_run_id }}
           pattern: docker-image-*
           merge-multiple: true
           path: ${{ runner.temp }}/image-reference
@@ -33,7 +37,7 @@ jobs:
         id: verify
         uses: actions/github-script@v7
         env:
-          IMAGE_RUN_ID: ${{ inputs.image_run_id }}
+          IMAGE_RUN_ID: ${{ github.event.workflow_run.id || inputs.image_run_id }}
         with:
           script: |
             const fs = require('fs');
@@ -43,7 +47,7 @@ jobs:
             const runId = Number(process.env.IMAGE_RUN_ID);
             if (!Number.isSafeInteger(runId) || runId <= 0) throw new Error('Invalid image run');
             const {data: imageRun} = await github.rest.actions.getWorkflowRun({...context.repo, run_id: runId});
-            if (imageRun.path !== '.github/workflows/publish-images.yml' || imageRun.conclusion !== 'success') throw new Error('Images must come from the successful image workflow');
+            if (imageRun.path !== '.github/workflows/publish-images.yml' || imageRun.conclusion !== 'success' || imageRun.head_branch !== 'main' || imageRun.repository.full_name !== context.repo.owner + '/' + context.repo.repo || !['workflow_run', 'workflow_dispatch'].includes(imageRun.event)) throw new Error('Images must come from the successful image workflow');
             const names = ['web', 'documents', 'translation'];
             const refs = names.map(name => JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'image-reference', name + '.json'), 'utf8')));
             const source = refs[0].source;
@@ -54,8 +58,10 @@ jobs:
               const prefix = `ghcr.io/${context.repo.owner.toLowerCase()}/moinpdf-${names[index]}:${version}-${source.slice(0, 12)}`;
               if (ref.image !== prefix || !/^sha256:[0-9a-f]{64}$/.test(ref.digest) || JSON.stringify(ref.platforms) !== JSON.stringify(['linux/amd64', 'linux/arm64'])) throw new Error('Image reference must match this release version and both platforms');
             }
-            const {data: dockerRuns} = await github.rest.actions.listWorkflowRuns({...context.repo, workflow_id: 'docker.yml', head_sha: context.sha, status: 'success', per_page: 100});
+            const {data: dockerRuns} = await github.rest.actions.listWorkflowRuns({...context.repo, workflow_id: 'docker.yml', head_sha: context.sha, branch: 'main', event: 'push', status: 'success', per_page: 100});
             if (!dockerRuns.workflow_runs.some(run => run.head_sha === context.sha && run.conclusion === 'success')) throw new Error('Missing successful Docker verification of the release source');
+            const {data: main} = await github.rest.repos.getBranch({...context.repo, branch: 'main'});
+            if (main.commit.sha !== source) throw new Error('The tested release source has been superseded on main');
             const heading = `## ${version} `;
             const section = fs.readFileSync('CHANGELOG.md', 'utf8').split(heading)[1];
             if (!section) throw new Error('Missing changelog');

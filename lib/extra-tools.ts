@@ -723,7 +723,15 @@ export async function extractEmbeddedImages(
     );
     for (const { op, args } of operations) {
       check(signal);
-      let image: any;
+      type ExtractedImage = {
+        width: number;
+        height: number;
+        bitmap?: ImageBitmap;
+        data?: Uint8Array | Uint8ClampedArray;
+        kind?: number;
+        extractionRect?: { x: number; y: number; w: number; h: number };
+      };
+      let image: ExtractedImage | null;
       if (
         op === OPS.paintImageMaskXObject ||
         op === OPS.paintImageMaskXObjectGroup ||
@@ -737,7 +745,7 @@ export async function extractEmbeddedImages(
         if (seen.has(id)) continue;
         seen.add(id);
         const objects = id.startsWith('g_') ? page.commonObjs : page.objs;
-        image = await new Promise<any>((resolve, reject) => {
+        image = await new Promise<ExtractedImage | null>((resolve, reject) => {
           const fail = () => {
             clearTimeout(timer);
             signal.removeEventListener('abort', abort);
@@ -754,7 +762,7 @@ export async function extractEmbeddedImages(
             objects.get(id, (value: unknown) => {
               clearTimeout(timer);
               signal.removeEventListener('abort', abort);
-              resolve(value);
+              resolve(value as ExtractedImage | null);
             });
           } catch {
             fail();

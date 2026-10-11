@@ -8,3 +8,7 @@ allowBuilds:
   sharp: true
   tesseract.js: false
   unrs-resolver: true
+# Security floors for optional transitive peers retained by pnpm's resolver.
+overrides:
+  'esbuild@>=0.27.3 <0.28.1': 0.28.1
+  'fast-uri@>=3.0.0 <3.1.8': 3.1.8

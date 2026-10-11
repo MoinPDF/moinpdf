@@ -73,7 +73,7 @@ export function fitRect(rect: Rect): Rect {
 }
 export async function readTextTargets(
   source: Source,
-  item: PageItem,
+  item: PageItem | Pick<PageItem, 'index' | 'rotation'>,
 ): Promise<{ targets: TextTarget[]; width: number; height: number }> {
   const page = await source.pdf.getPage(item.index + 1),
     viewport = page.getViewport({ scale: 1, rotation: (page.rotate + item.rotation) % 360 }),

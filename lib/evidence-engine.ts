@@ -13,7 +13,6 @@ import {
   dateValue,
   extractField,
   fold,
-  pageRef,
   type EvidenceWord,
   type EvidencePage,
   type EvidenceRef,

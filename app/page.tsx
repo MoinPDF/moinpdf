@@ -2,18 +2,19 @@
 import { ProjectManager } from '@/components/studio/project-manager';
 import { ocrLayouts } from '@/lib/ocr-languages';
 import { OcrLanguagePicker } from '@/components/studio/ocr-language-picker';
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import {
   FileText,
-  ScanText,
   Layers,
-  Scissors,
   LayoutGrid,
-  Images,
-  FileImage,
-  Minimize2,
-  Stamp,
-  ListOrdered,
   Upload,
   Plus,
   X,
@@ -28,19 +29,11 @@ import {
   LoaderCircle,
   Copy,
   Trash2,
-  PanelLeftClose,
   Undo2,
   Redo2,
-  Crop,
   PenLine,
   Type,
   Highlighter,
-  Square,
-  FileX2,
-  Contrast,
-  Maximize,
-  Grid2X2,
-  FileCheck2,
   Search,
   MousePointer2,
   ZoomIn,
@@ -49,7 +42,6 @@ import {
   MoveVertical,
   CornerDownLeft,
   CheckCheck,
-  Menu,
   FileSearch,
 } from 'lucide-react';
 import {
@@ -103,12 +95,32 @@ import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { UploadEntry, type ImportState } from '@/components/studio/upload-entry';
 import { LegalFooter } from '@/components/studio/legal-footer';
-import { DocumentWorkbench } from '@/components/studio/document-workbench';
+const DocumentWorkbench = lazy(() =>
+  import('@/components/studio/document-workbench').then((module) => ({
+    default: module.DocumentWorkbench,
+  })),
+);
 import { PasswordPrompt, type PasswordRequest } from '@/components/studio/password-prompt';
-import { SecurityWorkbench } from '@/components/studio/security-workbench';
-import { InvoiceWorkbench } from '@/components/studio/invoice-workbench';
-import { AdvancedWorkbench } from '@/components/studio/advanced-workbench';
-import { ServerWorkbench } from '@/components/studio/server-workbench';
+const SecurityWorkbench = lazy(() =>
+  import('@/components/studio/security-workbench').then((module) => ({
+    default: module.SecurityWorkbench,
+  })),
+);
+const InvoiceWorkbench = lazy(() =>
+  import('@/components/studio/invoice-workbench').then((module) => ({
+    default: module.InvoiceWorkbench,
+  })),
+);
+const AdvancedWorkbench = lazy(() =>
+  import('@/components/studio/advanced-workbench').then((module) => ({
+    default: module.AdvancedWorkbench,
+  })),
+);
+const ServerWorkbench = lazy(() =>
+  import('@/components/studio/server-workbench').then((module) => ({
+    default: module.ServerWorkbench,
+  })),
+);
 import { isAdvancedTool, isServerTool, type ServerTool } from '@/lib/advanced-types';
 import { conversionToolForFile, documentAccept } from '@/lib/import-routing';
 import { isDocumentTool, type DocumentSessions } from '@/lib/document-tools';
@@ -154,7 +166,6 @@ import {
   countEdits,
   makeBlankFile,
   normalizedRect,
-  type StudioTool,
   type StudioOptions,
   type Edits,
   type Mark,
@@ -182,7 +193,16 @@ export default function Home() {
         className="studio-provider"
         style={{ '--sidebar-width': '252px' } as CSSProperties}
       >
-        <Studio />
+        <Suspense
+          fallback={
+            <div className="tool-loading" role="status">
+              <LoaderCircle className="spin" size={24} />
+              <p>Werkzeug wird geladen …</p>
+            </div>
+          }
+        >
+          <Studio />
+        </Suspense>
       </SidebarProvider>
       <LegalFooter />
     </div>

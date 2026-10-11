@@ -1,8 +1,9 @@
 # Browser-Office: Freigabeprüfung vom 11. Oktober 2026
 
 Der lokale Office-Konverter ist noch nicht freigegeben. MoinPDF bietet weiter
-LibreOffice auf dem eigenen Dokumentenserver. Die Tests der beiden folgenden
-Browser-Kerne erklären die verbleibenden Hindernisse.
+LibreOffice auf dem eigenen Dokumentenserver. Die folgenden Prüfungen erklären den Stand. Ein neuer Matbee-Kern hat die
+CLI-Konvertierungen inzwischen bestanden; seine Browser- und Verteilungsfreigabe
+ist noch offen.
 
 ## ZetaOffice / ZetaJS
 
@@ -92,3 +93,40 @@ LibreOffice-WASM-Kern. Er benötigt eine eigenständige Prüfung von Verteilung,
 Komponentenhinweisen, Mobilgeräten, Speicherbedarf, Abbruch und Ausgabequalität
 aller drei Office-Formate. Bis dahin bleibt die vorhandene Serverkonvertierung
 der freigegebene Office-Weg.
+
+## Neuer, funktionierender Kandidat: Matbee 2.7.2
+
+Die erneute Suche ergab `@matbee/libreoffice-converter@2.7.2` (Quellrevision
+`b72a3d584bc28c5111afafcf25def7a24fb5fcb0`). Das tatsächlich ausgelieferte
+LibreOffice-WASM bestand neun lokale Node-Konvertierungen: die sechs vorhandenen
+Office-/ODF-Fixtures sowie reichere DOCX-, XLSX- und PPTX-Dateien. Tabellen, Bilder,
+Formelbetrag, Diagramm, Kopf-/Fußzeilen und griechische/kyrillische Zeichen wurden
+mit MuPDF und Poppler gegengeprüft. Japanische Zeichen benötigen zusätzliche
+Schriften. Dies ist eine bestandene CLI-Probe, keine Browserfreigabe.
+
+Die Kernressourcen lassen sich auf 77.553.637 Byte (73,96 MiB) komprimiert
+ausliefern. Damit ist die zuvor festgestellte reine Dateigrößenhürde nicht generell
+unlösbar. Der Kern reserviert allerdings 1 GiB gemeinsamen WASM-Speicher; der
+Node-Prozess erreichte nach den Proben rund 1,36 GB. Der Browser braucht HTTPS,
+COOP/COEP und SharedArrayBuffer. Die tatsächliche Gesamtausgabe und Mobilgeräte
+müssen eigenständig geprüft werden.
+
+Der npm-Lieferumfang enthält keine vollständige Lizenz-/Hinweissammlung für den
+identifizierten LibreOffice-Core und die 137 mitgelieferten Fontdateien. Vor einer
+Verteilung müssen passende Quellen und Hinweise ergänzt werden. Ein generelles
+Verteilungsverbot oder eine kostenpflichtige Matbee-Lizenz wurde nicht festgestellt.
+Außerdem wartet die vorhandene `destroy()`-Methode zunächst auf eine Workerantwort;
+ein hängender Konverter braucht einen eigenen harten Abbruch mit zuverlässiger
+Speicherfreigabe. Diese konkreten Integrationsarbeiten bleiben offen. Die Engine
+wurde nicht als ungeprüfte App-Abhängigkeit aufgenommen.
+
+Primärquellen:
+- [Matbee-Paket und API](https://github.com/matbeedotcom/libreoffice-document-converter/blob/b72a3d584bc28c5111afafcf25def7a24fb5fcb0/README.md)
+- [Browser-Worker und Abbruch](https://github.com/matbeedotcom/libreoffice-document-converter/blob/b72a3d584bc28c5111afafcf25def7a24fb5fcb0/src/browser.ts)
+- [Identifizierter LibreOffice-Core](https://github.com/LibreOffice/core/commit/d1c9e0e4e1ddeb24fe8f93e56860b3765043f8b1)
+- [Zugehöriger Komponenten-/Lizenzkatalog](https://github.com/LibreOffice/core/blob/d1c9e0e4e1ddeb24fe8f93e56860b3765043f8b1/readlicense_oo/license/license.xml)
+- [MPL 2.0](https://www.mozilla.org/en-US/MPL/2.0/)
+
+Die Proben sind mit den vorhandenen Office-Fixtures und den Skripten unter
+`tests/research/matbee/` wiederholbar. Die dortige Anleitung hält Paketversion,
+Integrität und Abnahmegrenzen fest.

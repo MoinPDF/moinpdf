@@ -5,7 +5,6 @@ import { PagePreview } from './canvas';
 import { uid } from '@/lib/pdf-engine';
 import {
   Choice,
-  Field,
   Text,
   NumberField,
   Tick,
@@ -374,7 +373,7 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
   );
 }
 
-export function ArithmeticPanel({ source, sources, busy, run, invalidate }: Props) {
+export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
   const [page, setPage] = useState(0),
     [area, setArea] = useState<Rect>({ x: 0.55, y: 0.12, w: 0.4, h: 0.72 }),
     [ocr, setOcr] = useState(false),

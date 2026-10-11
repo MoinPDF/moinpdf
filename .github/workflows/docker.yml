@@ -51,6 +51,10 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Audit pinned document-server dependencies
+        run: |
+          python -m pip install pip-audit==2.10.1
+          python -m pip_audit --disable-pip --no-deps -r server/requirements.lock.txt
       - name: Validate Compose configuration
         run: |
           docker compose config --quiet
@@ -61,9 +65,11 @@ jobs:
       - name: Browser engine and TypeScript checks
         run: |
           docker build --target build -t moinpdf-browser-tests .
+          docker run --rm moinpdf-browser-tests pnpm audit
           docker run --rm moinpdf-browser-tests pnpm run lint
           docker run --rm moinpdf-browser-tests pnpm run format:check
           docker run --rm moinpdf-browser-tests pnpm test
+          docker run --rm moinpdf-browser-tests node tests/release-workflow-smoke.mjs
       - name: Native document converters and key-file authentication
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
@@ -71,7 +77,7 @@ jobs:
           docker build --target test -t moinpdf-document-tests ./server
           docker run --rm --network none --read-only --tmpfs /tmp:mode=1777,size=1g \
             --volume "$PWD:/repo:ro" --workdir /repo moinpdf-document-tests \
-            python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats -v
+            python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats server.test_upload_security -v
       - name: Start complete stack with all seven languages
         id: start
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}

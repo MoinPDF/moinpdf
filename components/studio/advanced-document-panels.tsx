@@ -19,7 +19,6 @@ import {
   Text,
   Choice,
   Tick,
-  NumberField,
   PageSelect,
   PageStage,
   RectFields,
