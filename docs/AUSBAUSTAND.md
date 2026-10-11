@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 11. Oktober 2026, Entwicklungsversion 0.8.0.
+Stand: 11. Oktober 2026, Entwicklungsversion 0.8.1.
 
 Dieser Stand umfasst drei implementierte Etappen. Eine größere Zahl von
 Werkzeugen allein belegt keinen Gesamtsieg im Produktvergleich. Die folgende
@@ -38,7 +38,17 @@ PDF.js, kontrollieren Seitenkoordinaten bei allen rechtwinkligen Drehungen und
 CropBox-Offsets, erhaltene Texte, entfernte Originaltexte, geänderte Bildpixel,
 echte QPDF-Linearisierung, TIFF/BMP-Pixel und lokale Projektversionen. Alle 21 ausgelieferten Sprachmodelle werden offline initialisiert; Französisch und eine kombinierte deutsch-englisch-französisch-spanische Erkennung werden mit tatsächlichen Erkennungsaufträgen geprüft.
 Typprüfung, Linter, Formatprüfung und beide Produktionsbuilds gehören zur
-Freigabe. Interaktive Browserprüfungen laufen in der Docker-CI auf Desktop und Smartphone. Die ersten beiden Etappen haben den vollständigen Durchlauf bestanden; die Docker-Images von 0.7.0 sind veröffentlicht. Die dritte ergänzt Absatzvorschau/Export/Überlauf und die strukturierte PDF/UA-Ausgabe im echten Browser. Der aktuelle CI-Status ist vor Freigabe zu prüfen.
+Freigabe. Interaktive Browserprüfungen laufen in der Docker-CI auf Desktop und
+Smartphone. Version 0.8.0 hat einschließlich Absatzvorschau/Export/Überlauf und
+strukturierter PDF/UA-Ausgabe den [vollständigen Durchlauf](https://github.com/MoinPDF/moinpdf/actions/runs/38127214620)
+bestanden. Die [Docker-Images für amd64 und arm64](https://github.com/MoinPDF/moinpdf/actions/runs/38128260965)
+sind für den Quellstand `1b19dc8c64e89f6c4b2e80cdbab3caf94521b16f` veröffentlicht.
+
+Die Korrektur 0.8.1 entfernt veraltete PDF/UA-Ergebnisse nach Änderungen am Entwurf,
+am Prüfprofil oder an der Aktion. Die ergänzte Browserprüfung kontrolliert den
+erneuten Export und liest Inhalt und Metadaten unabhängig zurück. Für die
+Freigabe dieses neuen Quellstands ist dessen eigener vollständiger CI-Lauf nötig;
+die bestandenen Prüfungen von 0.8.0 ersetzen ihn nicht.
 
 ## Komponenten und Lizenzen
 

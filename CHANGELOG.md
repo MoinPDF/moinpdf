@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.8.1 – 2026-10-11
+
+- Ergebnisse im Barrierefreiheitswerkzeug werden nach Änderungen an Inhalt,
+  Titel, Sprache, Prüfprofil oder Aktion verworfen. Ein Download wird erst nach
+  erneuter Verarbeitung angeboten und gehört dadurch zum aktuellen Entwurf.
+- Browserprüfung für bearbeitete PDF/UA-Inhalte, erneuten Export und den Wechsel
+  von Prüfprofil und Aktion ergänzt. Neue PDF-Inhalte und Metadaten werden
+  unabhängig zurückgelesen.
+
 ## 0.8.0 – 2026-10-11
 
 - Absatzeditor mit Mehrfachauswahl vorhandener Textobjekte, automatischem Umbruch,
