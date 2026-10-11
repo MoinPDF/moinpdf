@@ -9,6 +9,32 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.9.0 – 2026-10-11
+
+- Unveränderliche Projektarchive mit allen fünf gespeicherten Ständen,
+  deduplizierten Originaldateien und Integritätsprüfung beim Import.
+- Gemischte Absatzformatierung, Ligaturen, kombinierende Zeichen und Textfluss
+  auf bis zu 19 zusätzliche Seiten; Objektgriffe und Zeichenreihenfolge.
+- Acht OCR-Sprachen gleichzeitig sowie optionale lokale Sprachprobe je Scan-Seite.
+- Lokaler PDF-Assistent mit geprüfter Modelldatei, Quellenzitaten, JSON-Export,
+  Abbruch und Speicherfreigabe.
+- HEIC/HEIF- und PSD-Import im Browser; Pages-, Visio- und Publisher-Konvertierung
+  mit Prüfung ungültiger Dateicontainer.
+- Workflow-Knotendiagramm mit verschachtelten Entscheidungen; zusätzliche
+  Seitenoperationen und nachvollziehbares Ablaufprotokoll.
+- Mehrere Bates-/Kopf-/Fußzeilenregeln, Papierformate, druckfertige Posterblätter
+  und abbrechbare Ergebnisvorschau.
+- SVG-Vektorexport, Schriftkonturen, dauerhaft reduzierte Ebenen, bearbeitbarer
+  PowerPoint-Text und Übersetzung an Originalpositionen mit Überlaufprüfung.
+- Reparatur bestehender PDF-Tags ohne Änderung des Seiteninhalts und Ausgabe
+  nur nach bestandener veraPDF-Prüfung.
+- Strenge Offline-Signaturprüfung, konfigurierbare PAdES-T/LT/LTA-Signaturen und
+  Erneuerung von Dokumentzeitstempeln. Zugangsdaten bleiben vom Konverter getrennt.
+- Spaltenbewusster Dokumentvergleich, seitenübergreifende Sätze und besondere
+  Hinweise auf geänderte Zahlen, Verneinungen und Pflichtwörter.
+- 24 Engine-Testsuiten, erweiterte Server- und Browserprüfungen. Offene Grenzen
+  des ursprünglichen Ausbauplans stehen in [docs/AUSBAUSTAND.md](docs/AUSBAUSTAND.md).
+
 ## 0.8.1 – 2026-10-11
 
 - Ergebnisse im Barrierefreiheitswerkzeug werden nach Änderungen an Inhalt,

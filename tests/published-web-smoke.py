@@ -173,6 +173,38 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Absatz exportieren', exact=True).click()
         expect(page.get_by_text(re.compile('Textüberlauf|kleiner als sein Innenabstand'))).to_be_visible()
         completed.append('Paragraph selection, embedded Unicode font, real PDFium result preview/export and overflow rejection in production UI')
+        page.get_by_label('Höhe (%)', exact=True).fill('35')
+        paragraph_input = page.get_by_label('Neuer Absatztext', exact=True)
+        paragraph_input.press('Control+Home')
+        for _ in range(5):
+            paragraph_input.press('Shift+ArrowRight')
+        page.get_by_role('button', name='Markierten Text anders formatieren', exact=True).click()
+        page.get_by_label('Formatierung 1: Schriftgröße', exact=True).fill('24')
+        page.get_by_role('button', name='Absatz exportieren', exact=True).click()
+        expect(page.locator('.advanced-result')).to_be_visible()
+        with page.expect_download() as download:
+            page.locator('.advanced-result a[download]').click()
+        saved = Path(temporary) / 'absatz-formatiert.pdf'
+        download.value.save_as(saved)
+        with pymupdf.open(saved) as document:
+            spans = [span for block in document[0].get_text('dict')['blocks'] if 'lines' in block for line in block['lines'] for span in line['spans']]
+            assert any(abs(span['size']-24)<.1 for span in spans), spans
+            assert any(abs(span['size']-12)<.1 for span in spans), spans
+        paragraph_input.fill((paragraph_text+' ')*5)
+        page.get_by_label('Höhe (%)', exact=True).fill('8')
+        page.get_by_role('checkbox', name='Bei Textüberlauf neue Folgeseiten einfügen', exact=True).check()
+        page.get_by_role('button', name='Absatz exportieren', exact=True).click()
+        expect(page.locator('.advanced-result')).to_be_visible()
+        with page.expect_download() as download:
+            page.locator('.advanced-result a[download]').click()
+        saved = Path(temporary) / 'absatz-folgeseiten.pdf'
+        download.value.save_as(saved)
+        with pymupdf.open(saved) as document:
+            assert len(document)>2
+            assert 'Zweite Seite' in document[-1].get_text()
+            combined=' '.join(' '.join(p.get_text().split()) for p in document)
+            assert combined.count('Neuer Absatz mit Umlauten')==5
+        completed.append('Mixed paragraph sizes and additional flowing pages exported through the real UI; later original page preserved')
         back(page)
 
         page.get_by_role('button', name='Projekte', exact=True).click()
@@ -241,6 +273,33 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             assert 'Zweite' in document[1].get_text()
         completed.append('Eight OCR languages selected in the real UI and used by production workers; searchable PDF independently read back')
         back(transfer)
+
+        scan_path=Path(temporary)/'automatische-sprache.pdf'
+        with pymupdf.open() as original:
+            sample=original.new_page(width=1500,height=250)
+            for row, text in enumerate(('Die Lieferung erfolgt am Freitag.', 'Bitte prüfen Sie die beigefügte Rechnung und bestätigen Sie den vereinbarten Termin.', 'Alle Angaben bleiben im lokalen Dokument und werden nicht verschickt.')):
+                sample.insert_text((30,55+row*60),text,fontsize=22)
+            scan=sample.get_pixmap(matrix=pymupdf.Matrix(1.5,1.5)).tobytes('png')
+            with pymupdf.open() as image_pdf:
+                image_pdf.new_page(width=1500,height=250).insert_image(pymupdf.Rect(0,0,1500,250),stream=scan)
+                image_pdf.save(scan_path)
+        automatic=browser.new_page(viewport={'width':1440,'height':1000},accept_downloads=True)
+        automatic.on('pageerror',lambda error:errors.append('Automatic OCR: '+str(error)))
+        automatic.goto(origin)
+        automatic.locator('input[type="file"]').first.set_input_files(str(scan_path))
+        automatic.get_by_role('button',name='OCR & Text',exact=True).click()
+        automatic.get_by_role('switch',name='Sprachen automatisch ermitteln',exact=True).check()
+        automatic.get_by_role('button',name='Text erkennen',exact=True).click()
+        expect(automatic.get_by_role('heading',name='Erledigt.',exact=True)).to_be_visible(timeout=240000)
+        with automatic.expect_download() as download:
+            automatic.locator('a[download]').first.click()
+        detected_pdf=Path(temporary)/'sprache-erkannt.pdf'
+        download.value.save_as(detected_pdf)
+        with pymupdf.open(detected_pdf) as document:
+            assert len(document)==1
+            assert 'Rechnung' in document[0].get_text() and 'Lieferung' in document[0].get_text()
+        automatic.close()
+        completed.append('Automatic OCR language selection on an image-only German scan through the real UI, with searchable PDF readback')
 
         changed_pdf = Path(temporary) / 'neue-fassung.pdf'
         with pymupdf.open() as document:

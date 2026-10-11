@@ -27,3 +27,18 @@ await assert.rejects(()=>compareContent([page(terms)],[page(terms)],names,AbortS
 await assert.rejects(()=>compare([page('x'.repeat(2_000_001))],[]),/Millionen/);
 const controller=new AbortController();await assert.rejects(()=>compareContent(Array.from({length:150},(_,i)=>page('Langer unveränderter Absatz '+i+'.',i+1)),[],names,controller.signal,()=>controller.abort()),/Abgebrochen/);
 console.log('PASS: inserted/deleted/reordered pages, moved sentences across pages, changed amounts/negation/case/punctuation, reflow whitespace, duplicates with explicit ambiguity, competing pairs rejected, unreadable scans, bounded work and cancellation.');
+const {comparisonPage,criticalChanges}=await import('../.cache/content-compare-test.mjs');
+const item=(text,x,y,w=160)=>({text,x,y,w,h:12,upright:true});
+const columns=comparisonPage(1,[item('Gesamttitel.',40,10,500),item('Linker Absatz beginnt',40,60),item('Rechter Absatz beginnt',330,60),item('und geht links weiter.',40,76),item('und geht rechts weiter.',330,76),item('Schluss über ganze Breite.',40,120,500)],600);
+assert(columns.text.indexOf('links weiter')<columns.text.indexOf('Rechter Absatz'));
+assert(columns.text.startsWith('Gesamttitel.'));assert(columns.text.endsWith('Schluss über ganze Breite.'));assert(columns.layoutNotes.length);
+r=await compare([columns],[page('Gesamttitel.\n\nLinker Absatz beginnt und geht links weiter.\n\nRechter Absatz beginnt und geht rechts weiter.\n\nSchluss über ganze Breite.')]);assert.equal(stat(r,'Textblöcke gleich'),4);
+const vertical=comparisonPage(1,[{...item('Drehtext',10,10),upright:false}],600);assert.equal(vertical.text,'Drehtext');assert.match(vertical.layoutNotes[0],/Gedrehter/);
+const dense=comparisonPage(1,Array.from({length:12000},(_,i)=>item('Zeile-'+i,i%2?330:40,30+Math.floor(i/2)*16)),600);
+assert.equal((dense.text.match(/Zeile-/g)||[]).length,12000,'Dense pages preserve every text item');
+assert(dense.text.indexOf('Zeile-11998')<dense.text.indexOf('Zeile-1\n'),'Columns remain separate on dense pages');
+r=await compare([page('Die Lieferung erfolgt innerhalb von'),page('drei Tagen ohne Zusatzkosten.',2)],[page('Die Lieferung erfolgt innerhalb von drei Tagen ohne Zusatzkosten.')]);assert.equal(stat(r,'Textblöcke gleich'),1);assert(r.sections.some(s=>s.title==='A: Seite 1–2 · B: Seite 1'));assert(r.sections.some(s=>s.details?.some(d=>d.label==='Seitenumbruch')));
+r=await compare([page('Das Unter-'),page('nehmen liefert pünktlich.',2)],[page('Das Unternehmen liefert pünktlich.')]);assert.equal(stat(r,'Textblöcke gleich'),1);
+assert.equal(criticalChanges('Wir müssen nicht 120,00 Euro zahlen.','Wir dürfen 150,00 Euro zahlen.').length,3);
+r=await compare([page('Wir müssen nicht 120,00 Euro zahlen.')],[page('Wir müssen 150,00 Euro zahlen.')]);assert(r.sections.some(s=>s.details?.some(d=>d.label==='Prüfhinweis'&&d.value.includes('Verneinung'))));
+console.log('PASS: geometric two-column reading order, full-width headings, retained rotated text, multi-page sentence provenance and explicit numeric/negation/obligation change flags.');

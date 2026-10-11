@@ -51,3 +51,11 @@ for(const name of ['base64-js','pako']) {
   for(const file of await readdir(dir)) if(/^(LICENSE|LICENCE|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',name+'-'+file));
 }
 console.log('Local PDF and OCR assets prepared.');
+const francRequire=createRequire(require.resolve('franc'));
+const trigramDir=path.dirname(francRequire.resolve('trigram-utils'));
+const trigramRequire=createRequire(path.join(trigramDir,'package.json'));
+for(const name of ['trigram-utils','n-gram','collapse-white-space']) {
+  const dir=name==='trigram-utils'?trigramDir:path.dirname(trigramRequire.resolve(name));
+  for(const file of await readdir(dir)) if(/^(LICENSE|LICENCE|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',name+'-'+file));
+}
+await copyFile('public/component-notices/franc-LICENSE.txt',path.join(out,'licenses/franc-LICENSE.txt'));

@@ -20,7 +20,16 @@ export type NativeChange = {
   image?: { width: number; height: number; rgba: Uint8Array };
 };
 export type NativeRemoval = { page: number; rect: NativeRect; color?: string };
+export type NativeParagraphStyle = {
+  from: number;
+  to: number;
+  fontSize: number;
+  color: string;
+  fontBytes?: Uint8Array;
+};
 export type NativeParagraph = {
+  styles?: NativeParagraphStyle[];
+  flow?: boolean;
   indices: number[];
   rect: NativeRect;
   text: string;
@@ -31,7 +40,12 @@ export type NativeParagraph = {
   align: 'left' | 'center' | 'right';
   color: string;
 };
-export type NativeParagraphResult = { bytes: Uint8Array; lines: number; height: number };
+export type NativeParagraphResult = {
+  bytes: Uint8Array;
+  lines: number;
+  height: number;
+  addedPages: number;
+};
 type NativeContext = {
   api: WrappedPdfiumModule;
   doc: number;
@@ -354,249 +368,413 @@ export function editNativeObjects(
     }
   });
 }
-/** Replace explicitly selected top-level text objects by one consistently styled paragraph.
- * All validation and layout happen before any original object is removed. */
+/** Shape LTR text with its real glyph advances, then lay it out before changing the PDF. */
 export function replaceNativeParagraph(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
   index: number,
   settings: NativeParagraph,
 ): NativeParagraphResult {
-  const { rect: r, fontSize, padding, lineHeight, align, indices, fontBytes, color } = settings;
+  const { rect: r, indices, padding, lineHeight, align } = settings;
   if (!indices.length || indices.length > 500 || new Set(indices).size !== indices.length)
     throw new Error('Bitte 1 bis 500 unterschiedliche Textobjekte auswählen.');
   if (
-    ![r.x, r.y, r.w, r.h, fontSize, padding, lineHeight].every(Number.isFinite) ||
+    ![r.x, r.y, r.w, r.h, padding, lineHeight].every(Number.isFinite) ||
     r.x < 0 ||
     r.y < 0 ||
     r.w <= 0 ||
     r.h <= 0 ||
     r.x + r.w > 1.00001 ||
     r.y + r.h > 1.00001 ||
-    fontSize < 6 ||
-    fontSize > 144 ||
     padding < 0 ||
     padding > 72 ||
     lineHeight < 1 ||
     lineHeight > 3 ||
-    !['left', 'center', 'right'].includes(align) ||
-    !/^#[0-9a-f]{6}$/i.test(color)
+    !['left', 'center', 'right'].includes(align)
   )
     throw new Error('Bitte Textbereich, Schriftgröße, Abstand und Farbe prüfen.');
-  const text = settings.text.replace(/\r\n?/g, '\n').replace(/\t/g, '    ').normalize('NFC');
+  const text = settings.text.replace(/\r\n?/g, '\n').replace(/\t/g, '    ');
   if (!text.trim() || text.length > 20000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(text))
     throw new Error('Bitte 1 bis 20.000 Zeichen ohne Steuerzeichen eingeben.');
-  // This engine positions Unicode characters without a shaping/bidi engine.
-  // Fail explicitly rather than silently producing disconnected or reversed text.
-  const complexRanges = [
-    [0x590, 0x109f],
-    [0x1780, 0x18af],
-    [0x200b, 0x200f],
-    [0x202a, 0x202e],
-    [0x2060, 0x206f],
-    [0xa980, 0xa9df],
-    [0xaa00, 0xaaff],
-    [0xfb1d, 0xfeff],
-  ];
+  // Fontkit shapes glyphs, but does not provide the paragraph bidi/line-breaking algorithm.
   if (
-    Array.from(text).some((ch) => {
-      const code = ch.codePointAt(0)!;
-      return (
-        /\p{M}/u.test(ch) || code > 0xffff || complexRanges.some(([a, b]) => code >= a && code <= b)
-      );
-    })
+    /[\u0590-\u109f]|[\u1780-\u18af]|[\u200b-\u200f]|[\u202a-\u202e]|[\u2060-\u206f]|[\ua980-\ua9df]|[\uaa00-\uaaff]|[\ufb1d-\ufeff]/u.test(
+      text,
+    )
   )
     throw new Error(
-      'Dieser Absatzeditor unterstützt links-nach-rechts gesetzte Schrift ohne komplexe Zeichenformung. Bitte lateinische, griechische oder kyrillische Texte verwenden.',
+      'Dieser Absatzeditor unterstützt links-nach-rechts gesetzte Schrift. Bidirektionale und komplexe nichtlateinische Zeichenformung ist noch nicht freigegeben.',
     );
-  if (
-    fontBytes.length < 12 ||
-    fontBytes.length > 10 * 1024 * 1024 ||
-    new DataView(fontBytes.buffer, fontBytes.byteOffset, fontBytes.byteLength).getUint32(0) !==
-      0x00010000
-  )
-    throw new Error('Bitte eine einzelne TrueType-Schrift (.ttf), höchstens 10 MB, verwenden.');
-  let fontInfo;
-  try {
-    fontInfo = fontkit.create(fontBytes);
-  } catch {
-    throw new Error('Die TrueType-Schrift ist nicht lesbar.');
-  }
-  if (
-    !fontInfo.characterSet ||
-    ('variationAxes' in fontInfo && Object.keys(fontInfo.variationAxes as object).length)
-  )
-    throw new Error(
-      'Bitte eine statische TrueType-Schrift verwenden, keine variable Schrift oder Schriftsammlung.',
-    );
-  const characterSet = new Set<number>(fontInfo.characterSet);
-  for (const ch of text) {
-    if (ch === '\n') continue;
-    if (!characterSet.has(ch.charCodeAt(0)))
-      throw new Error(
-        `Die gewählte Schrift enthält das Zeichen „${ch}“ nicht. Bitte eine passende TrueType-Schrift wählen.`,
-      );
-  }
-  return open(api, bytes, (ctx) => {
-    const page = pageHandle(ctx, index),
-      handles: number[] = [];
-    let font = 0;
-    try {
-      const count = api.FPDFPage_CountObjects(page);
-      if (count > 10000) throw new Error('Diese Seite enthält zu viele Objekte.');
-      for (const id of indices) {
-        const obj =
-          Number.isInteger(id) && id >= 0 && id < count ? api.FPDFPage_GetObject(page, id) : 0;
-        if (!obj || api.FPDFPageObj_GetType(obj) !== 1)
-          throw new Error(
-            'Die Auswahl enthält ein ungültiges Objekt. Bitte ausschließlich Text auswählen.',
-          );
-        handles.push(obj);
-      }
-      const fp = ctx.alloc(fontBytes.length);
+  type Glyph = { id: number; codePoints: number[] };
+  type Position = { xAdvance: number; yAdvance: number; xOffset: number; yOffset: number };
+  type Face = {
+    unitsPerEm: number;
+    ascent: number;
+    descent: number;
+    characterSet: number[];
+    variationAxes?: object;
+    layout: (text: string) => { direction: string; glyphs: Glyph[]; positions: Position[] };
+  };
+  type Font = {
+    bytes: Uint8Array;
+    face: Face;
+    cids: Map<string, { cid: number; glyph: Glyph }>;
+    handle: number;
+  };
+  type Style = { font: Font; size: number; color: string };
+  const fonts: Font[] = [];
+  const getStyle = (fontBytes: Uint8Array, size: number, color: string): Style => {
+    if (!Number.isFinite(size) || size < 6 || size > 144 || !/^#[0-9a-f]{6}$/i.test(color))
+      throw new Error('Bitte Schriftgröße und Farbe prüfen.');
+    let font = fonts.find((f) => f.bytes === fontBytes);
+    if (!font) {
+      if (
+        fontBytes.length < 12 ||
+        fontBytes.length > 10 * 1024 * 1024 ||
+        new DataView(fontBytes.buffer, fontBytes.byteOffset, fontBytes.byteLength).getUint32(0) !==
+          0x00010000
+      )
+        throw new Error('Bitte eine einzelne TrueType-Schrift (.ttf), höchstens 10 MB, verwenden.');
+      let face: Face;
       try {
-        heap(api).set(fontBytes, fp);
-        font = api.FPDFText_LoadFont(ctx.doc, fp, fontBytes.length, 2, true);
-      } finally {
-        ctx.free(fp);
+        face = fontkit.create(fontBytes) as unknown as Face;
+      } catch {
+        throw new Error('Die TrueType-Schrift ist nicht lesbar.');
       }
-      if (!font) throw new Error('Die Schrift konnte nicht eingebettet werden.');
-      const origin = toPdf(ctx, page, 0, 0),
-        right = toPdf(ctx, page, 1, 0),
-        bottom = toPdf(ctx, page, 0, 1);
-      const u = [right[0] - origin[0], right[1] - origin[1]],
-        v = [bottom[0] - origin[0], bottom[1] - origin[1]];
-      const width = Math.hypot(...u),
-        height = Math.hypot(...v),
-        available = r.w * width - 2 * padding;
-      if (available <= 0 || r.h * height <= 2 * padding)
-        throw new Error('Der Textbereich ist kleiner als sein Innenabstand.');
-      const metrics = ctx.alloc(8),
-        advances = new Map<string, number>();
-      let ascent: number, descent: number;
-      try {
-        if (
-          !api.FPDFFont_GetAscent(font, fontSize, metrics) ||
-          !api.FPDFFont_GetDescent(font, fontSize, metrics + 4)
-        )
-          throw new Error('Die Schriftmaße sind nicht lesbar.');
-        ascent = api.pdfium.getValue(metrics, 'float');
-        descent = Math.abs(api.pdfium.getValue(metrics + 4, 'float'));
-        for (const ch of text) {
-          if (ch === '\n' || advances.has(ch)) continue;
-          if (!api.FPDFFont_GetGlyphWidth(font, ch.charCodeAt(0), fontSize, metrics))
-            throw new Error(`Die Breite des Zeichens „${ch}“ ist nicht lesbar.`);
-          const value = api.pdfium.getValue(metrics, 'float');
-          if (!Number.isFinite(value) || value < 0) throw new Error('Ungültige Zeichenbreite.');
-          advances.set(ch, value);
-        }
-      } finally {
-        ctx.free(metrics);
-      }
-      if (![ascent, descent].every(Number.isFinite) || ascent <= 0)
-        throw new Error('Ungültige Schriftmaße.');
-      const measure = (value: string) =>
-        Array.from(value).reduce((total, ch) => total + (advances.get(ch) || 0), 0);
-      const lines: string[] = [];
-      for (const explicit of text.split('\n')) {
-        // Break at ordinary spaces; NBSP is kept within a word. Oversized words
-        // are split by characters, without introducing or deleting letters.
-        let line = '';
-        for (const word of explicit.trim().split(/ +/)) {
-          if (!word) continue;
-          const candidate = line ? line + ' ' + word : word;
-          if (measure(candidate) <= available + 0.001) {
-            line = candidate;
-            continue;
-          }
-          if (line) {
-            lines.push(line);
-            line = '';
-          }
-          for (const ch of word) {
-            if (measure(ch) > available + 0.001)
-              throw new Error('Der Textbereich ist schmaler als ein einzelnes Zeichen.');
-            if (line && measure(line + ch) > available + 0.001) {
-              lines.push(line);
-              line = '';
-            }
-            line += ch;
-          }
-        }
-        lines.push(line);
-      }
-      const advance = Math.max(fontSize * lineHeight, ascent + descent),
-        used = ascent + descent + (lines.length - 1) * advance + 2 * padding;
-      if (used > r.h * height + 0.01)
+      if (
+        !face.characterSet ||
+        Object.keys(face.variationAxes || {}).length ||
+        ![face.unitsPerEm, face.ascent, face.descent].every(Number.isFinite) ||
+        face.unitsPerEm <= 0 ||
+        face.ascent <= 0
+      )
         throw new Error(
-          `Textüberlauf: ${lines.length} Zeilen benötigen ${Math.ceil(used)} pt Höhe, verfügbar sind ${Math.floor(r.h * height)} pt. Bereich vergrößern, Text kürzen oder Schrift verkleinern.`,
+          'Bitte eine statische TrueType-Schrift mit gültigen Schriftmaßen verwenden.',
         );
-      const objects: number[] = [];
-      try {
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          if (!line) continue;
-          const obj = api.FPDFPageObj_CreateTextObj(ctx.doc, font, fontSize);
-          if (!obj) throw new Error('Eine Textzeile konnte nicht erzeugt werden.');
-          objects.push(obj);
-          const size = (line.length + 1) * 2,
-            p = ctx.alloc(size);
-          try {
-            api.pdfium.stringToUTF16(line, p, size);
-            if (!api.FPDFText_SetText(obj, p))
-              throw new Error('Eine Textzeile konnte nicht gesetzt werden.');
-          } finally {
-            ctx.free(p);
-          }
-          const offset =
-            align === 'right'
-              ? available - measure(line)
-              : align === 'center'
-                ? (available - measure(line)) / 2
-                : 0;
-          const x = r.x + (padding + offset) / width,
-            y = r.y + (padding + ascent + i * advance) / height;
-          const e = origin[0] + u[0] * x + v[0] * y,
-            f = origin[1] + u[1] * x + v[1] * y;
-          api.FPDFPageObj_Transform(
-            obj,
-            u[0] / width,
-            u[1] / width,
-            -v[0] / height,
-            -v[1] / height,
-            e,
-            f,
-          );
-          const channels = [1, 3, 5].map((j) => parseInt(color.slice(j, j + 2), 16));
-          if (!api.FPDFPageObj_SetFillColor(obj, channels[0], channels[1], channels[2], 255))
-            throw new Error('Die Textfarbe konnte nicht gesetzt werden.');
-          const bounds = objectRect(ctx, page, obj);
-          if (
-            !bounds ||
-            bounds.x < r.x - 0.0001 ||
-            bounds.y < r.y - 0.0001 ||
-            bounds.x + bounds.w > r.x + r.w + 0.0001 ||
-            bounds.y + bounds.h > r.y + r.h + 0.0001
-          )
-            throw new Error(
-              'Die tatsächlichen Schriftkonturen ragen über den Textbereich. Innenabstand oder Bereich vergrößern.',
-            );
-        }
-        for (const obj of handles) {
-          if (!api.FPDFPage_RemoveObject(page, obj))
-            throw new Error('Ein Originaltext konnte nicht entfernt werden.');
-          api.FPDFPageObj_Destroy(obj);
-        }
-        while (objects.length) api.FPDFPage_InsertObject(page, objects.shift()!);
-        if (!api.FPDFPage_GenerateContent(page))
-          throw new Error('Der Absatz konnte nicht gespeichert werden.');
-        return { bytes: saved(ctx), lines: lines.length, height: used };
-      } finally {
-        for (const obj of objects) api.FPDFPageObj_Destroy(obj);
+      font = { bytes: fontBytes, face, cids: new Map(), handle: 0 };
+      fonts.push(font);
+      if (fonts.reduce((n, f) => n + f.bytes.length, 0) > 40 * 1024 * 1024)
+        throw new Error('Die Absatzschriften dürfen zusammen höchstens 40 MB groß sein.');
+    }
+    return { font, size, color };
+  };
+  const base = getStyle(settings.fontBytes, settings.fontSize, settings.color);
+  const ranges = [...(settings.styles || [])].sort((a, b) => a.from - b.from);
+  if (ranges.length > 32 || (ranges.length && text !== settings.text))
+    throw new Error(
+      'Bitte höchstens 32 Formatierungen auf Text ohne Tabulatoren oder CR-Zeilenenden anwenden.',
+    );
+  const graphemes = Array.from(new Intl.Segmenter('de', { granularity: 'grapheme' }).segment(text)),
+    boundaries = new Set([0, text.length, ...graphemes.map((g) => g.index)]);
+  let last = 0;
+  const styled = ranges.map((range) => {
+    if (
+      !Number.isInteger(range.from) ||
+      !Number.isInteger(range.to) ||
+      range.from < last ||
+      range.to <= range.from ||
+      !boundaries.has(range.from) ||
+      !boundaries.has(range.to)
+    )
+      throw new Error(
+        'Formatierungen dürfen sich nicht überschneiden und keine Zeichenfolge teilen.',
+      );
+    last = range.to;
+    return {
+      ...range,
+      style: getStyle(range.fontBytes || settings.fontBytes, range.fontSize, range.color),
+    };
+  });
+  type Part = { text: string; style: Style };
+  const pieces: Part[] = graphemes.map((g) => ({
+    text: g.segment,
+    style: styled.find((s) => g.index >= s.from && g.index < s.to)?.style || base,
+  }));
+  for (const p of pieces)
+    for (const ch of p.text) {
+      if (ch === '\n') continue;
+      if (!p.style.font.face.characterSet.includes(ch.codePointAt(0)!))
+        throw new Error(
+          `Die gewählte Schrift enthält das Zeichen „${ch}“ nicht. Bitte eine passende TrueType-Schrift wählen.`,
+        );
+    }
+  const shape = (parts: Part[]) => {
+    const groups: Part[] = [];
+    for (const p of parts) {
+      const prev = groups.at(-1);
+      if (prev?.style === p.style) prev.text += p.text;
+      else groups.push({ ...p });
+    }
+    return groups.map((p) => {
+      const run = p.style.font.face.layout(p.text),
+        factor = p.style.size / p.style.font.face.unitsPerEm;
+      if (
+        run.direction !== 'ltr' ||
+        run.glyphs.length !== run.positions.length ||
+        run.positions.some(
+          (pos) => ![pos.xAdvance, pos.yAdvance, pos.xOffset, pos.yOffset].every(Number.isFinite),
+        )
+      )
+        throw new Error(
+          'Die Zeichenformung der gewählten Schrift kann nicht zuverlässig gesetzt werden.',
+        );
+      return {
+        ...p,
+        run,
+        factor,
+        width: run.positions.reduce((n, pos) => n + pos.xAdvance * factor, 0),
+      };
+    });
+  };
+  return open(api, bytes, (ctx) => {
+    const first = pageHandle(ctx, index),
+      opened = [first],
+      pending: { page: number; objects: number[] }[] = [];
+    try {
+      const handles = indices.map((id) =>
+        Number.isInteger(id) && id >= 0 && id < api.FPDFPage_CountObjects(first)
+          ? api.FPDFPage_GetObject(first, id)
+          : 0,
+      );
+      if (handles.some((obj) => !obj || api.FPDFPageObj_GetType(obj) !== 1))
+        throw new Error(
+          'Die Auswahl enthält ein ungültiges Objekt. Bitte ausschließlich Text auswählen.',
+        );
+      const origin = toPdf(ctx, first, 0, 0),
+        right = toPdf(ctx, first, 1, 0),
+        bottom = toPdf(ctx, first, 0, 1);
+      const width = Math.hypot(right[0] - origin[0], right[1] - origin[1]),
+        height = Math.hypot(bottom[0] - origin[0], bottom[1] - origin[1]);
+      const available = r.w * width - 2 * padding,
+        vertical = r.h * height - 2 * padding;
+      if (available <= 0 || vertical <= 0)
+        throw new Error('Der Textbereich ist kleiner als sein Innenabstand.');
+      const lines: ReturnType<typeof shape>[] = [];
+      let current: Part[] = [];
+      const measure = (p: Part[]) => shape(p).reduce((n, g) => n + g.width, 0);
+      const flush = () => {
+        while (current.length && /^\s+$/u.test(current.at(-1)!.text)) current.pop();
+        lines.push(shape(current));
+        current = [];
+      };
+      const words: Part[][] = [];
+      let word: Part[] = [];
+      for (const p of pieces) {
+        if (/^\s$/u.test(p.text)) {
+          if (word.length) words.push(word);
+          words.push([p]);
+          word = [];
+        } else word.push(p);
       }
+      if (word.length) words.push(word);
+      for (const token of words) {
+        if (token[0].text === '\n') {
+          flush();
+          continue;
+        }
+        if (!current.length && token.every((p) => /^\s+$/u.test(p.text))) continue;
+        if (measure([...current, ...token]) <= available + 0.001) {
+          current.push(...token);
+          continue;
+        }
+        if (current.length) flush();
+        if (token.every((p) => /^\s+$/u.test(p.text))) continue;
+        if (measure(token) <= available + 0.001) {
+          current = token.slice();
+          continue;
+        }
+        for (const p of token) {
+          if (measure([p]) > available + 0.001)
+            throw new Error('Der Textbereich ist schmaler als eine einzelne Zeichenfolge.');
+          if (current.length && measure([...current, p]) > available + 0.001) flush();
+          current.push(p);
+        }
+      }
+      if (current.length || text.endsWith('\n')) flush();
+      const layout: {
+        groups: ReturnType<typeof shape>;
+        page: number;
+        top: number;
+        ascent: number;
+        width: number;
+      }[] = [];
+      let pageNo = 0,
+        top = 0,
+        used = 0;
+      for (const groups of lines) {
+        const styles = groups.length ? groups.map((g) => g.style) : [base];
+        const ascent = Math.max(
+            ...styles.map((s) => (s.font.face.ascent * s.size) / s.font.face.unitsPerEm),
+          ),
+          descent = Math.max(
+            ...styles.map((s) => (Math.abs(s.font.face.descent) * s.size) / s.font.face.unitsPerEm),
+          );
+        const advance = Math.max(ascent + descent, ...styles.map((s) => s.size * lineHeight));
+        if (ascent + descent > vertical + 0.01)
+          throw new Error('Textüberlauf: Eine Zeile ist höher als der Textbereich.');
+        if (top + ascent + descent > vertical + 0.01) {
+          if (!settings.flow)
+            throw new Error(
+              `Textüberlauf: ${lines.length} Zeilen passen nicht in den Bereich. Bereich vergrößern oder neue Folgeseiten zulassen.`,
+            );
+          pageNo++;
+          top = 0;
+        }
+        if (pageNo >= 20) throw new Error('Der Absatz würde mehr als 20 Seiten benötigen.');
+        layout.push({
+          groups,
+          page: pageNo,
+          top,
+          ascent,
+          width: groups.reduce((n, g) => n + g.width, 0),
+        });
+        used = Math.max(used, top + ascent + descent + 2 * padding);
+        top += advance;
+        for (const g of groups)
+          for (const glyph of g.run.glyphs) {
+            const key = glyph.id + ':' + glyph.codePoints.join(',');
+            if (!g.style.font.cids.has(key))
+              g.style.font.cids.set(key, { cid: g.style.font.cids.size + 1, glyph });
+          }
+      }
+      for (const f of fonts) {
+        if (!f.cids.size) continue;
+        const values = [...f.cids.values()],
+          map = new Uint8Array((values.length + 1) * 2);
+        const sections: string[] = [];
+        for (let offset = 0; offset < values.length; offset += 100) {
+          const part = values.slice(offset, offset + 100);
+          sections.push(
+            part.length +
+              ' beginbfchar\n' +
+              part
+                .map(({ cid, glyph }) => {
+                  map[cid * 2] = glyph.id >> 8;
+                  map[cid * 2 + 1] = glyph.id & 255;
+                  const unicode = String.fromCodePoint(...glyph.codePoints)
+                    .split('')
+                    .map((ch) => ch.charCodeAt(0).toString(16).padStart(4, '0'))
+                    .join('');
+                  return '<' + cid.toString(16).padStart(4, '0') + '> <' + unicode + '>';
+                })
+                .join('\n') +
+              '\nendbfchar',
+          );
+        }
+        const cmap =
+          '/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /MoinParagraph def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n' +
+          sections.join('\n') +
+          '\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend';
+        const fp = ctx.alloc(f.bytes.length),
+          mp = ctx.alloc(map.length);
+        try {
+          heap(api).set(f.bytes, fp);
+          heap(api).set(map, mp);
+          f.handle = api.FPDFText_LoadCidType2Font(
+            ctx.doc,
+            fp,
+            f.bytes.length,
+            cmap,
+            mp,
+            map.length,
+          );
+        } finally {
+          ctx.free(fp);
+          ctx.free(mp);
+        }
+        if (!f.handle) throw new Error('Die geformte Schrift konnte nicht eingebettet werden.');
+      }
+      for (let n = 1; n <= pageNo; n++) {
+        const page = api.FPDFPage_New(ctx.doc, index + n, width, height);
+        if (!page) throw new Error('Eine Folgeseite konnte nicht erzeugt werden.');
+        opened.push(page);
+      }
+      for (const page of opened) pending.push({ page, objects: [] });
+      for (const line of layout) {
+        const target = pending[line.page],
+          page = target.page,
+          o = toPdf(ctx, page, 0, 0),
+          rr = toPdf(ctx, page, 1, 0),
+          bb = toPdf(ctx, page, 0, 1),
+          u = [rr[0] - o[0], rr[1] - o[1]],
+          v = [bb[0] - o[0], bb[1] - o[1]];
+        let x =
+          padding +
+          (align === 'right'
+            ? available - line.width
+            : align === 'center'
+              ? (available - line.width) / 2
+              : 0);
+        for (const group of line.groups) {
+          const channels = [1, 3, 5].map((j) => parseInt(group.style.color.slice(j, j + 2), 16));
+          for (let j = 0; j < group.run.glyphs.length; j++) {
+            const glyph = group.run.glyphs[j],
+              pos = group.run.positions[j],
+              obj = api.FPDFPageObj_CreateTextObj(
+                ctx.doc,
+                group.style.font.handle,
+                group.style.size,
+              );
+            if (!obj) throw new Error('Ein Textzeichen konnte nicht erstellt werden.');
+            target.objects.push(obj);
+            const cp = ctx.alloc(4);
+            try {
+              api.pdfium.setValue(
+                cp,
+                group.style.font.cids.get(glyph.id + ':' + glyph.codePoints.join(','))!.cid,
+                'i32',
+              );
+              if (!api.FPDFText_SetCharcodes(obj, cp, 1))
+                throw new Error('Ein Textzeichen konnte nicht gesetzt werden.');
+            } finally {
+              ctx.free(cp);
+            }
+            const nx = r.x + (x + pos.xOffset * group.factor) / width,
+              ny = r.y + (padding + line.top + line.ascent - pos.yOffset * group.factor) / height;
+            api.FPDFPageObj_Transform(
+              obj,
+              u[0] / width,
+              u[1] / width,
+              -v[0] / height,
+              -v[1] / height,
+              o[0] + u[0] * nx + v[0] * ny,
+              o[1] + u[1] * nx + v[1] * ny,
+            );
+            if (!api.FPDFPageObj_SetFillColor(obj, channels[0], channels[1], channels[2], 255))
+              throw new Error('Die Textfarbe konnte nicht gesetzt werden.');
+            const bounds = objectRect(ctx, page, obj);
+            if (
+              bounds &&
+              bounds.w > 0 &&
+              bounds.h > 0 &&
+              (bounds.x < r.x - 0.0002 ||
+                bounds.y < r.y - 0.0002 ||
+                bounds.x + bounds.w > r.x + r.w + 0.0002 ||
+                bounds.y + bounds.h > r.y + r.h + 0.0002)
+            )
+              throw new Error(
+                'Die tatsächlichen Schriftkonturen ragen über den Textbereich. Innenabstand oder Bereich vergrößern.',
+              );
+            x += pos.xAdvance * group.factor;
+          }
+        }
+      }
+      for (const obj of handles) {
+        if (!api.FPDFPage_RemoveObject(first, obj))
+          throw new Error('Ein Originaltext konnte nicht entfernt werden.');
+        api.FPDFPageObj_Destroy(obj);
+      }
+      for (const target of pending) {
+        while (target.objects.length)
+          api.FPDFPage_InsertObject(target.page, target.objects.shift()!);
+        if (!api.FPDFPage_GenerateContent(target.page))
+          throw new Error('Der Absatz konnte nicht gespeichert werden.');
+      }
+      return { bytes: saved(ctx), lines: lines.length, height: used, addedPages: pageNo };
     } finally {
-      api.FPDF_ClosePage(page);
-      if (font) api.FPDFFont_Close(font);
+      for (const t of pending) for (const obj of t.objects) api.FPDFPageObj_Destroy(obj);
+      for (const page of opened) api.FPDF_ClosePage(page);
+      for (const font of fonts) if (font.handle) api.FPDFFont_Close(font.handle);
     }
   });
 }

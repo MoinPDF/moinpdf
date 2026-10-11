@@ -3,10 +3,16 @@ import { useEffect, useState } from 'react';
 import './advanced-workbench.css';
 import { Button } from '@/components/ui/button';
 import { openSource, type Source } from '@/lib/pdf-engine';
-import { inspectObjects, replaceParagraph, type NativeObject } from '@/lib/native-pdf';
+import {
+  inspectObjects,
+  replaceParagraph,
+  type NativeObject,
+  type NativeParagraphStyle,
+} from '@/lib/native-pdf';
 import { packagePdfs } from '@/lib/pro-tools';
 import {
   Choice,
+  Tick,
   Field,
   NumberField,
   PageSelect,
@@ -29,11 +35,20 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
     [color, setColor] = useState('#000000'),
     [fontChoice, setFontChoice] = useState('noto'),
     [fontFile, setFontFile] = useState<File | null>(null);
+  const [styles, setStyles] = useState<(NativeParagraphStyle & { fontFile?: File })[]>([]),
+    [selection, setSelection] = useState<[number, number]>([0, 0]),
+    [flow, setFlow] = useState(false),
+    [previewPage, setPreviewPage] = useState(0);
   const [preview, setPreview] = useState<{ source: Source; key: string; lines: number } | null>(
     null,
   );
   const settingsKey = JSON.stringify({
     page,
+    styles: styles.map((s) => ({
+      ...s,
+      fontFile: s.fontFile && [s.fontFile.name, s.fontFile.size, s.fontFile.lastModified],
+    })),
+    flow,
     selected,
     text,
     rect,
@@ -57,6 +72,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
     const ordered = [...selectedObjects].sort((a, b) =>
       Math.abs(a.y - b.y) < Math.min(a.h, b.h) / 2 ? a.x - b.x : a.y - b.y,
     );
+    setStyles([]);
     setText(ordered.map((o) => o.text.trim()).join(' '));
     const x = Math.max(0, Math.min(...ordered.map((o) => o.x)) - 0.01),
       y = Math.max(0, Math.min(...ordered.map((o) => o.y)) - 0.01),
@@ -70,6 +86,9 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
     });
   };
   const build = async (signal: AbortSignal) => {
+    for (const style of styles)
+      if (style.fontFile && style.fontFile.size > 10 * 1024 * 1024)
+        throw new Error('Eine Bereichsschrift ist größer als 10 MB.');
     let fontBytes: Uint8Array;
     if (fontChoice === 'custom') {
       if (!fontFile || fontFile.size > 10 * 1024 * 1024)
@@ -83,7 +102,29 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
     return replaceParagraph(
       source.bytes,
       page,
-      { indices: selected, text, rect, fontBytes, fontSize, lineHeight, padding, align, color },
+      {
+        indices: selected,
+        text,
+        rect,
+        fontBytes,
+        fontSize,
+        lineHeight,
+        padding,
+        align,
+        color,
+        flow,
+        styles: await Promise.all(
+          styles.map(async (style) => ({
+            from: style.from,
+            to: style.to,
+            fontSize: style.fontSize,
+            color: style.color,
+            ...(style.fontFile
+              ? { fontBytes: new Uint8Array(await style.fontFile.arrayBuffer()) }
+              : {}),
+          })),
+        ),
+      },
       signal,
     );
   };
@@ -162,7 +203,13 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             rows={8}
             maxLength={20000}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              setStyles([]);
+            }}
+            onSelect={(e) =>
+              setSelection([e.currentTarget.selectionStart, e.currentTarget.selectionEnd])
+            }
           />
         </Field>
         <p className="fine-note">
@@ -170,6 +217,73 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
           Umbrüche setzt MoinPDF automatisch. Unterstützt werden lateinische, griechische und
           kyrillische Schriften.
         </p>
+        <Button
+          variant="outline"
+          disabled={busy || selection[1] <= selection[0] || styles.length >= 32}
+          onClick={() =>
+            setStyles((all) => [...all, { from: selection[0], to: selection[1], fontSize, color }])
+          }
+        >
+          Markierten Text anders formatieren
+        </Button>
+        {styles.map((style, i) => (
+          <fieldset className="pro-rule" key={i}>
+            <legend>
+              Formatierung {i + 1}: {text.slice(style.from, style.to).slice(0, 60)}
+            </legend>
+            <NumberField
+              label={`Formatierung ${i + 1}: Schriftgröße`}
+              value={style.fontSize}
+              min={6}
+              max={144}
+              onChange={(v) =>
+                setStyles((all) => all.map((s, n) => (n === i ? { ...s, fontSize: v } : s)))
+              }
+            />
+            <Field label={`Formatierung ${i + 1}: Farbe`}>
+              <input
+                type="color"
+                value={style.color}
+                onChange={(e) =>
+                  setStyles((all) =>
+                    all.map((s, n) => (n === i ? { ...s, color: e.target.value } : s)),
+                  )
+                }
+              />
+            </Field>
+            <Field label={`Formatierung ${i + 1}: eigene Schrift (.ttf)`}>
+              <input
+                type="file"
+                accept=".ttf"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f)
+                    setStyles((all) => all.map((s, n) => (n === i ? { ...s, fontFile: f } : s)));
+                }}
+              />
+              {style.fontFile && <small>{style.fontFile.name}</small>}
+            </Field>
+            <Button
+              variant="outline"
+              onClick={() => setStyles((all) => all.filter((_, n) => n !== i))}
+            >
+              Formatierung {i + 1} entfernen
+            </Button>
+          </fieldset>
+        ))}
+        <p className="fine-note">
+          Text markieren, dann eine abweichende Größe, Farbe oder eigene Schrift festlegen. Beim
+          Ändern des Absatztextes werden die Bereichsformatierungen zurückgesetzt. Überlappende
+          Bereiche werden abgewiesen.
+        </p>
+        <Tick label="Bei Textüberlauf neue Folgeseiten einfügen" value={flow} onChange={setFlow} />
+        {flow && (
+          <p className="fine-note">
+            Bis zu 19 zusätzliche leere Seiten werden direkt nach der bearbeiteten Seite eingefügt.
+            Der Absatz fließt im gleichen relativen Textbereich weiter; vorhandene spätere Seiten
+            bleiben erhalten.
+          </p>
+        )}
         <Choice
           label="Absatzschrift"
           value={fontChoice}
@@ -250,6 +364,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
                 await opened.pdf.loadingTask.destroy();
                 return;
               }
+              setPreviewPage(page);
               setPreview({ source: opened, key: settingsKey, lines: out.lines });
             })
           }
@@ -266,7 +381,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
                   {
                     name: source.name.replace(/\.pdf$/i, '') + '-Absatz.pdf',
                     bytes: out.bytes,
-                    pages: source.pdf.numPages,
+                    pages: source.pdf.numPages + out.addedPages,
                   },
                 ],
                 `${out.lines} Zeilen. Ausgewählte Originaltexte wurden ersetzt. Für weitere Änderungen „Ergebnis übernehmen“ verwenden. Signaturen und vorhandene Barrierefreiheits-Tags müssen nach einer Textänderung erneut geprüft werden. Keine Sicherheitsbereinigung.`,
@@ -277,10 +392,10 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
           Absatz exportieren
         </Button>
         <p className="fine-note">
-          MoinPDF meldet fehlende Zeichen und Textüberlauf vor dem Export. Ein Absatz erhält eine
-          Schrift und Farbe. Die Auswahl umfasst ganze Textobjekte; Bilder, ungewählte Texte und
-          Objektgruppen werden nicht entfernt. Überschneidungen mit ihnen bitte in der Vorschau
-          prüfen.
+          MoinPDF prüft Schriftzeichen, Formgebung und Textüberlauf vor dem Export. Formatierungen
+          können Größe, Farbe und Schrift innerhalb des Absatzes ändern. Die Auswahl umfasst ganze
+          Textobjekte; Bilder, ungewählte Texte und Objektgruppen werden nicht entfernt.
+          Überschneidungen mit ihnen bitte in der Vorschau prüfen.
         </p>
       </section>
       <section className="advanced-card">
@@ -289,9 +404,12 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             ? `Ergebnisvorschau · ${currentPreview.lines} Zeilen`
             : 'Original und neuer Textbereich'}
         </h2>
+        {currentPreview && (
+          <PageSelect source={currentPreview.source} page={previewPage} onChange={setPreviewPage} />
+        )}
         <PageStage
           source={currentPreview?.source || source}
-          page={page}
+          page={currentPreview ? previewPage : page}
           rects={
             currentPreview
               ? []

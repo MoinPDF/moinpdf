@@ -13,8 +13,8 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 ## Seiten, Bearbeitung und OCR
 
 - Check & Seitenfinder: dateiübergreifende Textsuche, lokale Scan-Erkennung, Trefferseiten als neue PDF; Hinweise auf Scan-Seiten, mögliche Leerseiten, optisch gleiche Seiten und unterschiedliche Papierformate
-- OCR & Text: 21 Sprachen plus Deutsch/Englisch kombiniert; automatische Seiteneinteilung, Textblock, Textspalte, Textzeile oder verstreuter Text; korrigierbarer Text neben PDF-Vorschau
-- JPG, PNG, WebP, BMP, mehrseitige TIFF und eigenständige SVG zu PDF (als Bildseiten); PDF zu PNG/JPG/WebP/TIFF/BMP im ZIP
+- OCR & Text: 21 Sprachen, bis zu acht kombiniert und optionale automatische Sprachprobe; automatische Seiteneinteilung, Textblock, Textspalte, Textzeile oder verstreuter Text; korrigierbarer Text neben PDF-Vorschau
+- JPG, PNG, WebP, BMP, mehrseitige TIFF, HEIC/HEIF, PSD und eigenständige SVG zu PDF (als Bildseiten); PDF zu PNG/JPG/WebP/TIFF/BMP im ZIP
 - Scan-Komprimierung
 - Zusammenfügen; einzelne Seiten als PDF im ZIP
 - Seiten organisieren: auswählen, sortieren, drehen, duplizieren, entfernen und Leerseiten ergänzen
@@ -31,7 +31,7 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 - PDF fixieren (Seitenbilder)
 - Dokumentinfos entfernen
 - Text bearbeiten, Inhalte entfernen und Bilder einfügen
-- Originalobjekte bearbeiten: Text in vorhandener Schrift, Suchen/Ersetzen pro Seite, Bilder ersetzen, Objekte verschieben/drehen/skalieren/löschen; zusätzlich Absatzmodus mit mehreren Textobjekten, Schriftwechsel, automatischem Umbruch, Vorschau und Überlaufprüfung; keine Bearbeitung einzelner Unterobjekte in Gruppen
+- Originalobjekte bearbeiten: Text in vorhandener Schrift, Suchen/Ersetzen pro Seite, Bilder ersetzen, Objekte verschieben/drehen/skalieren/löschen; zusätzlich Absatzmodus mit mehreren Textobjekten, gemischten Formatierungen, Schriftformung, Umbruch auf zusätzliche Seiten, Vorschau und Überlaufprüfung; keine Bearbeitung einzelner Unterobjekte in Gruppen
 - Linearisierung für schnelle Webansicht; strukturierter JSON-Export mit Textpositionen
 - PDF-Informationen und Textvergleich zweier PDFs
 - In Abschnitte teilen, abwechselnd zusammenfügen, Broschüren und Seiten aufteilen

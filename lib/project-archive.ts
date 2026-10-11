@@ -134,6 +134,7 @@ const options = z
       }),
     ocrLayout: z.enum(['3', '4', '6', '7', '11']),
     forceOcr: z.boolean(),
+    autoLanguage: z.boolean().optional(),
     imageFormat: z.enum(['png', 'jpg', 'webp', 'tiff', 'bmp']),
     quality: short,
     watermark: short,

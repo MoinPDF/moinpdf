@@ -5,7 +5,13 @@ import type {
   NativeParagraph,
   NativeParagraphResult,
 } from './native-pdf-core';
-export type { NativeObject, NativeChange, NativeRemoval, NativeParagraph } from './native-pdf-core';
+export type {
+  NativeObject,
+  NativeChange,
+  NativeRemoval,
+  NativeParagraph,
+  NativeParagraphStyle,
+} from './native-pdf-core';
 function nativeJob<T>(
   bytes: Uint8Array,
   options: Record<string, unknown>,

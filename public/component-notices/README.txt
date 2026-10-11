@@ -40,3 +40,10 @@ Fragen zu Hugging Face hoch.
 Testdaten für Pages/Visio/Publisher werden nur während der Tests aus dem
 LibreOffice-Quellarchiv geladen. Sie sind keine ausgelieferten App-Ressourcen.
 Commit und Git-Blob-Prüfsummen stehen in tests/fetch-office-fixtures.py.
+
+Statistische Sprachwahl: franc 6.2.0 (MIT), https://github.com/wooorm/franc.
+Der vollständige Upstream-Lizenztext aus Tag 6.2.0 liegt unter
+/component-notices/franc-LICENSE.txt und /vendor/licenses/franc-LICENSE.txt.
+Die MIT-Texte der Abhängigkeiten trigram-utils, n-gram und
+collapse-white-space werden ebenfalls unter /vendor/licenses/ ausgeliefert.
+Die Sprachprobe verarbeitet Text ausschließlich auf dem lokalen Gerät.

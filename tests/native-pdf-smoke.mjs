@@ -59,3 +59,20 @@ assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,
 assert.match((await inspect(bytes)).text,/SECRET 4815/,'Rejected export cannot alter input');
 await writeFile('.cache/paragraph-result.pdf',rightAligned.bytes);
 console.log('PASS: Paragraph reflow, multi-object replacement, embedded Unicode font, line/box overflow and missing-glyph rejection, all rotations and CropBox offsets, independent PDF.js text and vector checks.');
+const richText='Groß und klein. office fi A\u0301 bleibt richtig.';
+const rich=core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:richText,styles:[{from:0,to:4,fontSize:24,color:'#ff0000'},{from:5,to:14,fontSize:10,color:'#0000ff'}]});
+const richRead=await inspect(rich.bytes);assert.match(richRead.text.normalize('NFC'),/office fi Á bleibt richtig/);assert.match(richRead.text.replace(/\s+/g,' '),/Groß und klein/);
+const richObjects=core.inspectNativeObjects(api,rich.bytes,0).filter(o=>o.type==='text');assert(richObjects.some(o=>Math.abs(o.fontSize-24)<.01));assert(richObjects.some(o=>Math.abs(o.fontSize-10)<.01));
+let redPixels=0,bluePixels=0;const colored=richRead.canvas.getContext('2d').getImageData(0,0,richRead.canvas.width,richRead.canvas.height).data;for(let i=0;i<colored.length;i+=4){if(colored[i]>180&&colored[i+1]<80&&colored[i+2]<80)redPixels++;if(colored[i]<80&&colored[i+1]<80&&colored[i+2]>180)bluePixels++;}assert(redPixels>10&&bluePixels>10);
+const flowDoc=await PDFDocument.load(bytes);flowDoc.addPage([400,500]).drawText('UNCHANGED TRAILING PAGE',{x:30,y:430});const flowInput=await flowDoc.save();
+const longText=Array.from({length:12},(_,i)=>`Absatz ${i+1}: office bleibt als echter Text erhalten.`).join('\n');
+const flowing=core.replaceNativeParagraph(api,flowInput,0,{...paragraphSettings,rect:{x:.1,y:.1,w:.7,h:.22},fontSize:14,text:longText,flow:true});
+assert(flowing.addedPages>0&&flowing.addedPages<20);
+const flowPdf=await pdfjs.getDocument({data:flowing.bytes.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;
+try {
+ assert.equal(flowPdf.numPages,2+flowing.addedPages);let all='';for(let i=1;i<=flowPdf.numPages;i++)all+=(await(await flowPdf.getPage(i)).getTextContent()).items.filter(t=>'str'in t).map(t=>t.str).join(' ')+' ';
+ for(let i=1;i<=12;i++)assert(all.includes(`Absatz ${i}:`));assert(!all.includes('SECRET'));assert(all.includes('KEEP THIS TEXT'));assert(all.endsWith('UNCHANGED TRAILING PAGE '));
+}finally{await flowPdf.loadingTask.destroy();}
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'A\u0301 und B',styles:[{from:1,to:2,fontSize:12,color:'#000000'}]}),/Zeichenfolge/);
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:richText,styles:[{from:0,to:8,fontSize:12,color:'#000000'},{from:4,to:12,fontSize:14,color:'#000000'}]}),/überschneiden/);
+console.log('PASS: shaped ligatures/combining marks, mixed font sizes/colors, grapheme-safe styles and multi-page paragraph flow with untouched later pages.');
