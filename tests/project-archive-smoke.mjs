@@ -121,3 +121,32 @@ const beforeCount=(await projects.listProjects()).length;
 await assert.rejects(()=>projects.importProjectArchive({...roundtrip,versions:[...roundtrip.versions,{...roundtrip.versions[0],sources:[]}]}),/Ungültiges/);
 assert.equal((await projects.listProjects()).length,beforeCount,'Invalid import leaves all projects untouched');
 console.log('PASS: immutable historical bytes, five complete snapshots, SHA256 checks including local HTTP fallback, deduplicated binary archive, preserved timestamps, independent PDF reopen, fresh project IDs, bounded and atomic validated import.');
+
+// A deleted page may remain in undo history, but unrelated removed-file edits
+// must never leak into the current snapshot or any exported history snapshot.
+const orphan={id:'orphan',kind:'text',text:'REMOVED-FILE-PRIVATE-NOTE',...rect,fontScale:.03};
+const dirtyEdits={marks:{...edits.marks,removed:[orphan]},crops:{...edits.crops,removed:rect}};
+const emptyState={...state,pages:[],edits:dirtyEdits,activeId:'',
+  history:[{pages,edits:dirtyEdits}],future:[{pages:[pages[0]],edits:dirtyEdits}]};
+const cleanEmpty=projects.cleanProjectState(emptyState);
+assert.deepEqual(cleanEmpty.edits,{marks:{},crops:{}});
+assert.deepEqual(cleanEmpty.history[0].edits,edits,'Undo keeps edits for pages present in that historical snapshot');
+assert.deepEqual(cleanEmpty.future[0].edits,{marks:edits.marks,crops:{}});
+assert.equal(emptyState.edits.marks.removed[0].text,orphan.text,'Cleanup does not mutate the active undo state');
+const emptyId=await projects.saveProject('Leere Seitenliste',undefined,[source],emptyState);
+const emptyRecord=(await projects.listProjects()).find(p=>p.id===emptyId);
+assert.equal(emptyRecord.versions[0].pages,0);
+assert.deepEqual((await projects.loadProject(emptyRecord.versions[0].id)).version.state,cleanEmpty);
+const emptyFile=await encodeProjectFile('Leere Seitenliste',[source],emptyState);
+assert.deepEqual((await decodeProjectFile(emptyFile)).state,cleanEmpty);
+const emptyBundle={name:'Leere Seitenliste',updated:Date.now(),versions:[{created:Date.now(),state:emptyState,sources:[source]}]};
+assert.deepEqual((await bundles.decodeProjectArchive(await bundles.encodeProjectArchive(emptyBundle))).versions[0].state,cleanEmpty);
+const emptyImportId=await projects.importProjectArchive(emptyBundle);
+assert.deepEqual((await projects.loadProjectArchive(emptyImportId)).versions[0].state,cleanEmpty);
+// Heal older, correctly checksummed files on import as well as on new exports.
+assert.deepEqual((await decodeProjectFile(await edited(m=>m.state=emptyState))).state,cleanEmpty);
+assert.deepEqual((await bundles.decodeProjectArchive(await editBundle(m=>m.versions[0].state=emptyState))).versions[0].state,cleanEmpty);
+for(const file of [emptyFile,await bundles.encodeProjectArchive(emptyBundle)]) {
+  assert.ok(!(await file.text()).includes(orphan.text),'Removed-file content is absent from exported bytes');
+}
+console.log('PASS: zero-page projects save and transfer without blocking project switches; orphaned notes/crops are removed across current, undo, redo and legacy imports while valid undo edits survive.');

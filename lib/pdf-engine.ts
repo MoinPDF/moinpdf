@@ -2,6 +2,7 @@ import { PDFDocument, PDFDict, PDFName, StandardFonts, degrees, rgb, type PDFPag
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Worker } from 'tesseract.js';
 import type { PdfReport } from './pdf-report';
+import { parseOcrLanguages } from './ocr-languages';
 
 export type Source = {
   id: string;
@@ -373,7 +374,6 @@ export async function runJob(
           if (!worker) {
             report({ percent: (i / pages.length) * 100, label: 'Texterkennung wird geladen …' });
             const { createWorker, PSM } = await import('tesseract.js');
-            const { parseOcrLanguages } = await import('./ocr-languages');
             const creating = createWorker(parseOcrLanguages(selectedLanguage), 1, {
               workerPath: '/vendor/ocr/worker.min.js',
               corePath: '/vendor/ocr',

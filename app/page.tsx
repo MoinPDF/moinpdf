@@ -1,5 +1,6 @@
 'use client';
 import { ProjectManager } from '@/components/studio/project-manager';
+import { retainPageEdits } from '@/lib/local-projects';
 import { ocrLayouts } from '@/lib/ocr-languages';
 import { OcrLanguagePicker } from '@/components/studio/ocr-language-picker';
 import {
@@ -189,6 +190,7 @@ type Snapshot = { pages: PageItem[]; edits: Edits };
 export default function Home() {
   return (
     <div className="moinpdf-shell">
+      <div id="moinpdf-project-bar" className="project-bar" />
       <SidebarProvider
         className="studio-provider"
         style={{ '--sidebar-width': '252px' } as CSSProperties}
@@ -745,6 +747,12 @@ function Studio() {
     const source = sources.find((s) => s.id === id);
     setSources((old) => old.filter((s) => s.id !== id));
     setPages((old) => old.filter((p) => p.sourceId !== id));
+    setEdits(
+      retainPageEdits(
+        edits,
+        pages.filter((p) => p.sourceId !== id),
+      ),
+    );
     setHistory([]);
     setFuture([]);
     invalidate();

@@ -21,6 +21,7 @@ import {
   type RunContext,
 } from './advanced-types';
 import type { Worker } from 'tesseract.js';
+import { decodePageCodes } from './advanced-media';
 
 export const workflowOptions: StudioOptions = {
   ...extraDefaults,
@@ -208,7 +209,6 @@ export async function planSplit(
         .includes(query.trim().toLocaleLowerCase());
     if (mode === 'blank') match = (await inspectPage(source, page, i, ctx.signal)).blank;
     if (mode === 'qr') {
-      const { decodePageCodes } = await import('./advanced-media');
       match = (await decodePageCodes(source, i, ctx)).some(
         (c) => !query.trim() || c.text.includes(query.trim()),
       );

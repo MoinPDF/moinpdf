@@ -1,9 +1,11 @@
+.project-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: var(--project-bar-height, 56px);
+  padding: 8px max(18px, env(safe-area-inset-right)) 8px max(18px, env(safe-area-inset-left));
+}
 .project-toggle {
-  position: fixed;
-  bottom: 18px;
-  left: 18px;
-  z-index: 35;
-  box-shadow: 0 3px 18px #182d2520;
   gap: 8px;
   background: var(--background, #fff);
 }
@@ -51,10 +53,6 @@
   margin-bottom: 8px;
 }
 @media (max-width: 700px) {
-  .project-toggle {
-    bottom: 12px;
-    left: 12px;
-  }
   .project-dialog {
     max-height: 85dvh;
   }
