@@ -192,6 +192,8 @@ def capabilities():
                 "orient": bool(shutil.which("tesseract") and importlib.util.find_spec("pymupdf")),
                 "formDetect": importlib.util.find_spec("cv2") is not None,
                 "documentChecks": importlib.util.find_spec("pymupdf") is not None,
+                "pdfuaValidate": bool(Path(VERAPDF).is_file() and shutil.which("java")),
+                "pdfuaCreate": bool(Path(VERAPDF).is_file() and shutil.which("java") and office_binary()),
                 "dewarp": importlib.util.find_spec("cv2") is not None,
                 "translate": translation == "ready",
                 "wordMerge": bool(office_binary() and importlib.util.find_spec("openpyxl")),
@@ -250,7 +252,7 @@ def office(file: UploadFile = File(...)):
         return result(output.read_bytes(), "Office-Dokument.pdf", "application/pdf")
 
 
-def convert_office(source: Path, directory: Path, timeout=TIMEOUT):
+def convert_office(source: Path, directory: Path, timeout=TIMEOUT, pdfua=False):
     executable = office_binary()
     if not executable:
         raise HTTPException(503, "LibreOffice ist auf dem Dokumentenserver nicht installiert.")
@@ -259,7 +261,14 @@ def convert_office(source: Path, directory: Path, timeout=TIMEOUT):
     # Disable macros and external link updates in this isolated, disposable profile.
     (profile / "registrymodifications.xcu").write_text('''<?xml version="1.0"?>
 <oor:items xmlns:oor="http://openoffice.org/2001/registry"><item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item><item oor:path="/org.openoffice.Office.Calc/Content/Update"><prop oor:name="Link" oor:op="fuse"><value>2</value></prop></item></oor:items>''')
-    command([executable, f"-env:UserInstallation={(profile.parent).as_uri()}", "--headless", "--nologo", "--nodefault", "--norestore", "--convert-to", "pdf", "--outdir", str(directory), str(source)], directory, timeout=timeout)
+    export_filter = 'pdf:writer_pdf_Export:' + json.dumps({
+        'PDFUACompliance': {'type': 'boolean', 'value': 'true'},
+        'UseTaggedPDF': {'type': 'boolean', 'value': 'true'},
+        'DisplayPDFDocumentTitle': {'type': 'boolean', 'value': 'true'},
+        'SelectPdfVersion': {'type': 'long', 'value': '17'},
+        'ExportBookmarks': {'type': 'boolean', 'value': 'true'},
+    }) if pdfua else 'pdf'
+    command([executable, f"-env:UserInstallation={(profile.parent).as_uri()}", "--headless", "--nologo", "--nodefault", "--norestore", "--convert-to", export_filter, "--outdir", str(directory), str(source)], directory, timeout=timeout)
     output = source.with_suffix(".pdf")
     if not output.is_file():
         raise HTTPException(422, "LibreOffice hat keine PDF erzeugt. Bitte Dateiformat und Datei prüfen.")
@@ -361,6 +370,67 @@ def create_pdfa(file: UploadFile = File(...), profile: str = Form("2b")):
         # Failed validation never gets the PDF/A filename or a success claim.
         name = "Archiv-PDF-A.pdf" if report["compliant"] else "NICHT-PDF-A-konform.pdf"
         return archive({name: output.read_bytes(), "Ergebnis.json": json.dumps(report, indent=2).encode(), "veraPDF-Bericht.xml": raw}, "PDF-A-Ergebnis.zip")
+
+
+def pdfua_report(source: Path, profile: str, directory: Path):
+    if profile not in {'ua1', 'ua2'}:
+        raise HTTPException(422, 'Unterstützte Profile: PDF/UA-1 und PDF/UA-2.')
+    code, raw = command([VERAPDF, '--format', 'xml', '--flavour', profile, str(source)], directory, accepted=(0, 1))
+    try:
+        root = SafeET.fromstring(raw, forbid_dtd=True, forbid_entities=True, forbid_external=True)
+        reports = [n for n in root.iter() if n.tag.split('}')[-1] == 'validationReport']
+        batches = [n for n in root.iter() if n.tag.split('}')[-1] == 'batchSummary']
+        if len(reports) != 1 or len(batches) != 1 or batches[0].get('totalJobs') != '1':
+            raise ValueError()
+        if 'PDF/UA-' + profile[-1] not in reports[0].get('profileName', ''):
+            raise ValueError()
+        if any(int(batches[0].get(key, '0')) for key in ('failedToParse', 'encrypted', 'outOfMemory', 'veraExceptions')):
+            raise ValueError()
+        if any(int(n.get('failedJobs', '0')) for n in batches[0] if n.tag.split('}')[-1] == 'validationReports'):
+            raise ValueError()
+        passed = code == 0 and reports[0].get('isCompliant') == 'true'
+    except Exception:
+        raise HTTPException(422, 'Keine vollständige PDF/UA-Prüfung verfügbar. Es wird keine geprüfte PDF ausgegeben.')
+    summary = {'profile': profile, 'technicalPassed': passed, 'humanChecksRequired': True, 'engine': 'veraPDF', 'versions': versions(),
+               'note': 'Geprüft werden die maschinell prüfbaren PDF/UA-Regeln. Lesereihenfolge, passende Überschriften, richtige Alternativtexte, Vollständigkeit und Kontraste müssen zusätzlich von einem Menschen geprüft werden.'}
+    return summary, raw
+
+
+def pdfua_files(summary, raw):
+    return {'Ergebnis.json': json.dumps(summary, ensure_ascii=False, indent=2).encode(), 'veraPDF-Bericht.xml': raw,
+            'Manuell-pruefen.txt': (summary['note'] + '\n\nBei neu erstellten Dokumenten außerdem mit der Ausgangsdatei abgleichen. Das Layout wurde neu gesetzt; nur die im Struktureditor enthaltenen Blöcke wurden übernommen.').encode()}
+
+
+@app.post('/v1/pdfua/validate', dependencies=[Depends(authorize)])
+def validate_pdfua(file: UploadFile = File(...), profile: str = Form('ua1')):
+    with job() as directory:
+        source = upload(file, directory / 'input.pdf')
+        require_pdf(source)
+        summary, raw = pdfua_report(source, profile, directory)
+        response = archive(pdfua_files(summary, raw), 'PDF-UA-Pruefbericht.zip')
+        response.headers['X-MoinPDF-Note'] = quote(('Technische PDF/UA-Prüfung bestanden. ' if summary['technicalPassed'] else 'Technische PDF/UA-Prüfung nicht bestanden. ') + summary['note'])
+        return response
+
+
+@app.post('/v1/pdfua/create', dependencies=[Depends(authorize)])
+def create_pdfua(request: UploadFile = File(...)):
+    with job() as directory:
+        upload(request, directory / 'request.json', maximum=8 * 1024 * 1024)
+        code, _ = command([sys.executable, str(Path(__file__).with_name('accessible_documents.py')), str(directory)], directory, accepted=(0, 2))
+        if code == 2:
+            raise HTTPException(422, 'Strukturauftrag ungültig. Titel, Sprache, Überschriftenfolge, Bildbeschreibungen und Größen prüfen.')
+        output = convert_office(directory / 'structured.docx', directory, pdfua=True)
+        import pymupdf
+        with pymupdf.open(output) as generated:
+            if not 0 < len(generated) <= 200 or output.stat().st_size > MAX_BYTES:
+                raise HTTPException(422, 'Das erzeugte Dokument überschreitet 200 Seiten oder 80 MB.')
+        summary, raw = pdfua_report(output, 'ua1', directory)
+        files = pdfua_files(summary, raw)
+        if summary['technicalPassed']:
+            files['PDF-UA-1-technisch-geprueft.pdf'] = output.read_bytes()
+        response = archive(files, 'PDF-UA-Ergebnis.zip' if summary['technicalPassed'] else 'PDF-UA-Pruefung-fehlgeschlagen.zip')
+        response.headers['X-MoinPDF-Note'] = quote(('Technische PDF/UA-1-Prüfung bestanden. PDF und Prüfbericht liegen in der ZIP-Datei. ' if summary['technicalPassed'] else 'Prüfung nicht bestanden: Die ZIP-Datei enthält ausschließlich Prüfberichte, keine PDF. ') + summary['note'])
+        return response
 
 
 @app.post("/v1/xrechnung/validate", dependencies=[Depends(authorize)])

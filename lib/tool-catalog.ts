@@ -70,7 +70,7 @@ export const tools = [
     id: 'native-objects',
     title: 'PDF-Objekte bearbeiten',
     description:
-      'Vorhandene Texte in ihrer Originalschrift ändern sowie Bilder und Grafiken verschieben, ersetzen, drehen oder löschen.',
+      'Originaltexte ändern, Absätze mit Schriftwahl neu umbrechen sowie Bilder und Grafiken bearbeiten.',
     icon: TextCursorInput,
     group: 3,
     action: 'Objekte bearbeiten',
@@ -458,7 +458,7 @@ export const tools = [
     id: 'accessibility-check',
     title: 'Barrierefreiheit prüfen',
     description:
-      'Titel, Sprache, Tags, Textzugänglichkeit und Formularbeschriftungen auf technische Lücken prüfen.',
+      'PDF/UA prüfen und neue strukturierte PDFs mit Überschriften, Lesereihenfolge und Bildbeschreibungen erstellen.',
     icon: ClipboardCheck,
     group: 0,
     action: 'Barrierefreiheit prüfen',

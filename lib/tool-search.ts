@@ -4,6 +4,10 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 const aliases: Record<WorkspaceTool, string[]> = {
   'native-objects': [
     'originalschrift',
+    'Absatzeditor',
+    'Absatzumbruch',
+    'Schrift wechseln',
+    'mehrere Texte bearbeiten',
     'bilder bearbeiten',
     'text ersetzen',
     'suchen ersetzen',
@@ -158,7 +162,17 @@ const aliases: Record<WorkspaceTool, string[]> = {
   ],
   'redaction-check': ['Schwärzungen prüfen', 'versteckten Text prüfen', 'Schwärzung kontrollieren'],
   'print-check': ['Druckqualität prüfen', 'Druckvorstufe', 'Preflight', 'Bildauflösung dpi'],
-  'accessibility-check': ['Barrierefreiheit prüfen', 'PDF UA', 'Screenreader', 'Accessibility'],
+  'accessibility-check': [
+    'Barrierefreiheit prüfen',
+    'PDF UA',
+    'Screenreader',
+    'Accessibility',
+    'Lesereihenfolge',
+    'Alternativtext',
+    'Struktureditor',
+    'PDF UA erstellen',
+    'veraPDF',
+  ],
   'translate-pdf': [
     'PDF übersetzen',
     'Übersetzung nebeneinander',

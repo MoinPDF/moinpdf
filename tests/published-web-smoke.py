@@ -145,6 +145,36 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         completed.append('Production PDFium worker changes original text; independent PyMuPDF readback')
         back(page)
 
+        page.get_by_role('button', name='PDF-Objekte bearbeiten', exact=True).click()
+        page.get_by_label('Bearbeitung', exact=True).select_option('paragraph')
+        page.get_by_role('button', name='Textobjekte laden', exact=True).click()
+        page.locator('.paragraph-object-list input[type="checkbox"]').first.check()
+        page.get_by_role('button', name='Auswahl als Absatz laden', exact=True).click()
+        paragraph_text = 'Neuer Absatz mit Umlauten: ÄÖÜ. Dieser längere Text wird automatisch auf mehrere Zeilen verteilt und bleibt auswählbar.'
+        page.get_by_label('Neuer Absatztext', exact=True).fill(paragraph_text)
+        page.get_by_label('Links (%)', exact=True).fill('10')
+        page.get_by_label('Oben (%)', exact=True).fill('10')
+        page.get_by_label('Breite (%)', exact=True).fill('50')
+        page.get_by_label('Höhe (%)', exact=True).fill('35')
+        page.get_by_role('button', name='Absatzvorschau berechnen', exact=True).click()
+        expect(page.get_by_role('heading', name=re.compile('Ergebnisvorschau'))).to_be_visible()
+        page.get_by_role('button', name='Absatz exportieren', exact=True).click()
+        expect(page.locator('.advanced-result')).to_be_visible()
+        with page.expect_download() as download:
+            page.locator('.advanced-result a[download]').click()
+        saved = Path(temporary) / 'absatz.pdf'
+        download.value.save_as(saved)
+        with pymupdf.open(saved) as document:
+            text = document[0].get_text()
+            assert ' '.join(paragraph_text.split()) in ' '.join(text.split())
+            assert 'Moin aus dem Norden' not in text
+            assert 'Zweite Seite' in document[1].get_text()
+        page.get_by_label('Höhe (%)', exact=True).fill('1')
+        page.get_by_role('button', name='Absatz exportieren', exact=True).click()
+        expect(page.get_by_text(re.compile('Textüberlauf|kleiner als sein Innenabstand'))).to_be_visible()
+        completed.append('Paragraph selection, embedded Unicode font, real PDFium result preview/export and overflow rejection in production UI')
+        back(page)
+
         page.get_by_role('button', name='Projekte', exact=True).click()
         page.get_by_label('Projektname', exact=True).fill('Browser-Testprojekt')
         page.get_by_role('button', name='Projekt speichern', exact=True).click()
@@ -249,6 +279,31 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         back(page)
 
         if require_server:
+            page.get_by_role('button', name='Barrierefreiheit prüfen', exact=True).click()
+            page.get_by_label('Barrierefreiheit: Aktion', exact=True).select_option('create')
+            page.get_by_label('Dokumenttitel', exact=True).fill('Geprüfter Bericht')
+            page.get_by_label('Text für Block 1', exact=True).fill('Bericht aus MoinPDF')
+            page.get_by_role('button', name='Absatz hinzufügen', exact=True).click()
+            page.get_by_label('Text für Block 2', exact=True).fill('Zweiter Absatz mit geprüftem Unicode: ÄÖÜ.')
+            page.get_by_role('button', name='Absatz hinzufügen', exact=True).click()
+            page.get_by_label('Text für Block 3', exact=True).fill('Dieser Absatz wird nach oben verschoben.')
+            page.get_by_role('button', name='Block 3 nach oben', exact=True).click()
+            page.get_by_role('button', name='PDF/UA erstellen und prüfen', exact=True).click()
+            expect(page.locator('.advanced-result')).to_be_visible(timeout=180000)
+            with page.expect_download() as download:
+                page.locator('.advanced-result a[download]').first.click()
+            saved = Path(temporary) / 'pdfua.zip'
+            download.value.save_as(saved)
+            with zipfile.ZipFile(saved) as bundle:
+                assert json.loads(bundle.read('Ergebnis.json'))['technicalPassed'] is True
+                accessible_pdf = bundle.read('PDF-UA-1-technisch-geprueft.pdf')
+                with pymupdf.open(stream=accessible_pdf, filetype='pdf') as document:
+                    content = ''.join(p.get_text() for p in document)
+                    assert content.index('nach oben verschoben') < content.index('Zweiter Absatz')
+                    assert document.metadata['title'] == 'Geprüfter Bericht'
+                    assert document.xref_get_key(document.pdf_catalog(), 'StructTreeRoot')[0] != 'null'
+            completed.append('Structured reading order through production UI, LibreOffice export, real veraPDF/UA-1 gate and independent PDF readback')
+            back(page)
             page.get_by_role('button', name='PDF als Hörbuch', exact=True).click()
             page.get_by_role('button', name='Vorlesetext vorbereiten', exact=True).click()
             page.get_by_label('Lesereihenfolge und Vorlesetext der ausgewählten Abschnitte geprüft', exact=True).check()
@@ -277,6 +332,19 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='OCR & Text', exact=True).click()
         page.get_by_role('button', name='Sprachen kombinieren', exact=True).click()
         no_overflow(page, 'mobile OCR languages')
+        back(page)
+        page.get_by_role('button', name='PDF-Objekte bearbeiten', exact=True).click()
+        page.get_by_label('Bearbeitung', exact=True).select_option('paragraph')
+        page.get_by_role('button', name='Textobjekte laden', exact=True).click()
+        expect(page.locator('.paragraph-object-list')).to_be_visible()
+        no_overflow(page, 'mobile paragraph editor')
+        page.screenshot(path=str(evidence / 'mobile-paragraph.png'), full_page=True)
+        back(page)
+        page.get_by_role('button', name='Barrierefreiheit prüfen', exact=True).click()
+        page.get_by_label('Barrierefreiheit: Aktion', exact=True).select_option('create')
+        page.get_by_role('button', name='Absatz hinzufügen', exact=True).click()
+        no_overflow(page, 'mobile accessibility structure editor')
+        page.screenshot(path=str(evidence / 'mobile-accessible-editor.png'), full_page=True)
         back(page)
         assert not errors, errors
         print('PASS: ' + '; '.join(completed), flush=True)

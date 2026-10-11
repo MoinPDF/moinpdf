@@ -38,6 +38,12 @@ Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installatio
 | **Wiederkehrendes erledigen** | Stapelverarbeitung, gespeicherte Abläufe, Belegfelder sammeln, Formularrückläufe auswerten und Dokumente chronologisch ordnen. |
 | **Mehr aus Dokumenten machen** | PDF-Maßband und Ebenenverwaltung; mit Dokumentenserver lokal übersetzen und als Hörbuch ausgeben. |
 
+Neu in **0.8.0**: Der Absatzmodus bearbeitet mehrere Originaltexte mit Schriftwahl,
+automatischem Umbruch und Ergebnisvorschau. „Barrierefreiheit prüfen“ bietet mit
+Dokumentenserver PDF/UA-Prüfungen und einen Struktureditor für neue PDF/UA-1-Dokumente.
+Die PDF-Ausgabe erfolgt erst nach bestandener technischer Prüfung; Inhalte und
+Lesereihenfolge sind zusätzlich manuell zu kontrollieren.
+
 Die [Funktionsübersicht](docs/FUNKTIONEN.md) erklärt die Werkzeuge, Ausgabeformate und ihre Grenzen. Schrittfolgen für jedes Werkzeug findest du in der **Dokumentation** innerhalb der App.
 
 ## Vom Dokument zum Ergebnis

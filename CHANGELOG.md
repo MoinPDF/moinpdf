@@ -9,6 +9,20 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.8.0 – 2026-10-11
+
+- Absatzeditor mit Mehrfachauswahl vorhandener Textobjekte, automatischem Umbruch,
+  eingebetteter Noto Sans oder eigener statischer TTF, Größe, Farbe, Ausrichtung,
+  Abständen und tatsächlicher PDF-Vorschau. Überlauf und fehlende Glyphen werden
+  vor der Ausgabe gemeldet; übrige Seitenobjekte bleiben erhalten.
+- PDF/UA-1- und PDF/UA-2-Prüfung mit dem vorhandenen gepinnten veraPDF-Validator.
+- Struktureditor für neue A4-Dokumente: Überschriften, Absätze, Lesereihenfolge,
+  Bilder mit Alternativtext, Titel/Sprache und speicherbare JSON-Strukturdateien.
+  LibreOffice erzeugt PDF/UA-1; nur eine bestandene Maschinenprüfung erlaubt die
+  PDF-Ausgabe. Manuelle Prüfung und Abgleich mit dem Original bleiben nötig.
+- 21 Engine-Testsuiten, sechs zusätzliche Serverprüfungen und Browserabläufe für
+  Absatzvorschau, Überlauf und die geprüfte PDF/UA-Erstellung. Weiterhin 108 Werkzeuge.
+
 ## 0.7.0 – 2026-10-11
 
 - Übertragbare `.moinpdf`-Projektdateien für den aktuellen oder einen gespeicherten

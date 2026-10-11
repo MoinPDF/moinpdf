@@ -1,0 +1,13 @@
+.paragraph-object-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 17rem;
+  overflow: auto;
+  min-width: 0;
+  padding: 0.8rem;
+  border: 1px solid var(--line, #d7dfe1);
+  border-radius: 0.75rem;
+}
+.paragraph-object-list span {
+  overflow-wrap: anywhere;
+}
