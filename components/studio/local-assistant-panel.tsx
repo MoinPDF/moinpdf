@@ -122,7 +122,7 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
               const raw = await model.current.answer(
                 assistantSystem,
                 assistantPrompt(question, passages),
-                assistantSchema,
+                assistantSchema(passages),
                 ctx.signal,
               );
               ctx.signal.throwIfAborted();
@@ -170,9 +170,9 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
               </div>
             ))}
             <p className="fine-note">
-              Zitate sind gegen die ausgelesene Quelle geprüft. Die Auslegung durch das Modell kann
-              trotzdem falsch sein; bei OCR zusätzlich das Seitenbild kontrollieren. Für die Antwort
-              wurden lokal ausgewählte Passagen verwendet.
+              Zitate werden unverändert aus den ausgewählten Originalpassagen übernommen. Die
+              Auslegung durch das Modell kann trotzdem falsch sein; bei OCR zusätzlich das
+              Seitenbild kontrollieren. Für die Antwort wurden lokal ausgewählte Passagen verwendet.
             </p>
           </section>
         )}

@@ -14,12 +14,14 @@ const pages=[{sourceId:'a',name:'Plan.pdf',page:0,mode:'text',lines:[{text:'Die 
 const passages=selectPassages(pages,'Wann erfolgt die Abgabe?');
 assert.equal(passages[0].name,'Brief.pdf');
 assert.deepEqual(JSON.parse(assistantPrompt('Frage',passages)).document_data[0],{passageId:passages[0].id,file:'Brief.pdf',page:3,text:'Die Abgabe erfolgt am 12. November 2026.'});
-const valid={answer:'Am 12. November 2026.',abstain:false,citations:[{passageId:passages[0].id,quote:'12. November 2026'}]};
+const valid={answer:'Am 12. November 2026.',abstain:false,citations:[{passageId:passages[0].id}]};
 const answer=validateGroundedAnswer(JSON.stringify(valid),passages);
-assert.equal(answer.citations[0].sourceId,'b');assert.equal(answer.citations[0].page,2);assert.deepEqual(answer.citations[0].rects,rects);
-for(const change of [{citations:[]},{citations:[{passageId:'erfunden',quote:'12. November 2026'}]},{citations:[{passageId:passages[0].id,quote:'99. November 2026'}]},{abstain:'false'},{answer:'x'.repeat(4001)}]) assert.throws(()=>validateGroundedAnswer(JSON.stringify({...valid,...change}),passages));
+assert.equal(answer.citations[0].quote,'Die Abgabe erfolgt am 12. November 2026.');assert.equal(answer.citations[0].sourceId,'b');assert.equal(answer.citations[0].page,2);assert.deepEqual(answer.citations[0].rects,rects);
+for(const change of [{citations:[]},{citations:[{passageId:'erfunden'}]},{citations:[{passageId:passages[0].id,quote:'99. November 2026'}]},{abstain:'false'},{answer:'x'.repeat(4001)}]) assert.throws(()=>validateGroundedAnswer(JSON.stringify({...valid,...change}),passages));
 for(const raw of ['null','[]','{}','{"answer":']) assert.throws(()=>validateGroundedAnswer(raw,passages));
 assert.equal(validateGroundedAnswer(JSON.stringify({answer:'Unbekannt',abstain:true,citations:[]}),passages).abstain,true);
+assert.throws(()=>validateGroundedAnswer(JSON.stringify({...valid,abstain:true}),passages));
+assert.equal(validateGroundedAnswer(JSON.stringify({...valid,citations:[valid.citations[0],valid.citations[0]]}),passages).citations.length,1);
 const long=selectPassages([{...pages[0],lines:[{text:'a'.repeat(1600),rects}]}],'a');assert.equal(long.length,3);assert(long.every(p=>p.text.length<=650));
 for(const n of [0,55,56,63,64,65,1024*1024-1,1024*1024,1024*1024+57,2*1024*1024+1]) {
   const bytes=Uint8Array.from({length:n},(_,i)=>(i*71+19)%256);

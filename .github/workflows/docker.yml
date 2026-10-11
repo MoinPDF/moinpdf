@@ -24,7 +24,7 @@ jobs:
           docker build -t moinpdf-model-test .
           docker run -d --name moinpdf-model-test -p 8080:8080 \
             -e MOINPDF_API_KEY=synthetic-local-model-test-key-00000000 moinpdf-model-test
-          curl --fail --retry 20 --retry-connrefused --retry-delay 1 http://localhost:8080/ -o /dev/null
+          curl --fail --retry 20 --retry-all-errors --retry-delay 1 http://localhost:8080/ -o /dev/null
       - name: Install browser test runtime
         run: |
           python -m pip install playwright==1.55.0 pymupdf==1.28.2
