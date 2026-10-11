@@ -18,6 +18,9 @@ import type { AdvancedTool, ExportFile, RunContext } from '@/lib/advanced-types'
 import { Choice, PageStage, PageSelect } from './advanced-shared';
 import { SplitSizePanel } from './expansion-panels';
 import { RepairPanel, ReadingPanel, ScanSplitPanel } from './recovery-panels';
+import { NativePanel } from './native-panel';
+import { ProPanel } from './pro-panels';
+import { isProTool } from '@/lib/pro-tools';
 import { WorkflowPanel } from './advanced-workflows';
 import { RenamePanel, SplitPanel, TablePanel, RedactPanel } from './advanced-text-panels';
 import { EnhancePanel, ComparePanel, BarcodePanel, CameraPanel } from './advanced-media-panels';
@@ -135,6 +138,10 @@ export function AdvancedWorkbench({
     newProps = { ...props, invalidate: () => setResult(null) },
     multi = (
       [
+        'bates',
+        'continuous-page',
+        'linearize',
+        'structured-export',
         'form-responses',
         'chronology',
         'batch',
@@ -205,6 +212,8 @@ export function AdvancedWorkbench({
           <div className="advanced-empty">Bitte zuerst eine PDF öffnen.</div>
         ) : (
           <>
+            {tool === 'native-objects' && <NativePanel key={source.id} {...props} />}
+            {isProTool(tool) && <ProPanel {...props} tool={tool} />}
             {tool === 'form-responses' && <FormResponsesPanel {...newProps} />}{' '}
             {tool === 'chronology' && <ChronologyPanel {...newProps} />}{' '}
             {tool === 'arithmetic-check' && <ArithmeticPanel {...newProps} />}{' '}

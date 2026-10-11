@@ -11,7 +11,7 @@ Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(nam
 globalThis.Worker=class {constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['pdf-engine','editor-model','document-tools','advanced-types','table-data','evidence-model','evidence-engine','century-model','century-engine','advanced-documents','pdf-security','pdf-sanitize']) {
+for(const name of ['ocr-languages','content-compare','image-codecs','pdf-engine','editor-model','document-tools','advanced-types','table-data','evidence-model','evidence-engine','century-model','century-engine','advanced-documents','pdf-security','pdf-sanitize']) {
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-century-test.mjs${q}`);
  await writeFile(`.cache/${name}-century-test.mjs`,code);
 }
@@ -53,6 +53,7 @@ try {
  const layeredSource=await source(await layered.save()),layers=await e.readLayers(layeredSource);assert.equal(layers.length,1);assert.equal(layers[0].visible,true);
  const shown=await e.renderLayerPage(layeredSource,0,layers,200,ctx.signal);assert.deepEqual([...shown.canvas.getContext('2d').getImageData(100,100,1,1).data],[255,0,0,255]);shown.canvas.width=0;
  layers[0].visible=false;const hidden=await e.renderLayerPage(layeredSource,0,layers,200,ctx.signal);assert.deepEqual([...hidden.canvas.getContext('2d').getImageData(100,100,1,1).data],[255,255,255,255]);hidden.canvas.width=0;
+ const editable=await source(await(await e.editableLayersPdf(layeredSource,[{...layers[0],name:'Umbenannt'}],ctx)).blob.arrayBuffer());const reloaded=await e.readLayers(editable);assert.equal(reloaded.length,1);assert.equal(reloaded[0].name,'Umbenannt');assert.equal(reloaded[0].visible,false);const flipped=await e.layerConfig(editable,reloaded,{id:reloaded[0].id,visible:true});assert.equal(flipped.getGroup(reloaded[0].id).visible,true);
  const flattened=await source(await(await e.layersPdf(layeredSource,layers,ctx)).blob.arrayBuffer());assert.equal((await e.readLayers(flattened)).length,0);assert.equal((await(await flattened.pdf.getPage(1)).getTextContent()).items.length,0);assert.equal((await e.readLayers(layeredSource))[0].visible,true);const raster=await e.renderLayerPage(flattened,0,[],200,ctx.signal);assert.deepEqual([...raster.canvas.getContext('2d').getImageData(100,100,1,1).data],[255,255,255,255]);raster.canvas.width=0;
  // Non-square page geometry, area validation, per-page calibration and all four rotations.
  const c={points:[{x:0,y:0},{x:.5,y:0}],length:10,unit:'m'},measure={id:'one',page:0,kind:'length',points:[{x:0,y:0},{x:0,y:.5}],label:'Höhe'};

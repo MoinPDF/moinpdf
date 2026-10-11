@@ -3776,6 +3776,18 @@ summary:focus-visible {
   align-items: center;
   color: #347d70;
 }
+.report-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0;
+  font-size: 13px;
+}
+.report-filter input {
+  accent-color: #17694e;
+  width: 16px;
+  height: 16px;
+}
 .report-heading h2 {
   font-family: 'Space Grotesk Variable', sans-serif;
   font-size: 1.35rem;

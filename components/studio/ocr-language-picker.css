@@ -1,0 +1,31 @@
+.ocr-language-picker {
+  display: grid;
+  gap: 10px;
+}
+.ocr-language-options {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 0;
+}
+.ocr-language-options legend {
+  font-size: 12px;
+  padding: 0 4px;
+}
+.ocr-language-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.ocr-language-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ocr-language-grid input {
+  width: 16px;
+  height: 16px;
+  accent-color: #17694e;
+}

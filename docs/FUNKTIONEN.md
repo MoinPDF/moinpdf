@@ -13,12 +13,13 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 ## Seiten, Bearbeitung und OCR
 
 - Check & Seitenfinder: dateiübergreifende Textsuche, lokale Scan-Erkennung, Trefferseiten als neue PDF; Hinweise auf Scan-Seiten, mögliche Leerseiten, optisch gleiche Seiten und unterschiedliche Papierformate
-- OCR & Text: Deutsch, Englisch, gemischte Sprachen; korrigierbarer Text neben PDF-Vorschau
-- Bilder zu PDF; PDF zu PNG/JPG im ZIP
+- OCR & Text: 21 Sprachen plus Deutsch/Englisch kombiniert; automatische Seiteneinteilung, Textblock, Textspalte, Textzeile oder verstreuter Text; korrigierbarer Text neben PDF-Vorschau
+- JPG, PNG, WebP, BMP, mehrseitige TIFF und eigenständige SVG zu PDF (als Bildseiten); PDF zu PNG/JPG/WebP/TIFF/BMP im ZIP
 - Scan-Komprimierung
 - Zusammenfügen; einzelne Seiten als PDF im ZIP
 - Seiten organisieren: auswählen, sortieren, drehen, duplizieren, entfernen und Leerseiten ergänzen
-- Seitennummern
+- Seitennummern, dateiübergreifende Bates-Nummerierung mit Kopf-/Fußzeilen und internen Seitenbezeichnungen
+- Beliebige Drehwinkel, durchgehende lange Seiten und Posterdruck mit Überlappung
 - Seitenformat: DIN A4 oder US Letter, Hoch- und Querformat
 - Mehrere Seiten pro Blatt: 2 oder 4 Seiten
 - Schwärzen
@@ -30,6 +31,8 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 - PDF fixieren (Seitenbilder)
 - Dokumentinfos entfernen
 - Text bearbeiten, Inhalte entfernen und Bilder einfügen
+- Originalobjekte bearbeiten: Text in vorhandener Schrift, Suchen/Ersetzen pro Seite, Bilder ersetzen, Objekte verschieben/drehen/skalieren/löschen; kein Absatzumbruch und keine Bearbeitung einzelner Unterobjekte in Gruppen
+- Linearisierung für schnelle Webansicht; strukturierter JSON-Export mit Textpositionen
 - PDF-Informationen und Textvergleich zweier PDFs
 - In Abschnitte teilen, abwechselnd zusammenfügen, Broschüren und Seiten aufteilen
 - Weiße Ränder entfernen, Schwarzweiß-Scan und Farben umkehren
@@ -39,15 +42,15 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 - PDF schützen (AES-256) und mit bekanntem Passwort entsperren
 - E-Rechnungen lesen und mit einem Basischeck prüfen; UBL, UBL-Gutschriften und CII aus XML oder eingebetteten PDF-Anhängen
 
-PDFs, Rechnungs-XML, JPGs und PNGs lassen sich überall ins Fenster ziehen. Die Seitenreihenfolge wird per Drag-and-drop oder über Pfeile geändert. Visuelle Bereiche lassen sich direkt aufziehen beziehungsweise platzieren oder über Prozentwerte eingeben. Die letzten 30 Seiten- und Bereichsänderungen können rückgängig gemacht und wiederholt werden (Strg/⌘ + Z und Strg/⌘ + Umschalt + Z). Nach dem Hinzufügen oder Schließen von Dateien beginnt der Verlauf neu.
+PDFs, Rechnungs-XML und unterstützte Bildformate lassen sich überall ins Fenster ziehen. Die Seitenreihenfolge wird per Drag-and-drop oder über Pfeile geändert. Visuelle Bereiche lassen sich direkt aufziehen beziehungsweise platzieren oder über Prozentwerte eingeben. Die letzten 30 Seiten- und Bereichsänderungen können rückgängig gemacht und wiederholt werden (Strg/⌘ + Z und Strg/⌘ + Umschalt + Z). Nach dem Hinzufügen oder Schließen von Dateien beginnt der Verlauf neu.
 
 Ergebnisse können als neue Arbeitsdokumente übernommen werden. OCR exportiert durchsuchbare PDF, TXT und DOCX (Text ohne Rekonstruktion des ursprünglichen Layouts). Seitenwerkzeuge übernehmen ausstehende visuelle Änderungen auf den ausgewählten Seiten. Die Arbeitsplätze für Formulare, Lesezeichen, Passwortschutz und E-Rechnungen verwenden die vollständige Quelldatei; Änderungen aus anderen Werkzeugen deshalb zuerst anwenden und als Arbeitsdokument übernehmen.
 
-Dateien bleiben im Speicher der aktuellen Sitzung. Ergebnisse vor dem Schließen herunterladen. Obergrenzen: 80 MB Quelldateien und 200 Seiten. Umfangreiche OCR kann auf Mobilgeräten langsam sein.
+Über „Projekte“ lassen sich Dateien und Arbeitsstände einschließlich Editorverlauf, Formularen und Lesezeichen lokal wiederherstellen (letzte fünf gespeicherte Stände). Speicherung erfolgt unverschlüsselt im Browserspeicher; beim Projektwechsel wird die aktuelle Sitzung davor gesichert. Zwischenergebnisse eigenständiger Spezialwerkzeuge erst übernehmen. Ein gewählter Stand lässt sich als unverschlüsselte `.moinpdf`-Projektdatei einschließlich Originalen und Verlauf übertragen. Dafür „Projektdatei herunterladen“ beziehungsweise „Projektdatei öffnen“ verwenden. Projektdateien sind keine bereinigten Ergebnis-PDFs. Obergrenzen: 80 MB Quelldateien und 200 Seiten. Umfangreiche OCR kann auf Mobilgeräten langsam sein.
 
 ## Stapel, Abläufe und weitere Dateiformate
 
-- Stapelverarbeitung und gespeicherte mehrstufige Arbeitsabläufe mit JSON-Import/-Export; Passwörter und Dokumente werden nicht in Abläufen gespeichert.
+- Stapelverarbeitung und gespeicherte mehrstufige Arbeitsabläufe mit JSON-Import/-Export, Wenn-/Sonst-Schritten nach Dateiname, vorhandenen Texten oder Seitenzahl und Protokoll der Entscheidungen; Passwörter und Dokumente werden nicht in Abläufen gespeichert.
 - Automatische Dateinamenvorschläge aus Datum, Rechnungsnummer und Titel, mit bearbeitbarer Vorschau.
 - Trennen nach Text, Lesezeichen, leeren Seiten oder QR-/Barcode-Trennblättern, mit Abschnittsvorschau.
 - Tabellenbereiche zu Excel/CSV, OCR für Scans, manuelle Spaltengrenzen und bearbeitbare Zellen. XLSX speichert Werte als Text; CSV schützt vor Formelausführung.
@@ -151,3 +154,17 @@ Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die 
 ---
 
 [Zur README](../README.md) · [Installation](../DOCKER.md) · [Entwicklung](ENTWICKLUNG.md)
+
+
+## Ergänzungen in 0.7.0
+
+- **OCR und Scan-Suche:** Bis zu vier der 21 lokal ausgelieferten Sprachen kombinieren.
+  Keine automatische Spracherkennung; mehr Sprachen benötigen mehr Arbeitsspeicher.
+- **PDFs vergleichen:** Neben dem seitenweisen Vergleich gibt es „Inhalte über
+  Seiten hinweg“. Der Bericht zeigt Wortänderungen, Fundseiten und verschobene
+  Textblöcke. Doppelte oder uneindeutige Zuordnungen sind gekennzeichnet; Bilder
+  und Formatierung bleiben Aufgabe des visuellen Vergleichs. Der TXT-Export
+  enthält alle Einträge, auch die in der Oberfläche ausgeblendeten.
+- **Projektdateien:** Ein Arbeitsstand mit Rückgängig-Verlauf, Quellen und
+  Rechnungs-XML, bis zu 80 MB Dokumentdaten und 20 MB Bearbeitungsdaten. Vorhandene
+  PDFs werden beim Import tatsächlich geöffnet und Seitenverweise geprüft.

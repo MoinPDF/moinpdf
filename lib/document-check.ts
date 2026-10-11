@@ -129,7 +129,8 @@ export async function recognizeForSearch(
     if (signal.aborted) throw new DOMException('Abgebrochen', 'AbortError');
     report({ percent: 0, label: 'Texterkennung für die Suche wird geladen …' });
     const { createWorker, PSM } = await import('tesseract.js');
-    const creating = createWorker(language, 1, {
+    const { parseOcrLanguages } = await import('./ocr-languages');
+    const creating = createWorker(parseOcrLanguages(language), 1, {
       workerPath: '/vendor/ocr/worker.min.js',
       corePath: '/vendor/ocr',
       langPath: '/vendor/languages',

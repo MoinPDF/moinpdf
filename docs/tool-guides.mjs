@@ -2,6 +2,46 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+  'native-objects': guide('Eine PDF mit vorhandenen Text-, Bild- oder Grafikobjekten.', [
+    'Wähle eine Seite und lade ihre Objekte. Wähle anschließend einen Eintrag; der Rahmen zeigt seine ursprüngliche Position.',
+    'Ändere Text in der Originalschrift oder verschiebe, drehe oder skaliere das Objekt. Bilder können durch PNG, JPG oder WebP ersetzt werden. Alternativ ersetze einen Suchtext in mehreren Textobjekten der Seite.',
+    'Exportiere die Änderung, prüfe die Ergebnisvorschau und übernimm das Ergebnis für weitere Bearbeitungen.'
+  ], 'PDF mit bearbeiteten Originalobjekten; übriger Text bleibt auswählbar.', 'Einzelne Textobjekte, kein automatischer Absatzumbruch. Eingebettete Schriften müssen die neuen Zeichen enthalten. Objektgruppen lassen sich gemeinsam bearbeiten. Löschen ist keine Sicherheitsbereinigung; vorhandene Signaturen werden ungültig.'),
+  'bates': guide('Eine oder mehrere PDFs in der gewünschten Dateireihenfolge.', [
+    'Öffne alle Dateien, die fortlaufend gekennzeichnet werden sollen.',
+    'Wähle Vorlage, Startnummer, Ziffernstellen, Schriftgröße und Position. Platzhalter: {nummer}, {seite}, {seiten} und {datei}. Prüfe die Textvorschau.',
+    'Wende die Nummerierung an und prüfe ihre Position in der Ausgabe, besonders bei unterschiedlich großen Seiten.'
+  ], 'Nummerierte PDF oder ZIP mit mehreren PDFs und einer durchgehenden Nummernfolge.', 'Die Nummerierung folgt der Dateireihenfolge. Lateinische Zeichen in Helvetica; Beschriftungen müssen auf die Seite passen. Bestehende Signaturen werden ungültig.'),
+  'page-labels': guide('Eine PDF, deren Navigation eigene Seitenbezeichnungen erhalten soll.', [
+    'Lege den ersten Abschnitt ab Seite 1 fest.',
+    'Füge weitere Abschnitte mit römischer, alphabetischer oder dezimaler Zählweise hinzu. Optional Präfix und Startwert eintragen.',
+    'Speichere die Datei und prüfe die Seitennavigation in einem PDF-Programm mit Unterstützung für Seitenbezeichnungen.'
+  ], 'PDF mit internen Seitenbezeichnungen.', 'Gedruckte Seitenzahlen ändern sich nicht. Dafür die Nummerierungswerkzeuge verwenden.'),
+  'rotate-free': guide('Eine PDF mit Seiten, die um einen beliebigen Winkel gedreht werden sollen.', [
+    'Öffne die Datei und wähle den Drehwinkel im Uhrzeigersinn.',
+    'Erstelle die gedrehten Seiten. Die Seitengröße passt sich an den gesamten Inhalt an.',
+    'Prüfe die Vorschau und lade die neue Datei herunter.'
+  ], 'Neu aufgebaute PDF mit erhaltenen Text- und Vektorinhalten.', 'Formulare werden festgeschrieben. Links, Lesezeichen, Anhänge und ursprüngliche Signaturen werden beim Seitenneuaufbau nicht übernommen.'),
+  'continuous-page': guide('Eine oder mehrere PDFs, deren Seiten untereinander stehen sollen.', [
+    'Öffne die PDFs in der gewünschten Reihenfolge.',
+    'Lege die gemeinsame Breite und den Abstand zwischen den Seiten fest.',
+    'Erstelle die lange Seite und kontrolliere die Reihenfolge.'
+  ], 'PDF mit einer durchgehenden Seite, Text und Vektorgrafiken.', 'Maximale Seitenlänge 5,08 Meter. Formulare werden festgeschrieben; Links, Lesezeichen, Anhänge und Signaturen werden nicht übernommen.'),
+  'poster-print': guide('Eine PDF mit großen Vorlagen zum Aufteilen auf Druckbögen.', [
+    'Wähle die Anzahl der Spalten und Zeilen.',
+    'Stelle die gewünschte Überlappung in Millimetern ein und exportiere die Kacheln.',
+    'Drucke die Kacheln in passender Größe und setze sie je Originalseite zeilenweise von links oben zusammen.'
+  ], 'PDF mit mehreren Druckkacheln pro Originalseite.', 'Die Kacheln behalten Text und Vektoren. Links, Lesezeichen, Anhänge und Signaturen werden nicht übernommen. Für maßgenaue Ausgabe die Skalierung im Druckdialog prüfen.'),
+  'linearize': guide('Eine oder mehrere PDFs für die Veröffentlichung auf einem Webserver.', [
+    'Öffne die Dateien.',
+    'Starte die Optimierung für die schnelle Webansicht.',
+    'Lade die vorbereiteten Dateien herunter und verwende sie auf einem Server mit Unterstützung für Teilabrufe.'
+  ], 'Linearisierte PDF oder ZIP mit mehreren optimierten Dateien.', 'Der Webserver und PDF-Leser müssen schrittweises Laden unterstützen. Erneute Bearbeitungen können die Optimierung aufheben und bestehende Signaturen werden ungültig.'),
+  'structured-export': guide('Eine oder mehrere PDFs mit auslesbarem Text.', [
+    'Öffne die Dokumente. Reine Scans zuerst mit OCR durchsuchbar machen.',
+    'Starte den JSON-Export.',
+    'Verwende Textobjekte, Seitenzahlen und Positionsangaben in der gewünschten Weiterverarbeitung.'
+  ], 'JSON mit Dokumenten, Seiten, Textobjekten, Schriftreferenzen und Positionen.', 'Koordinaten folgen den PDF-Textmatrizen. Der Export erzeugt keine semantische Absatz- oder Tabellenstruktur und führt keine automatische OCR durch.'),
   'form-responses': guide('Mehrere ausgefüllte PDF-Formulare mit interaktiven Feldern.', [
     'Öffne die Rückläufe und lies die Formularwerte aus. Wähle anschließend eine Datei aus, um ihre Felder und Fundstellen zu prüfen.',
     'Kontrolliere besonders leere Pflichtfelder, Checkboxen und Auswahlwerte. Korrigiere den Exportwert bei Bedarf; der ursprüngliche Wert bleibt in der Detailausgabe nachvollziehbar.',
@@ -22,11 +62,11 @@ export const guides = {
     'Lege fest, ob eingebettete Dateien, Kommentare und Dokumentmetadaten ebenfalls entfernt werden sollen. Skripte, riskante Aktionen, dynamische XFA-Inhalte und eingebettete Medien werden grundsätzlich bereinigt.',
     'Starte „PDF bereinigen und nachprüfen“ und kontrolliere die neue PDF, insbesondere vorhandene Formulare.'
   ], 'Neu geschriebene und auf die gewählten Kategorien nachgeprüfte PDF.', 'Kein Virenscan und keine allgemeine Sicherheitsfreigabe. Normale Web- und Seitenlinks bleiben erhalten. Dynamische Formulare können anders aussehen; digitale Signaturen verlieren durch die Änderung ihre Gültigkeit.'),
-  'pdf-layers': guide('Eine PDF mit echten schaltbaren Ebenen, zum Beispiel ein Plan.', [
-    'Lade die Ebenen. Wenn keine angezeigt werden, enthält die Datei keine unterstützten schaltbaren PDF-Ebenen.',
-    'Schalte die gewünschten Ebenen ein oder aus und prüfe die Vorschau auf mehreren Seiten. Gegenseitig ausschließende Ebenen werden zusammen berücksichtigt.',
-    'Exportiere die gewählte Ansicht, sobald die Vorschau vollständig aufgebaut ist.'
-  ], 'PDF mit festgeschriebenen Seitenbildern der ausgewählten Ebenenansicht.', 'Die Ausgabe enthält keine schaltbaren Ebenen mehr. Ausgeblendete Inhalte, Suchtext, Links, Formularfelder und Anhänge werden nicht übernommen.'),
+  'pdf-layers': guide('Eine PDF mit schaltbaren Ebenen.', [
+    'Lade die vorhandenen Ebenen und wähle eine Vorschauseite.',
+    'Ändere Namen, Reihenfolge in der Ebenenliste und Sichtbarkeit. Prüfe die Vorschau.',
+    'Speichere schaltbare Ebenen mit erhaltenem Text und Vektoren oder exportiere die sichtbare Ansicht als Seitenbilder.'
+  ], 'PDF mit schaltbaren Ebenen oder festgeschriebene Ansicht.', 'Ausgeblendete Inhalte bleiben bei schaltbaren Ebenen in der Datei. Die Ebenenreihenfolge verändert die Navigation, nicht die Zeichenreihenfolge. Die Ausgabe als Seitenbilder entfernt Suchtext und interaktive Funktionen.'),
   'pdf-measure': guide('Ein Plan oder Scan mit einer bekannten Referenzlänge.', [
     'Wähle eine Seite und setze zwei Punkte an einer bekannten Strecke. Trage die tatsächliche Länge und die Einheit Millimeter, Zentimeter oder Meter ein und übernimm die Referenz.',
     'Wechsle zu Strecke oder Fläche. Für eine Strecke setzt du zwei Punkte, für eine Fläche mindestens drei Eckpunkte. Übernimm die Strecke beziehungsweise schließe die Fläche ab.',
@@ -328,7 +368,7 @@ export const guides = {
     'Prüfe die Trefferseiten, passe die Auswahl an und speichere die Auswahl als PDF.'
   ], 'Dokumentenübersicht und neue PDF aus ausgewählten beziehungsweise gefundenen Seiten.', 'Leerseiten und Duplikate sind Hinweise, keine automatische Löschentscheidung. Der lokale Suchindex macht die Original-PDF nicht dauerhaft durchsuchbar; dafür „OCR & Text“ verwenden. Ausstehende Änderungen zuerst anwenden, wenn sie Grundlage der Prüfung sein sollen.'),
   'ocr': guide('Gescannte PDFs, Bilder oder PDFs mit unzureichendem Suchtext.', [
-    'Wähle die Seiten und stelle Deutsch, Englisch oder die gemischte Erkennung ein. Erzwinge OCR nur, wenn vorhandener Text ersetzt oder neu erkannt werden soll.',
+    'Wähle die Seiten und eine der 21 Erkennungssprachen. Über „Sprachen kombinieren“ sind bis zu vier Sprachen gleichzeitig möglich. Wähle den Seitenaufbau und erzwinge OCR nur, wenn vorhandener Text neu erkannt werden soll.',
     'Starte die Erkennung und vergleiche den Text mit der Seitenvorschau. Korrigiere insbesondere Zahlen, Namen und Lesereihenfolge.',
     'Speichere eine durchsuchbare PDF, TXT oder DOCX. Übernimm die PDF als Arbeitsdokument, wenn weitere textbasierte Werkzeuge folgen sollen.'
   ], 'PDF mit Suchtext oder Textausgabe als TXT/DOCX.', 'DOCX enthält den erkannten Text ohne Rekonstruktion des ursprünglichen Layouts. Handschrift, Spalten und unscharfe Scans sind besonders fehleranfällig. Große OCR-Aufträge können auf Smartphones länger dauern.'),
@@ -434,9 +474,9 @@ export const guides = {
   ], 'PDF ohne die entfernten Titel-, Autor-, Betreff-, Stichwort-, Ersteller-, Datums- und XMP-Dokumentinfos.', 'Sichtbare Namen, Kommentare, Bilder, Anhänge und eingebettete Objektdaten werden dadurch nicht anonymisiert. Prüfe diese bei Bedarf mit den passenden Bearbeitungswerkzeugen.'),
   'compare': guide('Zwei PDF-Fassungen mit auslesbarem Text.', [
     'Öffne beide Dateien und wähle Datei A und Datei B.',
-    'Starte den seitenweisen Textvergleich und lies die hervorgehobenen Änderungen.',
+    'Wähle „Seiten an gleicher Position“ oder „Inhalte über Seiten hinweg“. Der Inhaltsmodus ordnet Textblöcke auch nach eingefügten oder verschobenen Seiten zu und zeigt Änderungen auf Wortebene.',
     'Prüfe die betreffenden Stellen im Original. Bei Scans zuerst OCR ausführen und die Ergebnisse öffnen.'
-  ], 'Textvergleich mit hervorgehobenen Änderungen.', 'Bilder, Layout und reine Scanänderungen werden nicht geprüft. Für diese Fälle nutze „Visueller PDF-Vergleich“; für Beträge und Kennnummern eignet sich ergänzend „Zahlenvergleich“.'),
+  ], 'Vergleichsbericht mit Änderungen, Fundseiten und vollständigem TXT-Download. Unveränderte Textblöcke lassen sich einblenden.', 'Die Zuordnung nutzt vorhandenen Text, keine KI-Bedeutungsprüfung. Mehrfach vorkommende und uneindeutige Texte bitte prüfen; unsichere Treffer bleiben als entfernt/hinzugefügt sichtbar. Leerzeichen und Zeilenumbrüche werden vereinheitlicht. Pro Datei bis zu 200 Seiten, zwei Millionen Textzeichen und 5.000 Textblöcke. Bilder, Layout und reine Scanänderungen werden nicht geprüft. Für diese Fälle nutze „Visueller PDF-Vergleich“; für Beträge und Kennnummern eignet sich ergänzend „Zahlenvergleich“.'),
   'pdf-info': guide('Eine oder mehrere geöffnete PDFs.', [
     'Wähle Seiten aus den Dateien, zu denen du Informationen benötigst.',
     'Erstelle den Bericht über die vollständigen zugehörigen Originaldateien.',

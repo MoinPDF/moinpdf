@@ -1,4 +1,12 @@
 export const advancedToolIds = [
+  'native-objects',
+  'bates',
+  'page-labels',
+  'rotate-free',
+  'continuous-page',
+  'poster-print',
+  'linearize',
+  'structured-export',
   'form-responses',
   'chronology',
   'arithmetic-check',

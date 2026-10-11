@@ -47,6 +47,7 @@ import {
   layerConfig,
   renderLayerPage,
   layersPdf,
+  editableLayersPdf,
   measurementRows,
   measurementsPdf,
   type FormResponse,
@@ -712,25 +713,56 @@ export function LayersPanel({ source, busy, run, invalidate }: Props) {
           Ebenen laden
         </Button>
         {layers && !layers.length && <p>Dieses PDF enthält keine schaltbaren PDF-Ebenen.</p>}
-        {layers?.map((l) => (
-          <Tick
-            key={l.id}
-            label={l.name}
-            value={l.visible}
-            onChange={(visible) => {
-              invalidate();
-              void run(async () => {
-                const config = await layerConfig(source, layers, { id: l.id, visible });
-                setLayers(
-                  layers.map((old) => ({ ...old, visible: config.getGroup(old.id).visible })),
-                );
-              });
-            }}
-          />
+        {layers?.map((l, i) => (
+          <div key={l.id} className="pro-rule">
+            <Text
+              label={`Name der Ebene ${i + 1}`}
+              value={l.name}
+              onChange={(name) => {
+                invalidate();
+                setLayers((old) => old!.map((x) => (x.id === l.id ? { ...x, name } : x)));
+              }}
+            />
+            <Button
+              variant="outline"
+              disabled={busy || i === 0}
+              onClick={() => {
+                invalidate();
+                setLayers((old) => {
+                  const next = [...old!];
+                  [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                  return next;
+                });
+              }}
+            >
+              In der Ebenenliste nach oben
+            </Button>
+            <Tick
+              key={l.id}
+              label={l.name}
+              value={l.visible}
+              onChange={(visible) => {
+                invalidate();
+                void run(async () => {
+                  const config = await layerConfig(source, layers, { id: l.id, visible });
+                  setLayers(
+                    layers.map((old) => ({ ...old, visible: config.getGroup(old.id).visible })),
+                  );
+                });
+              }}
+            />
+          </div>
         ))}
+        <Button
+          disabled={busy || !layers?.length || loading || !!error}
+          onClick={() => run((ctx) => editableLayersPdf(source, layers!, ctx))}
+        >
+          Schaltbare Ebenen speichern
+        </Button>
         <p className="fine-note">
-          Die Vorschau zeigt die gewählte Ansicht. Sich gegenseitig ausschließende Ebenen werden
-          gemeinsam umgeschaltet. Die Ausgabe schreibt diese Ansicht als Seitenbilder fest:
+          Beim Speichern schaltbarer Ebenen bleiben Text, Grafiken und ausgeblendete Inhalte
+          erhalten. Die Vorschau zeigt die gewählte Ansicht. Sich gegenseitig ausschließende Ebenen
+          werden gemeinsam umgeschaltet. Die Ausgabe schreibt diese Ansicht als Seitenbilder fest:
           ausgeblendete Inhalte, Suchtext, Links, Formulare und Anhänge werden nicht übernommen.
         </p>
         <Button

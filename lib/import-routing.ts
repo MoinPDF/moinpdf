@@ -1,7 +1,7 @@
 import type { ServerTool } from './advanced-types';
 
 export const documentAccept =
-  '.pdf,.xml,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.eml,.msg,.html,.htm,.epub';
+  '.pdf,.xml,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,.svg,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.eml,.msg,.html,.htm,.epub';
 
 // Route the original file straight to its converter, without requiring a PDF first.
 export function conversionToolForFile(name: string): ServerTool | null {

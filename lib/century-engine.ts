@@ -1,4 +1,13 @@
-import { PDFDocument, PDFName, PDFDict, rgb, type PDFFont } from 'pdf-lib';
+import {
+  PDFDocument,
+  PDFName,
+  PDFDict,
+  PDFArray,
+  PDFRef,
+  PDFHexString,
+  rgb,
+  type PDFFont,
+} from 'pdf-lib';
 import { pdfBlob, filenameStem, abortable, type Source } from './pdf-engine';
 import { readDocumentDraft, writeBookmarks, type FormField } from './document-tools';
 import { embedFont } from './evidence-engine';
@@ -427,6 +436,52 @@ export async function layersPdf(
     kind: 'pdf',
     pages: doc.getPageCount(),
     note: 'Die gewählte Ansicht ist als Seitenbilder festgeschrieben. Ausgeblendete Ebenen, Suchtext, Links, Formulare und Anhänge sind nicht in der neuen PDF enthalten.',
+  };
+}
+export async function editableLayersPdf(
+  source: Source,
+  layers: LayerChoice[],
+  ctx: RunContext,
+): Promise<ExportFile> {
+  checkAbort(ctx.signal);
+  const doc = await PDFDocument.load(source.bytes),
+    props = doc.catalog.lookup(PDFName.of('OCProperties'), PDFDict),
+    groups = props?.lookup(PDFName.of('OCGs'), PDFArray);
+  if (!groups || !layers.length || layers.length !== groups.size())
+    throw new Error('Die Ebenen konnten nicht eindeutig zugeordnet werden. Bitte neu laden.');
+  const byId = new Map<string, PDFRef>();
+  for (const ref of groups.asArray()) {
+    if (!(ref instanceof PDFRef))
+      throw new Error('Diese PDF verwendet eine nicht unterstützte Ebenenstruktur.');
+    byId.set(`${ref.objectNumber}R${ref.generationNumber || ''}`, ref);
+  }
+  if (new Set(layers.map((l) => l.id)).size !== layers.length) throw new Error('Doppelte Ebene.');
+  const order: PDFRef[] = [],
+    on: PDFRef[] = [],
+    off: PDFRef[] = [];
+  for (const l of layers) {
+    checkAbort(ctx.signal);
+    const ref = byId.get(l.id);
+    if (!ref || !l.name.trim() || l.name.length > 200)
+      throw new Error('Ungültige Ebene oder leerer Name.');
+    doc.context.lookup(ref, PDFDict).set(PDFName.of('Name'), PDFHexString.fromText(l.name));
+    order.push(ref);
+    (l.visible ? on : off).push(ref);
+  }
+  let config = props.lookupMaybe(PDFName.of('D'), PDFDict);
+  if (!config) {
+    config = doc.context.obj({});
+    props.set(PDFName.of('D'), config);
+  }
+  for (const [key, value] of Object.entries({ Order: order, ON: on, OFF: off, AS: [] }))
+    config.set(PDFName.of(key), doc.context.obj(value));
+  config.set(PDFName.of('BaseState'), PDFName.of('OFF'));
+  return {
+    blob: pdfBlob(await doc.save()),
+    filename: filenameStem(source.name) + '-Ebenen.pdf',
+    kind: 'pdf',
+    pages: doc.getPageCount(),
+    note: 'Ebenen bleiben schaltbar. Ausgeblendete Inhalte bleiben in der Datei enthalten. Die Ebenenliste verwendet die gewählte Reihenfolge; die Zeichenreihenfolge auf der Seite bleibt unverändert. Bestehende Signaturen werden ungültig.',
   };
 }
 export async function measurementRows(

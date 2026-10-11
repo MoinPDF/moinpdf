@@ -9,8 +9,8 @@ const {createCanvas,DOMMatrix,Path2D,ImageData}=pr('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['pdf-engine','document-check']){
- const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace("'./pdf-engine'","'./pdf-engine-check-test.mjs'");await writeFile(`.cache/${name}-check-test.mjs`,code);
+for(const name of ['ocr-languages','content-compare','image-codecs','pdf-engine','document-check']){
+ const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-check-test.mjs${q}`);await writeFile(`.cache/${name}-check-test.mjs`,code);
 }
 const {inspectPage,duplicateGroups,findPages,nearlyBlank}=await import('../.cache/document-check-check-test.mjs');
 const {runJob}=await import('../.cache/pdf-engine-check-test.mjs');

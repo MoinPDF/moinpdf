@@ -31,7 +31,7 @@ Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installatio
 | --- | --- |
 | **Seiten in Ordnung bringen** | Zusammenfügen, teilen, drehen, sortieren, zuschneiden, nummerieren und mit Lesezeichen versehen. |
 | **PDFs bearbeiten** | Text ersetzen, Inhalte entfernen, Bilder und Notizen einfügen, markieren, schwärzen und Formulare bearbeiten. |
-| **Scans lesbar machen** | Deutsche und englische OCR, durchsuchbare PDFs, Scanverbesserung, Komprimierung und Kameraimport. |
+| **Scans lesbar machen** | 21 OCR-Sprachen, bis zu vier gemeinsam, durchsuchbare PDFs, Scanverbesserung, Komprimierung und Kameraimport. |
 | **Dateien umwandeln** | Bilder, Text und Tabellen exportieren; mit Dokumentenserver auch Office-Dateien, E-Mails und weitere Formate konvertieren. |
 | **Dokumente prüfen** | Text- und Bildvergleich, Zahlenvergleich, Rechenprüfung, Dokumentlücken und Fundstellen im Original kontrollieren. |
 | **E-Rechnungen bearbeiten** | UBL/CII lesen und Rechnungsbild mit XML abgleichen; mit Dokumentenserver XRechnung validieren und den ZUGFeRD-Assistenten nutzen. |
@@ -46,7 +46,7 @@ Die [Funktionsübersicht](docs/FUNKTIONEN.md) erklärt die Werkzeuge, Ausgabefor
 2. **Vorhaben auswählen.** Die Frage „Was möchtest du tun?“ beantworten oder durch die Werkzeugkategorien stöbern.
 3. **Prüfen und anwenden.** Einstellungen und Vorschau kontrollieren, Ergebnis herunterladen oder direkt weiterbearbeiten.
 
-Über **„Werkzeug wechseln“** bleiben deine Arbeitsdokumente erhalten. Die Oberfläche passt sich an Desktop und Smartphone an. Lade Ergebnisse vor dem Schließen herunter: Die Dokumente liegen in der aktuellen Sitzung.
+Über **„Werkzeug wechseln“** bleiben deine Arbeitsdokumente erhalten. Die Oberfläche passt sich an Desktop und Smartphone an. Über **„Projekte“** kannst du Arbeitsstände einschließlich Seitenanordnung, Editoränderungen und Verlauf lokal speichern und später fortsetzen. Die letzten fünf gespeicherten Stände bleiben in diesem Browser verfügbar. Über **„Projektdatei herunterladen“** und **„Projektdatei öffnen“** lässt sich ein Stand samt Dateien und Bearbeitungsverlauf als `.moinpdf` auf einen anderen Browser oder Computer übertragen. Die Projektdatei ist unverschlüsselt und enthält Originale; zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden.
 
 ## Schnellstart
 

@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import {dirname} from 'node:path';
+import {Worker as NodeWorker} from 'node:worker_threads';
+import ts from 'typescript';
+import {PDFDocument,StandardFonts,degrees} from 'pdf-lib';
+import JSZip from 'jszip';
+import UTIF from 'utif';
+import 'fake-indexeddb/auto';
+const require=createRequire(import.meta.url),pr=createRequire(require.resolve('pdfjs-dist/package.json'));
+const {createCanvas,DOMMatrix,Path2D,ImageData}=pr('@napi-rs/canvas');
+Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement:()=>createCanvas(1,1)}});
+class BrowserWorker{constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',e=>this.onerror?.(e));}postMessage(v){this.worker.postMessage(v);}terminate(){return this.worker.terminate();}}
+globalThis.Worker=BrowserWorker;
+const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
+await mkdir('.cache',{recursive:true});
+for(const name of ['pro-tools','pdf-security','advanced-types','local-projects','image-codecs'])await writeFile(`.cache/${name}-pro-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-pro-test.mjs${q}`));
+const p=await import('../.cache/pro-tools-pro-test.mjs'),projects=await import('../.cache/local-projects-pro-test.mjs'),images=await import('../.cache/image-codecs-pro-test.mjs'),proxies=[];
+const ctx={signal:new AbortController().signal,report:()=>{}};
+async function source(bytes,name='Test.pdf'){bytes=new Uint8Array(bytes);const pdf=await pdfjs.getDocument({data:bytes.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);return{id:crypto.randomUUID(),name,bytes,pdf,kind:'pdf',size:bytes.length};}
+const text=async(s,i=1)=>(await(await s.pdf.getPage(i)).getTextContent()).items.filter(x=>'str'in x).map(x=>x.str).join(' ');
+const doc=await PDFDocument.create(),font=await doc.embedFont(StandardFonts.Helvetica);for(let i=0;i<3;i++)doc.addPage([400,500]).drawText('PAGE '+(i+1),{x:40,y:420,font,size:18});
+const original=await source(await doc.save());
+try{
+  const labels=await source(await p.pageLabels(original.bytes,[{page:1,style:'r',prefix:'',start:1},{page:3,style:'D',prefix:'A-',start:7}]));assert.deepEqual(await labels.pdf.getPageLabels(),['i','ii','A-7']);
+  await assert.rejects(()=>p.pageLabels(original.bytes,[{page:2,style:'D',prefix:'',start:1}]),/Seite 1/);
+  const numbered=await p.batesPdfs([original,original],{template:'AKTE-{nummer}',start:8,padding:4,size:10,position:'bottom-right'},ctx),zip=await JSZip.loadAsync(await numbered.blob.arrayBuffer());assert.equal(Object.keys(zip.files).length,2);const b=await source(await Object.values(zip.files)[1].async('uint8array'));assert.match(await text(b),/AKTE-0011/);assert.match(await text(b),/PAGE 1/);
+  for(const angle of [0,90,180,270]){const d=await PDFDocument.load(original.bytes);d.getPage(0).setRotation(degrees(angle));d.getPage(0).setCropBox(20,20,360,460);const s=await source(await d.save()),r=await p.batesPdfs([s],{template:'ABC',start:1,padding:1,size:10,position:'bottom-left'},ctx),out=await source(await r.blob.arrayBuffer()),page=await out.pdf.getPage(1),v=page.getViewport({scale:1}),t=(await page.getTextContent()).items.find(t=>t.str==='ABC'),position=pdfjs.Util.transform(v.transform,t.transform);assert(Math.abs(position[4]-16)<.1);assert(Math.abs(position[5]-(v.height-16))<.1);}
+  const rotated=await source(await p.rotateFreely(original.bytes,15,ctx));assert.match(await text(rotated),/PAGE 1/);const dim=(await rotated.pdf.getPage(1)).getViewport({scale:1});assert(dim.width>400&&dim.height>500);
+  const continuous=await source(await p.continuousPage([original],400,10,ctx));assert.equal(continuous.pdf.numPages,1);assert.equal((await continuous.pdf.getPage(1)).getViewport({scale:1}).height,1520);assert.match(await text(continuous),/PAGE 1.*PAGE 2.*PAGE 3/);
+  const poster=await source(await p.posterPages(original.bytes,2,2,10,ctx));assert.equal(poster.pdf.numPages,12);assert.equal((await poster.pdf.getPage(1)).getViewport({scale:1}).width,205);
+  const fast=await source(await(await p.linearizeSources([original],ctx)).blob.arrayBuffer());assert.match(new TextDecoder().decode(fast.bytes.slice(0,1500)),/\/Linearized/);assert.match(await text(fast),/PAGE 1/);
+  const structure=JSON.parse(await(await p.structuredExport([original],ctx)).blob.text());assert.equal(structure.documents[0].pages[0].items[0].text,'PAGE 1');
+  await assert.rejects(()=>p.rotateFreely(original.bytes,NaN,ctx),/Drehwinkel/);await assert.rejects(()=>p.continuousPage([original],2000,100,{...ctx,signal:AbortSignal.abort()}),/Abgebrochen/);
+  const canvas=createCanvas(2,2),c=canvas.getContext('2d');c.fillStyle='#ff0000';c.fillRect(0,0,2,1);c.fillStyle='#0000ff';c.fillRect(0,1,2,1);
+  const tiff=await(await images.rasterBlob(canvas,'tiff')).arrayBuffer(),ifd=UTIF.decode(tiff)[0];UTIF.decodeImage(tiff,ifd);assert.deepEqual([...UTIF.toRGBA8(ifd)],[255,0,0,255,255,0,0,255,0,0,255,255,0,0,255,255]);
+  const bmp=new Uint8Array(await(await images.rasterBlob(canvas,'bmp')).arrayBuffer());assert.equal(new DataView(bmp.buffer).getUint32(2,true),70);assert.deepEqual([...bmp.slice(54,60)],[255,0,0,255,0,0]);
+  const imported=await source(await images.imageFilePdf(new File([tiff],'test.tiff'),new Uint8Array(tiff)));assert.equal(imported.pdf.numPages,1);
+  const state={pages:[{id:'p1',sourceId:original.id,index:0,rotation:0,selected:true}],edits:{marks:{},crops:{}},options:{language:'deu'},history:[],future:[],documentSessions:{},activeId:'p1',toolId:'inspect'};
+  const projectId=await projects.saveProject('Testprojekt',undefined,[original],state);let list=await projects.listProjects();assert.equal(list.length,1);const first=list[0].versions[0].id;
+  const saved=await projects.loadProject(first);assert.deepEqual(saved.sources[0].bytes,original.bytes);assert.equal(saved.version.state.pages[0].sourceId,original.id);
+  for(let i=0;i<6;i++)await projects.saveProject('Testprojekt',projectId,[original],{...state,activeId:'Version '+i});list=await projects.listProjects();assert.equal(list[0].versions.length,5);assert.equal((await projects.loadProject(list[0].versions[0].id)).version.state.activeId,'Version 5');await assert.rejects(()=>projects.loadProject(first),/nicht gefunden/);
+  await assert.rejects(()=>projects.saveProject('Kaputt',undefined,[original],{...state,pages:[{...state.pages[0],sourceId:'missing'}]}),/ungültige/);assert.equal((await projects.listProjects()).length,1);
+  await projects.deleteProject(projectId);assert.equal((await projects.listProjects()).length,0);await assert.rejects(()=>projects.loadProject(list[0].versions[0].id),/nicht gefunden/);
+  console.log('PASS: Bates across files/rotations/CropBox, page labels, vector rotation/continuous/poster pages, real QPDF linearization, JSON positions, BMP/TIFF pixels/import, persistent projects with five versions/restoration/deletion and invalid-state protection.');
+}finally{for(const proxy of proxies)await proxy.loadingTask.destroy();}

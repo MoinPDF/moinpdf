@@ -1,0 +1,186 @@
+import type { Source, PageItem } from './pdf-engine';
+import type { Edits, StudioOptions } from './studio-engine';
+import type { DocumentSessions } from './document-tools';
+export type ProjectSnapshot = { pages: PageItem[]; edits: Edits };
+export type ProjectState = ProjectSnapshot & {
+  options: StudioOptions;
+  history: ProjectSnapshot[];
+  future: ProjectSnapshot[];
+  documentSessions: DocumentSessions;
+  activeId: string;
+  toolId: string;
+};
+export type ProjectSource = Omit<Source, 'pdf'>;
+export type ProjectMeta = {
+  id: string;
+  name: string;
+  updated: number;
+  versions: { id: string; created: number; pages: number }[];
+};
+export type ProjectVersion = {
+  id: string;
+  projectId: string;
+  created: number;
+  sourceIds: string[];
+  state: ProjectState;
+};
+const database = 'moinpdf.projects.v1';
+function db(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const r = indexedDB.open(database, 1);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      d.createObjectStore('projects', { keyPath: 'id' });
+      d.createObjectStore('documents', { keyPath: 'key' }).createIndex('projectId', 'projectId');
+      d.createObjectStore('versions', { keyPath: 'id' }).createIndex('projectId', 'projectId');
+    };
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+    r.onblocked = () =>
+      reject(new Error('Bitte andere geöffnete MoinPDF-Tabs schließen und erneut versuchen.'));
+  });
+}
+const completed = (tx: IDBTransaction) =>
+  new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('Speichern fehlgeschlagen.'));
+    tx.onabort = () => reject(tx.error || new Error('Speichern abgebrochen.'));
+  });
+const request = <T>(r: IDBRequest<T>) =>
+  new Promise<T>((resolve, reject) => {
+    r.onsuccess = () => resolve(r.result);
+    r.onerror = () => reject(r.error);
+  });
+const id = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), (n) =>
+    n.toString(16).padStart(2, '0'),
+  ).join('');
+export function validateProject(state: ProjectState, sources: ProjectSource[]) {
+  if (
+    !sources.length ||
+    sources.length > 200 ||
+    !state.pages.length ||
+    state.pages.length > 200 ||
+    sources.reduce((n, s) => n + s.bytes.length, 0) > 80 * 1024 * 1024
+  )
+    throw new Error('Ein Projekt darf höchstens 200 Seiten und 80 MB PDF-Daten enthalten.');
+  if (
+    new Set(sources.map((s) => s.id)).size !== sources.length ||
+    new Set(state.pages.map((p) => p.id)).size !== state.pages.length ||
+    state.pages.some(
+      (p) => !sources.some((s) => s.id === p.sourceId) || !Number.isInteger(p.index) || p.index < 0,
+    )
+  )
+    throw new Error('Der Projektstand enthält ungültige Seitenverweise.');
+  if (JSON.stringify(state).length > 20 * 1024 * 1024)
+    throw new Error(
+      'Dieser Arbeitsstand enthält zu viele Bearbeitungsdaten. Bitte das aktuelle PDF-Ergebnis übernehmen und dann speichern.',
+    );
+}
+export async function listProjects() {
+  const d = await db();
+  try {
+    return (
+      (await request(
+        d.transaction('projects', 'readonly').objectStore('projects').getAll(),
+      )) as ProjectMeta[]
+    ).sort((a, b) => b.updated - a.updated);
+  } finally {
+    d.close();
+  }
+}
+export async function saveProject(
+  name: string,
+  projectId: string | undefined,
+  sources: Source[],
+  state: ProjectState,
+) {
+  if (!name.trim() || name.trim().length > 100)
+    throw new Error('Bitte einen Projektnamen mit 1 bis 100 Zeichen eingeben.');
+  const sourceData = sources.map(({ pdf: _pdf, ...source }) => source);
+  validateProject(state, sourceData);
+  const d = await db(),
+    pid = projectId || id(),
+    now = Date.now(),
+    vid = id();
+  try {
+    const tx = d.transaction(['projects', 'documents', 'versions'], 'readwrite'),
+      done = completed(tx),
+      projects = tx.objectStore('projects'),
+      get = projects.get(pid);
+    get.onsuccess = () => {
+      const previous = get.result as ProjectMeta | undefined,
+        versions = [
+          { id: vid, created: now, pages: state.pages.length },
+          ...(previous?.versions || []),
+        ];
+      projects.put({
+        id: pid,
+        name: name.trim(),
+        updated: now,
+        versions: versions.slice(0, 5),
+      } satisfies ProjectMeta);
+      for (const old of versions.slice(5)) tx.objectStore('versions').delete(old.id);
+      for (const s of sourceData)
+        tx.objectStore('documents').put({ ...s, key: pid + ':' + s.id, projectId: pid });
+      tx.objectStore('versions').put({
+        id: vid,
+        projectId: pid,
+        created: now,
+        sourceIds: sources.map((s) => s.id),
+        state,
+      } satisfies ProjectVersion);
+    };
+    await done;
+    return pid;
+  } catch (e) {
+    if ((e as DOMException).name === 'QuotaExceededError')
+      throw new Error(
+        'Der lokale Speicher ist voll. Bitte ein nicht mehr benötigtes Projekt löschen oder eine PDF-Kopie herunterladen.',
+      );
+    throw e;
+  } finally {
+    d.close();
+  }
+}
+export async function loadProject(versionId: string) {
+  const d = await db();
+  try {
+    const version = (await request(
+      d.transaction('versions', 'readonly').objectStore('versions').get(versionId),
+    )) as ProjectVersion | undefined;
+    if (!version) throw new Error('Der Arbeitsstand wurde nicht gefunden.');
+    const tx = d.transaction('documents', 'readonly'),
+      sources = (await Promise.all(
+        version.sourceIds.map((s) =>
+          request(tx.objectStore('documents').get(version.projectId + ':' + s)),
+        ),
+      )) as ProjectSource[];
+    if (sources.some((s) => !s)) throw new Error('Zu diesem Arbeitsstand fehlen Originaldateien.');
+    validateProject(version.state, sources);
+    return { version, sources };
+  } finally {
+    d.close();
+  }
+}
+export async function deleteProject(projectId: string) {
+  const d = await db();
+  try {
+    const tx = d.transaction(['projects', 'documents', 'versions'], 'readwrite'),
+      done = completed(tx);
+    tx.objectStore('projects').delete(projectId);
+    for (const store of ['documents', 'versions']) {
+      const r = tx.objectStore(store).index('projectId').openKeyCursor(IDBKeyRange.only(projectId));
+      r.onsuccess = () => {
+        const cursor = r.result;
+        if (cursor) {
+          tx.objectStore(store).delete(cursor.primaryKey);
+          cursor.continue();
+        }
+      };
+    }
+    await done;
+  } finally {
+    d.close();
+  }
+}

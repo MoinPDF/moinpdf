@@ -1,0 +1,61 @@
+.project-toggle {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  z-index: 35;
+  box-shadow: 0 3px 18px #182d2520;
+  gap: 8px;
+  background: var(--background, #fff);
+}
+.project-dialog {
+  max-height: 90dvh;
+  overflow: auto;
+}
+.project-list {
+  display: grid;
+  gap: 16px;
+}
+.project-list section {
+  border: 1px solid var(--border, #ddd);
+  border-radius: 10px;
+  padding: 14px;
+}
+.project-list h3 {
+  font-weight: 650;
+  margin: 0 0 10px;
+}
+.project-version,
+.project-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.project-version span {
+  font-size: 12px;
+}
+.project-dialog input {
+  border: 1px solid var(--border, #ccc);
+  border-radius: 6px;
+  padding: 8px;
+}
+.pro-rule {
+  border: 1px solid var(--border, #ddd);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+}
+.pro-rule > * {
+  margin-bottom: 8px;
+}
+@media (max-width: 700px) {
+  .project-toggle {
+    bottom: 12px;
+    left: 12px;
+  }
+  .project-dialog {
+    max-height: 85dvh;
+  }
+}
