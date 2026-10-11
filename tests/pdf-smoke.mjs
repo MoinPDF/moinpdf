@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import ts from 'typescript';
-import { PDFDocument, StandardFonts, degrees } from 'pdf-lib';
+import { PDFDocument, PDFName, StandardFonts, degrees } from 'pdf-lib';
 import JSZip from 'jszip';
 await mkdir('.cache', {recursive:true});
 const source = await readFile('lib/pdf-engine.ts', 'utf8');
@@ -32,4 +32,8 @@ await assert.rejects(()=>execute('merge',[]), /mindestens/);
 await assert.rejects(()=>execute('merge',pages,options,AbortSignal.abort()), /Abgebrochen/);
 assert.deepEqual([...selectRange('1, 3-5',5)], [0,2,3,4]);
 for (const invalid of ['0','6','3-1','1,','a']) assert.throws(()=>selectRange(invalid,5));
+const xfaDoc=await PDFDocument.load(bytesA),xfaStream=xfaDoc.context.register(xfaDoc.context.flateStream('<xdp/>'));
+xfaDoc.catalog.set(PDFName.of('AcroForm'),xfaDoc.context.obj({Fields:[],XFA:xfaStream}));
+const xfaBytes=await xfaDoc.save({updateFieldAppearances:false}),xfaSource={...sources[0],bytes:xfaBytes};
+for(const tool of ['merge','organize','split','numbers','watermark'])await assert.rejects(()=>runJob(tool,[xfaSource],[pages[1]],options,()=>{},new AbortController().signal),/XFA/);
 console.log('PASS: merge order, original + added rotation, selected-page export, ZIP splitting, numbering, watermark, image-page assembly, Unicode validation, cancellation and invalid ranges.');

@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, degrees, rgb, type PDFPage } from 'pdf-lib';
+import { PDFDocument, PDFDict, PDFName, StandardFonts, degrees, rgb, type PDFPage } from 'pdf-lib';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Worker } from 'tesseract.js';
 import type { PdfReport } from './pdf-report';
@@ -84,6 +84,18 @@ export function formatSize(bytes: number) {
 }
 export function pdfBlob(bytes: Uint8Array) {
   return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });
+}
+// PDFDocument.getForm() deletes XFA as a side effect. Inspect the catalog first,
+// including indirect AcroForm dictionaries, before ever calling that API.
+export function hasXfaForm(doc: PDFDocument): boolean {
+  return doc.catalog.lookupMaybe(PDFName.of('AcroForm'), PDFDict)?.has(PDFName.of('XFA')) ?? false;
+}
+export function requireAcroForm(doc: PDFDocument) {
+  if (hasXfaForm(doc))
+    throw new Error(
+      'Dieses PDF verwendet XFA. Dieses Werkzeug kann die dynamischen Formularinhalte nicht zuverlässig übernehmen. Bitte eine gewöhnliche PDF-Version aus der ursprünglichen Formularanwendung verwenden.',
+    );
+  return doc.getForm();
 }
 export function filenameStem(name: string) {
   return (
@@ -265,7 +277,7 @@ export async function prepareSources(sources: Source[], pages: PageItem[]) {
     const source = sources.find((s) => s.id === id)!;
     const pdf = await PDFDocument.load(source.bytes.slice(), { updateMetadata: false });
     // Freeze filled form values before copying pages; form objects are document-level.
-    const form = pdf.getForm();
+    const form = requireAcroForm(pdf);
     if (form.getFields().length) form.flatten();
     loaded.set(id, pdf);
   }

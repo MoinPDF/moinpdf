@@ -12,7 +12,7 @@ import {
   type PDFPage,
   type PDFEmbeddedPage,
 } from 'pdf-lib';
-import type { Source } from './pdf-engine';
+import { requireAcroForm, type Source } from './pdf-engine';
 import { checkAbort, uniqueNames, type ExportFile, type RunContext } from './advanced-types';
 import { linearizePdf } from './pdf-security';
 
@@ -328,7 +328,8 @@ export async function rotateFreely(bytes: Uint8Array, angle: number, ctx: RunCon
   bounded(angle, -360, 360, 'Drehwinkel');
   const input = await PDFDocument.load(bytes),
     out = await PDFDocument.create();
-  if (input.getForm().getFields().length) input.getForm().flatten();
+  const form = requireAcroForm(input);
+  if (form.getFields().length) form.flatten();
   for (const [i, p] of input.getPages().entries()) {
     checkAbort(ctx.signal);
     const item = await placement(out, p, angle);
@@ -349,7 +350,8 @@ export async function continuousPage(
     items: Placement[] = [];
   for (const s of sources) {
     const pdf = await PDFDocument.load(s.bytes);
-    if (pdf.getForm().getFields().length) pdf.getForm().flatten();
+    const form = requireAcroForm(pdf);
+    if (form.getFields().length) form.flatten();
     for (const p of pdf.getPages()) {
       checkAbort(ctx.signal);
       items.push(await placement(out, p));
@@ -402,7 +404,8 @@ export async function posterPages(
     throw new Error(
       'Das Poster würde mehr als 1.000 Seiten erzeugen. Bitte weniger Kacheln wählen.',
     );
-  if (input.getForm().getFields().length) input.getForm().flatten();
+  const form = requireAcroForm(input);
+  if (form.getFields().length) form.flatten();
   for (const [i, p] of input.getPages().entries()) {
     checkAbort(ctx.signal);
     const item = await placement(out, p),

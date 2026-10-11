@@ -434,6 +434,42 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         no_overflow(page, 'mobile accessibility structure editor')
         page.screenshot(path=str(evidence / 'mobile-accessible-editor.png'), full_page=True)
         back(page)
+        # A raw XFA packet must remain blocked before any AcroForm API can strip it.
+        xfa_path = Path(temporary) / 'xfa-preservation.pdf'
+        xfa_xml = b'<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/"><xfa:data><value>XFA-SENTINEL</value></xfa:data></xfa:datasets>'
+        with pymupdf.open() as document:
+            document.new_page().insert_text((50, 60), 'XFA compatibility placeholder')
+            stream = document.get_new_xref()
+            document.update_object(stream, '<< >>')
+            document.update_stream(stream, xfa_xml)
+            form = document.get_new_xref()
+            document.update_object(form, f'<< /Fields [] /XFA {stream} 0 R >>')
+            document.xref_set_key(document.pdf_catalog(), 'AcroForm', f'{form} 0 R')
+            document.save(xfa_path)
+        xfa_page = browser.new_page(viewport={'width': 390, 'height': 844}, accept_downloads=True)
+        xfa_page.on('pageerror', lambda error: errors.append(str(error)))
+        xfa_page.goto(origin)
+        xfa_page.locator('input[type="file"]').first.set_input_files(str(xfa_path))
+        chooser(xfa_page)
+        xfa_page.get_by_role('button', name='Formular ausfüllen', exact=True).click()
+        expect(xfa_page.get_by_text('Dieses Dokument verwendet XFA.', exact=False)).to_be_visible()
+        expect(xfa_page.get_by_role('button', name='Formular speichern', exact=True)).to_be_disabled()
+        no_overflow(xfa_page, 'XFA rejection on mobile')
+        xfa_page.screenshot(path=str(evidence / 'xfa-preservation.png'), full_page=True)
+        back(xfa_page)
+        xfa_page.get_by_role('button', name='Lesezeichen bearbeiten', exact=True).click()
+        expect(xfa_page.get_by_role('button', name='Lesezeichen speichern', exact=True)).to_be_enabled()
+        xfa_page.get_by_role('button', name='Lesezeichen speichern', exact=True).click()
+        with xfa_page.expect_download() as download:
+            xfa_page.get_by_role('link', name='PDF herunterladen', exact=True).click()
+        xfa_saved = Path(temporary) / 'xfa-bookmarks.pdf'
+        download.value.save_as(xfa_saved)
+        with pymupdf.open(xfa_saved) as document:
+            kind, reference = document.xref_get_key(document.pdf_catalog(), 'AcroForm/XFA')
+            assert kind == 'xref', (kind, reference)
+            assert document.xref_stream(int(reference.split()[0])) == xfa_xml
+        xfa_page.close()
+        completed.append('XFA editor blocked before mutation; bookmark download preserves the original XFA stream (independent PyMuPDF readback)')
         assert not errors, errors
         print('PASS: ' + '; '.join(completed), flush=True)
     finally:

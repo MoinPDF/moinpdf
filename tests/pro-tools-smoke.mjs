@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {dirname} from 'node:path';
 import {Worker as NodeWorker} from 'node:worker_threads';
 import ts from 'typescript';
-import {PDFDocument,StandardFonts,degrees} from 'pdf-lib';
+import {PDFDocument,PDFName,StandardFonts,degrees} from 'pdf-lib';
 import JSZip from 'jszip';
 import UTIF from 'utif';
 import 'fake-indexeddb/auto';
@@ -15,7 +15,7 @@ class BrowserWorker{constructor(){this.worker=new NodeWorker(new URL('./security
 globalThis.Worker=BrowserWorker;
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['pro-tools','pdf-security','advanced-types','local-projects','image-codecs'])await writeFile(`.cache/${name}-pro-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-pro-test.mjs${q}`));
+for(const name of ['pdf-engine','pro-tools','pdf-security','advanced-types','local-projects','image-codecs'])await writeFile(`.cache/${name}-pro-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-pro-test.mjs${q}`));
 const p=await import('../.cache/pro-tools-pro-test.mjs'),projects=await import('../.cache/local-projects-pro-test.mjs'),images=await import('../.cache/image-codecs-pro-test.mjs'),proxies=[];
 const ctx={signal:new AbortController().signal,report:()=>{}};
 async function source(bytes,name='Test.pdf'){bytes=new Uint8Array(bytes);const pdf=await pdfjs.getDocument({data:bytes.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);return{id:crypto.randomUUID(),name,bytes,pdf,kind:'pdf',size:bytes.length};}
@@ -23,6 +23,12 @@ const text=async(s,i=1)=>(await(await s.pdf.getPage(i)).getTextContent()).items.
 const doc=await PDFDocument.create(),font=await doc.embedFont(StandardFonts.Helvetica);for(let i=0;i<3;i++)doc.addPage([400,500]).drawText('PAGE '+(i+1),{x:40,y:420,font,size:18});
 const original=await source(await doc.save());
 try{
+  const xfa=await PDFDocument.load(original.bytes),xfaStream=xfa.context.register(xfa.context.flateStream('<xdp/>'));
+  xfa.catalog.set(PDFName.of('AcroForm'),xfa.context.obj({Fields:[],XFA:xfaStream}));
+  const xfaSource=await source(await xfa.save({updateFieldAppearances:false}));
+  await assert.rejects(()=>p.rotateFreely(xfaSource.bytes,15,ctx),/XFA/);
+  await assert.rejects(()=>p.continuousPage([xfaSource],400,10,ctx),/XFA/);
+  await assert.rejects(()=>p.posterPages(xfaSource.bytes,2,2,10,ctx),/XFA/);
   const labels=await source(await p.pageLabels(original.bytes,[{page:1,style:'r',prefix:'',start:1},{page:3,style:'D',prefix:'A-',start:7}]));assert.deepEqual(await labels.pdf.getPageLabels(),['i','ii','A-7']);
   await assert.rejects(()=>p.pageLabels(original.bytes,[{page:2,style:'D',prefix:'',start:1}]),/Seite 1/);
   const numbered=await p.batesPdfs([original,original],{template:'AKTE-{nummer}',start:8,padding:4,size:10,position:'bottom-right'},ctx),zip=await JSZip.loadAsync(await numbered.blob.arrayBuffer());assert.equal(Object.keys(zip.files).length,2);const b=await source(await Object.values(zip.files)[1].async('uint8array'));assert.match(await text(b),/AKTE-0011/);assert.match(await text(b),/PAGE 1/);
