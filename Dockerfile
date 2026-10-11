@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM --platform=$BUILDPLATFORM node:24-bookworm-slim AS build
+FROM --platform=$BUILDPLATFORM node:25-bookworm-slim AS build
 WORKDIR /app
 # Canvas-based verification renders synthetic documents in the build stage.
 RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core fonts-liberation \
