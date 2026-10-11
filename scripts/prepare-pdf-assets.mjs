@@ -36,4 +36,13 @@ for (const name of ['@embedpdf/pdfium', 'utif', '@bwip-js/browser', '@zxing/libr
     if (/^(LICENSE|OFL|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',`${name.replaceAll('/', '-')}-${file}`));
   }
 }
+await mkdir(path.join(out,'images'),{recursive:true});
+for(const file of ['libheif.js','libheif.wasm'])await copyFile(path.join('node_modules/libheif-js/libheif-wasm',file),path.join(out,'images',file));
+await copyFile('node_modules/ag-psd/dist/bundle.js',path.join(out,'images/ag-psd.js'));
+await copyFile('node_modules/ag-psd/LICENSE',path.join(out,'licenses/ag-psd-LICENSE'));
+await copyFile('node_modules/libheif-js/LICENSE',path.join(out,'licenses/libheif-js-LICENSE'));
+await copyFile('node_modules/libheif-js/libheif-wasm/LICENSE',path.join(out,'licenses/libheif-WASM-LICENSE'));
+await mkdir(path.join(out,'llm'),{recursive:true});
+await copyFile('node_modules/@wllama/wllama/esm/wasm/wllama.wasm',path.join(out,'llm/wllama.wasm'));
+await copyFile('node_modules/@wllama/wllama/LICENCE',path.join(out,'licenses/wllama-LICENCE'));
 console.log('Local PDF and OCR assets prepared.');

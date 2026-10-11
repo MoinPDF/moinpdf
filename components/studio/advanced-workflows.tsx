@@ -11,6 +11,8 @@ import {
   type SavedWorkflow,
 } from '@/lib/advanced-pipeline';
 import { Text, Choice, NumberField, type PanelProps } from './advanced-shared';
+import { WorkflowGraphPanel } from './workflow-graph-panel';
+import { workflowToGraph, type WorkflowGraph } from '@/lib/workflow-graph';
 const storageKey = 'moinpdf.workflows.v1';
 export function WorkflowPanel({
   sources,
@@ -27,6 +29,8 @@ export function WorkflowPanel({
     [password, setPassword] = useState(''),
     [saved, setSaved] = useState<SavedWorkflow[]>([]),
     [notice, setNotice] = useState('');
+  const [graph, setGraph] = useState<WorkflowGraph | null>(null),
+    [graphView, setGraphView] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
     try {
@@ -41,12 +45,39 @@ export function WorkflowPanel({
     localStorage.setItem(storageKey, JSON.stringify(next));
     setSaved(next);
   };
+  if (graphView && graph)
+    return (
+      <WorkflowGraphPanel
+        value={graph}
+        onChange={setGraph}
+        onBack={() => setGraphView(false)}
+        sources={sources}
+        busy={busy}
+        run={run}
+      />
+    );
   return (
     <div className="advanced-grid">
       <section className="advanced-card">
         <h2>
           {batch ? 'Ein Arbeitsschritt für alle Dateien' : 'Dein Ablauf, Schritt für Schritt'}
         </h2>
+        {!batch && (
+          <Button
+            variant="outline"
+            disabled={busy}
+            onClick={() => {
+              try {
+                if (!graph) setGraph(workflowToGraph(workflow()));
+                setGraphView(true);
+              } catch (e) {
+                setNotice((e as Error).message);
+              }
+            }}
+          >
+            Freies Knotendiagramm öffnen
+          </Button>
+        )}
         {!batch && <Text label="Name des Arbeitsablaufs" value={name} onChange={setName} />}
         <ol className="workflow-steps">
           {steps.map((step, i) => (

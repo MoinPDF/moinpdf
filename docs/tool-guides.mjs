@@ -2,6 +2,31 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+  'svg-export': {
+    input:'Eine PDF und der integrierte Dokumentenserver.',
+    steps:['PDF öffnen und „PDF zu Vektor-SVG“ wählen.','Gewünschtes Dokument auswählen.','SVG-Dateien exportieren und die ZIP-Datei entpacken.'],
+    output:'Eine eigenständige SVG je PDF-Seite. Text erscheint als Vektorkontur, vorhandene Fotos bleiben eingebettete Bilder.',
+    note:'Höchstens 20 MB pro SVG und 80 MB insgesamt. Schriftkonturen sind nicht als Text bearbeitbar. Komplexe Transparenzen im Zielprogramm prüfen.',
+  },
+  'font-outlines': {
+    input:'Eine PDF und der integrierte Dokumentenserver.',
+    steps:['„Schriften in Pfade“ öffnen.','Die passende PDF auswählen.','Schriftkonturen erstellen und das Ergebnis vor der Weitergabe prüfen.'],
+    output:'Eine neue PDF mit Text als festen Vektorkonturen.',
+    note:'Der Text ist danach nicht auswählbar oder durchsuchbar. Formulare, Tags, Links, Anhänge und digitale Signaturen werden nicht garantiert übernommen.',
+  },
+  'flatten-layers': {
+    input:'Eine PDF mit der gewünschten anfänglichen Ebenensichtbarkeit und der Dokumentenserver.',
+    steps:['Unter „PDF-Ebenen“ gewünschte Ebenen ein- oder ausblenden und das Ergebnis übernehmen.','„Ebenen dauerhaft reduzieren“ öffnen.','Die feste Ansicht erzeugen, herunterladen und auf vollständigen Inhalt prüfen.'],
+    output:'Eine neue PDF aus den anfänglich sichtbaren Ebenen. Ausgeblendete Ebeneninhalte sind entfernt.',
+    note:'Die Ebenen sind danach nicht mehr einzeln schaltbar. Text und Vektoren bleiben soweit vom Konverter unterstützt erhalten; Formulare, Tags, Links, Anhänge und Signaturen werden nicht garantiert übernommen.',
+  },
+  'local-assistant': {
+    input:'Eine oder mehrere PDFs sowie die verlinkte Qwen2.5-0.5B-GGUF-Modelldatei mit etwa 409 MB.',
+    steps:['Modelldatei über den angegebenen Link herunterladen und lokal auswählen.','Optional die geprüfte Modelldatei für spätere Sitzungen speichern.','Eine konkrete Frage stellen und „Frage lokal beantworten“ wählen.','Jedes Zitat über die Fundstellenanzeige im Original kontrollieren.'],
+    output:'Lokal erzeugte Antwort mit überprüften Originalzitaten und einer JSON-Datei zum Herunterladen.',
+    note:'Fragen und Dokumente verlassen das Gerät nicht. Das Modell verwendet ausgewählte Passagen und kann Inhalte falsch auslegen. Zitate werden gegen ausgelesenen Text geprüft, bei OCR zusätzlich das Seitenbild kontrollieren. Fehlende oder erfundene Zitate sperren die Antwort. Zusätzlicher Arbeitsspeicher ist nötig; auf kleinen Geräten kann die Inferenz langsam sein.',
+  },
+
   'native-objects': guide('Eine PDF mit vorhandenen Text-, Bild- oder Grafikobjekten.', [
     'Für Einzelobjekte: Seitenobjekte laden, Objekt wählen und Text in Originalschrift ändern oder Bild/Grafik verschieben, drehen, skalieren und ersetzen.',
     'Für Absätze: oben „Absatz mit automatischem Umbruch“ wählen, Textobjekte laden, gewünschte Objekte ankreuzen und „Auswahl als Absatz laden“ verwenden. Textreihenfolge kontrollieren.',

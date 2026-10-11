@@ -63,6 +63,7 @@ jobs:
           python -m pip install playwright==1.55.0 pymupdf==1.28.2
           python -m playwright install --with-deps chromium
           python tests/published-web-smoke.py
+          python tests/local-assistant-browser.py
           MOINPDF_DOCUMENTATION_URL=http://localhost:8080 python tests/documentation-smoke.py
       - name: Retain browser evidence
         if: always()

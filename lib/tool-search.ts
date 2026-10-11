@@ -2,6 +2,14 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'local-assistant': [
+    'KI',
+    'lokales Sprachmodell',
+    'Fragen zum PDF',
+    'Dokumentassistent',
+    'Quellen',
+    'Zitate',
+  ],
   'svg-export': ['SVG', 'Vektorexport', 'Vektorgrafik', 'Pfade'],
   'font-outlines': ['Schriftkonturen', 'Schriften in Pfade', 'Font outlining'],
   'flatten-layers': ['Ebenen entfernen', 'Ebenen reduzieren', 'sichtbare Ebenen'],

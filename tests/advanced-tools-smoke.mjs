@@ -13,7 +13,7 @@ Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(nam
 globalThis.Worker=class {constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));globalThis.__advancedPdfJs=pdfjs;
 await mkdir('.cache',{recursive:true});
-for(const name of ['ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','extra-options','extra-tools','pdf-report','editor-model','document-tools','document-check','pdf-security','advanced-types','advanced-text','advanced-media','advanced-documents','advanced-pipeline','table-data','document-server']){
+for(const name of ['ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','extra-options','extra-tools','pdf-report','editor-model','document-tools','document-check','pdf-security','advanced-types','advanced-text','advanced-media','advanced-documents','advanced-pipeline','workflow-graph','table-data','document-server']){
  let code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-advanced-test.mjs${q}`);
  if(name==='pdf-engine')code=code.replace("import('pdfjs-dist')",'Promise.resolve(globalThis.__advancedPdfJs)').replace("'/vendor/pdf/pdf.worker.min.mjs'",JSON.stringify(assets+'/legacy/build/pdf.worker.mjs'));
  await writeFile(`.cache/${name}-advanced-test.mjs`,code);
@@ -46,6 +46,26 @@ try{
  const protectedBatch=await pipeline.runPipeline([original],{version:1,name:'Schutz',steps:[{kind:'protect'}]},'Test12345',ctx),protectedZip=await JSZip.loadAsync(await protectedBatch.blob.arrayBuffer());const ps=await source(await protectedZip.file('Test-bearbeitet.pdf').async('uint8array'),'protected.pdf','Test12345');assert.equal(ps.pdf.numPages,4);
  const pixels=new Uint8ClampedArray([255,255,255,255,0,0,0,255]);assert.equal(media.differencePixels(pixels,pixels,0).percent,0);assert.equal(media.differencePixels(pixels,new Uint8ClampedArray([255,255,255,255,255,255,255,255]),0).percent,50);const comparison=await media.compareVisual(original,original,30,ctx);assert.match(comparison.note,/Seite 1: 0.00 %/);
  const enhance=await media.enhancePdf(original,{...media.scanDefaults,autoDeskew:false},ctx);assert.equal((await PDFDocument.load(await enhance.blob.arrayBuffer())).getPageCount(),4);
+
+ const graphEngine=await import('../.cache/workflow-graph-advanced-test.mjs');
+ const graph={version:2,name:'Verschachtelte Entscheidungen',entry:'start',nodes:[
+  {id:'start',x:100,y:0,type:'condition',condition:{field:'text',operator:'contains',value:'Rechnung'},yes:'inner',no:'wrong'},
+  {id:'inner',x:0,y:100,type:'condition',condition:{field:'pages',operator:'gte',value:'3'},yes:'yes',no:'short'},
+  {id:'yes',x:0,y:200,type:'action',action:{kind:'stamp',text:'NESTED YES'},next:'end'},
+  {id:'short',x:250,y:200,type:'action',action:{kind:'stamp',text:'WRONG SHORT'},next:'end'},
+  {id:'wrong',x:500,y:100,type:'action',action:{kind:'stamp',text:'WRONG OUTER'},next:'end'},
+  {id:'end',x:200,y:300,type:'end'}]};
+ const graphResult=await graphEngine.runWorkflowGraph([original],graph,'',ctx),graphZip=await JSZip.loadAsync(await graphResult.blob.arrayBuffer()),graphPdf=await source(await graphZip.file('Test-bearbeitet.pdf').async('uint8array'));
+ const graphText=(await(await graphPdf.pdf.getPage(1)).getTextContent()).items.map(t=>t.str||'').join(' ');
+ assert.match(graphText,/NESTED YES/);assert(!graphText.includes('WRONG'));
+ const decisionLog=JSON.parse(await graphZip.file('MoinPDF-Ablaufprotokoll.json').async('string'));assert.deepEqual(decisionLog.decisions.filter(d=>typeof d.decision==='boolean').map(d=>d.decision),[true,true]);
+ assert.equal(graphEngine.validateWorkflowGraph(workflow).version,2,'Legacy workflows migrate without losing steps');
+ assert.throws(()=>graphEngine.validateWorkflowGraph({...graph,nodes:graph.nodes.map(n=>n.id==='yes'?{...n,next:'start'}:n)}),/Schleife/);
+ assert.throws(()=>graphEngine.validateWorkflowGraph({...graph,nodes:graph.nodes.map(n=>n.id==='yes'?{...n,next:'missing'}:n)}),/fehlenden/);
+ assert.throws(()=>graphEngine.validateWorkflowGraph({...graph,nodes:[...graph.nodes,{id:'orphan',x:0,y:0,type:'end'}]}),/nicht erreichbar/);
+ assert.throws(()=>graphEngine.validateWorkflowGraph({...graph,nodes:graph.nodes.map(n=>n.id==='yes'?{...n,action:{kind:'protect'},next:'inner'}:n)}),/Passwortschutz/);
+ await assert.rejects(()=>graphEngine.runWorkflowGraph([original],graph,'',{...ctx,signal:AbortSignal.abort()}),/Abgebrochen/);
+ const nup=await pipeline.runPipeline([original],{version:1,name:'Druckvorlage',steps:[{kind:'nup'}]},'',ctx),nupZip=await JSZip.loadAsync(await nup.blob.arrayBuffer());assert.equal((await PDFDocument.load(await nupZip.file('Test-bearbeitet.pdf').async('uint8array'))).getPageCount(),2);
  const code=await media.barcodeCanvas('MOINPDF-TEST-123','qrcode');assert.equal((await media.decodeCanvasCodes(code))[0].text,'MOINPDF-TEST-123');const coded=await media.placeBarcode(original,'MOINPDF-TEST-123','qrcode',[0],{x:.65,y:.05,w:.25},ctx),codedSource=await source(await coded.blob.arrayBuffer());assert((await media.decodePageCodes(codedSource,0,ctx)).some(c=>c.text==='MOINPDF-TEST-123'));assert.equal((await text.planSplit(codedSource,'qr','MOINPDF',false,ctx)).length,1);await writeFile('.cache/MoinPDF-QR-Test.pdf',codedSource.bytes);
  const photo=createCanvas(180,240),photoCtx=photo.getContext('2d');photoCtx.fillStyle='#fff';photoCtx.fillRect(0,0,180,240);photoCtx.fillStyle='#004c3e';photoCtx.fillRect(35,70,90,70);const corners=[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}],corrected=media.perspectiveCanvas(photo,corners);assert.deepEqual([...corrected.getContext('2d').getImageData(60,100,1,1).data],[0,76,62,255]);assert.throws(()=>media.perspectiveCanvas(photo,[corners[0],corners[2],corners[1],corners[3]]),/Ecken/);const photos=await media.photosPdf([corrected.toDataURL('image/jpeg')],ctx);assert.equal((await PDFDocument.load(await photos.blob.arrayBuffer())).getPageCount(),1);
  assert.equal(server.documentServerUrl('https://pdf.example.org/'),'https://pdf.example.org');assert.throws(()=>server.documentServerUrl('http://remote.example.org'),/HTTPS/);assert.throws(()=>server.documentServerUrl('https://user:password@example.org'),/Zugangsdaten/);

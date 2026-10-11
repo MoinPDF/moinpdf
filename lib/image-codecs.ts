@@ -101,7 +101,34 @@ export async function imageFilePdf(file: File, bytes: Uint8Array) {
   const tiff =
     (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 42) ||
     (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[3] === 42);
-  if (tiff) {
+  const special = /\.psd$/i.test(file.name) ? 'psd' : /\.hei[cf]$/i.test(file.name) ? 'heic' : null;
+  if (special) {
+    const { decodeSpecialImage } = await import('./image-decoder');
+    const image = await decodeSpecialImage(bytes, special);
+    const full = document.createElement('canvas'),
+      small = document.createElement('canvas');
+    try {
+      full.width = image.width;
+      full.height = image.height;
+      full
+        .getContext('2d')!
+        .putImageData(
+          new ImageData(new Uint8ClampedArray(image.rgba), image.width, image.height),
+          0,
+          0,
+        );
+      const scale = Math.min(1, 3500 / Math.max(image.width, image.height));
+      small.width = Math.max(1, Math.round(image.width * scale));
+      small.height = Math.max(1, Math.round(image.height * scale));
+      const ctx = small.getContext('2d')!;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, small.width, small.height);
+      ctx.drawImage(full, 0, 0, small.width, small.height);
+      await add(small);
+    } finally {
+      full.width = full.height = small.width = small.height = 0;
+    }
+  } else if (tiff) {
     const { default: UTIF } = await import('utif'),
       buffer = bytes.slice().buffer,
       pages = UTIF.decode(buffer);
@@ -155,7 +182,7 @@ export async function imageFilePdf(file: File, bytes: Uint8Array) {
         new TextDecoder().decode(bytes.slice(8, 12)) === 'WEBP');
     if (!known)
       throw new Error(
-        'Unterstützt werden PDF, Rechnungs-XML, JPG, PNG, WebP, BMP, TIFF und eigenständige SVG.',
+        'Unterstützt werden PDF, Rechnungs-XML, JPG, PNG, WebP, BMP, TIFF, HEIC, PSD und eigenständige SVG.',
       );
     const url = URL.createObjectURL(
         svg ? new Blob([bytes.slice()], { type: 'image/svg+xml' }) : file,

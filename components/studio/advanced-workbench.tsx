@@ -18,6 +18,7 @@ import type { AdvancedTool, ExportFile, RunContext } from '@/lib/advanced-types'
 import { Choice, PageStage, PageSelect } from './advanced-shared';
 import { SplitSizePanel } from './expansion-panels';
 import { RepairPanel, ReadingPanel, ScanSplitPanel } from './recovery-panels';
+import { LocalAssistantPanel } from './local-assistant-panel';
 import { NativePanel } from './native-panel';
 import { ProPanel } from './pro-panels';
 import { isProTool } from '@/lib/pro-tools';
@@ -138,6 +139,7 @@ export function AdvancedWorkbench({
     newProps = { ...props, invalidate: () => setResult(null) },
     multi = (
       [
+        'local-assistant',
         'bates',
         'continuous-page',
         'linearize',
@@ -212,6 +214,7 @@ export function AdvancedWorkbench({
           <div className="advanced-empty">Bitte zuerst eine PDF öffnen.</div>
         ) : (
           <>
+            {tool === 'local-assistant' && <LocalAssistantPanel {...props} />}
             {tool === 'native-objects' && <NativePanel key={source.id} {...props} />}
             {isProTool(tool) && <ProPanel {...props} tool={tool} />}
             {tool === 'form-responses' && <FormResponsesPanel {...newProps} />}{' '}

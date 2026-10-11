@@ -26,7 +26,7 @@ completed = []
 
 def chooser(page):
     page.get_by_role('heading', name='Was möchtest du tun?', exact=True).wait_for()
-    expect(page.locator('.chooser-tool')).to_have_count(108)
+    expect(page.locator('.chooser-tool')).to_have_count(112)
 
 def back(page):
     page.get_by_role('button', name=re.compile(r'^(Alle Werkzeuge|Werkzeug wechseln)$')).click()
@@ -38,7 +38,7 @@ def no_overflow(page, context):
 
 def all_views(page, messages, context, empty=False):
     titles = page.locator('.chooser-tool strong').all_text_contents()
-    assert len(titles) == len(set(titles)) == 108
+    assert len(titles) == len(set(titles)) == 112
     for title in titles:
         page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
         if empty and page.locator('.upload-entry').is_visible():
@@ -53,7 +53,7 @@ def all_views(page, messages, context, empty=False):
         assert not messages, f'JavaScript exception in {context} / {title}: {messages}'
         no_overflow(page, context + ' / ' + title)
         back(page)
-    completed.append(f'{context}: all 108 tool entries checked without losing files')
+    completed.append(f'{context}: all 112 tool entries checked without losing files')
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
@@ -98,7 +98,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             count = page.locator('.chooser-tool').count()
             assert count > 0, f'Empty category {label}'
             total += count
-        assert total == 108
+        assert total == 112
         categories.get_by_role('button', name='Alle', exact=True).click()
         chooser(page)
         search = page.get_by_placeholder('Zum Beispiel: PDF kleiner machen …', exact=True)

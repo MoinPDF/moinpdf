@@ -85,7 +85,10 @@
     "tesseract.js": "^7.0.0",
     "utif": "3.1.0",
     "vaul": "^1.1.2",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "@wllama/wllama": "3.8.1",
+    "ag-psd": "31.0.2",
+    "libheif-js": "1.23.2"
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",

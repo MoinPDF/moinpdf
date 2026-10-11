@@ -11,38 +11,17 @@ const constants = new Uint32Array([
   0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
 ]);
 const rotate = (n: number, bits: number) => (n >>> bits) | (n << (32 - bits));
-export async function contentDigest(bytes: Uint8Array, signal?: AbortSignal) {
-  const check = () => {
-    if (signal?.aborted) throw new DOMException('Abgebrochen', 'AbortError');
-  };
-  check();
-  if (globalThis.crypto?.subtle) {
-    const result = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes));
-    check();
-    return Array.from(new Uint8Array(result), (v) => v.toString(16).padStart(2, '0')).join('');
-  }
-  const h = new Uint32Array([
+class Sha256 {
+  private h = new Uint32Array([
     0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
   ]);
-  const words = new Uint32Array(64),
-    tail = new Uint8Array(128);
-  const whole = bytes.length - (bytes.length % 64);
-  tail.set(bytes.subarray(whole));
-  tail[bytes.length - whole] = 0x80;
-  const tailLength = bytes.length - whole < 56 ? 64 : 128;
-  const end = new DataView(tail.buffer);
-  end.setUint32(tailLength - 8, Math.floor(bytes.length / 0x20000000));
-  end.setUint32(tailLength - 4, (bytes.length * 8) >>> 0);
-  for (let offset = 0; offset < whole + tailLength; offset += 64) {
-    if (offset % (1024 * 1024) === 0) {
-      check();
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    }
-    const block =
-      offset < whole
-        ? bytes.subarray(offset, offset + 64)
-        : tail.subarray(offset - whole, offset - whole + 64);
-    const view = new DataView(block.buffer, block.byteOffset, 64);
+  private words = new Uint32Array(64);
+  private tail = new Uint8Array(64);
+  private used = 0;
+  private total = 0;
+  private block(bytes: Uint8Array) {
+    const words = this.words,
+      view = new DataView(bytes.buffer, bytes.byteOffset, 64);
     for (let i = 0; i < 16; i++) words[i] = view.getUint32(i * 4);
     for (let i = 16; i < 64; i++) {
       const x = words[i - 15],
@@ -53,7 +32,7 @@ export async function contentDigest(bytes: Uint8Array, signal?: AbortSignal) {
         words[i - 7] +
         (rotate(y, 17) ^ rotate(y, 19) ^ (y >>> 10));
     }
-    let [a, b, c, d, e, f, g, hh] = h;
+    let [a, b, c, d, e, f, g, hh] = this.h;
     for (let i = 0; i < 64; i++) {
       const first =
         (hh +
@@ -73,8 +52,66 @@ export async function contentDigest(bytes: Uint8Array, signal?: AbortSignal) {
       b = a;
       a = (first + second) >>> 0;
     }
-    for (const [i, value] of [a, b, c, d, e, f, g, hh].entries()) h[i] = h[i] + value;
+    for (const [i, value] of [a, b, c, d, e, f, g, hh].entries()) this.h[i] += value;
   }
-  check();
-  return Array.from(h, (v) => v.toString(16).padStart(8, '0')).join('');
+  update(bytes: Uint8Array) {
+    this.total += bytes.length;
+    let offset = 0;
+    if (this.used) {
+      const count = Math.min(64 - this.used, bytes.length);
+      this.tail.set(bytes.subarray(0, count), this.used);
+      this.used += count;
+      offset = count;
+      if (this.used === 64) {
+        this.block(this.tail);
+        this.used = 0;
+      }
+    }
+    for (; offset + 64 <= bytes.length; offset += 64)
+      this.block(bytes.subarray(offset, offset + 64));
+    if (offset < bytes.length) {
+      this.tail.set(bytes.subarray(offset), this.used);
+      this.used += bytes.length - offset;
+    }
+  }
+  finish() {
+    const tail = new Uint8Array(this.used < 56 ? 64 : 128);
+    tail.set(this.tail.subarray(0, this.used));
+    tail[this.used] = 128;
+    const view = new DataView(tail.buffer);
+    view.setUint32(tail.length - 8, Math.floor(this.total / 0x20000000));
+    view.setUint32(tail.length - 4, (this.total * 8) >>> 0);
+    for (let offset = 0; offset < tail.length; offset += 64)
+      this.block(tail.subarray(offset, offset + 64));
+    return Array.from(this.h, (v) => v.toString(16).padStart(8, '0')).join('');
+  }
+}
+const check = (signal?: AbortSignal) => {
+  if (signal?.aborted) throw new DOMException('Abgebrochen', 'AbortError');
+};
+export async function contentDigest(bytes: Uint8Array, signal?: AbortSignal) {
+  check(signal);
+  if (globalThis.crypto?.subtle) {
+    const result = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes));
+    check(signal);
+    return Array.from(new Uint8Array(result), (v) => v.toString(16).padStart(2, '0')).join('');
+  }
+  const hash = new Sha256();
+  for (let offset = 0; offset < bytes.length; offset += 1024 * 1024) {
+    check(signal);
+    hash.update(bytes.subarray(offset, offset + 1024 * 1024));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  }
+  check(signal);
+  return hash.finish();
+}
+// Bounded memory for large local model files; callers run this in a disposable worker.
+export async function contentDigestBlob(blob: Blob, signal?: AbortSignal) {
+  const hash = new Sha256();
+  for (let offset = 0; offset < blob.size; offset += 1024 * 1024) {
+    check(signal);
+    hash.update(new Uint8Array(await blob.slice(offset, offset + 1024 * 1024).arrayBuffer()));
+  }
+  check(signal);
+  return hash.finish();
 }

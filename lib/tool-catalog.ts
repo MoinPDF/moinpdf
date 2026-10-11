@@ -67,6 +67,16 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'local-assistant',
+    title: 'Lokaler PDF-Assistent',
+    description:
+      'Fragen mit einem lokalen Sprachmodell beantworten und Originalzitate direkt auf den PDF-Seiten überprüfen.',
+    icon: TextSearch,
+    group: 0,
+    action: 'Lokal beantworten',
+    fresh: true,
+  },
+  {
     id: 'native-objects',
     title: 'PDF-Objekte bearbeiten',
     description:

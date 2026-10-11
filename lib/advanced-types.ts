@@ -1,4 +1,5 @@
 export const advancedToolIds = [
+  'local-assistant',
   'native-objects',
   'bates',
   'page-labels',
