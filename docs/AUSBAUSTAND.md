@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 11. Oktober 2026, Version 0.9.2.
+Stand: 11. Oktober 2026, Version 0.9.3.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
@@ -60,7 +60,7 @@ Diese Ergänzungen ändern nicht die Lizenz des MoinPDF-Projekts.
 
 ## Nachprüfung von XFA und Druckstandards (11. Oktober 2026)
 
-Die eingesetzte PDF.js-Version 6.3.289 kann reine dynamische XFA-Formulare
+Die am 11. Oktober untersuchte PDF.js-Version 6.3.289 kann reine dynamische XFA-Formulare
 anzeigen und einfache Eingaben über `annotationStorage` in Datensatzpakete
 zurückschreiben. Das ist keine vollständige XFA-Laufzeit: XFA als einzelner
 Stream wird beim Speichern ausdrücklich nicht unterstützt; Mischformulare,
@@ -69,7 +69,10 @@ abgedeckt. Vor einer Erweiterung ist deshalb ein eigener, begrenzter Modus mit
 Ablehnung nicht unterstützter Formulare und unabhängiger Rückleseprüfung nötig.
 Die vorhandenen Schutzsperren bleiben aktiv, damit keine XFA-Daten verloren gehen.
 
-Primärquellen zum eingesetzten Versionsstand:
+MoinPDF verwendet inzwischen PDF.js 6.4.299. Die XFA-Schutzsperren wurden mit
+dieser Version erneut geprüft; eine vollständige XFA-Bearbeitung ist weiterhin
+nicht freigegeben. Die folgende Quellanalyse bezieht sich auf den damals
+untersuchten Versionsstand:
 [Dokumenterkennung](https://github.com/mozilla/pdf.js/blob/v6.3.289/src/core/document.js),
 [Speicherung](https://github.com/mozilla/pdf.js/blob/v6.3.289/src/core/worker.js),
 [Eingabeschicht](https://github.com/mozilla/pdf.js/blob/v6.3.289/src/display/xfa_layer.js).

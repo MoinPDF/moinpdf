@@ -36,6 +36,12 @@ def no_overflow(page, context):
     dimensions = page.evaluate('({width:innerWidth, content:document.documentElement.scrollWidth})')
     assert dimensions['content'] <= dimensions['width'] + 2, f'Horizontal overflow in {context}: {dimensions}'
 
+def project_toolbar(page):
+    button = page.get_by_role('button', name='Projekte', exact=True)
+    expect(button).to_be_visible()
+    assert button.evaluate('(el) => !["fixed", "absolute"].includes(getComputedStyle(el).position)')
+    assert page.locator('.project-bar').evaluate('(el) => el.getBoundingClientRect().bottom <= document.querySelector(".studio-provider").getBoundingClientRect().top + 1')
+
 def all_views(page, messages, context, empty=False):
     titles = page.locator('.chooser-tool strong').all_text_contents()
     assert len(titles) == len(set(titles)) == 112
@@ -255,6 +261,58 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(transfer.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
         completed.append('Portable project downloads, imports into a fresh browser context, independently exports identical PDF content; damaged import keeps current session')
 
+        lifecycle = browser.new_page(viewport={'width': 390, 'height': 844}, accept_downloads=True)
+        lifecycle.set_default_timeout(30000)
+        lifecycle.on('pageerror', lambda error: errors.append('Project lifecycle: ' + str(error)))
+        lifecycle.goto(origin)
+        lifecycle.locator('input[type="file"]').first.set_input_files(str(pdf_path))
+        chooser(lifecycle)
+        lifecycle.get_by_role('button', name='Text bearbeiten', exact=True).click()
+        lifecycle.get_by_role('button', name='Neuer Text', exact=True).click()
+        lifecycle.get_by_label('Textinhalt', exact=True).fill('REMOVED-FILE-PRIVATE-NOTE')
+        back(lifecycle)
+        survivor = Path(temporary) / 'behalten.pdf'
+        with pymupdf.open() as document:
+            document.new_page().insert_text((50, 60), 'Verbleibende Datei')
+            document.save(survivor)
+        lifecycle.locator('input[type="file"]').first.set_input_files(str(survivor))
+        expect(lifecycle.locator('.chooser-document-count')).to_have_text('2 Dateien·3 Seiten')
+        lifecycle.get_by_role('button', name=pdf_path.name + ' schließen', exact=True).click()
+        expect(lifecycle.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
+        lifecycle.get_by_role('button', name='Projekte', exact=True).click()
+        lifecycle.get_by_label('Projektname', exact=True).fill('Verbleibendes Projekt')
+        lifecycle.get_by_role('button', name='Projekt speichern', exact=True).click()
+        expect(lifecycle.get_by_text('Arbeitsstand gespeichert.', exact=True)).to_be_visible()
+        with lifecycle.expect_download() as download:
+            lifecycle.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
+        cleaned_file = Path(temporary) / 'bereinigt.moinpdf'
+        download.value.save_as(cleaned_file)
+        cleaned_bytes = cleaned_file.read_bytes()
+        assert b'REMOVED-FILE-PRIVATE-NOTE' not in cleaned_bytes
+        size = int.from_bytes(cleaned_bytes[20:24], 'big')
+        cleaned_state = json.loads(cleaned_bytes[32:32+size])['state']
+        assert cleaned_state['edits'] == {'marks': {}, 'crops': {}}
+        lifecycle.keyboard.press('Escape')
+        lifecycle.get_by_role('button', name='Seiten organisieren', exact=True).click()
+        lifecycle.get_by_role('button', name='Seite 1 entfernen', exact=True).click()
+        lifecycle.get_by_role('button', name='Projekte', exact=True).click()
+        lifecycle.get_by_role('button', name='Öffnen', exact=True).first.click()
+        chooser(lifecycle)
+        expect(lifecycle.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
+        lifecycle.get_by_role('button', name='Projekte', exact=True).click()
+        zero_version = lifecycle.locator('.project-version').filter(has_text='0 Seiten')
+        expect(zero_version).to_have_count(1)
+        zero_version.get_by_role('button', name='Öffnen', exact=True).click()
+        chooser(lifecycle)
+        expect(lifecycle.locator('.chooser-document-count')).to_have_text('1 Datei·0 Seiten')
+        lifecycle.get_by_role('button', name='Seiten organisieren', exact=True).click()
+        lifecycle.get_by_role('button', name='Rückgängig', exact=True).click()
+        expect(lifecycle.get_by_role('button', name='Seite 1 entfernen', exact=True)).to_be_visible()
+        project_toolbar(lifecycle)
+        lifecycle.screenshot(path=str(evidence / 'mobile-project-lifecycle.png'), full_page=True)
+        lifecycle.close()
+        completed.append('Mobile project lifecycle: removed-file annotations absent from exported bytes, zero-page auto-backup permits project switching and restores undo')
+
         transfer.get_by_role('button', name='OCR & Text', exact=True).click()
         transfer.get_by_role('button', name='Sprachen kombinieren', exact=True).click()
         for language in ('Englisch', 'Französisch', 'Spanisch', 'Italienisch', 'Portugiesisch', 'Niederländisch', 'Polnisch'):
@@ -426,6 +484,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Textobjekte laden', exact=True).click()
         expect(page.locator('.paragraph-object-list')).to_be_visible()
         no_overflow(page, 'mobile paragraph editor')
+        project_toolbar(page)
         page.screenshot(path=str(evidence / 'mobile-paragraph.png'), full_page=True)
         back(page)
         page.get_by_role('button', name='Barrierefreiheit prüfen', exact=True).click()

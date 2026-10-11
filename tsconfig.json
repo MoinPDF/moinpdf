@@ -33,6 +33,7 @@
     "components/**/*.ts",
     "hooks/**/*.ts",
     "lib/**/*.ts",
+    "workers/**/*.ts",
     "selfhost/**/*.tsx",
     "vite*.config.ts"
   ],

@@ -1,6 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import { renderPage, sourcePages, pdfBlob, filenameStem, type Source } from './pdf-engine';
 import { checkAbort, type RunContext, type ExportFile } from './advanced-types';
+import { drawOnViewport } from './advanced-documents';
 
 export const makeCanvas = (width: number, height: number) => {
   const c = document.createElement('canvas');
@@ -228,9 +229,10 @@ export async function compareVisual(
 export async function barcodeCanvas(text: string, format: 'qrcode' | 'code128' | 'ean13') {
   if (!text.trim() || text.length > 2000)
     throw new Error('Bitte 1 bis 2.000 Zeichen für den Code eingeben.');
-  const { toCanvas } = await import('@bwip-js/browser');
+  const { qrcode, code128, ean13 } = await import('@bwip-js/browser');
+  const render = { qrcode, code128, ean13 }[format];
   const c = makeCanvas(1, 1);
-  toCanvas(c, {
+  render(c, {
     bcid: format,
     text,
     scale: 3,
@@ -344,7 +346,6 @@ export async function placeBarcode(
         height = (width * c.height) / c.width;
       if (v.height * rect.y + height > v.height)
         throw new Error('Der Code passt an dieser Position nicht vollständig auf die Seite.');
-      const { drawOnViewport } = await import('./advanced-documents');
       drawOnViewport(page, v, rect.x * v.width, rect.y * v.height, width, height, (position) =>
         page.drawImage(png, position),
       );

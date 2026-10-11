@@ -31,7 +31,7 @@ Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installatio
 | --- | --- |
 | **Seiten in Ordnung bringen** | Zusammenfügen, teilen, drehen, sortieren, zuschneiden, nummerieren und mit Lesezeichen versehen. |
 | **PDFs bearbeiten** | Text ersetzen, Inhalte entfernen, Bilder und Notizen einfügen, markieren, schwärzen und Formulare bearbeiten. |
-| **Scans lesbar machen** | 21 OCR-Sprachen, bis zu vier gemeinsam, durchsuchbare PDFs, Scanverbesserung, Komprimierung und Kameraimport. |
+| **Scans lesbar machen** | 21 OCR-Sprachen, bis zu acht gemeinsam, durchsuchbare PDFs, Scanverbesserung, Komprimierung und Kameraimport. |
 | **Dateien umwandeln** | Bilder, Text und Tabellen exportieren; mit Dokumentenserver auch Office-Dateien, E-Mails und weitere Formate konvertieren. |
 | **Dokumente prüfen** | Text- und Bildvergleich, Zahlenvergleich, Rechenprüfung, Dokumentlücken und Fundstellen im Original kontrollieren. |
 | **E-Rechnungen bearbeiten** | UBL/CII lesen und Rechnungsbild mit XML abgleichen; mit Dokumentenserver XRechnung validieren und den ZUGFeRD-Assistenten nutzen. |

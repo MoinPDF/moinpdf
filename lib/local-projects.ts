@@ -30,6 +30,27 @@ export type ProjectArchive = {
   updated: number;
   versions: { created: number; sources: ProjectSource[]; state: ProjectState }[];
 };
+// Each undo snapshot owns its own page edits. Discard orphaned data in the
+// current snapshot without erasing edits that a retained undo step still needs.
+export function retainPageEdits(edits: Edits, pages: PageItem[]): Edits {
+  const ids = new Set(pages.map((page) => page.id));
+  return {
+    marks: Object.fromEntries(Object.entries(edits.marks).filter(([id]) => ids.has(id))),
+    crops: Object.fromEntries(Object.entries(edits.crops).filter(([id]) => ids.has(id))),
+  };
+}
+export function cleanProjectState(state: ProjectState): ProjectState {
+  const clean = (snapshot: ProjectSnapshot): ProjectSnapshot => ({
+    ...snapshot,
+    edits: retainPageEdits(snapshot.edits, snapshot.pages),
+  });
+  return {
+    ...state,
+    edits: retainPageEdits(state.edits, state.pages),
+    history: state.history.map(clean),
+    future: state.future.map(clean),
+  };
+}
 const database = 'moinpdf.projects.v1';
 function db(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -65,7 +86,6 @@ export function validateProject(state: ProjectState, sources: ProjectSource[]) {
   if (
     !sources.length ||
     sources.length > 200 ||
-    !state.pages.length ||
     state.pages.length > 200 ||
     sources.reduce((n, s) => n + s.bytes.length, 0) > 80 * 1024 * 1024
   )
@@ -104,6 +124,7 @@ export async function saveProject(
   if (!name.trim() || name.trim().length > 100)
     throw new Error('Bitte einen Projektnamen mit 1 bis 100 Zeichen eingeben.');
   const sourceData = sources.map(({ pdf: _pdf, ...source }) => source);
+  state = cleanProjectState(state);
   validateProject(state, sourceData);
   const d = await db(),
     pid = projectId || id(),
@@ -177,7 +198,7 @@ export async function loadProject(versionId: string) {
     )) as ProjectSource[];
     if (sources.some((s) => !s)) throw new Error('Zu diesem Arbeitsstand fehlen Originaldateien.');
     validateProject(version.state, sources);
-    return { version, sources };
+    return { version: { ...version, state: cleanProjectState(version.state) }, sources };
   } finally {
     d.close();
   }
@@ -234,7 +255,7 @@ export async function loadProjectArchive(projectId: string): Promise<ProjectArch
           return source;
         });
         validateProject(version.state, sources);
-        return { created: version.created, state: version.state, sources };
+        return { created: version.created, state: cleanProjectState(version.state), sources };
       }),
     };
   } finally {
@@ -270,7 +291,7 @@ export async function importProjectArchive(archive: ProjectArchive) {
           created: version.created,
           sourceIds: version.sources.map((s) => s.id),
           sourceKeys,
-          state: version.state,
+          state: cleanProjectState(version.state),
         } satisfies ProjectVersion);
         return { id: vid, created: version.created, pages: version.state.pages.length };
       });

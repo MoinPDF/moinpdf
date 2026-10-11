@@ -1,5 +1,6 @@
 'use client';
-import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { createPortal } from 'react-dom';
 import { FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,6 +47,8 @@ export function ProjectManager({
     [notice, setNotice] = useState(''),
     [deleteId, setDeleteId] = useState('');
   const importInput = useRef<HTMLInputElement>(null);
+  const [toolbar, setToolbar] = useState<HTMLElement | null>(null);
+  useEffect(() => setToolbar(document.getElementById('moinpdf-project-bar')), []);
   const name = identity.name,
     current = identity.id,
     setName = (name: string) => setIdentity((old) => ({ ...old, name })),
@@ -128,18 +131,22 @@ export function ProjectManager({
   };
   return (
     <>
-      <Button
-        className="project-toggle"
-        variant="outline"
-        disabled={locked || working}
-        onClick={() => {
-          setOpen(true);
-          void job(refresh);
-        }}
-      >
-        <FolderOpen size={16} />
-        Projekte
-      </Button>
+      {toolbar &&
+        createPortal(
+          <Button
+            className="project-toggle"
+            variant="outline"
+            disabled={locked || working}
+            onClick={() => {
+              setOpen(true);
+              void job(refresh);
+            }}
+          >
+            <FolderOpen size={16} />
+            Projekte
+          </Button>,
+          toolbar,
+        )}
       <Dialog
         open={open}
         onOpenChange={(v) => {

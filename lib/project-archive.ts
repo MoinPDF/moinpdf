@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { validateProject, type ProjectSource, type ProjectState } from './local-projects';
+import {
+  cleanProjectState,
+  validateProject,
+  type ProjectSource,
+  type ProjectState,
+} from './local-projects';
 import type { Source } from './pdf-engine';
 import { parseOcrLanguages } from './ocr-languages';
 
@@ -266,6 +271,7 @@ export async function encodeProjectFile(
   signal?: AbortSignal,
 ) {
   check(signal);
+  state = cleanProjectState(state);
   validateProjectReferences(state, sources);
   const manifest = manifestSchema.safeParse({
     name,
@@ -375,5 +381,10 @@ export async function decodeProjectFile(file: Blob, signal?: AbortSignal) {
   const state = manifest.state as ProjectState;
   validateProjectReferences(state, sources);
   check(signal);
-  return { name: manifest.name, created: manifest.created, sources, state };
+  return {
+    name: manifest.name,
+    created: manifest.created,
+    sources,
+    state: cleanProjectState(state),
+  };
 }

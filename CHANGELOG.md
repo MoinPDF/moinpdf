@@ -9,6 +9,26 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.9.3 – 2026-10-11
+
+- Beim Schließen einer Datei werden ihre Textnotizen, Bilder und Beschnittdaten
+  aus dem aktuellen Arbeitsstand entfernt. Speichern und Projekt-Download
+  bereinigen auch verwaiste Bearbeitungsdaten älterer Arbeitsstände; gültige
+  Rückgängig-Schritte bleiben erhalten.
+- Projekte ohne verbleibende Seiten lassen sich sichern und wieder öffnen.
+  Der Wechsel zu anderen Projekten bleibt möglich, ohne den Rückgängig-Verlauf
+  zu verlieren.
+- Die Projektauswahl erhält einen eigenen Platz oberhalb des Arbeitsbereichs
+  und überlagert keine mobilen Formularfelder mehr.
+- Abhängigkeitsupdates aus der geprüften Zusammenführung veröffentlicht;
+  OCR-Sprachzahl und PDF.js-Versionsangaben in der Dokumentation berichtigt.
+- Barcode-Generatoren gezielt geladen, wirkungslose dynamische Imports entfernt
+  und getrennte, überprüfte Größenbudgets für den Browser-Build eingeführt.
+- Neue Regressionstests prüfen entfernte Projektinhalte, leere Seitenlisten,
+  Projektwechsel und die mobile Projektauswahl.
+- Die reguläre Typprüfung erfasst auch Hintergrundprozesse; Seitenwerkzeuge
+  verwenden darin ausdrücklich die tatsächlich verfügbaren PDF-Daten.
+
 ## 0.9.2 – 2026-10-11
 
 - Sicherheitsaktualisierung von Vite und transitiven Abhängigkeiten.

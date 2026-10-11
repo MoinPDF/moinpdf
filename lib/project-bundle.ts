@@ -1,7 +1,12 @@
 import { z } from 'zod';
 import { contentDigest } from './content-digest';
 import { projectStateSchema, validateProjectReferences } from './project-archive';
-import type { ProjectArchive, ProjectSource, ProjectState } from './local-projects';
+import {
+  cleanProjectState,
+  type ProjectArchive,
+  type ProjectSource,
+  type ProjectState,
+} from './local-projects';
 
 const magic = new TextEncoder().encode('MOINPDF-ARCHIVE\n');
 const headerSize = 64;
@@ -67,7 +72,8 @@ export async function encodeProjectArchive(archive: ProjectArchive, signal?: Abo
     return hash;
   };
   const versions = [];
-  for (const version of archive.versions) {
+  for (const originalVersion of archive.versions) {
+    const version = { ...originalVersion, state: cleanProjectState(originalVersion.state) };
     validateProjectReferences(version.state, version.sources);
     if (
       version.sources.reduce(
@@ -198,7 +204,7 @@ export async function decodeProjectArchive(
       throw new Error('Ein Arbeitsstand überschreitet die Grenze von 80 MB Dokumentdaten.');
     const state = version.state as ProjectState;
     validateProjectReferences(state, sources);
-    return { created: version.created, state, sources };
+    return { created: version.created, state: cleanProjectState(state), sources };
   });
   if (used.size !== pool.size)
     throw new Error('Das Archiv enthält nicht zugeordnete Dokumentdaten.');
