@@ -26,7 +26,7 @@ import {
   initialExtraSettings,
   extraActions,
 } from './server-extra-fields';
-import { Text, Choice, Field, Tick, PageStage, PageSelect } from './advanced-shared';
+import { Text, Choice, Tick, PageStage, PageSelect } from './advanced-shared';
 import './conversion-workbench.css';
 import { AudioWorkbench } from './audio-workbench';
 import { AccessibleEditor, initialAccessibleDocument } from './accessible-editor';
@@ -172,7 +172,20 @@ function StandardServerWorkbench({
     setResult(null);
     setReport('');
     setError('');
-  }, [tool, sourceId, file, mode, profile, cert, attachments, extra, spreadsheet]);
+  }, [
+    tool,
+    sourceId,
+    file,
+    mode,
+    profile,
+    cert,
+    attachments,
+    extra,
+    spreadsheet,
+    uaMode,
+    uaProfile,
+    uaDocument,
+  ]);
   useEffect(() => {
     if (!result) {
       setUrl('');

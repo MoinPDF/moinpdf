@@ -302,7 +302,36 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     assert content.index('nach oben verschoben') < content.index('Zweiter Absatz')
                     assert document.metadata['title'] == 'Geprüfter Bericht'
                     assert document.xref_get_key(document.pdf_catalog(), 'StructTreeRoot')[0] != 'null'
-            completed.append('Structured reading order through production UI, LibreOffice export, real veraPDF/UA-1 gate and independent PDF readback')
+            # A previous validation/download must never describe edited content.
+            page.get_by_label('Dokumenttitel', exact=True).fill('Überarbeiteter Bericht')
+            expect(page.locator('.advanced-result')).to_have_count(0)
+            page.get_by_label('Text für Block 2', exact=True).fill('Aktualisierter Inhalt für den erneuten Export.')
+            page.get_by_role('button', name='PDF/UA erstellen und prüfen', exact=True).click()
+            expect(page.locator('.advanced-result')).to_be_visible(timeout=180000)
+            with page.expect_download() as download:
+                page.locator('.advanced-result a[download]').first.click()
+            saved = Path(temporary) / 'pdfua-updated.zip'
+            download.value.save_as(saved)
+            with zipfile.ZipFile(saved) as bundle:
+                assert json.loads(bundle.read('Ergebnis.json'))['technicalPassed'] is True
+                with pymupdf.open(stream=bundle.read('PDF-UA-1-technisch-geprueft.pdf'), filetype='pdf') as document:
+                    content = ''.join(p.get_text() for p in document)
+                    assert 'Aktualisierter Inhalt' in content
+                    assert 'nach oben verschoben' not in content
+                    assert document.metadata['title'] == 'Überarbeiteter Bericht'
+            # A block-only edit must invalidate the result just like a title edit.
+            page.get_by_label('Text für Block 2', exact=True).fill('Nochmals geänderter Inhalt.')
+            expect(page.locator('.advanced-result')).to_have_count(0)
+            page.get_by_label('Barrierefreiheit: Aktion', exact=True).select_option('validate')
+            page.get_by_role('button', name='PDF/UA prüfen', exact=True).click()
+            expect(page.locator('.advanced-result')).to_be_visible(timeout=180000)
+            page.get_by_label('PDF/UA-Prüfprofil', exact=True).select_option('ua2')
+            expect(page.locator('.advanced-result')).to_have_count(0)
+            page.get_by_role('button', name='PDF/UA prüfen', exact=True).click()
+            expect(page.locator('.advanced-result')).to_be_visible(timeout=180000)
+            page.get_by_label('Barrierefreiheit: Aktion', exact=True).select_option('basic')
+            expect(page.locator('.advanced-result')).to_have_count(0)
+            completed.append('Structured reading order, real PDF/UA gate and independent readback; edits, profile changes and mode changes invalidate old downloads')
             back(page)
             page.get_by_role('button', name='PDF als Hörbuch', exact=True).click()
             page.get_by_role('button', name='Vorlesetext vorbereiten', exact=True).click()

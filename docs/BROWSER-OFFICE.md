@@ -54,3 +54,41 @@ explizit angegebenen, separat entpackten Runtime-Ordner. Der Test bindet den
 verworfenen Kern nicht in MoinPDF ein. Ergebnis mit mindestens einem unabhängigen
 PDF-Renderer und Textleser gegen die Fixture prüfen, insbesondere die drei
 farbigen geometrischen Formen, Tabellenrahmen und die Zeile mit Cambria.
+
+## Ergänzende Quellprüfung: ONLYOFFICE und neuere Oxi-Revision
+
+Am 11. Oktober wurde zusätzlich eine Browserintegration von ONLYOFFICE geprüft.
+Der eigenständige CryptPad-Konverter `onlyoffice-x2t-wasm` hat mit
+`v9.3.2+3` zwar ein versioniertes Paket. Er ersetzt aber nicht den Layoutkern:
+Die untersuchte Browserintegration lässt das jeweilige Editor-SDK zunächst
+den Druckinhalt erzeugen und übergibt diesen anschließend an `bin2pdf`.
+Der kleine x2t-Download allein genügt deshalb nicht für Office zu PDF.
+
+Die Dateiauswahl des Wrappers `@agentbridges-ai/onlyoffice-browser` wurde am
+Quellstand `d15d12b6945be4d8b0f3aa1806120e740d2950ee` anhand der veröffentlichten
+Dateigrößen ausgewertet: ungefähr 268 MiB für die Standardauswahl der drei
+Editoren, beziehungsweise 241 MiB nach zusätzlichem Weglassen komprimierter
+Duplikate. Benötigte Schriften und MoinPDF kommen hinzu. Auch die Auswahl nur
+für Word benötigt ungefähr 148 MiB. Das passt nicht zusätzlich in die bestehende
+gehostete Ausgabe. Der Wrapper und SDKJS weisen außerdem AGPL-Bedingungen aus;
+die Bedingungen aller beteiligten Komponenten müssen vor einer Einbindung
+berücksichtigt werden. Diese Quellprüfung ist kein bestandener Konvertierungstest.
+
+Für Oxi existiert im Repository eine neuere Revision `v0.8.2`. Das veröffentlichte
+npm-Paket `@oxidocs/wasm` ist zum Prüfzeitpunkt weiterhin die bereits untersuchte
+Version 0.8.0. Die neuere Quellrevision wurde nicht ausgeführt. Ihre Existenz belegt
+weder eine Behebung der beobachteten Darstellungsfehler noch eine geprüfte
+XLSX-/PPTX-Ausgabe. Kein zusätzlicher Office-Kern wurde eingebaut.
+
+Quellen der ergänzenden Prüfung:
+- [Versionierter x2t-Konverter](https://github.com/cryptpad/onlyoffice-x2t-wasm/releases/tag/v9.3.2%2B3)
+- [Dateiauswahl des Browser-Wrappers](https://github.com/agentbridges-ai/onlyoffice-browser/blob/d15d12b6945be4d8b0f3aa1806120e740d2950ee/scripts/build-onlyoffice-runtime-assets.mjs)
+- [Zugehöriger Dateibaum mit Größen](https://api.github.com/repos/agentbridges-ai/onlyoffice-browser/git/trees/d15d12b6945be4d8b0f3aa1806120e740d2950ee?recursive=1)
+- [Oxi-WASM-Adapter v0.8.2](https://github.com/Ryujiyasu/oxi/blob/v0.8.2/crates/oxidocs-wasm/src/lib.rs)
+- [Metadaten des veröffentlichten npm-Pakets](https://registry.npmjs.org/@oxidocs%2fwasm/latest)
+
+Ein weiterzuverfolgender Weg ist ein separat ausgelieferter, reproduzierbarer
+LibreOffice-WASM-Kern. Er benötigt eine eigenständige Prüfung von Verteilung,
+Komponentenhinweisen, Mobilgeräten, Speicherbedarf, Abbruch und Ausgabequalität
+aller drei Office-Formate. Bis dahin bleibt die vorhandene Serverkonvertierung
+der freigegebene Office-Weg.
