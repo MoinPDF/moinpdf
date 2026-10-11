@@ -44,6 +44,7 @@ Der statische Web-Build allein enthält keinen laufenden Dokumentenserver. Die [
 Die folgenden Prüfungen decken Dokumentverarbeitung und Ausgaben ab. Serverprüfungen setzen die installierten Serverkomponenten voraus; Audioprüfungen benötigen zusätzlich die Sprachmodelle.
 
 - `pnpm audit`: bekannte Schwachstellen einschließlich Entwicklungsabhängigkeiten
+- `python -m pip_audit --disable-pip --no-deps -r server/requirements.lock.txt`: vollständiger Python-Lockfile einschließlich transitiver Pakete (pip-audit 2.10.1)
 - `pnpm run lint`: ESLint ohne zugelassene Warnungen
 - `node tests/release-workflow-smoke.mjs`: Freigabesicherheit bei falschen Images, Quellständen oder Prüfläufen
 - `pnpm test`: alle Browser-Engine-Testsuiten

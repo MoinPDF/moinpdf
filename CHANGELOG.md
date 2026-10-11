@@ -11,7 +11,9 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 
 ## 0.9.2 – 2026-10-11
 
-- Sicherheitsaktualisierung von Vite und transitiven Abhängigkeiten. Die
+- Sicherheitsaktualisierung von Vite und transitiven Abhängigkeiten.
+  Der Upload-Parser python-multipart wurde auf 0.0.32 aktualisiert; auch der
+  vollständige Python-Lockfile wird vor dem Docker-Build auf bekannte Lücken geprüft. Die
   Abhängigkeitsprüfung meldet für den freigegebenen Lockfile keine bekannten
   Schwachstellen; die Docker-Prüfung kontrolliert dies vor jeder Freigabe erneut.
 - Alle 37 ESLint-Warnungen behoben, einschließlich vollständiger Abhängigkeiten
