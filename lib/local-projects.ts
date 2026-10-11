@@ -22,7 +22,13 @@ export type ProjectVersion = {
   projectId: string;
   created: number;
   sourceIds: string[];
+  sourceKeys?: string[];
   state: ProjectState;
+};
+export type ProjectArchive = {
+  name: string;
+  updated: number;
+  versions: { created: number; sources: ProjectSource[]; state: ProjectState }[];
 };
 const database = 'moinpdf.projects.v1';
 function db(): Promise<IDBDatabase> {
@@ -120,14 +126,28 @@ export async function saveProject(
         updated: now,
         versions: versions.slice(0, 5),
       } satisfies ProjectMeta);
-      for (const old of versions.slice(5)) tx.objectStore('versions').delete(old.id);
+      for (const old of versions.slice(5)) {
+        const oldRequest = tx.objectStore('versions').get(old.id);
+        oldRequest.onsuccess = () => {
+          const oldVersion = oldRequest.result as ProjectVersion | undefined;
+          // Legacy keys may be shared by several snapshots. Immutable version
+          // keys belong to exactly one snapshot and can be collected safely.
+          for (const key of oldVersion?.sourceKeys || []) tx.objectStore('documents').delete(key);
+          tx.objectStore('versions').delete(old.id);
+        };
+      }
       for (const s of sourceData)
-        tx.objectStore('documents').put({ ...s, key: pid + ':' + s.id, projectId: pid });
+        tx.objectStore('documents').put({
+          ...s,
+          key: pid + ':' + vid + ':' + s.id,
+          projectId: pid,
+        });
       tx.objectStore('versions').put({
         id: vid,
         projectId: pid,
         created: now,
         sourceIds: sources.map((s) => s.id),
+        sourceKeys: sources.map((s) => pid + ':' + vid + ':' + s.id),
         state,
       } satisfies ProjectVersion);
     };
@@ -146,16 +166,15 @@ export async function saveProject(
 export async function loadProject(versionId: string) {
   const d = await db();
   try {
-    const version = (await request(
-      d.transaction('versions', 'readonly').objectStore('versions').get(versionId),
-    )) as ProjectVersion | undefined;
+    const tx = d.transaction(['versions', 'documents'], 'readonly');
+    const version = (await request(tx.objectStore('versions').get(versionId))) as
+      ProjectVersion | undefined;
     if (!version) throw new Error('Der Arbeitsstand wurde nicht gefunden.');
-    const tx = d.transaction('documents', 'readonly'),
-      sources = (await Promise.all(
-        version.sourceIds.map((s) =>
-          request(tx.objectStore('documents').get(version.projectId + ':' + s)),
-        ),
-      )) as ProjectSource[];
+    const sources = (await Promise.all(
+      (version.sourceKeys || version.sourceIds.map((s) => version.projectId + ':' + s)).map((key) =>
+        request(tx.objectStore('documents').get(key)),
+      ),
+    )) as ProjectSource[];
     if (sources.some((s) => !s)) throw new Error('Zu diesem Arbeitsstand fehlen Originaldateien.');
     validateProject(version.state, sources);
     return { version, sources };
@@ -180,6 +199,88 @@ export async function deleteProject(projectId: string) {
       };
     }
     await done;
+  } finally {
+    d.close();
+  }
+}
+
+// Read the metadata, snapshots and immutable bytes in the same transaction.
+export async function loadProjectArchive(projectId: string): Promise<ProjectArchive> {
+  const d = await db();
+  try {
+    const tx = d.transaction(['projects', 'versions', 'documents'], 'readonly');
+    const [project, versions, documents] = await Promise.all([
+      request(tx.objectStore('projects').get(projectId)) as Promise<ProjectMeta | undefined>,
+      request(tx.objectStore('versions').index('projectId').getAll(projectId)) as Promise<
+        ProjectVersion[]
+      >,
+      request(tx.objectStore('documents').index('projectId').getAll(projectId)) as Promise<
+        (ProjectSource & { key: string })[]
+      >,
+    ]);
+    if (!project) throw new Error('Das Projekt wurde nicht gefunden.');
+    const byKey = new Map(documents.map((source) => [source.key, source]));
+    return {
+      name: project.name,
+      updated: project.updated,
+      versions: project.versions.map((entry) => {
+        const version = versions.find((v) => v.id === entry.id);
+        if (!version) throw new Error('Ein gespeicherter Arbeitsstand fehlt.');
+        const sources = (
+          version.sourceKeys || version.sourceIds.map((s) => projectId + ':' + s)
+        ).map((key) => {
+          const source = byKey.get(key);
+          if (!source) throw new Error('Zu einem Arbeitsstand fehlen Originaldateien.');
+          return source;
+        });
+        validateProject(version.state, sources);
+        return { created: version.created, state: version.state, sources };
+      }),
+    };
+  } finally {
+    d.close();
+  }
+}
+// Import only after archive/PDF validation. One transaction either stores all
+// versions under fresh identities, or leaves the existing database untouched.
+export async function importProjectArchive(archive: ProjectArchive) {
+  if (
+    !archive.name.trim() ||
+    archive.name.length > 100 ||
+    !archive.versions.length ||
+    archive.versions.length > 5
+  )
+    throw new Error('Ungültiges Projektarchiv.');
+  for (const version of archive.versions) validateProject(version.state, version.sources);
+  const d = await db(),
+    pid = id();
+  try {
+    const tx = d.transaction(['projects', 'versions', 'documents'], 'readwrite'),
+      done = completed(tx);
+    const versions = archive.versions.map((version) => {
+      const vid = id(),
+        sourceKeys = version.sources.map((s) => pid + ':' + vid + ':' + s.id);
+      version.sources.forEach((s, index) =>
+        tx.objectStore('documents').put({ ...s, key: sourceKeys[index], projectId: pid }),
+      );
+      tx.objectStore('versions').put({
+        id: vid,
+        projectId: pid,
+        created: version.created,
+        sourceIds: version.sources.map((s) => s.id),
+        sourceKeys,
+        state: version.state,
+      } satisfies ProjectVersion);
+      return { id: vid, created: version.created, pages: version.state.pages.length };
+    });
+    tx.objectStore('projects').put({
+      id: pid,
+      name: archive.name,
+      updated: archive.updated,
+      versions,
+    } satisfies ProjectMeta);
+    await done;
+    return pid;
   } finally {
     d.close();
   }

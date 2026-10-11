@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import ts from 'typescript';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import 'fake-indexeddb/auto';
 await mkdir('.cache', {recursive:true});
-for (const name of ['project-archive','local-projects','ocr-languages']) {
+for (const name of ['project-archive','project-bundle','content-digest','local-projects','ocr-languages']) {
   const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-archive-test.mjs${q}`);
   await writeFile(`.cache/${name}-archive-test.mjs`,code);
 }
@@ -63,3 +64,60 @@ assert.throws(()=>validateOpenedProject(badWidget.state,[source]),/Seitenzahlen/
 await assert.rejects(()=>decodeProjectFile(archive,AbortSignal.abort()),/Abgebrochen/);
 await assert.rejects(()=>encodeProjectFile('Test',[source],state,AbortSignal.abort()),/Abgebrochen/);
 console.log('PASS: portable project preserves PDF/XML bytes, edits, crop, page order/rotation, OCR settings, undo, forms and bookmarks; independent PDF reopen, separate imported project, CRC/truncation/version/size limits, malicious data and history/widget reference rejection, cancellation.');
+
+const {contentDigest}=await import('../.cache/content-digest-archive-test.mjs');
+const vectors=[new Uint8Array(),new TextEncoder().encode('abc'),...Array.from({length:10},(_,i)=>new Uint8Array(54+i).map((_,n)=>n)),new Uint8Array(1024*1024+17).fill(97)];
+for(const vector of vectors) assert.equal(await contentDigest(vector),createHash('sha256').update(vector).digest('hex'));
+const cryptoDescriptor=Object.getOwnPropertyDescriptor(globalThis,'crypto');
+try {
+ Object.defineProperty(globalThis,'crypto',{configurable:true,value:{}});
+ for(const vector of vectors) assert.equal(await contentDigest(vector),createHash('sha256').update(vector).digest('hex'),'HTTP SHA256 fallback matches independent Node reference');
+ await assert.rejects(()=>contentDigest(bytes,AbortSignal.abort()),/Abgebrochen/);
+} finally {Object.defineProperty(globalThis,'crypto',cryptoDescriptor);}
+const bundles=await import('../.cache/project-bundle-archive-test.mjs');
+const oldVersion=(await projects.listProjects()).find(p=>p.id===existing).versions[0].id;
+const changedDoc=await PDFDocument.load(bytes);changedDoc.getPage(0).drawText('NEUER ARBEITSSTAND',{x:20,y:100,size:12});
+const changedBytes=await changedDoc.save(),changedSource={...source,bytes:changedBytes,size:changedBytes.length};
+await projects.saveProject('Vorhandenes Projekt',existing,[changedSource],state);
+assert.deepEqual((await projects.loadProject(oldVersion)).sources[0].bytes,bytes,'Saving same source ID with changed data must not corrupt a historical version');
+for(let i=0;i<5;i++) await projects.saveProject('Vorhandenes Projekt',existing,[i%2?source:changedSource],{...state,toolId:'archive-'+i});
+const whole=await projects.loadProjectArchive(existing);
+assert.equal(whole.versions.length,5);
+assert.equal(whole.versions[0].state.toolId,'archive-4');
+await assert.rejects(()=>projects.loadProject(oldVersion),/nicht gefunden/);
+const allFile=await bundles.encodeProjectArchive(whole);
+assert.equal(await bundles.isProjectArchive(allFile),true);
+assert.equal(await bundles.isProjectArchive(archive),false);
+const allBytes=new Uint8Array(await allFile.arrayBuffer()),allView=new DataView(allBytes.buffer),jsonLength=allView.getUint32(20);
+const manifest=JSON.parse(new TextDecoder().decode(allBytes.subarray(64,64+jsonLength)));
+assert.equal(manifest.parts.length,3,'Binary pool deduplicates identical PDFs/XML across five versions');
+const roundtrip=await bundles.decodeProjectArchive(allFile);
+for(let i=0;i<5;i++){
+ assert.deepEqual(roundtrip.versions[i].state,whole.versions[i].state);
+ assert.deepEqual(roundtrip.versions[i].sources[0].bytes,whole.versions[i].sources[0].bytes);
+ assert.equal((await PDFDocument.load(roundtrip.versions[i].sources[0].bytes)).getPageCount(),2);
+}
+const importedId=await projects.importProjectArchive(roundtrip);
+assert.notEqual(importedId,existing);
+assert.deepEqual((await projects.loadProjectArchive(importedId)).versions.map(v=>v.state),whole.versions.map(v=>v.state));
+assert.deepEqual((await projects.loadProjectArchive(importedId)).versions.map(v=>v.created),whole.versions.map(v=>v.created));
+const brokenAll=allBytes.slice();brokenAll[brokenAll.length-1]^=1;
+await assert.rejects(()=>bundles.decodeProjectArchive(new Blob([brokenAll])),/beschädigt/);
+await assert.rejects(()=>bundles.decodeProjectArchive(allFile.slice(0,-1)),/beschädigt/);
+await assert.rejects(()=>bundles.decodeProjectArchive({size:bundles.MAX_PROJECT_ARCHIVE+1}),/größer/);
+await assert.rejects(()=>bundles.encodeProjectArchive({...whole,versions:[...whole.versions,whole.versions[0]]}),/ungültige/);
+await assert.rejects(()=>bundles.decodeProjectArchive(allFile,AbortSignal.abort()),/Abgebrochen/);
+async function editBundle(change){
+ const m=JSON.parse(JSON.stringify(manifest));change(m);
+ const json=new TextEncoder().encode(JSON.stringify(m)),payload=allBytes.slice(64+jsonLength),out=new Uint8Array(64+json.length+payload.length),view=new DataView(out.buffer);
+ out.set(allBytes.subarray(0,64));out.set(json,64);out.set(payload,64+json.length);
+ view.setUint32(20,json.length);view.setUint32(24,out.length);out.set(createHash('sha256').update(json).digest(),32);
+ return new Blob([out]);
+}
+await assert.rejects(()=>editBundle(m=>m.versions[4].sources[0].pdf='0'.repeat(64)).then(bundles.decodeProjectArchive),/fehlende Dokumentdaten/);
+await assert.rejects(()=>editBundle(m=>m.versions[4].state.pages[0].sourceId='missing').then(bundles.decodeProjectArchive),/Seitenverweise/);
+await assert.rejects(()=>editBundle(m=>m.parts.push(m.parts[0])).then(bundles.decodeProjectArchive),/doppelte/);
+const beforeCount=(await projects.listProjects()).length;
+await assert.rejects(()=>projects.importProjectArchive({...roundtrip,versions:[...roundtrip.versions,{...roundtrip.versions[0],sources:[]}]}),/Ungültiges/);
+assert.equal((await projects.listProjects()).length,beforeCount,'Invalid import leaves all projects untouched');
+console.log('PASS: immutable historical bytes, five complete snapshots, SHA256 checks including local HTTP fallback, deduplicated binary archive, preserved timestamps, independent PDF reopen, fresh project IDs, bounded and atomic validated import.');
