@@ -194,8 +194,8 @@ importers:
         version: 3.25.76
     devDependencies:
       '@eslint/js':
-        specifier: 9.39.4
-        version: 9.39.4
+        specifier: 9.39.5
+        version: 9.39.5
       '@tailwindcss/postcss':
         specifier: 4.2.1
         version: 4.2.1
@@ -213,7 +213,7 @@ importers:
         version: 3.0.6
       '@vitejs/plugin-react':
         specifier: 6.0.2
-        version: 6.0.2(vite@8.0.16(@types/node@22.19.19)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1))
+        version: 6.0.2(vite@8.0.16(@types/node@22.19.19)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1))
       '@xmldom/xmldom':
         specifier: 0.9.12
         version: 0.9.12
@@ -246,7 +246,7 @@ importers:
         version: 8.59.3(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3)
       vite:
         specifier: 8.0.16
-        version: 8.0.16(@types/node@22.19.19)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1)
+        version: 8.0.16(@types/node@22.19.19)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1)
 
 packages:
 
@@ -571,6 +571,10 @@ packages:
 
   '@eslint/js@9.39.4':
     resolution: {integrity: sha512-nE7DEIchvtiFTwBw4Lfbu59PG+kCofhjsKaCWzxTpt4lfRjRMqG6uMBzKXuEcyXhOHoUp9riAm7/aWYGhXZ9cw==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@eslint/js@9.39.5':
+    resolution: {integrity: sha512-QywQuszQh77pIXCsq998c8hbhSTI/azTty1Z6N53dmAudKHhy573j3yvRLsX2BSp8YpLtoCEG8E9DJe+8zUh4A==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@eslint/object-schema@2.1.7':
@@ -3390,6 +3394,8 @@ snapshots:
 
   '@eslint/js@9.39.4': {}
 
+  '@eslint/js@9.39.5': {}
+
   '@eslint/object-schema@2.1.7': {}
 
   '@eslint/plugin-kit@0.4.1':
@@ -4616,10 +4622,10 @@ snapshots:
       '@typescript-eslint/types': 8.59.3
       eslint-visitor-keys: 5.0.1
 
-  '@vitejs/plugin-react@6.0.2(vite@8.0.16(@types/node@22.19.19)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1))':
+  '@vitejs/plugin-react@6.0.2(vite@8.0.16(@types/node@22.19.19)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.0.16(@types/node@22.19.19)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1)
+      vite: 8.0.16(@types/node@22.19.19)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1)
 
   '@wllama/wllama@3.8.1': {}
 
@@ -5705,7 +5711,7 @@ snapshots:
       d3-time: 3.1.0
       d3-timer: 3.0.1
 
-  vite@8.0.16(@types/node@22.19.19)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1):
+  vite@8.0.16(@types/node@22.19.19)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -5714,6 +5720,7 @@ snapshots:
       tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 22.19.19
+      esbuild: 0.28.1
       fsevents: 2.3.3
       jiti: 2.7.0
       terser: 5.47.1
