@@ -1,4 +1,6 @@
 import os
+import io
+import zipfile
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -22,5 +24,16 @@ class ImportFormatTests(unittest.TestCase):
                         self.assertTrue(any(p.get_text().strip() or p.get_drawings() or p.get_images() for p in pdf), 'Conversion must contain actual text, vectors or images')
                         pixels=pdf[0].get_pixmap(matrix=pymupdf.Matrix(.5,.5),alpha=False).samples
                         self.assertGreater(sum(v<245 for v in pixels),30,'The converted page must not be blank')
-            response=client.post('/v1/office',headers={'Authorization':'Bearer '+os.environ['MOINPDF_API_KEY']},files={'file':('corrupt.pages',b'not a Pages document')})
-            self.assertEqual(response.status_code,422)
+    def test_corrupt_new_formats_do_not_fall_back_to_plain_text(self):
+        with patch.dict(os.environ, {'MOINPDF_API_KEY': 'synthetic-'+40*'x'}), TestClient(service.app) as client:
+            for extension in ['pages', 'vsd', 'vsdx', 'pub']:
+                with self.subTest(extension=extension):
+                    response=client.post('/v1/office',headers={'Authorization':'Bearer '+os.environ['MOINPDF_API_KEY']},files={'file':('corrupt.'+extension,b'not an Office document')})
+                    self.assertEqual(response.status_code,422)
+            archive = io.BytesIO()
+            with zipfile.ZipFile(archive, 'w') as bundle:
+                bundle.writestr('notes.txt', 'Not a Pages or Visio file')
+            for extension in ['pages', 'vsdx']:
+                with self.subTest(archive=extension):
+                    response=client.post('/v1/office',headers={'Authorization':'Bearer '+os.environ['MOINPDF_API_KEY']},files={'file':('renamed.'+extension,archive.getvalue())})
+                    self.assertEqual(response.status_code,422)

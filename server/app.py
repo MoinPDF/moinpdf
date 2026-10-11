@@ -252,8 +252,30 @@ def office(file: UploadFile = File(...)):
         raise HTTPException(422, "Bitte eine unterstützte Office-Datei auswählen.")
     with job() as directory:
         source = upload(file, directory / ("input" + suffix))
+        require_office_container(source)
         output = convert_office(source, directory)
         return result(output.read_bytes(), "Office-Dokument.pdf", "application/pdf")
+
+
+def require_office_container(source: Path):
+    """Prevent LibreOffice's plain-text fallback from accepting corrupt new formats."""
+    suffix = source.suffix.lower()
+    if suffix in {'.pub', '.vsd'}:
+        with source.open('rb') as stream:
+            if stream.read(8) != bytes.fromhex('d0cf11e0a1b11ae1'):
+                raise HTTPException(422, 'Die Datei enthält kein gültiges Publisher-/Visio-Dokument.')
+    elif suffix in {'.pages', '.vsdx'}:
+        try:
+            with zipfile.ZipFile(source) as bundle:
+                entries = bundle.infolist()
+                if len(entries) > 10000 or sum(item.file_size for item in entries) > 512 * 1024 * 1024:
+                    raise HTTPException(422, 'Das entpackte Office-Dokument ist zu groß.')
+                names = {item.filename for item in entries}
+                valid = bool(names & {'index.xml', 'index.xml.gz', 'Index/Document.iwa'}) if suffix == '.pages' else {'[Content_Types].xml', 'visio/document.xml'} <= names
+                if not valid or any(item.flag_bits & 1 for item in entries):
+                    raise ValueError('missing document structure or encrypted archive')
+        except (OSError, ValueError, zipfile.BadZipFile):
+            raise HTTPException(422, 'Die Datei enthält kein gültiges Pages-/Visio-Dokument.')
 
 
 def convert_office(source: Path, directory: Path, timeout=TIMEOUT, pdfua=False):
