@@ -61,6 +61,134 @@ export function WorkflowPanel({
                   }
                   items={Object.entries(stepLabels) as [string, string][]}
                 />
+                {!batch && (
+                  <>
+                    <Choice
+                      label={`Schritt ${i + 1} ausführen`}
+                      value={step.condition?.field || 'always'}
+                      items={[
+                        ['always', 'Immer'],
+                        ['filename', 'Wenn Dateiname …'],
+                        ['text', 'Wenn vorhandener PDF-Text …'],
+                        ['pages', 'Wenn Seitenzahl …'],
+                      ]}
+                      onChange={(v) =>
+                        setSteps(
+                          steps.map((s, j) =>
+                            j === i
+                              ? {
+                                  ...s,
+                                  condition:
+                                    v === 'always'
+                                      ? undefined
+                                      : {
+                                          field: v as 'filename' | 'text' | 'pages',
+                                          operator: v === 'pages' ? 'gte' : 'contains',
+                                          value: v === 'pages' ? '2' : '',
+                                        },
+                                  otherwise: undefined,
+                                }
+                              : s,
+                          ),
+                        )
+                      }
+                    />
+                    {step.condition && (
+                      <div className="pro-rule">
+                        <Choice
+                          label={`Bedingung ${i + 1}`}
+                          value={step.condition.operator}
+                          items={
+                            step.condition.field === 'pages'
+                              ? [
+                                  ['gte', 'Mindestens'],
+                                  ['lt', 'Weniger als'],
+                                ]
+                              : [
+                                  ['contains', 'Enthält'],
+                                  ['notContains', 'Enthält nicht'],
+                                ]
+                          }
+                          onChange={(v) =>
+                            setSteps(
+                              steps.map((s, j) =>
+                                j === i
+                                  ? {
+                                      ...s,
+                                      condition: {
+                                        ...s.condition!,
+                                        operator: v as 'gte' | 'lt' | 'contains' | 'notContains',
+                                      },
+                                    }
+                                  : s,
+                              ),
+                            )
+                          }
+                        />
+                        <Text
+                          label={`Vergleichswert ${i + 1}`}
+                          value={step.condition.value}
+                          onChange={(v) =>
+                            setSteps(
+                              steps.map((s, j) =>
+                                j === i ? { ...s, condition: { ...s.condition!, value: v } } : s,
+                              ),
+                            )
+                          }
+                        />
+                        <Choice
+                          label={`Sonst ${i + 1}`}
+                          value={step.otherwise?.kind || 'skip'}
+                          items={[
+                            ['skip', 'Diesen Schritt überspringen'],
+                            ...Object.entries(stepLabels),
+                          ]}
+                          onChange={(v) =>
+                            setSteps(
+                              steps.map((s, j) =>
+                                j === i
+                                  ? {
+                                      ...s,
+                                      otherwise: v === 'skip' ? undefined : { kind: v as StepKind },
+                                    }
+                                  : s,
+                              ),
+                            )
+                          }
+                        />
+                        {(step.otherwise?.kind === 'stamp' ||
+                          step.otherwise?.kind === 'watermark') && (
+                          <Text
+                            label={`Text im Sonst-Zweig ${i + 1}`}
+                            value={step.otherwise.text || ''}
+                            onChange={(v) =>
+                              setSteps(
+                                steps.map((s, j) =>
+                                  j === i ? { ...s, otherwise: { ...s.otherwise!, text: v } } : s,
+                                ),
+                              )
+                            }
+                          />
+                        )}
+                        {step.otherwise?.kind === 'numbers' && (
+                          <NumberField
+                            label={`Startnummer im Sonst-Zweig ${i + 1}`}
+                            value={step.otherwise.number || 1}
+                            min={1}
+                            max={999999}
+                            onChange={(v) =>
+                              setSteps(
+                                steps.map((s, j) =>
+                                  j === i ? { ...s, otherwise: { ...s.otherwise!, number: v } } : s,
+                                ),
+                              )
+                            }
+                          />
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
                 {(step.kind === 'stamp' || step.kind === 'watermark') && (
                   <Text
                     label={`Text für Schritt ${i + 1}`}
@@ -127,7 +255,7 @@ export function WorkflowPanel({
             Schritt hinzufügen
           </Button>
         )}
-        {steps.some((s) => s.kind === 'protect') && (
+        {steps.some((s) => s.kind === 'protect' || s.otherwise?.kind === 'protect') && (
           <>
             <Text
               label="Öffnungspasswort für diesen Durchlauf"
@@ -142,8 +270,10 @@ export function WorkflowPanel({
           </>
         )}
         <p className="fine-note">
-          Die Dateien werden einzeln verarbeitet und gemeinsam als ZIP gespeichert. Bei OCR und
-          Leerseitenerkennung bitte die Ausgabe kontrollieren.
+          Bedingungen werden am jeweiligen Zwischenstand geprüft. Textbedingungen lesen vorhandenen
+          PDF-Text; bei Scans zuerst einen OCR-Schritt einsetzen. Das ZIP enthält ein Protokoll der
+          ausgeführten und übersprungenen Schritte. Die Dateien werden einzeln verarbeitet. Bei OCR
+          und Leerseitenerkennung bitte die Ausgabe kontrollieren.
         </p>
         <Button
           disabled={busy || !sources.length}

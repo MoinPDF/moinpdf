@@ -2,6 +2,21 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'native-objects': [
+    'originalschrift',
+    'bilder bearbeiten',
+    'text ersetzen',
+    'suchen ersetzen',
+    'grafik löschen',
+  ],
+  bates: ['Aktennummer', 'fortlaufend', 'Kopfzeile', 'Fußzeile', 'Bates'],
+  'page-labels': ['römisch', 'alphabetisch', 'Seitennavigation', 'Präfix'],
+  'rotate-free': ['Winkel', 'Grad', 'beliebig drehen', 'schräg'],
+  'continuous-page': ['lange Seite', 'Scrollen', 'Endlosseite', 'untereinander'],
+  'poster-print': ['Poster', 'Kacheln', 'Drucken', 'Überlappung'],
+  linearize: ['Webansicht', 'linearisieren', 'schnell laden'],
+  'structured-export': ['JSON', 'Daten', 'Fundstellen', 'KI', 'RAG'],
+
   'form-responses': [
     'Formularrückläufe auswerten',
     'ausgefüllte Formulare sammeln',

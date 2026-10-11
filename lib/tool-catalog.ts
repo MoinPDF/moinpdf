@@ -67,6 +67,85 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'native-objects',
+    title: 'PDF-Objekte bearbeiten',
+    description:
+      'Vorhandene Texte in ihrer Originalschrift ändern sowie Bilder und Grafiken verschieben, ersetzen, drehen oder löschen.',
+    icon: TextCursorInput,
+    group: 3,
+    action: 'Objekte bearbeiten',
+    fresh: true,
+  },
+  {
+    id: 'bates',
+    title: 'Bates-Nummerierung',
+    description:
+      'Mehrere PDFs fortlaufend mit Aktennummern, Dateinamen und Kopf- oder Fußzeilen kennzeichnen.',
+    icon: ListOrdered,
+    group: 4,
+    action: 'Nummerierung anwenden',
+    fresh: true,
+  },
+  {
+    id: 'page-labels',
+    title: 'Seitenbezeichnungen',
+    description:
+      'Römische, alphabetische oder eigene Seitenbezeichnungen für die PDF-Navigation festlegen.',
+    icon: Bookmark,
+    group: 2,
+    action: 'Bezeichnungen speichern',
+    fresh: true,
+  },
+  {
+    id: 'rotate-free',
+    title: 'Frei drehen',
+    description: 'Seiten um beliebige Winkel drehen und die Seitengröße automatisch anpassen.',
+    icon: Maximize,
+    group: 2,
+    action: 'Seiten drehen',
+    fresh: true,
+  },
+  {
+    id: 'continuous-page',
+    title: 'Lange PDF-Seite',
+    description:
+      'Mehrere Seiten als durchgehende Seite zum Scrollen verbinden. Text und Vektorgrafiken erhalten.',
+    icon: Layers,
+    group: 2,
+    action: 'Lange Seite erstellen',
+    fresh: true,
+  },
+  {
+    id: 'poster-print',
+    title: 'Posterdruck',
+    description: 'Große Seiten auf mehrere Druckkacheln verteilen, mit einstellbarer Überlappung.',
+    icon: Grid3X3,
+    group: 2,
+    action: 'Poster aufteilen',
+    fresh: true,
+  },
+  {
+    id: 'linearize',
+    title: 'Schnelle Webansicht',
+    description:
+      'PDFs so vorbereiten, dass die erste Seite vor der vollständigen Datei geladen werden kann.',
+    icon: FileCheck2,
+    group: 3,
+    action: 'Webansicht optimieren',
+    fresh: true,
+  },
+  {
+    id: 'structured-export',
+    title: 'PDF zu strukturiertem JSON',
+    description:
+      'Text, Seiten und Fundstellen als strukturierte Daten zur Weiterverarbeitung exportieren.',
+    icon: FileInput,
+    group: 1,
+    action: 'JSON exportieren',
+    fresh: true,
+  },
+
+  {
     id: 'form-responses',
     title: 'Formularrückläufe auswerten',
     description:
@@ -110,7 +189,7 @@ export const tools = [
     id: 'pdf-layers',
     title: 'PDF-Ebenen verwalten',
     description:
-      'Schaltbare Ebenen ein- und ausblenden, die Ansicht prüfen und als neue PDF mit Seitenbildern festschreiben.',
+      'PDF-Ebenen umbenennen, ihre Reihenfolge und Sichtbarkeit speichern oder die Ansicht als Seitenbilder festschreiben.',
     icon: Layers,
     group: 3,
     action: 'Ebenen laden',

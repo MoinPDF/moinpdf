@@ -14,6 +14,9 @@ importers:
       '@bwip-js/browser':
         specifier: ^4.11.4
         version: 4.11.4
+      '@embedpdf/pdfium':
+        specifier: 2.15.1
+        version: 2.15.1
       '@fontsource-variable/manrope':
         specifier: ^5.3.0
         version: 5.3.0
@@ -32,11 +35,68 @@ importers:
       '@shadcn/react':
         specifier: ^0.3.0
         version: 0.3.0(@types/react@19.2.14)(react@19.2.6)
+      '@tesseract.js-data/ara':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/ces':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/chi_sim':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/dan':
+        specifier: 1.0.0
+        version: 1.0.0
       '@tesseract.js-data/deu':
         specifier: ^1.0.0
         version: 1.0.0
       '@tesseract.js-data/eng':
         specifier: ^1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/fin':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/fra':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/hin':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/ita':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/jpn':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/kor':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/nld':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/nor':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/pol':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/por':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/rus':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/spa':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/swe':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/tur':
+        specifier: 1.0.0
+        version: 1.0.0
+      '@tesseract.js-data/ukr':
+        specifier: 1.0.0
         version: 1.0.0
       '@zxing/library':
         specifier: ^0.23.0
@@ -107,6 +167,9 @@ importers:
       tesseract.js:
         specifier: ^7.0.0
         version: 7.0.0
+      utif:
+        specifier: 3.1.0
+        version: 3.1.0
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -129,6 +192,9 @@ importers:
       '@types/react-dom':
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.14)
+      '@types/utif':
+        specifier: 3.0.6
+        version: 3.0.6
       '@vitejs/plugin-react':
         specifier: 6.0.2
         version: 6.0.2(vite@8.0.13(@types/node@22.19.19)(esbuild@0.28.0)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1))
@@ -141,6 +207,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: 7.1.1
         version: 7.1.1(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)
+      fake-indexeddb:
+        specifier: 6.2.4
+        version: 6.2.4
       globals:
         specifier: 16.4.0
         version: 16.4.0
@@ -272,6 +341,9 @@ packages:
 
   '@date-fns/tz@1.5.0':
     resolution: {integrity: sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg==}
+
+  '@embedpdf/pdfium@2.15.1':
+    resolution: {integrity: sha512-qDH4gEkGSQT0iM+07Hpm3LyvoB7PEFbW3Qyk6+LPkEYLJYfHagkHM1OzYlDq2EDOhJRguykTkzdMOT3/w27x5Q==}
 
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
@@ -1618,11 +1690,68 @@ packages:
   '@tailwindcss/postcss@4.2.1':
     resolution: {integrity: sha512-OEwGIBnXnj7zJeonOh6ZG9woofIjGrd2BORfvE5p9USYKDCZoQmfqLcfNiRWoJlRWLdNPn2IgVZuWAOM4iTYMw==}
 
+  '@tesseract.js-data/ara@1.0.0':
+    resolution: {integrity: sha512-bB60Av6dsv9LRUrlaM6SgnAwjUpdbanw9Jf3mbhDCZAhX7Cp8u7YjI8EWfCvMhH3R2QJT/2EA8cijqPANOhwaA==}
+
+  '@tesseract.js-data/ces@1.0.0':
+    resolution: {integrity: sha512-mXnVy8WoG/ImbrpN5oggaBBMSrHQH+hKbgkbPQeVY6MChIDDZT1H+e2I4eiAvl+fypfIbiqpIcodGex03PXvfw==}
+
+  '@tesseract.js-data/chi_sim@1.0.0':
+    resolution: {integrity: sha512-iuErURkPbECDUazgsLn/r3c+tU2y5o5S/w14d0A/YiagfsjYyZKgTo75RUpsGJ311qtu0dIX4hqnXAAjmqf2CA==}
+
+  '@tesseract.js-data/dan@1.0.0':
+    resolution: {integrity: sha512-nlR/VS/YKJs8u0SSa3C+wUTIopPIKwVG016T4/Lk2BsUOME3EkXgHWyGbzfobd5+6dwA+FYaUB17GVgIo7Zphg==}
+
   '@tesseract.js-data/deu@1.0.0':
     resolution: {integrity: sha512-3ter1p2gFAiCd5CMC+PodZ9YY2UDomkKj+ytlKeeZqOUmhLx1SDnYPf5zog0g5MBbxYveW+8omI3PUflqHfZ4Q==}
 
   '@tesseract.js-data/eng@1.0.0':
     resolution: {integrity: sha512-mbTumm6KQPUHyzTPQaF3ObXYnx0SqqfV2nabqFVQBwD6Kl7PhGSLSzOlfFTWy0P3BjghaSKA2W9GB19Jk+ZcTg==}
+
+  '@tesseract.js-data/fin@1.0.0':
+    resolution: {integrity: sha512-JLD9iF4Q3gqspuB5dphSZw7HT+EGZ6pKqoTUfDrUU9kYxGa2xkISa/3X/JpFZ6Lw8Lh6Ved0uVxUZhMuzoK9Dw==}
+
+  '@tesseract.js-data/fra@1.0.0':
+    resolution: {integrity: sha512-pp58gMaoyidoBBLd5y5rnf0WW0Y1994QrGqZrYatITqIU/AReUJMykD+YY3JDgvnmgz7uAx1UmhjjuyEmV8JEA==}
+
+  '@tesseract.js-data/hin@1.0.0':
+    resolution: {integrity: sha512-MB6WY6g4SAtrs+Xuyz5JDDsLFCykCwIESV7M9KkyxF71bxBqhLa8e7GJi5yGa/Wl6V4nuC7LWX/EMdSyTINTvg==}
+
+  '@tesseract.js-data/ita@1.0.0':
+    resolution: {integrity: sha512-Sx19NVYve5VAxEBDL6CWTX+evlvzV+iAS5ejJywcHVsmir/C9Tzw2fExoh97QFc06t48tYZA8VrMobsBzMAEhA==}
+
+  '@tesseract.js-data/jpn@1.0.0':
+    resolution: {integrity: sha512-nUq2xHUjiWE6FRqkvLIIbByLZ39B8qNaBSOnVP4XIKGPKtZ1e0hiRnK7WhPfl8A+Fe7aNE1u/QoXXUym3TbSCA==}
+
+  '@tesseract.js-data/kor@1.0.0':
+    resolution: {integrity: sha512-tepYhsYiRJ8E44R27MHxVteEDDLfYQxuvM6u4JlEHcCYqwpefvI5TGzoMgB67kunOvtyEJYtT5zfJ/6R6FVU9w==}
+
+  '@tesseract.js-data/nld@1.0.0':
+    resolution: {integrity: sha512-Fq9TDxewYAw3YBLqLYEu3rziNUHq0F1NnnM49vI0E5o6S2oKcirhTumGvv8ws088+li1llyKXT9nfrHuxxetHQ==}
+
+  '@tesseract.js-data/nor@1.0.0':
+    resolution: {integrity: sha512-UYIAl2T2g9Nha+uKQie4uE4zGN1a/sbs4sddsH3Ao54BguKyGbSBz4pBG/+zZY2Lnre3/z/z3d9RiVL6DVKvPw==}
+
+  '@tesseract.js-data/pol@1.0.0':
+    resolution: {integrity: sha512-e9naSi/5kIXIMsymriFMUXJ2XWxRY/09qU9pkmEN28nAeMyF70EYkn4G3iHoB2oF/HNhZpy8lCIe1/I2L/BqKA==}
+
+  '@tesseract.js-data/por@1.0.0':
+    resolution: {integrity: sha512-sQ7GqYUgKaMmV0vNujYoXLlXUp2e5RGGkJxQ3L59kUOaupIugLJeb1dqhrfgyb71XQw7ltdSuXdQIoaoS/rpsQ==}
+
+  '@tesseract.js-data/rus@1.0.0':
+    resolution: {integrity: sha512-GVOaLultru90gsuVGjXyPCKsg4SMeExnqSnzb8Gb+9zZ0F4wbA6bgWu/metQlcmU7OwTnYVd4UdSH9D4yBMZEA==}
+
+  '@tesseract.js-data/spa@1.0.0':
+    resolution: {integrity: sha512-9Ln+QKq/TNu4Hy4aOp5b4nXo9U0C6IqJMzNDpAJZe/fNtz6jXG9G/hQgR/Irxj+RGf0M7Xy1MNx1yl4wQUIfeg==}
+
+  '@tesseract.js-data/swe@1.0.0':
+    resolution: {integrity: sha512-9BRWhTs8THTaBtFNvaTSZbL8gb14CH86TsdNjpDVBgm4kOS5RW8V6xfM91SEho4rlxyzAJPA909GRD1xsJbyJg==}
+
+  '@tesseract.js-data/tur@1.0.0':
+    resolution: {integrity: sha512-510AUJda8BsgrTchfIIH1uV1wfYp28+PLy74sxSQiHM0sLv9kjbNyooxUCo/R4TOjLQY0fXQ2QWwozWlSlXrkw==}
+
+  '@tesseract.js-data/ukr@1.0.0':
+    resolution: {integrity: sha512-W/i5g9xbyBHJxklEb0mU2iLENBzU9CgXk1LVg82aQ95IaRwNFjY1z5y0vMcydEHQLx/TeawGrHiqlWoyXWCDzA==}
 
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
@@ -1676,6 +1805,9 @@ packages:
 
   '@types/use-sync-external-store@0.0.6':
     resolution: {integrity: sha512-zFDAD+tlpf2r4asuHEj0XH6pY6i0g5NeAHPn+15wk3BV6JA69eERFXC1gyGThDkVa1zCyKr5jox1+2LbV/AMLg==}
+
+  '@types/utif@3.0.6':
+    resolution: {integrity: sha512-4XHDJkLHoUeLA2P/VOd6dpDJpSTpV84tN9EyHojZrW22jtUR0VrdLwVRUAw+oI3g72vSzOo+YQOzfwcW6WYHLw==}
 
   '@typescript-eslint/eslint-plugin@8.59.3':
     resolution: {integrity: sha512-PwFvSKsXGShKGW6n5bZOhGHEcCZXM8HofLK9fNsEwZXzFRjoY+XT1Vsf1zgyXdwTr0ZYz1/2tkZ0DBTT9jZjhw==}
@@ -2039,6 +2171,10 @@ packages:
 
   eventemitter3@5.0.4:
     resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
+
+  fake-indexeddb@6.2.4:
+    resolution: {integrity: sha512-INKeIKEtSViN4yVtEWEUqbsqmaIy7Ls+MfU0yxQVXg67pOJ/sH1ZxcVrP8XrKULUFohcPD9gnmym+qBfEybACw==}
+    engines: {node: '>=18'}
 
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -2803,6 +2939,9 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  utif@3.1.0:
+    resolution: {integrity: sha512-WEo4D/xOvFW53K5f5QTaTbbiORcm2/pCL9P6qmJnup+17eYfKaEhDeX9PeQkuyEoIxlbGklDuGl8xwuXYMrrXQ==}
+
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
@@ -3036,6 +3175,8 @@ snapshots:
   '@bwip-js/browser@4.11.4': {}
 
   '@date-fns/tz@1.5.0': {}
+
+  '@embedpdf/pdfium@2.15.1': {}
 
   '@emnapi/core@1.10.0':
     dependencies:
@@ -4208,9 +4349,47 @@ snapshots:
       postcss: 8.5.23
       tailwindcss: 4.2.1
 
+  '@tesseract.js-data/ara@1.0.0': {}
+
+  '@tesseract.js-data/ces@1.0.0': {}
+
+  '@tesseract.js-data/chi_sim@1.0.0': {}
+
+  '@tesseract.js-data/dan@1.0.0': {}
+
   '@tesseract.js-data/deu@1.0.0': {}
 
   '@tesseract.js-data/eng@1.0.0': {}
+
+  '@tesseract.js-data/fin@1.0.0': {}
+
+  '@tesseract.js-data/fra@1.0.0': {}
+
+  '@tesseract.js-data/hin@1.0.0': {}
+
+  '@tesseract.js-data/ita@1.0.0': {}
+
+  '@tesseract.js-data/jpn@1.0.0': {}
+
+  '@tesseract.js-data/kor@1.0.0': {}
+
+  '@tesseract.js-data/nld@1.0.0': {}
+
+  '@tesseract.js-data/nor@1.0.0': {}
+
+  '@tesseract.js-data/pol@1.0.0': {}
+
+  '@tesseract.js-data/por@1.0.0': {}
+
+  '@tesseract.js-data/rus@1.0.0': {}
+
+  '@tesseract.js-data/spa@1.0.0': {}
+
+  '@tesseract.js-data/swe@1.0.0': {}
+
+  '@tesseract.js-data/tur@1.0.0': {}
+
+  '@tesseract.js-data/ukr@1.0.0': {}
 
   '@tybys/wasm-util@0.10.2':
     dependencies:
@@ -4262,6 +4441,10 @@ snapshots:
       csstype: 3.2.3
 
   '@types/use-sync-external-store@0.0.6': {}
+
+  '@types/utif@3.0.6':
+    dependencies:
+      '@types/node': 22.19.19
 
   '@typescript-eslint/eslint-plugin@8.59.3(@typescript-eslint/parser@8.59.3(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3))(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@5.9.3)':
     dependencies:
@@ -4684,6 +4867,8 @@ snapshots:
   esutils@2.0.3: {}
 
   eventemitter3@5.0.4: {}
+
+  fake-indexeddb@6.2.4: {}
 
   fast-deep-equal@3.1.3: {}
 
@@ -5377,6 +5562,10 @@ snapshots:
   use-sync-external-store@1.6.0(react@19.2.6):
     dependencies:
       react: 19.2.6
+
+  utif@3.1.0:
+    dependencies:
+      pako: 1.0.11
 
   util-deprecate@1.0.2: {}
 

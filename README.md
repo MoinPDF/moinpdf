@@ -46,7 +46,7 @@ Die [Funktionsübersicht](docs/FUNKTIONEN.md) erklärt die Werkzeuge, Ausgabefor
 2. **Vorhaben auswählen.** Die Frage „Was möchtest du tun?“ beantworten oder durch die Werkzeugkategorien stöbern.
 3. **Prüfen und anwenden.** Einstellungen und Vorschau kontrollieren, Ergebnis herunterladen oder direkt weiterbearbeiten.
 
-Über **„Werkzeug wechseln“** bleiben deine Arbeitsdokumente erhalten. Die Oberfläche passt sich an Desktop und Smartphone an. Lade Ergebnisse vor dem Schließen herunter: Die Dokumente liegen in der aktuellen Sitzung.
+Über **„Werkzeug wechseln“** bleiben deine Arbeitsdokumente erhalten. Die Oberfläche passt sich an Desktop und Smartphone an. Über **„Projekte“** kannst du Arbeitsstände einschließlich Seitenanordnung, Editoränderungen und Verlauf lokal speichern und später fortsetzen. Die letzten fünf gespeicherten Stände bleiben in diesem Browser verfügbar. Lade wichtige Ergebnisse zusätzlich herunter.
 
 ## Schnellstart
 

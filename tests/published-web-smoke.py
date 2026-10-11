@@ -26,7 +26,7 @@ completed = []
 
 def chooser(page):
     page.get_by_role('heading', name='Was möchtest du tun?', exact=True).wait_for()
-    expect(page.locator('.chooser-tool')).to_have_count(100)
+    expect(page.locator('.chooser-tool')).to_have_count(108)
 
 def back(page):
     page.get_by_role('button', name=re.compile(r'^(Alle Werkzeuge|Werkzeug wechseln)$')).click()
@@ -38,7 +38,7 @@ def no_overflow(page, context):
 
 def all_views(page, messages, context, empty=False):
     titles = page.locator('.chooser-tool strong').all_text_contents()
-    assert len(titles) == len(set(titles)) == 100
+    assert len(titles) == len(set(titles)) == 108
     for title in titles:
         page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
         if empty and page.locator('.upload-entry').is_visible():
@@ -53,7 +53,7 @@ def all_views(page, messages, context, empty=False):
         assert not messages, f'JavaScript exception in {context} / {title}: {messages}'
         no_overflow(page, context + ' / ' + title)
         back(page)
-    completed.append(f'{context}: all 100 tool entries checked without losing files')
+    completed.append(f'{context}: all 108 tool entries checked without losing files')
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
@@ -98,7 +98,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             count = page.locator('.chooser-tool').count()
             assert count > 0, f'Empty category {label}'
             total += count
-        assert total == 100
+        assert total == 108
         categories.get_by_role('button', name='Alle', exact=True).click()
         chooser(page)
         search = page.get_by_placeholder('Zum Beispiel: PDF kleiner machen …', exact=True)
@@ -127,6 +127,34 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             assert 'Zweite Seite' in document[1].get_text()
         completed.append('Real PDF preview and two-page PDF download independently read back')
         back(page)
+
+        page.get_by_role('button', name='PDF-Objekte bearbeiten', exact=True).click()
+        page.get_by_role('button', name='Seitenobjekte laden', exact=True).click()
+        page.get_by_label('Objekt auswählen', exact=True).select_option(index=1)
+        page.get_by_label('Textinhalt', exact=True).fill('Moin mit Originalschrift.')
+        page.get_by_role('button', name='Objektänderung exportieren', exact=True).click()
+        expect(page.locator('.advanced-result')).to_be_visible()
+        with page.expect_download() as download:
+            page.locator('.advanced-result a[download]').click()
+        saved = Path(temporary) / 'native-objekte.pdf'
+        download.value.save_as(saved)
+        with pymupdf.open(saved) as document:
+            assert 'Moin mit Originalschrift.' in document[0].get_text()
+            assert 'Moin aus dem Norden' not in document[0].get_text()
+            assert 'Zweite Seite' in document[1].get_text()
+        completed.append('Production PDFium worker changes original text; independent PyMuPDF readback')
+        back(page)
+
+        page.get_by_role('button', name='Projekte', exact=True).click()
+        page.get_by_label('Projektname', exact=True).fill('Browser-Testprojekt')
+        page.get_by_role('button', name='Projekt speichern', exact=True).click()
+        expect(page.get_by_text('Arbeitsstand gespeichert.', exact=True)).to_be_visible()
+        page.reload(wait_until='networkidle')
+        page.get_by_role('button', name='Projekte', exact=True).click()
+        page.get_by_role('button', name='Öffnen', exact=True).first.click()
+        chooser(page)
+        expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
+        completed.append('IndexedDB project survives reload and restores the complete PDF session')
 
         page.get_by_role('button', name='PDF zu E-Book', exact=True).click()
         page.get_by_role('button', name='EPUB erstellen', exact=True).click()

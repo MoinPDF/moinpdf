@@ -32,6 +32,7 @@ export type ToolId =
   | 'numbers';
 export type JobOptions = {
   language: string;
+  ocrLayout?: string;
   forceOcr: boolean;
   imageFormat: string;
   quality: string;
@@ -122,40 +123,9 @@ export async function openSource(
     bytes = await invoicePdf(invoiceFromBytes(bytes, file.name));
     kind = 'invoice';
   } else if (!new TextDecoder().decode(bytes.slice(0, 1024)).includes('%PDF-')) {
-    if (!((bytes[0] === 0x89 && bytes[1] === 0x50) || (bytes[0] === 0xff && bytes[1] === 0xd8)))
-      throw new Error('Bitte verwende eine PDF-, Rechnungs-XML-, JPG- oder PNG-Datei.');
     kind = 'image';
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    try {
-      image.src = url;
-      await image.decode();
-      if (image.naturalWidth * image.naturalHeight > 40_000_000)
-        throw new Error('Das Bild ist zu groß. Bitte auf unter 40 Megapixel verkleinern.');
-      const canvas = document.createElement('canvas');
-      const scale = Math.min(1, 3500 / Math.max(image.naturalWidth, image.naturalHeight));
-      canvas.width = Math.round(image.naturalWidth * scale);
-      canvas.height = Math.round(image.naturalHeight * scale);
-      const ctx = canvas.getContext('2d')!;
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const pdf = await PDFDocument.create();
-      const jpg = await pdf.embedJpg(canvas.toDataURL('image/jpeg', 0.94));
-      const landscape = canvas.width > canvas.height;
-      const size: [number, number] = landscape ? [841.89, 595.28] : [595.28, 841.89];
-      const page = pdf.addPage(size);
-      const fitted = jpg.scaleToFit(size[0] - 40, size[1] - 40);
-      page.drawImage(jpg, {
-        x: (size[0] - fitted.width) / 2,
-        y: (size[1] - fitted.height) / 2,
-        ...fitted,
-      });
-      bytes = new Uint8Array(await pdf.save());
-      canvas.width = canvas.height = 0;
-    } finally {
-      URL.revokeObjectURL(url);
-    }
+    const { imageFilePdf } = await import('./image-codecs');
+    bytes = await imageFilePdf(file, bytes);
   }
   const pdfjs = await getPdfJs();
   let wasEncrypted = false;
@@ -393,7 +363,9 @@ export async function runJob(
               .catch(() => {});
             worker = await abortable(creating, signal);
             await worker.setParameters({
-              tessedit_pageseg_mode: PSM.AUTO,
+              tessedit_pageseg_mode: (['3', '4', '6', '7', '11'].includes(options.ocrLayout || '')
+                ? options.ocrLayout
+                : PSM.AUTO) as typeof PSM.AUTO,
               preserve_interword_spaces: '1',
             });
           }
@@ -422,18 +394,19 @@ export async function runJob(
         const side = tool === 'compress' ? (options.quality === 'small' ? 1400 : 2000) : 2400;
         const { canvas, width, height } = await renderPage(source, item, side, signal);
         try {
-          const jpeg = tool === 'compress' || options.imageFormat === 'jpg';
-          const blob = await new Promise<Blob>((resolve, reject) =>
-            canvas.toBlob(
-              (b) => (b ? resolve(b) : reject(new Error('Das Bild konnte nicht erstellt werden.'))),
-              jpeg ? 'image/jpeg' : 'image/png',
-              tool === 'compress' ? (options.quality === 'small' ? 0.5 : 0.76) : 0.92,
-            ),
+          const { rasterBlob } = await import('./image-codecs');
+          const format = tool === 'compress' ? 'jpg' : options.imageFormat;
+          if (!['png', 'jpg', 'webp', 'tiff', 'bmp'].includes(format))
+            throw new Error('Unbekanntes Bildformat.');
+          const blob = await rasterBlob(
+            canvas,
+            format as import('./image-codecs').RasterFormat,
+            tool === 'compress' ? (options.quality === 'small' ? 0.5 : 0.76) : 0.92,
           );
           const data = new Uint8Array(await blob.arrayBuffer());
           if (zip)
             zip.file(
-              `${String(i + 1).padStart(3, '0')}-${filenameStem(source.name)}.${jpeg ? 'jpg' : 'png'}`,
+              `${String(i + 1).padStart(3, '0')}-${filenameStem(source.name)}.${format}`,
               data,
             );
           else {

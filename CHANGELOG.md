@@ -9,6 +9,26 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.6.0 – 2026-10-11
+
+- Acht neue Browserwerkzeuge: Originalobjekte bearbeiten, Bates-Nummerierung,
+  Seitenbezeichnungen, freie Drehwinkel, lange Seiten, Posterdruck, schnelle
+  Webansicht und strukturierter JSON-Export. Insgesamt 108 Werkzeuge.
+- PDFium verarbeitet Originaltexte, Bilder und Grafiken in einem abbrechbaren
+  lokalen Worker. Textbearbeitung erhält verfügbare Originalschriften und
+  meldet fehlende Zeichen. Einzelne Textobjekte, noch kein Absatzeditor.
+- 21 lokal bereitgestellte OCR-Sprachen und wählbarer Seitenaufbau.
+- WebP/BMP/TIFF/SVG-Import, mehrseitige TIFFs; WebP/TIFF/BMP-Export.
+- PDF-Ebenen umbenennen und ihre Navigation/Sichtbarkeit speichern, ohne Text
+  und Vektorgrafiken in Seitenbilder umzuwandeln.
+- Wenn-/Sonst-Schritte in Arbeitsabläufen mit nachvollziehbarem ZIP-Protokoll.
+- Lokale PDF-Projekte mit fünf gespeicherten Arbeitsständen, Wiederherstellung
+  und Rückgängig-Verlauf. Projektdaten liegen unverschlüsselt im Browserspeicher.
+- Unabhängige Prüfungen mit PDF.js und PDFium, tatsächliche QPDF-Linearisierung,
+  Bildcodec- und IndexedDB-Prüfungen. 18 Engine-Testsuiten.
+- Umfang und noch offene Teile des größeren Ausbaus in
+  [docs/AUSBAUSTAND.md](docs/AUSBAUSTAND.md) festgehalten.
+
 ## 0.5.11 – 2026-10-10
 
 - Eigenständige Entwicklungs- und Build-Konfiguration für die Docker-Ausgabe.

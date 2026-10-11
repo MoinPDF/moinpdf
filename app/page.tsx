@@ -1,4 +1,6 @@
 'use client';
+import { ProjectManager } from '@/components/studio/project-manager';
+import { ocrLanguages, ocrLayouts } from '@/lib/ocr-languages';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import {
   FileText,
@@ -161,6 +163,7 @@ import {
 const defaults: StudioOptions = {
   ...extraDefaults,
   language: 'deu',
+  ocrLayout: '3',
   forceOcr: false,
   imageFormat: 'png',
   quality: 'balanced',
@@ -186,6 +189,9 @@ export default function Home() {
 }
 function Studio() {
   const { setOpenMobile } = useSidebar();
+  const [projectIdentity, setProjectIdentity] = useState<{ id?: string; name: string }>({
+    name: 'Mein PDF-Projekt',
+  });
   const [sources, setSources] = useState<Source[]>([]),
     [pages, setPages] = useState<PageItem[]>([]),
     [edits, setEdits] = useState<Edits>(emptyEdits),
@@ -1006,7 +1012,14 @@ function Studio() {
     return () => life.abort();
   }, []);
   const renderChoice = (
-    key: 'language' | 'imageFormat' | 'quality' | 'pageSize' | 'orientation' | 'perSheet',
+    key:
+      | 'ocrLayout'
+      | 'language'
+      | 'imageFormat'
+      | 'quality'
+      | 'pageSize'
+      | 'orientation'
+      | 'perSheet',
     label: string,
     items: [string, string][],
   ) => (
@@ -1049,6 +1062,31 @@ function Studio() {
         }}
       />
       <PasswordPrompt request={passwordRequest} onClose={() => setPasswordRequest(null)} />
+      <ProjectManager
+        identity={projectIdentity}
+        setIdentity={setProjectIdentity}
+        sources={sources}
+        locked={locked}
+        state={{ pages, edits, options, history, future, documentSessions, activeId, toolId }}
+        onRestore={(loaded, state) => {
+          refs.current.sources.forEach((s) => void s.pdf.loadingTask.destroy());
+          setSources(loaded);
+          setPages(state.pages);
+          setEdits(state.edits);
+          setOptions({ ...defaults, ...state.options });
+          setHistory(state.history);
+          setFuture(state.future);
+          setDocumentSessions(state.documentSessions);
+          setActiveId(state.activeId);
+          setToolId(
+            tools.some((t) => t.id === state.toolId) ? (state.toolId as WorkspaceTool) : 'inspect',
+          );
+          setResult(null);
+          setError('');
+          setChoosingTool(true);
+          setSelectedMarkId('');
+        }}
+      />
     </>
   );
   if (!choosingTool && isAdvancedTool(toolId))
@@ -2082,11 +2120,7 @@ function Studio() {
               )}
               {toolId === 'inspect' && (
                 <>
-                  {renderChoice('language', 'Sprache für Scan-Suche', [
-                    ['deu', 'Deutsch'],
-                    ['deu+eng', 'Deutsch & Englisch'],
-                    ['eng', 'Englisch'],
-                  ])}
+                  {renderChoice('language', 'Sprache für Scan-Suche', ocrLanguages)}
                   <div className="check-howto">
                     <span>01</span>
                     <p>Begriff eingeben und über alle geöffneten Dateien suchen.</p>
@@ -2103,11 +2137,8 @@ function Studio() {
               )}
               {toolId === 'ocr' && (
                 <>
-                  {renderChoice('language', 'Erkennungssprache', [
-                    ['deu', 'Deutsch'],
-                    ['deu+eng', 'Deutsch & Englisch'],
-                    ['eng', 'Englisch'],
-                  ])}
+                  {renderChoice('language', 'Erkennungssprache', ocrLanguages)}
+                  {renderChoice('ocrLayout', 'Seitenaufbau', ocrLayouts)}
                   <label className="switch-field">
                     <span>
                       Alle Seiten neu erkennen<small>Auch vorhandenen Text</small>
@@ -2128,6 +2159,9 @@ function Studio() {
                 renderChoice('imageFormat', 'Bildformat', [
                   ['png', 'PNG · scharfe Schrift'],
                   ['jpg', 'JPG · kleinere Dateien'],
+                  ['webp', 'WebP · moderne Komprimierung'],
+                  ['tiff', 'TIFF · verlustfrei'],
+                  ['bmp', 'BMP · unkomprimiert'],
                 ])}
               {toolId === 'compress' && (
                 <>

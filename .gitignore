@@ -13,6 +13,7 @@ server/.venv/
 __pycache__/
 *.pyc
 public/vendor/pdf/
+public/vendor/pdfium/
 public/vendor/ocr/
 public/vendor/qpdf/
 public/vendor/languages/
