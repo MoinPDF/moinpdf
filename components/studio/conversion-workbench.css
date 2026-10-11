@@ -201,3 +201,34 @@
     text-align: center;
   }
 }
+
+.accessible-editor {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+}
+.accessible-block {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid var(--line, #d7dfe1);
+  border-radius: 0.8rem;
+  min-width: 0;
+}
+.accessible-block-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.accessible-block img {
+  max-width: 100%;
+  max-height: 16rem;
+  object-fit: contain;
+}
+.accessible-editor textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 0.6rem;
+  border: 1px solid #ced5d8;
+  border-radius: 0.5rem;
+}

@@ -1,4 +1,5 @@
 import { init, type WrappedPdfiumModule } from '@embedpdf/pdfium';
+import fontkit from '@pdf-lib/fontkit';
 
 export type NativeRect = { x: number; y: number; w: number; h: number };
 export type NativeObject = NativeRect & {
@@ -18,6 +19,18 @@ export type NativeChange = {
   image?: { width: number; height: number; rgba: Uint8Array };
 };
 export type NativeRemoval = { page: number; rect: NativeRect; color?: string };
+export type NativeParagraph = {
+  indices: number[];
+  rect: NativeRect;
+  text: string;
+  fontBytes: Uint8Array;
+  fontSize: number;
+  lineHeight: number;
+  padding: number;
+  align: 'left' | 'center' | 'right';
+  color: string;
+};
+export type NativeParagraphResult = { bytes: Uint8Array; lines: number; height: number };
 type NativeContext = {
   api: WrappedPdfiumModule;
   doc: number;
@@ -329,6 +342,253 @@ export function editNativeObjects(
     }
   });
 }
+/** Replace explicitly selected top-level text objects by one consistently styled paragraph.
+ * All validation and layout happen before any original object is removed. */
+export function replaceNativeParagraph(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+  settings: NativeParagraph,
+): NativeParagraphResult {
+  const { rect: r, fontSize, padding, lineHeight, align, indices, fontBytes, color } = settings;
+  if (!indices.length || indices.length > 500 || new Set(indices).size !== indices.length)
+    throw new Error('Bitte 1 bis 500 unterschiedliche Textobjekte auswählen.');
+  if (
+    ![r.x, r.y, r.w, r.h, fontSize, padding, lineHeight].every(Number.isFinite) ||
+    r.x < 0 ||
+    r.y < 0 ||
+    r.w <= 0 ||
+    r.h <= 0 ||
+    r.x + r.w > 1.00001 ||
+    r.y + r.h > 1.00001 ||
+    fontSize < 6 ||
+    fontSize > 144 ||
+    padding < 0 ||
+    padding > 72 ||
+    lineHeight < 1 ||
+    lineHeight > 3 ||
+    !['left', 'center', 'right'].includes(align) ||
+    !/^#[0-9a-f]{6}$/i.test(color)
+  )
+    throw new Error('Bitte Textbereich, Schriftgröße, Abstand und Farbe prüfen.');
+  const text = settings.text.replace(/\r\n?/g, '\n').replace(/\t/g, '    ').normalize('NFC');
+  if (!text.trim() || text.length > 20000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(text))
+    throw new Error('Bitte 1 bis 20.000 Zeichen ohne Steuerzeichen eingeben.');
+  // This engine positions Unicode characters without a shaping/bidi engine.
+  // Fail explicitly rather than silently producing disconnected or reversed text.
+  const complexRanges = [
+    [0x590, 0x109f],
+    [0x1780, 0x18af],
+    [0x200b, 0x200f],
+    [0x202a, 0x202e],
+    [0x2060, 0x206f],
+    [0xa980, 0xa9df],
+    [0xaa00, 0xaaff],
+    [0xfb1d, 0xfeff],
+  ];
+  if (
+    Array.from(text).some((ch) => {
+      const code = ch.codePointAt(0)!;
+      return (
+        /\p{M}/u.test(ch) || code > 0xffff || complexRanges.some(([a, b]) => code >= a && code <= b)
+      );
+    })
+  )
+    throw new Error(
+      'Dieser Absatzeditor unterstützt links-nach-rechts gesetzte Schrift ohne komplexe Zeichenformung. Bitte lateinische, griechische oder kyrillische Texte verwenden.',
+    );
+  if (
+    fontBytes.length < 12 ||
+    fontBytes.length > 10 * 1024 * 1024 ||
+    new DataView(fontBytes.buffer, fontBytes.byteOffset, fontBytes.byteLength).getUint32(0) !==
+      0x00010000
+  )
+    throw new Error('Bitte eine einzelne TrueType-Schrift (.ttf), höchstens 10 MB, verwenden.');
+  let fontInfo;
+  try {
+    fontInfo = fontkit.create(fontBytes);
+  } catch {
+    throw new Error('Die TrueType-Schrift ist nicht lesbar.');
+  }
+  if (
+    !fontInfo.characterSet ||
+    ('variationAxes' in fontInfo && Object.keys(fontInfo.variationAxes as object).length)
+  )
+    throw new Error(
+      'Bitte eine statische TrueType-Schrift verwenden, keine variable Schrift oder Schriftsammlung.',
+    );
+  const characterSet = new Set<number>(fontInfo.characterSet);
+  for (const ch of text) {
+    if (ch === '\n') continue;
+    if (!characterSet.has(ch.charCodeAt(0)))
+      throw new Error(
+        `Die gewählte Schrift enthält das Zeichen „${ch}“ nicht. Bitte eine passende TrueType-Schrift wählen.`,
+      );
+  }
+  return open(api, bytes, (ctx) => {
+    const page = pageHandle(ctx, index),
+      handles: number[] = [];
+    let font = 0;
+    try {
+      const count = api.FPDFPage_CountObjects(page);
+      if (count > 10000) throw new Error('Diese Seite enthält zu viele Objekte.');
+      for (const id of indices) {
+        const obj =
+          Number.isInteger(id) && id >= 0 && id < count ? api.FPDFPage_GetObject(page, id) : 0;
+        if (!obj || api.FPDFPageObj_GetType(obj) !== 1)
+          throw new Error(
+            'Die Auswahl enthält ein ungültiges Objekt. Bitte ausschließlich Text auswählen.',
+          );
+        handles.push(obj);
+      }
+      const fp = ctx.alloc(fontBytes.length);
+      try {
+        heap(api).set(fontBytes, fp);
+        font = api.FPDFText_LoadFont(ctx.doc, fp, fontBytes.length, 2, true);
+      } finally {
+        ctx.free(fp);
+      }
+      if (!font) throw new Error('Die Schrift konnte nicht eingebettet werden.');
+      const origin = toPdf(ctx, page, 0, 0),
+        right = toPdf(ctx, page, 1, 0),
+        bottom = toPdf(ctx, page, 0, 1);
+      const u = [right[0] - origin[0], right[1] - origin[1]],
+        v = [bottom[0] - origin[0], bottom[1] - origin[1]];
+      const width = Math.hypot(...u),
+        height = Math.hypot(...v),
+        available = r.w * width - 2 * padding;
+      if (available <= 0 || r.h * height <= 2 * padding)
+        throw new Error('Der Textbereich ist kleiner als sein Innenabstand.');
+      const metrics = ctx.alloc(8),
+        advances = new Map<string, number>();
+      let ascent: number, descent: number;
+      try {
+        if (
+          !api.FPDFFont_GetAscent(font, fontSize, metrics) ||
+          !api.FPDFFont_GetDescent(font, fontSize, metrics + 4)
+        )
+          throw new Error('Die Schriftmaße sind nicht lesbar.');
+        ascent = api.pdfium.getValue(metrics, 'float');
+        descent = Math.abs(api.pdfium.getValue(metrics + 4, 'float'));
+        for (const ch of text) {
+          if (ch === '\n' || advances.has(ch)) continue;
+          if (!api.FPDFFont_GetGlyphWidth(font, ch.charCodeAt(0), fontSize, metrics))
+            throw new Error(`Die Breite des Zeichens „${ch}“ ist nicht lesbar.`);
+          const value = api.pdfium.getValue(metrics, 'float');
+          if (!Number.isFinite(value) || value < 0) throw new Error('Ungültige Zeichenbreite.');
+          advances.set(ch, value);
+        }
+      } finally {
+        ctx.free(metrics);
+      }
+      if (![ascent, descent].every(Number.isFinite) || ascent <= 0)
+        throw new Error('Ungültige Schriftmaße.');
+      const measure = (value: string) =>
+        Array.from(value).reduce((total, ch) => total + (advances.get(ch) || 0), 0);
+      const lines: string[] = [];
+      for (const explicit of text.split('\n')) {
+        // Break at ordinary spaces; NBSP is kept within a word. Oversized words
+        // are split by characters, without introducing or deleting letters.
+        let line = '';
+        for (const word of explicit.trim().split(/ +/)) {
+          if (!word) continue;
+          const candidate = line ? line + ' ' + word : word;
+          if (measure(candidate) <= available + 0.001) {
+            line = candidate;
+            continue;
+          }
+          if (line) {
+            lines.push(line);
+            line = '';
+          }
+          for (const ch of word) {
+            if (measure(ch) > available + 0.001)
+              throw new Error('Der Textbereich ist schmaler als ein einzelnes Zeichen.');
+            if (line && measure(line + ch) > available + 0.001) {
+              lines.push(line);
+              line = '';
+            }
+            line += ch;
+          }
+        }
+        lines.push(line);
+      }
+      const advance = Math.max(fontSize * lineHeight, ascent + descent),
+        used = ascent + descent + (lines.length - 1) * advance + 2 * padding;
+      if (used > r.h * height + 0.01)
+        throw new Error(
+          `Textüberlauf: ${lines.length} Zeilen benötigen ${Math.ceil(used)} pt Höhe, verfügbar sind ${Math.floor(r.h * height)} pt. Bereich vergrößern, Text kürzen oder Schrift verkleinern.`,
+        );
+      const objects: number[] = [];
+      try {
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line) continue;
+          const obj = api.FPDFPageObj_CreateTextObj(ctx.doc, font, fontSize);
+          if (!obj) throw new Error('Eine Textzeile konnte nicht erzeugt werden.');
+          objects.push(obj);
+          const size = (line.length + 1) * 2,
+            p = ctx.alloc(size);
+          try {
+            api.pdfium.stringToUTF16(line, p, size);
+            if (!api.FPDFText_SetText(obj, p))
+              throw new Error('Eine Textzeile konnte nicht gesetzt werden.');
+          } finally {
+            ctx.free(p);
+          }
+          const offset =
+            align === 'right'
+              ? available - measure(line)
+              : align === 'center'
+                ? (available - measure(line)) / 2
+                : 0;
+          const x = r.x + (padding + offset) / width,
+            y = r.y + (padding + ascent + i * advance) / height;
+          const e = origin[0] + u[0] * x + v[0] * y,
+            f = origin[1] + u[1] * x + v[1] * y;
+          api.FPDFPageObj_Transform(
+            obj,
+            u[0] / width,
+            u[1] / width,
+            -v[0] / height,
+            -v[1] / height,
+            e,
+            f,
+          );
+          const channels = [1, 3, 5].map((j) => parseInt(color.slice(j, j + 2), 16));
+          if (!api.FPDFPageObj_SetFillColor(obj, channels[0], channels[1], channels[2], 255))
+            throw new Error('Die Textfarbe konnte nicht gesetzt werden.');
+          const bounds = objectRect(ctx, page, obj);
+          if (
+            !bounds ||
+            bounds.x < r.x - 0.0001 ||
+            bounds.y < r.y - 0.0001 ||
+            bounds.x + bounds.w > r.x + r.w + 0.0001 ||
+            bounds.y + bounds.h > r.y + r.h + 0.0001
+          )
+            throw new Error(
+              'Die tatsächlichen Schriftkonturen ragen über den Textbereich. Innenabstand oder Bereich vergrößern.',
+            );
+        }
+        for (const obj of handles) {
+          if (!api.FPDFPage_RemoveObject(page, obj))
+            throw new Error('Ein Originaltext konnte nicht entfernt werden.');
+          api.FPDFPageObj_Destroy(obj);
+        }
+        while (objects.length) api.FPDFPage_InsertObject(page, objects.shift()!);
+        if (!api.FPDFPage_GenerateContent(page))
+          throw new Error('Der Absatz konnte nicht gespeichert werden.');
+        return { bytes: saved(ctx), lines: lines.length, height: used };
+      } finally {
+        for (const obj of objects) api.FPDFPageObj_Destroy(obj);
+      }
+    } finally {
+      api.FPDF_ClosePage(page);
+      if (font) api.FPDFFont_Close(font);
+    }
+  });
+}
+
 export function removeNativeRegions(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,

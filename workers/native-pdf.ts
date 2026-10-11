@@ -3,6 +3,7 @@ import {
   inspectNativeObjects,
   editNativeObjects,
   removeNativeRegions,
+  replaceNativeParagraph,
 } from '../lib/native-pdf-core';
 self.onmessage = async ({ data }) => {
   try {
@@ -16,9 +17,13 @@ self.onmessage = async ({ data }) => {
           ? editNativeObjects(api, data.bytes, data.page, data.changes)
           : data.action === 'redact'
             ? removeNativeRegions(api, data.bytes, data.removals)
-            : null;
+            : data.action === 'paragraph'
+              ? replaceNativeParagraph(api, data.bytes, data.page, data.settings)
+              : null;
     if (value === null) throw new Error('Unbekannter Auftrag.');
     if (value instanceof Uint8Array) self.postMessage({ value }, { transfer: [value.buffer] });
+    else if (value && typeof value === 'object' && 'bytes' in value)
+      self.postMessage({ value }, { transfer: [value.bytes.buffer] });
     else self.postMessage({ value });
   } catch (error) {
     self.postMessage({

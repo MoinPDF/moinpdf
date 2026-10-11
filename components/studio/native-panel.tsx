@@ -16,6 +16,7 @@ import {
   type NativeChange,
 } from '@/lib/native-pdf';
 import { packagePdfs } from '@/lib/pro-tools';
+import { NativeParagraphPanel } from './native-paragraph-panel';
 
 async function replacementImage(file: File) {
   if (file.size > 20 * 1024 * 1024)
@@ -45,7 +46,28 @@ async function replacementImage(file: File) {
     URL.revokeObjectURL(url);
   }
 }
-export function NativePanel({ source, busy, run }: PanelProps) {
+export function NativePanel(props: PanelProps) {
+  const [mode, setMode] = useState('object');
+  return (
+    <>
+      <Choice
+        label="Bearbeitung"
+        value={mode}
+        onChange={setMode}
+        items={[
+          ['object', 'Einzelne Objekte'],
+          ['paragraph', 'Absatz mit automatischem Umbruch'],
+        ]}
+      />
+      {mode === 'paragraph' ? (
+        <NativeParagraphPanel {...props} />
+      ) : (
+        <SingleObjectPanel {...props} />
+      )}
+    </>
+  );
+}
+function SingleObjectPanel({ source, busy, run }: PanelProps) {
   const [page, setPage] = useState(0),
     [objects, setObjects] = useState<NativeObject[]>([]),
     [selected, setSelected] = useState(-1),
@@ -243,9 +265,9 @@ export function NativePanel({ source, busy, run }: PanelProps) {
         <p className="fine-note">
           Die Vorschau markiert das Originalobjekt. Jede Ausgabe basiert auf der geöffneten Datei;
           für weitere Änderungen „Ergebnis übernehmen“ verwenden. Bearbeitet werden einzelne
-          Textobjekte, ohne automatischen Absatzumbruch. Fehlende Zeichen in eingebetteten Schriften
-          werden gemeldet. Inhalte in Objektgruppen sind hier gemeinsam bearbeitbar. Das Löschen ist
-          keine Sicherheitsbereinigung.
+          Textobjekte. Für mehrere Texte und automatischen Umbruch oben „Absatz“ wählen. Fehlende
+          Zeichen in eingebetteten Schriften werden gemeldet. Inhalte in Objektgruppen sind hier
+          gemeinsam bearbeitbar. Das Löschen ist keine Sicherheitsbereinigung.
         </p>
       </section>
       <section className="advanced-card">

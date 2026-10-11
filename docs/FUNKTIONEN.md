@@ -31,7 +31,7 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 - PDF fixieren (Seitenbilder)
 - Dokumentinfos entfernen
 - Text bearbeiten, Inhalte entfernen und Bilder einfügen
-- Originalobjekte bearbeiten: Text in vorhandener Schrift, Suchen/Ersetzen pro Seite, Bilder ersetzen, Objekte verschieben/drehen/skalieren/löschen; kein Absatzumbruch und keine Bearbeitung einzelner Unterobjekte in Gruppen
+- Originalobjekte bearbeiten: Text in vorhandener Schrift, Suchen/Ersetzen pro Seite, Bilder ersetzen, Objekte verschieben/drehen/skalieren/löschen; zusätzlich Absatzmodus mit mehreren Textobjekten, Schriftwechsel, automatischem Umbruch, Vorschau und Überlaufprüfung; keine Bearbeitung einzelner Unterobjekte in Gruppen
 - Linearisierung für schnelle Webansicht; strukturierter JSON-Export mit Textpositionen
 - PDF-Informationen und Textvergleich zweier PDFs
 - In Abschnitte teilen, abwechselnd zusammenfügen, Broschüren und Seiten aufteilen
@@ -127,7 +127,7 @@ Alle Werkzeuge stehen direkt unter dem Suchfeld, nach ihrer Aufgabe gegliedert. 
 | Formularfelder erkennen | Server | Leere Rechtecke, Linien und Scan-Konturen; erzeugte Felder anschließend bearbeiten |
 | Schwärzungen prüfen | Server | Textsuche, Metadaten, verdächtige dunkle Vektor-Überdeckungen; keine Sicherheitsfreigabe |
 | Druckqualität prüfen | Server | Bildauflösung, Font-Einbettung, Seitenboxen; keine PDF/X-Zertifizierung |
-| Barrierefreiheit prüfen | Server | Technische Basisprüfung, kein PDF/UA-Konformitätsnachweis |
+| Barrierefreiheit prüfen | Server | Basisprüfung, veraPDF für PDF/UA-1/-2; Struktureditor für neue PDF/UA-1-Dokumente mit geprüfter Ausgabe; manuelle Inhaltsprüfung zusätzlich nötig |
 | PDF übersetzen | Server + eigener LibreTranslate-Dienst | Auslesbarer Text und Übersetzung nebeneinander; bis 60.000 Zeichen |
 | ZUGFeRD-Assistent | Server | PDF/A-3 und passende CII-XML verbinden; Mustang und veraPDF-Berichte, negative Befunde klar benannt |
 | Word-Serienbriefe | Server | DOCX mit {{Spaltenname}} und XLSX; bis 50 Datensätze, einzelne PDFs im ZIP |
@@ -168,3 +168,25 @@ Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die 
 - **Projektdateien:** Ein Arbeitsstand mit Rückgängig-Verlauf, Quellen und
   Rechnungs-XML, bis zu 80 MB Dokumentdaten und 20 MB Bearbeitungsdaten. Vorhandene
   PDFs werden beim Import tatsächlich geöffnet und Seitenverweise geprüft.
+
+
+## Ergänzungen in 0.8.0
+
+- Absatzeditor im Werkzeug „PDF-Objekte bearbeiten“: mehrere Textobjekte ersetzen,
+  automatische Zeilenumbrüche, Noto Sans oder eigene statische TTF, Größe, Farbe,
+  Ausrichtung, Innen- und Zeilenabstand; echte Ergebnisvorschau. Fehlende Glyphen,
+  Textüberlauf und überstehende Schriftkonturen verhindern den Export.
+- Grenzen: einheitlicher Absatz auf einer Seite, keine komplexe Schriftformung;
+  Texte innerhalb von Objektgruppen bleiben ausgenommen. Übrige Objekte bleiben
+  erhalten. Vorhandene Signaturen und Struktur-Tags nach Textänderungen prüfen.
+- „Barrierefreiheit prüfen“ bietet zusätzlich echte veraPDF-Profile für PDF/UA-1
+  und PDF/UA-2. Neue Dokumente können aus Überschriften, Absätzen und Bildern mit
+  Alternativtext aufgebaut werden. Die Reihenfolge ist editierbar; Strukturdateien
+  lassen sich lokal speichern und importieren.
+- Der Dokumentenserver erzeugt die strukturierte A4-Neufassung mit LibreOffice
+  und validiert sie anschließend mit veraPDF. Bei fehlgeschlagener Prüfung gibt
+  es ausschließlich Berichte, keine PDF-Ausgabe. Maschinenprüfung ersetzt nicht
+  die Prüfung von Sinn, Vollständigkeit, Lesereihenfolge und Kontrast.
+- PDF-Textimport ist ein Entwurf und übernimmt weder Originalseitenlayout noch
+  Tabellen, Bilder, Formulare oder Signaturen. Diese Funktion ist keine
+  nachträgliche automatische Reparatur beliebiger existierender PDF-Tags.

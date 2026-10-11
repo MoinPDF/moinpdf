@@ -29,3 +29,26 @@ assert.throws(()=>core.editNativeObjects(api,bytes,0,[{index:target.index,text:'
 assert.throws(()=>core.removeNativeRegions(api,bytes,[{page:0,rect:{x:-1,y:0,w:1,h:1}}]),/Ungültig/);
 await writeFile('.cache/native-result.pdf',changed);
 console.log('PASS: Native original-font text editing, object movement/deletion, text-preserving region removal, image removal, all page rotations and CropBox coordinates; independent PDF.js text/render checks.');
+
+const paragraphFont=new Uint8Array(await readFile('public/vendor/invoice-font/NotoSans-Regular.ttf'));
+const paragraphSettings={indices:[target.index],rect:{x:.1,y:.15,w:.7,h:.55},text:'Überarbeiteter Absatz mit 123 Euro. Dieser Text wird automatisch in mehrere Zeilen umbrochen.\n\nZweiter Absatz mit ÄÖÜ und €.',fontBytes:paragraphFont,fontSize:16,lineHeight:1.4,padding:4,align:'left',color:'#123456'};
+for(const angle of [0,90,180,270]) {
+  const original=await PDFDocument.load(bytes); original.getPage(0).setRotation(degrees(angle)); original.getPage(0).setCropBox(20,20,360,460);
+  const input=await original.save(); const found=core.inspectNativeObjects(api,input,0).find(o=>o.text==='SECRET 4815');
+  const updated=core.replaceNativeParagraph(api,input,0,{...paragraphSettings,indices:[found.index]}),read=await inspect(updated.bytes);
+  assert(updated.lines>3);assert.match(read.text,/Überarbeiteter Absatz/);assert.match(read.text,/Zweiter Absatz/);assert.doesNotMatch(read.text,/SECRET/);assert.match(read.text,/KEEP THIS TEXT/);
+  const list=core.inspectNativeObjects(api,updated.bytes,0);assert(list.some(o=>o.type==='image'));assert(list.some(o=>o.type==='path'));
+  for(const o of list.filter(o=>o.type==='text'&&o.text.trim()!=='KEEP THIS TEXT')) {assert(o.x>=.099,JSON.stringify({angle,o}));assert(o.y>=.149,JSON.stringify({angle,o}));assert(o.x+o.w<=.801);assert(o.y+o.h<=.701);}
+}
+const multiple=core.inspectNativeObjects(api,bytes,0).filter(o=>o.type==='text').map(o=>o.index);
+const rightAligned=core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,indices:multiple,align:'right',text:'Gemeinsamer Text'});
+const rightView=await inspect(rightAligned.bytes);assert.match(rightView.text,/Gemeinsamer Text/);assert.doesNotMatch(rightView.text,/KEEP|SECRET/);
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,rect:{x:0,y:0,w:.2,h:.015}}),/Textüberlauf|kleiner/);
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'漢字'}),/enthält das Zeichen/);
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'مرحبا'}),/Zeichenformung/);
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,fontBytes:new Uint8Array(20)}),/TrueType/);
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,indices:[img.index]}),/ausschließlich Text/);
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'Hello',rect:{x:.99,y:.1,w:.5,h:.5}}),/Textbereich/);
+assert.match((await inspect(bytes)).text,/SECRET 4815/,'Rejected export cannot alter input');
+await writeFile('.cache/paragraph-result.pdf',rightAligned.bytes);
+console.log('PASS: Paragraph reflow, multi-object replacement, embedded Unicode font, line/box overflow and missing-glyph rejection, all rotations and CropBox offsets, independent PDF.js text and vector checks.');

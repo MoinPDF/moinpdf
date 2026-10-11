@@ -1,5 +1,11 @@
-import type { NativeObject, NativeChange, NativeRemoval } from './native-pdf-core';
-export type { NativeObject, NativeChange, NativeRemoval } from './native-pdf-core';
+import type {
+  NativeObject,
+  NativeChange,
+  NativeRemoval,
+  NativeParagraph,
+  NativeParagraphResult,
+} from './native-pdf-core';
+export type { NativeObject, NativeChange, NativeRemoval, NativeParagraph } from './native-pdf-core';
 function nativeJob<T>(
   bytes: Uint8Array,
   options: Record<string, unknown>,
@@ -48,3 +54,9 @@ export const editObjects = (
 ) => nativeJob<Uint8Array>(bytes, { action: 'edit', page, changes }, signal);
 export const removeRegions = (bytes: Uint8Array, removals: NativeRemoval[], signal?: AbortSignal) =>
   nativeJob<Uint8Array>(bytes, { action: 'redact', removals }, signal);
+export const replaceParagraph = (
+  bytes: Uint8Array,
+  page: number,
+  settings: NativeParagraph,
+  signal?: AbortSignal,
+) => nativeJob<NativeParagraphResult>(bytes, { action: 'paragraph', page, settings }, signal);

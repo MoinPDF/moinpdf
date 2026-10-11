@@ -29,6 +29,8 @@ import {
 import { Text, Choice, Field, Tick, PageStage, PageSelect } from './advanced-shared';
 import './conversion-workbench.css';
 import { AudioWorkbench } from './audio-workbench';
+import { AccessibleEditor, initialAccessibleDocument } from './accessible-editor';
+import { validateAccessibleDocument } from '@/lib/accessible-document';
 
 type Props = {
   tool: ServerTool;
@@ -73,6 +75,9 @@ function StandardServerWorkbench({
     [password, setPassword] = useState('');
   const [mode, setMode] = useState(tool === 'certificate-sign' ? 'validate' : 'create'),
     [profile, setProfile] = useState(tool === 'zugferd-create' ? 'E' : '2b');
+  const [uaMode, setUaMode] = useState('basic'),
+    [uaProfile, setUaProfile] = useState('ua1'),
+    [uaDocument, setUaDocument] = useState(initialAccessibleDocument);
   const [extra, setExtra] = useState(initialExtraSettings),
     [spreadsheet, setSpreadsheet] = useState<File | null>(null),
     [attachments, setAttachments] = useState(false);
@@ -87,7 +92,15 @@ function StandardServerWorkbench({
   const previousSources = useRef(sources.map((value) => value.id));
   const info = tools.find((t) => t.id === tool)!,
     source = sources.find((s) => s.id === sourceId) || sources[0];
-  const available = localMode || capabilities?.capabilities[serverCapabilityKey[tool]] === true;
+  const available =
+    localMode ||
+    capabilities?.capabilities[
+      tool === 'accessibility-check' && uaMode !== 'basic'
+        ? uaMode === 'create'
+          ? 'pdfuaCreate'
+          : 'pdfuaValidate'
+        : serverCapabilityKey[tool]
+    ] === true;
   const fileInputTool = [
     'office-pdf',
     'email-pdf',
@@ -95,11 +108,14 @@ function StandardServerWorkbench({
     'word-mail-merge',
     'ebook-pdf',
   ].includes(tool);
-  const hasInput = fileInputTool
-    ? !!file
-    : tool === 'xrechnung-validate'
-      ? !!(file || source?.invoiceOriginal)
-      : !!source;
+  const hasInput =
+    tool === 'accessibility-check' && uaMode === 'create'
+      ? true
+      : fileInputTool
+        ? !!file
+        : tool === 'xrechnung-validate'
+          ? !!(file || source?.invoiceOriginal)
+          : !!source;
   const completeInput =
     hasInput &&
     (tool !== 'word-mail-merge' || !!spreadsheet) &&
@@ -266,7 +282,16 @@ function StandardServerWorkbench({
       throw new Error('Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.');
     const body = new FormData();
     let path = '';
-    if (fileInputTool) {
+    if (tool === 'accessibility-check' && uaMode === 'create') {
+      body.append(
+        'request',
+        new Blob([JSON.stringify(validateAccessibleDocument(uaDocument))], {
+          type: 'application/json',
+        }),
+        'struktur.json',
+      );
+      path = '/v1/pdfua/create';
+    } else if (fileInputTool) {
       if (!file) throw new Error('Bitte zuerst eine Datei auswählen.');
       body.append('file', file);
       if (tool === 'office-pdf') path = '/v1/office';
@@ -303,7 +328,10 @@ function StandardServerWorkbench({
         source.name,
       );
       if (tool === 'pdf-word') path = '/v1/pdf-to-word';
-      else if (extraActions[tool]) {
+      else if (tool === 'accessibility-check' && uaMode === 'validate') {
+        path = '/v1/pdfua/validate';
+        body.append('profile', uaProfile);
+      } else if (extraActions[tool]) {
         path = '/v1/documents/' + extraActions[tool];
         body.append('options', JSON.stringify(extra));
       } else if (tool === 'pdfa') {
@@ -362,7 +390,10 @@ function StandardServerWorkbench({
       </div>
       <ol className="conversion-steps" aria-label="Arbeitsschritte">
         <li className={hasInput ? 'is-complete' : 'is-current'}>
-          <span>{hasInput ? <Check size={14} /> : 1}</span>Datei auswählen
+          <span>{hasInput ? <Check size={14} /> : 1}</span>
+          {tool === 'accessibility-check' && uaMode === 'create'
+            ? 'Struktur vorbereiten'
+            : 'Datei auswählen'}
         </li>
         <li className={busy ? 'is-current' : ''}>
           <span>2</span>Verarbeiten
@@ -423,7 +454,53 @@ function StandardServerWorkbench({
               PDF auswählen
             </Button>
           )}
-          <ServerExtraFields tool={tool} value={extra} onChange={setExtra} />
+          {tool === 'accessibility-check' ? (
+            <>
+              <Choice
+                label="Barrierefreiheit: Aktion"
+                value={uaMode}
+                onChange={setUaMode}
+                items={[
+                  ['basic', 'Technische Basisprüfung'],
+                  ['validate', 'PDF/UA mit veraPDF prüfen'],
+                  ['create', 'Strukturiertes PDF neu erstellen'],
+                ]}
+              />
+              {uaMode === 'basic' && (
+                <p className="fine-note">
+                  Basischeck für Titel, Sprache und vorhandene Tags. Für die Normprüfung „PDF/UA mit
+                  veraPDF prüfen“ wählen.
+                </p>
+              )}
+              {uaMode === 'validate' && (
+                <>
+                  <Choice
+                    label="PDF/UA-Prüfprofil"
+                    value={uaProfile}
+                    onChange={setUaProfile}
+                    items={[
+                      ['ua1', 'PDF/UA-1'],
+                      ['ua2', 'PDF/UA-2'],
+                    ]}
+                  />
+                  <p className="fine-note">
+                    Vollständiger maschineller Prüfbericht als ZIP. Lesereihenfolge, Bedeutung der
+                    Alternativtexte und Bedienbarkeit zusätzlich manuell prüfen.
+                  </p>
+                </>
+              )}
+              {uaMode === 'create' && (
+                <AccessibleEditor
+                  value={uaDocument}
+                  onChange={setUaDocument}
+                  source={source}
+                  run={run}
+                />
+              )}
+            </>
+          ) : (
+            <ServerExtraFields tool={tool} value={extra} onChange={setExtra} />
+          )}
           {localOptimize && (
             <p className="fine-note">
               Die Verarbeitung erfolgt lokal. In dieser Ausgabe werden geeignete Bilder als JPEG
@@ -565,6 +642,14 @@ function StandardServerWorkbench({
                 <LoaderCircle className="spin" size={18} />
                 Wird verarbeitet …
               </>
+            ) : tool === 'accessibility-check' ? (
+              uaMode === 'create' ? (
+                'PDF/UA erstellen und prüfen'
+              ) : uaMode === 'validate' ? (
+                'PDF/UA prüfen'
+              ) : (
+                info.action
+              )
             ) : tool === 'certificate-sign' ? (
               mode === 'sign' ? (
                 'Signieren'
@@ -600,8 +685,10 @@ function StandardServerWorkbench({
           )}
           {available && !localMode && (
             <p className="conversion-privacy">
-              Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen. Sie wird nicht
-              dauerhaft gespeichert.{' '}
+              {tool === 'accessibility-check' && uaMode === 'create'
+                ? 'Mit dem Start werden die Inhaltsblöcke und Bilder aus dem Struktureditor für diesen Auftrag übertragen.'
+                : 'Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen.'}{' '}
+              Die Daten werden nicht dauerhaft gespeichert.{' '}
               <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">
                 Datenschutz
               </a>

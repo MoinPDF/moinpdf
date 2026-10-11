@@ -3,10 +3,11 @@
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
   'native-objects': guide('Eine PDF mit vorhandenen Text-, Bild- oder Grafikobjekten.', [
-    'Wähle eine Seite und lade ihre Objekte. Wähle anschließend einen Eintrag; der Rahmen zeigt seine ursprüngliche Position.',
-    'Ändere Text in der Originalschrift oder verschiebe, drehe oder skaliere das Objekt. Bilder können durch PNG, JPG oder WebP ersetzt werden. Alternativ ersetze einen Suchtext in mehreren Textobjekten der Seite.',
-    'Exportiere die Änderung, prüfe die Ergebnisvorschau und übernimm das Ergebnis für weitere Bearbeitungen.'
-  ], 'PDF mit bearbeiteten Originalobjekten; übriger Text bleibt auswählbar.', 'Einzelne Textobjekte, kein automatischer Absatzumbruch. Eingebettete Schriften müssen die neuen Zeichen enthalten. Objektgruppen lassen sich gemeinsam bearbeiten. Löschen ist keine Sicherheitsbereinigung; vorhandene Signaturen werden ungültig.'),
+    'Für Einzelobjekte: Seitenobjekte laden, Objekt wählen und Text in Originalschrift ändern oder Bild/Grafik verschieben, drehen, skalieren und ersetzen.',
+    'Für Absätze: oben „Absatz mit automatischem Umbruch“ wählen, Textobjekte laden, gewünschte Objekte ankreuzen und „Auswahl als Absatz laden“ verwenden. Textreihenfolge kontrollieren.',
+    'Text, Noto Sans oder eigene statische TrueType-Schrift, Größe, Abstand, Ausrichtung und Farbe einstellen. Den neuen Bereich aufziehen oder seine Prozentwerte ändern.',
+    'Absatzvorschau berechnen und danach exportieren. Bei Überlauf den Bereich vergrößern oder Text beziehungsweise Schrift anpassen. Für weitere Bearbeitung das Ergebnis übernehmen.',
+  ], 'PDF mit echten bearbeiteten Textobjekten und eingebetteter Absatzschrift; übriger Text und Grafiken bleiben erhalten.', 'Absätze ersetzen ausgewählte ganze Textobjekte einer Seite mit einheitlicher Formatierung. Keine Textbearbeitung innerhalb verschachtelter Gruppen, kein seitenübergreifender Umbruch oder komplexe Schriftformung. Fehlende Zeichen und Überlauf werden gemeldet. Überschneidungen mit ungewählten Objekten manuell prüfen. Löschen ist keine Sicherheitsbereinigung; Signaturen und vorhandene Barrierefreiheits-Tags erneut prüfen.'),
   'bates': guide('Eine oder mehrere PDFs in der gewünschten Dateireihenfolge.', [
     'Öffne alle Dateien, die fortlaufend gekennzeichnet werden sollen.',
     'Wähle Vorlage, Startnummer, Ziffernstellen, Schriftgröße und Position. Platzhalter: {nummer}, {seite}, {seiten} und {datei}. Prüfe die Textvorschau.',
@@ -197,11 +198,13 @@ export const guides = {
     'Starte die Prüfung und lies die Hinweise zu effektiver Bildauflösung, Schrifteinbettung und Seitenboxen.',
     'Prüfe auffällige Seiten in der Vorschau und korrigiere die Quelldatei, bevor du eine neue PDF erzeugst.'
   ], 'Technischer Bericht zur Druckvorbereitung.', 'Farbseparation, Überdruck und konkrete Druckerei-Vorgaben sind nicht Teil dieser Prüfung. Der Bericht ist keine PDF/X-Zertifizierung.'),
-  'accessibility-check': guide('Eine PDF, deren technische Voraussetzungen für Barrierefreiheit geprüft werden sollen.', [
-    'Wähle die Datei und starte die Prüfung.',
-    'Lies die Hinweise zu Titel, Sprache, Struktur-Tags, auslesbarem Text und Formularbeschriftungen.',
-    'Korrigiere fehlende Angaben möglichst im Ausgangsdokument. Prüfe zusätzlich Lesereihenfolge, Alternativtexte, Kontraste und praktische Bedienbarkeit.'
-  ], 'Technischer Basisbericht mit erkannten Lücken.', 'Das Werkzeug bestätigt keine PDF/UA- oder WCAG-Konformität und repariert die Dokumentstruktur nicht automatisch.'),
+  'accessibility-check': guide('Für Prüfungen eine vorhandene PDF; für ein neues Dokument Textblöcke und bei Bedarf eigene Bilder. Der Dokumentenserver muss verfügbar sein.', [
+    'Unter „Barrierefreiheit: Aktion“ zwischen Basisprüfung, veraPDF-Prüfung und „Strukturiertes PDF neu erstellen“ wählen.',
+    'Bei einer vorhandenen Datei PDF/UA-1 oder PDF/UA-2 als Prüfprofil auswählen. Die ZIP-Datei enthält Ergebnis und vollständigen veraPDF-Bericht.',
+    'Für eine neue Datei Titel und Dokumentsprache angeben. PDF-Text als Entwurf anhängen oder eigene Blöcke schreiben. Überschriftenebenen, Absätze und Reihenfolge bearbeiten; Bilder mit passender Beschreibung hinzufügen.',
+    'Strukturdatei bei Bedarf speichern oder wieder öffnen. „PDF/UA erstellen und prüfen“ erzeugt eine A4-Neufassung. Die ZIP enthält ein PDF nur bei bestandener technischer PDF/UA-1-Prüfung.',
+    'Zusätzlich Vollständigkeit, Lesereihenfolge, Überschriften, Alternativtexte und Kontraste manuell kontrollieren.',
+  ], 'Basisbericht oder PDF/UA-Prüfbericht; bei bestandener Erstellungsprüfung zusätzlich ein technisch geprüftes PDF/UA-1-Dokument.', 'Die Neufassung erhält nicht das ursprüngliche Layout. Tabellen, Formulare und Bilder werden beim PDF-Textimport nicht automatisch übernommen. Höchstens 200 Blöcke, 100.000 Zeichen, zehn Bilder und 8 MB Strukturauftrag. Keine automatische Reparatur beliebiger PDF-Tags. Maschinenprüfung allein bestätigt keine vollständige Barrierefreiheit.'),
   'translate-pdf': guide('Eine PDF mit auslesbarem Text; bei Scans zunächst OCR anwenden.', [
     'Wähle die Ausgangssprache oder automatische Erkennung und die gewünschte Zielsprache.',
     'Starte die Übersetzung. Falls die Sprachmodelle beim ersten Serverstart noch vorbereitet werden, warte auf deren Bereitschaft.',

@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import ts from 'typescript';
+await mkdir('.cache',{recursive:true});
+await writeFile('.cache/accessible-test.mjs',ts.transpileModule(await readFile('lib/accessible-document.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const {validateAccessibleDocument,accessibleTextDraft}=await import('../.cache/accessible-test.mjs');
+const draft={title:'Bericht',language:'de-DE',blocks:[{kind:'h1',text:'Titel'},{kind:'p',text:'Absatz'}]};
+assert.deepEqual(validateAccessibleDocument(draft),draft);
+for(const value of [{...draft,title:''},{...draft,language:'invalid'},{...draft,blocks:[{kind:'h3',text:'Skipped'}]},{...draft,blocks:[{kind:'figure',alt:'',data:'AAAA'}]},{...draft,blocks:[{kind:'figure',alt:'x',data:'https://example.com'}]},{...draft,blocks:[{kind:'p',text:'x',unsafe:true}]},{...draft,blocks:Array.from({length:201},()=>({kind:'p',text:'x'}))}]) assert.throws(()=>validateAccessibleDocument(value));
+const controller=new AbortController();
+const source={pdf:{numPages:2,getPage:async i=>({getTextContent:async()=>({items:[{str:`Seite ${i}`,hasEOL:true},{str:'Zweiter Text',hasEOL:false}]})})}};
+assert.deepEqual(await accessibleTextDraft(source,controller.signal),[{kind:'p',text:'Seite 1\nZweiter Text'},{kind:'p',text:'Seite 2\nZweiter Text'}]);
+controller.abort();await assert.rejects(()=>accessibleTextDraft(source,controller.signal),{name:'AbortError'});
+await assert.rejects(()=>accessibleTextDraft({pdf:{numPages:1,getPage:async()=>({getTextContent:async()=>({items:[]})})}},new AbortController().signal),/Kein auslesbarer Text/);
+console.log('PASS: Accessible document structure, heading order, safe block data, bounded PDF text extraction and cancellation.');
