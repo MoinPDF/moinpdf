@@ -24,7 +24,7 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
   Ladezustand.
 - Datenschutzhinweise für den lokalen Dokument-Assistenten, den bewusst
   geöffneten externen Modelldownload und den optionalen Modellspeicher ergänzt.
-- Prüfübersicht auf 24 Engine-Suiten, 56 Servertests und 112 Werkzeuge aktualisiert;
+- Prüfübersicht auf 24 Engine-Suiten, 60 Servertests und 112 Werkzeuge aktualisiert;
   Ausbaugrenzen anhand aktueller Office-, XFA- und PDF/X-Prüfungen präzisiert.
 - Versionen werden nach erfolgreichen Docker-Tests und veröffentlichten Images
   automatisch erstellt. Quellstand, Version, beide Architekturen und aktuelle
