@@ -54,6 +54,16 @@ jobs:
           docker compose stop
           docker compose up -d --wait --wait-timeout 180
           docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /repo/tests/selfhost-smoke.py
+      - name: Install browser test runtime
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: |
+          python -m pip install playwright==1.55.0 pymupdf==1.28.2
+          python -m playwright install --with-deps chromium
+      - name: Real local language model with offline document questions
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+        run: python tests/local-assistant-browser.py
       - name: All tool views, desktop and mobile, PDF and audio downloads
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         env:
@@ -61,15 +71,8 @@ jobs:
           MOINPDF_REQUIRE_SERVER: "1"
           MOINPDF_TEST_NONLOCAL_HTTP: "1"
         run: |
-          python -m pip install playwright==1.55.0 pymupdf==1.28.2
-          python -m playwright install --with-deps chromium
           python tests/published-web-smoke.py
           MOINPDF_DOCUMENTATION_URL=http://localhost:8080 python tests/documentation-smoke.py
-      - name: Real local language model with offline document questions
-        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
-        env:
-          MOINPDF_TEST_URL: http://localhost:8080
-        run: python tests/local-assistant-browser.py
       - name: Retain browser evidence
         if: always()
         uses: actions/upload-artifact@v4

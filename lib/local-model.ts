@@ -1,6 +1,7 @@
 import type { Wllama } from '@wllama/wllama/esm/index.js';
 import type { RunContext } from './advanced-types';
 import { abortable } from './pdf-engine';
+import { assistantExamples } from './grounded-assistant';
 export const localModelInfo = {
   name: 'Qwen2.5 0.5B Instruct',
   revision: '9217f5db79a29953eb74d5343926648285ec7e67',
@@ -85,7 +86,7 @@ export class LocalDocumentModel {
           engine.loadModel([file], {
             n_gpu_layers: 0,
             n_threads: 1,
-            n_ctx: 2048,
+            n_ctx: 4096,
             n_batch: 128,
             n_ubatch: 64,
           }),
@@ -114,6 +115,7 @@ export class LocalDocumentModel {
         engine.createChatCompletion({
           messages: [
             { role: 'system', content: system },
+            ...assistantExamples,
             { role: 'user', content: user },
           ],
           temperature: 0,

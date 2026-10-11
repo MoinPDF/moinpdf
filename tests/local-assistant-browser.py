@@ -68,7 +68,15 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         assert not errors, errors
         page.screenshot(path=str(evidence/'local-assistant-real-inference.png'),full_page=True)
         (evidence/'local-assistant-real-inference.json').write_text(json.dumps({'modelSha256':DIGEST,'networkRequestsOutsideApp':external,'answer':answer},ensure_ascii=False,indent=2))
-        # A second real request exercises cancellation and worker disposal.
+        # An absent fact must still produce an abstention after the supported answer.
+        page.get_by_label('Frage zu den geöffneten Dokumenten',exact=True).fill('Wie hoch ist die monatliche Miete?')
+        page.get_by_role('button',name='Frage lokal beantworten',exact=True).click()
+        expect(result).to_be_visible(timeout=360000)
+        expect(result).to_contain_text('Keine belegte Antwort')
+        assert result.locator('blockquote').count() == 0
+        assert not external, external
+        assert not errors, errors
+        # A third real request exercises cancellation and worker disposal.
         page.get_by_label('Frage zu den geöffneten Dokumenten',exact=True).fill('Fasse alle Angaben im Dokument zusammen.')
         page.get_by_role('button',name='Frage lokal beantworten',exact=True).click()
         page.get_by_role('button',name='Abbrechen',exact=True).click()
@@ -76,7 +84,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(result).not_to_be_visible()
         page.get_by_role('button',name='Modell entladen und gespeicherte Kopie löschen',exact=True).click()
         expect(page.get_by_text('Modelldatei und Laufzeit entladen.',exact=True)).to_be_visible()
-        print('PASS: real Qwen CPU inference, verified quote/JSON provenance, app-only network, cancellation and unload in production Chromium.')
+        print('PASS: real Qwen CPU inference, verified quote/JSON provenance, absent-fact abstention, app-only network, cancellation and unload in production Chromium.')
     except BaseException:
         page.screenshot(path=str(evidence/'local-assistant-failure.png'),full_page=True)
         (evidence/'local-assistant-failure.txt').write_text(page.locator('body').inner_text()+'\n'+repr(errors)+'\n'+repr(external))
