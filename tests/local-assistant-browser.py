@@ -80,7 +80,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         assert result.locator('blockquote').count() == 0
         assert not external, external
         assert not errors, errors
-        # Shared vocabulary is not evidence for a rent amount: this invokes the model again.
+        # Shared dates and a filename are not evidence for the requested subject.
         page.get_by_label('Frage zu den geöffneten Dokumenten',exact=True).fill('Welche monatliche Miete nennt der Projektplan für November 2026?')
         page.get_by_role('button',name='Frage lokal beantworten',exact=True).click()
         expect(result.or_(page.get_by_role('alert'))).to_be_visible(timeout=360000)

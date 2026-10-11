@@ -11,48 +11,90 @@ const fold = (value: string) =>
 export function selectPassages(pages: EvidencePage[], question: string): AssistantPassage[] {
   if (!question.trim() || question.length > 600)
     throw new Error('Bitte eine Frage mit 1 bis 600 Zeichen stellen.');
-  const terms =
-    fold(question)
-      .match(/[\p{L}\p{N}]{2,}/gu)
-      ?.filter(
-        (word) =>
-          ![
-            'der',
-            'die',
-            'das',
-            'und',
-            'oder',
-            'ist',
-            'sind',
-            'ein',
-            'eine',
-            'mit',
-            'von',
-            'den',
-            'dem',
-            'des',
-            'was',
-            'wie',
-            'welche',
-            'welcher',
-            'welches',
-            'bitte',
-            'steht',
-            'dokument',
-            'pdf',
-            'im',
-            'in',
-            'am',
-            'auf',
-            'an',
-            'mir',
-            'hoch',
-            'nenne',
-            'nennt',
-            'antworte',
-            'antwort',
-          ].includes(word),
-      ) || [];
+  const terms = [
+    ...new Set(
+      fold(question)
+        .match(/[\p{L}\p{N}]{2,}/gu)
+        ?.filter(
+          (word) =>
+            ![
+              'der',
+              'die',
+              'das',
+              'und',
+              'oder',
+              'ist',
+              'sind',
+              'ein',
+              'eine',
+              'mit',
+              'von',
+              'den',
+              'dem',
+              'des',
+              'was',
+              'wie',
+              'welche',
+              'welcher',
+              'welches',
+              'welchem',
+              'wann',
+              'wird',
+              'wurde',
+              'werden',
+              'bitte',
+              'steht',
+              'dokument',
+              'pdf',
+              'im',
+              'in',
+              'am',
+              'auf',
+              'an',
+              'mir',
+              'hoch',
+              'nenne',
+              'nennt',
+              'antworte',
+              'antwort',
+              'für',
+              'zu',
+              'zum',
+              'zur',
+              'aus',
+              'bei',
+              'nach',
+              'vom',
+              'als',
+              'diesem',
+              'dieser',
+              'dieses',
+            ].includes(word),
+        ) || [],
+    ),
+  ];
+  // Dates help rank passages, but do not establish that the requested subject exists.
+  const subjects = terms.filter(
+    (term) =>
+      !/^\p{N}+$/u.test(term) &&
+      ![
+        'januar',
+        'februar',
+        'märz',
+        'april',
+        'mai',
+        'juni',
+        'juli',
+        'august',
+        'september',
+        'oktober',
+        'november',
+        'dezember',
+      ].includes(term),
+  );
+  const overview = /zusammenfass|zusammen\b|überblick|\binhalt\b|summari[sz]|\bsummary\b/u.test(
+    fold(question),
+  );
   const candidates: AssistantPassage[] = [];
   let characters = 0;
   for (const page of pages) {
@@ -109,15 +151,15 @@ export function selectPassages(pages: EvidencePage[], question: string): Assista
           (fold(passage.name).includes(term) ? 1 : 0),
         0,
       ),
-      matchesText: terms.some((term) => fold(passage.text).includes(term)),
+      termMatches: terms.filter((term) => fold(passage.text).includes(term)).length,
+      subjectMatches: subjects.filter((term) => fold(passage.text).includes(term)).length,
     }))
     .filter(
       (item) =>
-        !terms.length ||
-        /zusammenfass|zusammen\b|überblick|\binhalt\b|summari[sz]|\bsummary\b/u.test(
-          fold(question),
-        ) ||
-        item.matchesText,
+        overview ||
+        (terms.length > 0 &&
+          item.termMatches >= Math.ceil(terms.length / 2) &&
+          (subjects.length === 0 || item.subjectMatches >= Math.ceil(subjects.length / 2))),
     )
     .sort((a, b) => b.score - a.score || a.index - b.index)
     .slice(0, 4)
