@@ -1,5 +1,6 @@
 import {
   PDFDocument,
+  PDFForm,
   PDFTextField,
   PDFCheckBox,
   PDFDropdown,
@@ -150,7 +151,15 @@ export async function readDocumentDraft(
   const doc = await PDFDocument.load(source.bytes, { updateMetadata: false });
   const fields: FormField[] = [],
     xfa = hasXfaForm(doc);
-  let signed = false;
+  // Read signatures without the destructive PDFDocument.getForm() convenience
+  // method. XFA fields remain unavailable to the ordinary field editor.
+  let signed = xfa
+    ? PDFForm.of(doc.catalog.getOrCreateAcroForm(), doc)
+        .getFields()
+        .some(
+          (field) => field instanceof PDFSignature && !!field.acroField.dict.get(PDFName.of('V')),
+        )
+    : false;
   for (const field of xfa ? [] : doc.getForm().getFields()) {
     if (fields.length >= 1000)
       throw new Error('Bitte eine PDF mit höchstens 1.000 Formularfeldern öffnen.');

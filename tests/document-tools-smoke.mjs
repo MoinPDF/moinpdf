@@ -39,10 +39,12 @@ try{
   const xfaDoc=await PDFDocument.load(original.bytes),xfaForm=xfaDoc.catalog.lookup(PDFName.of('AcroForm'),PDFDict);
   const xml='<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/"><xfa:data><secret>XFA-VALUE-DO-NOT-LOSE</secret></xfa:data></xfa:datasets>';
   const ref=xfaDoc.context.register(xfaDoc.context.flateStream(xml));
+  const signature=xfaDoc.context.register(xfaDoc.context.obj({FT:'Sig',T:PDFString.of('ExistingSignature'),V:{Type:'Sig',Contents:PDFString.of('synthetic-signature-placeholder')}}));
+  xfaForm.lookup(PDFName.of('Fields'),PDFArray).push(signature);
   xfaForm.set(PDFName.of('XFA'),packetArray?xfaDoc.context.obj([PDFString.of('datasets'),ref]):ref);
   xfaDoc.catalog.set(PDFName.of('AcroForm'),indirectForm?xfaDoc.context.register(xfaForm):xfaForm);
   const xfaSource=await source(await xfaDoc.save({updateFieldAppearances:false}),'XFA.pdf'),before=xfaSource.bytes.slice();
-  const xfaDraft=await readDocumentDraft(xfaSource);assert.equal(xfaDraft.xfa,true);assert.equal(xfaDraft.fields.length,0,'XFA is never treated as an ordinary AcroForm');
+  const xfaDraft=await readDocumentDraft(xfaSource);assert.equal(xfaDraft.xfa,true);assert.equal(xfaDraft.signed,true,'Existing signature warnings survive XFA detection');assert.equal(xfaDraft.fields.length,0,'XFA is never treated as an ordinary AcroForm');
   for(const tool of ['fill-form','create-form'])await assert.rejects(()=>execute(xfaSource,{...xfaDraft,xfa:false},tool),/XFA/,'Persisted draft flags cannot bypass the source check');
   xfaDraft.bookmarks[0].title='XFA bleibt erhalten';
   const saved=await PDFDocument.load(await(await execute(xfaSource,xfaDraft,'bookmarks')).blob.arrayBuffer());
