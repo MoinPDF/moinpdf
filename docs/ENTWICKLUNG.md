@@ -96,6 +96,8 @@ Der projektweite [Lizenzstatus](../LICENSE) erteilt keine pauschale Open-Source-
 
 PDF.js, Tesseract.js und deutsche/englische Sprachdaten (Apache-2.0), pdf-lib, JSZip und docx (MIT), Manrope und Space Grotesk (SIL Open Font License). Lizenztexte werden aus den Paketen unter `public/vendor/licenses` mitgeliefert. qpdf/WASM für Verschlüsselung, fontkit und Noto Sans für die E-Rechnungs-Leseansicht werden ebenfalls lokal ausgeliefert; zugehörige Lizenztexte liegen unter `public/vendor`. Für Codes kommen bwip-js und ZXing hinzu; ihre Lizenztexte werden ebenfalls mitgeliefert. Die Browserfunktionen verwenden lokal ausgelieferte Ressourcen.
 
+Zusätzliche lokale Decoder, Modelllaufzeit, genaue Quellstände und Austausch der LGPL-Bibliothek: [Komponentenhinweise](../public/component-notices/README.txt).
+
 Schriftlizenzen der Wortmarke: [public/branding/LICENSES.txt](../public/branding/LICENSES.txt). Modellversionen und Lizenzen der Sprachausgabe: [server/AUDIO-NOTICES.md](../server/AUDIO-NOTICES.md). Weitere Serverkomponenten sind in der [Serverdokumentation](../server/README.md) beschrieben.
 
 ## Formatierung und Wartung

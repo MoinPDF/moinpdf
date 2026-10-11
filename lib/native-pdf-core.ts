@@ -10,6 +10,7 @@ export type NativeObject = NativeRect & {
 };
 export type NativeChange = {
   index: number;
+  order?: 'front' | 'back';
   remove?: boolean;
   text?: string;
   dx?: number;
@@ -244,6 +245,17 @@ export function editNativeObjects(
             throw new Error('Das Objekt konnte nicht entfernt werden.');
           api.FPDFPageObj_Destroy(obj);
           continue;
+        }
+        if (change.order) {
+          if (!['front', 'back'].includes(change.order))
+            throw new Error('Ungültige Zeichenreihenfolge.');
+          if (!api.FPDFPage_RemoveObject(page, obj))
+            throw new Error('Das Objekt konnte nicht umgeordnet werden.');
+          if (change.order === 'front') api.FPDFPage_InsertObject(page, obj);
+          else if (!api.FPDFPage_InsertObjectAtIndex(page, obj, 0)) {
+            api.FPDFPage_InsertObject(page, obj);
+            throw new Error('Das Objekt konnte nicht nach hinten gestellt werden.');
+          }
         }
         if (change.image) {
           const im = change.image;

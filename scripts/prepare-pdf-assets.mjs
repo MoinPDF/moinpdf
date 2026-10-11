@@ -45,4 +45,9 @@ await copyFile('node_modules/libheif-js/libheif-wasm/LICENSE',path.join(out,'lic
 await mkdir(path.join(out,'llm'),{recursive:true});
 await copyFile('node_modules/@wllama/wllama/esm/wasm/wllama.wasm',path.join(out,'llm/wllama.wasm'));
 await copyFile('node_modules/@wllama/wllama/LICENCE',path.join(out,'licenses/wllama-LICENCE'));
+const psdRequire=createRequire(require.resolve('ag-psd'));
+for(const name of ['base64-js','pako']) {
+  const dir=path.dirname(psdRequire.resolve(name+'/package.json'));
+  for(const file of await readdir(dir)) if(/^(LICENSE|LICENCE|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',name+'-'+file));
+}
 console.log('Local PDF and OCR assets prepared.');

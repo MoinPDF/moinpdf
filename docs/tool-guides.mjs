@@ -396,7 +396,7 @@ export const guides = {
     'Prüfe die Trefferseiten, passe die Auswahl an und speichere die Auswahl als PDF.'
   ], 'Dokumentenübersicht und neue PDF aus ausgewählten beziehungsweise gefundenen Seiten.', 'Leerseiten und Duplikate sind Hinweise, keine automatische Löschentscheidung. Der lokale Suchindex macht die Original-PDF nicht dauerhaft durchsuchbar; dafür „OCR & Text“ verwenden. Ausstehende Änderungen zuerst anwenden, wenn sie Grundlage der Prüfung sein sollen.'),
   'ocr': guide('Gescannte PDFs, Bilder oder PDFs mit unzureichendem Suchtext.', [
-    'Wähle die Seiten und eine der 21 Erkennungssprachen. Über „Sprachen kombinieren“ sind bis zu vier Sprachen gleichzeitig möglich. Wähle den Seitenaufbau und erzwinge OCR nur, wenn vorhandener Text neu erkannt werden soll.',
+    'Wähle die Seiten und eine der 21 Erkennungssprachen. Über „Sprachen kombinieren“ sind bis zu acht Sprachen gleichzeitig möglich. Wähle den Seitenaufbau und erzwinge OCR nur, wenn vorhandener Text neu erkannt werden soll.',
     'Starte die Erkennung und vergleiche den Text mit der Seitenvorschau. Korrigiere insbesondere Zahlen, Namen und Lesereihenfolge.',
     'Speichere eine durchsuchbare PDF, TXT oder DOCX. Übernimm die PDF als Arbeitsdokument, wenn weitere textbasierte Werkzeuge folgen sollen.'
   ], 'PDF mit Suchtext oder Textausgabe als TXT/DOCX.', 'DOCX enthält den erkannten Text ohne Rekonstruktion des ursprünglichen Layouts. Handschrift, Spalten und unscharfe Scans sind besonders fehleranfällig. Große OCR-Aufträge können auf Smartphones länger dauern.'),

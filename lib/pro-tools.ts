@@ -4,6 +4,11 @@ import {
   StandardFonts,
   degrees,
   rgb,
+  pushGraphicsState,
+  popGraphicsState,
+  rectangle,
+  clip,
+  endPath,
   type PDFPage,
   type PDFEmbeddedPage,
 } from 'pdf-lib';
@@ -70,8 +75,17 @@ export type BatesOptions = {
   start: number;
   padding: number;
   size: number;
+  rules?: BatesRule[];
   position:
     'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+};
+export type BatesRule = Omit<BatesOptions, 'start' | 'rules'> & {
+  from: number;
+  to: number; // zero means the last page of each file
+  parity: 'all' | 'odd' | 'even';
+  skipFirst: number;
+  numberOffset: number;
+  sectionStart: number;
 };
 export function batesText(
   template: string,
@@ -80,26 +94,45 @@ export function batesText(
   page: number,
   pages: number,
   file: string,
+  sectionPage = page,
+  sectionPages = pages,
 ) {
   return template.replace(
-    /\{(nummer|seite|seiten|datei)\}/g,
+    /\{(nummer|seite|seiten|datei|abschnittseite|abschnittseiten)\}/g,
     (_, key: string) =>
       ({
         nummer: String(number).padStart(padding, '0'),
         seite: String(page),
         seiten: String(pages),
         datei: stem(file),
+        abschnittseite: String(sectionPage),
+        abschnittseiten: String(sectionPages),
       })[key]!,
   );
 }
 export async function batesPdfs(sources: Source[], options: BatesOptions, ctx: RunContext) {
   bounded(options.start, 0, 999999999, 'Startnummer', true);
-  bounded(options.padding, 1, 12, 'Stellen', true);
-  bounded(options.size, 6, 40, 'Schriftgröße');
-  if (!options.template.trim() || options.template.length > 250)
-    throw new Error('Bitte eine Vorlage mit 1 bis 250 Zeichen eingeben.');
-  if (!/^(top|bottom)-(left|center|right)$/.test(options.position))
-    throw new Error('Ungültige Position.');
+  const rules = options.rules ?? [
+    { ...options, from: 1, to: 0, parity: 'all', skipFirst: 0, numberOffset: 0, sectionStart: 1 },
+  ];
+  if (!rules.length || rules.length > 8)
+    throw new Error('Bitte 1 bis 8 Beschriftungsregeln verwenden.');
+  for (const rule of rules) {
+    bounded(rule.padding, 1, 12, 'Stellen', true);
+    bounded(rule.size, 6, 40, 'Schriftgröße');
+    bounded(rule.from, 1, 1000, 'Erste Seite', true);
+    bounded(rule.to, 0, 1000, 'Letzte Seite', true);
+    bounded(rule.skipFirst, 0, 1000, 'Deckblätter', true);
+    bounded(rule.numberOffset, -999999999, 999999999, 'Nummernversatz', true);
+    bounded(rule.sectionStart, 0, 999999999, 'Abschnittsstart', true);
+    if (rule.to && rule.to < rule.from)
+      throw new Error('Das Abschnittsende liegt vor dem Abschnittsanfang.');
+    if (!['all', 'odd', 'even'].includes(rule.parity)) throw new Error('Ungültige Seitenauswahl.');
+    if (!rule.template.trim() || rule.template.length > 250)
+      throw new Error('Bitte eine Vorlage mit 1 bis 250 Zeichen eingeben.');
+    if (!/^(top|bottom)-(left|center|right)$/.test(rule.position))
+      throw new Error('Ungültige Position.');
+  }
   let counter = options.start,
     done = 0;
   const total = sources.reduce((n, s) => n + s.pdf.numPages, 0),
@@ -108,55 +141,90 @@ export async function batesPdfs(sources: Source[], options: BatesOptions, ctx: R
     checkAbort(ctx.signal);
     const pdf = await PDFDocument.load(source.bytes),
       font = await pdf.embedFont(StandardFonts.Helvetica);
+    const selections = rules.map((rule) =>
+      pdf
+        .getPages()
+        .map((_, i) => i + 1)
+        .filter(
+          (page) =>
+            page >= rule.from &&
+            (!rule.to || page <= rule.to) &&
+            page > rule.skipFirst &&
+            (rule.parity === 'all' || page % 2 === (rule.parity === 'odd' ? 1 : 0)),
+        ),
+    );
     for (const [i, page] of pdf.getPages().entries()) {
       checkAbort(ctx.signal);
-      const text = batesText(
-        options.template,
-        counter++,
-        options.padding,
-        i + 1,
-        pdf.getPageCount(),
-        source.name,
-      );
-      try {
-        font.encodeText(text);
-      } catch {
-        throw new Error(
-          'Die Beschriftung enthält Zeichen, die Helvetica nicht unterstützt. Bitte lateinische Zeichen verwenden.',
-        );
-      }
-      // Work in the displayed coordinate system, including pages with /Rotate.
       const angle = ((page.getRotation().angle % 360) + 360) % 360,
         box = page.getCropBox();
       const width = angle % 180 ? box.height : box.width,
         height = angle % 180 ? box.width : box.height;
-      const measured = font.widthOfTextAtSize(text, options.size);
-      if (measured > width - 32)
-        throw new Error(
-          `Die Beschriftung passt auf Seite ${i + 1} nicht. Schrift verkleinern oder Vorlage kürzen.`,
+      const occupied: { x: number; y: number; w: number; h: number }[] = [];
+      for (const [ruleIndex, rule] of rules.entries()) {
+        const ordinal = selections[ruleIndex].indexOf(i + 1);
+        if (ordinal < 0) continue;
+        const number = counter + rule.numberOffset;
+        bounded(number, 0, 1999999999, 'Berechnete Nummer', true);
+        const text = batesText(
+          rule.template,
+          number,
+          rule.padding,
+          i + 1,
+          pdf.getPageCount(),
+          source.name,
+          rule.sectionStart + ordinal,
+          selections[ruleIndex].length,
         );
-      const x = options.position.endsWith('left')
-        ? 16
-        : options.position.endsWith('right')
-          ? width - 16 - measured
-          : (width - measured) / 2;
-      const y = options.position.startsWith('top') ? height - 16 - options.size : 16;
-      const point =
-        angle === 90
-          ? [box.width - y, x]
-          : angle === 180
-            ? [box.width - x, box.height - y]
-            : angle === 270
-              ? [y, box.height - x]
-              : [x, y];
-      page.drawText(text, {
-        x: box.x + point[0],
-        y: box.y + point[1],
-        font,
-        size: options.size,
-        color: rgb(0.12, 0.12, 0.12),
-        rotate: degrees(angle),
-      });
+        try {
+          font.encodeText(text);
+        } catch {
+          throw new Error(
+            'Die Beschriftung enthält Zeichen, die Helvetica nicht unterstützt. Bitte lateinische Zeichen verwenden.',
+          );
+        }
+        const measured = font.widthOfTextAtSize(text, rule.size);
+        if (measured > width - 32 || rule.size > height - 32)
+          throw new Error(
+            `Die Beschriftung passt auf Seite ${i + 1} nicht. Schrift verkleinern oder Vorlage kürzen.`,
+          );
+        const x = rule.position.endsWith('left')
+          ? 16
+          : rule.position.endsWith('right')
+            ? width - 16 - measured
+            : (width - measured) / 2;
+        const y = rule.position.startsWith('top') ? height - 16 - rule.size : 16;
+        const area = { x, y: y - rule.size * 0.3, w: measured, h: rule.size * 1.3 };
+        if (
+          occupied.some(
+            (r) =>
+              r.x < area.x + area.w &&
+              area.x < r.x + r.w &&
+              r.y < area.y + area.h &&
+              area.y < r.y + r.h,
+          )
+        )
+          throw new Error(
+            `Beschriftungsregeln überlappen sich auf Seite ${i + 1}. Position, Schriftgröße oder Vorlagen ändern.`,
+          );
+        occupied.push(area);
+        const point =
+          angle === 90
+            ? [box.width - y, x]
+            : angle === 180
+              ? [box.width - x, box.height - y]
+              : angle === 270
+                ? [y, box.height - x]
+                : [x, y];
+        page.drawText(text, {
+          x: box.x + point[0],
+          y: box.y + point[1],
+          font,
+          size: rule.size,
+          color: rgb(0.12, 0.12, 0.12),
+          rotate: degrees(angle),
+        });
+      }
+      counter++; // exactly once per physical page, including skipped pages
       ctx.report({
         percent: (++done / Math.max(1, total)) * 100,
         label: `Kennzeichnung ${done} von ${total}`,
@@ -170,7 +238,7 @@ export async function batesPdfs(sources: Source[], options: BatesOptions, ctx: R
   }
   return packagePdfs(
     outputs,
-    'Die Nummerierung läuft in der angezeigten Dateireihenfolge weiter. Änderungen machen bestehende Signaturen ungültig.',
+    'Die globale Nummer zählt jede Originalseite in Dateireihenfolge, auch ausgelassene Seiten. Abschnittsnummern zählen nur zur Regel passende Seiten und beginnen je Datei neu. Änderungen machen bestehende Signaturen ungültig.',
   );
 }
 export type LabelRule = {
@@ -306,16 +374,28 @@ export async function continuousPage(
   }
   return out.save();
 }
+export type PosterPrint = {
+  paper: 'source' | 'a4' | 'a3' | 'letter';
+  landscape: boolean;
+  margin: number;
+  marks: boolean;
+};
 export async function posterPages(
   bytes: Uint8Array,
   columns: number,
   rows: number,
   overlap: number,
   ctx: RunContext,
+  print: PosterPrint = { paper: 'source', landscape: false, margin: 0, marks: false },
 ) {
   bounded(columns, 1, 8, 'Spalten', true);
   bounded(rows, 1, 8, 'Zeilen', true);
   bounded(overlap, 0, 72, 'Überlappung');
+  bounded(print.margin, 0, 72, 'Druckrand');
+  if (!['source', 'a4', 'a3', 'letter'].includes(print.paper))
+    throw new Error('Unbekanntes Papierformat.');
+  if (print.marks && print.margin < 8)
+    throw new Error('Schnittmarken benötigen mindestens 8 pt Druckrand.');
   const input = await PDFDocument.load(bytes),
     out = await PDFDocument.create();
   if (input.getPageCount() * columns * rows > 1000)
@@ -326,15 +406,65 @@ export async function posterPages(
   for (const [i, p] of input.getPages().entries()) {
     checkAbort(ctx.signal);
     const item = await placement(out, p),
-      w = (item.width + overlap * (columns - 1)) / columns,
-      h = (item.height + overlap * (rows - 1)) / rows;
+      originalW = (item.width + overlap * (columns - 1)) / columns,
+      originalH = (item.height + overlap * (rows - 1)) / rows;
+    const dimensions: [number, number] =
+      print.paper === 'a4'
+        ? [595.276, 841.89]
+        : print.paper === 'a3'
+          ? [841.89, 1190.551]
+          : print.paper === 'letter'
+            ? [612, 792]
+            : [originalW + 2 * print.margin, originalH + 2 * print.margin];
+    if (print.landscape && print.paper !== 'source') dimensions.reverse();
+    const w = dimensions[0] - 2 * print.margin,
+      h = dimensions[1] - 2 * print.margin;
+    if (w <= 0 || h <= 0) throw new Error('Der Druckrand lässt keinen Inhaltsbereich frei.');
+    const fullW = w * columns - overlap * (columns - 1),
+      fullH = h * rows - overlap * (rows - 1);
+    const scale = print.paper === 'source' ? 1 : Math.min(fullW / item.width, fullH / item.height);
+    const offsetX = (fullW - item.width * scale) / 2,
+      offsetY = (fullH - item.height * scale) / 2;
     if (overlap >= Math.min(w, h) / 2)
       throw new Error('Die Überlappung ist für diese Kachelgröße zu groß.');
     for (let r = 0; r < rows; r++)
       for (let c = 0; c < columns; c++) {
         checkAbort(ctx.signal);
-        const page = out.addPage([w, h]);
-        paint(page, item, -c * (w - overlap), -(item.height - h - r * (h - overlap)));
+        const page = out.addPage(dimensions);
+        page.pushOperators(
+          pushGraphicsState(),
+          rectangle(print.margin, print.margin, w, h),
+          clip(),
+          endPath(),
+        );
+        paint(
+          page,
+          item,
+          print.margin + offsetX - c * (w - overlap),
+          print.margin + offsetY - fullH + h + r * (h - overlap),
+          scale,
+        );
+        page.pushOperators(popGraphicsState());
+        if (print.marks) {
+          const m = print.margin;
+          for (const x of [m, m + w])
+            for (const y of [m, m + h]) {
+              const sx = x === m ? -1 : 1,
+                sy = y === m ? -1 : 1;
+              page.drawLine({
+                start: { x: x + sx * 2, y },
+                end: { x: x + sx * 7, y },
+                thickness: 0.35,
+                color: rgb(0, 0, 0),
+              });
+              page.drawLine({
+                start: { x, y: y + sy * 2 },
+                end: { x, y: y + sy * 7 },
+                thickness: 0.35,
+                color: rgb(0, 0, 0),
+              });
+            }
+        }
       }
     ctx.report({
       percent: ((i + 1) / input.getPageCount()) * 100,

@@ -67,7 +67,7 @@ export function OcrLanguagePicker({
             Sprachkombination ({selected.length}/{MAX_OCR_LANGUAGES})
           </legend>
           <p className="fine-note">
-            Wähle nur Sprachen, die im Dokument vorkommen. Bis zu vier gleichzeitig; zusätzliche
+            Wähle nur Sprachen, die im Dokument vorkommen. Bis zu acht gleichzeitig; zusätzliche
             Sprachen benötigen mehr Arbeitsspeicher.
           </p>
           <div className="ocr-language-grid">

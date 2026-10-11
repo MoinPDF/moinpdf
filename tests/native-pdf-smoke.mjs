@@ -30,6 +30,13 @@ assert.throws(()=>core.removeNativeRegions(api,bytes,[{page:0,rect:{x:-1,y:0,w:1
 await writeFile('.cache/native-result.pdf',changed);
 console.log('PASS: Native original-font text editing, object movement/deletion, text-preserving region removal, image removal, all page rotations and CropBox coordinates; independent PDF.js text/render checks.');
 
+const stack=await PDFDocument.create(),stackPage=stack.addPage([100,100]);stackPage.drawRectangle({x:10,y:10,width:70,height:70,color:rgb(1,0,0)});stackPage.drawRectangle({x:20,y:20,width:70,height:70,color:rgb(0,0,1)});
+const stackBytes=await stack.save(),stackObjects=core.inspectNativeObjects(api,stackBytes,0);
+const behind=core.editNativeObjects(api,stackBytes,0,[{index:stackObjects[1].index,order:'back'}]);assert.deepEqual([...(await inspect(behind)).canvas.getContext('2d').getImageData(50,50,1,1).data],[255,0,0,255]);
+const front=core.editNativeObjects(api,stackBytes,0,[{index:stackObjects[0].index,order:'front'}]);assert.deepEqual([...(await inspect(front)).canvas.getContext('2d').getImageData(50,50,1,1).data],[255,0,0,255]);
+assert.equal(core.inspectNativeObjects(api,behind,0).length,2);
+console.log('PASS: native top-level object ordering persists after save and independent rendering.');
+
 const paragraphFont=new Uint8Array(await readFile('public/vendor/invoice-font/NotoSans-Regular.ttf'));
 const paragraphSettings={indices:[target.index],rect:{x:.1,y:.15,w:.7,h:.55},text:'Überarbeiteter Absatz mit 123 Euro. Dieser Text wird automatisch in mehrere Zeilen umbrochen.\n\nZweiter Absatz mit ÄÖÜ und €.',fontBytes:paragraphFont,fontSize:16,lineHeight:1.4,padding:4,align:'left',color:'#123456'};
 for(const angle of [0,90,180,270]) {

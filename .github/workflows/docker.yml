@@ -34,10 +34,11 @@ jobs:
       - name: Native document converters and key-file authentication
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
+          python tests/fetch-office-fixtures.py
           docker build --target test -t moinpdf-document-tests ./server
           docker run --rm --network none --read-only --tmpfs /tmp:mode=1777,size=1g \
             --volume "$PWD:/repo:ro" --workdir /repo moinpdf-document-tests \
-            python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures -v
+            python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats -v
       - name: Start complete stack with all seven languages
         id: start
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}

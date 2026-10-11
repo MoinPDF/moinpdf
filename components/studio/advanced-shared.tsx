@@ -144,11 +144,13 @@ export function PageStage({
   page = 0,
   rects = [],
   onRect,
+  children,
 }: {
   source: Source;
   page?: number;
   rects?: (Rect & { label?: string })[];
   onRect?: (r: Rect) => void;
+  children?: ReactNode;
 }) {
   const [aspect, setAspect] = useState('595 / 842');
   useEffect(() => {
@@ -235,6 +237,7 @@ export function PageStage({
             {'label' in r && typeof r.label === 'string' ? r.label : null}
           </span>
         ))}
+        {children}
       </div>
       {onRect && (
         <p className="fine-note">Bereich auf der Seite aufziehen oder die Prozentwerte anpassen.</p>

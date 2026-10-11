@@ -30,7 +30,7 @@ export const ocrLayouts: [string, string][] = [
   ['7', 'Eine Textzeile'],
 ];
 export const individualOcrLanguages = ocrLanguages.filter(([code]) => !code.includes('+'));
-export const MAX_OCR_LANGUAGES = 4;
+export const MAX_OCR_LANGUAGES = 8;
 export function parseOcrLanguages(value: string): string[] {
   const codes = typeof value === 'string' ? value.split('+') : [];
   if (
@@ -39,6 +39,6 @@ export function parseOcrLanguages(value: string): string[] {
     new Set(codes).size !== codes.length ||
     codes.some((code) => !individualOcrLanguages.some(([allowed]) => code === allowed))
   )
-    throw new Error('Bitte eine bis vier der verfügbaren OCR-Sprachen auswählen.');
+    throw new Error('Bitte eine bis acht der verfügbaren OCR-Sprachen auswählen.');
   return codes;
 }

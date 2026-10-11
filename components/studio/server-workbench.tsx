@@ -434,8 +434,8 @@ function StandardServerWorkbench({
         <fieldset disabled={busy} className="advanced-fields conversion-fields">
           {tool === 'office-pdf' ? (
             pick(
-              'Word, Excel, PowerPoint oder OpenDocument',
-              '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp',
+              'Office, Pages, Visio oder Publisher',
+              '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.pages,.vsd,.vsdx,.pub',
               file,
               setFile,
             )

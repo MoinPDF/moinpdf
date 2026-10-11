@@ -248,7 +248,7 @@ def translation_status():
 @app.post("/v1/office", dependencies=[Depends(authorize)])
 def office(file: UploadFile = File(...)):
     suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods", ".odp"}:
+    if suffix not in {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods", ".odp", ".pages", ".vsd", ".vsdx", ".pub"}:
         raise HTTPException(422, "Bitte eine unterstützte Office-Datei auswählen.")
     with job() as directory:
         source = upload(file, directory / ("input" + suffix))
