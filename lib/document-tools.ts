@@ -1,5 +1,6 @@
 import {
   PDFDocument,
+  PDFForm,
   PDFTextField,
   PDFCheckBox,
   PDFDropdown,
@@ -18,7 +19,15 @@ import {
   rgb,
   type PDFObject,
 } from 'pdf-lib';
-import { uid, filenameStem, pdfBlob, type Source, type JobResult } from './pdf-engine';
+import {
+  uid,
+  filenameStem,
+  pdfBlob,
+  hasXfaForm,
+  requireAcroForm,
+  type Source,
+  type JobResult,
+} from './pdf-engine';
 
 export const documentToolIds = ['fill-form', 'create-form', 'bookmarks'] as const;
 export type DocumentTool = (typeof documentToolIds)[number];
@@ -139,12 +148,19 @@ export async function readDocumentDraft(
   signal?: AbortSignal,
 ): Promise<DocumentDraft> {
   check(signal);
-  const doc = await PDFDocument.load(source.bytes, { updateMetadata: false }),
-    form = doc.getForm();
+  const doc = await PDFDocument.load(source.bytes, { updateMetadata: false });
   const fields: FormField[] = [],
-    xfa = form.hasXFA();
-  let signed = false;
-  for (const field of form.getFields()) {
+    xfa = hasXfaForm(doc);
+  // Read signatures without the destructive PDFDocument.getForm() convenience
+  // method. XFA fields remain unavailable to the ordinary field editor.
+  let signed = xfa
+    ? PDFForm.of(doc.catalog.getOrCreateAcroForm(), doc)
+        .getFields()
+        .some(
+          (field) => field instanceof PDFSignature && !!field.acroField.dict.get(PDFName.of('V')),
+        )
+    : false;
+  for (const field of xfa ? [] : doc.getForm().getFields()) {
     if (fields.length >= 1000)
       throw new Error('Bitte eine PDF mit höchstens 1.000 Formularfeldern öffnen.');
     let kind: FieldKind = 'unsupported',
@@ -406,11 +422,7 @@ export async function saveDocumentDraft(
       (f) => f.deleted || !f.existing || JSON.stringify(f.value) !== JSON.stringify(f.initialValue),
     )
   ) {
-    const form = doc.getForm();
-    if (form.hasXFA())
-      throw new Error(
-        'Dieses PDF verwendet XFA. Bitte eine Version mit gewöhnlichen PDF-Formularfeldern verwenden.',
-      );
+    const form = requireAcroForm(doc);
     const names = new Set<string>(),
       font = await doc.embedFont(StandardFonts.Helvetica);
     for (const item of draft.fields) {

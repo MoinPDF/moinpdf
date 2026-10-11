@@ -8,7 +8,7 @@ import {
   rgb,
   type PDFFont,
 } from 'pdf-lib';
-import { pdfBlob, filenameStem, abortable, type Source } from './pdf-engine';
+import { pdfBlob, filenameStem, abortable, requireAcroForm, type Source } from './pdf-engine';
 import { readDocumentDraft, writeBookmarks, type FormField } from './document-tools';
 import { embedFont } from './evidence-engine';
 import { drawOnViewport } from './advanced-documents';
@@ -181,11 +181,7 @@ export async function chronologyPdf(
     const source = sources.find((s) => s.id === item.sourceId);
     if (!source) throw new Error('Quelldokument fehlt.');
     const input = await PDFDocument.load(source.bytes, { updateMetadata: false }),
-      form = input.getForm();
-    if (form.hasXFA())
-      throw new Error(
-        `${source.name}: XFA zuerst über „PDF fixieren“ in sichtbare Seiten umwandeln.`,
-      );
+      form = requireAcroForm(input);
     if (form.getFields().length) {
       form.updateFieldAppearances(await embedFont(input, fontBytes));
       form.flatten({ updateFieldAppearances: false });

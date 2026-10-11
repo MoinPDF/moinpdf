@@ -28,6 +28,11 @@ try {
  assert.equal(responses[0].fields.find(f=>f.name==='Name').value,'Anna');assert.equal(responses[0].fields.find(f=>f.name==='Gruppe').value,'B');assert(e.fieldEmpty(responses[0].fields.find(f=>f.name==='Einwilligung')));assert(responses[1].warnings.length);assert.equal(responses[0].fields[0].ref.page,0);
  responses[0].fields[0].value='Geprüfter Wert';const matrix=e.formResponseRows(responses);assert(matrix[1].includes('Geprüfter Wert'));assert(matrix[1][1].includes('Einwilligung'));assert.deepEqual(original.bytes,before);
  const collision={...responses[0],fields:[{...responses[0].fields[0],kind:'checkbox',value:'Ja'}]};assert.equal(e.formResponseRows([responses[0],collision])[0].filter(t=>t.startsWith('Name')).length,2);
+ const xfa=await PDFDocument.load(original.bytes),xfaStream=xfa.context.register(xfa.context.flateStream('<xdp/>'));
+ xfa.catalog.lookup(PDFName.of('AcroForm'),PDFDict).set(PDFName.of('XFA'),xfaStream);
+ const xfaSource=await source(await xfa.save({updateFieldAppearances:false}),'XFA.pdf');
+ const xfaResponses=await e.readFormResponses([xfaSource],ctx);assert(xfaResponses[0].warnings.some(w=>w.includes('XFA')));assert.equal(xfaResponses[0].fields.length,0);
+ await assert.rejects(()=>e.chronologyPdf([xfaSource],[{sourceId:xfaSource.id,title:'XFA',date:'',included:true,confirmed:true,candidates:[]}],ctx,fontBytes),/XFA/);
  // Valid calendar dates, review gate, manual ordering and actual clickable destinations.
  assert.equal(m.validDate('2026-02-29'),false);assert.equal(m.validDate('2024-02-29'),true);assert.equal(m.validDate('2026-13-01'),false);
  const dates=m.dateCandidates([page(['Datum 07.10.2026; zahlbar 2026-10-21','Ungültig 31.02.2026'])]);assert.deepEqual(dates.map(c=>c.date),['2026-10-07','2026-10-21']);

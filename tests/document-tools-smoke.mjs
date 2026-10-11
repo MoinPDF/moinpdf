@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {dirname} from 'node:path';
 import ts from 'typescript';
 import JSZip from 'jszip';
-import {PDFDocument,PDFName,PDFDict,PDFString,StandardFonts,rgb,degrees} from 'pdf-lib';
+import {PDFDocument,PDFName,PDFDict,PDFString,PDFArray,decodePDFRawStream,StandardFonts,rgb,degrees} from 'pdf-lib';
 const require=createRequire(import.meta.url),pdfRequire=createRequire(require.resolve('pdfjs-dist/package.json'));
 const {createCanvas,loadImage,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
@@ -34,6 +34,25 @@ const png=await doc.embedPng(canvas.toBuffer('image/png'));page.drawImage(png,{x
 writeBookmarks(doc,[{id:'a',title:'Formular',page:0,depth:0,open:true,targetChanged:true},{id:'b',title:'Gedrehte Seite',page:1,depth:1,open:true,targetChanged:true},{id:'c',title:'Anhang',page:2,depth:0,open:true,targetChanged:true}]);
 const original=await source(await doc.save());await writeFile('.cache/PDF-Formular-Test.pdf',original.bytes);
 try{
+ // XFA must be inspected before pdf-lib.getForm(), which silently deletes it.
+ for(const packetArray of [false,true])for(const indirectForm of [false,true]){
+  const xfaDoc=await PDFDocument.load(original.bytes),xfaForm=xfaDoc.catalog.lookup(PDFName.of('AcroForm'),PDFDict);
+  const xml='<xfa:datasets xmlns:xfa="http://www.xfa.org/schema/xfa-data/1.0/"><xfa:data><secret>XFA-VALUE-DO-NOT-LOSE</secret></xfa:data></xfa:datasets>';
+  const ref=xfaDoc.context.register(xfaDoc.context.flateStream(xml));
+  const signature=xfaDoc.context.register(xfaDoc.context.obj({FT:'Sig',T:PDFString.of('ExistingSignature'),V:{Type:'Sig',Contents:PDFString.of('synthetic-signature-placeholder')}}));
+  xfaForm.lookup(PDFName.of('Fields'),PDFArray).push(signature);
+  xfaForm.set(PDFName.of('XFA'),packetArray?xfaDoc.context.obj([PDFString.of('datasets'),ref]):ref);
+  xfaDoc.catalog.set(PDFName.of('AcroForm'),indirectForm?xfaDoc.context.register(xfaForm):xfaForm);
+  const xfaSource=await source(await xfaDoc.save({updateFieldAppearances:false}),'XFA.pdf'),before=xfaSource.bytes.slice();
+  const xfaDraft=await readDocumentDraft(xfaSource);assert.equal(xfaDraft.xfa,true);assert.equal(xfaDraft.signed,true,'Existing signature warnings survive XFA detection');assert.equal(xfaDraft.fields.length,0,'XFA is never treated as an ordinary AcroForm');
+  for(const tool of ['fill-form','create-form'])await assert.rejects(()=>execute(xfaSource,{...xfaDraft,xfa:false},tool),/XFA/,'Persisted draft flags cannot bypass the source check');
+  xfaDraft.bookmarks[0].title='XFA bleibt erhalten';
+  const saved=await PDFDocument.load(await(await execute(xfaSource,xfaDraft,'bookmarks')).blob.arrayBuffer());
+  const actual=saved.catalog.lookup(PDFName.of('AcroForm'),PDFDict).lookup(PDFName.of('XFA'));
+  const stream=actual instanceof PDFArray?actual.lookup(1):actual;
+  assert.equal(new TextDecoder().decode(decodePDFRawStream(stream).decode()),xml,'Bookmark-only saves preserve every XFA byte');
+  assert.deepEqual(xfaSource.bytes,before);
+ }
  const draft=await readDocumentDraft(original);assert.equal(draft.fields.length,6);assert.equal(draft.bookmarks.length,3);assert.equal(draft.fields.find(f=>f.name==='Kontakt').widgets.length,2);assert.equal(draft.fields.find(f=>f.name==='Referenz').readOnly,true);
  const filled=structuredClone(draft);for(const f of filled.fields){if(f.name==='Name')f.value='Jörg Müller';if(f.name==='Bestaetigung')f.value=true;if(f.name==='Bereich')f.value='Betrieb';if(f.name==='Kontakt')f.value='Telefon';if(f.name==='Unterlagen')f.value=['Beleg','Vertrag'];if(f.name==='Referenz')f.value='DARF NICHT GEÄNDERT WERDEN';}
  const result=await execute(original,filled),resultDoc=await PDFDocument.load(await result.blob.arrayBuffer()),outForm=resultDoc.getForm();assert.equal(resultDoc.getPageCount(),4);assert.equal(resultDoc.getTitle(),'Formular Original');assert.equal(outForm.getTextField('Name').getText(),'Jörg Müller');assert.equal(outForm.getTextField('Referenz').getText(),'Unveraendert');assert(outForm.getCheckBox('Bestaetigung').isChecked());assert.deepEqual(outForm.getDropdown('Bereich').getSelected(),['Betrieb']);assert.equal(outForm.getRadioGroup('Kontakt').getSelected(),'Telefon');assert.deepEqual(outForm.getOptionList('Unterlagen').getSelected(),['Beleg','Vertrag']);

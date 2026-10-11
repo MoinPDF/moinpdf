@@ -9,6 +9,18 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.9.1 – 2026-10-11
+
+- XFA-Erkennung erfolgt vor jedem Zugriff auf die gewöhnliche Formular-API.
+  Dadurch werden XFA-Pakete nicht mehr unbemerkt entfernt.
+- Formularbearbeitung, Seitenübernahme, freie Drehung, lange Seiten, Posterdruck
+  und chronologische Pakete lehnen nicht unterstützte XFA-Inhalte vor der Ausgabe ab.
+- Reine Lesezeichenänderungen erhalten vorhandene XFA-Pakete unverändert.
+  Formularauswertungen weisen auf nicht unterstützte XFA-Felder hin.
+- Regressionstests prüfen direkte und indirekte Formularwörterbücher,
+  Stream- und Paketlisten sowie den Erhalt der Originaldaten. Der Browsertest
+  kontrolliert die gesperrte Bearbeitung und liest den Download unabhängig zurück.
+
 ## 0.9.0 – 2026-10-11
 
 - Unveränderliche Projektarchive mit allen fünf gespeicherten Ständen,

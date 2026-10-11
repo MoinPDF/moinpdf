@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 11. Oktober 2026, Version 0.9.0.
+Stand: 11. Oktober 2026, Version 0.9.1.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
@@ -16,7 +16,7 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 | 6. Importformate | HEIC/HEIF und PSD im lokalen Worker, WebP, BMP, mehrseitige TIFF, SVG; Pages 4/5, Visio und Publisher über LibreOffice; Integritäts-, Format- und Größenprüfungen | SVG-Import wird als Bildseite übernommen; PSD-Ebenen werden nicht als editierbare PDF-Ebenen importiert |
 | 7. Exportformate | WebP, TIFF, BMP, JSON mit Positionen und echter SVG-Vektorexport | SVG-Vektorexport benötigt den Dokumentenserver |
 | 8. Arbeitsabläufe | Frei angeordnete Knoten, verschachtelte Ja/Nein-Zweige, mehrere Schrittarten, Import/Export und Entscheidungsprotokoll; Prüfung auf Schleifen und unerreichbare Knoten | Durchgängig im Hintergrund laufende Verarbeitung großer Stapel |
-| 9. XFA | Erkennung und verständliche Hinweise bei nicht unterstützten Formularen | Dynamische XFA-Anzeige, Bearbeitung und verlässlicher Export |
+| 9. XFA | Erkennung vor der Formularverarbeitung; verlustbehaftete Formular- und Seitenübernahme wird abgelehnt; Lesezeichenänderungen erhalten XFA-Pakete; verständliche Hinweise | Dynamische XFA-Anzeige, Bearbeitung und verlässlicher Export |
 | 10. Ebenen | Namen und Sichtbarkeit bearbeiten; dauerhaftes Reduzieren der sichtbaren Ebenen; Zeichenreihenfolge von Seitenobjekten | Ebeneninhalte erstellen und beliebige Objekte zwischen Ebenen verschieben |
 | 11. Nummerierung | Dateiübergreifende Bates-Zählung, mehrere unabhängige Kopf-/Fußzeilenregeln, Seitenbereiche und interne Seitenbezeichnungen; Überlappungsprüfung | Beliebige verschachtelte Abschnittsstrukturen |
 | 12. Signaturen | PAdES-T/LT/LTA, strenge Offline-Widerrufsprüfung, eingebettete DSS-Nachweise und Erneuerung von Dokumentzeitstempeln | Betreiber muss Zeitstempeldienst, kontrollierte Erreichbarkeit, Vertrauensanker und Sperrnachweise bereitstellen; qualifizierter Status wird nicht behauptet |
