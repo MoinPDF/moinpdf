@@ -171,7 +171,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             assert 'Zweite Seite' in document[1].get_text()
         page.get_by_label('Höhe (%)', exact=True).fill('1')
         page.get_by_role('button', name='Absatz exportieren', exact=True).click()
-        expect(page.get_by_text(re.compile('Textüberlauf|kleiner als sein Innenabstand'))).to_be_visible()
+        expect(page.get_by_role('alert')).to_contain_text(re.compile('Textüberlauf|kleiner als sein Innenabstand'))
         completed.append('Paragraph selection, embedded Unicode font, real PDFium result preview/export and overflow rejection in production UI')
         page.get_by_label('Höhe (%)', exact=True).fill('35')
         paragraph_input = page.get_by_label('Neuer Absatztext', exact=True)

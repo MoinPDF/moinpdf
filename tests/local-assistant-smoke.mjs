@@ -22,6 +22,12 @@ for(const raw of ['null','[]','{}','{"answer":']) assert.throws(()=>validateGrou
 assert.equal(validateGroundedAnswer(JSON.stringify({answer:'Unbekannt',abstain:true,citations:[]}),passages).abstain,true);
 assert.throws(()=>validateGroundedAnswer(JSON.stringify({...valid,abstain:true}),passages));
 assert.equal(validateGroundedAnswer(JSON.stringify({...valid,citations:[valid.citations[0],valid.citations[0]]}),passages).citations.length,1);
+assert.equal(selectPassages(pages,'Wie hoch ist die monatliche Miete?').length,0);
+assert(selectPassages(pages,'Fasse alle Angaben im Dokument zusammen.').length>0);
+assert.equal(validateGroundedAnswer(JSON.stringify({...valid,answer:'Die Miete beträgt 12.000 Euro.'}),passages).reason,'unsupported-number');
+assert.equal(validateGroundedAnswer(JSON.stringify({...valid,answer:'Die Miete beträgt −2026 Euro.'}),passages).reason,'unsupported-number');
+for(const answer of ['Der Wert beträgt 1.2.','Der Wert beträgt 1,2.','Der Wert beträgt 2.026.']) assert.equal(validateGroundedAnswer(JSON.stringify({...valid,answer}),passages).reason,'unsupported-number');
+assert.equal(validateGroundedAnswer(JSON.stringify({...valid,answer:'Am 12. November 2026.'}),passages).abstain,false);
 const long=selectPassages([{...pages[0],lines:[{text:'a'.repeat(1600),rects}]}],'a');assert.equal(long.length,3);assert(long.every(p=>p.text.length<=650));
 for(const n of [0,55,56,63,64,65,1024*1024-1,1024*1024,1024*1024+57,2*1024*1024+1]) {
   const bytes=Uint8Array.from({length:n},(_,i)=>(i*71+19)%256);

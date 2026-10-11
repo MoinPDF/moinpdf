@@ -12,6 +12,7 @@ import {
   assistantPrompt,
   selectPassages,
   validateGroundedAnswer,
+  noGroundedAnswer,
   type GroundedAnswer,
 } from '@/lib/grounded-assistant';
 export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
@@ -115,18 +116,21 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
                 throw new Error('Bitte zuerst die Modelldatei auswählen.');
               if (!evidence.current) evidence.current = await readEvidence(sources, 'auto', ctx);
               const passages = selectPassages(evidence.current, question);
-              if (!passages.length)
-                throw new Error('Keine lesbaren Fundstellen gefunden. Bitte zuerst OCR prüfen.');
-              await model.current.load(file, ctx);
-              ctx.report({ percent: 40, label: 'Lokale Antwort mit Quellen erzeugen' });
-              const raw = await model.current.answer(
-                assistantSystem,
-                assistantPrompt(question, passages),
-                assistantSchema(passages),
-                ctx.signal,
-              );
-              ctx.signal.throwIfAborted();
-              const result = validateGroundedAnswer(raw, passages);
+              let result: GroundedAnswer;
+              if (!passages.length) {
+                result = noGroundedAnswer('no-relevant-passage');
+              } else {
+                await model.current.load(file, ctx);
+                ctx.report({ percent: 40, label: 'Lokale Antwort mit Quellen erzeugen' });
+                const raw = await model.current.answer(
+                  assistantSystem,
+                  assistantPrompt(question, passages),
+                  assistantSchema(passages),
+                  ctx.signal,
+                );
+                ctx.signal.throwIfAborted();
+                result = validateGroundedAnswer(raw, passages);
+              }
               setAnswer(result);
               setFocus(result.citations[0] || null);
               ctx.report({ percent: 100, label: 'Quellenangaben geprüft' });
@@ -149,7 +153,9 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
                 filename: 'PDF-Assistent-Antwort.json',
                 kind: 'data',
                 pages: 0,
-                note: 'Lokal erzeugte Modellantwort mit überprüften Originalzitaten.',
+                note: result.abstain
+                  ? 'Keine ausreichende Beleglage für eine Antwort.'
+                  : 'Lokal erzeugte Modellantwort mit überprüften Originalzitaten.',
               };
             })
           }
