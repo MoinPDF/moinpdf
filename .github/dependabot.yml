@@ -26,3 +26,7 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 2
+    ignore:
+      # Node 25 reached end of life on 2026-06-01. Keep Node 24 LTS.
+      - dependency-name: node
+        versions: [">=25, <26"]
