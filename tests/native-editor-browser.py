@@ -28,8 +28,9 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
     browser = api.chromium.launch()
     page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
     page.set_default_timeout(120000)
-    errors, external, uploads, requested = [], [], [], []
+    errors, external, uploads, requested, console_errors = [], [], [], [], []
     page.on('pageerror', lambda error: errors.append(str(error)))
+    page.on('console', lambda message: console_errors.append(message.text) if message.type == 'error' else None)
     def route(r):
         url = r.request.url
         requested.append(url)
@@ -60,7 +61,10 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
         open_tool(source_path)
         page.get_by_label('Bearbeitung', exact=True).select_option('paragraph')
         page.get_by_role('button', name='Textobjekte laden', exact=True).click()
-        page.get_by_role('checkbox', name=re.compile('ORIGINAL PARAGRAPH')).check()
+        original=page.get_by_role('checkbox', name=re.compile('ORIGINAL PARAGRAPH'))
+        expect(original.or_(page.get_by_role('alert'))).to_be_visible(timeout=125000)
+        assert original.is_visible(), page.get_by_role('alert').inner_text()
+        original.check()
         page.get_by_role('button', name='Auswahl als Absatz laden', exact=True).click()
         text='MoinPDF किताब क्षत्रिय कर्म'
         page.get_by_label('Neuer Absatztext', exact=True).fill(text)
@@ -113,6 +117,12 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
         assert not external, external
         assert not uploads, uploads
         print('PASS: production HarfBuzz/WASM, local font fallback, paragraph readback/replacement and isolated nested editing without uploads.')
+    except Exception:
+        page.screenshot(path=str(evidence/'native-editor-failure.png'), full_page=True)
+        print(page.locator('body').inner_text())
+        print('Console errors:', console_errors)
+        print('Requests:', requested)
+        raise
     finally:
-        (evidence/'native-editor-browser.json').write_text(json.dumps({'errors':errors,'external':external,'uploads':uploads},ensure_ascii=False,indent=2))
+        (evidence/'native-editor-browser.json').write_text(json.dumps({'errors':errors,'external':external,'uploads':uploads,'console_errors':console_errors},ensure_ascii=False,indent=2))
         browser.close()
