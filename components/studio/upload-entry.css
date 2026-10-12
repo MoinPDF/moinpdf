@@ -31,7 +31,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px 8px;
   width: min(100%, 600px);
-  margin-block: 8px;
+  margin-block: 8px 24px;
   text-align: center;
 }
 
