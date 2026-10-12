@@ -1,18 +1,13 @@
 {
-  "id": "moinpdf-conversion-worker-2",
+  "id": "moinpdf-conversion-worker-3",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
-  "description": "MoinPDF uses the worker only for one-shot conversion. Preserve ordinary headless event dispatch and honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
+  "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
   "replacements": [
     {
       "description": "LibreOfficeKit initializes its own headless application. Prevent Emscripten from also starting the full soffice main function on a pthread: it races with Kit initialization and document export.",
       "before": "mainScriptUrlOrBlob:e,locateFile:",
       "after": "noInitialRun:true,mainScriptUrlOrBlob:e,locateFile:"
-    },
-    {
-      "description": "Do not activate synchronous keyboard/mouse editing events during document import/export.",
-      "before": "c.enableSyncEvents(),console.log(\"[LOK Worker] Enabled synchronous event dispatch (Unipoll mode)\")",
-      "after": "c.disableSyncEvents(),console.log(\"[MoinPDF Office] Headless conversion event dispatch\")"
     },
     {
       "description": "Honor the supplied verbose flag for LibreOffice stdout and stderr; no synthetic document contents are written to the browser console in normal use.",

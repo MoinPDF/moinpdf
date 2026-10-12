@@ -18,6 +18,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     subprocess.run([sys.executable, str(root/'tests/research/docx-fixture.py'), str(folder/'fixtures')], check=True)
     subprocess.run([sys.executable, str(root/'tests/research/matbee/generate-rich-fixtures.py')], cwd=folder, check=True)
     browser = api.chromium.launch()
+    browser_session = browser.new_browser_cdp_session()
     page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
     page.set_default_timeout(180000)
     errors, uploads, external, results, console = [], [], [], [], []
@@ -78,13 +79,14 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                 if path.suffix == '.pptx':
                     assert len(pdf) == 2 and 'ENDE DER PRÜFDATEI' in text, text
             pdf[0].get_pixmap().save(str(evidence / (path.name+suffix+'.png')))
-            results.append({'file':path.name+suffix,'pages':len(pdf),'images':images,'text':text,'seconds':round(time.monotonic()-started,2),'progress':page.evaluate('window.__officeProgress')})
+            workers = [t['url'] for t in browser_session.send('Target.getTargets')['targetInfos'] if t['type']=='worker' and '/vendor/office/' in t['url']]
+            results.append({'file':path.name+suffix,'pages':len(pdf),'images':images,'text':text,'seconds':round(time.monotonic()-started,2),'progress':page.evaluate('window.__officeProgress'),'remainingOfficeWorkers':workers})
         print('PASS: Office '+path.name+suffix+' in '+str(results[-1]['seconds'])+'s', flush=True)
     try:
+        for name in ['rich.xlsx','rich.pptx','rich.docx']:
+            convert(folder/'fixtures'/name)
         for name in ['sample.docx','sample.xlsx','sample.pptx','sample.odt','sample.ods','sample.odp']:
             convert(root/'tests/fixtures/office'/name)
-        for name in ['rich.docx','rich.xlsx','rich.pptx']:
-            convert(folder/'fixtures'/name)
         choose(folder/'fixtures/rich.docx')
         page.get_by_role('button', name='PDF erstellen', exact=True).click()
         page.get_by_role('button', name='Abbrechen', exact=True).click()
@@ -101,6 +103,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         print(page.locator('body').inner_text()[:8000], flush=True)
         print('Browser errors: '+repr(errors), flush=True)
         print('Office progress: '+json.dumps(page.evaluate('window.__officeProgress')), flush=True)
+        print('Completed conversions: '+json.dumps(results,ensure_ascii=False), flush=True)
         print('Recent console: '+json.dumps(console), flush=True)
         (evidence/'browser-office-failure.json').write_text(json.dumps({'results':results,'progress':page.evaluate('window.__officeProgress'),'console':console,'errors':errors}, ensure_ascii=False, indent=2))
         page.screenshot(path=str(evidence/'browser-office-failure.png'), full_page=True)
