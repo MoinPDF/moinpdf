@@ -15,6 +15,7 @@ import {
   extractNativeForm,
   markNativeObject,
   scopedNativeChanges,
+  nativeMarkerId,
   type NativeChange,
 } from './native-pdf-core';
 
@@ -46,7 +47,7 @@ async function locate(
   pageIndex: number,
   objectIndex: number,
 ) {
-  const marker = 'MoinEdit' + crypto.randomUUID().replaceAll('-', '');
+  const marker = 'MoinEdit' + nativeMarkerId();
   const marked = markNativeObject(api, bytes, pageIndex, objectIndex, marker);
   const doc = await PDFDocument.load(marked),
     page = doc.getPage(pageIndex),

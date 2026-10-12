@@ -1,14 +1,21 @@
 """Production browser acceptance for local shaping and nested instance editing."""
 import json
+import ipaddress
 import os
 from pathlib import Path
 import re
+import subprocess
 import tempfile
 import urllib.parse
 import pymupdf
 from playwright.sync_api import expect, sync_playwright
 
 origin = os.environ['MOINPDF_TEST_URL']
+if os.environ.get('MOINPDF_TEST_NONLOCAL_HTTP') == '1':
+    addresses = subprocess.check_output(['hostname', '-I'], text=True).split()
+    host = next(value for value in addresses
+                if ipaddress.ip_address(value).version == 4 and not ipaddress.ip_address(value).is_loopback)
+    origin = f'http://{host}:8080'
 evidence = Path('web-evidence')
 evidence.mkdir(exist_ok=True)
 with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:

@@ -4,6 +4,11 @@ import bidiFactory from 'bidi-js';
 import * as hb from 'harfbuzzjs';
 import { PDFDocument, PDFDict, PDFName, PDFArray, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 const bidi = bidiFactory();
+// Local HTTP installations do not expose randomUUID; random bytes remain available.
+export const nativeMarkerId = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), (n) =>
+    n.toString(16).padStart(2, '0'),
+  ).join('');
 
 export type NativeRect = { x: number; y: number; w: number; h: number };
 export type NativeMatrix = [number, number, number, number, number, number];
@@ -925,7 +930,7 @@ export async function replaceNativeParagraph(
         cids: new Map(),
         handle: 0,
         shaping,
-        cmapName: 'MoinParagraph' + crypto.randomUUID().replaceAll('-', ''),
+        cmapName: 'MoinParagraph' + nativeMarkerId(),
       };
       fonts.push(font);
       if (fonts.reduce((n, f) => n + f.bytes.length, 0) > 40 * 1024 * 1024)
@@ -1180,7 +1185,7 @@ export async function replaceNativeParagraph(
         semantics: { obj: number; start: number }[];
         marker: string;
         text: string;
-        runs: string[];
+        runs: { marker: string; text: string }[];
       }[] = [];
     try {
       requireSerializablePage(ctx, first);
@@ -1383,7 +1388,7 @@ export async function replaceNativeParagraph(
           page,
           objects: [],
           semantics: [],
-          marker: 'MoinCluster' + crypto.randomUUID().replaceAll('-', ''),
+          marker: 'MoinCluster' + nativeMarkerId(),
           text: '',
           runs: [],
         });
@@ -1407,8 +1412,8 @@ export async function replaceNativeParagraph(
             : align === 'center'
               ? (available - line.width) / 2
               : 0);
-        const semanticSegments = new Map<number, { start: number; marker: string }>();
-        let segment: { start: number; marker: string } | undefined,
+        const semanticSegments = new Map<number, { start: number; marker: string; text: string }>();
+        let segment: { start: number; marker: string; text: string } | undefined,
           previousLevel = -1;
         const minimumLevel = Math.min(...line.groups.map((g) => g.level));
         for (const group of [...line.groups].sort((a, b) => a.start - b.start)) {
@@ -1416,10 +1421,12 @@ export async function replaceNativeParagraph(
           if (!segment || level !== previousLevel) {
             segment = {
               start: group.start,
-              marker: target.marker + 'Run' + crypto.randomUUID().replaceAll('-', ''),
+              marker: target.marker + 'Run' + nativeMarkerId(),
+              text: '',
             };
-            target.runs.push(segment.marker);
+            target.runs.push(segment);
           }
+          segment.text += group.text;
           semanticSegments.set(group.start, segment);
           previousLevel = level;
         }
@@ -1585,6 +1592,10 @@ export async function replaceNativeParagraph(
   if (matched !== fonts.filter((f) => f.cids.size).length)
     throw new Error('Die logischen Zeichenbreiten konnten nicht gespeichert werden.');
   for (const mark of result.marks) {
+    const textHex = (value: string) =>
+      Array.from({ length: value.length }, (_, i) =>
+        value.charCodeAt(i).toString(16).padStart(4, '0'),
+      ).join('');
     const page = document.getPage(mark.page),
       contents = page.node.Contents();
     const streams =
@@ -1615,7 +1626,7 @@ export async function replaceNativeParagraph(
     const visualPattern = new RegExp('/' + mark.marker + '\\s+BMC([\\s\\S]*?)\\bEMC', 'g');
     inner = inner.replace(visualPattern, '$1');
     for (const run of mark.runs) {
-      const runPattern = new RegExp('/' + run + '\\s+BMC([\\s\\S]*?)\\bEMC', 'g'),
+      const runPattern = new RegExp('/' + run.marker + '\\s+BMC([\\s\\S]*?)\\bEMC', 'g'),
         parts = [...inner.matchAll(runPattern)];
       if (!parts.length) continue;
       const start = parts[0].index!,
@@ -1624,19 +1635,19 @@ export async function replaceNativeParagraph(
       inner =
         inner.slice(0, start) +
         '/' +
-        run +
-        ' BMC\n' +
+        run.marker +
+        ' << /ActualText <FEFF' +
+        textHex(run.text) +
+        '> >> BDC\n' +
         inner.slice(start, finish).replace(runPattern, '$1') +
         '\nEMC' +
         inner.slice(finish);
     }
-    const hex = Array.from({ length: mark.text.length }, (_, i) =>
-      mark.text.charCodeAt(i).toString(16).padStart(4, '0'),
-    ).join('');
-    const semanticStart = inner.search(new RegExp('/' + mark.marker + 'Run[a-f0-9]{32}\\s+BMC'));
+    const hex = textHex(mark.text);
+    const semanticStart = inner.search(new RegExp('/' + mark.marker + 'Run[a-f0-9]{32}\\b'));
     if (semanticStart < 0) throw new Error('Der logische Absatz konnte nicht zugeordnet werden.');
-    // ActualText belongs to the logical scalar positions. Mapping it onto the
-    // reordered visual glyphs makes readers such as MuPDF infer spurious spaces.
+    // ActualText belongs to each logical line/direction segment. A page-wide
+    // value maps line breaks onto glyphs and corrupts extraction in some readers.
     const normalized =
       source.slice(0, first) +
       '/' +
@@ -1645,11 +1656,9 @@ export async function replaceNativeParagraph(
       hex +
       ') >> BDC\n/Span << /ActualText <> >> BDC\n' +
       inner.slice(0, semanticStart) +
-      '\nEMC\n/Span << /ActualText <FEFF' +
-      hex +
-      '> >> BDC\n' +
+      '\nEMC\n' +
       inner.slice(semanticStart) +
-      '\nEMC\nEMC' +
+      '\nEMC' +
       source.slice(end);
     page.node.set(
       name('Contents'),
