@@ -50,7 +50,7 @@ def back(page):
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch(channel='chrome')
-    context = browser.new_context(viewport={'width':1440,'height':1000})
+    context = browser.new_context(viewport={'width':1440,'height':1000}, reduced_motion='reduce')
     page = context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
     try:
@@ -113,6 +113,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         # A live second tab follows the app language and retains its deep link.
         manual=context.new_page()
         manual.goto(origin+'/en/documentation.html#werkzeug-pdf-audio')
+        page.bring_to_front()
         page.locator('.language-trigger').click()
         page.get_by_role('menuitemradio',name='Deutsch',exact=True).click()
         expect(manual).to_have_url(origin+'/dokumentation.html#werkzeug-pdf-audio')
@@ -121,14 +122,20 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('menuitemradio',name='English',exact=True).click()
         expect(manual).to_have_url(origin+'/en/documentation.html#werkzeug-pdf-audio')
         expect(page.locator('.chooser-file')).to_contain_text('original-user-content.pdf')
+        manual.close()
+        page.bring_to_front()
         page.set_viewport_size({'width':320,'height':844})
         check(page,'English tools mobile')
-        page.screenshot(path=str(out/'english-tools-mobile.png'),full_page=True)
+        page.evaluate('window.scrollTo(0,0)')
+        page.screenshot(path=str(out/'english-tools-mobile.png'),animations='disabled')
         completed.append('Cross-tab language changes, reload preference, deep links and original document preserved')
         assert not errors, errors
         assert not misses, json.dumps(misses,ensure_ascii=False,indent=2)
     finally:
-        page.screenshot(path=str(out/'english-final-state.png'), full_page=True)
         (out/'english-verification.json').write_text(json.dumps({'completed':completed,'misses':misses,'errors':errors},ensure_ascii=False,indent=2))
+        try:
+            page.screenshot(path=str(out/'english-final-state.png'),animations='disabled',timeout=5000)
+        except Exception:
+            pass  # Preserve the functional failure/report if diagnostics cannot be captured.
         browser.close()
 print('PASS:', '; '.join(completed))
