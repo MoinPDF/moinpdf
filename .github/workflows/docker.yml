@@ -29,6 +29,10 @@ jobs:
         run: |
           python -m pip install playwright==1.55.0 pymupdf==1.28.2 python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 Pillow==11.3.0
           python -m playwright install --with-deps chromium
+      - name: Complex text and nested PDF editor in production
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+        run: python tests/native-editor-browser.py
       - name: XFA data editing and packet preservation
         env:
           MOINPDF_TEST_URL: http://localhost:8080

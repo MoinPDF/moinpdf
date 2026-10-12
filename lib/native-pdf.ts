@@ -50,14 +50,19 @@ function nativeJob<T>(
     worker.postMessage({ ...options, bytes: copy }, [copy.buffer]);
   });
 }
-export const inspectObjects = (bytes: Uint8Array, page: number, signal?: AbortSignal) =>
-  nativeJob<NativeObject[]>(bytes, { action: 'inspect', page }, signal);
+export const inspectObjects = (
+  bytes: Uint8Array,
+  page: number,
+  signal?: AbortSignal,
+  path: number[] = [],
+) => nativeJob<NativeObject[]>(bytes, { action: 'inspect', page, path }, signal);
 export const editObjects = (
   bytes: Uint8Array,
   page: number,
   changes: NativeChange[],
   signal?: AbortSignal,
-) => nativeJob<Uint8Array>(bytes, { action: 'edit', page, changes }, signal);
+  path: number[] = [],
+) => nativeJob<Uint8Array>(bytes, { action: 'edit', page, changes, path }, signal);
 export const removeRegions = (bytes: Uint8Array, removals: NativeRemoval[], signal?: AbortSignal) =>
   nativeJob<Uint8Array>(bytes, { action: 'redact', removals }, signal);
 export const replaceParagraph = (

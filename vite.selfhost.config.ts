@@ -6,6 +6,7 @@ import react from '@vitejs/plugin-react';
 // Cloudflare worker, database, or external account session at runtime.
 const root = fileURLToPath(new URL('.', import.meta.url));
 export default defineConfig({
+  worker: {format: 'es'},
   root: fileURLToPath(new URL('./selfhost', import.meta.url)),
   publicDir: root + 'public',
   plugins: [react(), {

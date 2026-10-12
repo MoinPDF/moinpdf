@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.12.0 — 2026-10-12
+
+- Absatzeditor mit HarfBuzz und 14 lokalen Noto-Schriften für indische und südostasiatische Schriftsysteme; passende Schriften werden bei Bedarf ergänzt.
+- Konjunkte und Ligaturen bleiben bei Zeilenumbruch und Formatierung zusammen. Eine verknüpfte logische Textebene erhält Suche, Kopieren und erneutes Bearbeiten; erzeugte Absätze werden je Seite gemeinsam ausgewählt.
+- Einzelne Texte, Bilder und Pfade innerhalb verschachtelter Gruppen bearbeiten, verschieben, drehen, skalieren, umordnen und löschen. Mehrfach verwendete Gruppen und Bildressourcen werden für die ausgewählte Instanz getrennt.
+- Gruppen behalten Transformation, Beschnitt und Transparenz. Nicht unterstützte Grafiktypen und widersprüchliche geerbte Grafikzustände werden vor der Ausgabe abgewiesen.
+- Neue unabhängige Tests für Schriftformen, Unicode-Ausgabe, Gruppeninstanzen, wiederholte Bearbeitung und reale Browserbedienung; aktualisierte deutsche und englische Anleitung.
+
 ## 0.11.0 — 2026-10-12
 
 - Office-Dokumente lokal mit gepinntem LibreOffice/WASM konvertieren; Downloads und Cache enthalten ausschließlich Programmdaten. Eigener Dokumentenserver bleibt ausdrücklich wählbar.

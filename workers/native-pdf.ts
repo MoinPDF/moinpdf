@@ -2,10 +2,10 @@ import {
   createNativeEngine,
   groupNativeObjects,
   inspectNativeObjects,
-  editNativeObjects,
   removeNativeRegions,
   replaceNativeParagraph,
 } from '../lib/native-pdf-core';
+import { editNativeDocument } from '../lib/nested-native';
 self.onmessage = async ({ data }) => {
   try {
     const response = await fetch('/vendor/pdfium/pdfium.wasm');
@@ -15,13 +15,13 @@ self.onmessage = async ({ data }) => {
       data.action === 'group'
         ? groupNativeObjects(api, data.bytes, data.page, data.indices, data.duplicate)
         : data.action === 'inspect'
-          ? inspectNativeObjects(api, data.bytes, data.page)
+          ? inspectNativeObjects(api, data.bytes, data.page, data.path || [])
           : data.action === 'edit'
-            ? editNativeObjects(api, data.bytes, data.page, data.changes)
+            ? await editNativeDocument(api, data.bytes, data.page, data.changes, data.path || [])
             : data.action === 'redact'
               ? removeNativeRegions(api, data.bytes, data.removals)
               : data.action === 'paragraph'
-                ? replaceNativeParagraph(api, data.bytes, data.page, data.settings)
+                ? await replaceNativeParagraph(api, data.bytes, data.page, data.settings)
                 : null;
     if (value === null) throw new Error('Unbekannter Auftrag.');
     if (value instanceof Uint8Array) self.postMessage({ value }, { transfer: [value.buffer] });

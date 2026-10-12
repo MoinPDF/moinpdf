@@ -83,6 +83,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
     [objects, setObjects] = useState<NativeObject[]>([]),
     [selected, setSelected] = useState(-1),
     [loaded, setLoaded] = useState(false);
+  const [scope, setScope] = useState<number[]>([]);
   const [text, setText] = useState(''),
     [dx, setDx] = useState(0),
     [dy, setDy] = useState(0),
@@ -93,7 +94,9 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
   const [find, setFind] = useState(''),
     [replace, setReplace] = useState('');
   const object = objects.find((o) => o.index === selected),
-    matches = find ? objects.filter((o) => o.type === 'text' && o.text.includes(find)) : [];
+    matches = find
+      ? objects.filter((o) => o.type === 'text' && !o.shaped && o.text.includes(find))
+      : [];
   const select = (id: number) => {
     setSelected(id);
     setText(objects.find((o) => o.index === id)?.text || '');
@@ -109,7 +112,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
       [
         {
           name: source.name.replace(/\.pdf$/i, '') + '-Objekte.pdf',
-          bytes: await editObjects(source.bytes, page, changes, signal),
+          bytes: await editObjects(source.bytes, page, changes, signal, scope),
           pages: source.pdf.numPages,
         },
       ],
@@ -122,6 +125,15 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
     group: 'Objektgruppe',
     other: 'Sonstiges',
   };
+  const openScope = (path: number[]) =>
+    run(async (ctx) => {
+      const items = await inspectObjects(source.bytes, page, ctx.signal, path);
+      if (ctx.signal.aborted) return;
+      setScope(path);
+      setObjects(items);
+      setLoaded(true);
+      setSelected(-1);
+    });
   return (
     <div className="century-columns">
       <section className="advanced-card">
@@ -139,22 +151,27 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
             setObjects([]);
             setSelected(-1);
             setLoaded(false);
+            setScope([]);
           }}
         />
-        <Button
-          disabled={busy}
-          onClick={() =>
-            run(async (ctx) => {
-              const items = await inspectObjects(source.bytes, page, ctx.signal);
-              if (ctx.signal.aborted) return;
-              setObjects(items);
-              setLoaded(true);
-              setSelected(-1);
-            })
-          }
-        >
+        <Button disabled={busy} onClick={() => openScope([])}>
           {ui('Seitenobjekte laden')}
         </Button>
+        {!!scope.length && (
+          <div className="advanced-card">
+            <p>
+              {ui('Geöffnete Gruppe')}: {scope.map((n) => n + 1).join(' / ')}
+            </p>
+            <Button disabled={busy} variant="outline" onClick={() => openScope(scope.slice(0, -1))}>
+              {ui('Eine Ebene zurück')}
+            </Button>
+            <p className="fine-note">
+              {ui(
+                'Änderungen betreffen nur diese Gruppeninstanz. Der Beschnitt der Gruppe bleibt erhalten.',
+              )}
+            </p>
+          </div>
+        )}
         {loaded && !objects.length && (
           <p>{ui('Keine einzeln bearbeitbaren Objekte auf dieser Seite gefunden.')}</p>
         )}
@@ -177,8 +194,29 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
         )}
         {object && (
           <>
+            {object.type === 'group' && (
+              <Button
+                disabled={busy || scope.length >= 16}
+                variant="outline"
+                onClick={() => openScope([...scope, selected])}
+              >
+                {ui('Gruppeninhalt bearbeiten')}
+              </Button>
+            )}
             {object.type === 'text' && (
-              <Text label={ui('Textinhalt')} value={text} onChange={setText} />
+              <Text
+                label={ui('Textinhalt')}
+                value={text}
+                onChange={setText}
+                disabled={object.shaped}
+              />
+            )}
+            {object.shaped && (
+              <p className="fine-note">
+                {ui(
+                  'Diesen geformten Absatz im Absatzmodus ändern. Verschieben, Drehen und Löschen betrifft den ganzen Absatz.',
+                )}
+              </p>
             )}
             {object.type === 'image' && (
               <label className="advanced-field">
@@ -243,7 +281,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
                     [
                       {
                         index: selected,
-                        ...(object.type === 'text' ? { text } : {}),
+                        ...(object.type === 'text' && text !== object.text ? { text } : {}),
                         dx: dx / 100,
                         dy: dy / 100,
                         scale: scale / 100,
@@ -270,7 +308,13 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
         )}
         {!!objects.length && (
           <>
-            <h3>{ui('Suchen und ersetzen auf dieser Seite')}</h3>
+            <h3>
+              {ui(
+                scope.length
+                  ? 'Suchen und ersetzen in dieser Gruppe'
+                  : 'Suchen und ersetzen auf dieser Seite',
+              )}
+            </h3>
             <Text
               label={ui('Suchtext (Groß-/Kleinschreibung beachten)')}
               value={find}
@@ -301,7 +345,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
         )}
         <p className="fine-note">
           {ui(
-            'Objekte in der Vorschau auswählen; am Rahmen verschieben, am Eckpunkt skalieren und am runden Griff drehen. Die Pfeiltasten bedienen den fokussierten Griff. Jede Ausgabe basiert auf der geöffneten Datei; für weitere Änderungen „Ergebnis übernehmen“ verwenden. Bearbeitet werden einzelne Textobjekte. Für mehrere Texte und automatischen Umbruch oben „Absatz“ wählen. Fehlende Zeichen in eingebetteten Schriften werden gemeldet. Inhalte in Objektgruppen sind hier gemeinsam bearbeitbar. Das Löschen ist keine Sicherheitsbereinigung.',
+            'Objekte in der Vorschau auswählen; am Rahmen verschieben, am Eckpunkt skalieren und am runden Griff drehen. Die Pfeiltasten bedienen den fokussierten Griff. Gruppen lassen sich öffnen, um einzelne Inhalte zu bearbeiten. Jede Ausgabe basiert auf der geöffneten Datei; für weitere Änderungen „Ergebnis übernehmen“ verwenden. Für automatischen Umbruch oben „Absatz“ wählen. Fehlende Zeichen werden gemeldet. Das Löschen ist keine Sicherheitsbereinigung.',
           )}
         </p>
       </section>
@@ -326,6 +370,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
             busy={busy}
             version={JSON.stringify({
               page,
+              scope,
               selected,
               text,
               dx,
@@ -340,7 +385,7 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
                 [
                   {
                     index: selected,
-                    ...(object.type === 'text' ? { text } : {}),
+                    ...(object.type === 'text' && text !== object.text ? { text } : {}),
                     dx: dx / 100,
                     dy: dy / 100,
                     scale: scale / 100,
