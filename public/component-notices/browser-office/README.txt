@@ -14,8 +14,10 @@ The full MPL-2.0 text is in LIBREOFFICE-SOURCES/COPYING.MPL.
 
 MOINPDF MODIFICATIONS (2026-10-12)
 MOINPDF-PATCHES.json supplies the exact corresponding changes to the pinned
-browser worker. The conversion-only integration disables interactive sync
-events and respects verbose=false for LibreOffice diagnostics. The build
+browser worker. The conversion-only integration sets noInitialRun=true,
+so Emscripten does not start soffice main concurrently with LibreOfficeKit.
+It also disables interactive sync events and respects verbose=false for
+LibreOffice diagnostics. The build
 checks each replacement and records the patch ID and modified worker hash
 in the runtime manifest. The WASM, data and original sources are unchanged.
 
