@@ -13,6 +13,8 @@ Beim ersten Start werden rund 75 MB komprimierte Programmdaten vom selben Urspru
 - [Mitgelieferte Hinweise, Quellverweise und Fontquellen](../public/component-notices/browser-office/README.txt)
 
 TGZ-SHA256: `14d670936fe220ee49becbfd40bf233ceabb94981fa9987fccde345449ee2c3a`.
+
+PDF-Exporte verwenden direkt Laden und Speichern; zusätzliche Editor-Seitenabfragen sind nur für Bildexporte erforderlich. Die Seitenzahl der PDF wird anschließend aus der erzeugten Datei gelesen.
 `scripts/prepare-office-assets.mjs` erzeugt die Laufzeit bei jedem Produktionsbuild aus diesem verifizierten Archiv. Alle 137 eingebetteten Font-Pfade sind inventarisiert. Die Sammlung enthält verschiedene Lizenzen; MPL-2.0 ist keine pauschale Lizenz aller Fonts und Bibliotheken. Der LibreOffice-Lizenzkatalog enthält auch optionale Komponenten, keine genaue Liste aller statisch eingebundenen Bibliotheken.
 
 Der Browser-Worker wird für die reine Konvertierung angepasst: `noInitialRun=true` verhindert, dass Emscripten neben LibreOfficeKit eine zweite Office-Anwendung auf einem Hintergrundthread startet. Die synchrone Ereignisverarbeitung des ursprünglichen Workers bleibt erhalten; die ausführliche LibreOffice-Debug-Ausgabe respektiert `verbose=false`. Die exakten Änderungen liegen in `MOINPDF-PATCHES.json` neben den unveränderten Originalquellen. Der Build bricht bei abweichendem Quelltext ab und berechnet die Prüfsumme des angepassten Workers neu. WASM und eingebettete Ressourcen bleiben unverändert.

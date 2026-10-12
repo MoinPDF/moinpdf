@@ -17,7 +17,9 @@ MOINPDF-PATCHES.json supplies the exact corresponding changes to the pinned
 browser worker. The conversion-only integration sets noInitialRun=true,
 so Emscripten does not start soffice main concurrently with LibreOfficeKit.
 It preserves the original synchronous event dispatch and respects
-verbose=false for LibreOffice diagnostics. The build
+verbose=false for LibreOffice diagnostics. The worker queries editor
+page/part metadata only for image exports, not for PDFs, as
+the upstream Node conversion path does. The build
 checks each replacement and records the patch ID and modified worker hash
 in the runtime manifest. The WASM, data and original sources are unchanged.
 
