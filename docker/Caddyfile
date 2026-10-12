@@ -12,6 +12,8 @@ http://127.0.0.1:8081 {
 	import /tmp/access.caddy
 	encode zstd gzip
 	header {
+		Cross-Origin-Opener-Policy same-origin
+		Cross-Origin-Embedder-Policy require-corp
 		X-Content-Type-Options nosniff
 		Referrer-Policy same-origin
 		X-Frame-Options SAMEORIGIN

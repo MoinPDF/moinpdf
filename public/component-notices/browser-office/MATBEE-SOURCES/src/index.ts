@@ -1,0 +1,362 @@
+/**
+ * LibreOffice WASM Document Converter
+ *
+ * A headless document conversion toolkit that uses LibreOffice
+ * compiled to WebAssembly. Supports conversion between various
+ * document formats without any UI dependencies.
+ *
+ * @packageDocumentation
+ */
+
+export { LibreOfficeConverter } from './converter-node.js';
+export { WorkerConverter, createWorkerConverter } from './node.worker-converter.js';
+export { SubprocessConverter, createSubprocessConverter } from './subprocess.worker-converter.js';
+
+// Font loading utilities (Node.js)
+export { loadFontsFromZip, loadFontsFromDirectory, loadSystemFonts, loadFontsFromPackage, loadFontsFromPackages } from './font-loader.js';
+
+// Image encoding utilities (uses sharp when available, falls back to pure JS)
+export {
+  encodeImage,
+  rgbaToPng,
+  rgbaToJpeg,
+  rgbaToWebp,
+  isSharpAvailable,
+  getSharp,
+} from './image-utils.js';
+export type { ImageEncodeOptions } from './image-utils.js';
+
+export type {
+  ConversionOptions,
+  ConversionResult,
+  FontData,
+  FilterOptions,
+  ImageOptions,
+  InputFormat,
+  LibreOfficeWasmOptions,
+  OutputFormat,
+  PdfOptions,
+  ProgressInfo,
+} from './types.js';
+
+export {
+  ConversionError,
+  ConversionErrorCode,
+  FORMAT_FILTERS,
+  FORMAT_MIME_TYPES,
+  EXTENSION_TO_FORMAT,
+  // Conversion validation helpers
+  getValidOutputFormats,
+  isConversionValid,
+  getConversionErrorMessage,
+  INPUT_FORMAT_CATEGORY,
+  CATEGORY_OUTPUT_FORMATS,
+  // Dynamic document type helpers (use after loading document)
+  LOKDocumentType,
+  LOK_DOCTYPE_OUTPUT_FORMATS,
+  getOutputFormatsForDocType,
+  // Browser WASM path helpers (also useful for understanding paths)
+  createWasmPaths,
+  DEFAULT_WASM_BASE_URL,
+} from './types.js';
+
+export type { DocumentCategory, WasmLoadPhase, WasmLoadProgress } from './types.js';
+
+// Export LOK constants for advanced usage
+export {
+  LOK_MOUSEEVENT_BUTTONDOWN,
+  LOK_MOUSEEVENT_BUTTONUP,
+  LOK_MOUSEEVENT_MOVE,
+  LOK_KEYEVENT_KEYINPUT,
+  LOK_KEYEVENT_KEYUP,
+  LOK_SELTYPE_NONE,
+  LOK_SELTYPE_TEXT,
+  LOK_SELTYPE_CELL,
+  LOK_SETTEXTSELECTION_START,
+  LOK_SETTEXTSELECTION_END,
+  LOK_SETTEXTSELECTION_RESET,
+  LOK_DOCTYPE_TEXT,
+  LOK_DOCTYPE_SPREADSHEET,
+  LOK_DOCTYPE_PRESENTATION,
+  LOK_DOCTYPE_DRAWING,
+  LOK_DOCTYPE_OTHER,
+} from './lok-bindings.js';
+
+import { LibreOfficeConverter } from './converter-node.js';
+import { createSubprocessConverter } from './subprocess.worker-converter.js';
+import type { ConversionOptions, ConversionResult, ImageOptions, LibreOfficeWasmOptions } from './types.js';
+
+/**
+ * Image format options for exportAsImage
+ */
+export type ImageFormat = 'png' | 'jpg' | 'svg';
+
+// Detect if running in Node.js
+const isNode = typeof process !== 'undefined' &&
+  process.versions != null &&
+  process.versions.node != null;
+
+/**
+ * Create a configured LibreOffice converter instance
+ *
+ * @example
+ * ```typescript
+ * import { createConverter } from '@matbee/libreoffice-converter';
+ *
+ * const converter = await createConverter({
+ *   wasmPath: './wasm',
+ *   verbose: true,
+ * });
+ *
+ * const pdfData = await converter.convert(docxBuffer, {
+ *   outputFormat: 'pdf',
+ * });
+ * ```
+ */
+export async function createConverter(
+  options?: LibreOfficeWasmOptions
+): Promise<LibreOfficeConverter> {
+  const converter = new LibreOfficeConverter(options);
+  await converter.initialize();
+  return converter;
+}
+
+/**
+ * Quick conversion utility - creates converter, converts, then destroys
+ *
+ * In Node.js, uses SubprocessConverter for clean process exit.
+ * In browsers, uses LibreOfficeConverter directly.
+ *
+ * @example
+ * ```typescript
+ * import { convertDocument } from '@matbee/libreoffice-converter';
+ *
+ * const pdfData = await convertDocument(docxBuffer, {
+ *   outputFormat: 'pdf',
+ *   pdf: { pdfaLevel: 'PDF/A-2b' }
+ * });
+ * ```
+ */
+export async function convertDocument(
+  input: Uint8Array | ArrayBuffer | Buffer,
+  options: ConversionOptions,
+  converterOptions?: LibreOfficeWasmOptions
+): Promise<ConversionResult> {
+  // In Node.js, use subprocess for clean exit (no hanging pthread workers)
+  // SubprocessConverter only supports basic conversions, not image/page options
+  const isBasicConversion = !options.image;
+
+  if (isNode && isBasicConversion) {
+    const converter = await createSubprocessConverter(converterOptions);
+    try {
+      return await converter.convert(input, options);
+    } finally {
+      await converter.destroy();
+    }
+  }
+
+  // Browser or advanced conversion: use LibreOfficeConverter
+  const converter = await createConverter(converterOptions);
+  try {
+    return await converter.convert(input, options);
+  } finally {
+    await converter.destroy();
+  }
+}
+
+/**
+ * Export document pages as images - creates converter, exports specified pages, then destroys
+ *
+ * @param input - Document buffer
+ * @param pages - Page index or array of page indices to export (0-indexed)
+ * @param format - Output format: 'png', 'jpg', or 'svg'
+ * @param imageOptions - Image options (width, height, dpi)
+ * @param converterOptions - Converter options (wasmPath, etc.)
+ * @returns Array of ConversionResult, one per page
+ *
+ * @example
+ * ```typescript
+ * import { exportAsImage } from '@matbee/libreoffice-converter';
+ *
+ * // Export single page (0-indexed)
+ * const [cover] = await exportAsImage(docxBuffer, 0, 'png');
+ * fs.writeFileSync('cover.png', cover.data);
+ *
+ * // Export multiple pages
+ * const slides = await exportAsImage(pptxBuffer, [0, 1, 2], 'png');
+ * slides.forEach((img, i) => fs.writeFileSync(`slide-${i}.png`, img.data));
+ *
+ * // Export with options
+ * const highRes = await exportAsImage(pptxBuffer, [0, 1, 2], 'png', {
+ *   dpi: 300,
+ *   width: 1920
+ * });
+ * ```
+ */
+export async function exportAsImage(
+  input: Uint8Array | ArrayBuffer | Buffer,
+  pages: number | number[],
+  format: ImageFormat = 'png',
+  imageOptions?: Omit<ImageOptions, 'pageIndex' | 'pages'>,
+  converterOptions?: LibreOfficeWasmOptions
+): Promise<ConversionResult[]> {
+  const pageArray = Array.isArray(pages) ? pages : [pages];
+  if (pageArray.length === 0) {
+    throw new Error('pages is required and must not be empty');
+  }
+  const converter = await createConverter(converterOptions);
+  try {
+    const results: ConversionResult[] = [];
+    for (const pageIndex of pageArray) {
+      const result = await converter.convert(input, {
+        outputFormat: format,
+        image: { ...imageOptions, pageIndex },
+      });
+      results.push(result);
+    }
+    return results;
+  } finally {
+    await converter.destroy();
+  }
+}
+
+/**
+ * Check if a format is supported for input
+ */
+export function isInputFormatSupported(format: string): boolean {
+  return LibreOfficeConverter.getSupportedInputFormats().includes(format.toLowerCase());
+}
+
+/**
+ * Check if a format is supported for output
+ */
+export function isOutputFormatSupported(format: string): boolean {
+  return LibreOfficeConverter.getSupportedOutputFormats().includes(format.toLowerCase() as OutputFormat);
+}
+
+/**
+ * Check if a specific conversion path is supported
+ * @param inputFormat The input document format (e.g., 'pdf', 'docx')
+ * @param outputFormat The desired output format (e.g., 'pdf', 'docx')
+ * @returns true if the conversion is supported
+ * 
+ * @example
+ * ```typescript
+ * import { isConversionSupported } from '@matbee/libreoffice-converter';
+ * 
+ * isConversionSupported('docx', 'pdf');  // true
+ * isConversionSupported('pdf', 'docx');  // false - PDFs can't be converted to DOCX
+ * isConversionSupported('xlsx', 'csv');  // true
+ * ```
+ */
+export function isConversionSupported(inputFormat: string, outputFormat: string): boolean {
+  return LibreOfficeConverter.isConversionSupported(inputFormat, outputFormat);
+}
+
+/**
+ * Get valid output formats for a given input format
+ * @param inputFormat The input document format
+ * @returns Array of valid output formats
+ * 
+ * @example
+ * ```typescript
+ * import { getValidOutputFormatsFor } from '@matbee/libreoffice-converter';
+ * 
+ * getValidOutputFormatsFor('docx');  // ['pdf', 'docx', 'doc', 'odt', 'rtf', 'txt', 'html', 'png', 'jpg', 'svg']
+ * getValidOutputFormatsFor('pdf');   // ['pdf', 'png', 'jpg', 'svg', 'html']
+ * getValidOutputFormatsFor('xlsx');  // ['pdf', 'xlsx', 'xls', 'ods', 'csv', 'html', 'png', 'jpg', 'svg']
+ * ```
+ */
+export function getValidOutputFormatsFor(inputFormat: string): OutputFormat[] {
+  return LibreOfficeConverter.getValidOutputFormats(inputFormat);
+}
+
+// Re-export OutputFormat type for the isOutputFormatSupported function
+import type { OutputFormat } from './types.js';
+
+// ============================================
+// Editor API (LLM-friendly document editing)
+// ============================================
+
+export {
+  // Factory and type guards
+  createEditor,
+  isWriterEditor,
+  isCalcEditor,
+  isImpressEditor,
+  isDrawEditor,
+  // Editor classes
+  OfficeEditor,
+  WriterEditor,
+  CalcEditor,
+  ImpressEditor,
+  DrawEditor,
+  // LLM tool definitions
+  allTools,
+  toolsByName,
+  commonTools,
+  writerTools,
+  calcTools,
+  impressTools,
+  drawTools,
+  documentTools,
+  getToolsForDocumentType,
+  toOpenAIFunction,
+  toAnthropicTool,
+  getOpenAIFunctions,
+  getAnthropicTools,
+} from './editor/index.js';
+
+export type {
+  // Operation result types
+  OperationResult,
+  TruncationInfo,
+  OpenDocumentOptions,
+  // Writer types
+  TextPosition,
+  TextRange,
+  TextFormat,
+  Paragraph,
+  WriterStructure,
+  // Calc types
+  CellRef,
+  RangeRef,
+  ColRef,
+  SheetRef,
+  CellValue,
+  CellData,
+  CellFormat,
+  SheetInfo,
+  CalcStructure,
+  // Impress types
+  SlideLayout,
+  TextFrame,
+  SlideData,
+  SlideInfo,
+  ImpressStructure,
+  // Draw types
+  ShapeType,
+  ShapeData,
+  PageData,
+  PageInfo,
+  DrawStructure,
+  // Common types
+  Rectangle,
+  Size,
+  Position,
+  DocumentMetadata,
+  DocumentStructure,
+  DocumentType,
+  SelectionRange,
+  FindOptions,
+  // LLM tool types
+  ToolDefinition,
+  CommonToolName,
+  WriterToolName,
+  CalcToolName,
+  ImpressToolName,
+  DrawToolName,
+  DocumentToolName,
+  AllToolName,
+  ToolParameters,
+} from './editor/index.js';

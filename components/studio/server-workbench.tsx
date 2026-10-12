@@ -1,4 +1,6 @@
 'use client';
+import { convertOfficeLocally, browserOfficeUnavailable } from '@/lib/browser-office';
+import { signLocally } from '@/lib/local-signature';
 import { ui } from '@/lib/ui-language';
 
 import { useLanguage, useTools } from '@/components/studio/appearance';
@@ -68,9 +70,14 @@ function StandardServerWorkbench({
 }: Props) {
   const { t } = useLanguage();
   const { tools } = useTools();
+  const [processing, setProcessing] = useState('local');
+  const [mode, setMode] = useState(tool === 'certificate-sign' ? 'validate' : 'create');
+  const [progress, setProgress] = useState('');
+  const localOffice = tool === 'office-pdf' && processing === 'local';
+  const localCertificate = tool === 'certificate-sign' && mode === 'sign' && processing === 'local';
   const localWord = !integratedDocumentServer && tool === 'pdf-word';
-  const localOptimize = !integratedDocumentServer && tool === 'optimize-pdf',
-    localMode = localWord || localOptimize;
+  const localOptimize = processing === 'local' && tool === 'optimize-pdf',
+    localMode = localWord || localOptimize || localOffice || localCertificate;
   const [capabilities, setCapabilities] = useState<ServerCapabilities | null>(null);
   const [status, setStatus] = useState<'checking' | 'ready' | 'unavailable'>(
     localMode ? 'ready' : 'checking',
@@ -81,8 +88,7 @@ function StandardServerWorkbench({
     [file, setFile] = useState<File | null>(initialFile || null);
   const [cert, setCert] = useState<File | null>(null),
     [password, setPassword] = useState('');
-  const [mode, setMode] = useState(tool === 'certificate-sign' ? 'validate' : 'create'),
-    [profile, setProfile] = useState(tool === 'zugferd-create' ? 'E' : '2b');
+  const [profile, setProfile] = useState(tool === 'zugferd-create' ? 'E' : '2b');
   const [uaMode, setUaMode] = useState('basic'),
     [uaProfile, setUaProfile] = useState('ua1'),
     [uaDocument, setUaDocument] = useState(initialAccessibleDocument);
@@ -137,6 +143,10 @@ function StandardServerWorkbench({
     (tool !== 'certificate-sign' || mode !== 'sign' || !!cert);
 
   const checkConnection = useCallback(async () => {
+    if (localMode) {
+      setStatus('ready');
+      return;
+    }
     if (!integratedDocumentServer) {
       setStatus(localMode ? 'ready' : 'unavailable');
       return;
@@ -192,7 +202,7 @@ function StandardServerWorkbench({
     file,
     mode,
     profile,
-    cert,
+    processing,
     attachments,
     extra,
     spreadsheet,
@@ -281,6 +291,7 @@ function StandardServerWorkbench({
               setError('Bitte eine Datei mit höchstens 80 MB auswählen.');
               return;
             }
+            setResult(null);
             onChange(next);
             e.target.value = '';
           }}
@@ -292,6 +303,35 @@ function StandardServerWorkbench({
   async function process(signal: AbortSignal) {
     setResult(null);
     setReport('');
+    if (localOffice) {
+      if (!file) throw new Error('Bitte zuerst eine Datei auswählen.');
+      const out = await convertOfficeLocally(file, signal, setProgress);
+      if (!signal.aborted) setResult(out);
+      return;
+    }
+    if (localCertificate) {
+      if (!source || !cert) throw new Error('Bitte PDF und Zertifikatsdatei auswählen.');
+      let p12: Uint8Array | undefined;
+      try {
+        if (cert.size > 5 * 1024 * 1024)
+          throw new Error('Das Zertifikat darf höchstens 5 MB groß sein.');
+        p12 = new Uint8Array(await cert.arrayBuffer());
+        const bytes = await signLocally(source.bytes, p12, password, signal);
+        if (!signal.aborted)
+          setResult({
+            blob: new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }),
+            filename: source.name.replace(/\.pdf$/i, '') + '-signiert.pdf',
+            kind: 'pdf',
+            pages: source.pdf.numPages,
+            note: 'Lokal mit Zertifikat signiert. Ohne Zeitstempel oder Bestätigung der Zertifikatsvertrauenskette.',
+          });
+      } finally {
+        p12?.fill(0);
+        setPassword('');
+        setCert(null);
+      }
+      return;
+    }
     if (localOptimize) {
       if (!source) throw new Error('Bitte zuerst eine PDF auswählen.');
       const { optimizeBrowser } = await import('@/lib/pdf-recovery');
@@ -443,10 +483,38 @@ function StandardServerWorkbench({
       </ol>
       <section className="advanced-card conversion-card" aria-label={ui(info.title)}>
         <fieldset disabled={busy} className="advanced-fields conversion-fields">
+          {(['office-pdf', 'optimize-pdf'].includes(tool) ||
+            (tool === 'certificate-sign' && mode === 'sign')) && (
+            <Choice
+              label={ui('Verarbeitung')}
+              value={processing}
+              onChange={setProcessing}
+              items={[
+                ['local', 'Lokal im Browser'],
+                ...(integratedDocumentServer
+                  ? [['server', 'Eigener Dokumentenserver'] as [string, string]]
+                  : []),
+              ]}
+            />
+          )}
+          {localOffice && (
+            <p className="fine-note">
+              {ui(
+                'Die Datei bleibt auf deinem Gerät. Beim ersten Start werden etwa 75 MB Programmdaten geladen. Mehr als 1 GB freier Arbeitsspeicher, HTTPS und ein aktueller Desktop-Browser werden benötigt. Höchstens 40 MB pro Office-Datei.',
+              )}
+            </p>
+          )}
+          {localOffice && browserOfficeUnavailable() && (
+            <p className="notice">{ui(browserOfficeUnavailable()!)}</p>
+          )}
           {tool === 'office-pdf' ? (
             pick(
-              'Office, Pages, Visio oder Publisher',
-              '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.pages,.vsd,.vsdx,.pub',
+              localOffice
+                ? 'Word, Excel, PowerPoint, OpenDocument oder RTF'
+                : 'Office, Pages, Visio oder Publisher',
+              localOffice
+                ? '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.rtf'
+                : '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.rtf,.pages,.vsd,.vsdx,.pub',
               file,
               setFile,
             )
@@ -678,24 +746,26 @@ function StandardServerWorkbench({
               />
               {mode === 'sign' && (
                 <>
-                  <Choice
-                    label={ui('Signaturprofil')}
-                    value={signLevel}
-                    onChange={setSignLevel}
-                    items={(['basic', 'timestamp', 'lt', 'lta'] as const)
-                      .filter(
-                        (level) => level === 'basic' || capabilities?.signatureLevels?.[level],
-                      )
-                      .map((level) => [
-                        level,
-                        {
-                          basic: 'PAdES-B: Zertifikatssignatur',
-                          timestamp: 'PAdES-T: mit geprüftem Zeitstempel',
-                          lt: 'PAdES-LT: mit eingebetteten Sperrnachweisen',
-                          lta: 'PAdES-LTA: mit Langzeit-Zeitstempel',
-                        }[level],
-                      ])}
-                  />
+                  {!localCertificate && (
+                    <Choice
+                      label={ui('Signaturprofil')}
+                      value={signLevel}
+                      onChange={setSignLevel}
+                      items={(['basic', 'timestamp', 'lt', 'lta'] as const)
+                        .filter(
+                          (level) => level === 'basic' || capabilities?.signatureLevels?.[level],
+                        )
+                        .map((level) => [
+                          level,
+                          {
+                            basic: 'PAdES-B: Zertifikatssignatur',
+                            timestamp: 'PAdES-T: mit geprüftem Zeitstempel',
+                            lt: 'PAdES-LT: mit eingebetteten Sperrnachweisen',
+                            lta: 'PAdES-LTA: mit Langzeit-Zeitstempel',
+                          }[level],
+                        ])}
+                    />
+                  )}
                   {pick('Zertifikat (.p12 oder .pfx)', '.p12,.pfx', cert, setCert)}
                   <Text
                     label={ui('Zertifikatspasswort')}
@@ -705,7 +775,9 @@ function StandardServerWorkbench({
                   />
                   <p className="fine-note">
                     {ui(
-                      'Mit „Signieren“ werden auch das ausgewählte Zertifikat samt privatem Schlüssel und das Passwort für diesen Auftrag übertragen.',
+                      localCertificate
+                        ? 'Zertifikat, privater Schlüssel und Passwort bleiben auf deinem Gerät. Benötigt HTTPS und ein modernes PKCS#12-Zertifikat mit RSA ab 2048 Bit. Keine qualifizierte Signatur und kein Zeitstempel.'
+                        : 'Mit „Signieren“ werden auch das ausgewählte Zertifikat samt privatem Schlüssel und das Passwort für diesen Auftrag übertragen.',
                     )}
                   </p>
                 </>
@@ -719,7 +791,13 @@ function StandardServerWorkbench({
           )}
           <Button
             className="conversion-submit"
-            disabled={busy || !available || !completeInput || status === 'checking'}
+            disabled={
+              busy ||
+              !available ||
+              !completeInput ||
+              status === 'checking' ||
+              (localOffice && !!browserOfficeUnavailable())
+            }
             onClick={() => run(process)}
           >
             {busy ? (
@@ -796,7 +874,7 @@ function StandardServerWorkbench({
       {busy && (
         <div className="advanced-progress" role="status">
           <LoaderCircle className="spin" size={18} />
-          <span>{ui('Deine Datei wird verarbeitet …')}</span>
+          <span>{ui(localOffice && progress ? progress : 'Deine Datei wird verarbeitet …')}</span>
           <Button variant="ghost" onClick={() => controller.current?.abort()}>
             {t('Abbrechen')}
           </Button>

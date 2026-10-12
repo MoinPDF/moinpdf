@@ -28,6 +28,14 @@ const oldAttachment=new TextEncoder().encode('SENSITIVE_ATTACHMENT_REMOVAL_SENTI
 const {writeBookmarks}=await import('../.cache/document-tools-advanced-test.mjs');writeBookmarks(doc,[{id:'a',title:'Rechnung',page:0,depth:0,open:true,targetChanged:true},{id:'b',title:'Kapitel',page:3,depth:0,open:true,targetChanged:true}]);
 const original=await source(await doc.save());await writeFile('.cache/MoinPDF-Test.pdf',original.bytes);
 try{
+ for(const kind of ['rotate90','rotate180','reverse','flattenForms','optimizeLossless']) {
+  const output=await pipeline.applyWorkflowAction(original,{kind},'',ctx),reopened=await source(output),parsed=await PDFDocument.load(output);
+  assert.equal(reopened.pdf.numPages,4);assert.equal((await reopened.pdf.getAttachments()).size,2);
+  if(kind==='reverse'){assert.match((await(await reopened.pdf.getPage(1)).getTextContent()).items.map(x=>x.str||'').join(' '),/Kapitel 3/);assert.equal(parsed.getForm().getFields().length,1);}
+  if(kind==='rotate90'||kind==='rotate180')assert.equal(parsed.getPage(0).getRotation().angle,kind==='rotate90'?90:180);
+  if(kind==='flattenForms')assert.equal(parsed.getForm().getFields().length,0);
+ }
+ for(const template of pipeline.workflowTemplates)assert.doesNotThrow(()=>pipeline.validateWorkflow(template));
  // CSV preserves quoted separators/newlines, XLSX uses inline text (no formula execution).
  assert.deepEqual(table.parseDelimited('Name;Wert\r\n"Müller; Team";"Zeile 1\nZeile 2"'),[['Name','Wert'],['Müller; Team','Zeile 1\nZeile 2']]);assert.throws(()=>table.parseDelimited('A;"offen'),/Anführungszeichen/);
  assert.match(table.csvText([['=HYPERLINK("x")']]),/'=HYPERLINK/);const xlsx=await JSZip.loadAsync(await(await table.makeXlsx([['Name','Wert'],['Öl','=1+1']])).arrayBuffer());const sheet=await xlsx.file('xl/worksheets/sheet1.xml').async('string');assert.match(sheet,/inlineStr/);assert(!sheet.includes('<f>'));assert.match(sheet,/Öl/);

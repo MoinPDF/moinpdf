@@ -332,7 +332,7 @@ export const guides = {
   ], 'PDF aus bis zu 50 gesammelten Fotoseiten.', 'Die Kamera benötigt HTTPS oder einen vom Browser als sicher behandelten lokalen Ursprung sowie deine Berechtigung. Über gewöhnliches HTTP im lokalen Netz kann die Fotoauswahl weiterhin als Alternative dienen. Gute Beleuchtung ohne Schatten verbessert das Ergebnis.'),
   'office-pdf': guide('Word, Excel, PowerPoint oder OpenDocument: DOC/DOCX, XLS/XLSX, PPT/PPTX, ODT/ODS/ODP.', [
     'Wähle die Office-Datei direkt auf der Startseite oder im Werkzeug.',
-    'Starte die Umwandlung auf dem Dokumentenserver und warte auf das Ergebnis.',
+    'Starte die Umwandlung im gewählten Modus und warte auf das Ergebnis.',
     'Kontrolliere Schriften, Seitenumbrüche, Tabellenbreiten und bei Präsentationen jede Folie.'
   ], 'PDF der Office-Datei.', 'Die Darstellung hängt unter anderem von verfügbaren Schriften und Dokumenteinstellungen ab. Komplexe Office-Layouts können abweichen. Die Eingabedatei bleibt unverändert.'),
   'pdfa': guide('Eine PDF für eine Archivkopie oder eine vorhandene PDF/A-Datei zur Prüfung.', [
@@ -347,9 +347,9 @@ export const guides = {
   ], 'Prüfbericht nach den installierten KoSIT-Regeln.', 'Die Validierung prüft technische Regeln der Rechnung. Sie ersetzt weder den Abgleich mit dem zugrunde liegenden Geschäftsvorfall noch eine Prüfung der Echtheit oder der tatsächlichen Leistung.'),
   'certificate-sign': guide('Eine PDF; zum Signieren zusätzlich ein PKCS#12-Zertifikat (.p12/.pfx) mit Passwort.', [
     'Wähle Signieren oder Signaturen prüfen. Für eine neue Signatur wähle das Zertifikat und gib dessen Passwort ein.',
-    'Starte die Verarbeitung. Beim Signieren werden PDF, Zertifikat mit privatem Schlüssel und Passwort für diesen Auftrag an den Dokumentenserver übertragen.',
+    'Starte die Verarbeitung. Nur im Servermodus werden PDF, Zertifikat mit privatem Schlüssel und Passwort für diesen Auftrag an den eigenen Dokumentenserver übertragen.',
     'Lade das Ergebnis herunter und prüfe Integrität, Vertrauen und Änderungsbefunde. Bearbeite eine fertig signierte Datei anschließend nicht weiter.'
-  ], 'Signierte PDF beziehungsweise Signatur-Prüfbericht.', 'Die Prüfung fragt den aktuellen Sperrstatus nicht ab und bestätigt keine qualifizierte elektronische Signatur. Nutze zum Signieren nur einen Dokumentenserver, dem du auch dein Zertifikat anvertrauen möchtest.'),
+  ], 'Signierte PDF beziehungsweise Signatur-Prüfbericht.', 'Die Prüfung fragt den aktuellen Sperrstatus nicht ab und bestätigt keine qualifizierte elektronische Signatur. Wähle den Servermodus nur, wenn du dem eigenen Dokumentenserver auch dein Zertifikat anvertrauen möchtest.'),
   'protect': guide('Eine vollständige PDF und ein neues Öffnungspasswort.', [
     'Wähle das Dokument und lege das Passwort sowie die angebotenen Berechtigungen fest.',
     'Erstelle die mit AES-256 geschützte Ausgabe.',
@@ -572,3 +572,12 @@ export const guides = {
     'Erstelle die Überlagerung und prüfe Ausrichtung sowie Lesbarkeit.'
   ], 'PDF mit der proportional aufgelegten ersten ausgewählten Vorlagenseite auf den ausgewählten Basisseiten.', 'Ein weißer Hintergrund der Basis kann eine dahinterliegende Vorlage verdecken. Eine Überlagerung entfernt vorhandene Inhalte nicht vertraulich.'),
 };
+
+// Local expansion: keep the established guide text and describe the additional mode explicitly.
+guides['office-pdf'].steps.unshift('Standardmäßig lokal im Browser konvertieren. Den eigenen Dokumentenserver bei Bedarf ausdrücklich auswählen.');
+guides['office-pdf'].note = 'Lokal: Word, Excel, PowerPoint, OpenDocument und RTF bis 40 MB. Etwa 75 MB Programmdaten werden beim ersten Start geladen; benötigt HTTPS, isolierten Browser-Speicher und mehr als 1 GB freien Arbeitsspeicher. Nur Programmdaten werden zwischengespeichert. Schriften, Umbrüche, Bilder und Formeln nach dem Export kontrollieren. Pages, Visio und Publisher benötigen den Dokumentenserver.';
+guides['certificate-sign'].steps.unshift('Für eine einfache Zertifikatssignatur „Mit Zertifikat signieren“ und „Lokal im Browser“ auswählen.');
+guides['certificate-sign'].note += ' Im lokalen Modus bleiben Zertifikat und Passwort auf deinem Gerät. Unterstützt werden moderne PKCS#12-Dateien mit PBES2/AES und einem RSA-Schlüssel ab 2048 Bit. Bereits signierte PDFs und XFA werden abgewiesen. Die lokale CMS-Signatur enthält keinen Zeitstempel und bestätigt weder Vertrauenskette noch qualifizierten Status.';
+guides['fill-form'].note += ' Für einfache reine XFA-Formulare steht ein separater Dateneditor bereit. Er erhält die Vorlagenpakete und prüft gespeicherte Werte durch Rücklesen. Dynamische Berechnungen, Skripte und hybride Formulare werden abgewiesen; die Darstellung in einer XFA-fähigen Anwendung kontrollieren.';
+
+guides['native-objects'].steps.push('Unter „Mehrere Objekte“ ausrichten, verteilen, spiegeln, duplizieren oder aufeinanderfolgende Objekte gruppieren. Im Absatzmodus stehen lokale Schriften, Schreibrichtung, Browser-Rechtschreibprüfung, Listen und Suchen/Ersetzen bereit. Formatbereiche erlauben Hoch- und Tiefstellen.');

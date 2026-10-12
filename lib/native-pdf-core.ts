@@ -614,11 +614,16 @@ export function replaceNativeParagraph(
       ),
     };
   });
-  type Part = { text: string; style: Style; start: number; level: number };
+  type Part = { text: string; style: Style; start: number; script?: string; level: number };
   const pieces: Part[] = graphemes.map((g) => ({
     text: g.segment,
     start: g.index,
     level: embedding.levels[g.index],
+    script: /\p{Script=Arabic}/u.test(g.segment)
+      ? 'arab'
+      : /\p{Script=Hebrew}/u.test(g.segment)
+        ? 'hebr'
+        : undefined,
     style: styled.find((s) => g.index >= s.from && g.index < s.to)?.style || base,
   }));
   for (const p of pieces)
@@ -640,8 +645,14 @@ export function replaceNativeParagraph(
     const groups: Part[] = [];
     for (const p of parts) {
       const prev = groups.at(-1);
-      if (prev?.style === p.style && prev.level === p.level) prev.text += p.text;
-      else groups.push({ ...p });
+      if (
+        prev?.style === p.style &&
+        prev.level === p.level &&
+        (!prev.script || !p.script || prev.script === p.script)
+      ) {
+        prev.text += p.text;
+        prev.script ||= p.script;
+      } else groups.push({ ...p });
     }
     return groups
       .sort((a, b) => rank.get(a.start)! - rank.get(b.start)!)
@@ -653,7 +664,7 @@ export function replaceNativeParagraph(
         const run = p.style.font.face.layout(
             mirrored,
             undefined,
-            undefined,
+            p.script,
             undefined,
             rtl ? 'rtl' : 'ltr',
           ),
@@ -667,14 +678,15 @@ export function replaceNativeParagraph(
           throw new Error(
             'Die Zeichenformung der gewählten Schrift kann nicht zuverlässig gesetzt werden.',
           );
-        // Keep logical Unicode in ToUnicode even where the displayed bracket is mirrored.
         if (rtl)
-          for (const glyph of run.glyphs)
-            glyph.codePoints = glyph.codePoints.map((cp) =>
+          run.glyphs = run.glyphs.map((glyph) => ({
+            ...glyph,
+            codePoints: glyph.codePoints.map((cp) =>
               (
                 bidi.getMirroredCharacter(String.fromCodePoint(cp)) || String.fromCodePoint(cp)
               ).codePointAt(0)!,
-            );
+            ),
+          }));
         return {
           ...p,
           run,

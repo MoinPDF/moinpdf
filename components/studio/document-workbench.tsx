@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { XfaDataPanel } from './xfa-data-panel';
 import { FormCanvas } from './form-canvas';
 import { PagePreview } from './canvas';
 import {
@@ -693,11 +694,13 @@ export function DocumentWorkbench({
             draft && (
               <>
                 {draft.xfa && !isBookmarks && (
-                  <div className="notice">
-                    {ui(
-                      'Dieses Dokument verwendet XFA. Die Formularbearbeitung unterstützt gewöhnliche PDF-Formulare (AcroForms).',
-                    )}
-                  </div>
+                  <XfaDataPanel
+                    key={source.id}
+                    source={source}
+                    disabled={locked}
+                    onBusy={onBusy}
+                    onUse={onUse}
+                  />
                 )}
                 {isBookmarks ? (
                   <>

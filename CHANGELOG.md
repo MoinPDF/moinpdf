@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.11.0 — 2026-10-12
+
+- Office-Dokumente lokal mit gepinntem LibreOffice/WASM konvertieren; Downloads und Cache enthalten ausschließlich Programmdaten. Eigener Dokumentenserver bleibt ausdrücklich wählbar.
+- Lokale PKCS#12-Zertifikatssignaturen mit WebCrypto/PKI.js, ohne Upload von PDF, privatem Schlüssel oder Passwort; unabhängige OpenSSL-Verifikation.
+- Absatzeditor mit Arabisch/Hebräisch, bidirektionalem Mischtext, acht zusätzlichen Schriften, Browser-Rechtschreibprüfung, Listen, Suchen/Ersetzen und Hoch-/Tiefstellen.
+- Mehrfachauswahl mit Ausrichten, Verteilen, Spiegeln, Duplizieren und Vektorgruppen.
+- Begrenzter XFA-Dateneditor mit Erhalt der Vorlagen und Rückleseprüfung; aktive und hybride Formulare werden abgewiesen.
+- Ablaufvorlagen und zusätzliche Schritte zum Drehen, Umkehren, Festschreiben und verlustfreien Optimieren; lokale Komprimierung als Standard.
+- Zusätzliche Engine-, Browser- und Datenschutzprüfungen sowie DE/EN-Dokumentation. Vollständiges XFA, unabhängiges PDF/X, lokale PDF/A-Prüfung und lokaler SVG-Vektorexport bleiben offen.
+
 MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentrale
 Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
 Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen festen Digest.

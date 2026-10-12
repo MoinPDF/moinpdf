@@ -177,7 +177,11 @@ export async function applyWorkflowAction(
 ): Promise<Uint8Array> {
   checkAbort(ctx.signal);
   if (
-    (step.kind === 'rotate90' || step.kind === 'rotate180' || step.kind === 'reverse' || step.kind === 'flattenForms' || step.kind === 'optimizeLossless')
+    step.kind === 'rotate90' ||
+    step.kind === 'rotate180' ||
+    step.kind === 'reverse' ||
+    step.kind === 'flattenForms' ||
+    step.kind === 'optimizeLossless'
   ) {
     const doc = await PDFDocument.load(source.bytes);
     const form = requireAcroForm(doc);

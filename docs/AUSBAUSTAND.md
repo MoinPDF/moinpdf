@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 11. Oktober 2026, Version 0.9.3.
+Stand: 12. Oktober 2026, Version 0.11.0.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
@@ -8,20 +8,20 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
 | Bereich | Umgesetzt | Verbleibende Arbeit |
 | --- | --- | --- |
-| 1. Nativer Texteditor | Originalobjekte und Absätze; bis zu 32 Formatbereiche mit Schrift, Größe und Farbe; Ligaturen und kombinierende Zeichen; automatische zusätzliche Folgeseiten; echte Vorschau und Überlaufprüfung | Rechts-nach-links-Schrift und beliebige komplexe Leserichtungen; Unterobjekte verschachtelter Gruppen |
-| 2. Bilder und Grafiken | Objekte bewegen, drehen, skalieren, ersetzen, löschen und in ihrer Zeichenreihenfolge ändern; direkte Griffpunkte mit Tastaturbedienung | Einzelne Unterobjekte verschachtelter Gruppen |
-| 3. Lokales Office zu PDF | LibreOffice auf dem eigenen Dokumentenserver; alternative Browserkerne geprüft | Zuverlässiger, verteilbarer Browserkern für Word, Excel und PowerPoint; konkrete Hindernisse in [BROWSER-OFFICE.md](BROWSER-OFFICE.md) |
+| 1. Nativer Texteditor | Originalobjekte und Absätze; lokale Schriftbibliothek, Browser-Rechtschreibprüfung, Listen, Hoch-/Tiefstellen und Absatz-Suchen/Ersetzen; bis zu 32 Formatbereiche mit Schrift, Größe und Farbe; Ligaturen und kombinierende Zeichen; automatische zusätzliche Folgeseiten; echte Vorschau und Überlaufprüfung | Arabisch/Hebräisch und Mischtext ergänzt; noch offen: weitere komplexe Schriften; Unterobjekte verschachtelter Gruppen |
+| 2. Bilder und Grafiken | Mehrfachauswahl, Ausrichten, Verteilen, Spiegeln, Duplizieren, Vektorgruppen; Objekte bewegen, drehen, skalieren, ersetzen, löschen und in ihrer Zeichenreihenfolge ändern; direkte Griffpunkte mit Tastaturbedienung | Einzelne Unterobjekte verschachtelter Gruppen |
+| 3. Lokales Office zu PDF | Gepinnter LibreOffice-WASM-Kern lokal im Browser sowie LibreOffice auf dem eigenen Dokumentenserver | Speicherarme Mobilgeräte, allgemeine Layouttreue; Umfang in [BROWSER-OFFICE.md](BROWSER-OFFICE.md) |
 | 4. PDF zu Office | Word-Rekonstruktion, Tabellenexport und bearbeitbare PowerPoint-Textfelder mit Stil und Position | Allgemeine originalgetreue Rekonstruktion komplexer Tabellen und Layouts |
 | 5. OCR | 21 lokal ausgelieferte Modelle; bis zu acht gemeinsam; automatische Sprachprobe pro Scan-Seite mit bewusster Ablehnung kurzer oder unklarer Texte | Vollständige Spracherkennung bei Handschrift, sehr kurzen Texten und beliebigem Sprachmix wird nicht garantiert |
 | 6. Importformate | HEIC/HEIF und PSD im lokalen Worker, WebP, BMP, mehrseitige TIFF, SVG; Pages 4/5, Visio und Publisher über LibreOffice; Integritäts-, Format- und Größenprüfungen | SVG-Import wird als Bildseite übernommen; PSD-Ebenen werden nicht als editierbare PDF-Ebenen importiert |
 | 7. Exportformate | WebP, TIFF, BMP, JSON mit Positionen und echter SVG-Vektorexport | SVG-Vektorexport benötigt den Dokumentenserver |
-| 8. Arbeitsabläufe | Frei angeordnete Knoten, verschachtelte Ja/Nein-Zweige, mehrere Schrittarten, Import/Export und Entscheidungsprotokoll; Prüfung auf Schleifen und unerreichbare Knoten | Durchgängig im Hintergrund laufende Verarbeitung großer Stapel |
-| 9. XFA | Erkennung vor der Formularverarbeitung; verlustbehaftete Formular- und Seitenübernahme wird abgelehnt; Lesezeichenänderungen erhalten XFA-Pakete; verständliche Hinweise | Dynamische XFA-Anzeige, Bearbeitung und verlässlicher Export |
+| 8. Arbeitsabläufe | Frei angeordnete Knoten, verschachtelte Ja/Nein-Zweige, Vorlagen, Drehen, Umkehren, Formular-Festschreiben, verlustfreie Optimierung, Import/Export und Entscheidungsprotokoll; Prüfung auf Schleifen und unerreichbare Knoten | Durchgängig im Hintergrund laufende Verarbeitung großer Stapel |
+| 9. XFA | Separater Dateneditor für einfache reine XFA-Paketformulare mit Rückleseprüfung; Erkennung vor der Formularverarbeitung; verlustbehaftete Formular- und Seitenübernahme wird abgelehnt; Lesezeichenänderungen erhalten XFA-Pakete; verständliche Hinweise | Dynamische XFA-Anzeige, Bearbeitung und verlässlicher Export |
 | 10. Ebenen | Namen und Sichtbarkeit bearbeiten; dauerhaftes Reduzieren der sichtbaren Ebenen; Zeichenreihenfolge von Seitenobjekten | Ebeneninhalte erstellen und beliebige Objekte zwischen Ebenen verschieben |
 | 11. Nummerierung | Dateiübergreifende Bates-Zählung, mehrere unabhängige Kopf-/Fußzeilenregeln, Seitenbereiche und interne Seitenbezeichnungen; Überlappungsprüfung | Beliebige verschachtelte Abschnittsstrukturen |
-| 12. Signaturen | PAdES-T/LT/LTA, strenge Offline-Widerrufsprüfung, eingebettete DSS-Nachweise und Erneuerung von Dokumentzeitstempeln | Betreiber muss Zeitstempeldienst, kontrollierte Erreichbarkeit, Vertrauensanker und Sperrnachweise bereitstellen; qualifizierter Status wird nicht behauptet |
+| 12. Signaturen | Lokale PKCS#12/CMS-Signatur ohne Upload; serverseitig PAdES-T/LT/LTA, strenge Offline-Widerrufsprüfung, eingebettete DSS-Nachweise und Erneuerung von Dokumentzeitstempeln | Betreiber muss Zeitstempeldienst, kontrollierte Erreichbarkeit, Vertrauensanker und Sperrnachweise bereitstellen; qualifizierter Status wird nicht behauptet |
 | 13. Seitenwerkzeuge | Freie Winkel, lange Seiten, Posterdruck auf wählbarem Papier mit Rand und Überlappung; abbrechbare Vorschau bei Parameteränderungen | Weitere frei gestaltbare Druckvorlagen |
-| 14. Optimierung | QPDF-Linearisierung und Umwandeln vorhandener Schriftkonturen in Vektorpfade | Fehlende Originalschriften ohne passende, lizenzierte Schriftdateien rekonstruieren |
+| 14. Optimierung | Lokale Komprimierung als Standard; QPDF-Linearisierung und Umwandeln vorhandener Schriftkonturen in Vektorpfade | Fehlende Originalschriften ohne passende, lizenzierte Schriftdateien rekonstruieren |
 | 15. Vektorerhaltende Schwärzung | PDFium-Grundlage für Text- und Bildbereiche mit Tests; freigegebene Schwärzung baut Seitenbilder vollständig neu auf | Sicherheitsfreigabe einer vektorerhaltenden Schwärzung für beliebige PDF-Strukturen |
 | 16. Barrierefreiheit | PDF/UA-Prüfung, neuer Struktureditor und Reparatur vorhandener Tags mit Alternativtexten, Tabellenköpfen, Feldbezeichnungen und Lesereihenfolge; Seiteninhalt bleibt bei Tag-Reparatur erhalten; Ausgabe nach bestandener veraPDF-Prüfung | Beliebige ungetaggte PDFs automatisch originalgetreu strukturieren; menschliche Prüfung bleibt notwendig |
 | 17. Druckvorbereitung | Technische Druckprüfung, Seitenanpassung, Randbeschnitt und Posterdruck | Vollständiges Farbmanagement und unabhängig validierter PDF/X-Export |
@@ -33,7 +33,7 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
 ## Prüfung und Freigabe
 
-25 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
+28 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
 Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
 Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
 Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche
@@ -65,8 +65,7 @@ anzeigen und einfache Eingaben über `annotationStorage` in Datensatzpakete
 zurückschreiben. Das ist keine vollständige XFA-Laufzeit: XFA als einzelner
 Stream wird beim Speichern ausdrücklich nicht unterstützt; Mischformulare,
 JavaScript, Berechnungen und dynamische Aktionen sind nicht vollständig
-abgedeckt. Vor einer Erweiterung ist deshalb ein eigener, begrenzter Modus mit
-Ablehnung nicht unterstützter Formulare und unabhängiger Rückleseprüfung nötig.
+abgedeckt. Version 0.11.0 ergänzt diesen begrenzten Dateneditor mit Ablehnung nicht unterstützter Formulare und unabhängiger Rückleseprüfung.
 Die vorhandenen Schutzsperren bleiben aktiv, damit keine XFA-Daten verloren gehen.
 
 MoinPDF verwendet inzwischen PDF.js 6.4.299. Die XFA-Schutzsperren wurden mit

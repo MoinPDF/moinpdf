@@ -1,0 +1,10 @@
+[Version]
+AllLanguages=en-US
+buildid=d1c9e0e4e1ddeb24fe8f93e56860b3765043f8b1
+ExtensionUpdateURL=https://updateexte.libreoffice.org/ExtensionUpdateService/check.Update
+UpdateChannel=
+ReferenceOOoMajorMinor=4.1
+UpdateID=LibreOfficeDev_24_en-US
+UpdateURL=
+UpdateUserAgent=<PRODUCT> (${buildid}; ${_OS}; ${_ARCH}; <OPTIONAL_OS_HW_DATA>)
+Vendor=ubuntu
