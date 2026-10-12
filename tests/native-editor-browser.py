@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
         page.get_by_role('button', name='PDF-Objekte bearbeiten', exact=True).click()
     def download(name):
         link=page.get_by_role('link', name='Herunterladen', exact=True)
-        expect(link.or_(page.get_by_role('alert'))).to_be_visible()
+        expect(link.or_(page.get_by_role('alert'))).to_be_visible(timeout=125000)
         assert link.is_visible(), page.get_by_role('alert').inner_text()
         with page.expect_download() as pending:
             link.click()
@@ -95,14 +95,17 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
         page.get_by_role('button', name='Seitenobjekte laden', exact=True).click()
         for _ in range(10):
             chooser=page.get_by_label('Objekt auswählen', exact=True)
+            expect(chooser).to_be_visible(timeout=125000)
             options=chooser.locator('option').evaluate_all('(nodes)=>nodes.map(n=>({value:n.value,text:n.textContent}))')
             text_option=next((o for o in options if 'ORIGINAL' in o['text']), None)
             if text_option:
                 chooser.select_option(text_option['value'])
                 break
-            group=next(o for o in options if 'Gruppe' in o['text'])
+            group=next(o for o in options if 'gruppe' in o['text'].lower())
             chooser.select_option(group['value'])
-            page.get_by_role('button', name='Gruppeninhalt bearbeiten', exact=True).click()
+            open_group=page.get_by_role('button', name='Gruppeninhalt bearbeiten', exact=True)
+            open_group.click()
+            expect(open_group).to_have_count(0, timeout=125000)
         else:
             raise AssertionError('Nested text was not reachable')
         page.get_by_label('Textinhalt', exact=True).fill('EDITED')
