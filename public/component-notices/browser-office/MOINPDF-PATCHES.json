@@ -1,5 +1,5 @@
 {
-  "id": "moinpdf-conversion-worker-5",
+  "id": "moinpdf-conversion-worker-6",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
   "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
@@ -33,6 +33,11 @@
       "description": "The pinned Emscripten build exposes PThread on the worker global, not Module. Destroy that pool explicitly, also while asynchronous initialization has not yet assigned E.",
       "before": "if(E&&E.PThread?.terminateAllThreads)try{E.PThread.terminateAllThreads();}catch{}",
       "after": "try{(E?.PThread||self.Module?.PThread||self.PThread)?.terminateAllThreads();}catch{}"
+    },
+    {
+      "description": "Pure load/save conversion does not post editor input events. Keep the normal LibreOfficeKit yield loop instead of registering the editor dummy poll callbacks, which can starve threaded XLSX import.",
+      "before": "c.enableSyncEvents(),console.log(\"[LOK Worker] Enabled synchronous event dispatch (Unipoll mode)\"),",
+      "after": ""
     }
   ]
 }
