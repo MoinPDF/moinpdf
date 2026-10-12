@@ -4,6 +4,7 @@
 
 - Kompakte Startseiten-Buttons mit Icons, hervorgehobenem „Alle Werkzeuge“ und zusätzlichem Abstand zum Footer in Light- und Darkmode.
 - Lokale Office-Konvertierung räumt Dokument und Hintergrundprozesse vor dem Beenden auf, auch bei Abbruch während der Initialisierung; begrenzter harter Abbruch bleibt für blockierte Laufzeiten erhalten.
+- Bereitschaft aller vorab gestarteten Office-Threads abwarten; Grafikimport, Skalierung und Formelberechnung vor der Laufzeitinitialisierung auf sequenzielle Ausführung stellen.
 - Reine Office-Konvertierungen verwenden die normale LibreOfficeKit-Ereignisschleife ohne zusätzliche Editor-Poll-Callbacks.
 - Docker-Veröffentlichungen prüfen den erfolgreichen Testlauf direkt über seine ID. Alle drei Images und die Release-Freigabe verwenden denselben belegten Quellstand und Testlauf.
 - Regressionstests für Aufräumen, Abbrechen, erneute Konvertierung und die Freigabe unveränderlicher Images.

@@ -100,8 +100,10 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             expect(link.or_(page.get_by_role('alert'))).to_be_visible(timeout=30000)
         except AssertionError:
             snapshot_office_threads()
-            expect(link.or_(page.get_by_role('alert'))).to_be_visible(timeout=240000)
+            raise
         assert link.is_visible(), page.get_by_role('alert').inner_text()
+        pool = [e['progress'] for e in page.evaluate('window.__officeProgress') if (e.get('progress') or {}).get('phase') == 'thread-pool']
+        assert pool and all(p['workers'] >= 4 and p['readyWorkers'] == p['workers'] for p in pool), pool
         with page.expect_download() as dl: link.click()
         target = folder / (path.name + suffix + '.pdf')
         dl.value.save_as(target)
@@ -126,7 +128,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             convert(folder/'fixtures'/name)
         for name in ['sample.docx','sample.xlsx','sample.pptx','sample.odt','sample.ods','sample.odp']:
             convert(root/'tests/fixtures/office'/name)
-        for cycle in range(2):
+        for cycle in range(5):
             choose(folder/'fixtures/rich.docx', reload=(cycle == 0))
             page.get_by_role('button', name='PDF erstellen', exact=True).click()
             # Cancel the actual running WASM worker, after asset preparation.

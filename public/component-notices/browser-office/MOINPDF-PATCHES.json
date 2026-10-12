@@ -1,5 +1,5 @@
 {
-  "id": "moinpdf-conversion-worker-6",
+  "id": "moinpdf-conversion-worker-7",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
   "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
@@ -10,9 +10,9 @@
       "after": "let u=i?c.documentGetParts(d):1,g=i?c.documentGetDocumentType(d):0;"
     },
     {
-      "description": "LibreOfficeKit initializes its own headless application. Prevent Emscripten from also starting the full soffice main function on a pthread: it races with Kit initialization and document export.",
+      "description": "Start only LibreOfficeKit. Configure the synchronous conversion path before Emscripten constructs and caches the native environment: avoid nested background image import/scaling and formula-calculation tasks that can block the WASM runtime thread.",
       "before": "mainScriptUrlOrBlob:e,locateFile:",
-      "after": "noInitialRun:true,mainScriptUrlOrBlob:e,locateFile:"
+      "after": "noInitialRun:true,preRun:[a=>{Object.assign(a.ENV,{SAL_LOG:\"-INFO\",MAX_CONCURRENCY:\"1\",VCL_NO_THREAD_IMPORT:\"1\",VCL_NO_THREAD_SCALE:\"1\",SC_NO_THREADED_CALCULATION:\"1\"});}],mainScriptUrlOrBlob:e,locateFile:"
     },
     {
       "description": "Honor the supplied verbose flag for LibreOffice stdout and stderr; no synthetic document contents are written to the browser console in normal use.",
@@ -38,6 +38,11 @@
       "description": "Pure load/save conversion does not post editor input events. Keep the normal LibreOfficeKit yield loop instead of registering the editor dummy poll callbacks, which can starve threaded XLSX import.",
       "before": "c.enableSyncEvents(),console.log(\"[LOK Worker] Enabled synchronous event dispatch (Unipoll mode)\"),",
       "after": ""
+    },
+    {
+      "description": "Do not enter synchronous LibreOfficeKit calls until all initial pthread workers have acknowledged their compiled module. Record the readiness barrier for the real-browser regression test.",
+      "before": "B(\"lok-init\",\"Initializing LibreOfficeKit...\");",
+      "after": "{let p=self.PThread,w=[...p.unusedWorkers,...p.runningWorkers],t=Date.now();while(w.some(a=>!a.loaded)){if(Date.now()-t>10000)throw new Error(\"Office pthread initialization timeout\");await new Promise(a=>setTimeout(a,10));}y({type:\"progress\",id:ge,progress:{phase:\"thread-pool\",percent:68,workers:w.length,readyWorkers:w.filter(a=>a.loaded).length}});}B(\"lok-init\",\"Initializing LibreOfficeKit...\");"
     }
   ]
 }
