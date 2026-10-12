@@ -47,7 +47,10 @@ Die folgenden Prüfungen decken Dokumentverarbeitung und Ausgaben ab. Serverprü
 - `python -m pip_audit --disable-pip --no-deps -r server/requirements.lock.txt`: vollständiger Python-Lockfile einschließlich transitiver Pakete (pip-audit 2.10.1)
 - `pnpm run lint`: ESLint ohne zugelassene Warnungen
 - `node tests/release-workflow-smoke.mjs`: Freigabesicherheit bei falschen Images, Quellständen oder Prüfläufen
-- `pnpm test`: alle Browser-Engine-Testsuiten
+- `pnpm test`: alle 30 Browser-Engine-Testsuiten
+- `node tests/complex-scripts-smoke.mjs`: 19 mit nativem HarfBuzz erzeugte Referenzen, Glyphenpositionen, unabhängige PDF-Bilder, Unicode und atomare Absatzänderung
+- `node tests/nested-native-smoke.mjs`: geteilte und verschachtelte Form-/Bildressourcen, Transformationen, Beschnitt, Transparenz und mehrfache Bearbeitung
+- `python tests/native-editor-browser.py`: Produktionsbrowser, lokales HarfBuzz/WASM, Font-Fallback und Gruppenbedienung
 - `pnpm test:evidence`: Fundstellenwerkzeuge mit tatsächlicher lokaler OCR, Gegenprüfung der PDF-Ausgaben, sichtbarer Pseudonymisierung, Linkzielen, Positionsvergleich und sicheren Exporten
 - `pnpm test:century`: Formularrückläufe, bestätigte Chronologie, exakte Summen, versteckte Skript-/Anhangsentfernung, echte Ebenenpixel, Messungen bei vier Seitendrehungen und Hörbuchkapitel
 - `python -m unittest server.test_audio -v`: echte Spracherzeugung mit beiden installierten Modellen, Tempovergleich, WAV/ZIP, Authentifizierung, Eingabegrenzen und temporäre Dateibereinigung
@@ -138,3 +141,5 @@ Zwischen Image-Build und Release darf sich der Quellstand nicht ändern.
 Weitere Änderungen benötigen einen neuen geprüften Image-Build.
 Installationspakete für externe Plattformen werden außerhalb dieses Repositorys
 gepflegt und verwenden die freigegebenen, per Digest festgelegten Images.
+
+Zusätzliche Schriftformung: [HarfBuzz-Hinweise](../public/component-notices/harfbuzz/README.txt), [Noto-Prüfsummen](../public/vendor/editor-fonts/NOTO-MANIFEST.json) und [OFL-Lizenz](../public/vendor/editor-fonts/NOTO-LICENSE.txt). Die Formreferenzen werden unabhängig mit `tests/research/generate-native-shaping.py` und dem nativen System-HarfBuzz erzeugt; die Tests erzeugen ihre Sollwerte nicht aus der verwendeten JavaScript-Bibliothek.

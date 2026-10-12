@@ -234,7 +234,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         saved = Path(temporary) / 'absatz-formatiert.pdf'
         download.value.save_as(saved)
         with pymupdf.open(saved) as document:
-            spans = [span for block in document[0].get_text('dict')['blocks'] if 'lines' in block for line in block['lines'] for span in line['spans']]
+            # Check rendered glyph sizes; the separate logical copy layer has a
+            # uniform base size so reader heuristics cannot split shaped words.
+            spans = [span for span in document[0].get_texttrace() if span['type'] != 3]
             assert any(abs(span['size']-24)<.1 for span in spans), spans
             assert any(abs(span['size']-12)<.1 for span in spans), spans
         paragraph_input.fill((paragraph_text+' ')*5)

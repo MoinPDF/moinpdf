@@ -1,14 +1,24 @@
 import { init, type WrappedPdfiumModule } from '@embedpdf/pdfium';
 import fontkit from '@pdf-lib/fontkit';
 import bidiFactory from 'bidi-js';
+import * as hb from 'harfbuzzjs';
+import { PDFDocument, PDFDict, PDFName, PDFArray, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 const bidi = bidiFactory();
+// Local HTTP installations do not expose randomUUID; random bytes remain available.
+export const nativeMarkerId = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), (n) =>
+    n.toString(16).padStart(2, '0'),
+  ).join('');
 
 export type NativeRect = { x: number; y: number; w: number; h: number };
+export type NativeMatrix = [number, number, number, number, number, number];
 export type NativeObject = NativeRect & {
   index: number;
   type: 'text' | 'image' | 'path' | 'group' | 'other';
   text: string;
   fontSize: number;
+  children?: number;
+  shaped?: boolean;
 };
 export type NativeChange = {
   index: number;
@@ -22,6 +32,8 @@ export type NativeChange = {
   scale?: number;
   rotation?: number;
   image?: { width: number; height: number; rgba: Uint8Array };
+  /** Internal transform in the containing Form's coordinate system. */
+  transform?: NativeMatrix;
 };
 export type NativeRemoval = { page: number; rect: NativeRect; color?: string };
 export type NativeParagraphStyle = {
@@ -34,6 +46,7 @@ export type NativeParagraphStyle = {
 };
 export type NativeParagraph = {
   direction?: 'auto' | 'ltr' | 'rtl';
+  fallbackFonts?: Uint8Array[];
   styles?: NativeParagraphStyle[];
   flow?: boolean;
   indices: number[];
@@ -118,6 +131,13 @@ function pageHandle(ctx: NativeContext, index: number) {
   if (!page) throw new Error('Die Seite konnte nicht geladen werden.');
   return page;
 }
+function requireSerializablePage(ctx: NativeContext, page: number) {
+  for (let i = 0; i < ctx.api.FPDFPage_CountObjects(page); i++)
+    if (![1, 2, 3, 5].includes(ctx.api.FPDFPageObj_GetType(ctx.api.FPDFPage_GetObject(page, i))))
+      throw new Error(
+        'Diese Seite enthält einen nicht unterstützten Grafiktyp. Der Originalinhalt bleibt erhalten.',
+      );
+}
 function toPdf(ctx: NativeContext, page: number, x: number, y: number) {
   const { api, alloc, free } = ctx,
     p = alloc(16);
@@ -153,23 +173,96 @@ function toView(ctx: NativeContext, page: number, x: number, y: number) {
     free(p);
   }
 }
-function objectRect(ctx: NativeContext, page: number, obj: number) {
+const identity: NativeMatrix = [1, 0, 0, 1, 0, 0];
+function multiply(a: NativeMatrix, b: NativeMatrix): NativeMatrix {
+  return [
+    a[0] * b[0] + a[2] * b[1],
+    a[1] * b[0] + a[3] * b[1],
+    a[0] * b[2] + a[2] * b[3],
+    a[1] * b[2] + a[3] * b[3],
+    a[0] * b[4] + a[2] * b[5] + a[4],
+    a[1] * b[4] + a[3] * b[5] + a[5],
+  ];
+}
+function inverse(m: NativeMatrix): NativeMatrix {
+  const d = m[0] * m[3] - m[1] * m[2];
+  if (!Number.isFinite(d) || Math.abs(d) < 1e-12)
+    throw new Error('Die Gruppe hat keine umkehrbare Transformation.');
+  return [
+    m[3] / d,
+    -m[1] / d,
+    -m[2] / d,
+    m[0] / d,
+    (m[2] * m[5] - m[3] * m[4]) / d,
+    (m[1] * m[4] - m[0] * m[5]) / d,
+  ];
+}
+function formScope(ctx: NativeContext, page: number, path: number[]) {
+  if (path.length > 16) throw new Error('Objektgruppen dürfen höchstens 16 Ebenen tief sein.');
+  let container = page,
+    matrix: NativeMatrix = identity;
+  for (const [depth, index] of path.entries()) {
+    const count = depth
+      ? ctx.api.FPDFFormObj_CountObjects(container)
+      : ctx.api.FPDFPage_CountObjects(container);
+    if (!Number.isInteger(index) || index < 0 || index >= count)
+      throw new Error('Die ausgewählte Objektgruppe ist nicht mehr vorhanden.');
+    const obj = depth
+      ? ctx.api.FPDFFormObj_GetObject(container, index)
+      : ctx.api.FPDFPage_GetObject(container, index);
+    if (ctx.api.FPDFPageObj_GetType(obj) !== 5)
+      throw new Error('Die Auswahl ist keine Objektgruppe.');
+    const p = ctx.alloc(24);
+    try {
+      if (!ctx.api.FPDFPageObj_GetMatrix(obj, p))
+        throw new Error('Die Gruppentransformation ist nicht lesbar.');
+      const local = [0, 4, 8, 12, 16, 20].map((n) =>
+        ctx.api.pdfium.getValue(p + n, 'float'),
+      ) as NativeMatrix;
+      matrix = multiply(matrix, local);
+    } finally {
+      ctx.free(p);
+    }
+    container = obj;
+  }
+  return { container, matrix };
+}
+function objectRect(
+  ctx: NativeContext,
+  page: number,
+  obj: number,
+  matrix: NativeMatrix = identity,
+) {
   const { api, alloc, free } = ctx,
     p = alloc(16);
   try {
     if (!api.FPDFPageObj_GetBounds(obj, p, p + 4, p + 8, p + 12)) return null;
-    const [l, b, r, t] = [0, 4, 8, 12].map((i) => api.pdfium.getValue(p + i, 'float')),
-      a = toView(ctx, page, l, b),
-      z = toView(ctx, page, r, t);
+    const [l, b, r, t] = [0, 4, 8, 12].map((i) => api.pdfium.getValue(p + i, 'float'));
+    const corners = [
+      [l, b],
+      [l, t],
+      [r, b],
+      [r, t],
+    ].map(([x, y]) => [
+      matrix[0] * x + matrix[2] * y + matrix[4],
+      matrix[1] * x + matrix[3] * y + matrix[5],
+    ]);
+    const views = corners.map(([x, y]) => toView(ctx, page, x, y));
+    const left = Math.min(...corners.map((v) => v[0])),
+      right = Math.max(...corners.map((v) => v[0])),
+      bottom = Math.min(...corners.map((v) => v[1])),
+      top = Math.max(...corners.map((v) => v[1]));
+    const x = Math.min(...views.map((v) => v[0])),
+      y = Math.min(...views.map((v) => v[1]));
     return {
-      x: Math.min(a[0], z[0]),
-      y: Math.min(a[1], z[1]),
-      w: Math.abs(z[0] - a[0]),
-      h: Math.abs(z[1] - a[1]),
-      left: l,
-      bottom: b,
-      right: r,
-      top: t,
+      x,
+      y,
+      w: Math.max(...views.map((v) => v[0])) - x,
+      h: Math.max(...views.map((v) => v[1])) - y,
+      left,
+      bottom,
+      right,
+      top,
     };
   } finally {
     free(p);
@@ -182,33 +275,144 @@ function objectText(ctx: NativeContext, obj: number, textPage: number) {
   const p = alloc(size);
   try {
     api.FPDFTextObj_GetText(obj, textPage, p, size);
-    return api.pdfium.UTF16ToString(p);
+    return api.pdfium.UTF16ToString(p).replace(/\u200b/g, '');
   } finally {
     free(p);
   }
+}
+/** Shaped outlines and their logical text must remain one editable cluster. */
+function clusterMark(ctx: NativeContext, obj: number) {
+  const { api } = ctx;
+  const p = ctx.alloc(256),
+    length = ctx.alloc(4);
+  try {
+    for (let i = 0; i < api.FPDFPageObj_CountMarks(obj); i++) {
+      const mark = api.FPDFPageObj_GetMark(obj, i);
+      if (api.FPDFPageObjMark_GetName(mark, p, 256, length)) {
+        const value = api.pdfium.UTF16ToString(p);
+        if (/^MoinCluster[a-f0-9]{32}$/.test(value)) return value;
+      }
+    }
+  } finally {
+    ctx.free(p);
+    ctx.free(length);
+  }
+  return '';
+}
+function clusterMembers(ctx: NativeContext, handles: number[]) {
+  const groups = new Map<string, number[]>(),
+    byIndex = new Map<number, number[]>();
+  handles.forEach((obj, i) => {
+    const key = clusterMark(ctx, obj);
+    if (key) {
+      const ids = groups.get(key) || [];
+      ids.push(i);
+      groups.set(key, ids);
+    }
+  });
+  for (const ids of groups.values()) for (const i of ids) byIndex.set(i, ids);
+  return byIndex;
+}
+function logicalMarkedText(ctx: NativeContext, obj: number) {
+  if (!clusterMark(ctx, obj)) return undefined;
+  const length = ctx.alloc(4);
+  try {
+    for (let i = 0; i < ctx.api.FPDFPageObj_CountMarks(obj); i++) {
+      const mark = ctx.api.FPDFPageObj_GetMark(obj, i);
+      if (!ctx.api.FPDFPageObjMark_GetParamStringValue(mark, 'MoinTextHex', 0, 0, length)) continue;
+      const size = ctx.api.pdfium.getValue(length, 'i32');
+      if (size < 2 || size > 160002) continue;
+      const p = ctx.alloc(size);
+      try {
+        if (!ctx.api.FPDFPageObjMark_GetParamStringValue(mark, 'MoinTextHex', p, size, length))
+          continue;
+        const hex: string = ctx.api.pdfium.UTF16ToString(p);
+        if (!/^(?:[0-9a-f]{4})*$/.test(hex)) continue;
+        return (hex.match(/.{4}/g) || []).map((n) => String.fromCharCode(parseInt(n, 16))).join('');
+      } finally {
+        ctx.free(p);
+      }
+    }
+  } finally {
+    ctx.free(length);
+  }
+}
+function expandedIndices(ctx: NativeContext, handles: number[], indices: number[]) {
+  if (indices.some((i) => !Number.isInteger(i) || i < 0 || !handles[i]))
+    throw new Error('Ungültige Objektauswahl.');
+  const members = clusterMembers(ctx, handles);
+  return [...new Set(indices.flatMap((i) => members.get(i) || [i]))].sort((a, b) => a - b);
+}
+function combinedBounds(
+  ctx: NativeContext,
+  page: number,
+  handles: number[],
+  matrix: NativeMatrix = identity,
+) {
+  const visible = handles.filter(
+    (obj) =>
+      ctx.api.FPDFPageObj_GetType(obj) !== 1 || ctx.api.FPDFTextObj_GetTextRenderMode(obj) !== 3,
+  );
+  const rects = (visible.length ? visible : handles)
+    .map((obj) => objectRect(ctx, page, obj, matrix))
+    .filter((r) => r !== null);
+  if (!rects.length) return null;
+  const x = Math.min(...rects.map((r) => r.x)),
+    y = Math.min(...rects.map((r) => r.y));
+  return {
+    x,
+    y,
+    w: Math.max(...rects.map((r) => r.x + r.w)) - x,
+    h: Math.max(...rects.map((r) => r.y + r.h)) - y,
+    left: Math.min(...rects.map((r) => r.left)),
+    bottom: Math.min(...rects.map((r) => r.bottom)),
+    right: Math.max(...rects.map((r) => r.right)),
+    top: Math.max(...rects.map((r) => r.top)),
+  };
 }
 export function inspectNativeObjects(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
   index: number,
+  path: number[] = [],
 ): NativeObject[] {
   return open(api, bytes, (ctx) => {
     const page = pageHandle(ctx, index),
       textPage = api.FPDFText_LoadPage(page),
       sizePtr = ctx.alloc(4);
     try {
-      const count = api.FPDFPage_CountObjects(page);
+      const scope = formScope(ctx, page, path);
+      const count = path.length
+        ? api.FPDFFormObj_CountObjects(scope.container)
+        : api.FPDFPage_CountObjects(page);
       if (count > 10000)
         throw new Error(
           'Diese Seite enthält mehr als 10.000 Objekte. Bitte einen kleineren Ausschnitt verwenden.',
         );
       const objects: NativeObject[] = [];
+      const handles = Array.from({ length: count }, (_, i) =>
+        path.length
+          ? api.FPDFFormObj_GetObject(scope.container, i)
+          : api.FPDFPage_GetObject(page, i),
+      );
+      const members = clusterMembers(ctx, handles);
       for (let i = 0; i < count; i++) {
-        const obj = api.FPDFPage_GetObject(page, i),
-          r = objectRect(ctx, page, obj);
+        const ids = members.get(i) || [i];
+        if (ids[0] !== i) continue;
+        const obj = handles[i],
+          r = combinedBounds(
+            ctx,
+            page,
+            ids.map((id) => handles[id]),
+            scope.matrix,
+          );
         if (!r) continue;
         const type = api.FPDFPageObj_GetType(obj),
-          text = type === 1 ? objectText(ctx, obj, textPage) : '';
+          text =
+            type === 1
+              ? (logicalMarkedText(ctx, obj) ??
+                ids.map((id) => objectText(ctx, handles[id], textPage)).join(''))
+              : '';
         let fontSize = 0;
         if (type === 1 && api.FPDFTextObj_GetFontSize(obj, sizePtr))
           fontSize = api.pdfium.getValue(sizePtr, 'float');
@@ -226,6 +430,8 @@ export function inspectNativeObjects(
                     : 'other',
           text,
           fontSize,
+          ...(type === 5 ? { children: api.FPDFFormObj_CountObjects(obj) } : {}),
+          ...(members.has(i) ? { shaped: true } : {}),
           x: r.x,
           y: r.y,
           w: r.w,
@@ -240,6 +446,53 @@ export function inspectNativeObjects(
     }
   });
 }
+function changeMatrix(
+  ctx: NativeContext,
+  page: number,
+  obj: number,
+  change: NativeChange,
+  parent: NativeMatrix = identity,
+  linked?: number[],
+): NativeMatrix | null {
+  const dx = change.dx ?? 0,
+    dy = change.dy ?? 0,
+    scale = change.scale ?? 1,
+    rotation = change.rotation ?? 0;
+  if (
+    ![dx, dy, scale, rotation].every(Number.isFinite) ||
+    Math.abs(dx) > 1 ||
+    Math.abs(dy) > 1 ||
+    scale < 0.1 ||
+    scale > 10 ||
+    Math.abs(rotation) > 360
+  )
+    throw new Error('Ungültige Verschiebung, Größe oder Drehung.');
+  if (!(dx || dy || scale !== 1 || rotation || change.flipX || change.flipY)) return null;
+  const r = linked ? combinedBounds(ctx, page, linked, parent) : objectRect(ctx, page, obj, parent);
+  if (!r) throw new Error('Die Objektposition ist nicht lesbar.');
+  const center = [(r.left + r.right) / 2, (r.bottom + r.top) / 2],
+    origin = toPdf(ctx, page, 0, 0),
+    offset = toPdf(ctx, page, dx, dy),
+    rad = (-rotation * Math.PI) / 180,
+    c = Math.cos(rad) * scale,
+    s = Math.sin(rad) * scale;
+  const viewX = toPdf(ctx, page, 1, 0),
+    swapped = Math.abs(viewX[1] - origin[1]) > Math.abs(viewX[0] - origin[0]);
+  const fx = (swapped ? change.flipY : change.flipX) ? -1 : 1,
+    fy = (swapped ? change.flipX : change.flipY) ? -1 : 1;
+  const a = c * fx,
+    b = s * fx,
+    cc = -s * fy,
+    d = c * fy;
+  return [
+    a,
+    b,
+    cc,
+    d,
+    center[0] - a * center[0] - cc * center[1] + offset[0] - origin[0],
+    center[1] - b * center[0] - d * center[1] + offset[1] - origin[1],
+  ] as NativeMatrix;
+}
 export function editNativeObjects(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
@@ -252,10 +505,35 @@ export function editNativeObjects(
     const page = pageHandle(ctx, index),
       seen = new Set<number>();
     try {
+      requireSerializablePage(ctx, page);
       const handles = Array.from({ length: api.FPDFPage_CountObjects(page) }, (_, i) =>
         api.FPDFPage_GetObject(page, i),
       );
-      for (const change of changes) {
+      const members = clusterMembers(ctx, handles);
+      const prepared = changes.flatMap((change) => {
+        const ids = members.get(change.index);
+        if (!ids) return [change];
+        if (change.text !== undefined)
+          throw new Error(
+            'Geformte Zeichen bitte im Absatzmodus mit einer passenden Schrift bearbeiten.',
+          );
+        const transform =
+          change.transform ||
+          changeMatrix(
+            ctx,
+            page,
+            handles[change.index],
+            change,
+            identity,
+            ids.map((id) => handles[id]),
+          );
+        return (change.order === 'back' ? ids.slice().reverse() : ids).map((id) => ({
+          ...change,
+          index: id,
+          ...(transform ? { transform } : {}),
+        }));
+      });
+      for (const change of prepared) {
         if (seen.has(change.index) || !handles[change.index])
           throw new Error('Doppeltes oder ungültiges Seitenobjekt.');
         seen.add(change.index);
@@ -333,51 +611,128 @@ export function editNativeObjects(
             ctx.free(p);
           }
         }
-        const dx = change.dx ?? 0,
-          dy = change.dy ?? 0,
-          scale = change.scale ?? 1,
-          rotation = change.rotation ?? 0;
-        if (
-          ![dx, dy, scale, rotation].every(Number.isFinite) ||
-          Math.abs(dx) > 1 ||
-          Math.abs(dy) > 1 ||
-          scale < 0.1 ||
-          scale > 10 ||
-          Math.abs(rotation) > 360
-        )
-          throw new Error('Ungültige Verschiebung, Größe oder Drehung.');
-        if (dx || dy || scale !== 1 || rotation || change.flipX || change.flipY) {
-          const r = objectRect(ctx, page, obj);
-          if (!r) throw new Error('Die Objektposition ist nicht lesbar.');
-          const center = [(r.left + r.right) / 2, (r.bottom + r.top) / 2],
-            origin = toPdf(ctx, page, 0, 0),
-            offset = toPdf(ctx, page, dx, dy),
-            rad = (-rotation * Math.PI) / 180,
-            c = Math.cos(rad) * scale,
-            s = Math.sin(rad) * scale;
-          const viewX = toPdf(ctx, page, 1, 0),
-            swapped = Math.abs(viewX[1] - origin[1]) > Math.abs(viewX[0] - origin[0]);
-          const fx = (swapped ? change.flipY : change.flipX) ? -1 : 1,
-            fy = (swapped ? change.flipX : change.flipY) ? -1 : 1;
-          const a = c * fx,
-            b = s * fx,
-            cc = -s * fy,
-            d = c * fy;
-          api.FPDFPageObj_Transform(
-            obj,
-            a,
-            b,
-            cc,
-            d,
-            center[0] - a * center[0] - cc * center[1] + offset[0] - origin[0],
-            center[1] - b * center[0] - d * center[1] + offset[1] - origin[1],
-          );
+        const transform = change.transform || changeMatrix(ctx, page, obj, change);
+        if (transform) {
+          if (
+            transform.length !== 6 ||
+            !transform.every((n) => Number.isFinite(n) && Math.abs(n) < 1e12)
+          )
+            throw new Error('Ungültige Objekttransformation.');
+          api.FPDFPageObj_Transform(obj, ...transform);
         }
       }
       if (!api.FPDFPage_GenerateContent(page))
         throw new Error('Die bearbeitete Seite konnte nicht aufgebaut werden.');
       return saved(ctx);
     } finally {
+      api.FPDF_ClosePage(page);
+    }
+  });
+}
+/** Resolve transformations before extracting nested content into a temporary page. */
+export function scopedNativeChanges(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+  path: number[],
+  changes: NativeChange[],
+): NativeChange[] {
+  return open(api, bytes, (ctx) => {
+    const page = pageHandle(ctx, index);
+    try {
+      const scope = formScope(ctx, page, path),
+        inv = inverse(scope.matrix);
+      const count = api.FPDFFormObj_CountObjects(scope.container);
+      const handles = Array.from({ length: count }, (_, i) =>
+          api.FPDFFormObj_GetObject(scope.container, i),
+        ),
+        members = clusterMembers(ctx, handles);
+      return changes.map((change) => {
+        if (!Number.isInteger(change.index) || change.index < 0 || change.index >= count)
+          throw new Error('Ungültiges Gruppenobjekt.');
+        const obj = api.FPDFFormObj_GetObject(scope.container, change.index);
+        const transform = changeMatrix(
+          ctx,
+          page,
+          obj,
+          change,
+          scope.matrix,
+          (members.get(change.index) || [change.index]).map((i) => handles[i]),
+        );
+        return {
+          ...change,
+          ...(transform ? { transform: multiply(multiply(inv, transform), scope.matrix) } : {}),
+        };
+      });
+    } finally {
+      api.FPDF_ClosePage(page);
+    }
+  });
+}
+/** A unique content mark locates exactly one invocation, including shared XObjects. */
+export function markNativeObject(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+  objectIndex: number,
+  marker: string,
+) {
+  if (!/^[A-Za-z][A-Za-z0-9]{8,90}$/.test(marker)) throw new Error('Ungültige Objektmarkierung.');
+  return open(api, bytes, (ctx) => {
+    const page = pageHandle(ctx, index);
+    try {
+      requireSerializablePage(ctx, page);
+      if (
+        !Number.isInteger(objectIndex) ||
+        objectIndex < 0 ||
+        objectIndex >= api.FPDFPage_CountObjects(page)
+      )
+        throw new Error('Ungültiges Seitenobjekt.');
+      const obj = api.FPDFPage_GetObject(page, objectIndex);
+      if (![3, 5].includes(api.FPDFPageObj_GetType(obj)) || !api.FPDFPageObj_AddMark(obj, marker))
+        throw new Error('Das Objekt konnte nicht für die Bearbeitung vorbereitet werden.');
+      if (!api.FPDFPage_GenerateContent(page))
+        throw new Error('Die Objektmarkierung konnte nicht gespeichert werden.');
+      return saved(ctx);
+    } finally {
+      api.FPDF_ClosePage(page);
+    }
+  });
+}
+/** Disposable document: move direct children, retaining resolved inherited graphics state. */
+export function extractNativeForm(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+  objectIndex: number,
+  outputIndex: number,
+) {
+  return open(api, bytes, (ctx) => {
+    const page = pageHandle(ctx, index);
+    let temp = 0;
+    try {
+      const scope = formScope(ctx, page, [objectIndex]),
+        count = api.FPDFFormObj_CountObjects(scope.container);
+      if (count < 0 || count > 10000) throw new Error('Die Gruppe enthält zu viele Objekte.');
+      temp = pageHandle(ctx, outputIndex);
+      if (!temp) throw new Error('Die Gruppe konnte nicht geöffnet werden.');
+      const children = Array.from({ length: count }, (_, n) =>
+        api.FPDFFormObj_GetObject(scope.container, n),
+      );
+      if (children.some((obj) => ![1, 2, 3, 5].includes(api.FPDFPageObj_GetType(obj))))
+        throw new Error(
+          'Diese Gruppe enthält einen nicht unterstützten Grafiktyp. Der Originalinhalt bleibt erhalten.',
+        );
+      for (const obj of children) {
+        if (!api.FPDFFormObj_RemoveObject(scope.container, obj))
+          throw new Error('Der Gruppeninhalt konnte nicht getrennt werden.');
+        api.FPDFPage_InsertObject(temp, obj);
+      }
+      if (!api.FPDFPage_GenerateContent(temp))
+        throw new Error('Der Gruppeninhalt konnte nicht gespeichert werden.');
+      return { bytes: saved(ctx), page: outputIndex };
+    } finally {
+      if (temp) api.FPDF_ClosePage(temp);
       api.FPDF_ClosePage(page);
     }
   });
@@ -390,12 +745,7 @@ export function groupNativeObjects(
   indices: number[],
   duplicate = false,
 ) {
-  const sorted = [...new Set(indices)].sort((a, b) => a - b);
-  if (
-    !sorted.length ||
-    sorted.length > 500 ||
-    (!duplicate && sorted.some((id, i) => id !== sorted[0] + i))
-  )
+  if (!indices.length || indices.length > 500)
     throw new Error('Zum Gruppieren aufeinanderfolgende Objekte in der Zeichenreihenfolge wählen.');
   return open(api, bytes, (target) =>
     open(api, bytes, (copy) => {
@@ -403,11 +753,15 @@ export function groupNativeObjects(
         temp = pageHandle(copy, index);
       let xobject = 0;
       try {
+        requireSerializablePage(target, page);
         const handles = Array.from({ length: api.FPDFPage_CountObjects(page) }, (_, i) =>
           api.FPDFPage_GetObject(page, i),
         );
-        if (sorted.some((id) => !Number.isInteger(id) || !handles[id]))
-          throw new Error('Ungültige Objektauswahl.');
+        const sorted = expandedIndices(target, handles, indices);
+        if (!duplicate && sorted.some((id, i) => id !== sorted[0] + i))
+          throw new Error(
+            'Zum Gruppieren aufeinanderfolgende Objekte in der Zeichenreihenfolge wählen.',
+          );
         for (let i = api.FPDFPage_CountObjects(temp) - 1; i >= 0; i--)
           if (!sorted.includes(i)) {
             const obj = api.FPDFPage_GetObject(temp, i);
@@ -471,12 +825,12 @@ export function groupNativeObjects(
   );
 }
 /** Shape Unicode text with measured glyph advances before changing the PDF. */
-export function replaceNativeParagraph(
+export async function replaceNativeParagraph(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
   index: number,
   settings: NativeParagraph,
-): NativeParagraphResult {
+): Promise<NativeParagraphResult> {
   const { rect: r, indices, padding, lineHeight, align } = settings;
   if (!indices.length || indices.length > 500 || new Set(indices).size !== indices.length)
     throw new Error('Bitte 1 bis 500 unterschiedliche Textobjekte auswählen.');
@@ -500,28 +854,17 @@ export function replaceNativeParagraph(
     throw new Error('Bitte 1 bis 20.000 Zeichen ohne Steuerzeichen eingeben.');
   if (!['auto', 'ltr', 'rtl'].includes(settings.direction || 'auto'))
     throw new Error('Ungültige Schreibrichtung.');
-  if (
-    Array.from(text).some((ch) => {
-      const cp = ch.codePointAt(0)!;
-      return (
-        (cp >= 0x900 && cp <= 0x109f) ||
-        (cp >= 0x1780 && cp <= 0x18af) ||
-        (cp >= 0x200b && cp <= 0x200f) ||
-        (cp >= 0x202a && cp <= 0x202e) ||
-        (cp >= 0x2060 && cp <= 0x206f) ||
-        (cp >= 0xa980 && cp <= 0xa9df) ||
-        (cp >= 0xaa00 && cp <= 0xaaff)
-      );
-    })
-  )
+  if (/[\u202a-\u202e\u2066-\u2069]/u.test(text))
     throw new Error(
-      'Diese komplexe Schrift oder explizite Richtungssteuerung ist noch nicht freigegeben.',
+      'Explizite Richtungssteuerzeichen bitte entfernen und die Schreibrichtung auswählen.',
     );
   const embedding = bidi.getEmbeddingLevels(
     text,
     settings.direction === 'auto' ? undefined : settings.direction,
   );
-  type Glyph = { id: number; codePoints: number[] };
+  type Glyph = { id: number; codePoints: number[]; width?: number };
+  const glyphKey = (glyph: Glyph) =>
+    glyph.id + ':' + glyph.codePoints.join(',') + ':' + (glyph.width ?? 'visual');
   type Position = { xAdvance: number; yAdvance: number; xOffset: number; yOffset: number };
   type Face = {
     unitsPerEm: number;
@@ -529,6 +872,7 @@ export function replaceNativeParagraph(
     descent: number;
     characterSet: number[];
     variationAxes?: object;
+    glyphForCodePoint: (codePoint: number) => { id: number };
     layout: (
       text: string,
       features?: string[],
@@ -542,6 +886,8 @@ export function replaceNativeParagraph(
     face: Face;
     cids: Map<string, { cid: number; glyph: Glyph }>;
     handle: number;
+    shaping: hb.Font;
+    cmapName: string;
   };
   type Style = { font: Font; size: number; color: string; shift: number };
   const fonts: Font[] = [];
@@ -575,7 +921,17 @@ export function replaceNativeParagraph(
         throw new Error(
           'Bitte eine statische TrueType-Schrift mit gültigen Schriftmaßen verwenden.',
         );
-      font = { bytes: fontBytes, face, cids: new Map(), handle: 0 };
+      const shapingFace = new hb.Face(new hb.Blob(fontBytes.slice().buffer));
+      const shaping = new hb.Font(shapingFace);
+      shaping.setScale(face.unitsPerEm, face.unitsPerEm);
+      font = {
+        bytes: fontBytes,
+        face,
+        cids: new Map(),
+        handle: 0,
+        shaping,
+        cmapName: 'MoinParagraph' + nativeMarkerId(),
+      };
       fonts.push(font);
       if (fonts.reduce((n, f) => n + f.bytes.length, 0) > 40 * 1024 * 1024)
         throw new Error('Die Absatzschriften dürfen zusammen höchstens 40 MB groß sein.');
@@ -614,26 +970,76 @@ export function replaceNativeParagraph(
       ),
     };
   });
+  const scriptDefinitions = [
+    ['Latin', 'Latn'],
+    ['Greek', 'Grek'],
+    ['Cyrillic', 'Cyrl'],
+    ['Arabic', 'Arab'],
+    ['Hebrew', 'Hebr'],
+    ['Devanagari', 'Deva'],
+    ['Bengali', 'Beng'],
+    ['Gujarati', 'Gujr'],
+    ['Gurmukhi', 'Guru'],
+    ['Kannada', 'Knda'],
+    ['Malayalam', 'Mlym'],
+    ['Oriya', 'Orya'],
+    ['Tamil', 'Taml'],
+    ['Telugu', 'Telu'],
+    ['Thai', 'Thai'],
+    ['Lao', 'Laoo'],
+    ['Khmer', 'Khmr'],
+    ['Myanmar', 'Mymr'],
+    ['Sinhala', 'Sinh'],
+    ['Tibetan', 'Tibt'],
+    ['Han', 'Hani'],
+    ['Hangul', 'Hang'],
+    ['Hiragana', 'Hira'],
+    ['Katakana', 'Kana'],
+  ].map(([name, tag]) => ({ tag, test: new RegExp('\\p{Script=' + name + '}', 'u') }));
   type Part = { text: string; style: Style; start: number; script?: string; level: number };
-  const pieces: Part[] = graphemes.map((g) => ({
-    text: g.segment,
-    start: g.index,
-    level: embedding.levels[g.index],
-    script: /\p{Script=Arabic}/u.test(g.segment)
-      ? 'arab'
-      : /\p{Script=Hebrew}/u.test(g.segment)
-        ? 'hebr'
-        : undefined,
-    style: styled.find((s) => g.index >= s.from && g.index < s.to)?.style || base,
-  }));
-  for (const p of pieces)
-    for (const ch of p.text) {
-      if (ch === '\n') continue;
-      if (!p.style.font.face.characterSet.includes(ch.codePointAt(0)!))
-        throw new Error(
-          `Die gewählte Schrift enthält das Zeichen „${ch}“ nicht. Bitte eine passende TrueType-Schrift wählen.`,
+  const covers = (style: Style, value: string) =>
+    Array.from(value).every(
+      (ch) =>
+        ch === '\n' ||
+        /\p{Cf}/u.test(ch) ||
+        style.font.face.characterSet.includes(ch.codePointAt(0)!),
+    );
+  if ((settings.fallbackFonts?.length || 0) > 16)
+    throw new Error('Bitte höchstens 16 Ersatzschriften verwenden.');
+  const fallbackStyles = new Map<Style, Style[]>();
+  const pieces: Part[] = graphemes.map((g) => {
+    let style = styled.find((s) => g.index >= s.from && g.index < s.to)?.style || base;
+    if (!covers(style, g.segment)) {
+      let candidates = fallbackStyles.get(style);
+      if (!candidates) {
+        candidates = (settings.fallbackFonts || []).map((bytes) =>
+          getStyle(bytes, style.size, style.color, style.shift),
         );
+        fallbackStyles.set(style, candidates);
+      }
+      const fallback = candidates.find((candidate) => covers(candidate, g.segment));
+      if (!fallback)
+        throw new Error(
+          `Die gewählte Schrift enthält das Zeichen „${g.segment}“ nicht. Bitte eine passende TrueType-Schrift wählen.`,
+        );
+      style = fallback;
     }
+    return {
+      text: g.segment,
+      start: g.index,
+      level: embedding.levels[g.index],
+      script: scriptDefinitions.find((definition) => definition.test.test(g.segment))?.tag,
+      style,
+    };
+  });
+  // Common characters belong to an adjacent script, without merging two strong scripts.
+  for (let i = 0; i < pieces.length; i++) {
+    if (!pieces[i].script && pieces[i].text !== '\n')
+      pieces[i].script =
+        (i && pieces[i - 1].text !== '\n' ? pieces[i - 1].script : undefined) ||
+        pieces.slice(i + 1).find((p) => p.script || p.text === '\n')?.script;
+  }
+  const shapingBuffer = new hb.Buffer();
   const shape = (parts: Part[]) => {
     if (!parts.length) return [];
     const start = parts[0].start,
@@ -658,53 +1064,135 @@ export function replaceNativeParagraph(
       .sort((a, b) => rank.get(a.start)! - rank.get(b.start)!)
       .map((p) => {
         const rtl = !!(p.level & 1);
-        const mirrored = Array.from(p.text, (ch) =>
-          rtl ? bidi.getMirroredCharacter(ch) || ch : ch,
-        ).join('');
-        const run = p.style.font.face.layout(
-            mirrored,
-            undefined,
-            p.script,
-            undefined,
-            rtl ? 'rtl' : 'ltr',
-          ),
+        shapingBuffer.reset();
+        shapingBuffer.addText(p.text);
+        shapingBuffer.setClusterLevel(hb.ClusterLevel.MONOTONE_GRAPHEMES);
+        shapingBuffer.setDirection(rtl ? hb.Direction.RTL : hb.Direction.LTR);
+        if (p.script) shapingBuffer.setScript(p.script);
+        shapingBuffer.guessSegmentProperties();
+        hb.shape(p.style.font.shaping, shapingBuffer);
+        const infos = shapingBuffer.getGlyphInfos(),
+          positions = shapingBuffer.getGlyphPositions();
+        const clusters = [...new Set(infos.map((g) => g.cluster))].sort((a, b) => a - b);
+        const clusterEnd = new Map(clusters.map((c, i) => [c, clusters[i + 1] ?? p.text.length]));
+        const glyphs: Glyph[] = infos.map((g) => {
+          const original = p.text.slice(g.cluster, clusterEnd.get(g.cluster));
+          if (!g.codepoint && !/^[\p{Cf}\s]*$/u.test(original))
+            throw new Error('Die Schrift kann diese Zeichenfolge nicht vollständig darstellen.');
+          return { id: g.codepoint, codePoints: [0x200b] };
+        });
+        const records = clusters.map((cluster) => ({
+          text: p.text.slice(cluster, clusterEnd.get(cluster)),
+          ids: infos.flatMap((g, i) => (g.cluster === cluster ? [i] : [])),
+        }));
+        for (let i = 0; i < records.length - 1; i++) {
+          if (!/^[\p{Cf}]+$/u.test(records[i].text)) continue;
+          records[i + 1].text = records[i].text + records[i + 1].text;
+          records[i + 1].ids.push(...records[i].ids);
+          records.splice(i--, 1);
+        }
+        const logical = records
+          .map((record) => {
+            const ids = record.ids.sort((a, b) => a - b),
+              advance = ids.reduce((n, i) => n + positions[i].xAdvance, 0);
+            const tokens: string[] = [];
+            let prefix = '';
+            for (const ch of record.text) {
+              if (/\p{Cf}/u.test(ch)) {
+                if (tokens.length && /\p{Mn}/u.test(tokens.at(-1)!))
+                  tokens[tokens.length - 1] += ch;
+                else prefix += ch;
+              } else {
+                tokens.push(prefix + ch);
+                prefix = '';
+              }
+            }
+            // A trailing standalone format control must not hide the preceding visible scalar.
+            if (prefix) tokens.push(prefix);
+            if (rtl) tokens.reverse();
+            const carrier = tokens.findIndex(
+              (ch) => !/\p{Mn}/u.test(ch) && !/^[\p{Cf}]*$/u.test(ch),
+            );
+            return {
+              first: ids[0],
+              last: ids.at(-1)!,
+              advance,
+              text: record.text,
+              glyphs: tokens.map((ch, i): Glyph => ({
+                id: 0,
+                codePoints: Array.from(ch, (c) => c.codePointAt(0)!),
+                width:
+                  i === carrier
+                    ? (advance * 1000 * p.style.size) / (p.style.font.face.unitsPerEm * base.size)
+                    : 0,
+              })),
+            };
+          })
+          .sort((a, b) => a.first - b.first);
+        const run = { glyphs, positions },
           factor = p.style.size / p.style.font.face.unitsPerEm;
         if (
-          run.glyphs.length !== run.positions.length ||
-          run.positions.some(
+          glyphs.length !== positions.length ||
+          positions.some(
             (pos) => ![pos.xAdvance, pos.yAdvance, pos.xOffset, pos.yOffset].every(Number.isFinite),
           )
         )
           throw new Error(
             'Die Zeichenformung der gewählten Schrift kann nicht zuverlässig gesetzt werden.',
           );
-        if (rtl)
-          run.glyphs = run.glyphs.map((glyph) => ({
-            ...glyph,
-            codePoints: glyph.codePoints.map((cp) =>
-              (
-                bidi.getMirroredCharacter(String.fromCodePoint(cp)) || String.fromCodePoint(cp)
-              ).codePointAt(0)!,
-            ),
-          }));
         return {
           ...p,
+          clusters: clusters.map((c) => c + p.start),
           run,
+          logical,
           factor,
           width: run.positions.reduce((n, pos) => n + pos.xAdvance * factor, 0),
         };
       });
   };
-  return open(api, bytes, (ctx) => {
+  // Validate formatting before it can interrupt a conjunct that Intl grapheme boundaries split.
+  const unstyledFonts = new Map<Font, Style>();
+  const unstyled = pieces.map((part) => {
+    const font = fonts.find((f) => covers({ ...base, font: f }, part.text)) || part.style.font;
+    let style = unstyledFonts.get(font);
+    if (!style) {
+      style = { ...base, font };
+      unstyledFonts.set(font, style);
+    }
+    return { ...part, style };
+  });
+  const formatBoundaries = new Set<number>([0, text.length]);
+  let unstyledParagraph: Part[] = [];
+  for (const part of [...unstyled, { text: '\n', start: text.length, style: base, level: 0 }]) {
+    if (part.text !== '\n') {
+      unstyledParagraph.push(part);
+      continue;
+    }
+    for (const group of shape(unstyledParagraph))
+      for (const start of group.clusters) formatBoundaries.add(start);
+    formatBoundaries.add(part.start);
+    formatBoundaries.add(part.start + 1);
+    unstyledParagraph = [];
+  }
+  if (ranges.some((range) => !formatBoundaries.has(range.from) || !formatBoundaries.has(range.to)))
+    throw new Error('Formatierungen dürfen keine geformte Zeichenfolge teilen.');
+  const result = open(api, bytes, (ctx) => {
     const first = pageHandle(ctx, index),
       opened = [first],
-      pending: { page: number; objects: number[] }[] = [];
+      pending: {
+        page: number;
+        objects: number[];
+        semantics: { obj: number; start: number }[];
+        marker: string;
+        text: string;
+        runs: { marker: string; text: string }[];
+      }[] = [];
     try {
-      const handles = indices.map((id) =>
-        Number.isInteger(id) && id >= 0 && id < api.FPDFPage_CountObjects(first)
-          ? api.FPDFPage_GetObject(first, id)
-          : 0,
+      requireSerializablePage(ctx, first);
+      const all = Array.from({ length: api.FPDFPage_CountObjects(first) }, (_, i) =>
+        api.FPDFPage_GetObject(first, i),
       );
+      const handles = expandedIndices(ctx, all, indices).map((id) => all[id]);
       if (handles.some((obj) => !obj || api.FPDFPageObj_GetType(obj) !== 1))
         throw new Error(
           'Die Auswahl enthält ein ungültiges Objekt. Bitte ausschließlich Text auswählen.',
@@ -718,6 +1206,30 @@ export function replaceNativeParagraph(
         vertical = r.h * height - 2 * padding;
       if (available <= 0 || vertical <= 0)
         throw new Error('Der Textbereich ist kleiner als sein Innenabstand.');
+      const safeBreaks = new Set<number>([0, text.length]);
+      let paragraph: Part[] = [];
+      for (const part of [...pieces, { text: '\n', start: text.length, style: base, level: 0 }]) {
+        if (part.text !== '\n') {
+          paragraph.push(part);
+          continue;
+        }
+        for (const group of shape(paragraph))
+          for (const start of group.clusters) safeBreaks.add(start);
+        safeBreaks.add(part.start);
+        safeBreaks.add(part.start + 1);
+        paragraph = [];
+      }
+      const atoms: Part[][] = [];
+      for (const part of pieces) {
+        if (!atoms.length || safeBreaks.has(part.start)) atoms.push([part]);
+        else atoms.at(-1)!.push(part);
+      }
+      const wordBreaks = new Set(
+        Array.from(
+          new Intl.Segmenter(undefined, { granularity: 'word' }).segment(text),
+          (s) => s.index,
+        ),
+      );
       const lines: ReturnType<typeof shape>[] = [];
       let current: Part[] = [];
       const measure = (p: Part[]) => shape(p).reduce((n, g) => n + g.width, 0);
@@ -728,12 +1240,13 @@ export function replaceNativeParagraph(
       };
       const words: Part[][] = [];
       let word: Part[] = [];
-      for (const p of pieces) {
-        if (/^\s$/u.test(p.text)) {
+      for (const atom of atoms) {
+        if (wordBreaks.has(atom[0].start) || /^\s$/u.test(atom[0].text)) {
           if (word.length) words.push(word);
-          words.push([p]);
           word = [];
-        } else word.push(p);
+        }
+        if (/^\s$/u.test(atom[0].text)) words.push(atom);
+        else word.push(...atom);
       }
       if (word.length) words.push(word);
       for (const token of words) {
@@ -752,11 +1265,13 @@ export function replaceNativeParagraph(
           current = token.slice();
           continue;
         }
-        for (const p of token) {
-          if (measure([p]) > available + 0.001)
+        for (const atom of atoms.filter(
+          (a) => a[0].start >= token[0].start && a[0].start <= token.at(-1)!.start,
+        )) {
+          if (measure(atom) > available + 0.001)
             throw new Error('Der Textbereich ist schmaler als eine einzelne Zeichenfolge.');
-          if (current.length && measure([...current, p]) > available + 0.001) flush();
-          current.push(p);
+          if (current.length && measure([...current, ...atom]) > available + 0.001) flush();
+          current.push(...atom);
         }
       }
       if (current.length || text.endsWith('\n')) flush();
@@ -801,12 +1316,18 @@ export function replaceNativeParagraph(
         });
         used = Math.max(used, top + ascent + descent + 2 * padding);
         top += advance;
-        for (const g of groups)
+        for (const g of groups) {
           for (const glyph of g.run.glyphs) {
-            const key = glyph.id + ':' + glyph.codePoints.join(',');
+            const key = glyphKey(glyph);
             if (!g.style.font.cids.has(key))
               g.style.font.cids.set(key, { cid: g.style.font.cids.size + 1, glyph });
           }
+          for (const glyph of g.logical.flatMap((l) => l.glyphs)) {
+            const key = glyphKey(glyph);
+            if (!base.font.cids.has(key))
+              base.font.cids.set(key, { cid: base.font.cids.size + 1, glyph });
+          }
+        }
       }
       for (const f of fonts) {
         if (!f.cids.size) continue;
@@ -833,7 +1354,9 @@ export function replaceNativeParagraph(
           );
         }
         const cmap =
-          '/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /MoinParagraph def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n' +
+          '/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /' +
+          f.cmapName +
+          ' def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n' +
           sections.join('\n') +
           '\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend';
         const fp = ctx.alloc(f.bytes.length),
@@ -860,7 +1383,15 @@ export function replaceNativeParagraph(
         if (!page) throw new Error('Eine Folgeseite konnte nicht erzeugt werden.');
         opened.push(page);
       }
-      for (const page of opened) pending.push({ page, objects: [] });
+      for (const page of opened)
+        pending.push({
+          page,
+          objects: [],
+          semantics: [],
+          marker: 'MoinCluster' + nativeMarkerId(),
+          text: '',
+          runs: [],
+        });
       for (const line of layout) {
         const target = pending[line.page],
           page = target.page,
@@ -869,6 +1400,11 @@ export function replaceNativeParagraph(
           bb = toPdf(ctx, page, 0, 1),
           u = [rr[0] - o[0], rr[1] - o[1]],
           v = [bb[0] - o[0], bb[1] - o[1]];
+        if (target.text) target.text += '\n';
+        target.text += [...line.groups]
+          .sort((a, b) => a.start - b.start)
+          .map((g) => g.text)
+          .join('');
         let x =
           padding +
           (align === 'right'
@@ -876,8 +1412,30 @@ export function replaceNativeParagraph(
             : align === 'center'
               ? (available - line.width) / 2
               : 0);
+        const semanticSegments = new Map<number, { start: number; marker: string; text: string }>();
+        let segment: { start: number; marker: string; text: string } | undefined,
+          previousLevel = -1;
+        const minimumLevel = Math.min(...line.groups.map((g) => g.level));
+        for (const group of [...line.groups].sort((a, b) => a.start - b.start)) {
+          const level = minimumLevel & 1 ? 1 : Math.min(1, group.level);
+          if (!segment || level !== previousLevel) {
+            segment = {
+              start: group.start,
+              marker: target.marker + 'Run' + nativeMarkerId(),
+              text: '',
+            };
+            target.runs.push(segment);
+          }
+          segment.text += group.text;
+          semanticSegments.set(group.start, segment);
+          previousLevel = level;
+        }
         for (const group of line.groups) {
           const channels = [1, 3, 5].map((j) => parseInt(group.style.color.slice(j, j + 2), 16));
+          let clusterStart = x,
+            marker = '';
+          const segment = semanticSegments.get(group.start)!;
+          const runMarker = segment.marker;
           for (let j = 0; j < group.run.glyphs.length; j++) {
             const glyph = group.run.glyphs[j],
               pos = group.run.positions[j],
@@ -888,13 +1446,16 @@ export function replaceNativeParagraph(
               );
             if (!obj) throw new Error('Ein Textzeichen konnte nicht erstellt werden.');
             target.objects.push(obj);
+            const logical = group.logical.find((l) => j >= l.first && j <= l.last)!;
+            if (j === logical.first) {
+              clusterStart = x;
+              marker = target.marker;
+            }
+            if (!api.FPDFPageObj_AddMark(obj, marker))
+              throw new Error('Die Zeichenfolge konnte nicht markiert werden.');
             const cp = ctx.alloc(4);
             try {
-              api.pdfium.setValue(
-                cp,
-                group.style.font.cids.get(glyph.id + ':' + glyph.codePoints.join(','))!.cid,
-                'i32',
-              );
+              api.pdfium.setValue(cp, group.style.font.cids.get(glyphKey(glyph))!.cid, 'i32');
               if (!api.FPDFText_SetCharcodes(obj, cp, 1))
                 throw new Error('Ein Textzeichen konnte nicht gesetzt werden.');
             } finally {
@@ -934,6 +1495,36 @@ export function replaceNativeParagraph(
                 'Die tatsächlichen Schriftkonturen ragen über den Textbereich. Innenabstand oder Bereich vergrößern.',
               );
             x += pos.xAdvance * group.factor;
+            if (j === logical.last) {
+              const semantic = api.FPDFPageObj_CreateTextObj(ctx.doc, base.font.handle, base.size);
+              if (!semantic) throw new Error('Der logische Text konnte nicht erstellt werden.');
+              target.semantics.push({ obj: semantic, start: segment.start });
+              const codes = ctx.alloc(logical.glyphs.length * 4);
+              try {
+                logical.glyphs.forEach((g, i) =>
+                  api.pdfium.setValue(codes + 4 * i, base.font.cids.get(glyphKey(g))!.cid, 'i32'),
+                );
+                if (
+                  !api.FPDFText_SetCharcodes(semantic, codes, logical.glyphs.length) ||
+                  !api.FPDFTextObj_SetTextRenderMode(semantic, 3) ||
+                  !api.FPDFPageObj_AddMark(semantic, runMarker)
+                )
+                  throw new Error('Der logische Text konnte nicht gesetzt werden.');
+              } finally {
+                ctx.free(codes);
+              }
+              const sx = r.x + clusterStart / width,
+                sy = r.y + (padding + line.top + line.ascent - group.style.shift) / height;
+              api.FPDFPageObj_Transform(
+                semantic,
+                u[0] / width,
+                u[1] / width,
+                -v[0] / height,
+                -v[1] / height,
+                o[0] + u[0] * sx + v[0] * sy,
+                o[1] + u[1] * sx + v[1] * sy,
+              );
+            }
           }
         }
       }
@@ -943,18 +1534,145 @@ export function replaceNativeParagraph(
         api.FPDFPageObj_Destroy(obj);
       }
       for (const target of pending) {
+        target.objects.push(
+          ...target.semantics.sort((a, b) => a.start - b.start).map((s) => s.obj),
+        );
+        target.semantics.length = 0;
         while (target.objects.length)
           api.FPDFPage_InsertObject(target.page, target.objects.shift()!);
         if (!api.FPDFPage_GenerateContent(target.page))
           throw new Error('Der Absatz konnte nicht gespeichert werden.');
       }
-      return { bytes: saved(ctx), lines: lines.length, height: used, addedPages: pageNo };
+      return {
+        bytes: saved(ctx),
+        lines: lines.length,
+        height: used,
+        addedPages: pageNo,
+        marks: pending.map((t, n) => ({
+          page: index + n,
+          marker: t.marker,
+          text: t.text,
+          runs: t.runs,
+        })),
+      };
     } finally {
-      for (const t of pending) for (const obj of t.objects) api.FPDFPageObj_Destroy(obj);
+      for (const t of pending)
+        for (const obj of [...t.objects, ...t.semantics.map((s) => s.obj)])
+          api.FPDFPageObj_Destroy(obj);
       for (const page of opened) api.FPDF_ClosePage(page);
       for (const font of fonts) if (font.handle) api.FPDFFont_Close(font.handle);
     }
   });
+  // Each visual glyph has its own matrix. Logical scalar widths describe the entire cluster
+  // for selection/search, independently of reordered glyph outlines and combining marks.
+  const document = await PDFDocument.load(result.bytes);
+  const name = PDFName.of;
+  let matched = 0;
+  for (const [, object] of document.context.enumerateIndirectObjects()) {
+    if (
+      !(object instanceof PDFDict) ||
+      object.lookupMaybe(name('Subtype'), PDFName) !== name('Type0')
+    )
+      continue;
+    const cmap = object.lookup(name('ToUnicode'));
+    if (!(cmap instanceof PDFRawStream)) continue;
+    const text = new TextDecoder().decode(decodePDFRawStream(cmap).decode());
+    const font = fonts.find((f) => text.includes('/' + f.cmapName + ' '));
+    if (!font) continue;
+    const descendant = object.lookup(name('DescendantFonts'), PDFArray).lookup(0, PDFDict);
+    const combined = document.context.obj([]);
+    // Remove visual widths too: they carry only an invisible formatting marker.
+    for (const { cid, glyph } of font.cids.values()) {
+      combined.push(document.context.obj(cid));
+      combined.push(document.context.obj([glyph.width ?? 0]));
+    }
+    descendant.set(name('W'), combined);
+    matched++;
+  }
+  if (matched !== fonts.filter((f) => f.cids.size).length)
+    throw new Error('Die logischen Zeichenbreiten konnten nicht gespeichert werden.');
+  for (const mark of result.marks) {
+    const textHex = (value: string) =>
+      Array.from({ length: value.length }, (_, i) =>
+        value.charCodeAt(i).toString(16).padStart(4, '0'),
+      ).join('');
+    const page = document.getPage(mark.page),
+      contents = page.node.Contents();
+    const streams =
+      contents instanceof PDFArray
+        ? Array.from({ length: contents.size() }, (_, i) => contents.lookup(i, PDFRawStream))
+        : contents
+          ? [contents as PDFRawStream]
+          : [];
+    const source = streams
+      .map((stream) => {
+        const data = decodePDFRawStream(stream).decode();
+        let value = '';
+        for (let i = 0; i < data.length; i += 8192)
+          value += String.fromCharCode(...data.subarray(i, i + 8192));
+        return value;
+      })
+      .join('\n');
+    const pattern = new RegExp(
+      '/' + mark.marker + '(?:Run[a-f0-9]{32})?\\s+BMC([\\s\\S]*?)\\bEMC',
+      'g',
+    );
+    const spans = [...source.matchAll(pattern)];
+    if (!spans.length) throw new Error('Die Absatzmarkierung konnte nicht gespeichert werden.');
+    const first = spans[0].index!,
+      last = spans.at(-1)!,
+      end = last.index! + last[0].length;
+    let inner = source.slice(first, end);
+    const visualPattern = new RegExp('/' + mark.marker + '\\s+BMC([\\s\\S]*?)\\bEMC', 'g');
+    inner = inner.replace(visualPattern, '$1');
+    for (const run of mark.runs) {
+      const runPattern = new RegExp('/' + run.marker + '\\s+BMC([\\s\\S]*?)\\bEMC', 'g'),
+        parts = [...inner.matchAll(runPattern)];
+      if (!parts.length) continue;
+      const start = parts[0].index!,
+        last = parts.at(-1)!,
+        finish = last.index! + last[0].length;
+      inner =
+        inner.slice(0, start) +
+        '/' +
+        run.marker +
+        ' << /ActualText <FEFF' +
+        textHex(run.text) +
+        '> >> BDC\n' +
+        inner.slice(start, finish).replace(runPattern, '$1') +
+        '\nEMC' +
+        inner.slice(finish);
+    }
+    const hex = textHex(mark.text);
+    const semanticStart = inner.search(new RegExp('/' + mark.marker + 'Run[a-f0-9]{32}\\b'));
+    if (semanticStart < 0) throw new Error('Der logische Absatz konnte nicht zugeordnet werden.');
+    // ActualText belongs to each logical line/direction segment. A page-wide
+    // value maps line breaks onto glyphs and corrupts extraction in some readers.
+    const normalized =
+      source.slice(0, first) +
+      '/' +
+      mark.marker +
+      ' << /MoinTextHex (' +
+      hex +
+      ') >> BDC\n/Span << /ActualText <> >> BDC\n' +
+      inner.slice(0, semanticStart) +
+      '\nEMC\n' +
+      inner.slice(semanticStart) +
+      '\nEMC' +
+      source.slice(end);
+    page.node.set(
+      name('Contents'),
+      document.context.register(
+        document.context.flateStream(Uint8Array.from(normalized, (ch) => ch.charCodeAt(0))),
+      ),
+    );
+  }
+  return {
+    lines: result.lines,
+    height: result.height,
+    addedPages: result.addedPages,
+    bytes: await document.save(),
+  };
 }
 
 export function removeNativeRegions(
@@ -981,6 +1699,18 @@ export function removeNativeRegions(
           r.y + r.h > 1.001
         )
           throw new Error('Ungültiger Löschbereich.');
+        const clearLogical = (obj: number, depth = 0) => {
+          if (depth > 16) throw new Error('Objektgruppen dürfen höchstens 16 Ebenen tief sein.');
+          if (clusterMark(ctx, obj))
+            for (let i = 0; i < api.FPDFPageObj_CountMarks(obj); i++)
+              for (const key of ['ActualText', 'MoinTextHex'])
+                api.FPDFPageObjMark_RemoveParam(obj, api.FPDFPageObj_GetMark(obj, i), key);
+          if (api.FPDFPageObj_GetType(obj) === 5)
+            for (let i = 0; i < api.FPDFFormObj_CountObjects(obj); i++)
+              clearLogical(api.FPDFFormObj_GetObject(obj, i), depth + 1);
+        };
+        for (let i = 0; i < api.FPDFPage_CountObjects(page); i++)
+          clearLogical(api.FPDFPage_GetObject(page, i));
         const a = toPdf(ctx, page, r.x, r.y),
           b = toPdf(ctx, page, r.x + r.w, r.y + r.h);
         ptr = ctx.alloc(16);

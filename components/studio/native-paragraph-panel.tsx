@@ -25,6 +25,26 @@ import {
   type PanelProps,
 } from './advanced-shared';
 
+const scriptFonts = [
+  'Devanagari',
+  'Bengali',
+  'Gujarati',
+  'Gurmukhi',
+  'Kannada',
+  'Malayalam',
+  'Oriya',
+  'Tamil',
+  'Telugu',
+  'Thai',
+  'Lao',
+  'Khmer',
+  'Myanmar',
+  'Sinhala',
+];
+const fontUrl = (choice: string) =>
+  choice === 'noto'
+    ? '/vendor/invoice-font/NotoSans-Regular.ttf'
+    : '/vendor/editor-fonts/' + choice + '.ttf';
 export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
   useLanguage();
   const [page, setPage] = useState(0),
@@ -43,6 +63,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
     [replacement, setReplacement] = useState(''),
     [color, setColor] = useState('#000000'),
     [fontChoice, setFontChoice] = useState('noto'),
+    [autoFonts, setAutoFonts] = useState(true),
     [fontFile, setFontFile] = useState<File | null>(null);
   const [styles, setStyles] = useState<(NativeParagraphStyle & { fontFile?: File })[]>([]),
     [selection, setSelection] = useState<[number, number]>([0, 0]),
@@ -68,6 +89,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
     direction,
     color,
     fontChoice,
+    autoFonts,
     fontFile: fontFile && [fontFile.name, fontFile.size, fontFile.lastModified],
   });
   const currentPreview = preview?.key === settingsKey ? preview : null;
@@ -105,15 +127,26 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
         throw new Error('Bitte eine statische TrueType-Schrift mit höchstens 10 MB auswählen.');
       fontBytes = new Uint8Array(await fontFile.arrayBuffer());
     } else {
-      const response = await fetch(
-        fontChoice === 'noto'
-          ? '/vendor/invoice-font/NotoSans-Regular.ttf'
-          : '/vendor/editor-fonts/' + fontChoice + '.ttf',
-        { signal },
-      );
+      const response = await fetch(fontUrl(fontChoice), { signal });
       if (!response.ok) throw new Error('Die lokale Schrift konnte nicht geladen werden.');
       fontBytes = new Uint8Array(await response.arrayBuffer());
     }
+    const neededFonts = autoFonts
+      ? [
+          'noto',
+          ...(/[\p{Script=Arabic}\p{Script=Hebrew}]/u.test(text) ? ['DejaVuSans'] : []),
+          ...scriptFonts
+            .filter((script) => new RegExp('\\p{Script=' + script + '}', 'u').test(text))
+            .map((script) => 'NotoSans' + script + '-Regular'),
+        ].filter((choice) => choice !== fontChoice)
+      : [];
+    const fallbackFonts = await Promise.all(
+      neededFonts.map(async (choice) => {
+        const response = await fetch(fontUrl(choice), { signal });
+        if (!response.ok) throw new Error('Die lokale Schrift konnte nicht geladen werden.');
+        return new Uint8Array(await response.arrayBuffer());
+      }),
+    );
     return replaceParagraph(
       source.bytes,
       page,
@@ -122,6 +155,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
         text,
         rect,
         fontBytes,
+        fallbackFonts,
         fontSize,
         lineHeight,
         padding,
@@ -238,7 +272,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
         </Field>
         <p className="fine-note">
           {ui(
-            'Textreihenfolge nach dem Übernehmen prüfen. Eingabetaste beginnt eine neue Zeile; weitere Umbrüche setzt MoinPDF automatisch. Lateinische, griechische, kyrillische, arabische und hebräische Schriften werden unterstützt, wenn die gewählte Schrift die Zeichen enthält.',
+            'Textreihenfolge nach dem Übernehmen prüfen. Eingabetaste beginnt eine neue Zeile; weitere Umbrüche setzt MoinPDF automatisch. Die Schriftformung unterstützt auch indische und südostasiatische Schriften. Fehlende Zeichen werden bei eingeschalteter Schriftergänzung mit passenden lokalen Schriften gesetzt.',
           )}
         </p>
         <Choice
@@ -416,9 +450,23 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             ['DejaVuSerif-Bold', 'DejaVu Serif Bold'],
             ['DejaVuSerif-Italic', 'DejaVu Serif Italic'],
             ['DejaVuSansMono', 'DejaVu Sans Mono'],
+            ...scriptFonts.map(
+              (script) =>
+                ['NotoSans' + script + '-Regular', 'Noto Sans ' + script] as [string, string],
+            ),
             ['custom', 'Eigene TrueType-Schrift'],
           ]}
         />
+        <Tick
+          label={ui('Passende Schriften automatisch ergänzen')}
+          value={autoFonts}
+          onChange={setAutoFonts}
+        />
+        <p className="fine-note">
+          {ui(
+            'Zusätzliche Schriften für indische und südostasiatische Schriften werden bei Bedarf lokal geladen. Zusammengehörige Zeichen bleiben beim Umbruch erhalten.',
+          )}
+        </p>
         {fontChoice === 'custom' && (
           <Field label={ui('TrueType-Schrift (.ttf)')}>
             <input

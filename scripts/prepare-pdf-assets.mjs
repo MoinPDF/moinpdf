@@ -30,7 +30,7 @@ let copyright='';
 const originalLog=console.log;
 try{console.log=s=>{copyright+=s+'\n';};const qpdf=await require('@neslinesli93/qpdf-wasm')({});qpdf.callMain(['--copyright']);}finally{console.log=originalLog;}
 await (await import('node:fs/promises')).writeFile(path.join(out,'licenses','qpdf-COPYRIGHT.txt'),copyright);
-for (const name of ['bidi-js', 'pkijs', 'asn1js', '@embedpdf/pdfium', 'utif', '@bwip-js/browser', '@zxing/library', 'pdfjs-dist', 'tesseract.js', 'pdf-lib', '@pdf-lib/fontkit', 'jszip', 'docx', '@fontsource-variable/manrope', '@fontsource-variable/space-grotesk', ...['deu','eng','fra','spa','ita','por','nld','pol','ces','dan','swe','nor','fin','tur','ukr','rus','ara','chi_sim','jpn','kor','hin'].map(l=>'@tesseract.js-data/'+l)]) {
+for (const name of ['harfbuzzjs', 'bidi-js', 'pkijs', 'asn1js', '@embedpdf/pdfium', 'utif', '@bwip-js/browser', '@zxing/library', 'pdfjs-dist', 'tesseract.js', 'pdf-lib', '@pdf-lib/fontkit', 'jszip', 'docx', '@fontsource-variable/manrope', '@fontsource-variable/space-grotesk', ...['deu','eng','fra','spa','ita','por','nld','pol','ces','dan','swe','nor','fin','tur','ukr','rus','ara','chi_sim','jpn','kor','hin'].map(l=>'@tesseract.js-data/'+l)]) {
   const dir = path.resolve('node_modules', name);
   for (const file of await readdir(dir)) {
     if (/^(LICENSE|OFL|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',`${name.replaceAll('/', '-')}-${file}`));

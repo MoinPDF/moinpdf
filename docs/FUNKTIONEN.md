@@ -31,7 +31,7 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 - PDF fixieren (Seitenbilder)
 - Dokumentinfos entfernen
 - Text bearbeiten, Inhalte entfernen und Bilder einfügen
-- Originalobjekte bearbeiten: Text in vorhandener Schrift, Suchen/Ersetzen pro Seite, Bilder ersetzen, Objekte verschieben/drehen/skalieren/löschen; zusätzlich Absatzmodus mit mehreren Textobjekten, gemischten Formatierungen, Schriftformung, Umbruch auf zusätzliche Seiten, Vorschau und Überlaufprüfung; keine Bearbeitung einzelner Unterobjekte in Gruppen
+- Originalobjekte bearbeiten: Text in vorhandener Schrift, Suchen/Ersetzen pro Seite, Bilder ersetzen, Objekte verschieben/drehen/skalieren/löschen; zusätzlich Absatzmodus mit mehreren Textobjekten, gemischten Formatierungen, Schriftformung, Umbruch auf zusätzliche Seiten, Vorschau und Überlaufprüfung; einzelne Unterobjekte verschachtelter Gruppen öffnen und bearbeiten; wiederverwendete Instanzen bleiben unabhängig
 - Linearisierung für schnelle Webansicht; strukturierter JSON-Export mit Textpositionen
 - PDF-Informationen und Textvergleich zweier PDFs
 - In Abschnitte teilen, abwechselnd zusammenfügen, Broschüren und Seiten aufteilen
@@ -176,7 +176,7 @@ Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die 
   automatische Zeilenumbrüche, Noto Sans oder eigene statische TTF, Größe, Farbe,
   Ausrichtung, Innen- und Zeilenabstand; echte Ergebnisvorschau. Fehlende Glyphen,
   Textüberlauf und überstehende Schriftkonturen verhindern den Export.
-- Grenzen: einheitlicher Absatz auf einer Seite, keine komplexe Schriftformung;
+- Absätze unterstützen gemischte Formatierungen, Folgeseiten und komplexe Schriftformung mit HarfBuzz;
   Texte innerhalb von Objektgruppen bleiben ausgenommen. Übrige Objekte bleiben
   erhalten. Vorhandene Signaturen und Struktur-Tags nach Textänderungen prüfen.
 - „Barrierefreiheit prüfen“ bietet zusätzlich echte veraPDF-Profile für PDF/UA-1

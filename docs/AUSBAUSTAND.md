@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 12. Oktober 2026, Version 0.11.0.
+Stand: 12. Oktober 2026, Version 0.12.0.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
@@ -8,8 +8,8 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
 | Bereich | Umgesetzt | Verbleibende Arbeit |
 | --- | --- | --- |
-| 1. Nativer Texteditor | Originalobjekte und Absätze; lokale Schriftbibliothek, Browser-Rechtschreibprüfung, Listen, Hoch-/Tiefstellen und Absatz-Suchen/Ersetzen; bis zu 32 Formatbereiche mit Schrift, Größe und Farbe; Ligaturen und kombinierende Zeichen; automatische zusätzliche Folgeseiten; echte Vorschau und Überlaufprüfung | Arabisch/Hebräisch und Mischtext ergänzt; noch offen: weitere komplexe Schriften; Unterobjekte verschachtelter Gruppen |
-| 2. Bilder und Grafiken | Mehrfachauswahl, Ausrichten, Verteilen, Spiegeln, Duplizieren, Vektorgruppen; Objekte bewegen, drehen, skalieren, ersetzen, löschen und in ihrer Zeichenreihenfolge ändern; direkte Griffpunkte mit Tastaturbedienung | Einzelne Unterobjekte verschachtelter Gruppen |
+| 1. Nativer Texteditor | Originalobjekte und Absätze; lokale Schriftbibliothek, Browser-Rechtschreibprüfung, Listen, Hoch-/Tiefstellen und Absatz-Suchen/Ersetzen; bis zu 32 Formatbereiche mit Schrift, Größe und Farbe; Ligaturen und kombinierende Zeichen; automatische zusätzliche Folgeseiten; echte Vorschau und Überlaufprüfung | HarfBuzz mit 14 zusätzlichen Noto-Schriften; Arabisch/Hebräisch und Mischtext; gruppeninterne Originaltexte. Fehlende Schriftdateien und beliebige exotische Schriften bleiben dokumentabhängig |
+| 2. Bilder und Grafiken | Mehrfachauswahl, Ausrichten, Verteilen, Spiegeln, Duplizieren, Vektorgruppen; Objekte bewegen, drehen, skalieren, ersetzen, löschen und in ihrer Zeichenreihenfolge ändern; direkte Griffpunkte mit Tastaturbedienung | Verschachtelte Gruppen bis 16 Ebenen einzeln öffnen; nicht unterstützte Grafiktypen und widersprüchliche geerbte Grafikzustände werden abgewiesen |
 | 3. Lokales Office zu PDF | Gepinnter LibreOffice-WASM-Kern lokal im Browser sowie LibreOffice auf dem eigenen Dokumentenserver | Speicherarme Mobilgeräte, allgemeine Layouttreue; Umfang in [BROWSER-OFFICE.md](BROWSER-OFFICE.md) |
 | 4. PDF zu Office | Word-Rekonstruktion, Tabellenexport und bearbeitbare PowerPoint-Textfelder mit Stil und Position | Allgemeine originalgetreue Rekonstruktion komplexer Tabellen und Layouts |
 | 5. OCR | 21 lokal ausgelieferte Modelle; bis zu acht gemeinsam; automatische Sprachprobe pro Scan-Seite mit bewusster Ablehnung kurzer oder unklarer Texte | Vollständige Spracherkennung bei Handschrift, sehr kurzen Texten und beliebigem Sprachmix wird nicht garantiert |
@@ -33,7 +33,7 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
 ## Prüfung und Freigabe
 
-28 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
+30 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
 Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
 Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
 Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche
@@ -85,3 +85,5 @@ weiterhin einen vollständigen unabhängigen Validator. Das unverändert
 weitergebbare [ICC-Profil CGATS21_CRPC6](https://registry.color.org/profile-registry/CGATS21_CRPC6)
 wäre für die zugehörige Druckbedingung nutzbar, ersetzt aber weder Farbmanagement
 noch Konformitätsprüfung. Daher wurde kein ungesicherter PDF/X-Export ergänzt.
+
+Der Absatzeditor speichert logischen Text zusätzlich als PDF-ActualText. Leser ohne ActualText-Unterstützung können bei ungewöhnlich gemischten Schreibrichtungen eine abweichende Kopierreihenfolge bestimmen, etwa in einem von rechts nach links angeordneten Absatz mit überwiegend lateinischem Text. Darstellung und erneutes Bearbeiten nutzen den vollständigen gespeicherten Absatz.

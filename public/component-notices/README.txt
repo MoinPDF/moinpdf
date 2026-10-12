@@ -49,3 +49,5 @@ collapse-white-space werden ebenfalls unter /vendor/licenses/ ausgeliefert.
 Die Sprachprobe verarbeitet Text ausschließlich auf dem lokalen Gerät.
 
 Browser-Office 2.7.2: browser-office/README.txt mit vollständigen Komponentenhinweisen, Fontlizenzen und Quellverweisen. Lokale Signatur: PKI.js/ASN1.js; Absatzrichtung: bidi-js; Lizenzkopien unter /vendor/licenses/. DejaVu-Editor-Schriften: /vendor/editor-fonts/LICENSE.txt.
+
+Komplexe Absatzschriften: harfbuzz/README.txt; HarfBuzzJS 1.6.2 mit HarfBuzz 14.5.0. Gepinnte Noto-Schriften und Prüfsummen unter /vendor/editor-fonts/NOTO-MANIFEST.json, OFL-Lizenz daneben.
