@@ -1633,17 +1633,23 @@ export async function replaceNativeParagraph(
     const hex = Array.from({ length: mark.text.length }, (_, i) =>
       mark.text.charCodeAt(i).toString(16).padStart(4, '0'),
     ).join('');
+    const semanticStart = inner.search(new RegExp('/' + mark.marker + 'Run[a-f0-9]{32}\\s+BMC'));
+    if (semanticStart < 0) throw new Error('Der logische Absatz konnte nicht zugeordnet werden.');
+    // ActualText belongs to the logical scalar positions. Mapping it onto the
+    // reordered visual glyphs makes readers such as MuPDF infer spurious spaces.
     const normalized =
       source.slice(0, first) +
       '/' +
       mark.marker +
       ' << /MoinTextHex (' +
       hex +
-      ') /ActualText <FEFF' +
+      ') >> BDC\n/Span << /ActualText <> >> BDC\n' +
+      inner.slice(0, semanticStart) +
+      '\nEMC\n/Span << /ActualText <FEFF' +
       hex +
       '> >> BDC\n' +
-      inner +
-      '\nEMC' +
+      inner.slice(semanticStart) +
+      '\nEMC\nEMC' +
       source.slice(end);
     page.node.set(
       name('Contents'),

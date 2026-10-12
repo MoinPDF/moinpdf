@@ -73,7 +73,7 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
         shaped=download('shaped.pdf')
         with pymupdf.open(shaped) as document:
             actual=document[0].get_text()
-            assert 'किताब' in actual and 'MoinPDF' in actual and 'ORIGINAL' not in actual, actual
+            assert actual.strip() == text, actual
             document[0].get_pixmap(matrix=pymupdf.Matrix(2,2)).save(evidence/'native-shaping-output.png')
         assert any('harfbuzz-' in url and '.wasm' in url for url in requested), 'Real HarfBuzz WASM was not loaded'
         assert any('NotoSansDevanagari-Regular.ttf' in url for url in requested), 'Automatic local font fallback was not loaded'
@@ -90,7 +90,7 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
         repeated=download('repeated.pdf')
         with pymupdf.open(repeated) as document:
             actual=document[0].get_text()
-            assert 'ERNEUT BEARBEITET' in actual and 'किताब' not in actual, actual
+            assert actual.strip() == 'ERNEUT BEARBEITET', actual
         open_tool(nested_path)
         page.get_by_role('button', name='Seitenobjekte laden', exact=True).click()
         for _ in range(10):
