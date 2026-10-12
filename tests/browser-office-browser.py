@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.parse
 import pymupdf
 from playwright.sync_api import expect, sync_playwright
@@ -19,8 +20,26 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     browser = api.chromium.launch()
     page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
     page.set_default_timeout(180000)
-    errors, uploads, external, results = [], [], [], []
+    errors, uploads, external, results, console = [], [], [], [], []
     page.on('pageerror', lambda error: errors.append(str(error)))
+    def log(message):
+        console.append(message.type+': '+message.text[:1500])
+        del console[:-100]
+    page.on('console', log)
+    page.add_init_script('''(() => {
+      const NativeWorker = window.Worker;
+      window.__officeProgress = [];
+      window.Worker = class extends NativeWorker {
+        constructor(url, options) {
+          super(url, options);
+          if (String(url).includes('/vendor/office/browser.worker.global.js')) {
+            this.addEventListener('message', ({data}) => {
+              window.__officeProgress.push({time: performance.now(), type: data.type, progress: data.progress});
+            });
+          }
+        }
+      };
+    })();''')
     cached_only = False
     def route(r):
         url = r.request.url
@@ -37,6 +56,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         page.locator('input[type="file"]').first.set_input_files(str(path))
         expect(page.get_by_role('heading', name='Office zu PDF', exact=True)).to_be_visible()
     def convert(path, suffix=''):
+        started = time.monotonic()
         choose(path)
         page.get_by_role('button', name='PDF erstellen', exact=True).click()
         link = page.get_by_role('link', name='PDF herunterladen', exact=True)
@@ -58,8 +78,8 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                 if path.suffix == '.pptx':
                     assert len(pdf) == 2 and 'ENDE DER PRÜFDATEI' in text, text
             pdf[0].get_pixmap().save(str(evidence / (path.name+suffix+'.png')))
-            results.append({'file':path.name+suffix,'pages':len(pdf),'images':images,'text':text})
-        print('PASS: Office '+path.name+suffix, flush=True)
+            results.append({'file':path.name+suffix,'pages':len(pdf),'images':images,'text':text,'seconds':round(time.monotonic()-started,2),'progress':page.evaluate('window.__officeProgress')})
+        print('PASS: Office '+path.name+suffix+' in '+str(results[-1]['seconds'])+'s', flush=True)
     try:
         for name in ['sample.docx','sample.xlsx','sample.pptx','sample.odt','sample.ods','sample.odp']:
             convert(root/'tests/fixtures/office'/name)
@@ -80,6 +100,9 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     except BaseException:
         print(page.locator('body').inner_text()[:8000], flush=True)
         print('Browser errors: '+repr(errors), flush=True)
+        print('Office progress: '+json.dumps(page.evaluate('window.__officeProgress')), flush=True)
+        print('Recent console: '+json.dumps(console), flush=True)
+        (evidence/'browser-office-failure.json').write_text(json.dumps({'results':results,'progress':page.evaluate('window.__officeProgress'),'console':console,'errors':errors}, ensure_ascii=False, indent=2))
         page.screenshot(path=str(evidence/'browser-office-failure.png'), full_page=True)
         raise
     finally:

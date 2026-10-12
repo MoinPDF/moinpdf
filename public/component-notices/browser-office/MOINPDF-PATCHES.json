@@ -1,0 +1,28 @@
+{
+  "id": "moinpdf-conversion-worker-1",
+  "upstream": "@matbee/libreoffice-converter@2.7.2",
+  "license": "MPL-2.0",
+  "description": "MoinPDF uses the worker only for one-shot conversion. Preserve ordinary headless event dispatch and honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
+  "replacements": [
+    {
+      "description": "Do not activate synchronous keyboard/mouse editing events during document import/export.",
+      "before": "c.enableSyncEvents(),console.log(\"[LOK Worker] Enabled synchronous event dispatch (Unipoll mode)\")",
+      "after": "c.disableSyncEvents(),console.log(\"[MoinPDF Office] Headless conversion event dispatch\")"
+    },
+    {
+      "description": "Honor the supplied verbose flag for LibreOffice stdout and stderr; no synthetic document contents are written to the browser console in normal use.",
+      "before": "print:console.log,printErr:console.error",
+      "after": "print:o?console.log:()=>{},printErr:o?console.error:()=>{}"
+    },
+    {
+      "description": "Keep warnings enabled without forcing all LibreOffice diagnostic categories.",
+      "before": "a.ENV.SAL_LOG=\"+ALL\"",
+      "after": "a.ENV.SAL_LOG=\"-INFO\""
+    },
+    {
+      "description": "Keep the diagnostic label consistent with the changed setting.",
+      "before": "[Worker] Set SAL_LOG to +ALL",
+      "after": "[MoinPDF Office] Disabled verbose LibreOffice diagnostics"
+    }
+  ]
+}

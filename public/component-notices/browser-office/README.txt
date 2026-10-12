@@ -12,6 +12,13 @@ The package declares MPL-2.0. MATBEE-SOURCES contains its package declaration,
 build recipe, active patch and original TypeScript extracted from npm maps.
 The full MPL-2.0 text is in LIBREOFFICE-SOURCES/COPYING.MPL.
 
+MOINPDF MODIFICATIONS (2026-10-12)
+MOINPDF-PATCHES.json supplies the exact corresponding changes to the pinned
+browser worker. The conversion-only integration disables interactive sync
+events and respects verbose=false for LibreOffice diagnostics. The build
+checks each replacement and records the patch ID and modified worker hash
+in the runtime manifest. The WASM, data and original sources are unchanged.
+
 LIBREOFFICE AND COMPONENTS
 The embedded versionrc identifies core commit:
 https://github.com/LibreOffice/core/tree/d1c9e0e4e1ddeb24fe8f93e56860b3765043f8b1

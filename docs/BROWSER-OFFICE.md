@@ -15,6 +15,8 @@ Beim ersten Start werden rund 75 MB komprimierte Programmdaten vom selben Urspru
 TGZ-SHA256: `14d670936fe220ee49becbfd40bf233ceabb94981fa9987fccde345449ee2c3a`.
 `scripts/prepare-office-assets.mjs` erzeugt die Laufzeit bei jedem Produktionsbuild aus diesem verifizierten Archiv. Alle 137 eingebetteten Font-Pfade sind inventarisiert. Die Sammlung enthält verschiedene Lizenzen; MPL-2.0 ist keine pauschale Lizenz aller Fonts und Bibliotheken. Der LibreOffice-Lizenzkatalog enthält auch optionale Komponenten, keine genaue Liste aller statisch eingebundenen Bibliotheken.
 
+Der Browser-Worker wird für die reine Konvertierung angepasst: Der Ereignismodus des interaktiven Office-Editors bleibt aus und die ausführliche LibreOffice-Debug-Ausgabe respektiert `verbose=false`. Die exakten Änderungen liegen in `MOINPDF-PATCHES.json` neben den unveränderten Originalquellen. Der Build bricht bei abweichendem Quelltext ab und berechnet die Prüfsumme des angepassten Workers neu. WASM und eingebettete Ressourcen bleiben unverändert.
+
 ## Verifikation
 
 `tests/browser-office-browser.py` konvertiert im echten Produktions-Chromium sechs Office-/ODF-Fixtures und drei reichere DOCX-/XLSX-/PPTX-Dateien. MuPDF prüft Text, Umlaute, Bilder, Tabellen-/Diagrammzeichnungen, den errechneten Betrag 53,30 und beide Präsentationsseiten. Zusätzlich werden Abbruch, Wiederanlauf mit gesperrten Binärdownloads und fehlende Dokument-Uploads geprüft. Der aktuelle GitHub-CI-Lauf entscheidet über die Freigabe.
