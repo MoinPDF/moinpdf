@@ -1,0 +1,533 @@
+/* Shared appearance tokens. PDF canvases and exported content keep their own colors. */
+:root {
+  --ui-heading: #075466;
+  --ui-copy: #587484;
+  --ui-control: rgba(255, 255, 255, 0.8);
+  --ui-control-line: #bce0e1;
+  --ui-glass: rgba(247, 253, 251, 0.95);
+  --ui-shadow: 0 4px 16px #0b657a09;
+}
+:root.dark {
+  color-scheme: dark;
+  --background: #202427;
+  --foreground: #e2eae9;
+  --card: #292e32;
+  --card-foreground: #e2eae9;
+  --popover: #2b3135;
+  --popover-foreground: #e2eae9;
+  --primary: #78cec3;
+  --primary-foreground: #102d2a;
+  --secondary: #343e3b;
+  --secondary-foreground: #dce8da;
+  --muted: #2d3438;
+  --muted-foreground: #a9bbb9;
+  --accent: #354842;
+  --accent-foreground: #c5e9d8;
+  --destructive: #ff9bac;
+  --border: #46534f;
+  --input: #51615d;
+  --ring: #80d8cb;
+  --sidebar: #252a2e;
+  --sidebar-foreground: #e2eae9;
+  --sidebar-primary: #78cec3;
+  --sidebar-primary-foreground: #102d2a;
+  --sidebar-accent: #354842;
+  --sidebar-accent-foreground: #c5e9d8;
+  --sidebar-border: #46534f;
+  --sidebar-ring: #80d8cb;
+  --ui-heading: #c4e9e6;
+  --ui-copy: #afc1c4;
+  --ui-control: #2a3136;
+  --ui-control-line: #52686c;
+  --ui-glass: rgba(32, 36, 39, 0.96);
+  --ui-shadow: 0 5px 20px #0002;
+  --ui-ink: #dce8e6;
+  --ui-muted: #acbfba;
+  --ui-faint: #a2b8b3;
+  --ui-teal: #88d6ca;
+  --ui-green: #b7db8b;
+  --ui-blue: #9ecfdf;
+  --ui-red: #ffa4b3;
+  --ui-amber: #e7ca99;
+  --ui-purple: #d2b9ee;
+  --ui-surface: #292f33;
+  --ui-soft: #2e3739;
+  --ui-well: #242a2e;
+  --ui-teal-soft: #2d4442;
+  --ui-green-soft: #35432f;
+  --ui-blue-soft: #2c404b;
+  --ui-red-soft: #493239;
+  --ui-amber-soft: #453c2e;
+  --ui-purple-soft: #3d354b;
+  --ui-line: #46534f;
+  --ui-line-strong: #647d74;
+  --paper-top: #344245;
+  --paper-middle: #2b4742;
+  --paper-bottom: #3c5038;
+}
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+.moinpdf-shell.moinpdf-shell {
+  --project-bar-height: 76px;
+  background-color: #f9fefd;
+  background-image:
+    radial-gradient(ellipse at 0% 4%, #d8fbf280, transparent 42%),
+    radial-gradient(ellipse at 100% 76%, #d4faf180, transparent 36%),
+    radial-gradient(ellipse at 12% 100%, #e5fcf780, transparent 35%);
+  background-attachment: fixed;
+}
+.dark .moinpdf-shell.moinpdf-shell {
+  background-color: #202427;
+  background-image:
+    radial-gradient(ellipse at 0% 4%, #36635b24, transparent 45%),
+    radial-gradient(ellipse at 100% 78%, #36635720, transparent 40%);
+}
+.app-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: var(--project-bar-height);
+  padding: 14px max(28px, env(safe-area-inset-right)) 10px max(28px, env(safe-area-inset-left));
+  z-index: 30;
+  position: relative;
+}
+.app-toolbar .project-bar {
+  min-height: 0;
+  padding: 0;
+  min-width: 0;
+}
+.app-toolbar .project-toggle {
+  border: 1px solid var(--ui-control-line);
+  border-radius: 12px;
+  min-height: 44px;
+  height: auto;
+  color: var(--ui-copy);
+  background: var(--ui-control);
+  font-size: 12px;
+  box-shadow: var(--ui-shadow);
+}
+.appearance-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+.appearance-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  border: 1px solid var(--ui-control-line);
+  border-radius: 13px;
+  background: var(--ui-control);
+  color: var(--ui-heading);
+  box-shadow: var(--ui-shadow);
+  padding: 10px 13px;
+  font-size: 13px;
+  font-weight: 550;
+}
+.appearance-button:hover,
+.appearance-button[data-state='open'] {
+  background: var(--accent);
+  border-color: var(--ring);
+}
+.appearance-button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 4px;
+}
+.language-flag {
+  width: 23px;
+  height: 16px;
+  flex: 0 0 23px;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px #0000000d;
+}
+.language-menu {
+  min-width: 184px;
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: var(--ui-shadow);
+}
+.language-menu .language-option {
+  min-height: 44px;
+  gap: 12px;
+  border-radius: 9px;
+  font-size: 13px;
+}
+.language-menu .language-flag {
+  width: 23px;
+  height: 16px;
+}
+.theme-toggle {
+  width: 48px;
+  padding: 6px;
+  color: #168c76;
+}
+.lighthouse {
+  width: 29px;
+  height: 33px;
+  overflow: visible;
+}
+.lighthouse-glass {
+  fill: #879c9518;
+}
+.lighthouse-stripe {
+  fill: currentColor;
+  opacity: 0.28;
+}
+.lighthouse-beams {
+  opacity: 0;
+  transform-origin: 20px 13px;
+  transition:
+    opacity 0.25s,
+    transform 0.25s;
+  transform: scaleX(0.8);
+}
+.lighthouse.is-lit .lighthouse-glass {
+  fill: #c2ef80;
+}
+.lighthouse.is-lit .lighthouse-beams {
+  opacity: 0.8;
+  transform: scaleX(1);
+}
+.dark .theme-toggle {
+  color: #8caaa8;
+}
+.dark .lighthouse-glass {
+  fill: #202729;
+}
+.dark .lighthouse-stripe {
+  opacity: 0.2;
+}
+.moinpdf-shell .upload-entry.upload-entry-branded {
+  gap: 34px;
+  padding: 28px 24px 48px;
+}
+.upload-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(390px, 100%);
+  margin-bottom: 26px;
+}
+.upload-brand .upload-entry-logo {
+  width: 100%;
+  height: auto;
+}
+.upload-brand .logo-dark {
+  display: none;
+}
+.dark .upload-brand .logo-light {
+  display: none;
+}
+.dark .upload-brand .logo-dark {
+  display: block;
+}
+.upload-tagline {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--ui-copy);
+  margin-top: -2px;
+}
+.moinpdf-shell .upload-title {
+  color: var(--ui-heading);
+  font-family: inherit;
+  font-weight: 500;
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+  letter-spacing: -0.7px;
+}
+.moinpdf-shell .upload-description {
+  color: var(--ui-copy);
+  white-space: normal;
+}
+.moinpdf-shell .upload-alternatives button {
+  color: var(--ui-copy);
+  min-height: 44px;
+  font-size: 12px;
+}
+.moinpdf-shell .upload-alternatives button:hover {
+  color: var(--ui-heading);
+}
+.dark .upload-document-icon > path:nth-of-type(2) {
+  fill: #344740;
+  stroke: #74c5b5;
+}
+.dark .upload-document-badge {
+  border-color: #2a3535;
+}
+.moinpdf-shell .moinpdf-legal-footer {
+  color: var(--ui-copy);
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.moinpdf-shell .moinpdf-version {
+  color: var(--ui-copy);
+}
+.moinpdf-shell .chooser-content {
+  max-width: 1040px;
+  margin-top: 20px;
+}
+.chooser-search-dock {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 18px 0;
+  background: var(--ui-glass);
+  backdrop-filter: blur(16px);
+  border-radius: 0 0 20px 20px;
+}
+.moinpdf-shell .chooser-content h1 {
+  font-family: inherit;
+  color: var(--ui-heading);
+  font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+  font-weight: 550;
+  letter-spacing: -0.7px;
+  margin-bottom: 22px;
+}
+.moinpdf-shell .intent-search [data-slot='command-input-wrapper'] {
+  background: var(--ui-control);
+  border: 1px solid var(--ui-control-line);
+  box-shadow: var(--ui-shadow);
+  border-radius: 17px;
+}
+.moinpdf-shell .intent-search input {
+  color: var(--ui-heading);
+}
+.moinpdf-shell .chooser-categories {
+  gap: 7px;
+}
+.moinpdf-shell .chooser-category {
+  color: var(--ui-copy);
+  border-color: var(--border);
+  background: var(--ui-control);
+}
+.moinpdf-shell .chooser-category[aria-pressed='true'] {
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.moinpdf-shell .chooser-category:not([aria-pressed='true']):hover {
+  background: var(--accent);
+}
+.moinpdf-shell .chooser-tool-grid {
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.moinpdf-shell .chooser-tool {
+  border: 1px solid var(--border);
+  background: var(--ui-control);
+  border-radius: 17px;
+  padding: 22px 12px 20px;
+  gap: 14px;
+  box-shadow: 0 2px 6px #163c3103;
+}
+.moinpdf-shell .chooser-tool:hover:not(:disabled) {
+  border-color: var(--ui-control-line);
+  transform: translateY(-3px);
+  box-shadow: var(--ui-shadow);
+}
+.moinpdf-shell .chooser-tool > span {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 13px;
+}
+.moinpdf-shell .chooser-tool:hover > span {
+  transform: none;
+  box-shadow: none;
+}
+.moinpdf-shell .chooser-tool strong {
+  font-size: 12px;
+  color: var(--ui-heading);
+  font-weight: 550;
+  max-width: 190px;
+}
+.moinpdf-shell .chooser-tool svg {
+  width: 23px;
+  height: 23px;
+  stroke-width: 1.5;
+}
+.moinpdf-shell .chooser-tool.tone-4 > span,
+.intent-result-icon.tone-4 {
+  background: var(--ui-purple-soft, #f1edf7);
+  color: var(--ui-purple, #88749a);
+}
+.moinpdf-shell .chooser-section-heading h3 {
+  color: var(--ui-copy);
+  font-size: 13px;
+  font-weight: 550;
+}
+.chooser-file,
+.result-banner,
+.advanced-result {
+  animation: calmEnter 0.3s ease-out;
+}
+.result-check {
+  animation: resultReady 0.42s ease-out;
+}
+@keyframes calmEnter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes resultReady {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (min-width: 1400px) {
+  .moinpdf-shell .upload-entry.upload-entry-branded {
+    gap: 44px;
+  }
+}
+@media (max-width: 700px) {
+  .moinpdf-shell.moinpdf-shell {
+    --project-bar-height: 68px;
+  }
+  .app-toolbar {
+    gap: 8px;
+    padding: 10px max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
+  }
+  .appearance-controls {
+    gap: 7px;
+  }
+  .appearance-button {
+    min-height: 44px;
+    border-radius: 12px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .theme-toggle {
+    width: 44px;
+    padding: 5px;
+  }
+  .app-toolbar .project-toggle {
+    font-size: 11px;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .moinpdf-shell .upload-entry.upload-entry-branded {
+    padding: 22px 20px 28px;
+    gap: 20px;
+  }
+  .upload-brand {
+    width: min(315px, 100%);
+    margin-bottom: 14px;
+  }
+  .upload-tagline {
+    font-size: 12px;
+  }
+  .moinpdf-shell .chooser-tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .moinpdf-shell .chooser-tool {
+    padding: 17px 8px;
+    border-radius: 14px;
+  }
+  .chooser-search-dock {
+    padding: 12px 0 14px;
+  }
+  .moinpdf-shell .chooser-content h1 {
+    margin-bottom: 17px;
+  }
+}
+@media (max-width: 430px) {
+  .moinpdf-shell .chooser-tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .moinpdf-shell .chooser-content {
+    padding-inline: 16px;
+  }
+  .app-toolbar .project-toggle {
+    max-width: 140px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+}
+@media (max-height: 740px) {
+  .moinpdf-shell .upload-entry.upload-entry-branded {
+    gap: 8px;
+    padding-top: 6px;
+    padding-bottom: 12px;
+  }
+  .upload-brand {
+    width: min(300px, 85%);
+    margin-bottom: 4px;
+  }
+  .moinpdf-shell .upload-document-stage {
+    width: 216px;
+    height: 224px;
+  }
+  .moinpdf-shell .upload-document-float {
+    height: 216px;
+  }
+  .moinpdf-shell .upload-field {
+    padding-top: 10px;
+    padding-bottom: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .lighthouse *,
+  .chooser-file,
+  .result-banner,
+  .advanced-result,
+  .result-check {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Keep desktop navigation below the shared toolbar. */
+.moinpdf-shell .app-toolbar {
+  position: sticky;
+  top: 0;
+  background: var(--ui-glass);
+  backdrop-filter: blur(16px);
+}
+.moinpdf-shell [data-slot='sidebar-container'] {
+  top: var(--project-bar-height);
+  height: calc(100dvh - var(--project-bar-height));
+}
+.moinpdf-shell .chooser-search-dock {
+  top: var(--project-bar-height);
+}
+.dark .moinpdf-shell .chooser-tool.tone-0 > span {
+  background: var(--ui-green-soft);
+  color: var(--ui-green);
+}
+.dark .moinpdf-shell .chooser-tool.tone-1 > span {
+  background: var(--ui-teal-soft);
+  color: var(--ui-teal);
+}
+.dark .moinpdf-shell .chooser-tool.tone-2 > span {
+  background: var(--ui-blue-soft);
+  color: var(--ui-blue);
+}
+.dark .moinpdf-shell .chooser-tool.tone-3 > span {
+  background: var(--ui-green-soft);
+  color: var(--ui-green);
+}
+@media (min-width: 1031px) {
+  .moinpdf-shell .studio-main {
+    height: calc(100dvh - var(--project-bar-height));
+  }
+}

@@ -1,4 +1,6 @@
 'use client';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
 import { FolderOpen } from 'lucide-react';
@@ -41,6 +43,7 @@ export function ProjectManager({
   identity: { id?: string; name: string };
   setIdentity: Dispatch<SetStateAction<{ id?: string; name: string }>>;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false),
     [working, setWorking] = useState(false),
     [projects, setProjects] = useState<ProjectMeta[]>([]),
@@ -143,7 +146,7 @@ export function ProjectManager({
             }}
           >
             <FolderOpen size={16} />
-            Projekte
+            {t('Projekte')}
           </Button>,
           toolbar,
         )}
@@ -155,15 +158,15 @@ export function ProjectManager({
       >
         <DialogContent className="project-dialog">
           <DialogHeader>
-            <DialogTitle>Lokale PDF-Projekte</DialogTitle>
+            <DialogTitle>{t('Lokale PDF-Projekte')}</DialogTitle>
             <DialogDescription>
-              Dateien, Seitenanordnung, Editoränderungen, Formulare, Lesezeichen und
-              Rückgängig-Verlauf später fortsetzen. Gespeichert werden die letzten fünf von dir
-              angelegten Arbeitsstände.
+              {t(
+                'Dateien, Seitenanordnung, Editoränderungen, Formulare, Lesezeichen und Rückgängig-Verlauf später fortsetzen. Gespeichert werden die letzten fünf von dir angelegten Arbeitsstände.',
+              )}
             </DialogDescription>
           </DialogHeader>
           <label className="advanced-field">
-            <span>Projektname</span>
+            <span>{t('Projektname')}</span>
             <input
               value={name}
               maxLength={100}
@@ -179,11 +182,11 @@ export function ProjectManager({
                   const projectId = await saveProject(name, current, sources, state);
                   setCurrent(projectId);
                   await refresh();
-                  setNotice('Arbeitsstand gespeichert.');
+                  setNotice(t('Arbeitsstand gespeichert.'));
                 })
               }
             >
-              {current ? 'Neuen Arbeitsstand speichern' : 'Projekt speichern'}
+              {current ? t('Neuen Arbeitsstand speichern') : t('Projekt speichern')}
             </Button>
             <Button
               variant="outline"
@@ -193,7 +196,7 @@ export function ProjectManager({
                 setName('Neues PDF-Projekt');
               }}
             >
-              Als neues Projekt
+              {t('Als neues Projekt')}
             </Button>
           </div>
           <div className="project-actions">
@@ -202,14 +205,14 @@ export function ProjectManager({
               disabled={working || locked || !sources.length}
               onClick={() => job(() => download(name, sources, state))}
             >
-              Projektdatei herunterladen
+              {t('Projektdatei herunterladen')}
             </Button>
             <Button
               variant="outline"
               disabled={working || locked}
               onClick={() => importInput.current?.click()}
             >
-              Projektdatei öffnen
+              {t('Projektdatei öffnen')}
             </Button>
             <input
               ref={importInput}
@@ -252,9 +255,9 @@ export function ProjectManager({
             übernehmen“ zum Projekt.
           </p>
           {notice && <p role="status">{notice}</p>}
-          {working && <p role="status">Arbeitsstand wird verarbeitet …</p>}
+          {working && <p role="status">{t('Arbeitsstand wird verarbeitet …')}</p>}
           <div className="project-list">
-            {!projects.length && !working && <p>Noch keine gespeicherten Projekte.</p>}
+            {!projects.length && !working && <p>{t('Noch keine gespeicherten Projekte.')}</p>}
             {projects.map((p) => (
               <section key={p.id}>
                 <h3>
@@ -278,12 +281,13 @@ export function ProjectManager({
                     })
                   }
                 >
-                  Gesamtes Projektarchiv herunterladen
+                  {t('Gesamtes Projektarchiv herunterladen')}
                 </Button>
                 {p.versions.map((v, i) => (
                   <div className="project-version" key={v.id}>
                     <span>
-                      {new Date(v.created).toLocaleString('de-DE')} · {v.pages} Seiten
+                      {new Date(v.created).toLocaleString('de-DE')} · {v.pages}
+                      {t('Seiten')}
                       {i === 0 ? ' · neuester Stand' : ''}
                     </span>
                     <Button
@@ -297,7 +301,7 @@ export function ProjectManager({
                         })
                       }
                     >
-                      Öffnen
+                      {t('Öffnen')}
                     </Button>
                     <Button
                       size="sm"
@@ -311,7 +315,7 @@ export function ProjectManager({
                         })
                       }
                     >
-                      Herunterladen
+                      {t('Herunterladen')}
                     </Button>
                   </div>
                 ))}
@@ -321,11 +325,15 @@ export function ProjectManager({
                   disabled={working}
                   onClick={() => setDeleteId(deleteId === p.id ? '' : p.id)}
                 >
-                  Projekt löschen
+                  {t('Projekt löschen')}
                 </Button>
                 {deleteId === p.id && (
                   <div className="project-actions">
-                    <span>Alle gespeicherten Stände von „{p.name}“ löschen?</span>
+                    <span>
+                      {t('Alle gespeicherten Stände von „')}
+                      {p.name}
+                      {t('“ löschen?')}
+                    </span>
                     <Button
                       size="sm"
                       variant="destructive"
@@ -339,10 +347,10 @@ export function ProjectManager({
                         })
                       }
                     >
-                      Endgültig löschen
+                      {t('Endgültig löschen')}
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setDeleteId('')}>
-                      Abbrechen
+                      {t('Abbrechen')}
                     </Button>
                   </div>
                 )}

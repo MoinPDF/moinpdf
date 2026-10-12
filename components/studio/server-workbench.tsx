@@ -1,4 +1,6 @@
 'use client';
+import { useLanguage, useTools } from '@/components/studio/appearance';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ChevronLeft,
@@ -10,7 +12,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { tools, type WorkspaceTool } from '@/lib/tool-catalog';
+import { type WorkspaceTool } from '@/lib/tool-catalog';
 import { openSource, formatSize, MAX_BYTES, type Source, type JobResult } from '@/lib/pdf-engine';
 import type { ServerTool, ExportFile } from '@/lib/advanced-types';
 import {
@@ -61,6 +63,8 @@ function StandardServerWorkbench({
   onUse,
   onChoose,
 }: Props) {
+  const { t } = useLanguage();
+  const { tools } = useTools();
   const localWord = !integratedDocumentServer && tool === 'pdf-word';
   const localOptimize = !integratedDocumentServer && tool === 'optimize-pdf',
     localMode = localWord || localOptimize;
@@ -403,7 +407,7 @@ function StandardServerWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" disabled={busy} onClick={onBack}>
           <ChevronLeft size={17} />
-          Alle Werkzeuge
+          {t('Alle Werkzeuge')}
         </Button>
       </header>
       <div className="workbench-title">
@@ -427,7 +431,8 @@ function StandardServerWorkbench({
           <span>2</span>Verarbeiten
         </li>
         <li className={result ? 'is-complete' : ''}>
-          <span>3</span>Herunterladen
+          <span>3</span>
+          {t('Herunterladen')}
         </li>
       </ol>
       <section className="advanced-card conversion-card" aria-label={info.title}>
@@ -469,7 +474,7 @@ function StandardServerWorkbench({
                 <strong>{source.name}</strong>
                 <span>
                   {formatSize(source.size)} · {source.pdf.numPages}{' '}
-                  {source.pdf.numPages === 1 ? 'Seite' : 'Seiten'}
+                  {source.pdf.numPages === 1 ? t('Seite') : t('Seiten')}
                 </span>
               </div>
               <Button variant="ghost" onClick={onAdd}>
@@ -768,7 +773,7 @@ function StandardServerWorkbench({
           <LoaderCircle className="spin" size={18} />
           <span>Deine Datei wird verarbeitet …</span>
           <Button variant="ghost" onClick={() => controller.current?.abort()}>
-            Abbrechen
+            {t('Abbrechen')}
           </Button>
         </div>
       )}
@@ -782,7 +787,7 @@ function StandardServerWorkbench({
           <div>
             <h2>
               <Check size={22} />
-              Fertig.
+              {t('Fertig.')}
             </h2>
             <p>
               {result.filename} · {formatSize(result.blob.size)}
@@ -794,10 +799,10 @@ function StandardServerWorkbench({
                 {result.filename.toLowerCase().endsWith('.docx')
                   ? 'Word herunterladen'
                   : result.kind === 'pdf'
-                    ? 'PDF herunterladen'
+                    ? t('PDF herunterladen')
                     : result.kind === 'zip'
-                      ? 'ZIP herunterladen'
-                      : 'Ergebnis herunterladen'}
+                      ? t('ZIP herunterladen')
+                      : t('Ergebnis herunterladen')}
               </a>
             </Button>
             {result.kind === 'pdf' && (
@@ -809,7 +814,7 @@ function StandardServerWorkbench({
                   )
                 }
               >
-                Ergebnis weiterbearbeiten
+                {t('Ergebnis weiterbearbeiten')}
               </Button>
             )}
             {report && <StructuredReport raw={report} />}

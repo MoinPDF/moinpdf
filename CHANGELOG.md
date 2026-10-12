@@ -9,6 +9,23 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.10.0 – 2026-10-12
+
+- Startseite nach dem freigegebenen Konzept mit Mintverlauf, ruhiger Wortmarke,
+  schwebendem Dokument und kompakten Bedienelementen gestaltet.
+- Dunkelgrauer Darkmode mit gespeichertem Leuchtturm-Schalter: im hellen Modus
+  leuchtet der Turm, im dunklen Modus ist er ausgeschaltet. PDF-Inhalte behalten
+  ihre eigenen Farben. Auch Dokumentation, Medienbereich und Rechtstexte folgen
+  der gewählten Darstellung.
+- Sprachmenü mit Flaggen für Deutsch und Englisch. Startseite, Slogan,
+  Werkzeugkatalog und zentrale Navigation sind übersetzt; detaillierte
+  Spezialwerkzeugtexte und Dokumentationsinhalte bleiben vorerst deutsch.
+- Alle 112 Werkzeugtitel, Beschreibungen und Aktionen im Katalog auf Englisch
+  verfügbar; Suche unterstützt deutsche und englische Werkzeugbegriffe.
+- Ruhigere Werkzeugkarten, dezente Kategorieakzente, feststehende Suchleiste,
+  mobile Abstände und zurückhaltende Ergebnisanimationen. Reduzierte Bewegung
+  wird berücksichtigt. Darstellungswechsel erhalten geöffnete Dokumente.
+
 ## 0.9.3 – 2026-10-11
 
 - Beim Schließen einer Datei werden ihre Textnotizen, Bilder und Beschnittdaten

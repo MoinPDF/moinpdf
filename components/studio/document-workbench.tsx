@@ -1,4 +1,6 @@
 'use client';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   Bookmark,
@@ -75,6 +77,7 @@ export function DocumentWorkbench({
   pending,
   onBusy,
 }: Props) {
+  const { t } = useLanguage();
   const [sourceId, setSourceId] = useState(sources[0].id),
     [page, setPage] = useState(0),
     [selectedId, setSelectedId] = useState(''),
@@ -423,7 +426,7 @@ export function DocumentWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={locked}>
           <ChevronLeft size={17} />
-          Alle Werkzeuge
+          {t('Alle Werkzeuge')}
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
@@ -486,14 +489,16 @@ export function DocumentWorkbench({
           <div className="workbench-filebar">
             <div className="workbench-source">
               {select(
-                'Dokument',
+                t('Dokument'),
                 source.id,
                 sources.map((s) => [s.id, s.name]),
                 (id) => setSourceId(id),
               )}
             </div>
             <span>
-              {source.pdf.numPages} Seiten · {formatSize(source.size)}
+              {source.pdf.numPages}
+              {t('Seiten ·')}
+              {formatSize(source.size)}
             </span>
           </div>
           <div className="workbench-pagebar">
@@ -507,7 +512,7 @@ export function DocumentWorkbench({
               <ChevronLeft size={18} />
             </Button>
             {select(
-              'Seite',
+              t('Seite'),
               String(page),
               Array.from({ length: source.pdf.numPages }, (_, i) => [
                 String(i),
@@ -531,7 +536,7 @@ export function DocumentWorkbench({
                 variant={!showResult ? 'secondary' : 'ghost'}
                 onClick={() => setShowResult(false)}
               >
-                Bearbeiten
+                {t('Bearbeiten')}
               </Button>
               <Button
                 size="sm"
@@ -539,7 +544,7 @@ export function DocumentWorkbench({
                 disabled={!output}
                 onClick={() => setShowResult(true)}
               >
-                Ergebnis
+                {t('Ergebnis')}
               </Button>
             </div>
           </div>
@@ -579,7 +584,7 @@ export function DocumentWorkbench({
                   : design
                     ? 'Feldtyp wählen und aufziehen. Neue Felder kannst du ziehen und skalieren.'
                     : 'Ein Feld auf der Seite oder in der Liste auswählen und ausfüllen.'}
-            {creating && <button onClick={() => setCreating(null)}>Abbrechen</button>}
+            {creating && <button onClick={() => setCreating(null)}>{t('Abbrechen')}</button>}
           </div>
           <div className="workbench-canvas">
             {showResult && output ? (
@@ -590,7 +595,7 @@ export function DocumentWorkbench({
                   <Button asChild>
                     <a href={outputUrl || undefined} download={output.filename}>
                       <Download size={16} />
-                      PDF herunterladen
+                      {t('PDF herunterladen')}
                     </a>
                   </Button>
                 </div>
@@ -1160,7 +1165,7 @@ export function DocumentWorkbench({
             </Button>
             {busy && (
               <Button variant="ghost" onClick={() => controller.current?.abort()}>
-                Abbrechen
+                {t('Abbrechen')}
               </Button>
             )}
             <p className="fine-note">
@@ -1186,7 +1191,7 @@ export function DocumentWorkbench({
                 }}
               >
                 <FileText size={16} />
-                Ergebnis weiterbearbeiten
+                {t('Ergebnis weiterbearbeiten')}
               </Button>
             )}
           </div>

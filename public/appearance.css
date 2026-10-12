@@ -1,0 +1,72 @@
+/* Shared appearance tokens. PDF canvases and exported content keep their own colors. */
+:root {
+  --ui-heading: #075466;
+  --ui-copy: #587484;
+  --ui-control: rgba(255, 255, 255, .8);
+  --ui-control-line: #bce0e1;
+  --ui-glass: rgba(247, 253, 251, .95);
+  --ui-shadow: 0 4px 16px #0b657a09;
+}
+:root.dark {
+  color-scheme: dark;
+  --background: #202427;
+  --foreground: #e2eae9;
+  --card: #292e32;
+  --card-foreground: #e2eae9;
+  --popover: #2b3135;
+  --popover-foreground: #e2eae9;
+  --primary: #78cec3;
+  --primary-foreground: #102d2a;
+  --secondary: #343e3b;
+  --secondary-foreground: #dce8da;
+  --muted: #2d3438;
+  --muted-foreground: #a9bbb9;
+  --accent: #354842;
+  --accent-foreground: #c5e9d8;
+  --destructive: #ff9bac;
+  --border: #46534f;
+  --input: #51615d;
+  --ring: #80d8cb;
+  --sidebar: #252a2e;
+  --sidebar-foreground: #e2eae9;
+  --sidebar-primary: #78cec3;
+  --sidebar-primary-foreground: #102d2a;
+  --sidebar-accent: #354842;
+  --sidebar-accent-foreground: #c5e9d8;
+  --sidebar-border: #46534f;
+  --sidebar-ring: #80d8cb;
+  --ui-heading: #c4e9e6;
+  --ui-copy: #afc1c4;
+  --ui-control: #2a3136;
+  --ui-control-line: #52686c;
+  --ui-glass: rgba(32, 36, 39, .96);
+  --ui-shadow: 0 5px 20px #0002;
+  --ui-ink: #dce8e6;
+  --ui-muted: #acbfba;
+  --ui-faint: #a2b8b3;
+  --ui-teal: #88d6ca;
+  --ui-green: #b7db8b;
+  --ui-blue: #9ecfdf;
+  --ui-red: #ffa4b3;
+  --ui-amber: #e7ca99;
+  --ui-purple: #d2b9ee;
+  --ui-surface: #292f33;
+  --ui-soft: #2e3739;
+  --ui-well: #242a2e;
+  --ui-teal-soft: #2d4442;
+  --ui-green-soft: #35432f;
+  --ui-blue-soft: #2c404b;
+  --ui-red-soft: #493239;
+  --ui-amber-soft: #453c2e;
+  --ui-purple-soft: #3d354b;
+  --ui-line: #46534f;
+  --ui-line-strong: #647d74;
+  --paper-top: #344245;
+  --paper-middle: #2b4742;
+  --paper-bottom: #3c5038;
+}
+
+.dark body { background: #202427; color: #dce8e6; }
+.dark .docs-shell, .dark .legal-shell { background: transparent; }
+.dark .docs-header, .dark .docs-sidebar { background: #252c30; }
+.dark .docs-logo, .dark .legal-logo { filter: brightness(1.45); }

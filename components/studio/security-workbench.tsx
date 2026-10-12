@@ -1,4 +1,6 @@
 'use client';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState } from 'react';
 import {
   ChevronLeft,
@@ -42,6 +44,7 @@ export function SecurityWorkbench({
   onUse,
   pending,
 }: Props) {
+  const { t } = useLanguage();
   const [sourceId, setSourceId] = useState(
       sources.find((s) => tool === 'unlock' && s.wasEncrypted)?.id || sources[0].id,
     ),
@@ -177,7 +180,7 @@ export function SecurityWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
-          Alle Werkzeuge
+          {t('Alle Werkzeuge')}
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
@@ -219,7 +222,7 @@ export function SecurityWorkbench({
         <section className="security-preview">
           <div className="security-source">
             {select(
-              'Dokument',
+              t('Dokument'),
               source.id,
               sources.map((s) => [s.id, s.name]),
               setSourceId,
@@ -242,7 +245,7 @@ export function SecurityWorkbench({
           </div>
           <div className="security-file-stats">
             <span>
-              {source.pdf.numPages} {source.pdf.numPages === 1 ? 'Seite' : 'Seiten'}
+              {source.pdf.numPages} {source.pdf.numPages === 1 ? t('Seite') : t('Seiten')}
             </span>
             <span>{formatSize(source.size)}</span>
             <span>{source.wasEncrypted ? 'Lokal entsperrt' : 'Geöffnete PDF'}</span>
@@ -354,7 +357,7 @@ export function SecurityWorkbench({
               <Button asChild>
                 <a href={url} download={result.filename}>
                   <Download size={17} />
-                  PDF herunterladen
+                  {t('PDF herunterladen')}
                 </a>
               </Button>
               {!protect && (
@@ -372,7 +375,7 @@ export function SecurityWorkbench({
                     }
                   }}
                 >
-                  Ergebnis weiterbearbeiten
+                  {t('Ergebnis weiterbearbeiten')}
                 </Button>
               )}
             </div>
@@ -398,7 +401,7 @@ export function SecurityWorkbench({
           )}
           {busy && (
             <Button variant="ghost" onClick={() => controller.current?.abort()}>
-              Abbrechen
+              {t('Abbrechen')}
             </Button>
           )}
           <p className="security-footer-note">

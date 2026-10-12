@@ -24,8 +24,8 @@
 .evidence-crop {
   overflow: auto;
   padding: 12px;
-  background: #edf3ee;
-  border: 1px solid #d8e4dc;
+  background: var(--ui-surface, #edf3ee);
+  border: 1px solid var(--ui-line, #d8e4dc);
   border-radius: 12px;
   max-height: 260px;
 }
@@ -37,16 +37,16 @@
   max-width: 100%;
   object-fit: contain;
   margin: auto;
-  background: #fff;
+  background: var(--ui-surface, #fff);
 }
 .evidence-finding {
-  border: 1px solid #dce7df;
+  border: 1px solid var(--ui-line, #dce7df);
   border-radius: 14px;
   padding: 16px;
   display: grid;
   gap: 12px;
   min-width: 0;
-  background: #fff;
+  background: var(--ui-surface, #fff);
   overflow-wrap: anywhere;
 }
 .evidence-finding h3 {
@@ -63,17 +63,17 @@
   font-size: 11px;
   font-weight: 650;
   letter-spacing: 0.03em;
-  color: #577365;
+  color: var(--ui-muted, #577365);
 }
 .evidence-changed {
-  border-left: 4px solid #d59a4a;
+  border-left: 4px solid var(--ui-amber, #d59a4a);
 }
 .evidence-missing,
 .evidence-review {
-  border-left: 4px solid #8ea9a8;
+  border-left: 4px solid var(--ui-line, #8ea9a8);
 }
 .evidence-match {
-  border-left: 4px solid #65ae8c;
+  border-left: 4px solid var(--ui-line-strong, #65ae8c);
 }
 .evidence-values {
   display: grid;
@@ -83,12 +83,12 @@
 }
 .evidence-values > div {
   min-width: 0;
-  background: #f4f7f3;
+  background: var(--ui-surface, #f4f7f3);
   border-radius: 9px;
   padding: 12px;
 }
 .evidence-values dt {
-  color: #657b70;
+  color: var(--ui-muted, #657b70);
   font-size: 11px;
   margin-bottom: 5px;
 }
@@ -111,7 +111,7 @@
   display: grid;
   gap: 12px;
   padding: 15px 0;
-  border-bottom: 1px solid #dde8df;
+  border-bottom: 1px solid var(--ui-line, #dde8df);
 }
 .evidence-position-group > h3 {
   font-size: 15px;
@@ -126,8 +126,8 @@
 .evidence-controls blockquote {
   margin: 0;
   padding: 12px;
-  background: #f4f7f3;
-  border-left: 3px solid #9cb7a6;
+  background: var(--ui-surface, #f4f7f3);
+  border-left: 3px solid var(--ui-line, #9cb7a6);
   font-size: 13px;
 }
 .evidence-controls .advanced-actions {

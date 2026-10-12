@@ -58,6 +58,15 @@ import {
 } from 'lucide-react';
 import { CalendarDays, Calculator, ShieldCheck, Ruler, Headphones } from 'lucide-react';
 export type WorkspaceTool = StudioTool | 'inspect';
+export type ToolDefinition = {
+  id: WorkspaceTool;
+  title: string;
+  description: string;
+  icon: typeof FileSearch;
+  group: number;
+  action: string;
+  fresh?: boolean;
+};
 export const groups = [
   'Prüfen & finden',
   'Erkennen & konvertieren',

@@ -1,4 +1,7 @@
 'use client';
+import { useLanguage } from '@/components/studio/appearance';
+import { AppearanceProvider, AppearanceControls, useTools } from '@/components/studio/appearance';
+
 import { ProjectManager } from '@/components/studio/project-manager';
 import { retainPageEdits } from '@/lib/local-projects';
 import { ocrLayouts } from '@/lib/ocr-languages';
@@ -132,8 +135,8 @@ import { editorTools, fitRect, type EditorAction } from '@/lib/editor-model';
 import { ExtraSettings } from '@/components/studio/extra-settings';
 import { ReportView } from '@/components/studio/report-view';
 import { extraDefaults, isExtraTool, sourceOnlyTools } from '@/lib/extra-options';
-import { tools, groups, type WorkspaceTool } from '@/lib/tool-catalog';
-import { suggestTools } from '@/lib/tool-search';
+import { type WorkspaceTool } from '@/lib/tool-catalog';
+import { searchTools } from '@/lib/localized-search';
 import { DocumentCheck } from '@/components/studio/document-check';
 import { useDocumentIndex } from '@/components/studio/use-document-index';
 import {
@@ -189,8 +192,19 @@ const defaults: StudioOptions = {
 type Snapshot = { pages: PageItem[]; edits: Edits };
 export default function Home() {
   return (
+    <AppearanceProvider>
+      <WorkspaceShell />
+    </AppearanceProvider>
+  );
+}
+function WorkspaceShell() {
+  const { t } = useLanguage();
+  return (
     <div className="moinpdf-shell">
-      <div id="moinpdf-project-bar" className="project-bar" />
+      <header className="app-toolbar">
+        <div id="moinpdf-project-bar" className="project-bar" />
+        <AppearanceControls />
+      </header>
       <SidebarProvider
         className="studio-provider"
         style={{ '--sidebar-width': '252px' } as CSSProperties}
@@ -199,7 +213,7 @@ export default function Home() {
           fallback={
             <div className="tool-loading" role="status">
               <LoaderCircle className="spin" size={24} />
-              <p>Werkzeug wird geladen …</p>
+              <p>{t('Werkzeug wird geladen …')}</p>
             </div>
           }
         >
@@ -211,6 +225,8 @@ export default function Home() {
   );
 }
 function Studio() {
+  const { t } = useLanguage();
+  const { tools, groups } = useTools();
   const { setOpenMobile } = useSidebar();
   const [projectIdentity, setProjectIdentity] = useState<{ id?: string; name: string }>({
     name: 'Mein PDF-Projekt',
@@ -424,106 +440,118 @@ function Studio() {
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
   }, []);
-  const addFiles = useCallback(async (files: File[], showToolChoice = true) => {
-    if (!files.length || refs.current.busy || uploadLock.current) return;
-    const conversionFile = files.find((file) => conversionToolForFile(file.name));
-    if (conversionFile) {
-      if (files.length !== 1) {
-        toast.error(
-          'Bitte Office-Dateien, E-Mails, E-Books und Webseiten einzeln umwandeln. PDFs und Bilder kannst du weiterhin gemeinsam öffnen.',
-        );
+  const addFiles = useCallback(
+    async (files: File[], showToolChoice = true) => {
+      if (!files.length || refs.current.busy || uploadLock.current) return;
+      const conversionFile = files.find((file) => conversionToolForFile(file.name));
+      if (conversionFile) {
+        if (files.length !== 1) {
+          toast.error(
+            'Bitte Office-Dateien, E-Mails, E-Books und Webseiten einzeln umwandeln. PDFs und Bilder kannst du weiterhin gemeinsam öffnen.',
+          );
+          return;
+        }
+        if (conversionFile.size > MAX_BYTES) {
+          toast.error('Bitte eine Datei mit höchstens 80 MB auswählen.');
+          return;
+        }
+        const nextTool = conversionToolForFile(conversionFile.name)!;
+        setConversionInput({ tool: nextTool, file: conversionFile });
+        setToolId(nextTool);
+        setChoosingTool(false);
+        setBrowseEmpty(true);
+        setDragOver(false);
+        setError('');
         return;
       }
-      if (conversionFile.size > MAX_BYTES) {
-        toast.error('Bitte eine Datei mit höchstens 80 MB auswählen.');
-        return;
-      }
-      const nextTool = conversionToolForFile(conversionFile.name)!;
-      setConversionInput({ tool: nextTool, file: conversionFile });
-      setToolId(nextTool);
-      setChoosingTool(false);
-      setBrowseEmpty(true);
+      uploadLock.current = true;
+      setLoading(true);
       setDragOver(false);
       setError('');
-      return;
-    }
-    uploadLock.current = true;
-    setLoading(true);
-    setDragOver(false);
-    setError('');
-    const initial = !refs.current.sources.length,
-      started = performance.now();
-    setImportState({ phase: 'reading', name: files[0].name, completed: 0, total: files.length });
-    const added: Source[] = [];
-    let size = refs.current.sources.reduce((n, s) => n + s.size, 0),
-      count = refs.current.pages.length;
-    try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setImportState({ phase: 'reading', name: file.name, completed: i, total: files.length });
-        try {
-          if (size + file.size > MAX_BYTES)
-            throw new Error('Maximal 80 MB insgesamt. Entferne zuerst andere Dateien.');
-          const source = await openSource(file, {
-            requestPassword: (name, failed) =>
-              new Promise((resolve) => setPasswordRequest({ name, failed, resolve })),
-          });
-          if (count + source.pdf.numPages > MAX_PAGES) {
-            await source.pdf.loadingTask.destroy();
-            throw new Error('Maximal 200 Seiten insgesamt.');
-          }
-          added.push(source);
-          size += file.size;
-          count += source.pdf.numPages;
-        } catch (err) {
-          if ((err as Error).name !== 'AbortError')
-            toast.error(file.name, {
-              description: (err as Error).message,
-              duration: 8000,
-              ...(/\.pdf$/i.test(file.name)
-                ? {
-                    action: {
-                      label: 'PDF reparieren',
-                      onClick: () => {
-                        setRepairInput(file);
-                        setToolId('pdf-repair');
-                        setChoosingTool(false);
-                        setBrowseEmpty(true);
-                      },
-                    },
-                  }
-                : {}),
+      const initial = !refs.current.sources.length,
+        started = performance.now();
+      setImportState({ phase: 'reading', name: files[0].name, completed: 0, total: files.length });
+      const added: Source[] = [];
+      let size = refs.current.sources.reduce((n, s) => n + s.size, 0),
+        count = refs.current.pages.length;
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          setImportState({ phase: 'reading', name: file.name, completed: i, total: files.length });
+          try {
+            if (size + file.size > MAX_BYTES)
+              throw new Error('Maximal 80 MB insgesamt. Entferne zuerst andere Dateien.');
+            const source = await openSource(file, {
+              requestPassword: (name, failed) =>
+                new Promise((resolve) => setPasswordRequest({ name, failed, resolve })),
             });
+            if (count + source.pdf.numPages > MAX_PAGES) {
+              await source.pdf.loadingTask.destroy();
+              throw new Error('Maximal 200 Seiten insgesamt.');
+            }
+            added.push(source);
+            size += file.size;
+            count += source.pdf.numPages;
+          } catch (err) {
+            if ((err as Error).name !== 'AbortError')
+              toast.error(file.name, {
+                description: (err as Error).message,
+                duration: 8000,
+                ...(/\.pdf$/i.test(file.name)
+                  ? {
+                      action: {
+                        label: 'PDF reparieren',
+                        onClick: () => {
+                          setRepairInput(file);
+                          setToolId('pdf-repair');
+                          setChoosingTool(false);
+                          setBrowseEmpty(true);
+                        },
+                      },
+                    }
+                  : {}),
+              });
+          }
         }
-      }
-      if (added.length) {
-        if (initial) {
-          await new Promise((r) => setTimeout(r, Math.max(0, 700 - (performance.now() - started))));
-          setImportState({ phase: 'done', name: '', completed: added.length, total: files.length });
-          await new Promise((r) => setTimeout(r, 400));
+        if (added.length) {
+          if (initial) {
+            await new Promise((r) =>
+              setTimeout(r, Math.max(0, 700 - (performance.now() - started))),
+            );
+            setImportState({
+              phase: 'done',
+              name: '',
+              completed: added.length,
+              total: files.length,
+            });
+            await new Promise((r) => setTimeout(r, 400));
+          }
+          const nextPages = added.flatMap(sourcePages);
+          setSources((old) => [...old, ...added]);
+          setPages((old) => [...old, ...nextPages]);
+          setActiveId(nextPages[0].id);
+          setResult(null);
+          setRange('');
+          setHistory([]);
+          setFuture([]);
+          if (showToolChoice) {
+            setChoosingTool(true);
+            setToolId('inspect');
+            setView('check');
+            setSearch('');
+          } else setView('pages');
+          toast.success(
+            `${added.length} ${t(added.length === 1 ? 'Datei geöffnet' : 'Dateien geöffnet')}`,
+          );
         }
-        const nextPages = added.flatMap(sourcePages);
-        setSources((old) => [...old, ...added]);
-        setPages((old) => [...old, ...nextPages]);
-        setActiveId(nextPages[0].id);
-        setResult(null);
-        setRange('');
-        setHistory([]);
-        setFuture([]);
-        if (showToolChoice) {
-          setChoosingTool(true);
-          setToolId('inspect');
-          setView('check');
-          setSearch('');
-        } else setView('pages');
-        toast.success(`${added.length} ${added.length === 1 ? 'Datei' : 'Dateien'} geöffnet`);
+      } finally {
+        uploadLock.current = false;
+        setLoading(false);
+        setImportState({ phase: 'idle', name: '', completed: 0, total: 0 });
       }
-    } finally {
-      uploadLock.current = false;
-      setLoading(false);
-      setImportState({ phase: 'idle', name: '', completed: 0, total: 0 });
-    }
-  }, []);
+    },
+    [t],
+  );
   useEffect(() => {
     const over = (e: DragEvent) => {
       if (Array.from(e.dataTransfer?.types || []).includes('Files')) {
@@ -1039,7 +1067,7 @@ function Studio() {
       },
     });
     return () => life.abort();
-  }, []);
+  }, [tools]);
   const renderChoice = (
     key:
       | 'ocrLayout'
@@ -1121,7 +1149,7 @@ function Studio() {
   if (!choosingTool && isAdvancedTool(toolId))
     return (
       <>
-        <Toaster position="bottom-right" theme="light" richColors closeButton />
+        <Toaster position="bottom-right" richColors closeButton />
         {fileInput}
         <AdvancedWorkbench
           key={toolId}
@@ -1142,7 +1170,7 @@ function Studio() {
   if (!choosingTool && isServerTool(toolId))
     return (
       <>
-        <Toaster position="bottom-right" theme="light" richColors closeButton />
+        <Toaster position="bottom-right" richColors closeButton />
         {fileInput}
         <ServerWorkbench
           key={toolId}
@@ -1160,7 +1188,7 @@ function Studio() {
   if (!sources.length && !(choosingTool && browseEmpty))
     return (
       <>
-        <Toaster position="bottom-right" theme="light" richColors closeButton />
+        <Toaster position="bottom-right" richColors closeButton />
         {fileInput}
         <UploadEntry
           dragOver={dragOver}
@@ -1180,7 +1208,7 @@ function Studio() {
   if (choosingTool)
     return (
       <>
-        <Toaster position="bottom-right" theme="light" richColors closeButton />
+        <Toaster position="bottom-right" richColors closeButton />
         {fileInput}
         <ToolChooser
           sources={sources}
@@ -1198,7 +1226,7 @@ function Studio() {
   if (isDocumentTool(toolId))
     return (
       <>
-        <Toaster position="bottom-right" theme="light" richColors closeButton />
+        <Toaster position="bottom-right" richColors closeButton />
         {fileInput}
         <DocumentWorkbench
           tool={toolId}
@@ -1216,7 +1244,7 @@ function Studio() {
   if (toolId === 'protect' || toolId === 'unlock')
     return (
       <>
-        <Toaster position="bottom-right" theme="light" richColors closeButton />
+        <Toaster position="bottom-right" richColors closeButton />
         {fileInput}
         <SecurityWorkbench
           tool={toolId}
@@ -1235,7 +1263,7 @@ function Studio() {
   if (toolId === 'invoice-read' || toolId === 'invoice-check')
     return (
       <>
-        <Toaster position="bottom-right" theme="light" richColors closeButton />
+        <Toaster position="bottom-right" richColors closeButton />
         {fileInput}
         <InvoiceWorkbench
           tool={toolId}
@@ -1247,10 +1275,10 @@ function Studio() {
         />
       </>
     );
-  const toolMatches = new Set(suggestTools(search).map((t) => t.id));
+  const toolMatches = new Set(searchTools(search, tools).map((t) => t.id));
   return (
     <>
-      <Toaster position="bottom-right" theme="light" richColors closeButton />
+      <Toaster position="bottom-right" richColors closeButton />
       {fileInput}
       <input
         ref={imagePicker}
@@ -1269,15 +1297,15 @@ function Studio() {
         <SidebarHeader className="sidebar-brand">
           <div className="sidebar-caption">
             <FileText size={21} strokeWidth={1.5} />
-            <span>Werkzeuge</span>
+            <span>{t('Werkzeuge')}</span>
           </div>
           <div className="tool-search">
             <Search size={16} />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Werkzeug finden"
-              aria-label="Werkzeuge durchsuchen"
+              placeholder={t('Werkzeug finden')}
+              aria-label={t('Werkzeuge durchsuchen')}
             />
           </div>
         </SidebarHeader>
@@ -1313,17 +1341,17 @@ function Studio() {
             ) : null;
           })}
           {search.trim() && !toolMatches.size && (
-            <p className="no-tools">Kein passendes Werkzeug gefunden.</p>
+            <p className="no-tools">{t('Kein passendes Werkzeug gefunden.')}</p>
           )}
         </SidebarContent>
         <SidebarFooter className="sidebar-bottom">
           <button onClick={() => setHelp('privacy')}>
             <ShieldCheck size={16} />
-            <span>Lokal. Privat. Bei dir.</span>
+            <span>{t('Lokal. Privat. Bei dir.')}</span>
           </button>
           <button onClick={() => setHelp('help')}>
             <CircleHelp size={16} />
-            <span>Hilfe & Tastenkürzel</span>
+            <span>{t('Hilfe & Tastenkürzel')}</span>
             <small>{tools.length} Tools</small>
           </button>
         </SidebarFooter>
@@ -1340,19 +1368,19 @@ function Studio() {
               }}
               disabled={locked}
             >
-              Werkzeug wechseln
+              {t('Werkzeug wechseln')}
             </button>
             <span className="header-slash">/</span>
             <strong>
               {sources.length
-                ? `${sources.length} ${sources.length === 1 ? 'Dokument' : 'Dokumente'}`
-                : 'Neues Dokument'}
+                ? `${sources.length} ${sources.length === 1 ? t('Dokument') : 'Dokumente'}`
+                : t('Neues Dokument')}
             </strong>
           </div>
           <div className="topbar-actions">
             <span className="device-tag">
               <ShieldCheck size={14} />
-              OHNE DOKUMENTEN-UPLOAD
+              {t('OHNE DOKUMENTEN-UPLOAD')}
             </span>
             <Button
               className="open-button"
@@ -1360,13 +1388,13 @@ function Studio() {
               onClick={() => picker.current?.click()}
             >
               <Plus size={18} />
-              <span>Dateien öffnen</span>
+              <span>{t('Dateien öffnen')}</span>
             </Button>
           </div>
         </header>
         <div className="studio-titlebar">
           <div>
-            <div className="studio-kicker">DEIN ARBEITSBEREICH</div>
+            <div className="studio-kicker">{t('DEIN ARBEITSBEREICH')}</div>
             <h1>
               <tool.icon size={29} strokeWidth={1.5} />
               {tool.title}
@@ -1376,7 +1404,7 @@ function Studio() {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Rückgängig"
+              aria-label={t('Rückgängig')}
               title="Rückgängig · Strg+Z"
               disabled={!history.length || locked}
               onClick={undo}
@@ -1386,7 +1414,7 @@ function Studio() {
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Wiederholen"
+              aria-label={t('Wiederholen')}
               title="Wiederholen · Strg+Umschalt+Z"
               disabled={!future.length || locked}
               onClick={redo}
@@ -1399,7 +1427,7 @@ function Studio() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Arbeitsbereich leeren"
+                  aria-label={t('Arbeitsbereich leeren')}
                   disabled={!sources.length || locked}
                 >
                   <Trash2 size={18} />
@@ -1407,15 +1435,16 @@ function Studio() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Arbeitsbereich leeren?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('Arbeitsbereich leeren?')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Geöffnete Dokumente, Änderungen und Ergebnisse werden aus dieser Sitzung
-                    entfernt. Deine Originaldateien bleiben erhalten.
+                    {t(
+                      'Geöffnete Dokumente, Änderungen und Ergebnisse werden aus dieser Sitzung entfernt. Deine Originaldateien bleiben erhalten.',
+                    )}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Behalten</AlertDialogCancel>
-                  <AlertDialogAction onClick={clear}>Leeren</AlertDialogAction>
+                  <AlertDialogCancel>{t('Behalten')}</AlertDialogCancel>
+                  <AlertDialogAction onClick={clear}>{t('Leeren')}</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -1432,16 +1461,16 @@ function Studio() {
                   </TabsTrigger>
                   <TabsTrigger value="pages">
                     <LayoutGrid size={15} />
-                    <span>Seiten</span>
+                    <span>{t('Seiten')}</span>
                     {pages.length > 0 && <small>{pages.length}</small>}
                   </TabsTrigger>
                   <TabsTrigger value="document" disabled={!pages.length}>
                     <FileText size={15} />
-                    <span>Dokument</span>
+                    <span>{t('Dokument')}</span>
                   </TabsTrigger>
                   <TabsTrigger value="result" disabled={!result}>
                     <CheckCheck size={15} />
-                    <span>Ergebnis</span>
+                    <span>{t('Ergebnis')}</span>
                   </TabsTrigger>
                 </TabsList>
                 <span className="stage-format">
@@ -1467,7 +1496,7 @@ function Studio() {
                     className="file-add"
                     onClick={() => picker.current?.click()}
                     disabled={locked}
-                    aria-label="Dateien hinzufügen"
+                    aria-label={t('Dateien hinzufügen')}
                   >
                     <Plus size={17} />
                   </button>
@@ -1475,20 +1504,20 @@ function Studio() {
               )}
               {!pages.length ? (
                 <div className={`empty-stage ${dragOver ? 'hovered' : ''}`}>
-                  <div className="empty-coordinate">01 — DOKUMENT ÖFFNEN</div>
+                  <div className="empty-coordinate">{t('01 — DOKUMENT ÖFFNEN')}</div>
                   <div className="drop-composition">
                     <div className="drop-cross">
                       <Plus size={52} strokeWidth={1} />
                     </div>
                     <h2>
-                      PDF rein.
+                      {t('PDF rein.')}
                       <br />
-                      <span>Und los.</span>
+                      <span>{t('Und los.')}</span>
                     </h2>
                     <p>
-                      Dateien hierher ziehen.
+                      {t('Dateien hierher ziehen.')}
                       <br />
-                      Danach kannst du sie bearbeiten.
+                      {t('Danach kannst du sie bearbeiten.')}
                     </p>
                     <Button
                       className="start-button"
@@ -1496,10 +1525,11 @@ function Studio() {
                       onClick={() => picker.current?.click()}
                     >
                       {loading ? <LoaderCircle className="spin" size={17} /> : <Upload size={17} />}
-                      Dateien auswählen
+                      {t('Dateien auswählen')}
                     </Button>
                     <button className="try-demo" disabled={loading} onClick={demo}>
-                      Mit Beispieldokument ausprobieren <CornerDownLeft size={14} />
+                      {t('Mit Beispieldokument ausprobieren')}
+                      <CornerDownLeft size={14} />
                     </button>
                   </div>
                   <div className="empty-stage-bottom">
@@ -1507,7 +1537,7 @@ function Studio() {
                       <MousePointer2 size={14} />
                       DRAG. DROP. DONE.
                     </span>
-                    <span>80 MB / 200 Seiten</span>
+                    <span>{t('80 MB / 200 Seiten')}</span>
                   </div>
                 </div>
               ) : (
@@ -1549,7 +1579,7 @@ function Studio() {
                             })
                           }
                         />
-                        Alle
+                        {t('Alle')}
                       </label>
                       <div className="selection-range">
                         <Input
@@ -1581,7 +1611,7 @@ function Studio() {
                           onClick={() => rotate()}
                         >
                           <RotateCw size={15} />
-                          <span>Drehen</span>
+                          <span>{t('Drehen')}</span>
                         </Button>
                         <Button
                           aria-label="Seitenreihenfolge umkehren"
@@ -1591,7 +1621,7 @@ function Studio() {
                           onClick={() => commit({ pages: [...pages].reverse(), edits })}
                         >
                           <MoveVertical size={15} />
-                          <span>Umkehren</span>
+                          <span>{t('Umkehren')}</span>
                         </Button>
                         <Button
                           aria-label="Leerseite einfügen"
@@ -1601,7 +1631,7 @@ function Studio() {
                           onClick={blank}
                         >
                           <FilePlus2 size={15} />
-                          <span>Leerseite</span>
+                          <span>{t('Leerseite')}</span>
                         </Button>
                       </div>
                     </div>
@@ -1666,9 +1696,15 @@ function Studio() {
                             />
                           </button>
                           <div className="tile-caption">
-                            <strong>Seite {index + 1}</strong>
+                            <strong>
+                              {t('Seite')}
+                              {index + 1}
+                            </strong>
                             {countEdits(edits, [page]) > 0 && (
-                              <span>{countEdits(edits, [page])} Änderungen</span>
+                              <span>
+                                {countEdits(edits, [page])}
+                                {t('Änderungen')}
+                              </span>
                             )}
                           </div>
                           <div className="tile-actions">
@@ -1716,13 +1752,14 @@ function Studio() {
                         disabled={locked}
                       >
                         <Plus size={29} strokeWidth={1.1} />
-                        <span>Dateien hinzufügen</span>
+                        <span>{t('Dateien hinzufügen')}</span>
                       </button>
                     </div>
                     <div className="stage-hint">
                       <GripVertical size={14} />
-                      Seiten ziehen, umsortieren, fertig. Die Pfeile funktionieren auch auf dem
-                      Handy.
+                      {t(
+                        'Seiten ziehen, umsortieren, fertig. Die Pfeile funktionieren auch auf dem Handy.',
+                      )}
                     </div>
                   </TabsContent>
                   <TabsContent value="document" className="document-view">
@@ -1750,7 +1787,8 @@ function Studio() {
                               <SelectContent>
                                 {pages.map((p, i) => (
                                   <SelectItem key={p.id} value={p.id}>
-                                    Seite {i + 1} / {pages.length}
+                                    {t('Seite')}
+                                    {i + 1} / {pages.length}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -1809,7 +1847,7 @@ function Studio() {
                         </div>
                         {!activePage.selected && (
                           <div className="page-unselected">
-                            Diese Seite ist nicht für den Export ausgewählt.
+                            {t('Diese Seite ist nicht für den Export ausgewählt.')}
                             <button
                               onClick={() =>
                                 commit({
@@ -1820,7 +1858,7 @@ function Studio() {
                                 })
                               }
                             >
-                              Auswählen
+                              {t('Auswählen')}
                             </button>
                           </div>
                         )}
@@ -1904,9 +1942,11 @@ function Studio() {
                             <Check size={22} />
                           </div>
                           <div>
-                            <h2>Erledigt.</h2>
+                            <h2>{t('Erledigt.')}</h2>
                             <p>
-                              {result.pages} Seiten · {formatSize(result.blob.size)}
+                              {result.pages}
+                              {t('Seiten ·')}
+                              {formatSize(result.blob.size)}
                               {toolId === 'compress'
                                 ? result.blob.size < result.inputSize
                                   ? ` · ${Math.round((1 - result.blob.size / result.inputSize) * 100)} % kleiner`
@@ -1918,10 +1958,10 @@ function Studio() {
                             <a href={resultUrl || undefined} download={result.filename}>
                               <Download size={16} />
                               {result.kind === 'zip'
-                                ? 'ZIP herunterladen'
+                                ? t('ZIP herunterladen')
                                 : result.kind === 'report'
-                                  ? 'Bericht herunterladen'
-                                  : 'PDF herunterladen'}
+                                  ? t('Bericht herunterladen')
+                                  : t('PDF herunterladen')}
                             </a>
                           </Button>
                         </div>
@@ -1969,8 +2009,8 @@ function Studio() {
                             </div>
                             <div className="ocr-result">
                               <div className="ocr-text-heading">
-                                <label htmlFor="recognized-text">Erkannter Text</label>
-                                <span>BEARBEITBAR</span>
+                                <label htmlFor="recognized-text">{t('Erkannter Text')}</label>
+                                <span>{t('BEARBEITBAR')}</span>
                               </div>
                               <Textarea
                                 id="recognized-text"
@@ -1984,14 +2024,14 @@ function Studio() {
                                   onClick={async () => {
                                     try {
                                       await navigator.clipboard.writeText(resultText);
-                                      toast.success('Text kopiert');
+                                      toast.success(t('Text kopiert'));
                                     } catch {
-                                      toast.info('Text markieren und manuell kopieren.');
+                                      toast.info(t('Text markieren und manuell kopieren.'));
                                     }
                                   }}
                                 >
                                   <Copy size={15} />
-                                  Kopieren
+                                  {t('Kopieren')}
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -2017,9 +2057,9 @@ function Studio() {
                                 </Button>
                               </div>
                               <p className="export-note">
-                                Korrekturen gelten für Text und Word. Die PDF enthält das
-                                ursprüngliche OCR-Ergebnis. Word übernimmt den Text ohne das
-                                Original-Layout.
+                                {t(
+                                  'Korrekturen gelten für Text und Word. Die PDF enthält das ursprüngliche OCR-Ergebnis. Word übernimmt den Text ohne das Original-Layout.',
+                                )}
                               </p>
                             </div>
                           </div>
@@ -2036,7 +2076,8 @@ function Studio() {
                                     <ChevronLeft size={17} />
                                   </button>
                                   <span>
-                                    ERGEBNISVORSCHAU · {resultPage + 1}/{resultSource.pdf.numPages}
+                                    {t('ERGEBNISVORSCHAU ·')}
+                                    {resultPage + 1}/{resultSource.pdf.numPages}
                                   </span>
                                   <button
                                     disabled={resultPage >= resultSource.pdf.numPages - 1}
@@ -2061,15 +2102,16 @@ function Studio() {
                               <LoaderCircle className="spin" />
                             ) : (
                               <p>
-                                Das Ergebnis ist bereit. Eine Vorschau ist für diese Datei nicht
-                                verfügbar.
+                                {t(
+                                  'Das Ergebnis ist bereit. Eine Vorschau ist für diese Datei nicht verfügbar.',
+                                )}
                               </p>
                             )}
                           </div>
                         ) : (
                           <div className="zip-result">
                             <Layers size={55} strokeWidth={1} />
-                            <strong>Alle Dateien. Ein Download.</strong>
+                            <strong>{t('Alle Dateien. Ein Download.')}</strong>
                             <p>
                               {result.note ||
                                 'Entpacke die ZIP-Datei, um die einzelnen Dateien zu öffnen.'}
@@ -2078,10 +2120,10 @@ function Studio() {
                         )}
                         {result.kind === 'pdf' && (
                           <div className="continue-result">
-                            <span>Noch etwas vor mit diesem Dokument?</span>
+                            <span>{t('Noch etwas vor mit diesem Dokument?')}</span>
                             <Button variant="outline" onClick={continueResult} disabled={locked}>
                               <PenLine size={16} />
-                              Ergebnis weiterbearbeiten
+                              {t('Ergebnis weiterbearbeiten')}
                             </Button>
                           </div>
                         )}
@@ -2094,23 +2136,23 @@ function Studio() {
             <div className="workstage-status">
               <span>
                 <ShieldCheck size={13} />
-                Lokale Verarbeitung
+                {t('Lokale Verarbeitung')}
               </span>
               <span>
                 {sources.length
                   ? `${formatSize(sourceBytes)} · ${pages.length} Seiten`
-                  : 'Keine Dateien geöffnet'}
+                  : t('Keine Dateien geöffnet')}
               </span>
               <span>
                 {editCount
-                  ? `${editCount} ${editCount === 1 ? 'Änderung' : 'Änderungen'}`
-                  : 'Originale bleiben erhalten'}
+                  ? `${editCount} ${editCount === 1 ? 'Änderung' : t('Änderungen')}`
+                  : t('Originale bleiben erhalten')}
               </span>
             </div>
           </section>
           <aside className="inspector">
             <div className="inspector-heading">
-              <span>EINSTELLUNGEN</span>
+              <span>{t('EINSTELLUNGEN')}</span>
               <span className="inspector-number">
                 {String(tools.findIndex((t) => t.id === toolId) + 1).padStart(2, '0')}/
                 {tools.length}
@@ -2157,15 +2199,16 @@ function Studio() {
                   />
                   <div className="check-howto">
                     <span>01</span>
-                    <p>Begriff eingeben und über alle geöffneten Dateien suchen.</p>
+                    <p>{t('Begriff eingeben und über alle geöffneten Dateien suchen.')}</p>
                     <span>02</span>
-                    <p>Scan-Seiten bei Bedarf lokal erkennen lassen.</p>
+                    <p>{t('Scan-Seiten bei Bedarf lokal erkennen lassen.')}</p>
                     <span>03</span>
-                    <p>Treffer prüfen und als neue PDF sammeln.</p>
+                    <p>{t('Treffer prüfen und als neue PDF sammeln.')}</p>
                   </div>
                   <p className="fine-note">
-                    Vermutete Leerseiten und doppelte Vorschauen werden angezeigt. Die Auswahl
-                    bleibt bei dir.
+                    {t(
+                      'Vermutete Leerseiten und doppelte Vorschauen werden angezeigt. Die Auswahl bleibt bei dir.',
+                    )}
                   </p>
                 </>
               )}
@@ -2173,11 +2216,13 @@ function Studio() {
                 <>
                   <label className="switch-field">
                     <span>
-                      Sprachen automatisch ermitteln
-                      <small>Pro Scan-Seite; benötigt zusätzlich etwa 600 MB Arbeitsspeicher</small>
+                      {t('Sprachen automatisch ermitteln')}
+                      <small>
+                        {t('Pro Scan-Seite; benötigt zusätzlich etwa 600 MB Arbeitsspeicher')}
+                      </small>
                     </span>
                     <Switch
-                      aria-label="Sprachen automatisch ermitteln"
+                      aria-label={t('Sprachen automatisch ermitteln')}
                       checked={!!options.autoLanguage}
                       disabled={locked}
                       onCheckedChange={(v) => setOptions((old) => ({ ...old, autoLanguage: v }))}
@@ -2185,9 +2230,9 @@ function Studio() {
                   </label>
                   {options.autoLanguage && (
                     <p className="fine-note">
-                      Eine mehrsprachige OCR-Probe und ein lokaler statistischer Sprachvergleich
-                      wählen bis zu acht Modelle. Kurze, verrauschte oder mehrdeutige Texte werden
-                      zur manuellen Auswahl zurückgewiesen.
+                      {t(
+                        'Eine mehrsprachige OCR-Probe und ein lokaler statistischer Sprachvergleich wählen bis zu acht Modelle. Kurze, verrauschte oder mehrdeutige Texte werden zur manuellen Auswahl zurückgewiesen.',
+                      )}
                     </p>
                   )}
                   <OcrLanguagePicker
@@ -2199,7 +2244,8 @@ function Studio() {
                   {renderChoice('ocrLayout', 'Seitenaufbau', ocrLayouts)}
                   <label className="switch-field">
                     <span>
-                      Alle Seiten neu erkennen<small>Auch vorhandenen Text</small>
+                      {t('Alle Seiten neu erkennen')}
+                      <small>{t('Auch vorhandenen Text')}</small>
                     </span>
                     <Switch
                       checked={options.forceOcr}
@@ -2208,8 +2254,9 @@ function Studio() {
                     />
                   </label>
                   <p className="fine-note">
-                    Bildseiten werden automatisch erkannt. Bei gemischten Text- und Scanbereichen
-                    „Alle Seiten neu erkennen“ aktivieren.
+                    {t(
+                      'Bildseiten werden automatisch erkannt. Bei gemischten Text- und Scanbereichen „Alle Seiten neu erkennen“ aktivieren.',
+                    )}
                   </p>
                 </>
               )}
@@ -2228,14 +2275,15 @@ function Studio() {
                     ['small', 'Möglichst klein'],
                   ])}
                   <div className="notice">
-                    Erstellt eine Bild-PDF. Kopierbare Texte, Links und Formularfunktionen gehen
-                    verloren. Eine kleinere Datei ist nicht garantiert.
+                    {t(
+                      'Erstellt eine Bild-PDF. Kopierbare Texte, Links und Formularfunktionen gehen verloren. Eine kleinere Datei ist nicht garantiert.',
+                    )}
                   </div>
                 </>
               )}
               {toolId === 'numbers' && (
                 <label className="field">
-                  <span>Beginnen bei</span>
+                  <span>{t('Beginnen bei')}</span>
                   <Input
                     type="number"
                     min={1}
@@ -2251,7 +2299,7 @@ function Studio() {
               {toolId === 'watermark' && (
                 <>
                   <label className="field">
-                    <span>Wasserzeichen</span>
+                    <span>{t('Wasserzeichen')}</span>
                     <Input
                       value={options.watermark}
                       maxLength={70}
@@ -2261,7 +2309,7 @@ function Studio() {
                   </label>
                   <div className="watermark-sample">{options.watermark || 'DEIN TEXT'}</div>
                   <p className="fine-note">
-                    Transparentes Türkis, mittig auf jeder ausgewählten Seite.
+                    {t('Transparentes Türkis, mittig auf jeder ausgewählten Seite.')}
                   </p>
                 </>
               )}
@@ -2281,28 +2329,30 @@ function Studio() {
                     ['landscape', 'Querformat'],
                   ])}
                   <p className="fine-note">
-                    Inhalte werden proportional verkleinert oder vergrößert. Text bleibt kopierbar,
-                    soweit er im Original vorhanden ist.
+                    {t(
+                      'Inhalte werden proportional verkleinert oder vergrößert. Text bleibt kopierbar, soweit er im Original vorhanden ist.',
+                    )}
                   </p>
                 </>
               )}
               {toolId === 'redact' && (
                 <div className="notice strong">
-                  Schwärzungen werden in die Seitenbilder eingerechnet. Die betroffenen Seiten
-                  enthalten danach keine ursprüngliche Textebene. Prüfe die Ergebnisvorschau vor dem
-                  Download.
+                  {t(
+                    'Schwärzungen werden in die Seitenbilder eingerechnet. Die betroffenen Seiten enthalten danach keine ursprüngliche Textebene. Prüfe die Ergebnisvorschau vor dem Download.',
+                  )}
                 </div>
               )}
               {toolId === 'crop' && (
                 <>
                   <p className="fine-note">
-                    Zugeschnittene Seiten werden als neue Seitenbilder exportiert. Inhalte außerhalb
-                    des Ausschnitts werden entfernt; die Textebene entfällt.
+                    {t(
+                      'Zugeschnittene Seiten werden als neue Seitenbilder exportiert. Inhalte außerhalb des Ausschnitts werden entfernt; die Textebene entfällt.',
+                    )}
                   </p>
                   {activePage && edits.crops[activePage.id] && (
                     <Button variant="outline" onClick={clearCrop} disabled={locked}>
                       <X size={15} />
-                      Ausschnitt zurücksetzen
+                      {t('Ausschnitt zurücksetzen')}
                     </Button>
                   )}
                 </>
@@ -2320,14 +2370,14 @@ function Studio() {
                       </TabsTrigger>
                       <TabsTrigger value="highlight">
                         <Highlighter size={15} />
-                        Marker
+                        {t('Marker')}
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
                   {noteMode === 'text' ? (
                     <>
                       <label className="field">
-                        <span>Deine Notiz</span>
+                        <span>{t('Deine Notiz')}</span>
                         <Textarea
                           value={noteText}
                           maxLength={600}
@@ -2337,7 +2387,8 @@ function Studio() {
                       </label>
                       <label className="field">
                         <span>
-                          Schriftgröße <b>{fontSize} pt</b>
+                          {t('Schriftgröße')}
+                          <b>{fontSize} pt</b>
                         </span>
                         <Slider
                           value={[fontSize]}
@@ -2345,13 +2396,13 @@ function Studio() {
                           max={42}
                           step={1}
                           onValueChange={(v) => setFontSize(v[0])}
-                          aria-label="Schriftgröße"
+                          aria-label={t('Schriftgröße')}
                           disabled={locked}
                         />
                       </label>
                     </>
                   ) : (
-                    <div className="marker-sample">Wichtiges hervorheben.</div>
+                    <div className="marker-sample">{t('Wichtiges hervorheben.')}</div>
                   )}
                 </>
               )}
@@ -2372,21 +2423,22 @@ function Studio() {
                     </div>
                   )}
                   <p className="fine-note">
-                    Wird als Bild eingefügt. Keine digitale Zertifikatssignatur.
+                    {t('Wird als Bild eingefügt. Keine digitale Zertifikatssignatur.')}
                   </p>
                 </>
               )}
               {(toolId === 'grayscale' || toolId === 'flatten') && (
                 <div className="notice">
-                  Die Ausgabe enthält neue Seitenbilder. Textebenen, Links und interaktive
-                  Formularfelder werden nicht übernommen.
+                  {t(
+                    'Die Ausgabe enthält neue Seitenbilder. Textebenen, Links und interaktive Formularfelder werden nicht übernommen.',
+                  )}
                 </div>
               )}
               {toolId === 'metadata' && (
                 <>
                   {activeSource && (
                     <div className="metadata-list">
-                      <span>DOKUMENTINFOS DER AKTUELLEN DATEI</span>
+                      <span>{t('DOKUMENTINFOS DER AKTUELLEN DATEI')}</span>
                       {(['Title', 'Author', 'Creator', 'Producer', 'CreationDate'] as const).map(
                         (key) => (
                           <div key={key}>
@@ -2408,8 +2460,9 @@ function Studio() {
                     </div>
                   )}
                   <p className="fine-note">
-                    Inhalte im Dokument, Kommentare, Bilder und eingebettete Objektdaten werden
-                    damit nicht anonymisiert.
+                    {t(
+                      'Inhalte im Dokument, Kommentare, Bilder und eingebettete Objektdaten werden damit nicht anonymisiert.',
+                    )}
                   </p>
                 </>
               )}
@@ -2419,20 +2472,23 @@ function Studio() {
                 toolId === 'images') && (
                 <div className="mini-workflow">
                   <div>
-                    <span>01</span>Dateien hinzufügen
+                    <span>01</span>
+                    {t('Dateien hinzufügen')}
                   </div>
                   <div>
-                    <span>02</span>Seiten auswählen & sortieren
+                    <span>02</span>
+                    {t('Seiten auswählen & sortieren')}
                   </div>
                   <div>
-                    <span>03</span>Ergebnis herunterladen
+                    <span>03</span>
+                    {t('Ergebnis herunterladen')}
                   </div>
                 </div>
               )}
               {visualTools.includes(toolId) && !isEditor && activePage && (
                 <>
                   <details className="manual-placement">
-                    <summary>Bereich per Eingabe setzen</summary>
+                    <summary>{t('Bereich per Eingabe setzen')}</summary>
                     <div className="position-inputs">
                       {(['x', 'y', 'w', 'h'] as const).map((key) => (
                         <label key={key}>
@@ -2462,12 +2518,15 @@ function Studio() {
                         (editMode === 'text' && !noteText.trim())
                       }
                     >
-                      Bereich hinzufügen
+                      {t('Bereich hinzufügen')}
                     </Button>
                   </details>
                   {pageMarks.length > 0 && (
                     <div className="mark-list">
-                      <span>AUF DIESER SEITE · {pageMarks.length}</span>
+                      <span>
+                        {t('AUF DIESER SEITE ·')}
+                        {pageMarks.length}
+                      </span>
                       {pageMarks.map((m, i) => (
                         <div key={m.id}>
                           <span>
@@ -2519,7 +2578,7 @@ function Studio() {
                   <Progress value={progress.percent} aria-label="Verarbeitungsfortschritt" />
                   <p>{progress.label}</p>
                   <Button variant="outline" onClick={() => job.current?.abort()}>
-                    Abbrechen
+                    {t('Abbrechen')}
                   </Button>
                 </div>
               ) : (
@@ -2550,9 +2609,9 @@ function Studio() {
       <Dialog open={signatureOpen} onOpenChange={setSignatureOpen}>
         <DialogContent className="signature-dialog">
           <DialogHeader>
-            <DialogTitle>Deine Unterschrift.</DialogTitle>
+            <DialogTitle>{t('Deine Unterschrift.')}</DialogTitle>
             <DialogDescription>
-              Mit Maus oder Finger zeichnen. Danach im Dokument platzieren.
+              {t('Mit Maus oder Finger zeichnen. Danach im Dokument platzieren.')}
             </DialogDescription>
           </DialogHeader>
           <SignaturePad
@@ -2691,8 +2750,8 @@ function Studio() {
       {dragOver && (
         <div className="drop-overlay">
           <Plus size={64} strokeWidth={1} />
-          <strong>Einfach loslassen.</strong>
-          <span>Dein Dokument. Dein nächster Schritt.</span>
+          <strong>{t('Einfach loslassen.')}</strong>
+          <span>{t('Dein Dokument. Dein nächster Schritt.')}</span>
         </div>
       )}
     </>

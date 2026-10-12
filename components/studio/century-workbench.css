@@ -26,14 +26,14 @@
   display: block;
   width: 100%;
   height: auto;
-  border: 1px solid #dce8e4;
-  background: white;
+  border: 1px solid var(--ui-line, #dce8e4);
+  background: var(--ui-surface, white);
 }
 .century-measure-surface {
   position: relative;
   cursor: crosshair;
-  background: white;
-  border: 1px solid #dce8e4;
+  background: var(--ui-surface, white);
+  border: 1px solid var(--ui-line, #dce8e4);
   overflow: hidden;
   touch-action: manipulation;
 }

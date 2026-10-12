@@ -1,4 +1,6 @@
 'use client';
+import { useLanguage, useTools } from '@/components/studio/appearance';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import './evidence-workbench.css';
 import './century-workbench.css';
@@ -12,7 +14,6 @@ import {
 } from './century-panels';
 import { ChevronLeft, Plus, ShieldCheck, Download, LoaderCircle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { tools } from '@/lib/tool-catalog';
 import { openSource, formatSize, type Source, type JobResult } from '@/lib/pdf-engine';
 import type { AdvancedTool, ExportFile, RunContext } from '@/lib/advanced-types';
 import { Choice, PageStage, PageSelect } from './advanced-shared';
@@ -63,6 +64,8 @@ export function AdvancedWorkbench({
   onUse: (result: JobResult) => Promise<void>;
   pending: boolean;
 }) {
+  const { t } = useLanguage();
+  const { tools } = useTools();
   const [sourceId, setSourceId] = useState(sources[0]?.id || ''),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
@@ -161,12 +164,12 @@ export function AdvancedWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
-          Alle Werkzeuge
+          {t('Alle Werkzeuge')}
         </Button>
         <div className="advanced-actions">
           <Button variant="outline" onClick={onAdd} disabled={busy}>
             <Plus size={16} />
-            Dateien hinzufügen
+            {t('Dateien hinzufügen')}
           </Button>
           <span className="device-tag">
             <ShieldCheck size={14} />
@@ -193,7 +196,7 @@ export function AdvancedWorkbench({
       {!multi && tool !== 'camera-scan' && source && (
         <fieldset disabled={busy} className="advanced-fields advanced-source">
           <Choice
-            label={tool === 'visual-compare' ? 'Erste Datei' : 'Dokument'}
+            label={tool === 'visual-compare' ? 'Erste Datei' : t('Dokument')}
             value={source.id}
             onChange={setSourceId}
             items={sources.map((s) => [s.id, s.name])}
@@ -268,7 +271,7 @@ export function AdvancedWorkbench({
           <span>{progress.label}</span>
           <progress max={100} value={progress.percent} />
           <Button variant="ghost" onClick={() => controller.current?.abort()}>
-            Abbrechen
+            {t('Abbrechen')}
           </Button>
         </div>
       )}
@@ -282,7 +285,7 @@ export function AdvancedWorkbench({
           <div>
             <h2>
               <Check size={22} />
-              Dein Ergebnis ist bereit.
+              {t('Dein Ergebnis ist bereit.')}
             </h2>
             <p>
               {result.filename} · {formatSize(result.blob.size)}
@@ -292,7 +295,7 @@ export function AdvancedWorkbench({
               <Button asChild>
                 <a href={url} download={result.filename}>
                   <Download size={17} />
-                  Herunterladen
+                  {t('Herunterladen')}
                 </a>
               </Button>
               {result.kind === 'pdf' && (
@@ -309,7 +312,7 @@ export function AdvancedWorkbench({
                     })
                   }
                 >
-                  Ergebnis weiterbearbeiten
+                  {t('Ergebnis weiterbearbeiten')}
                 </Button>
               )}
             </div>
