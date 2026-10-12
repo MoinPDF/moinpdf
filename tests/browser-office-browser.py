@@ -39,6 +39,10 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             });
           }
         }
+        postMessage(data, ...args) {
+          if (data?.type === 'init' && data.sofficeJs) data = {...data, verbose: true};
+          return super.postMessage(data, ...args);
+        }
       };
     })();''')
     cached_only = False
@@ -51,6 +55,28 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             r.abort()
         else: r.continue_()
     page.route('**/*', route)
+    def snapshot_office_threads():
+        snapshots, sessions = [], []
+        def received(event):
+            message = json.loads(event['message'])
+            if message.get('method') == 'Debugger.paused':
+                snapshots.append({'session': event['sessionId'], 'frames': [{'function': f['functionName'], 'url': f['url'], 'location': f['location']} for f in message['params']['callFrames'][:24]]})
+        browser_session.on('Target.receivedMessageFromTarget', received)
+        try:
+            targets = [t for t in browser_session.send('Target.getTargets')['targetInfos'] if t['type']=='worker' and '/vendor/office/' in t['url']]
+            print('Office thread targets: ' + json.dumps(targets), flush=True)
+            for target in targets:
+                session = browser_session.send('Target.attachToTarget', {'targetId': target['targetId'], 'flatten': False})['sessionId']
+                sessions.append(session)
+                for ident, method in enumerate(['Debugger.enable', 'Debugger.pause'], 1):
+                    browser_session.send('Target.sendMessageToTarget', {'sessionId': session, 'message': json.dumps({'id': ident, 'method': method})})
+            page.wait_for_timeout(3000)
+            print('Office thread stacks: ' + json.dumps(snapshots), flush=True)
+        finally:
+            for session in sessions:
+                browser_session.send('Target.sendMessageToTarget', {'sessionId': session, 'message': json.dumps({'id': 3, 'method': 'Debugger.resume'})})
+                browser_session.send('Target.detachFromTarget', {'sessionId': session})
+            browser_session.remove_listener('Target.receivedMessageFromTarget', received)
     def wait_office_closed():
         deadline = time.monotonic() + 10
         while True:
@@ -69,7 +95,11 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         choose(path, reload)
         page.get_by_role('button', name='PDF erstellen', exact=True).click()
         link = page.get_by_role('link', name='PDF herunterladen', exact=True)
-        expect(link.or_(page.get_by_role('alert'))).to_be_visible(timeout=240000)
+        try:
+            expect(link.or_(page.get_by_role('alert'))).to_be_visible(timeout=30000)
+        except AssertionError:
+            snapshot_office_threads()
+            expect(link.or_(page.get_by_role('alert'))).to_be_visible(timeout=240000)
         assert link.is_visible(), page.get_by_role('alert').inner_text()
         with page.expect_download() as dl: link.click()
         target = folder / (path.name + suffix + '.pdf')
