@@ -1,4 +1,6 @@
 'use client';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useId, type CSSProperties } from 'react';
 import { File, FileText, Plus, Check, LoaderCircle } from 'lucide-react';
 import { APP_VERSION } from '@/lib/version';
@@ -30,6 +32,7 @@ export function UploadEntry({
   onEmail?: () => void;
   onTools?: () => void;
 }) {
+  const { t } = useLanguage();
   const phase = state.phase === 'idle' && dragOver ? 'drag' : state.phase;
   const id = useId().replace(/:/g, '');
   const paperId = `${id}-paper`,
@@ -39,19 +42,30 @@ export function UploadEntry({
   return (
     <main className="upload-entry upload-entry-branded">
       <div className="upload-entry-focus">
-        <img
-          className="upload-entry-logo"
-          src={`/branding/moinpdf-logo.svg?v=${APP_VERSION}`}
-          width={680}
-          height={225}
-          alt="MoinPDF. Papierkram. Läuft."
-          draggable={false}
-        />
+        <div className="upload-brand">
+          <img
+            className="upload-entry-logo logo-light"
+            src={`/branding/moinpdf-wordmark.svg?v=${APP_VERSION}`}
+            width={680}
+            height={170}
+            alt="MoinPDF"
+            draggable={false}
+          />
+          <img
+            className="upload-entry-logo logo-dark"
+            src={`/branding/moinpdf-wordmark-dark.svg?v=${APP_VERSION}`}
+            width={680}
+            height={170}
+            alt="MoinPDF"
+            draggable={false}
+          />
+          <p className="upload-tagline">{t('Papierkram. Läuft.')}</p>
+        </div>
         <button
           className={`upload-field is-${phase}`}
           onClick={onOpen}
           disabled={loading}
-          aria-label="PDF oder andere Datei auswählen"
+          aria-label={t('PDF oder andere Datei auswählen')}
           aria-busy={loading}
         >
           <span className="upload-document-stage" aria-hidden="true">
@@ -69,9 +83,9 @@ export function UploadEntry({
               >
                 <defs>
                   <linearGradient id={paperId} x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#f7fffd" />
-                    <stop offset="45%" stopColor="#def4ee" />
-                    <stop offset="100%" stopColor="#d7edb1" />
+                    <stop offset="0%" stopColor="var(--paper-top, #f7fffd)" />
+                    <stop offset="45%" stopColor="var(--paper-middle, #def4ee)" />
+                    <stop offset="100%" stopColor="var(--paper-bottom, #d7edb1)" />
                   </linearGradient>
                   <linearGradient id={edgeId} x1="0%" y1="0%" x2="100%" y2="90%">
                     <stop offset="0%" stopColor="#68c2c2" />
@@ -113,27 +127,27 @@ export function UploadEntry({
           <span className="upload-field-inner">
             <span className="upload-title" role="heading" aria-level={1}>
               {state.phase === 'done'
-                ? 'Alles bereit.'
+                ? t('Alles bereit.')
                 : state.phase === 'reading'
-                  ? 'Wird geöffnet …'
+                  ? t('Wird geöffnet …')
                   : dragOver
-                    ? 'Hier loslassen.'
-                    : 'Datei hier ablegen.'}
+                    ? t('Hier loslassen.')
+                    : t('Datei hier ablegen.')}
             </span>
             <span className="upload-description">
               {state.phase === 'done'
-                ? `${state.completed} ${state.completed === 1 ? 'Datei geöffnet' : 'Dateien geöffnet'}`
+                ? `${state.completed} ${state.completed === 1 ? t('Datei geöffnet') : t('Dateien geöffnet')}`
                 : state.phase === 'reading'
                   ? state.name
                   : dragOver
-                    ? 'Eine oder mehrere Dateien'
-                    : 'oder antippen · PDF, Office, Bilder & E-Mails'}
+                    ? t('Eine oder mehrere Dateien')
+                    : t('oder antippen · PDF, Office, Bilder & E-Mails')}
             </span>
             {loading && (
               <span
                 className="upload-progress"
                 role="progressbar"
-                aria-label="Dateien öffnen"
+                aria-label={t('Dateien öffnen')}
                 aria-valuenow={state.completed}
                 aria-valuemin={0}
                 aria-valuemax={Math.max(1, state.total)}
@@ -148,23 +162,25 @@ export function UploadEntry({
       </div>
       <div className="upload-alternatives">
         <button disabled={loading} onClick={onCamera}>
-          Kamera-Scanner
+          {t('Kamera-Scanner')}
         </button>
         <span>·</span>
         <button disabled={loading} onClick={onOffice}>
-          Office zu PDF
+          {t('Office zu PDF')}
         </button>
         <span>·</span>
         <button disabled={loading} onClick={onEmail}>
-          E-Mails zu PDF
+          {t('E-Mails zu PDF')}
         </button>
         <span>·</span>
         <button disabled={loading} onClick={onTools}>
-          Alle Werkzeuge
+          {t('Alle Werkzeuge')}
         </button>
       </div>
       <span className="sr-only" role="status" aria-live="polite">
-        {loading ? `${state.completed} von ${state.total} Dateien verarbeitet` : ''}
+        {loading
+          ? `${state.completed} ${t('von', 'of')} ${state.total} ${t('Dateien verarbeitet', 'files processed')}`
+          : ''}
       </span>
     </main>
   );

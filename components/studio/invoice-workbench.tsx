@@ -1,4 +1,6 @@
 'use client';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useState } from 'react';
 import {
   ChevronLeft,
@@ -41,6 +43,7 @@ type Props = {
   onAdd: () => void;
 };
 export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd }: Props) {
+  const { t } = useLanguage();
   const [sourceId, setSourceId] = useState(
       sources.find((s) => s.invoiceOriginal)?.id || sources[0].id,
     ),
@@ -172,7 +175,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={locked}>
           <ChevronLeft size={17} />
-          Alle Werkzeuge
+          {t('Alle Werkzeuge')}
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
@@ -209,7 +212,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
       </div>
       <div className="invoice-sourcebar">
         {select(
-          'Dokument',
+          t('Dokument'),
           source.id,
           sources.map((s) => [s.id, s.name]),
           setSourceId,
@@ -302,7 +305,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                         <p>{c.detail}</p>
                       </div>
                       <span>
-                        {c.level === 'pass' ? 'OK' : c.level === 'error' ? 'Prüfen' : 'Hinweis'}
+                        {c.level === 'pass' ? 'OK' : c.level === 'error' ? t('Prüfen') : 'Hinweis'}
                       </span>
                     </article>
                   ))}
@@ -515,7 +518,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     <span>PDF erstellt · {formatSize(output.blob.size)}</span>
                     <a href={url} download={output.filename}>
                       <Download size={16} />
-                      PDF herunterladen
+                      {t('PDF herunterladen')}
                     </a>
                   </div>
                 )}

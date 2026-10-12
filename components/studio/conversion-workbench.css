@@ -15,7 +15,7 @@
 .conversion-workbench .workbench-title p {
   margin-top: 12px;
   line-height: 1.7;
-  color: #617b74;
+  color: var(--ui-muted, #617b74);
 }
 .conversion-steps {
   display: flex;
@@ -24,7 +24,7 @@
   gap: 12px;
   padding: 0 0 24px;
   list-style: none;
-  color: #617b74;
+  color: var(--ui-muted, #617b74);
   font-size: 13px;
 }
 .conversion-steps li {
@@ -38,16 +38,16 @@
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: #e9f0ec;
+  background: var(--ui-soft, #e9f0ec);
   font-size: 12px;
 }
 .conversion-steps .is-current,
 .conversion-steps .is-complete {
-  color: #176c64;
+  color: var(--ui-ink, #176c64);
 }
 .conversion-steps .is-complete > span,
 .conversion-steps .is-current > span {
-  background: #dbeedb;
+  background: var(--ui-soft, #dbeedb);
 }
 .conversion-fields {
   display: flex;
@@ -60,14 +60,14 @@
   align-items: center;
   gap: 14px;
   padding: 18px;
-  border: 1px solid #dbe7e2;
+  border: 1px solid var(--ui-line, #dbe7e2);
   border-radius: 14px;
-  background: #f8fbf9;
+  background: var(--ui-surface, #f8fbf9);
   min-width: 0;
 }
 .conversion-selected-file > svg {
   flex: none;
-  color: #176c64;
+  color: var(--ui-ink, #176c64);
 }
 .conversion-selected-file > div {
   flex: 1;
@@ -84,7 +84,7 @@
   display: block;
   margin-top: 4px;
   font-size: 12px;
-  color: #6b8278;
+  color: var(--ui-muted, #6b8278);
 }
 .conversion-file-field > p {
   margin-bottom: 8px;
@@ -96,11 +96,11 @@
   align-items: center;
   min-height: 90px;
   padding: 18px;
-  border: 1px dashed #8dbbb0;
+  border: 1px dashed var(--ui-line, #8dbbb0);
   border-radius: 14px;
   cursor: pointer;
-  color: #176c64;
-  background: #f8fcf9;
+  color: var(--ui-ink, #176c64);
+  background: var(--ui-surface, #f8fcf9);
 }
 .conversion-file-picker > svg {
   flex: none;
@@ -109,17 +109,17 @@
   min-width: 0;
 }
 .conversion-file-picker:focus-within {
-  outline: 2px solid #176c64;
+  outline: 2px solid var(--ui-teal, #176c64);
   outline-offset: 3px;
 }
 .conversion-options {
-  border-top: 1px solid #e0e9e2;
-  border-bottom: 1px solid #e0e9e2;
+  border-top: 1px solid var(--ui-line, #e0e9e2);
+  border-bottom: 1px solid var(--ui-line, #e0e9e2);
 }
 .conversion-options > summary {
   cursor: pointer;
   padding: 15px 0;
-  color: #496e61;
+  color: var(--ui-muted, #496e61);
   font-size: 13px;
 }
 .conversion-options > summary ~ * {
@@ -128,7 +128,7 @@
 .conversion-text-link {
   text-decoration: underline;
   text-underline-offset: 3px;
-  color: #176c64;
+  color: var(--ui-ink, #176c64);
 }
 .conversion-submit {
   width: 100%;
@@ -147,14 +147,14 @@
 .conversion-privacy {
   text-align: center;
   font-size: 12px;
-  color: #74877e !important;
+  color: var(--ui-muted, #74877e) !important;
 }
 .conversion-unavailable {
   display: grid;
   gap: 12px;
   padding: 15px;
   border-radius: 12px;
-  background: #faf6e9;
+  background: var(--ui-amber-soft, #faf6e9);
   font-size: 13px;
 }
 .conversion-unavailable > button {
@@ -229,6 +229,6 @@
   width: 100%;
   min-width: 0;
   padding: 0.6rem;
-  border: 1px solid #ced5d8;
+  border: 1px solid var(--ui-line, #ced5d8);
   border-radius: 0.5rem;
 }

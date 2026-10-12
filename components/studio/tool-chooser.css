@@ -14,10 +14,10 @@
   min-height: 44px;
   max-width: 100%;
   padding: 8px 14px;
-  border: 1px solid #dce8df;
+  border: 1px solid var(--ui-line, #dce8df);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
-  color: #52705f;
+  background: var(--ui-surface, rgba(255, 255, 255, 0.7));
+  color: var(--ui-muted, #52705f);
   font:
     500 0.8125rem/1.4 'Manrope Variable',
     Arial,
@@ -26,18 +26,18 @@
 }
 
 .chooser-category:not(:disabled):not([aria-pressed='true']):hover {
-  border-color: #a8cbbc;
-  background: #edf5ef;
+  border-color: var(--ui-line, #a8cbbc);
+  background: var(--ui-surface, #edf5ef);
 }
 
 .chooser-category[aria-pressed='true'] {
-  border-color: #176c64;
+  border-color: var(--ui-teal, #176c64);
   background: #176c64;
   color: #fff;
 }
 
 .chooser-category:focus-visible {
-  outline: 2px solid #176c64;
+  outline: 2px solid var(--ui-teal, #176c64);
   outline-offset: 3px;
 }
 

@@ -1,21 +1,27 @@
+import { useLanguage } from '@/components/studio/appearance';
 import './legal-footer.css';
 import { APP_VERSION } from '@/lib/version';
 
 export function LegalFooter() {
+  const { t } = useLanguage();
   return (
     <footer className="moinpdf-legal-footer">
-      <nav aria-label="Informationen zu MoinPDF">
+      <nav aria-label={t('Informationen zu MoinPDF')}>
         <a href="/dokumentation.html" target="_blank" rel="noopener noreferrer">
-          Dokumentation<span className="sr-only"> (neuer Tab)</span>
+          {t('Dokumentation')}
+          <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
         <a href="/medienbereich.html" target="_blank" rel="noopener noreferrer">
-          Medienbereich<span className="sr-only"> (neuer Tab)</span>
+          {t('Medienbereich')}
+          <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
         <a href="/impressum.html" target="_blank" rel="noopener noreferrer">
-          Impressum<span className="sr-only"> (neuer Tab)</span>
+          {t('Impressum')}
+          <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
         <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">
-          Datenschutzerklärung<span className="sr-only"> (neuer Tab)</span>
+          {t('Datenschutzerklärung')}
+          <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
       </nav>
       <div className="moinpdf-footer-brand">

@@ -1,4 +1,6 @@
 'use client';
+import { useLanguage, useTools } from '@/components/studio/appearance';
+
 import './tool-chooser.css';
 import { useMemo, useState } from 'react';
 import { FileText, Plus, X, Trash2, LoaderCircle } from 'lucide-react';
@@ -15,8 +17,8 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { tools, groups, type WorkspaceTool } from '@/lib/tool-catalog';
-import { suggestTools } from '@/lib/tool-search';
+import { type WorkspaceTool } from '@/lib/tool-catalog';
+import { searchTools } from '@/lib/localized-search';
 import type { Source } from '@/lib/pdf-engine';
 
 type Props = {
@@ -42,39 +44,41 @@ export function ToolChooser({
   onRemove,
   onClear,
 }: Props) {
+  const { t } = useLanguage();
+  const { tools, groups } = useTools();
   const [query, setQuery] = useState('');
   const [activeGroup, setActiveGroup] = useState<number | null>(null);
   const suggestions = useMemo(
     () =>
-      suggestTools(query)
+      searchTools(query, tools)
         .filter((tool) => activeGroup === null || tool.group === activeGroup)
         .slice(0, 5),
-    [query, activeGroup],
+    [query, activeGroup, tools],
   );
   const visibleTools = useMemo(
     () => tools.filter((tool) => activeGroup === null || tool.group === activeGroup),
-    [activeGroup],
+    [activeGroup, tools],
   );
   return (
     <main className="tool-chooser">
       <header className="chooser-header">
         <span className="chooser-document-count">
           <FileText size={17} />
-          {sources.length} {sources.length === 1 ? 'Datei' : 'Dateien'}
+          {sources.length} {sources.length === 1 ? t('Datei') : t('Dateien')}
           <span>·</span>
-          {pageCount} {pageCount === 1 ? 'Seite' : 'Seiten'}
+          {pageCount} {pageCount === 1 ? t('Seite') : t('Seiten')}
         </span>
         <div className="chooser-file-actions">
           <Button variant="ghost" onClick={onAdd} disabled={locked}>
-            {loading ? <LoaderCircle size={17} className="spin" /> : <Plus size={17} />}Dateien
-            hinzufügen
+            {loading ? <LoaderCircle size={17} className="spin" /> : <Plus size={17} />}
+            {t('Dateien hinzufügen')}
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Arbeitsbereich leeren"
+                aria-label={t('Arbeitsbereich leeren')}
                 disabled={locked}
               >
                 <Trash2 size={17} />
@@ -82,22 +86,23 @@ export function ToolChooser({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Arbeitsbereich leeren?</AlertDialogTitle>
+                <AlertDialogTitle>{t('Arbeitsbereich leeren?')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Geöffnete Dokumente und Änderungen werden aus dieser Sitzung entfernt. Deine
-                  Originaldateien bleiben erhalten.
+                  {t(
+                    'Geöffnete Dokumente und Änderungen werden aus dieser Sitzung entfernt. Deine Originaldateien bleiben erhalten.',
+                  )}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Behalten</AlertDialogCancel>
-                <AlertDialogAction onClick={onClear}>Leeren</AlertDialogAction>
+                <AlertDialogCancel>{t('Behalten')}</AlertDialogCancel>
+                <AlertDialogAction onClick={onClear}>{t('Leeren')}</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
       </header>
       <section className="chooser-content" aria-labelledby="chooser-title">
-        <div className="chooser-files" aria-label="Geöffnete Dateien">
+        <div className="chooser-files" aria-label={t('Geöffnete Dateien')}>
           {sources.map((s) => (
             <span className="chooser-file" key={s.id}>
               <FileText size={13} />
@@ -112,90 +117,101 @@ export function ToolChooser({
             </span>
           ))}
         </div>
-        <h1 id="chooser-title">Was möchtest du tun?</h1>
-        <Command shouldFilter={false} className="intent-command" loop label="Werkzeugvorschläge">
-          <div className="intent-search">
-            <CommandInput
-              value={query}
-              onValueChange={setQuery}
-              placeholder="Zum Beispiel: PDF kleiner machen …"
-              aria-label="Was möchtest du tun?"
-              disabled={locked}
-            />
-            {query && (
-              <button
-                className="intent-clear"
-                onClick={() => setQuery('')}
-                aria-label="Suche leeren"
-              >
-                <X size={18} />
-              </button>
-            )}
-          </div>
-          <CommandList className={query.trim() ? 'intent-results' : 'intent-results is-empty'}>
-            {query.trim() && (
-              <>
-                <p className="intent-results-label" role="status">
-                  {suggestions.length ? 'Passende Werkzeuge' : 'Kein passender Vorschlag'}
-                </p>
-                {suggestions.length ? (
-                  suggestions.map((tool, i) => (
-                    <CommandItem
-                      key={tool.id}
-                      value={tool.id}
-                      onSelect={() => onChoose(tool.id)}
-                      disabled={locked}
-                      className="intent-result"
-                    >
-                      <span className={`intent-result-icon tone-${tool.group}`}>
-                        <tool.icon size={22} strokeWidth={1.6} />
-                      </span>
-                      <span>
-                        <strong>{tool.title}</strong>
-                        <small>{tool.description}</small>
-                      </span>
-                      {i === 0 && <kbd>↵</kbd>}
-                    </CommandItem>
-                  ))
-                ) : (
-                  <p className="intent-no-match">
-                    {activeGroup === null
-                      ? 'Versuche zum Beispiel „Text auslesen“, „zusammenfügen“ oder wähle unten ein Werkzeug.'
-                      : 'In dieser Kategorie gibt es keinen passenden Vorschlag. Wähle „Alle“, um in allen Werkzeugen zu suchen.'}
-                  </p>
-                )}
-              </>
-            )}
-          </CommandList>
-        </Command>
-        <div className="chooser-categories" role="group" aria-label="Werkzeugkategorien">
-          <button
-            type="button"
-            className="chooser-category"
-            aria-pressed={activeGroup === null}
-            aria-controls="chooser-all-tools"
-            disabled={locked}
-            onClick={() => setActiveGroup(null)}
+        <div className="chooser-search-dock">
+          <h1 id="chooser-title">{t('Was möchtest du tun?')}</h1>
+          <Command
+            shouldFilter={false}
+            className="intent-command"
+            loop
+            label={t('Werkzeugvorschläge')}
           >
-            Alle
-          </button>
-          {groups.map((label, group) => (
+            <div className="intent-search">
+              <CommandInput
+                value={query}
+                onValueChange={setQuery}
+                placeholder={t('Zum Beispiel: PDF kleiner machen …')}
+                aria-label={t('Was möchtest du tun?')}
+                disabled={locked}
+              />
+              {query && (
+                <button
+                  className="intent-clear"
+                  onClick={() => setQuery('')}
+                  aria-label={t('Suche leeren')}
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+            <CommandList className={query.trim() ? 'intent-results' : 'intent-results is-empty'}>
+              {query.trim() && (
+                <>
+                  <p className="intent-results-label" role="status">
+                    {suggestions.length ? t('Passende Werkzeuge') : t('Kein passender Vorschlag')}
+                  </p>
+                  {suggestions.length ? (
+                    suggestions.map((tool, i) => (
+                      <CommandItem
+                        key={tool.id}
+                        value={tool.id}
+                        onSelect={() => onChoose(tool.id)}
+                        disabled={locked}
+                        className="intent-result"
+                      >
+                        <span className={`intent-result-icon tone-${tool.group}`}>
+                          <tool.icon size={22} strokeWidth={1.6} />
+                        </span>
+                        <span>
+                          <strong>{tool.title}</strong>
+                          <small>{tool.description}</small>
+                        </span>
+                        {i === 0 && <kbd>↵</kbd>}
+                      </CommandItem>
+                    ))
+                  ) : (
+                    <p className="intent-no-match">
+                      {activeGroup === null
+                        ? t(
+                            'Versuche zum Beispiel „Text auslesen“, „zusammenfügen“ oder wähle unten ein Werkzeug.',
+                          )
+                        : t(
+                            'In dieser Kategorie gibt es keinen passenden Vorschlag. Wähle „Alle“, um in allen Werkzeugen zu suchen.',
+                          )}
+                    </p>
+                  )}
+                </>
+              )}
+            </CommandList>
+          </Command>
+          <div className="chooser-categories" role="group" aria-label={t('Werkzeugkategorien')}>
             <button
               type="button"
               className="chooser-category"
-              key={group}
-              title={label}
-              aria-pressed={activeGroup === group}
+              aria-pressed={activeGroup === null}
               aria-controls="chooser-all-tools"
               disabled={locked}
-              onClick={() => setActiveGroup(group)}
+              onClick={() => setActiveGroup(null)}
             >
-              {categoryNames[group] ?? label}
+              {t('Alle')}
             </button>
-          ))}
+            {groups.map((label, group) => (
+              <button
+                type="button"
+                className={`chooser-category category-${group}`}
+                key={group}
+                title={label}
+                aria-pressed={activeGroup === group}
+                aria-controls="chooser-all-tools"
+                disabled={locked}
+                onClick={() => setActiveGroup(group)}
+              >
+                {t(categoryNames[group] ?? label)}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="chooser-tools-heading" aria-live="polite" aria-atomic="true">
-          <h2>{activeGroup === null ? 'Alle Werkzeuge' : groups[activeGroup]}</h2>
+          <h2>{activeGroup === null ? t('Alle Werkzeuge') : groups[activeGroup]}</h2>
           <span>{visibleTools.length}</span>
         </div>
         <div className="chooser-all-tools" id="chooser-all-tools">
@@ -232,8 +248,8 @@ export function ToolChooser({
       {dragOver && (
         <div className="drop-overlay">
           <Plus size={60} strokeWidth={1} />
-          <strong>Dateien hinzufügen.</strong>
-          <span>Einfach hier loslassen.</span>
+          <strong>{t('Dateien hinzufügen.')}</strong>
+          <span>{t('Einfach hier loslassen.')}</span>
         </div>
       )}
     </main>
