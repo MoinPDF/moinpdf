@@ -51,14 +51,14 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             r.abort()
         else: r.continue_()
     page.route('**/*', route)
-    def choose(path):
-        page.goto(origin)
+    def choose(path, reload=True):
+        if reload: page.goto(origin)
         assert page.evaluate('crossOriginIsolated'), 'Office requires COOP/COEP'
         page.locator('input[type="file"]').first.set_input_files(str(path))
         expect(page.get_by_role('heading', name='Office zu PDF', exact=True)).to_be_visible()
-    def convert(path, suffix=''):
+    def convert(path, suffix='', reload=True):
         started = time.monotonic()
-        choose(path)
+        choose(path, reload)
         page.get_by_role('button', name='PDF erstellen', exact=True).click()
         link = page.get_by_role('link', name='PDF herunterladen', exact=True)
         expect(link.or_(page.get_by_role('alert'))).to_be_visible(timeout=240000)
@@ -89,11 +89,13 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             convert(root/'tests/fixtures/office'/name)
         choose(folder/'fixtures/rich.docx')
         page.get_by_role('button', name='PDF erstellen', exact=True).click()
+        # Cancel the actual running WASM worker, after asset preparation.
+        page.wait_for_function("window.__officeProgress.some(e => e.progress?.phase === 'compile')")
         page.get_by_role('button', name='Abbrechen', exact=True).click()
         expect(page.get_by_role('button', name='PDF erstellen', exact=True)).to_be_enabled()
         expect(page.get_by_role('link', name='PDF herunterladen', exact=True)).not_to_be_visible()
         cached_only = True
-        convert(folder/'fixtures/rich.xlsx', '-cached-after-abort')
+        convert(folder/'fixtures/rich.xlsx', '-cached-after-abort', reload=False)
         assert not uploads, uploads
         assert not external, external
         assert not errors, errors
