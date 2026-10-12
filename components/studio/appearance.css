@@ -168,6 +168,7 @@ body {
   font-size: 13px;
 }
 .language-menu .language-flag {
+  flex-basis: 23px;
   width: 23px;
   height: 16px;
 }
@@ -537,5 +538,11 @@ body {
 @media (min-width: 1031px) {
   .moinpdf-shell .studio-main {
     height: calc(100dvh - var(--project-bar-height));
+  }
+}
+
+@media (pointer: coarse) {
+  .appearance-controls {
+    gap: 10px;
   }
 }

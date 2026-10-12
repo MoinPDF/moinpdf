@@ -28,7 +28,7 @@ def check(page, name):
         const el = node.parentElement;
         if (!el || ['SCRIPT','STYLE','TEXTAREA'].includes(el.tagName)) continue;
         if (!el.getClientRects().length || getComputedStyle(el).visibility === 'hidden') continue;
-        if (el.closest('[data-sonner-toast]')) continue;
+        if (el.closest('[data-sonner-toast], .language-menu')) continue;
         values.push(node.textContent.trim().replace(/\\s+/g,' '));
       }
       for (const el of document.querySelectorAll('[title],[aria-label],[placeholder]')) {
@@ -58,11 +58,13 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.locator('.language-trigger').click()
         page.get_by_role('menuitemradio',name='English',exact=True).click()
         expect(page.locator('html')).to_have_attribute('lang','en')
+        expect(page.get_by_role('menuitemradio',name='English',exact=True)).not_to_be_visible()
         check(page,'home')
         assert page.locator('.theme-toggle').bounding_box()['width'] <= 36
         assert page.locator('.language-trigger').bounding_box()['height'] <= 36
         page.reload()
         expect(page.locator('html')).to_have_attribute('lang','en')
+        expect(page.get_by_role('menuitemradio',name='English',exact=True)).not_to_be_visible()
         pdf = Path(temporary)/'original-user-content.pdf'
         with pymupdf.open() as document:
             document.new_page().insert_text((50,60),'Benutzerinhalt bleibt unveraendert. ORIGINAL-123.')
@@ -126,6 +128,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         assert not errors, errors
         assert not misses, json.dumps(misses,ensure_ascii=False,indent=2)
     finally:
+        page.screenshot(path=str(out/'english-final-state.png'), full_page=True)
         (out/'english-verification.json').write_text(json.dumps({'completed':completed,'misses':misses,'errors':errors},ensure_ascii=False,indent=2))
         browser.close()
 print('PASS:', '; '.join(completed))

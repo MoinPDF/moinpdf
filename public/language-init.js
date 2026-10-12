@@ -9,9 +9,11 @@
   const path = window.location.pathname;
   const original = Object.keys(routes).find((key) => key === path || routes[key] === path);
   if (!original) return;
-  const apply = (language) => {
+  const apply = (language, fromStorage = false) => {
     const target = language === 'en' ? routes[original] : original;
-    if (target !== path) window.location.replace(target + window.location.search + window.location.hash);
+    const query = new URLSearchParams(window.location.search);
+    if (fromStorage && query.has('lang')) query.set('lang', language);
+    if (target !== path) window.location.replace(target + (query.size ? '?' + query : '') + window.location.hash);
   };
   let preference;
   try { preference = localStorage.getItem('moinpdf-language'); } catch { /* Storage is optional. */ }
@@ -19,6 +21,6 @@
   if (explicit === 'en' || explicit === 'de') apply(explicit);
   else if (path === original && preference === 'en') apply('en');
   window.addEventListener('storage', (event) => {
-    if (event.key === 'moinpdf-language' || event.key === null) apply(event.newValue === 'en' ? 'en' : 'de');
+    if (event.key === 'moinpdf-language' || event.key === null) apply(event.newValue === 'en' ? 'en' : 'de', true);
   });
 })();

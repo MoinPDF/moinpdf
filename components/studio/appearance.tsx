@@ -68,6 +68,11 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       }
       const explicit = new URLSearchParams(window.location.search).get('lang');
       if (initial && (explicit === 'de' || explicit === 'en')) preference = explicit;
+      if (!initial && explicit) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('lang', preference === 'en' ? 'en' : 'de');
+        window.history.replaceState(null, '', url);
+      }
       void applyLanguage(preference === 'en' ? 'en' : 'de');
     };
     read(true);
@@ -172,11 +177,12 @@ export function AppearanceControls() {
   const { language, setLanguage, loadingLanguage, t } = useLanguage();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
   useEffect(() => setMounted(true), []);
   const dark = mounted && resolvedTheme === 'dark';
   return (
     <div className="appearance-controls" role="group" aria-label={t('Darstellung und Sprache')}>
-      <DropdownMenu>
+      <DropdownMenu open={languageMenuOpen} onOpenChange={setLanguageMenuOpen}>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
@@ -198,7 +204,10 @@ export function AppearanceControls() {
           <DropdownMenuRadioGroup
             value={language}
             onValueChange={(value) => {
-              if (value === 'de' || value === 'en') setLanguage(value);
+              if (value === 'de' || value === 'en') {
+                setLanguageMenuOpen(false);
+                setLanguage(value);
+              }
             }}
           >
             {(['de', 'en'] as const).map((value) => (

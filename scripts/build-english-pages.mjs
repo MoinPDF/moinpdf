@@ -7,10 +7,10 @@ const routes = {
   '/impressum.html': '/en/legal.html',
   '/datenschutz.html': '/en/privacy.html',
 };
-const decode = (value) => value.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi, (all, entity) => {
+const decode = (value) => value.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbsp|shy);/gi, (all, entity) => {
   if (entity.startsWith('#x')) return String.fromCodePoint(parseInt(entity.slice(2), 16));
   if (entity.startsWith('#')) return String.fromCodePoint(Number(entity.slice(1)));
-  return { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }[entity.toLowerCase()] ?? all;
+  return { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', shy: '\u00ad' }[entity.toLowerCase()] ?? all;
 });
 const escape = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 const unresolved = new Set();
@@ -19,7 +19,7 @@ const text = (raw) => {
   if (!source) return raw;
   let translated = catalog[source];
   if (translated === undefined) {
-    if (!/^(?:MoinPDF(?:\s+v[\d.]+)?|\d+(?:[,.]\d+)?(?:\s*[x×/·%]|\s*(?:MB|KB|px|s))?|[A-Z\d./+×: –-]+|https?:\/\/|post@moinpdf\.de)/.test(source)) unresolved.add(source);
+    if (/\p{L}/u.test(source) && !/^MoinPDF(?:\s+v[\d.]+)?$/.test(source) && !/^[\d,.× ·]+(?:MB|KB|px|s)$/.test(source)) unresolved.add(source);
     return raw;
   }
   return (raw.match(/^\s*/)?.[0] ?? '') + escape(translated) + (raw.match(/\s*$/)?.[0] ?? '');

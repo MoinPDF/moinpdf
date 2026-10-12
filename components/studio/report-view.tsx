@@ -102,7 +102,11 @@ export function ReportView({ report }: { report: PdfReport }) {
                             ? '!'
                             : ''}
                     </span>
-                    <p>{line.kind === 'note' ? ui(line.text) : line.text}</p>
+                    <p>
+                      {line.kind === 'note' || report.title === 'PDF-Dokumentbericht'
+                        ? ui(line.text)
+                        : line.text}
+                    </p>
                   </div>
                 ))}
               </div>

@@ -2463,15 +2463,15 @@ function Studio() {
                         (key) => (
                           <div key={key}>
                             <b>
-                              {
+                              {ui(
                                 {
                                   Title: 'Titel',
                                   Author: 'Autor',
                                   Creator: 'Ersteller',
                                   Producer: 'PDF-Software',
                                   CreationDate: 'Erstellt',
-                                }[key]
-                              }
+                                }[key],
+                              )}
                             </b>
                             <span>{String(metadata[key] || '—')}</span>
                           </div>
