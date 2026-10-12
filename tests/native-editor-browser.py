@@ -88,7 +88,7 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
             actual=document[0].get_text()
             assert 'ERNEUT BEARBEITET' in actual and 'किताब' not in actual, actual
         open_tool(nested_path)
-        page.get_by_role('button', name='Objekte laden', exact=True).click()
+        page.get_by_role('button', name='Seitenobjekte laden', exact=True).click()
         for _ in range(10):
             chooser=page.get_by_label('Objekt auswählen', exact=True)
             options=chooser.locator('option').evaluate_all('(nodes)=>nodes.map(n=>({value:n.value,text:n.textContent}))')
