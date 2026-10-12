@@ -69,6 +69,7 @@ export function XfaDataPanel({
           <label className="advanced-field" key={f.id}>
             <span>{f.label}</span>
             <textarea
+              aria-label={f.label}
               value={values[f.id]}
               maxLength={20000}
               onChange={(e) => {
