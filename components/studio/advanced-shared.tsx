@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { PagePreview } from './canvas';
@@ -11,12 +14,15 @@ export type PanelProps = {
   busy: boolean;
   run: (job: (ctx: RunContext) => Promise<ExportFile | void>) => Promise<void>;
 };
-export const Field = ({ label, children }: { label: string; children: ReactNode }) => (
-  <label className="advanced-field">
-    <span>{label}</span>
-    {children}
-  </label>
-);
+export const Field = ({ label, children }: { label: string; children: ReactNode }) => {
+  useLanguage();
+  return (
+    <label className="advanced-field">
+      <span>{ui(label)}</span>
+      {children}
+    </label>
+  );
+};
 export const Text = ({
   label,
   value,
@@ -31,18 +37,21 @@ export const Text = ({
   type?: string;
   placeholder?: string;
   disabled?: boolean;
-}) => (
-  <Field label={label}>
-    <input
-      aria-label={label}
-      type={type}
-      value={value}
-      placeholder={placeholder}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  </Field>
-);
+}) => {
+  useLanguage();
+  return (
+    <Field label={ui(label)}>
+      <input
+        aria-label={ui(label)}
+        type={type}
+        value={value}
+        placeholder={ui(placeholder)}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </Field>
+  );
+};
 export const NumberField = ({
   label,
   value,
@@ -57,19 +66,22 @@ export const NumberField = ({
   min?: number;
   max?: number;
   step?: number;
-}) => (
-  <Field label={label}>
-    <input
-      aria-label={label}
-      type="number"
-      min={min}
-      max={max}
-      step={step}
-      value={value}
-      onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value))))}
-    />
-  </Field>
-);
+}) => {
+  useLanguage();
+  return (
+    <Field label={ui(label)}>
+      <input
+        aria-label={ui(label)}
+        type="number"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Math.max(min, Math.min(max, Number(e.target.value))))}
+      />
+    </Field>
+  );
+};
 export const Choice = ({
   label,
   value,
@@ -80,17 +92,20 @@ export const Choice = ({
   value: string;
   onChange: (v: string) => void;
   items: [string, string][];
-}) => (
-  <Field label={label}>
-    <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
-      {items.map(([v, text]) => (
-        <option key={v} value={v}>
-          {text}
-        </option>
-      ))}
-    </select>
-  </Field>
-);
+}) => {
+  useLanguage();
+  return (
+    <Field label={ui(label)}>
+      <select aria-label={ui(label)} value={value} onChange={(e) => onChange(e.target.value)}>
+        {items.map(([v, text]) => (
+          <option key={v} value={v}>
+            {ui(text)}
+          </option>
+        ))}
+      </select>
+    </Field>
+  );
+};
 export const Tick = ({
   label,
   value,
@@ -99,12 +114,15 @@ export const Tick = ({
   label: string;
   value: boolean;
   onChange: (v: boolean) => void;
-}) => (
-  <label className="advanced-tick">
-    <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
-    <span>{label}</span>
-  </label>
-);
+}) => {
+  useLanguage();
+  return (
+    <label className="advanced-tick">
+      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
+      <span>{ui(label)}</span>
+    </label>
+  );
+};
 export function PageSelect({
   source,
   page,
@@ -114,9 +132,10 @@ export function PageSelect({
   page: number;
   onChange: (n: number) => void;
 }) {
+  useLanguage();
   return (
     <Choice
-      label="Seite"
+      label={ui('Seite')}
       value={String(page)}
       onChange={(v) => onChange(Number(v))}
       items={Array.from({ length: source.pdf.numPages }, (_, i) => [String(i), `Seite ${i + 1}`])}
@@ -124,6 +143,7 @@ export function PageSelect({
   );
 }
 export function RectFields({ rect, onChange }: { rect: Rect; onChange: (r: Rect) => void }) {
+  useLanguage();
   return (
     <div className="advanced-coordinates">
       {(['x', 'y', 'w', 'h'] as const).map((key, i) => (
@@ -152,6 +172,7 @@ export function PageStage({
   onRect?: (r: Rect) => void;
   children?: ReactNode;
 }) {
+  useLanguage();
   const [aspect, setAspect] = useState('595 / 842');
   useEffect(() => {
     let active = true;
@@ -234,13 +255,15 @@ export function PageStage({
               height: r.h * 100 + '%',
             }}
           >
-            {'label' in r && typeof r.label === 'string' ? r.label : null}
+            {'label' in r && typeof r.label === 'string' ? ui(r.label) : null}
           </span>
         ))}
         {children}
       </div>
       {onRect && (
-        <p className="fine-note">Bereich auf der Seite aufziehen oder die Prozentwerte anpassen.</p>
+        <p className="fine-note">
+          {ui('Bereich auf der Seite aufziehen oder die Prozentwerte anpassen.')}
+        </p>
       )}
     </div>
   );
@@ -252,6 +275,7 @@ export function EditTable({
   rows: string[][];
   onChange: (r: string[][]) => void;
 }) {
+  useLanguage();
   const columns = Math.max(1, ...rows.map((r) => r.length));
   return (
     <div className="advanced-table-wrap">
@@ -263,7 +287,7 @@ export function EditTable({
               {Array.from({ length: columns }, (_, x) => (
                 <td key={x}>
                   <input
-                    aria-label={`Zeile ${y + 1}, Spalte ${x + 1}`}
+                    aria-label={ui(`Zeile ${y + 1}, Spalte ${x + 1}`)}
                     value={row[x] || ''}
                     onChange={(e) =>
                       onChange(
@@ -283,7 +307,7 @@ export function EditTable({
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label={`Zeile ${y + 1} löschen`}
+                  aria-label={ui(`Zeile ${y + 1} löschen`)}
                   onClick={() => onChange(rows.filter((_, i) => i !== y))}
                 >
                   ×

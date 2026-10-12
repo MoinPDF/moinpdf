@@ -6,11 +6,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { ThemeProvider, useTheme } from 'next-themes';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, LoaderCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,42 +20,75 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { type Language, translate } from '@/lib/ui-language';
+import { type Language, translate, loadEnglishCatalog, setUiLanguage } from '@/lib/ui-language';
+import { APP_VERSION } from '@/lib/version';
 import { tools, groups, type ToolDefinition } from '@/lib/tool-catalog';
 import { englishTools } from '@/lib/tool-translations';
 
 const LanguageContext = createContext({
   language: 'de' as Language,
   setLanguage: (_: Language) => {},
+  loadingLanguage: false,
 });
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [language, updateLanguage] = useState<Language>('de');
+  const [loadingLanguage, setLoadingLanguage] = useState(false);
+  const languageRequest = useRef(0);
+  const applyLanguage = useCallback(async (value: Language, persist = false) => {
+    const request = ++languageRequest.current;
+    setLoadingLanguage(true);
+    try {
+      if (value === 'en') await loadEnglishCatalog(APP_VERSION);
+      if (request !== languageRequest.current) return;
+      toast.dismiss();
+      setUiLanguage(value);
+      updateLanguage(value);
+      if (persist) {
+        try {
+          localStorage.setItem('moinpdf-language', value);
+        } catch {
+          /* Persistence is optional. */
+        }
+      }
+    } catch {
+      if (request === languageRequest.current)
+        toast.error('English language files could not be loaded. Please try again.');
+    } finally {
+      if (request === languageRequest.current) setLoadingLanguage(false);
+    }
+  }, []);
   useEffect(() => {
-    const read = () => {
+    const read = (initial = false) => {
+      let preference = 'de';
       try {
-        updateLanguage(localStorage.getItem('moinpdf-language') === 'en' ? 'en' : 'de');
+        preference = localStorage.getItem('moinpdf-language') ?? 'de';
       } catch {
         /* Storage is optional. */
       }
+      const explicit = new URLSearchParams(window.location.search).get('lang');
+      if (initial && (explicit === 'de' || explicit === 'en')) preference = explicit;
+      void applyLanguage(preference === 'en' ? 'en' : 'de');
     };
-    read();
+    read(true);
     const sync = (event: StorageEvent) => {
       if (event.key === 'moinpdf-language' || event.key === null) read();
     };
     window.addEventListener('storage', sync);
     return () => window.removeEventListener('storage', sync);
-  }, []);
+  }, [applyLanguage]);
   useEffect(() => {
     document.documentElement.lang = language;
+    document.title =
+      language === 'en' ? 'MoinPDF – Paperwork. Sorted.' : 'MoinPDF – Papierkram. Läuft.';
   }, [language]);
   const setLanguage = (value: Language) => {
-    updateLanguage(value);
-    try {
-      localStorage.setItem('moinpdf-language', value);
-    } catch {
-      /* Continue without persistence. */
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('lang')) {
+      url.searchParams.set('lang', value);
+      window.history.replaceState(null, '', url);
     }
+    void applyLanguage(value, true);
   };
   return (
     <ThemeProvider
@@ -63,7 +98,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       storageKey="moinpdf-theme"
       disableTransitionOnChange
     >
-      <LanguageContext.Provider value={{ language, setLanguage }}>
+      <LanguageContext.Provider value={{ language, setLanguage, loadingLanguage }}>
         {children}
       </LanguageContext.Provider>
     </ThemeProvider>
@@ -134,7 +169,7 @@ export function Lighthouse({ lit }: { lit: boolean }) {
 }
 
 export function AppearanceControls() {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, loadingLanguage, t } = useLanguage();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -147,10 +182,16 @@ export function AppearanceControls() {
             type="button"
             className="appearance-button language-trigger"
             aria-label={t('Sprache auswählen')}
+            aria-busy={loadingLanguage}
+            disabled={loadingLanguage}
           >
             <CountryFlag language={language} />
             <span>{language.toUpperCase()}</span>
-            <ChevronDown size={15} />
+            {loadingLanguage ? (
+              <LoaderCircle className="spin" size={12} />
+            ) : (
+              <ChevronDown size={12} />
+            )}
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="language-menu">

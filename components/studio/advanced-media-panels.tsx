@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { renderPage, sourcePages, selectRange } from '@/lib/pdf-engine';
@@ -34,15 +37,16 @@ function ScanControls({
   settings: ScanSettings;
   onChange: (v: ScanSettings) => void;
 }) {
+  useLanguage();
   return (
     <>
       <Tick
-        label="Schieflage automatisch korrigieren (bis 6°)"
+        label={ui('Schieflage automatisch korrigieren (bis 6°)')}
         value={settings.autoDeskew}
         onChange={(v) => onChange({ ...settings, autoDeskew: v })}
       />
       <NumberField
-        label="Zusätzliche Drehung (°)"
+        label={ui('Zusätzliche Drehung (°)')}
         value={settings.angle}
         min={-15}
         max={15}
@@ -50,21 +54,21 @@ function ScanControls({
         onChange={(v) => onChange({ ...settings, angle: v })}
       />
       <NumberField
-        label="Kontrast (%)"
+        label={ui('Kontrast (%)')}
         value={settings.contrast}
         min={-50}
         max={150}
         onChange={(v) => onChange({ ...settings, contrast: v })}
       />
       <NumberField
-        label="Helligkeit (%)"
+        label={ui('Helligkeit (%)')}
         value={settings.brightness}
         min={-50}
         max={50}
         onChange={(v) => onChange({ ...settings, brightness: v })}
       />
       <NumberField
-        label="Hintergrund aufhellen ab Grauwert (255 = aus)"
+        label={ui('Hintergrund aufhellen ab Grauwert (255 = aus)')}
         value={settings.cleanup}
         min={180}
         max={255}
@@ -74,6 +78,7 @@ function ScanControls({
   );
 }
 export function EnhancePanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [settings, setSettings] = useState(scanDefaults),
     [page, setPage] = useState(0),
     [preview, setPreview] = useState(''),
@@ -97,8 +102,9 @@ export function EnhancePanel({ source, busy, run }: PanelProps) {
           }}
         />
         <p className="fine-note">
-          Hintergrundbereinigung kann helle Inhalte entfernen. Automatische Schieflagenkorrektur
-          arbeitet am besten bei Textscans. Die Ausgabe besteht aus neuen Seitenbildern.
+          {ui(
+            'Hintergrundbereinigung kann helle Inhalte entfernen. Automatische Schieflagenkorrektur arbeitet am besten bei Textscans. Die Ausgabe besteht aus neuen Seitenbildern.',
+          )}
         </p>
         <Button
           variant="outline"
@@ -121,17 +127,20 @@ export function EnhancePanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Vorschau berechnen
+          {ui('Vorschau berechnen')}
         </Button>
         <Button disabled={busy} onClick={() => run((c) => enhancePdf(source, settings, c))}>
-          Alle Seiten verbessern
+          {ui('Alle Seiten verbessern')}
         </Button>
       </section>
       <section>
         {preview ? (
           <div className="advanced-image-preview">
-            <img src={preview} alt="Vorschau des verbesserten Scans" />
-            <p>Korrekturwinkel: {angle.toFixed(2)}°</p>
+            <img src={preview} alt={ui('Vorschau des verbesserten Scans')} />
+            <p>
+              {ui('Korrekturwinkel: ')}
+              {angle.toFixed(2)}°
+            </p>
           </div>
         ) : (
           <PageStage source={source} page={page} />
@@ -141,32 +150,36 @@ export function EnhancePanel({ source, busy, run }: PanelProps) {
   );
 }
 export function ComparePanel({ source, sources, busy, run }: PanelProps) {
+  useLanguage();
   const others = sources.filter((s) => s.id !== source.id),
     [second, setSecond] = useState(others[0]?.id || ''),
     [tolerance, setTolerance] = useState(30);
   return (
     <div className="advanced-grid">
       <section className="advanced-card">
-        <h2>Änderungen im Seitenbild erkennen</h2>
-        <p>Erste Datei: {source.name}</p>
+        <h2>{ui('Änderungen im Seitenbild erkennen')}</h2>
+        <p>
+          {ui('Erste Datei: ')}
+          {source.name}
+        </p>
         <Choice
-          label="Zweite Datei"
+          label={ui('Zweite Datei')}
           value={second || others[0]?.id || ''}
           onChange={setSecond}
           items={others.map((s) => [s.id, s.name])}
         />
         <NumberField
-          label="Farbtoleranz (0–255)"
+          label={ui('Farbtoleranz (0–255)')}
           value={tolerance}
           max={255}
           onChange={setTolerance}
         />
         <p className="fine-note">
-          Die Seiten werden maßstabsgleich links oben ausgerichtet. Rot markiert dunklere Inhalte
-          der ersten Datei, Türkis die der zweiten. Verschiebungen und Scanrauschen erscheinen
-          ebenfalls als Unterschiede.
+          {ui(
+            'Die Seiten werden maßstabsgleich links oben ausgerichtet. Rot markiert dunklere Inhalte der ersten Datei, Türkis die der zweiten. Verschiebungen und Scanrauschen erscheinen ebenfalls als Unterschiede.',
+          )}
         </p>
-        {!others.length && <p>Bitte über „Dateien hinzufügen“ eine zweite PDF öffnen.</p>}
+        {!others.length && <p>{ui('Bitte über „Dateien hinzufügen“ eine zweite PDF öffnen.')}</p>}
         <Button
           disabled={busy || !others.length}
           onClick={() =>
@@ -177,7 +190,7 @@ export function ComparePanel({ source, sources, busy, run }: PanelProps) {
             })
           }
         >
-          Visuellen Vergleich erstellen
+          {ui('Visuellen Vergleich erstellen')}
         </Button>
       </section>
       <PageStage source={source} />
@@ -185,6 +198,7 @@ export function ComparePanel({ source, sources, busy, run }: PanelProps) {
   );
 }
 export function BarcodePanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [mode, setMode] = useState('create'),
     [format, setFormat] = useState<'qrcode' | 'code128' | 'ean13'>('qrcode'),
     [text, setText] = useState('https://'),
@@ -199,7 +213,7 @@ export function BarcodePanel({ source, busy, run }: PanelProps) {
     <div className="advanced-grid">
       <section className="advanced-card">
         <Choice
-          label="Aktion"
+          label={ui('Aktion')}
           value={mode}
           onChange={setMode}
           items={[
@@ -210,7 +224,7 @@ export function BarcodePanel({ source, busy, run }: PanelProps) {
         {mode === 'create' ? (
           <>
             <Choice
-              label="Codeformat"
+              label={ui('Codeformat')}
               value={format}
               onChange={(v) => {
                 setFormat(v as typeof format);
@@ -223,19 +237,23 @@ export function BarcodePanel({ source, busy, run }: PanelProps) {
               ]}
             />
             <Text
-              label="Inhalt"
+              label={ui('Inhalt')}
               value={text}
               onChange={(v) => {
                 setText(v);
                 setPreview('');
               }}
             />
-            <Text label="Seiten (z. B. 1, 3–5; leer = alle)" value={range} onChange={setRange} />
+            <Text
+              label={ui('Seiten (z. B. 1, 3–5; leer = alle)')}
+              value={range}
+              onChange={setRange}
+            />
             <div className="advanced-coordinates">
-              <NumberField label="Links (%)" value={x} max={95} onChange={setX} />
-              <NumberField label="Oben (%)" value={y} max={95} onChange={setY} />
+              <NumberField label={ui('Links (%)')} value={x} max={95} onChange={setX} />
+              <NumberField label={ui('Oben (%)')} value={y} max={95} onChange={setY} />
               <NumberField
-                label="Breite (%)"
+                label={ui('Breite (%)')}
                 value={width}
                 min={2}
                 max={100 - x}
@@ -253,7 +271,7 @@ export function BarcodePanel({ source, busy, run }: PanelProps) {
                 })
               }
             >
-              Code anzeigen
+              {ui('Code anzeigen')}
             </Button>
             <Button
               disabled={busy}
@@ -270,14 +288,15 @@ export function BarcodePanel({ source, busy, run }: PanelProps) {
                 )
               }
             >
-              Code in PDF einfügen
+              {ui('Code in PDF einfügen')}
             </Button>
           </>
         ) : (
           <>
             <p className="fine-note">
-              Liest verbreitete QR- und Barcodeformate, bis zu zehn Codes pro Seite. Kleine,
-              verdeckte oder gedrehte Codes können unerkannt bleiben.
+              {ui(
+                'Liest verbreitete QR- und Barcodeformate, bis zu zehn Codes pro Seite. Kleine, verdeckte oder gedrehte Codes können unerkannt bleiben.',
+              )}
             </p>
             <Button
               disabled={busy}
@@ -297,13 +316,18 @@ export function BarcodePanel({ source, busy, run }: PanelProps) {
                 })
               }
             >
-              Alle Seiten auslesen
+              {ui('Alle Seiten auslesen')}
             </Button>
-            {scanned && <p role="status">{codes.length} Codes gefunden</p>}
+            {scanned && (
+              <p role="status">
+                {codes.length} {ui(' Codes gefunden')}
+              </p>
+            )}
             {codes.map((code, i) => (
               <div className="advanced-list-row" key={i}>
                 <strong>
-                  Seite {code.page} · {code.format}
+                  {ui('Seite ')}
+                  {code.page} · {code.format}
                 </strong>
                 <code className="code-result">{code.text}</code>
               </div>
@@ -328,7 +352,7 @@ export function BarcodePanel({ source, busy, run }: PanelProps) {
                   }))
                 }
               >
-                Ergebnisse als CSV
+                {ui('Ergebnisse als CSV')}
               </Button>
             )}
           </>
@@ -337,7 +361,7 @@ export function BarcodePanel({ source, busy, run }: PanelProps) {
       <section>
         {preview && mode === 'create' ? (
           <div className="advanced-code-preview">
-            <img src={preview} alt="Vorschau des erzeugten Codes" />
+            <img src={preview} alt={ui('Vorschau des erzeugten Codes')} />
           </div>
         ) : (
           <PageStage source={source} />
@@ -353,6 +377,7 @@ const initialCorners: Point[] = [
   { x: 0.03, y: 0.97 },
 ];
 export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
+  useLanguage();
   const [photo, setPhoto] = useState(''),
     [corners, setCorners] = useState(initialCorners),
     [settings, setSettings] = useState({ ...scanDefaults, autoDeskew: false }),
@@ -382,10 +407,11 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
     <>
       <div className="advanced-grid">
         <section className="advanced-card">
-          <h2>Aus Fotos werden Dokumente</h2>
+          <h2>{ui('Aus Fotos werden Dokumente')}</h2>
           <p>
-            Auf dem Smartphone öffnet die Fotoauswahl bei unterstützten Browsern die Kamera. Auf dem
-            Computer lassen sich vorhandene Fotos auswählen.
+            {ui(
+              'Auf dem Smartphone öffnet die Fotoauswahl bei unterstützten Browsern die Kamera. Auf dem Computer lassen sich vorhandene Fotos auswählen.',
+            )}
           </p>
           <input
             ref={input}
@@ -393,7 +419,7 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
             accept="image/jpeg,image/png,image/webp"
             capture="environment"
             className="sr-only"
-            aria-label="Kamerafoto auswählen"
+            aria-label={ui('Kamerafoto auswählen')}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = '';
@@ -421,19 +447,20 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
             }}
           />
           <Button disabled={busy} onClick={() => input.current?.click()}>
-            Foto aufnehmen oder auswählen
+            {ui('Foto aufnehmen oder auswählen')}
           </Button>
           {photo && (
             <>
-              <h3>Ausschnitt und Perspektive</h3>
+              <h3>{ui('Ausschnitt und Perspektive')}</h3>
               <p className="fine-note">
-                Die vier Ecken am Dokument ausrichten. Reihenfolge: links oben, rechts oben, rechts
-                unten, links unten.
+                {ui(
+                  'Die vier Ecken am Dokument ausrichten. Reihenfolge: links oben, rechts oben, rechts unten, links unten.',
+                )}
               </p>
               {corners.map((p, i) => (
                 <div className="advanced-coordinates" key={i}>
                   <NumberField
-                    label={`${i + 1} · X (%)`}
+                    label={ui(`${i + 1} · X (%)`)}
                     value={Math.round(p.x * 100)}
                     onChange={(v) => {
                       setCorners(corners.map((c, n) => (n === i ? { ...c, x: v / 100 } : c)));
@@ -441,7 +468,7 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
                     }}
                   />
                   <NumberField
-                    label={`${i + 1} · Y (%)`}
+                    label={ui(`${i + 1} · Y (%)`)}
                     value={Math.round(p.y * 100)}
                     onChange={(v) => {
                       setCorners(corners.map((c, n) => (n === i ? { ...c, y: v / 100 } : c)));
@@ -451,7 +478,7 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
                 </div>
               ))}
               <details>
-                <summary>Scan verbessern</summary>
+                <summary>{ui('Scan verbessern')}</summary>
                 <ScanControls
                   settings={settings}
                   onChange={(v) => {
@@ -466,7 +493,7 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
                   disabled={busy}
                   onClick={() => run(async () => setPreview(process()))}
                 >
-                  Ausschnitt prüfen
+                  {ui('Ausschnitt prüfen')}
                 </Button>
                 <Button
                   disabled={busy || images.length >= 50}
@@ -485,7 +512,7 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
                     })
                   }
                 >
-                  Als Seite hinzufügen
+                  {ui('Als Seite hinzufügen')}
                 </Button>
               </div>
             </>
@@ -510,14 +537,14 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
                 onPointerUp={() => setDrag(-1)}
                 onPointerCancel={() => setDrag(-1)}
               >
-                <img src={photo} alt="Foto mit vier einstellbaren Dokumentecken" />
+                <img src={photo} alt={ui('Foto mit vier einstellbaren Dokumentecken')} />
                 <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                   <polygon points={corners.map((p) => `${p.x * 100},${p.y * 100}`).join(' ')} />
                 </svg>
                 {corners.map((p, i) => (
                   <button
                     key={i}
-                    aria-label={`Ecke ${i + 1} verschieben`}
+                    aria-label={ui(`Ecke ${i + 1} verschieben`)}
                     style={{ left: p.x * 100 + '%', top: p.y * 100 + '%' }}
                     onPointerDown={(e) => {
                       e.preventDefault();
@@ -531,29 +558,37 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
               </div>
               {preview && (
                 <div className="advanced-image-preview">
-                  <h3>Entzerrte Vorschau</h3>
-                  <img src={preview} alt="Perspektivisch korrigierter Ausschnitt" />
+                  <h3>{ui('Entzerrte Vorschau')}</h3>
+                  <img src={preview} alt={ui('Perspektivisch korrigierter Ausschnitt')} />
                 </div>
               )}
             </>
           ) : (
-            <div className="advanced-empty">Foto auswählen, Ecken setzen, Seiten sammeln.</div>
+            <div className="advanced-empty">
+              {ui('Foto auswählen, Ecken setzen, Seiten sammeln.')}
+            </div>
           )}
         </section>
       </div>
       {!!images.length && (
         <section className="advanced-card">
-          <h2>Gesammelte Seiten · {images.length}/50</h2>
+          <h2>
+            {ui('Gesammelte Seiten · ')}
+            {images.length}/50
+          </h2>
           <div className="camera-pages">
             {images.map((img, i) => (
               <div key={i}>
-                <img src={img} alt={`Gesammelte Seite ${i + 1}`} />
-                <span>Seite {i + 1}</span>
+                <img src={img} alt={ui(`Gesammelte Seite ${i + 1}`)} />
+                <span>
+                  {ui('Seite ')}
+                  {i + 1}
+                </span>
                 <div>
                   <Button
                     size="sm"
                     variant="ghost"
-                    aria-label={`Seite ${i + 1} nach vorne`}
+                    aria-label={ui(`Seite ${i + 1} nach vorne`)}
                     disabled={i === 0}
                     onClick={() => {
                       const next = [...images];
@@ -566,17 +601,17 @@ export function CameraPanel({ busy, run }: Pick<PanelProps, 'busy' | 'run'>) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    aria-label={`Seite ${i + 1} entfernen`}
+                    aria-label={ui(`Seite ${i + 1} entfernen`)}
                     onClick={() => setImages(images.filter((_, n) => n !== i))}
                   >
-                    Entfernen
+                    {ui('Entfernen')}
                   </Button>
                 </div>
               </div>
             ))}
           </div>
           <Button disabled={busy} onClick={() => run((c) => photosPdf(images, c))}>
-            Gesammelte Seiten als PDF erstellen
+            {ui('Gesammelte Seiten als PDF erstellen')}
           </Button>
         </section>
       )}

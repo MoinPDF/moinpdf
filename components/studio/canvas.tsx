@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { LoaderCircle, PenLine, Trash2 } from 'lucide-react';
 import { MarkLayers } from './editor-canvas';
@@ -18,6 +21,7 @@ export function PagePreview({
   page: PageItem;
   small?: boolean;
 }) {
+  useLanguage();
   const [image, setImage] = useState(''),
     [error, setError] = useState(false);
   const holder = useRef<HTMLDivElement>(null);
@@ -70,11 +74,11 @@ export function PagePreview({
       {image ? (
         <img
           src={image}
-          alt={`${source.name}, Originalseite ${page.index + 1}`}
+          alt={ui(`${source.name}, Originalseite ${page.index + 1}`)}
           draggable={false}
         />
       ) : error ? (
-        <span>Vorschau nicht verfügbar</span>
+        <span>{ui('Vorschau nicht verfügbar')}</span>
       ) : (
         <LoaderCircle className="spin" size={21} />
       )}
@@ -106,6 +110,7 @@ export function PageCanvas({
   onCrop: (rect: Rect) => void;
   disabled: boolean;
 }) {
+  useLanguage();
   const [url, setUrl] = useState(''),
     [dims, setDims] = useState({ width: 595.28, height: 841.89 }),
     [draft, setDraft] = useState<Rect | null>(null),
@@ -219,14 +224,14 @@ export function PageCanvas({
           start.current = null;
           setDraft(null);
         }}
-        aria-label="Dokumentfläche"
+        aria-label={ui('Dokumentfläche')}
         role="region"
       >
         {url ? (
-          <img src={url} alt={`${source.name}, Seite ${page.index + 1}`} draggable={false} />
+          <img src={url} alt={ui(`${source.name}, Seite ${page.index + 1}`)} draggable={false} />
         ) : (
           <div className="canvas-loading">
-            {error ? 'Vorschau nicht verfügbar' : <LoaderCircle className="spin" />}
+            {error ? ui('Vorschau nicht verfügbar') : <LoaderCircle className="spin" />}
           </div>
         )}
         <MarkLayers marks={marks} width={displayWidth} />
@@ -240,7 +245,7 @@ export function PageCanvas({
               height: `${crop.h * 100}%`,
             }}
           >
-            <span>AUSSCHNITT</span>
+            <span>{ui('AUSSCHNITT')}</span>
           </div>
         )}
         {draft && (
@@ -259,6 +264,7 @@ export function PageCanvas({
   );
 }
 export function SignaturePad({ onSave }: { onSave: (signature: Signature) => void }) {
+  useLanguage();
   const canvas = useRef<HTMLCanvasElement>(null),
     drawing = useRef(false),
     [hasInk, setHasInk] = useState(false);
@@ -315,7 +321,7 @@ export function SignaturePad({ onSave }: { onSave: (signature: Signature) => voi
           ref={canvas}
           width={700}
           height={240}
-          aria-label="Unterschrift mit Maus oder Finger zeichnen"
+          aria-label={ui('Unterschrift mit Maus oder Finger zeichnen')}
           onPointerDown={(e) => {
             const p = point(e),
               ctx = e.currentTarget.getContext('2d')!;
@@ -344,21 +350,22 @@ export function SignaturePad({ onSave }: { onSave: (signature: Signature) => voi
             drawing.current = false;
           }}
         />
-        {!hasInk && <span>Hier unterschreiben</span>}
+        {!hasInk && <span>{ui('Hier unterschreiben')}</span>}
       </div>
       <div className="signature-actions">
         <Button variant="ghost" onClick={clear}>
           <Trash2 size={16} />
-          Leeren
+          {ui('Leeren')}
         </Button>
         <Button onClick={save} disabled={!hasInk}>
           <PenLine size={16} />
-          Unterschrift übernehmen
+          {ui('Unterschrift übernehmen')}
         </Button>
       </div>
       <p>
-        Die Unterschrift wird als Bild eingefügt. Es wird keine digitale Zertifikatssignatur
-        erstellt.
+        {ui(
+          'Die Unterschrift wird als Bild eingefügt. Es wird keine digitale Zertifikatssignatur erstellt.',
+        )}
       </p>
     </div>
   );

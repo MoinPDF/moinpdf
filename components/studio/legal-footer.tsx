@@ -1,25 +1,42 @@
+import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 import './legal-footer.css';
 import { APP_VERSION } from '@/lib/version';
 
 export function LegalFooter() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   return (
     <footer className="moinpdf-legal-footer">
       <nav aria-label={t('Informationen zu MoinPDF')}>
-        <a href="/dokumentation.html" target="_blank" rel="noopener noreferrer">
+        <a
+          href={language === 'en' ? '/en/documentation.html' : '/dokumentation.html'}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {t('Dokumentation')}
           <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
-        <a href="/medienbereich.html" target="_blank" rel="noopener noreferrer">
+        <a
+          href={language === 'en' ? '/en/media.html' : '/medienbereich.html'}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {t('Medienbereich')}
           <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
-        <a href="/impressum.html" target="_blank" rel="noopener noreferrer">
+        <a
+          href={language === 'en' ? '/en/legal.html' : '/impressum.html'}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {t('Impressum')}
           <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
-        <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">
+        <a
+          href={language === 'en' ? '/en/privacy.html' : '/datenschutz.html'}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {t('Datenschutzerklärung')}
           <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
@@ -33,8 +50,9 @@ export function LegalFooter() {
           alt=""
           decoding="async"
         />
-        <span className="moinpdf-version" aria-label={`MoinPDF Version ${APP_VERSION}`}>
-          MoinPDF <span>v{APP_VERSION}</span>
+        <span className="moinpdf-version" aria-label={ui(`MoinPDF Version ${APP_VERSION}`)}>
+          {ui('MoinPDF ')}
+          <span>v{APP_VERSION}</span>
         </span>
       </div>
     </footer>

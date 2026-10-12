@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PagePreview } from './canvas';
@@ -61,6 +64,7 @@ import {
 type Props = PanelProps & { invalidate: () => void };
 
 export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
+  useLanguage();
   const [responses, setResponses] = useState<FormResponse[]>([]),
     [selected, setSelected] = useState(''),
     [layout, setLayout] = useState<'matrix' | 'details'>('matrix'),
@@ -80,14 +84,17 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Ausgefüllte Formulare zusammenfassen</h2>
+        <h2>{ui('Ausgefüllte Formulare zusammenfassen')}</h2>
         <p>
-          {sources.length} geöffnete Dateien. Gleichnamige Felder desselben Typs werden zu
-          gemeinsamen Spalten. Unterschiedliche Feldtypen bleiben getrennt.
+          {sources.length}{' '}
+          {ui(
+            ' geöffnete Dateien. Gleichnamige Felder desselben Typs werden zu gemeinsamen Spalten. Unterschiedliche Feldtypen bleiben getrennt.',
+          )}
         </p>
         <p className="fine-note">
-          Änderungen betreffen nur die Auswertung. Die Originalformulare bleiben erhalten.
-          Unterschriften und XFA-Felder werden nicht als vollständige Formularantwort ausgewertet.
+          {ui(
+            'Änderungen betreffen nur die Auswertung. Die Originalformulare bleiben erhalten. Unterschriften und XFA-Felder werden nicht als vollständige Formularantwort ausgewertet.',
+          )}
         </p>
         <Button
           disabled={busy}
@@ -98,13 +105,13 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
             })
           }
         >
-          Formularwerte auslesen
+          {ui('Formularwerte auslesen')}
         </Button>
       </section>
       {!!responses.length && (
         <section className="advanced-card">
           <Choice
-            label="Rücklauf prüfen"
+            label={ui('Rücklauf prüfen')}
             value={current.sourceId}
             onChange={(v) => {
               setSelected(v);
@@ -119,8 +126,9 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
             </p>
           ))}
           <p>
-            {current.fields.length} Felder ·{' '}
-            {current.fields.filter((f) => f.required && fieldEmpty(f)).length} fehlende Pflichtwerte
+            {current.fields.length} {ui(' Felder ·')}{' '}
+            {current.fields.filter((f) => f.required && fieldEmpty(f)).length}{' '}
+            {ui(' fehlende Pflichtwerte')}
           </p>
           {current.fields.slice(0, limit).map((f, i) => (
             <article
@@ -132,11 +140,12 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
                 {f.required ? ' *' : ''}
               </h3>
               <p className="fine-note">
-                {f.kind} · Original: {f.original || 'Leer'}
+                {f.kind} {ui(' · Original: ')}
+                {f.original || ui('Leer')}
               </p>
               {f.kind === 'checkbox' ? (
                 <Choice
-                  label={`Exportwert für ${f.name}`}
+                  label={ui(`Exportwert für ${f.name}`)}
                   value={f.value}
                   onChange={(v) => update(i, v)}
                   items={[
@@ -146,7 +155,7 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
                 />
               ) : (
                 <Text
-                  label={`Exportwert für ${f.name}`}
+                  label={ui(`Exportwert für ${f.name}`)}
                   value={f.value}
                   onChange={(v) => update(i, v)}
                 />
@@ -156,11 +165,11 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
           ))}
           {current.fields.length > limit && (
             <Button variant="outline" onClick={() => setLimit(limit + 60)}>
-              Weitere Felder anzeigen
+              {ui('Weitere Felder anzeigen')}
             </Button>
           )}
           <Choice
-            label="Tabellenaufbau"
+            label={ui('Tabellenaufbau')}
             value={layout}
             onChange={(v) => setLayout(v as typeof layout)}
             items={[
@@ -175,7 +184,7 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
                 run(() => exportRows(formResponseRows(responses, layout), 'Formularruecklaeufe'))
               }
             >
-              Excel erstellen
+              {ui('Excel erstellen')}
             </Button>
             <Button
               disabled={busy}
@@ -186,7 +195,7 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
                 )
               }
             >
-              CSV erstellen
+              {ui('CSV erstellen')}
             </Button>
           </div>
         </section>
@@ -196,6 +205,7 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
 }
 
 export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
+  useLanguage();
   const [ocr, setOcr] = useState(false),
     [pages, setPages] = useState<EvidencePage[]>([]),
     [items, setItems] = useState<ChronologyItem[]>([]),
@@ -220,7 +230,7 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Dokumentdatum und Reihenfolge prüfen</h2>
+        <h2>{ui('Dokumentdatum und Reihenfolge prüfen')}</h2>
         <ReadOptions
           ocr={ocr}
           setOcr={(v) => {
@@ -230,9 +240,9 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
           }}
         />
         <p className="fine-note">
-          Ein Dokument kann mehrere Daten enthalten, etwa Briefdatum und Zahlungsfrist. Wähle das
-          passende Datum und bestätige jeden Eintrag. Dateien ohne Datum können bewusst am Ende
-          eingeordnet werden.
+          {ui(
+            'Ein Dokument kann mehrere Daten enthalten, etwa Briefdatum und Zahlungsfrist. Wähle das passende Datum und bestätige jeden Eintrag. Dateien ohne Datum können bewusst am Ende eingeordnet werden.',
+          )}
         </p>
         <Button
           disabled={busy}
@@ -259,7 +269,7 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
             })
           }
         >
-          Daten im Inhalt suchen
+          {ui('Daten im Inhalt suchen')}
         </Button>
       </section>
       <Coverage pages={pages} />
@@ -273,7 +283,7 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
                 setItems(sortChronology(items));
               }}
             >
-              Älteste zuerst
+              {ui('Älteste zuerst')}
             </Button>
             <Button
               variant="outline"
@@ -282,7 +292,7 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
                 setItems(sortChronology(items, true));
               }}
             >
-              Neueste zuerst
+              {ui('Neueste zuerst')}
             </Button>
           </div>
           {items.map((item, index) => (
@@ -295,19 +305,19 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
               {item.included && (
                 <>
                   <Text
-                    label="Titel im Inhaltsverzeichnis"
+                    label={ui('Titel im Inhaltsverzeichnis')}
                     value={item.title}
                     onChange={(title) => update(item.sourceId, { title, confirmed: false })}
                   />
                   <Text
-                    label="Datum (leer = ohne Datum)"
+                    label={ui('Datum (leer = ohne Datum)')}
                     type="date"
                     value={item.date}
                     onChange={(date) => update(item.sourceId, { date, confirmed: false })}
                   />
                   {!!item.candidates.length && (
                     <Choice
-                      label="Erkanntes Datum übernehmen"
+                      label={ui('Erkanntes Datum übernehmen')}
                       value=""
                       onChange={(v) => {
                         if (v) {
@@ -329,7 +339,7 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
                     />
                   )}
                   <Tick
-                    label="Datum beziehungsweise fehlendes Datum und Titel geprüft"
+                    label={ui('Datum beziehungsweise fehlendes Datum und Titel geprüft')}
                     value={item.confirmed}
                     onChange={(confirmed) => update(item.sourceId, { confirmed })}
                   />
@@ -342,7 +352,7 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
                   disabled={index === 0}
                   onClick={() => move(index, -1)}
                 >
-                  Nach oben
+                  {ui('Nach oben')}
                 </Button>
                 <Button
                   size="sm"
@@ -350,21 +360,21 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
                   disabled={index === items.length - 1}
                   onClick={() => move(index, 1)}
                 >
-                  Nach unten
+                  {ui('Nach unten')}
                 </Button>
               </div>
             </article>
           ))}
           <p className="fine-note">
-            Die aktuell angezeigte Reihenfolge wird exportiert. Das Inhaltsverzeichnis ist
-            anklickbar. Formularwerte werden festgeschrieben; ursprüngliche Signaturen, Lesezeichen
-            und Anhänge werden nicht übernommen.
+            {ui(
+              'Die aktuell angezeigte Reihenfolge wird exportiert. Das Inhaltsverzeichnis ist anklickbar. Formularwerte werden festgeschrieben; ursprüngliche Signaturen, Lesezeichen und Anhänge werden nicht übernommen.',
+            )}
           </p>
           <Button
             disabled={busy || !ready}
             onClick={() => run((ctx) => chronologyPdf(sources, items, ctx))}
           >
-            Chronologische PDF erstellen
+            {ui('Chronologische PDF erstellen')}
           </Button>
           <ReportButtons rows={chronologyRows(items)} name="Chronologie" run={run} busy={busy} />
         </section>
@@ -374,6 +384,7 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
 }
 
 export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
+  useLanguage();
   const [page, setPage] = useState(0),
     [area, setArea] = useState<Rect>({ x: 0.55, y: 0.12, w: 0.4, h: 0.72 }),
     [ocr, setOcr] = useState(false),
@@ -408,7 +419,7 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
   return (
     <div className="century-columns">
       <section className="advanced-card">
-        <h2>Zahlenspalte markieren</h2>
+        <h2>{ui('Zahlenspalte markieren')}</h2>
         <PageSelect
           source={source}
           page={page}
@@ -459,18 +470,19 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
             })
           }
         >
-          Zahlen im Bereich übernehmen
+          {ui('Zahlen im Bereich übernehmen')}
         </Button>
         <Coverage pages={pages} />
       </section>
       <section className="advanced-card">
-        <h2>Summe gegenprüfen</h2>
+        <h2>{ui('Summe gegenprüfen')}</h2>
         <p className="fine-note">
-          Wähle nur die zu addierenden Werte. Eine bereits gedruckte Summe darf nicht als Summand
-          mitgerechnet werden. OCR, Vorzeichen und Dezimalzeichen am Original prüfen.
+          {ui(
+            'Wähle nur die zu addierenden Werte. Eine bereits gedruckte Summe darf nicht als Summand mitgerechnet werden. OCR, Vorzeichen und Dezimalzeichen am Original prüfen.',
+          )}
         </p>
         <Choice
-          label="Zahlenformat"
+          label={ui('Zahlenformat')}
           value={locale}
           onChange={(v) => {
             setLocale(v as NumberLocale);
@@ -484,7 +496,7 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
         {rows.map((row, i) => (
           <div className="century-number-row" key={row.id}>
             <Tick
-              label={`Wert ${i + 1} addieren`}
+              label={ui(`Wert ${i + 1} addieren`)}
               value={row.included}
               onChange={(included) => {
                 update(row.id, { included });
@@ -494,7 +506,7 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
               }}
             />
             <Text
-              label={`Wert ${i + 1} (Original: ${row.original})`}
+              label={ui(`Wert ${i + 1} (Original: ${row.original})`)}
               value={row.value}
               onChange={(value) => {
                 update(row.id, { value });
@@ -502,7 +514,7 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
               }}
             />
             <Button size="sm" variant="outline" onClick={() => setFocus(row.ref)}>
-              Auf Seite zeigen
+              {ui('Auf Seite zeigen')}
             </Button>
             <Button
               size="sm"
@@ -515,15 +527,15 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
                 setFocus(row.ref);
               }}
             >
-              Als angegebene Summe
+              {ui('Als angegebene Summe')}
             </Button>
           </div>
         ))}
         {!rows.length && (
-          <p>Noch keine Zahlen ausgewählt. Bereich markieren und Zahlen übernehmen.</p>
+          <p>{ui('Noch keine Zahlen ausgewählt. Bereich markieren und Zahlen übernehmen.')}</p>
         )}
         <Text
-          label="Angegebene Summe"
+          label={ui('Angegebene Summe')}
           value={total}
           onChange={(v) => {
             change();
@@ -531,27 +543,29 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
             setTotalId('');
           }}
         />
-        {problem && <p className="error-box">{problem}</p>}
+        {problem && <p className="error-box">{ui(problem)}</p>}
         {calculation && (
           <div
             className={`evidence-finding ${calculation.difference === 0n ? 'evidence-match' : 'evidence-changed'}`}
             role="status"
           >
             <p>
-              {calculation.count} Summanden: <strong>{decimalText(calculation.sum, locale)}</strong>
+              {calculation.count} {ui(' Summanden: ')}
+              <strong>{decimalText(calculation.sum, locale)}</strong>
             </p>
             <p>
-              Abweichung: <strong>{decimalText(calculation.difference, locale)}</strong>
+              {ui('Abweichung: ')}
+              <strong>{decimalText(calculation.difference, locale)}</strong>
             </p>
             <p>
               {calculation.difference === 0n
-                ? 'Die ausgewählten Summanden ergeben die angegebene Summe.'
-                : 'Die ausgewählten Summanden weichen von der angegebenen Summe ab.'}
+                ? ui('Die ausgewählten Summanden ergeben die angegebene Summe.')
+                : ui('Die ausgewählten Summanden weichen von der angegebenen Summe ab.')}
             </p>
           </div>
         )}
         <Tick
-          label="Summanden, Zahlenformat und angegebene Summe am Original geprüft"
+          label={ui('Summanden, Zahlenformat und angegebene Summe am Original geprüft')}
           value={reviewed}
           onChange={setReviewed}
         />
@@ -571,7 +585,7 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
               )
             }
           >
-            Markierte PDF mit Rechenprotokoll
+            {ui('Markierte PDF mit Rechenprotokoll')}
           </Button>
           <Button
             variant="outline"
@@ -580,7 +594,7 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
               run(() => exportRows(arithmeticRows(rows, total, locale), 'Rechenpruefung', 'csv'))
             }
           >
-            CSV-Protokoll
+            {ui('CSV-Protokoll')}
           </Button>
         </div>
       </section>
@@ -589,6 +603,7 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
 }
 
 export function SanitizePanel({ source, busy, run }: Props) {
+  useLanguage();
   const [findings, setFindings] = useState<SanitizeFinding[] | null>(null),
     [options, setOptions] = useState<SanitizeOptions>({
       attachments: true,
@@ -604,14 +619,16 @@ export function SanitizePanel({ source, busy, run }: Props) {
   return (
     <div className="century-columns">
       <section className="advanced-card">
-        <h2>Inhalte prüfen und bereinigen</h2>
+        <h2>{ui('Inhalte prüfen und bereinigen')}</h2>
         <p>
-          Skripte, automatische Aktionen, riskante Verweise, dynamische XFA-Inhalte und eingebettete
-          Medien werden entfernt. Gewöhnliche Web- und interne Seitenlinks bleiben erhalten.
+          {ui(
+            'Skripte, automatische Aktionen, riskante Verweise, dynamische XFA-Inhalte und eingebettete Medien werden entfernt. Gewöhnliche Web- und interne Seitenlinks bleiben erhalten.',
+          )}
         </p>
         <p className="fine-note">
-          Kein Virenscan. Digitale Signaturen verlieren durch die Änderung ihre Gültigkeit.
-          Dynamische Formulare können danach anders aussehen; bitte die Ergebnisvorschau prüfen.
+          {ui(
+            'Kein Virenscan. Digitale Signaturen verlieren durch die Änderung ihre Gültigkeit. Dynamische Formulare können danach anders aussehen; bitte die Ergebnisvorschau prüfen.',
+          )}
         </p>
         <Button
           variant="outline"
@@ -622,20 +639,20 @@ export function SanitizePanel({ source, busy, run }: Props) {
             })
           }
         >
-          Entfernbare Inhalte auflisten
+          {ui('Entfernbare Inhalte auflisten')}
         </Button>
         <Tick
-          label="Eingebettete Dateien und zugeordnete Anhänge entfernen"
+          label={ui('Eingebettete Dateien und zugeordnete Anhänge entfernen')}
           value={options.attachments}
           onChange={(attachments) => setOptions({ ...options, attachments })}
         />
         <Tick
-          label="Kommentare und Markierungen entfernen"
+          label={ui('Kommentare und Markierungen entfernen')}
           value={options.comments}
           onChange={(comments) => setOptions({ ...options, comments })}
         />
         <Tick
-          label="Dokumenteigenschaften und XMP-Metadaten entfernen"
+          label={ui('Dokumenteigenschaften und XMP-Metadaten entfernen')}
           value={options.metadata}
           onChange={(metadata) => setOptions({ ...options, metadata })}
         />
@@ -643,29 +660,31 @@ export function SanitizePanel({ source, busy, run }: Props) {
           disabled={busy || findings === null}
           onClick={() => run((ctx) => sanitizePdf(source, options, ctx))}
         >
-          PDF bereinigen und nachprüfen
+          {ui('PDF bereinigen und nachprüfen')}
         </Button>
       </section>
       <section className="advanced-card">
-        <h2>Gefundene Strukturen</h2>
+        <h2>{ui('Gefundene Strukturen')}</h2>
         {findings === null ? (
-          <p>Bitte zuerst die Inhalte auflisten.</p>
+          <p>{ui('Bitte zuerst die Inhalte auflisten.')}</p>
         ) : !findings.length ? (
           <p>
-            Keine der untersuchten Strukturen gefunden. Daraus folgt keine allgemeine
-            Sicherheitsgarantie.
+            {ui(
+              'Keine der untersuchten Strukturen gefunden. Daraus folgt keine allgemeine Sicherheitsgarantie.',
+            )}
           </p>
         ) : (
           findings.map((f) => (
             <p key={f.kind + f.detail}>
-              <strong>{labels[f.kind]}:</strong> {f.detail} · {f.count} Fundstelle
-              {f.count === 1 ? '' : 'n'}
+              <strong>{ui(labels[f.kind])}:</strong> {ui(f.detail)} · {f.count}{' '}
+              {ui(f.count === 1 ? 'Fundstelle' : 'Fundstellen')}
             </p>
           ))
         )}
         <p className="fine-note">
-          Mehrere Struktureinträge können zur selben Aktion oder Datei gehören. Nach dem Export
-          prüft das Werkzeug, ob die gewählten Kategorien entfernt sind.
+          {ui(
+            'Mehrere Struktureinträge können zur selben Aktion oder Datei gehören. Nach dem Export prüft das Werkzeug, ob die gewählten Kategorien entfernt sind.',
+          )}
         </p>
       </section>
     </div>
@@ -673,6 +692,7 @@ export function SanitizePanel({ source, busy, run }: Props) {
 }
 
 export function LayersPanel({ source, busy, run, invalidate }: Props) {
+  useLanguage();
   const [layers, setLayers] = useState<LayerChoice[] | null>(null),
     [page, setPage] = useState(0),
     [preview, setPreview] = useState(''),
@@ -700,7 +720,7 @@ export function LayersPanel({ source, busy, run, invalidate }: Props) {
   return (
     <div className="century-columns">
       <section className="advanced-card">
-        <h2>Ebenen ein- und ausblenden</h2>
+        <h2>{ui('Ebenen ein- und ausblenden')}</h2>
         <Button
           disabled={busy}
           onClick={() =>
@@ -709,13 +729,15 @@ export function LayersPanel({ source, busy, run, invalidate }: Props) {
             })
           }
         >
-          Ebenen laden
+          {ui('Ebenen laden')}
         </Button>
-        {layers && !layers.length && <p>Dieses PDF enthält keine schaltbaren PDF-Ebenen.</p>}
+        {layers && !layers.length && (
+          <p>{ui('Dieses PDF enthält keine schaltbaren PDF-Ebenen.')}</p>
+        )}
         {layers?.map((l, i) => (
           <div key={l.id} className="pro-rule">
             <Text
-              label={`Name der Ebene ${i + 1}`}
+              label={ui(`Name der Ebene ${i + 1}`)}
               value={l.name}
               onChange={(name) => {
                 invalidate();
@@ -734,7 +756,7 @@ export function LayersPanel({ source, busy, run, invalidate }: Props) {
                 });
               }}
             >
-              In der Ebenenliste nach oben
+              {ui('In der Ebenenliste nach oben')}
             </Button>
             <Tick
               key={l.id}
@@ -756,30 +778,29 @@ export function LayersPanel({ source, busy, run, invalidate }: Props) {
           disabled={busy || !layers?.length || loading || !!error}
           onClick={() => run((ctx) => editableLayersPdf(source, layers!, ctx))}
         >
-          Schaltbare Ebenen speichern
+          {ui('Schaltbare Ebenen speichern')}
         </Button>
         <p className="fine-note">
-          Beim Speichern schaltbarer Ebenen bleiben Text, Grafiken und ausgeblendete Inhalte
-          erhalten. Die Vorschau zeigt die gewählte Ansicht. Sich gegenseitig ausschließende Ebenen
-          werden gemeinsam umgeschaltet. Die Ausgabe schreibt diese Ansicht als Seitenbilder fest:
-          ausgeblendete Inhalte, Suchtext, Links, Formulare und Anhänge werden nicht übernommen.
+          {ui(
+            'Beim Speichern schaltbarer Ebenen bleiben Text, Grafiken und ausgeblendete Inhalte erhalten. Die Vorschau zeigt die gewählte Ansicht. Sich gegenseitig ausschließende Ebenen werden gemeinsam umgeschaltet. Die Ausgabe schreibt diese Ansicht als Seitenbilder fest: ausgeblendete Inhalte, Suchtext, Links, Formulare und Anhänge werden nicht übernommen.',
+          )}
         </p>
         <Button
           disabled={busy || !layers?.length || loading || !!error}
           onClick={() => run((ctx) => layersPdf(source, layers!, ctx))}
         >
-          Gewählte Ansicht als PDF exportieren
+          {ui('Gewählte Ansicht als PDF exportieren')}
         </Button>
       </section>
       <section className="advanced-card">
         <PageSelect source={source} page={page} onChange={setPage} />
-        {loading && <p role="status">Ebenenansicht wird aufgebaut …</p>}
-        {error && <p className="error-box">{error}</p>}
+        {loading && <p role="status">{ui('Ebenenansicht wird aufgebaut …')}</p>}
+        {error && <p className="error-box">{ui(error)}</p>}
         {preview && (
           <img
             className="century-page-image"
             src={preview}
-            alt={`Gewählte Ebenen auf Seite ${page + 1}`}
+            alt={ui(`Gewählte Ebenen auf Seite ${page + 1}`)}
           />
         )}
       </section>
@@ -788,6 +809,7 @@ export function LayersPanel({ source, busy, run, invalidate }: Props) {
 }
 
 export function MeasurePanel({ source, busy, run, invalidate }: Props) {
+  useLanguage();
   const [page, setPage] = useState(0),
     [size, setSize] = useState({ width: 595, height: 842 }),
     [mode, setMode] = useState<'calibrate' | 'length' | 'area'>('calibrate'),
@@ -864,7 +886,7 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
   return (
     <div className="century-columns century-measure">
       <section className="advanced-card">
-        <h2>Referenz festlegen und messen</h2>
+        <h2>{ui('Referenz festlegen und messen')}</h2>
         <PageSelect
           source={source}
           page={page}
@@ -895,7 +917,10 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
               selected: true,
             }}
           />
-          <svg viewBox={`0 0 ${size.width} ${size.height}`} aria-label="Messpunkte und Strecken">
+          <svg
+            viewBox={`0 0 ${size.width} ${size.height}`}
+            aria-label={ui('Messpunkte und Strecken')}
+          >
             {visible.map((item) => (
               <g key={item.id}>
                 <polyline
@@ -915,7 +940,7 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
                   paintOrder="stroke"
                   fill="#00483f"
                 >
-                  {item.label}: {label(item)}
+                  {item.label}: {ui(label(item))}
                 </text>
               </g>
             ))}
@@ -942,13 +967,14 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
           </svg>
         </div>
         <p className="fine-note">
-          Punkte auf der Seite antippen. Blaue Kreise markieren die Referenz. Für genaue Platzierung
-          können die Prozentkoordinaten verwendet werden.
+          {ui(
+            'Punkte auf der Seite antippen. Blaue Kreise markieren die Referenz. Für genaue Platzierung können die Prozentkoordinaten verwendet werden.',
+          )}
         </p>
       </section>
       <section className="advanced-card">
         <Choice
-          label="Messaufgabe"
+          label={ui('Messaufgabe')}
           value={mode}
           onChange={(v) => {
             setMode(v as typeof mode);
@@ -962,18 +988,21 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
         />
         {calibrations[page] ? (
           <p className="workbench-notice">
-            Seite {page + 1}: Referenz {calibrations[page].length} {calibrations[page].unit}. Neue
-            Kalibrierung berechnet vorhandene Messungen neu.
+            {ui('Seite ')}
+            {page + 1}
+            {ui(': Referenz ')}
+            {calibrations[page].length} {calibrations[page].unit}
+            {ui('. Neue Kalibrierung berechnet vorhandene Messungen neu.')}
           </p>
         ) : (
           <p className="workbench-notice">
-            Diese Seite muss zuerst mit einer bekannten Strecke kalibriert werden.
+            {ui('Diese Seite muss zuerst mit einer bekannten Strecke kalibriert werden.')}
           </p>
         )}
         {mode === 'calibrate' && (
           <>
             <NumberField
-              label="Bekannte Referenzlänge"
+              label={ui('Bekannte Referenzlänge')}
               value={length}
               min={0.000001}
               max={1000000}
@@ -981,7 +1010,7 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
               onChange={setLength}
             />
             <Choice
-              label="Referenzeinheit"
+              label={ui('Referenzeinheit')}
               value={unit}
               onChange={(v) => setUnit(v as typeof unit)}
               items={[
@@ -994,13 +1023,13 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
         )}
         <div className="advanced-coordinates">
           <NumberField
-            label="Punkt X (%)"
+            label={ui('Punkt X (%)')}
             value={manual.x * 100}
             step={0.1}
             onChange={(x) => setManual({ ...manual, x: x / 100 })}
           />
           <NumberField
-            label="Punkt Y (%)"
+            label={ui('Punkt Y (%)')}
             value={manual.y * 100}
             step={0.1}
             onChange={(y) => setManual({ ...manual, y: y / 100 })}
@@ -1011,9 +1040,11 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
           onClick={() => add(manual)}
           disabled={busy || points.length >= (mode === 'area' ? 100 : 2)}
         >
-          Punkt hinzufügen
+          {ui('Punkt hinzufügen')}
         </Button>
-        <p>{points.length} Punkte gesetzt</p>
+        <p>
+          {points.length} {ui(' Punkte gesetzt')}
+        </p>
         <div className="advanced-actions">
           <Button
             variant="outline"
@@ -1024,7 +1055,7 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
               setError('');
             }}
           >
-            Letzten Punkt zurücknehmen
+            {ui('Letzten Punkt zurücknehmen')}
           </Button>
           <Button
             disabled={
@@ -1035,32 +1066,33 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
             onClick={save}
           >
             {mode === 'calibrate'
-              ? 'Referenz übernehmen'
+              ? ui('Referenz übernehmen')
               : mode === 'area'
-                ? 'Fläche abschließen'
-                : 'Strecke übernehmen'}
+                ? ui('Fläche abschließen')
+                : ui('Strecke übernehmen')}
           </Button>
         </div>
         {error && (
           <p className="error-box" role="alert">
-            {error}
+            {ui(error)}
           </p>
         )}
         <p className="fine-note">
-          Messhilfe mit selbst festgelegtem Maßstab. Verzerrte Scans können abweichende Maße
-          ergeben. Die Kalibrierung gilt jeweils nur für die aktuelle Seite.
+          {ui(
+            'Messhilfe mit selbst festgelegtem Maßstab. Verzerrte Scans können abweichende Maße ergeben. Die Kalibrierung gilt jeweils nur für die aktuelle Seite.',
+          )}
         </p>
         {visible.map((item) => (
           <article key={item.id} className="evidence-finding">
             <Text
-              label="Bezeichnung"
+              label={ui('Bezeichnung')}
               value={item.label}
               onChange={(text) => {
                 invalidate();
                 setItems(items.map((i) => (i.id === item.id ? { ...i, label: text } : i)));
               }}
             />
-            <strong>{label(item)}</strong>
+            <strong>{ui(label(item))}</strong>
             <Button
               size="sm"
               variant="ghost"
@@ -1069,17 +1101,19 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
                 setItems(items.filter((i) => i.id !== item.id));
               }}
             >
-              Messung löschen
+              {ui('Messung löschen')}
             </Button>
           </article>
         ))}
-        <p>{items.length} Messungen im Dokument</p>
+        <p>
+          {items.length} {ui(' Messungen im Dokument')}
+        </p>
         <div className="advanced-actions">
           <Button
             disabled={busy || !items.length}
             onClick={() => run((ctx) => measurementsPdf(source, items, calibrations, ctx))}
           >
-            PDF mit Messungen erstellen
+            {ui('PDF mit Messungen erstellen')}
           </Button>
           <Button
             variant="outline"
@@ -1090,7 +1124,7 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
               )
             }
           >
-            Messwerte als CSV
+            {ui('Messwerte als CSV')}
           </Button>
         </div>
       </section>

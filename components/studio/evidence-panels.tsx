@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { renderPage, sourcePages, uid, type Source } from '@/lib/pdf-engine';
@@ -57,6 +60,7 @@ const labels = {
   match: 'Übereinstimmung',
 };
 function EvidencePreview({ sources, focus }: { sources: Source[]; focus?: EvidenceRef }) {
+  useLanguage();
   const [sourceId, setSourceId] = useState(focus?.sourceId || sources[0]?.id || ''),
     [page, setPage] = useState(focus?.page || 0),
     [active, setActive] = useState<EvidenceRef | undefined>(focus),
@@ -107,10 +111,14 @@ function EvidencePreview({ sources, focus }: { sources: Source[]; focus?: Eviden
   }, [source, page, active]);
   if (!source) return null;
   return (
-    <aside ref={box} className="evidence-preview advanced-card" aria-label="Fundstellenvorschau">
-      <h2>Fundstelle im Original</h2>
+    <aside
+      ref={box}
+      className="evidence-preview advanced-card"
+      aria-label={ui('Fundstellenvorschau')}
+    >
+      <h2>{ui('Fundstelle im Original')}</h2>
       <Choice
-        label="Vorschaudokument"
+        label={ui('Vorschaudokument')}
         value={source.id}
         onChange={(id) => {
           setSourceId(id);
@@ -129,12 +137,13 @@ function EvidencePreview({ sources, focus }: { sources: Source[]; focus?: Eviden
       />
       {crop && (
         <div className="evidence-crop">
-          <img src={crop} alt="Vergrößerter Ausschnitt der ausgewählten Fundstelle" />
+          <img src={crop} alt={ui('Vergrößerter Ausschnitt der ausgewählten Fundstelle')} />
         </div>
       )}
       {active && (
         <p className="fine-note">
-          {active.mode === 'ocr' ? 'Per OCR erkannt' : 'Aus der PDF-Textebene'}: {active.text}
+          {active.mode === 'ocr' ? ui('Per OCR erkannt') : ui('Aus der PDF-Textebene')}:{' '}
+          {active.text}
         </p>
       )}
       <PageStage source={source} page={page} rects={active?.rects || []} />
@@ -150,6 +159,7 @@ export function RefButton({
   onFocus: (r: EvidenceRef) => void;
   label?: string;
 }) {
+  useLanguage();
   return value ? (
     <Button
       type="button"
@@ -158,8 +168,8 @@ export function RefButton({
       className="evidence-ref"
       onClick={() => onFocus({ ...value })}
     >
-      {label ? label + ' · ' : ''}
-      {refLabel(value)}
+      {label ? ui(label) + ' · ' : ''}
+      {ui(refLabel(value))}
     </Button>
   ) : null;
 }
@@ -172,6 +182,7 @@ export function EvidenceLayout({
   focus?: EvidenceRef;
   children: ReactNode;
 }) {
+  useLanguage();
   return (
     <div className="evidence-layout">
       <div className="evidence-controls">{children}</div>
@@ -180,21 +191,23 @@ export function EvidenceLayout({
   );
 }
 export function ReadOptions({ ocr, setOcr }: { ocr: boolean; setOcr: (v: boolean) => void }) {
+  useLanguage();
   return (
     <>
-      <Tick label="Alle sichtbaren Seiten per OCR lesen" value={ocr} onChange={setOcr} />
+      <Tick label={ui('Alle sichtbaren Seiten per OCR lesen')} value={ocr} onChange={setOcr} />
       <p className="fine-note">
-        Standard: vorhandene Textebene lesen, reine Scanseiten per OCR. Die vollständige OCR liest
-        sichtbare Inhalte unabhängig von der Textebene. Verdrehte Seiten bitte zuerst ausrichten.
-        Verarbeitung auf deinem Gerät; große Stapel brauchen Zeit.
+        {ui(
+          'Standard: vorhandene Textebene lesen, reine Scanseiten per OCR. Die vollständige OCR liest sichtbare Inhalte unabhängig von der Textebene. Verdrehte Seiten bitte zuerst ausrichten. Verarbeitung auf deinem Gerät; große Stapel brauchen Zeit.',
+        )}
       </p>
     </>
   );
 }
 export function Coverage({ pages }: { pages: EvidencePage[] }) {
+  useLanguage();
   return pages.length ? (
     <p className="workbench-notice" role="status">
-      {coverage(pages)}
+      {ui(coverage(pages))}
     </p>
   ) : null;
 }
@@ -209,17 +222,18 @@ export function ReportButtons({
   run: PanelProps['run'];
   busy: boolean;
 }) {
+  useLanguage();
   return (
     <div className="advanced-actions">
       <Button disabled={busy} onClick={() => run(() => exportRows(rows, name))}>
-        Excel erstellen
+        {ui('Excel erstellen')}
       </Button>
       <Button
         variant="outline"
         disabled={busy}
         onClick={() => run(() => exportRows(rows, name, 'csv'))}
       >
-        CSV erstellen
+        {ui('CSV erstellen')}
       </Button>
     </div>
   );
@@ -239,35 +253,39 @@ function Findings({
   ready: boolean;
   note?: string;
 }) {
+  useLanguage();
   const [limit, setLimit] = useState(30);
   if (!ready) return null;
   return (
     <section className="advanced-card">
-      <h2>{rows.length} Prüfergebnisse</h2>
-      <p className="fine-note">{note}</p>
+      <h2>
+        {rows.length} {ui(' Prüfergebnisse')}
+      </h2>
+      <p className="fine-note">{ui(note)}</p>
       {!rows.length && (
         <p>
-          Keine zuordenbaren Abweichungen gefunden. Das bestätigt weder Vollständigkeit noch
-          Fehlerfreiheit.
+          {ui(
+            'Keine zuordenbaren Abweichungen gefunden. Das bestätigt weder Vollständigkeit noch Fehlerfreiheit.',
+          )}
         </p>
       )}
       {rows.slice(0, limit).map((row, i) => (
         <article className={`evidence-finding evidence-${row.status}`} key={row.id + '-' + i}>
-          <span className="evidence-status">{labels[row.status]}</span>
-          <h3>{row.title}</h3>
+          <span className="evidence-status">{ui(labels[row.status])}</span>
+          <h3>{ui(row.title)}</h3>
           {(row.oldValue || row.newValue) && (
             <dl className="evidence-values">
               <div>
-                <dt>Erste Angabe</dt>
+                <dt>{ui('Erste Angabe')}</dt>
                 <dd>{row.oldValue || '—'}</dd>
               </div>
               <div>
-                <dt>Zweite Angabe</dt>
+                <dt>{ui('Zweite Angabe')}</dt>
                 <dd>{row.newValue || '—'}</dd>
               </div>
             </dl>
           )}
-          <p>{row.detail}</p>
+          <p>{ui(row.detail)}</p>
           <div className="advanced-actions">
             <RefButton value={row.before} onFocus={onFocus} />
             <RefButton value={row.after} onFocus={onFocus} />
@@ -276,7 +294,7 @@ function Findings({
       ))}
       {rows.length > limit && (
         <Button variant="outline" onClick={() => setLimit(limit + 30)}>
-          Weitere Ergebnisse anzeigen
+          {ui('Weitere Ergebnisse anzeigen')}
         </Button>
       )}
       <ReportButtons
@@ -290,6 +308,7 @@ function Findings({
 }
 
 export function NumberComparePanel({ source, sources, busy, run }: PanelProps) {
+  useLanguage();
   const [other, setOther] = useState(sources.find((s) => s.id !== source.id)?.id || ''),
     [ocr, setOcr] = useState(false),
     [pages, setPages] = useState<EvidencePage[]>([]),
@@ -302,9 +321,9 @@ export function NumberComparePanel({ source, sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Zahlen zwischen zwei Fassungen vergleichen</h2>
+        <h2>{ui('Zahlen zwischen zwei Fassungen vergleichen')}</h2>
         <Choice
-          label="Zweite Fassung"
+          label={ui('Zweite Fassung')}
           value={other}
           onChange={(v) => {
             setOther(v);
@@ -325,8 +344,9 @@ export function NumberComparePanel({ source, sources, busy, run }: PanelProps) {
           }}
         />
         <p className="fine-note">
-          Vergleicht Beträge, Prozentwerte, Datumsangaben und mögliche IBANs anhand der
-          Zeilenbeschriftungen. Mehrdeutige Zeilen werden zur Prüfung angezeigt.
+          {ui(
+            'Vergleicht Beträge, Prozentwerte, Datumsangaben und mögliche IBANs anhand der Zeilenbeschriftungen. Mehrdeutige Zeilen werden zur Prüfung angezeigt.',
+          )}
         </p>
         <Button
           disabled={busy || !other}
@@ -346,7 +366,7 @@ export function NumberComparePanel({ source, sources, busy, run }: PanelProps) {
             })
           }
         >
-          Zahlen vergleichen
+          {ui('Zahlen vergleichen')}
         </Button>
       </section>
       <Coverage pages={pages} />
@@ -364,6 +384,7 @@ type CollectedCell = {
   reviewed: boolean;
 };
 export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
+  useLanguage();
   const [input, setInput] = useState(defaultFieldRules),
     [ocr, setOcr] = useState(false),
     [pages, setPages] = useState<EvidencePage[]>([]),
@@ -395,8 +416,8 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Gewünschte Felder festlegen</h2>
-        <Field label="Ein Feld pro Zeile: Feldname = Suchbegriff | Alternative">
+        <h2>{ui('Gewünschte Felder festlegen')}</h2>
+        <Field label={ui('Ein Feld pro Zeile: Feldname = Suchbegriff | Alternative')}>
           <textarea
             rows={7}
             value={input}
@@ -414,9 +435,10 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
           }}
         />
         <p className="fine-note">
-          Liest Werte nach einer passenden Beschriftung, bei Bedarf aus der folgenden Zeile. Für
-          andere Dokumente kannst du eigene Felder ergänzen. Alle {sources.length} geöffneten
-          Dateien werden ausgewertet.
+          {ui(
+            'Liest Werte nach einer passenden Beschriftung, bei Bedarf aus der folgenden Zeile. Für andere Dokumente kannst du eigene Felder ergänzen. Alle ',
+          )}
+          {sources.length} {ui(' geöffneten Dateien werden ausgewertet.')}
         </p>
         <Button
           disabled={busy}
@@ -448,24 +470,24 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
             })
           }
         >
-          Felder aus allen Dateien sammeln
+          {ui('Felder aus allen Dateien sammeln')}
         </Button>
       </section>
       <Coverage pages={pages} />
       {!!cells.length && (
         <section className="advanced-card">
-          <h2>Werte und Fundstellen prüfen</h2>
+          <h2>{ui('Werte und Fundstellen prüfen')}</h2>
           {cells.slice(0, visible).map((cell, index) => {
             const rule = rules.find((r) => r.id === cell.ruleId)!,
               src = sources.find((s) => s.id === cell.sourceId)!;
             return (
               <article className="evidence-finding" key={`${cell.sourceId}-${cell.ruleId}`}>
                 <h3>
-                  {src.name} · {rule.label}
+                  {src.name} · {ui(rule.label)}
                 </h3>
                 {cell.candidates.length > 1 && (
                   <Choice
-                    label="Gefundene Angabe wählen"
+                    label={ui('Gefundene Angabe wählen')}
                     value={String(cell.selected)}
                     onChange={(v) => {
                       const selected = Number(v);
@@ -481,7 +503,7 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
                     ])}
                   />
                 )}
-                <Field label="Wert">
+                <Field label={ui('Wert')}>
                   <input
                     value={cell.value}
                     onChange={(e) => change(index, { value: e.target.value, reviewed: false })}
@@ -489,16 +511,16 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
                 </Field>
                 <p className="fine-note">
                   {!cell.candidates.length
-                    ? 'Nicht erkannt – Wert manuell ergänzen.'
+                    ? ui('Nicht erkannt – Wert manuell ergänzen.')
                     : cell.candidates.length > 1
-                      ? 'Mehrere Kandidaten gefunden.'
+                      ? ui('Mehrere Kandidaten gefunden.')
                       : cell.candidates[0].uncertain
-                        ? 'Erkennung oder Zuordnung bitte kontrollieren.'
-                        : 'Passende Beschriftung gefunden.'}
+                        ? ui('Erkennung oder Zuordnung bitte kontrollieren.')
+                        : ui('Passende Beschriftung gefunden.')}
                 </p>
                 <RefButton value={cell.candidates[cell.selected]?.ref} onFocus={setFocus} />
                 <Tick
-                  label="Wert geprüft"
+                  label={ui('Wert geprüft')}
                   value={cell.reviewed}
                   onChange={(reviewed) => change(index, { reviewed })}
                 />
@@ -507,11 +529,11 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
           })}
           {cells.length > visible && (
             <Button variant="outline" onClick={() => setVisible(visible + 40)}>
-              Weitere Werte anzeigen
+              {ui('Weitere Werte anzeigen')}
             </Button>
           )}
           <p className="fine-note">
-            Ungeprüfte und fehlende Werte werden im Export ausdrücklich gekennzeichnet.
+            {ui('Ungeprüfte und fehlende Werte werden im Export ausdrücklich gekennzeichnet.')}
           </p>
           <ReportButtons rows={rows} name="Gesammelte-Belegfelder" run={run} busy={busy} />
         </section>
@@ -521,6 +543,7 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
 }
 
 export function InvoiceEvidencePanel({ source, sources, busy, run }: PanelProps) {
+  useLanguage();
   const [entries, setEntries] = useState<InvoiceEntry[]>([]),
     [entry, setEntry] = useState('0'),
     [pages, setPages] = useState<EvidencePage[]>([]),
@@ -529,14 +552,16 @@ export function InvoiceEvidencePanel({ source, sources, busy, run }: PanelProps)
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Sichtbare Rechnung mit ihrer XML vergleichen</h2>
+        <h2>{ui('Sichtbare Rechnung mit ihrer XML vergleichen')}</h2>
         <p>
-          Die sichtbaren Seiten werden auf deinem Gerät per OCR gelesen und mit ausgewählten
-          Rechnungsangaben aus der eingebetteten XML verglichen.
+          {ui(
+            'Die sichtbaren Seiten werden auf deinem Gerät per OCR gelesen und mit ausgewählten Rechnungsangaben aus der eingebetteten XML verglichen.',
+          )}
         </p>
         <p className="fine-note">
-          Erste Angabe = XML, zweite Angabe = sichtbare Rechnung. Dies prüft weder Signaturen noch
-          die Echtheit einer Rechnung. Ein nicht erkannter Wert bleibt ungeklärt.
+          {ui(
+            'Erste Angabe = XML, zweite Angabe = sichtbare Rechnung. Dies prüft weder Signaturen noch die Echtheit einer Rechnung. Ein nicht erkannter Wert bleibt ungeklärt.',
+          )}
         </p>
         <Button
           disabled={busy}
@@ -558,11 +583,11 @@ export function InvoiceEvidencePanel({ source, sources, busy, run }: PanelProps)
             })
           }
         >
-          Rechnung und XML abgleichen
+          {ui('Rechnung und XML abgleichen')}
         </Button>
         {entries.length > 1 && (
           <Choice
-            label="Eingebettete Rechnung"
+            label={ui('Eingebettete Rechnung')}
             value={entry}
             onChange={(v) => {
               setEntry(v);
@@ -579,6 +604,7 @@ export function InvoiceEvidencePanel({ source, sources, busy, run }: PanelProps)
 }
 
 export function PageGapsPanel({ sources, busy, run }: PanelProps) {
+  useLanguage();
   const [ocr, setOcr] = useState(false),
     [pages, setPages] = useState<EvidencePage[]>([]),
     [rows, setRows] = useState<Finding[]>([]),
@@ -586,10 +612,11 @@ export function PageGapsPanel({ sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Gedruckte Seitenzählungen prüfen</h2>
+        <h2>{ui('Gedruckte Seitenzählungen prüfen')}</h2>
         <p>
-          Findet Lücken, wiederholte Seitennummern und Sprünge in Angaben wie „Seite 3 von 7“. Jede
-          Datei wird getrennt betrachtet.
+          {ui(
+            'Findet Lücken, wiederholte Seitennummern und Sprünge in Angaben wie „Seite 3 von 7“. Jede Datei wird getrennt betrachtet.',
+          )}
         </p>
         <ReadOptions
           ocr={ocr}
@@ -611,7 +638,7 @@ export function PageGapsPanel({ sources, busy, run }: PanelProps) {
             })
           }
         >
-          Dokumentlücken suchen
+          {ui('Dokumentlücken suchen')}
         </Button>
       </section>
       <Coverage pages={pages} />
@@ -621,6 +648,7 @@ export function PageGapsPanel({ sources, busy, run }: PanelProps) {
 }
 
 export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
+  useLanguage();
   const [pages, setPages] = useState<EvidencePage[]>([]),
     [corrections, setCorrections] = useState<Record<string, string>>({}),
     [threshold, setThreshold] = useState('85'),
@@ -644,10 +672,11 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Erkannte Wörter am Original korrigieren</h2>
+        <h2>{ui('Erkannte Wörter am Original korrigieren')}</h2>
         <p>
-          Die OCR markiert unsichere Wörter und Zahlenwerte. Klicke auf eine Fundstelle, um den
-          vergrößerten Originalausschnitt zu sehen.
+          {ui(
+            'Die OCR markiert unsichere Wörter und Zahlenwerte. Klicke auf eine Fundstelle, um den vergrößerten Originalausschnitt zu sehen.',
+          )}
         </p>
         <Button
           disabled={busy}
@@ -660,14 +689,14 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
             })
           }
         >
-          OCR mit Wortprüfung starten
+          {ui('OCR mit Wortprüfung starten')}
         </Button>
       </section>
       <Coverage pages={pages} />
       {!!pages.length && (
         <section className="advanced-card">
           <Choice
-            label="Wörter unter dieser OCR-Sicherheit markieren"
+            label={ui('Wörter unter dieser OCR-Sicherheit markieren')}
             value={threshold}
             onChange={(v) => {
               setThreshold(v);
@@ -680,7 +709,7 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
             ]}
           />
           <Tick
-            label="Alle Wörter anzeigen"
+            label={ui('Alle Wörter anzeigen')}
             value={all}
             onChange={(v) => {
               setAll(v);
@@ -688,20 +717,23 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
             }}
           />
           <p>
-            {words.length} Wörter in dieser Ansicht · {Object.keys(corrections).length} bearbeitet
+            {words.length} {ui(' Wörter in dieser Ansicht · ')}
+            {Object.keys(corrections).length} {ui(' bearbeitet')}
           </p>
           {!words.length && (
             <p>
-              Keine Wörter für diesen Filter gefunden. Über „Alle Wörter anzeigen“ kannst du die
-              gesamte Erkennung kontrollieren.
+              {ui(
+                'Keine Wörter für diesen Filter gefunden. Über „Alle Wörter anzeigen“ kannst du die gesamte Erkennung kontrollieren.',
+              )}
             </p>
           )}
           {words.slice(0, limit).map(({ key, word, page, reason }) => (
             <article className="evidence-finding" key={key}>
               <p className="fine-note">
-                Seite {page.page + 1} · {reason || 'Manuelle Kontrolle'}
+                {ui('Seite ')}
+                {page.page + 1} · {reason || ui('Manuelle Kontrolle')}
               </p>
-              <Field label={`Erkannt: ${word.text}`}>
+              <Field label={ui(`Erkannt: ${word.text}`)}>
                 <input
                   value={corrections[key] ?? word.text}
                   maxLength={200}
@@ -716,19 +748,20 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
           ))}
           {words.length > limit && (
             <Button variant="outline" onClick={() => setLimit(limit + 40)}>
-              Weitere Wörter anzeigen
+              {ui('Weitere Wörter anzeigen')}
             </Button>
           )}
           <p className="fine-note">
-            Die PDF-Ausgabe erhält korrigierten Suchtext hinter den unveränderten Seitenbildern.
-            Sichtbare Schreibfehler im Original werden dadurch nicht geändert.
+            {ui(
+              'Die PDF-Ausgabe erhält korrigierten Suchtext hinter den unveränderten Seitenbildern. Sichtbare Schreibfehler im Original werden dadurch nicht geändert.',
+            )}
           </p>
           <div className="advanced-actions">
             <Button
               disabled={busy || !pages.some((p) => p.words.length)}
               onClick={() => run((ctx) => correctedOcr(source, pages, corrections, ctx))}
             >
-              PDF mit korrigierter Textebene
+              {ui('PDF mit korrigierter Textebene')}
             </Button>
             <Button
               variant="outline"
@@ -744,7 +777,7 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
                 }))
               }
             >
-              Korrigierten Text exportieren
+              {ui('Korrigierten Text exportieren')}
             </Button>
           </div>
         </section>
@@ -754,6 +787,7 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
 }
 
 export function PseudonymPanel({ sources, busy, run }: PanelProps) {
+  useLanguage();
   const [input, setInput] = useState(''),
     [rules, setRules] = useState<PseudonymRule[]>([]),
     [pages, setPages] = useState<EvidencePage[]>([]),
@@ -769,11 +803,11 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Gleiche Angaben überall gleich ersetzen</h2>
-        <Field label="Ein Originalbegriff = Platzhalter pro Zeile">
+        <h2>{ui('Gleiche Angaben überall gleich ersetzen')}</h2>
+        <Field label={ui('Ein Originalbegriff = Platzhalter pro Zeile')}>
           <textarea
             rows={7}
-            placeholder={'Max Mustermann = Person A\nMusterfirma GmbH = Firma B'}
+            placeholder={ui('Max Mustermann = Person A\nMusterfirma GmbH = Firma B')}
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
@@ -782,10 +816,9 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
           />
         </Field>
         <p className="fine-note">
-          Namen, Schreibvarianten, E-Mail-Adressen oder Kontonummern ausdrücklich angeben. Gesucht
-          wird ohne Beachtung der Großschreibung in den sichtbaren OCR-Wörtern. Unterschiedliche
-          Schreibweisen können auf denselben Platzhalter verweisen. Eine automatische Erkennung
-          aller personenbezogenen Angaben ist damit nicht verbunden.
+          {ui(
+            'Namen, Schreibvarianten, E-Mail-Adressen oder Kontonummern ausdrücklich angeben. Gesucht wird ohne Beachtung der Großschreibung in den sichtbaren OCR-Wörtern. Unterschiedliche Schreibweisen können auf denselben Platzhalter verweisen. Eine automatische Erkennung aller personenbezogenen Angaben ist damit nicht verbunden.',
+          )}
         </p>
         <Button
           disabled={busy || !input.trim()}
@@ -800,17 +833,19 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
             })
           }
         >
-          Treffer in allen Dateien suchen
+          {ui('Treffer in allen Dateien suchen')}
         </Button>
       </section>
       <Coverage pages={pages} />
       {!!pages.length && (
         <section className="advanced-card">
-          <h2>{hits.length} Treffer prüfen</h2>
+          <h2>
+            {hits.length} {ui(' Treffer prüfen')}
+          </h2>
           {rules.map((r, i) => (
             <p key={i}>
               {r.term} → <strong>{r.replacement}</strong> ·{' '}
-              {hits.filter((h) => h.rule === i).length} Treffer
+              {hits.filter((h) => h.rule === i).length} {ui(' Treffer')}
             </p>
           ))}
           {hits.slice(0, limit).map((hit, index) => (
@@ -828,15 +863,16 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
           ))}
           {hits.length > limit && (
             <Button variant="outline" onClick={() => setLimit(limit + 40)}>
-              Weitere Treffer anzeigen
+              {ui('Weitere Treffer anzeigen')}
             </Button>
           )}
           <p className="workbench-notice">
-            Nicht erkannte oder abgewählte Angaben bleiben sichtbar. Die Ausgabe enthält neue
-            Seitenbilder mit neutralen Dateinamen; die Originaldateien bleiben erhalten.
+            {ui(
+              'Nicht erkannte oder abgewählte Angaben bleiben sichtbar. Die Ausgabe enthält neue Seitenbilder mit neutralen Dateinamen; die Originaldateien bleiben erhalten.',
+            )}
           </p>
           <Tick
-            label="Ich habe die Trefferbereiche und Platzhalter geprüft."
+            label={ui('Ich habe die Trefferbereiche und Platzhalter geprüft.')}
             value={confirmed}
             onChange={setConfirmed}
           />
@@ -844,7 +880,7 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
             disabled={busy || !confirmed || !hits.some((h) => h.selected)}
             onClick={() => run((ctx) => pseudonymizedZip(sources, rules, hits, ctx))}
           >
-            Pseudonymisierte PDFs als ZIP erstellen
+            {ui('Pseudonymisierte PDFs als ZIP erstellen')}
           </Button>
           <Button
             variant="outline"
@@ -862,11 +898,12 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
               )
             }
           >
-            Vertrauliche Zuordnung separat exportieren
+            {ui('Vertrauliche Zuordnung separat exportieren')}
           </Button>
           <p className="fine-note">
-            Die Zuordnungsdatei enthält die Originalangaben. Sie gehört nicht in das Paket für
-            Empfänger.
+            {ui(
+              'Die Zuordnungsdatei enthält die Originalangaben. Sie gehört nicht in das Paket für Empfänger.',
+            )}
           </p>
         </section>
       )}
@@ -875,6 +912,7 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
 }
 
 export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
+  useLanguage();
   const [ocr, setOcr] = useState(false),
     [pages, setPages] = useState<EvidencePage[]>([]),
     [targets, setTargets] = useState<AttachmentTarget[]>([]),
@@ -891,10 +929,11 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Anlagenverweise mit Zielseiten verbinden</h2>
+        <h2>{ui('Anlagenverweise mit Zielseiten verbinden')}</h2>
         <p>
-          Erkennt Verweise wie „siehe Anlage 3“ und passende Überschriften oder Dateinamen. Das
-          Ergebnis ist ein zusammenhängendes Dokument mit anklickbaren Verweisen.
+          {ui(
+            'Erkennt Verweise wie „siehe Anlage 3“ und passende Überschriften oder Dateinamen. Das Ergebnis ist ein zusammenhängendes Dokument mit anklickbaren Verweisen.',
+          )}
         </p>
         <ReadOptions
           ocr={ocr}
@@ -904,8 +943,9 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
           }}
         />
         <p className="fine-note">
-          Reihenfolge im Paket: {sources.map((s) => s.name).join(' → ')}. Offene oder mehrdeutige
-          Verweise kannst du einer beliebigen Seite zuordnen.
+          {ui('Reihenfolge im Paket: ')}
+          {sources.map((s) => s.name).join(' → ')}
+          {ui('. Offene oder mehrdeutige Verweise kannst du einer beliebigen Seite zuordnen.')}
         </p>
         <Button
           disabled={busy}
@@ -930,19 +970,21 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
             })
           }
         >
-          Anlagenverweise erkennen
+          {ui('Anlagenverweise erkennen')}
         </Button>
       </section>
       <Coverage pages={pages} />
       {!!pages.length && (
         <section className="advanced-card">
           <h2>
-            {refs.length} Verweise · {refs.filter((r) => !r.target).length} offen
+            {refs.length} {ui(' Verweise · ')}
+            {refs.filter((r) => !r.target).length} {ui(' offen')}
           </h2>
           {!refs.length && (
             <p>
-              Keine Verweise im Fließtext gefunden. Erkannt werden „Anlage“, „Anhang“ oder
-              „Appendix“ mit einer Nummer oder einem einzelnen Buchstaben.
+              {ui(
+                'Keine Verweise im Fließtext gefunden. Erkannt werden „Anlage“, „Anhang“ oder „Appendix“ mit einer Nummer oder einem einzelnen Buchstaben.',
+              )}
             </p>
           )}
           {refs.slice(0, limit).map((r, index) => (
@@ -951,7 +993,7 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
               <p>{r.ref.text}</p>
               <RefButton value={r.ref} onFocus={setFocus} />
               <Choice
-                label="Zielseite"
+                label={ui('Zielseite')}
                 value={r.target}
                 onChange={(target) => {
                   setRefs(refs.map((v, i) => (i === index ? { ...v, target } : v)));
@@ -966,25 +1008,25 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
               />
               <RefButton
                 value={targets.find((t) => t.id === r.target)?.ref}
-                label="Ziel prüfen"
+                label={ui('Ziel prüfen')}
                 onFocus={setFocus}
               />
               {r.candidates.length !== 1 && (
                 <p className="fine-note">
                   {r.candidates.length
-                    ? 'Mehrere passende Anlagen gefunden.'
-                    : 'Keine eindeutige Anlagenüberschrift gefunden.'}
+                    ? ui('Mehrere passende Anlagen gefunden.')
+                    : ui('Keine eindeutige Anlagenüberschrift gefunden.')}
                 </p>
               )}
             </article>
           ))}
           {refs.length > limit && (
             <Button variant="outline" onClick={() => setLimit(limit + 40)}>
-              Weitere Verweise anzeigen
+              {ui('Weitere Verweise anzeigen')}
             </Button>
           )}
           <Tick
-            label="Ich habe die zugeordneten Zielseiten geprüft."
+            label={ui('Ich habe die zugeordneten Zielseiten geprüft.')}
             value={confirmed}
             onChange={setConfirmed}
           />
@@ -992,7 +1034,7 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
             disabled={busy || !confirmed || !refs.some((r) => r.target)}
             onClick={() => run((ctx) => linkAttachments(sources, targets, refs, ctx))}
           >
-            PDF-Paket mit Anlagenlinks erstellen
+            {ui('PDF-Paket mit Anlagenlinks erstellen')}
           </Button>
           <ReportButtons
             rows={[
@@ -1016,6 +1058,7 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
 }
 
 export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
+  useLanguage();
   const [candidates, setCandidates] = useState<ScanCandidate[]>([]),
     [choices, setChoices] = useState<ScanChoice[]>([]),
     [focus, setFocus] = useState<EvidenceRef>(),
@@ -1033,15 +1076,16 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Die besten Seiten aus mehreren Scans zusammenstellen</h2>
+        <h2>{ui('Die besten Seiten aus mehreren Scans zusammenstellen')}</h2>
         <p>
-          Die gewählte Hauptdatei legt zunächst Seitenzahl und Reihenfolge fest. Ähnliche Seiten aus
-          den weiteren Dateien werden anhand von Bildstruktur, Schärfe, Kontrast und Randinhalt
-          vorgeschlagen.
+          {ui(
+            'Die gewählte Hauptdatei legt zunächst Seitenzahl und Reihenfolge fest. Ähnliche Seiten aus den weiteren Dateien werden anhand von Bildstruktur, Schärfe, Kontrast und Randinhalt vorgeschlagen.',
+          )}
         </p>
         <p className="fine-note">
-          Rauschen kann scharf wirken und unterschiedliche Seiten können ähnlich aussehen. Die
-          Bewertung ist eine Hilfe zur Auswahl; bestätige jede Seite am Original.
+          {ui(
+            'Rauschen kann scharf wirken und unterschiedliche Seiten können ähnlich aussehen. Die Bewertung ist eine Hilfe zur Auswahl; bestätige jede Seite am Original.',
+          )}
         </p>
         <Button
           disabled={busy || sources.length < 2}
@@ -1055,21 +1099,26 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
             })
           }
         >
-          Scans vergleichen und Seiten vorschlagen
+          {ui('Scans vergleichen und Seiten vorschlagen')}
         </Button>
-        {sources.length < 2 && <p>Bitte mindestens zwei Scans desselben Dokuments hinzufügen.</p>}
+        {sources.length < 2 && (
+          <p>{ui('Bitte mindestens zwei Scans desselben Dokuments hinzufügen.')}</p>
+        )}
       </section>
       {!!candidates.length && (
         <section className="advanced-card">
-          <h2>Ausgabeseiten zusammenstellen</h2>
+          <h2>{ui('Ausgabeseiten zusammenstellen')}</h2>
           {choices.slice(0, limit).map((choice, index) => {
             const selected = candidates.find((c) => c.key === choice.selected),
               original = candidates.find((c) => c.key === choice.reference);
             return (
               <article className="evidence-finding" key={choice.id}>
-                <h3>Ausgabeseite {index + 1}</h3>
+                <h3>
+                  {ui('Ausgabeseite ')}
+                  {index + 1}
+                </h3>
                 <Choice
-                  label="Verwendete Originalseite"
+                  label={ui('Verwendete Originalseite')}
                   value={choice.selected}
                   onChange={(selected) => update(index, { selected, confirmed: false })}
                   items={candidates.map((c) => [
@@ -1079,20 +1128,22 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
                 />
                 <p className="fine-note">
                   {choice.confidence
-                    ? `Automatischer Ähnlichkeitswert: ${Math.round(choice.confidence * 100)} %. `
-                    : 'Keine eindeutig bessere Alternative vorgeschlagen. '}
-                  Inhalt und abgeschnittene Ränder bitte prüfen.
+                    ? ui(
+                        `Automatischer Ähnlichkeitswert: ${Math.round(choice.confidence * 100)} %. `,
+                      )
+                    : ui('Keine eindeutig bessere Alternative vorgeschlagen. ')}
+                  {ui('Inhalt und abgeschnittene Ränder bitte prüfen.')}
                 </p>
                 <div className="advanced-actions">
                   {original && (
-                    <RefButton value={ref(original)} label="Referenz" onFocus={setFocus} />
+                    <RefButton value={ref(original)} label={ui('Referenz')} onFocus={setFocus} />
                   )}{' '}
                   {selected && (
-                    <RefButton value={ref(selected)} label="Auswahl" onFocus={setFocus} />
+                    <RefButton value={ref(selected)} label={ui('Auswahl')} onFocus={setFocus} />
                   )}
                 </div>
                 <Tick
-                  label="Diese Ausgabeseite ist geprüft."
+                  label={ui('Diese Ausgabeseite ist geprüft.')}
                   value={choice.confirmed}
                   onChange={(confirmed) => update(index, { confirmed })}
                 />
@@ -1107,7 +1158,7 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
                       setChoices(next);
                     }}
                   >
-                    Nach oben
+                    {ui('Nach oben')}
                   </Button>
                   <Button
                     size="sm"
@@ -1119,14 +1170,14 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
                       setChoices(next);
                     }}
                   >
-                    Nach unten
+                    {ui('Nach unten')}
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => setChoices(choices.filter((_, i) => i !== index))}
                   >
-                    Entfernen
+                    {ui('Entfernen')}
                   </Button>
                 </div>
               </article>
@@ -1134,7 +1185,7 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
           })}
           {choices.length > limit && (
             <Button variant="outline" onClick={() => setLimit(limit + 30)}>
-              Weitere Seiten anzeigen
+              {ui('Weitere Seiten anzeigen')}
             </Button>
           )}
           <div className="advanced-actions">
@@ -1154,18 +1205,21 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
                 setLimit(choices.length + 1);
               }}
             >
-              Weitere Seite hinzufügen
+              {ui('Weitere Seite hinzufügen')}
             </Button>
             <Button
               disabled={busy || !choices.length || choices.some((c) => !c.confirmed)}
               onClick={() => run((ctx) => saveBestScans(sources, candidates, choices, ctx))}
             >
-              Bestätigte Seiten als PDF
+              {ui('Bestätigte Seiten als PDF')}
             </Button>
           </div>
           <p className="fine-note">
-            {choices.filter((c) => c.confirmed).length} von {choices.length} Seiten bestätigt.
-            Gewählte Originalseiten werden ohne erneute Bildkomprimierung übernommen.
+            {choices.filter((c) => c.confirmed).length} {ui(' von ')}
+            {choices.length}{' '}
+            {ui(
+              ' Seiten bestätigt. Gewählte Originalseiten werden ohne erneute Bildkomprimierung übernommen.',
+            )}
           </p>
           <ReportButtons
             rows={[
@@ -1192,6 +1246,7 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
 }
 
 export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
+  useLanguage();
   const [order, setOrder] = useState(
       sources.filter((s) => s.id !== source.id).length > 1
         ? sources.find((s) => s.id !== source.id)!.id
@@ -1230,10 +1285,12 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Angebot → Auftrag → Rechnung</h2>
-        <p>Die oben gewählte Datei ist das Angebot. Ein Auftrag kann optional dazukommen.</p>
+        <h2>{ui('Angebot → Auftrag → Rechnung')}</h2>
+        <p>
+          {ui('Die oben gewählte Datei ist das Angebot. Ein Auftrag kann optional dazukommen.')}
+        </p>
         <Choice
-          label="Auftrag (optional)"
+          label={ui('Auftrag (optional)')}
           value={order}
           onChange={(v) => {
             setOrder(v);
@@ -1247,7 +1304,7 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
           ]}
         />
         <Choice
-          label="Rechnung"
+          label={ui('Rechnung')}
           value={invoice}
           onChange={(v) => {
             setInvoice(v);
@@ -1268,9 +1325,9 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
           }}
         />
         <p className="fine-note">
-          Vorschläge erkennen einfache Positionszeilen mit Positionsnummer, Beschreibung, Menge,
-          Einzelpreis und Betrag. Abweichende Tabellen bitte vor dem Vergleich korrigieren.
-          Preisbasis, Rabatte und Steuersätze werden nicht automatisch umgerechnet.
+          {ui(
+            'Vorschläge erkennen einfache Positionszeilen mit Positionsnummer, Beschreibung, Menge, Einzelpreis und Betrag. Abweichende Tabellen bitte vor dem Vergleich korrigieren. Preisbasis, Rabatte und Steuersätze werden nicht automatisch umgerechnet.',
+          )}
         </p>
         <Button
           disabled={busy || !invoice || invoice === order}
@@ -1290,28 +1347,36 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
             })
           }
         >
-          Positionen auslesen
+          {ui('Positionen auslesen')}
         </Button>
         {invoice && invoice === order && (
-          <p className="error-box">Auftrag und Rechnung müssen unterschiedliche Dateien sein.</p>
+          <p className="error-box">
+            {ui('Auftrag und Rechnung müssen unterschiedliche Dateien sein.')}
+          </p>
         )}
       </section>
       <Coverage pages={pages} />
       {!!pages.length && (
         <section className="advanced-card">
-          <h2>Erfasste Positionen prüfen</h2>
+          <h2>{ui('Erfasste Positionen prüfen')}</h2>
           {selected.map((s) => (
             <section className="evidence-position-group" key={s.id}>
               <h3>
-                {s.id === source.id ? 'Angebot' : s.id === order ? 'Auftrag' : 'Rechnung'} ·{' '}
-                {s.name}
+                {s.id === source.id
+                  ? ui('Angebot')
+                  : s.id === order
+                    ? ui('Auftrag')
+                    : ui('Rechnung')}{' '}
+                · {s.name}
               </h3>
               {!(positions[s.id] || []).length && (
-                <p>Keine einfachen Positionszeilen erkannt. Du kannst sie manuell ergänzen.</p>
+                <p>
+                  {ui('Keine einfachen Positionszeilen erkannt. Du kannst sie manuell ergänzen.')}
+                </p>
               )}
               {(positions[s.id] || []).map((p, index) => (
                 <article className="evidence-finding" key={index}>
-                  <Field label="Beschreibung (für Zuordnung)">
+                  <Field label={ui('Beschreibung (für Zuordnung)')}>
                     <input
                       value={p.label}
                       onChange={(e) => change(s.id, index, { label: e.target.value })}
@@ -1333,7 +1398,7 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
                     ))}
                   </div>
                   <Choice
-                    label="Fundstellenseite"
+                    label={ui('Fundstellenseite')}
                     value={String(p.ref.page)}
                     onChange={(v) => {
                       const page = pages.find((d) => d.sourceId === s.id && d.page === Number(v))!;
@@ -1357,7 +1422,7 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
                       setConfirmed(false);
                     }}
                   >
-                    Position entfernen
+                    {ui('Position entfernen')}
                   </Button>
                 </article>
               ))}
@@ -1383,12 +1448,14 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
                   setConfirmed(false);
                 }}
               >
-                Position ergänzen
+                {ui('Position ergänzen')}
               </Button>
             </section>
           ))}
           <Tick
-            label="Beschreibungen, Mengen, Preise und Beträge sind geprüft und haben dieselbe Einheit / Währung."
+            label={ui(
+              'Beschreibungen, Mengen, Preise und Beträge sind geprüft und haben dieselbe Einheit / Währung.',
+            )}
             value={confirmed}
             onChange={setConfirmed}
           />
@@ -1420,7 +1487,7 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
               })
             }
           >
-            Geprüfte Positionen vergleichen
+            {ui('Geprüfte Positionen vergleichen')}
           </Button>
         </section>
       )}
@@ -1430,6 +1497,7 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
 }
 
 export function CommentExportPanel({ sources, busy, run }: PanelProps) {
+  useLanguage();
   const [rows, setRows] = useState<CommentRow[]>([]),
     [ready, setReady] = useState(false),
     [focus, setFocus] = useState<EvidenceRef>(),
@@ -1437,15 +1505,16 @@ export function CommentExportPanel({ sources, busy, run }: PanelProps) {
   return (
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
-        <h2>Kommentare und Markierungen als Arbeitsliste</h2>
+        <h2>{ui('Kommentare und Markierungen als Arbeitsliste')}</h2>
         <p>
-          Liest PDF-Anmerkungen samt Autor, Seite und markiertem Text aus allen geöffneten Dateien.
-          Du kannst Aufgaben bearbeiten und abhaken.
+          {ui(
+            'Liest PDF-Anmerkungen samt Autor, Seite und markiertem Text aus allen geöffneten Dateien. Du kannst Aufgaben bearbeiten und abhaken.',
+          )}
         </p>
         <p className="fine-note">
-          In Seitenbilder eingebrannte Kommentare sind keine PDF-Anmerkungen und werden nicht
-          erkannt. Markierter Text ist nur bei auslesbarer Textebene verfügbar. Änderungen hier
-          betreffen die exportierte Arbeitsliste.
+          {ui(
+            'In Seitenbilder eingebrannte Kommentare sind keine PDF-Anmerkungen und werden nicht erkannt. Markierter Text ist nur bei auslesbarer Textebene verfügbar. Änderungen hier betreffen die exportierte Arbeitsliste.',
+          )}
         </p>
         <Button
           disabled={busy}
@@ -1458,20 +1527,24 @@ export function CommentExportPanel({ sources, busy, run }: PanelProps) {
             })
           }
         >
-          Kommentare sammeln
+          {ui('Kommentare sammeln')}
         </Button>
       </section>
       {ready && (
         <section className="advanced-card">
-          <h2>{rows.length} Anmerkungen gefunden</h2>
-          {!rows.length && <p>Keine unterstützten PDF-Kommentare oder Markierungen gefunden.</p>}
+          <h2>
+            {rows.length} {ui(' Anmerkungen gefunden')}
+          </h2>
+          {!rows.length && (
+            <p>{ui('Keine unterstützten PDF-Kommentare oder Markierungen gefunden.')}</p>
+          )}
           {rows.slice(0, limit).map((row, index) => (
             <article className="evidence-finding" key={row.id}>
               <h3>
-                {row.type} · {row.author || 'Ohne Autor'}
+                {ui(row.type)} · {row.author || ui('Ohne Autor')}
               </h3>
               {row.quote && <blockquote>{row.quote}</blockquote>}
-              <Field label="Kommentar / Aufgabe">
+              <Field label={ui('Kommentar / Aufgabe')}>
                 <textarea
                   rows={3}
                   value={row.comment}
@@ -1483,7 +1556,7 @@ export function CommentExportPanel({ sources, busy, run }: PanelProps) {
                 />
               </Field>
               <Tick
-                label="Erledigt"
+                label={ui('Erledigt')}
                 value={row.done}
                 onChange={(done) => setRows(rows.map((r, i) => (i === index ? { ...r, done } : r)))}
               />
@@ -1492,7 +1565,7 @@ export function CommentExportPanel({ sources, busy, run }: PanelProps) {
           ))}
           {rows.length > limit && (
             <Button variant="outline" onClick={() => setLimit(limit + 40)}>
-              Weitere Kommentare anzeigen
+              {ui('Weitere Kommentare anzeigen')}
             </Button>
           )}
           <ReportButtons rows={commentRows(rows)} name="PDF-Kommentare" run={run} busy={busy} />
@@ -1501,7 +1574,7 @@ export function CommentExportPanel({ sources, busy, run }: PanelProps) {
             disabled={busy}
             onClick={() => run(async () => commentMarkdown(rows))}
           >
-            Markdown-Aufgabenliste erstellen
+            {ui('Markdown-Aufgabenliste erstellen')}
           </Button>
         </section>
       )}

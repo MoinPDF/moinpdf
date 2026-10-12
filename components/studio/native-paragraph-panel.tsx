@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useState } from 'react';
 import './advanced-workbench.css';
 import { Button } from '@/components/ui/button';
@@ -22,6 +25,7 @@ import {
 } from './advanced-shared';
 
 export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [page, setPage] = useState(0),
     [objects, setObjects] = useState<NativeObject[]>([]),
     [selected, setSelected] = useState<number[]>([]),
@@ -132,10 +136,11 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
   return (
     <div className="century-columns">
       <section className="advanced-card">
-        <h2>Absätze neu umbrechen</h2>
+        <h2>{ui('Absätze neu umbrechen')}</h2>
         <p>
-          Mehrere vorhandene Textobjekte auswählen und durch einen gemeinsam formatierten Absatz
-          ersetzen. Der übrige Seiteninhalt bleibt erhalten.
+          {ui(
+            'Mehrere vorhandene Textobjekte auswählen und durch einen gemeinsam formatierten Absatz ersetzen. Der übrige Seiteninhalt bleibt erhalten.',
+          )}
         </p>
         <PageSelect
           source={source}
@@ -160,18 +165,19 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Textobjekte laden
+          {ui('Textobjekte laden')}
         </Button>
         {loaded && !objects.length && (
           <p>
-            Keine einzeln bearbeitbaren Texte. Scans zuerst mit OCR auslesen. Texte in Objektgruppen
-            sind hier nicht auswählbar.
+            {ui(
+              'Keine einzeln bearbeitbaren Texte. Scans zuerst mit OCR auslesen. Texte in Objektgruppen sind hier nicht auswählbar.',
+            )}
           </p>
         )}
         {!!objects.length && (
           <>
             <fieldset className="paragraph-object-list" disabled={busy}>
-              <legend>Zu ersetzende Textobjekte</legend>
+              <legend>{ui('Zu ersetzende Textobjekte')}</legend>
               {objects.map((o) => (
                 <label className="advanced-tick" key={o.index}>
                   <input
@@ -186,20 +192,22 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
                     }
                   />
                   <span>
-                    {o.index + 1} · {o.text.slice(0, 160) || '(leerer Text)'}
+                    {o.index + 1} · {o.text.slice(0, 160) || ui('(leerer Text)')}
                   </span>
                 </label>
               ))}
             </fieldset>
-            <p>{selected.length} Textobjekte ausgewählt</p>
+            <p>
+              {selected.length} {ui(' Textobjekte ausgewählt')}
+            </p>
             <Button variant="outline" disabled={busy || !selected.length} onClick={useSelection}>
-              Auswahl als Absatz laden
+              {ui('Auswahl als Absatz laden')}
             </Button>
           </>
         )}
-        <Field label="Neuer Absatztext">
+        <Field label={ui('Neuer Absatztext')}>
           <textarea
-            aria-label="Neuer Absatztext"
+            aria-label={ui('Neuer Absatztext')}
             rows={8}
             maxLength={20000}
             value={text}
@@ -213,9 +221,9 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
           />
         </Field>
         <p className="fine-note">
-          Textreihenfolge nach dem Übernehmen prüfen. Eingabetaste beginnt eine neue Zeile; weitere
-          Umbrüche setzt MoinPDF automatisch. Unterstützt werden lateinische, griechische und
-          kyrillische Schriften.
+          {ui(
+            'Textreihenfolge nach dem Übernehmen prüfen. Eingabetaste beginnt eine neue Zeile; weitere Umbrüche setzt MoinPDF automatisch. Unterstützt werden lateinische, griechische und kyrillische Schriften.',
+          )}
         </p>
         <Button
           variant="outline"
@@ -224,15 +232,16 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             setStyles((all) => [...all, { from: selection[0], to: selection[1], fontSize, color }])
           }
         >
-          Markierten Text anders formatieren
+          {ui('Markierten Text anders formatieren')}
         </Button>
         {styles.map((style, i) => (
           <fieldset className="pro-rule" key={i}>
             <legend>
-              Formatierung {i + 1}: {text.slice(style.from, style.to).slice(0, 60)}
+              {ui('Formatierung ')}
+              {i + 1}: {text.slice(style.from, style.to).slice(0, 60)}
             </legend>
             <NumberField
-              label={`Formatierung ${i + 1}: Schriftgröße`}
+              label={ui(`Formatierung ${i + 1}: Schriftgröße`)}
               value={style.fontSize}
               min={6}
               max={144}
@@ -240,7 +249,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
                 setStyles((all) => all.map((s, n) => (n === i ? { ...s, fontSize: v } : s)))
               }
             />
-            <Field label={`Formatierung ${i + 1}: Farbe`}>
+            <Field label={ui(`Formatierung ${i + 1}: Farbe`)}>
               <input
                 type="color"
                 value={style.color}
@@ -251,7 +260,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
                 }
               />
             </Field>
-            <Field label={`Formatierung ${i + 1}: eigene Schrift (.ttf)`}>
+            <Field label={ui(`Formatierung ${i + 1}: eigene Schrift (.ttf)`)}>
               <input
                 type="file"
                 accept=".ttf"
@@ -267,25 +276,30 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
               variant="outline"
               onClick={() => setStyles((all) => all.filter((_, n) => n !== i))}
             >
-              Formatierung {i + 1} entfernen
+              {ui('Formatierung ')}
+              {i + 1} {ui(' entfernen')}
             </Button>
           </fieldset>
         ))}
         <p className="fine-note">
-          Text markieren, dann eine abweichende Größe, Farbe oder eigene Schrift festlegen. Beim
-          Ändern des Absatztextes werden die Bereichsformatierungen zurückgesetzt. Überlappende
-          Bereiche werden abgewiesen.
+          {ui(
+            'Text markieren, dann eine abweichende Größe, Farbe oder eigene Schrift festlegen. Beim Ändern des Absatztextes werden die Bereichsformatierungen zurückgesetzt. Überlappende Bereiche werden abgewiesen.',
+          )}
         </p>
-        <Tick label="Bei Textüberlauf neue Folgeseiten einfügen" value={flow} onChange={setFlow} />
+        <Tick
+          label={ui('Bei Textüberlauf neue Folgeseiten einfügen')}
+          value={flow}
+          onChange={setFlow}
+        />
         {flow && (
           <p className="fine-note">
-            Bis zu 19 zusätzliche leere Seiten werden direkt nach der bearbeiteten Seite eingefügt.
-            Der Absatz fließt im gleichen relativen Textbereich weiter; vorhandene spätere Seiten
-            bleiben erhalten.
+            {ui(
+              'Bis zu 19 zusätzliche leere Seiten werden direkt nach der bearbeiteten Seite eingefügt. Der Absatz fließt im gleichen relativen Textbereich weiter; vorhandene spätere Seiten bleiben erhalten.',
+            )}
           </p>
         )}
         <Choice
-          label="Absatzschrift"
+          label={ui('Absatzschrift')}
           value={fontChoice}
           onChange={setFontChoice}
           items={[
@@ -294,19 +308,21 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
           ]}
         />
         {fontChoice === 'custom' && (
-          <Field label="TrueType-Schrift (.ttf)">
+          <Field label={ui('TrueType-Schrift (.ttf)')}>
             <input
-              aria-label="TrueType-Schrift (.ttf)"
+              aria-label={ui('TrueType-Schrift (.ttf)')}
               type="file"
               accept=".ttf,font/ttf"
               onChange={(e) => setFontFile(e.target.files?.[0] || null)}
             />
-            <small>Statische Schrift, höchstens 10 MB. Sie wird in die Ausgabe eingebettet.</small>
+            <small>
+              {ui('Statische Schrift, höchstens 10 MB. Sie wird in die Ausgabe eingebettet.')}
+            </small>
           </Field>
         )}
         <div className="advanced-coordinates">
           <NumberField
-            label="Absatzschriftgröße (pt)"
+            label={ui('Absatzschriftgröße (pt)')}
             value={fontSize}
             onChange={setFontSize}
             min={6}
@@ -314,7 +330,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             step={0.5}
           />
           <NumberField
-            label="Zeilenabstand (Faktor)"
+            label={ui('Zeilenabstand (Faktor)')}
             value={lineHeight}
             onChange={setLineHeight}
             min={1}
@@ -322,15 +338,15 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             step={0.1}
           />
           <NumberField
-            label="Innenabstand (pt)"
+            label={ui('Innenabstand (pt)')}
             value={padding}
             onChange={setPadding}
             min={0}
             max={72}
           />
-          <Field label="Textfarbe">
+          <Field label={ui('Textfarbe')}>
             <input
-              aria-label="Textfarbe"
+              aria-label={ui('Textfarbe')}
               type="color"
               value={color}
               onChange={(e) => setColor(e.target.value)}
@@ -338,7 +354,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
           </Field>
         </div>
         <Choice
-          label="Absatzausrichtung"
+          label={ui('Absatzausrichtung')}
           value={align}
           onChange={(v) => setAlign(v as typeof align)}
           items={[
@@ -347,7 +363,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             ['right', 'Rechtsbündig'],
           ]}
         />
-        <h3>Neuer Textbereich</h3>
+        <h3>{ui('Neuer Textbereich')}</h3>
         <RectFields rect={rect} onChange={setRect} />
         <Button
           disabled={!ready}
@@ -369,7 +385,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Absatzvorschau berechnen
+          {ui('Absatzvorschau berechnen')}
         </Button>
         <Button
           disabled={!ready}
@@ -389,20 +405,19 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Absatz exportieren
+          {ui('Absatz exportieren')}
         </Button>
         <p className="fine-note">
-          MoinPDF prüft Schriftzeichen, Formgebung und Textüberlauf vor dem Export. Formatierungen
-          können Größe, Farbe und Schrift innerhalb des Absatzes ändern. Die Auswahl umfasst ganze
-          Textobjekte; Bilder, ungewählte Texte und Objektgruppen werden nicht entfernt.
-          Überschneidungen mit ihnen bitte in der Vorschau prüfen.
+          {ui(
+            'MoinPDF prüft Schriftzeichen, Formgebung und Textüberlauf vor dem Export. Formatierungen können Größe, Farbe und Schrift innerhalb des Absatzes ändern. Die Auswahl umfasst ganze Textobjekte; Bilder, ungewählte Texte und Objektgruppen werden nicht entfernt. Überschneidungen mit ihnen bitte in der Vorschau prüfen.',
+          )}
         </p>
       </section>
       <section className="advanced-card">
         <h2>
           {currentPreview
-            ? `Ergebnisvorschau · ${currentPreview.lines} Zeilen`
-            : 'Original und neuer Textbereich'}
+            ? ui(`Ergebnisvorschau · ${currentPreview.lines} Zeilen`)
+            : ui('Original und neuer Textbereich')}
         </h2>
         {currentPreview && (
           <PageSelect source={currentPreview.source} page={previewPage} onChange={setPreviewPage} />
@@ -422,7 +437,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
         />
         {currentPreview && (
           <Button variant="outline" onClick={() => setPreview(null)}>
-            Zur Originalansicht
+            {ui('Zur Originalansicht')}
           </Button>
         )}
       </section>

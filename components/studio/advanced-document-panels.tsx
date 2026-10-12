@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +30,7 @@ import {
 } from './advanced-shared';
 
 export function LinksPanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [links, setLinks] = useState<LinkDraft[]>([]),
     [loaded, setLoaded] = useState(false),
     [selected, setSelected] = useState(''),
@@ -50,11 +54,13 @@ export function LinksPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Vorhandene Links laden
+          {ui('Vorhandene Links laden')}
         </Button>
         {loaded && (
           <>
-            <p>{links.filter((l) => !l.deleted).length} Links</p>
+            <p>
+              {links.filter((l) => !l.deleted).length} {ui(' Links')}
+            </p>
             <div className="advanced-hit-list">
               {links
                 .filter((l) => !l.deleted)
@@ -67,7 +73,8 @@ export function LinksPanel({ source, busy, run }: PanelProps) {
                       setPage(l.page);
                     }}
                   >
-                    Seite {l.page + 1} · {l.kind === 'page' ? '→ Seite ' : ''}
+                    {ui('Seite ')}
+                    {l.page + 1} · {l.kind === 'page' ? ui('→ Seite ') : ''}
                     {l.target}
                   </button>
                 ))}
@@ -90,18 +97,18 @@ export function LinksPanel({ source, busy, run }: PanelProps) {
                 setSelected(id);
               }}
             >
-              Link hinzufügen
+              {ui('Link hinzufügen')}
             </Button>
             {link && (
               <>
                 {link.kind === 'unsupported' ? (
                   <p className="fine-note">
-                    Diese Spezialaktion bleibt erhalten. Du kannst sie bei Bedarf entfernen.
+                    {ui('Diese Spezialaktion bleibt erhalten. Du kannst sie bei Bedarf entfernen.')}
                   </p>
                 ) : (
                   <>
                     <Choice
-                      label="Verweist auf"
+                      label={ui('Verweist auf')}
                       value={link.kind}
                       onChange={(v) =>
                         patch({
@@ -115,7 +122,7 @@ export function LinksPanel({ source, busy, run }: PanelProps) {
                       ]}
                     />
                     <Text
-                      label={link.kind === 'page' ? 'Zielseite' : 'Linkziel'}
+                      label={link.kind === 'page' ? ui('Zielseite') : ui('Linkziel')}
                       value={link.target}
                       onChange={(target) => patch({ target })}
                     />
@@ -129,12 +136,12 @@ export function LinksPanel({ source, busy, run }: PanelProps) {
                     setSelected('');
                   }}
                 >
-                  Diesen Link entfernen
+                  {ui('Diesen Link entfernen')}
                 </Button>
               </>
             )}
             <Button disabled={busy} onClick={() => run((c) => saveLinks(source, links, c))}>
-              PDF mit Links speichern
+              {ui('PDF mit Links speichern')}
             </Button>
           </>
         )}
@@ -154,16 +161,18 @@ export function LinksPanel({ source, busy, run }: PanelProps) {
   );
 }
 export function AttachmentsPanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [items, setItems] = useState<AttachmentDraft[]>([]),
     [loaded, setLoaded] = useState(false);
   const input = useRef<HTMLInputElement>(null),
     replace = useRef<string | null>(null);
   return (
     <section className="advanced-card">
-      <h2>Dateien innerhalb der PDF</h2>
+      <h2>{ui('Dateien innerhalb der PDF')}</h2>
       <p className="fine-note">
-        Änderungen an Rechnungs-XML können eine E-Rechnung ungültig machen. Eine vorhandene digitale
-        Signatur wird durch das Bearbeiten der PDF ungültig.
+        {ui(
+          'Änderungen an Rechnungs-XML können eine E-Rechnung ungültig machen. Eine vorhandene digitale Signatur wird durch das Bearbeiten der PDF ungültig.',
+        )}
       </p>
       <Button
         disabled={busy || loaded}
@@ -175,14 +184,14 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
           })
         }
       >
-        Anhänge laden
+        {ui('Anhänge laden')}
       </Button>
       <input
         ref={input}
         type="file"
         multiple={!replace.current}
         className="sr-only"
-        aria-label="Anhang auswählen"
+        aria-label={ui('Anhang auswählen')}
         onChange={(e) => {
           const files = Array.from(e.target.files || []),
             replacement = replace.current;
@@ -215,13 +224,15 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
       />
       {loaded && (
         <>
-          <p>{items.filter((a) => !a.deleted).length} Anhänge</p>
+          <p>
+            {items.filter((a) => !a.deleted).length} {ui(' Anhänge')}
+          </p>
           {items
             .filter((a) => !a.deleted)
             .map((item) => (
               <div className="attachment-row" key={item.id}>
                 <Text
-                  label="Dateiname des Anhangs"
+                  label={ui('Dateiname des Anhangs')}
                   value={item.name}
                   onChange={(name) =>
                     setItems(items.map((a) => (a.id === item.id ? { ...a, name } : a)))
@@ -237,7 +248,7 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
                       item.bytes && downloadBlob(new Blob([new Uint8Array(item.bytes)]), item.name)
                     }
                   >
-                    Herunterladen
+                    {ui('Herunterladen')}
                   </Button>
                   <Button
                     variant="outline"
@@ -248,7 +259,7 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
                       input.current?.click();
                     }}
                   >
-                    Ersetzen
+                    {ui('Ersetzen')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -257,7 +268,7 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
                       setItems(items.map((a) => (a.id === item.id ? { ...a, deleted: true } : a)))
                     }
                   >
-                    Entfernen
+                    {ui('Entfernen')}
                   </Button>
                 </div>
               </div>
@@ -271,10 +282,10 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
                 input.current?.click();
               }}
             >
-              Anhänge hinzufügen
+              {ui('Anhänge hinzufügen')}
             </Button>
             <Button disabled={busy} onClick={() => run((c) => saveAttachments(source, items, c))}>
-              PDF mit diesen Anhängen speichern
+              {ui('PDF mit diesen Anhängen speichern')}
             </Button>
           </div>
         </>
@@ -283,6 +294,7 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
   );
 }
 export function CoverPanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [title, setTitle] = useState(source.name.replace(/\.pdf$/i, '')),
     [subtitle, setSubtitle] = useState(''),
     [cover, setCover] = useState(true),
@@ -290,20 +302,21 @@ export function CoverPanel({ source, busy, run }: PanelProps) {
   return (
     <div className="advanced-grid">
       <section className="advanced-card">
-        <Text label="Dokumenttitel" value={title} onChange={setTitle} />
-        <Text label="Untertitel" value={subtitle} onChange={setSubtitle} />
-        <Tick label="Zusätzlich ein Deckblatt einfügen" value={cover} onChange={setCover} />
-        <Field label="Verzeichnis: Titel | Originalseite">
+        <Text label={ui('Dokumenttitel')} value={title} onChange={setTitle} />
+        <Text label={ui('Untertitel')} value={subtitle} onChange={setSubtitle} />
+        <Tick label={ui('Zusätzlich ein Deckblatt einfügen')} value={cover} onChange={setCover} />
+        <Field label={ui('Verzeichnis: Titel | Originalseite')}>
           <textarea
-            aria-label="Verzeichnis: Titel | Originalseite"
+            aria-label={ui('Verzeichnis: Titel | Originalseite')}
             value={entries}
             onChange={(e) => setEntries(e.target.value)}
             rows={10}
           />
         </Field>
         <p className="fine-note">
-          Ein Eintrag pro Zeile, zum Beispiel „Anhang | 5“. Die neuen Seitenzahlen werden
-          automatisch berechnet. Verzeichniszeilen und Lesezeichen sind anklickbar.
+          {ui(
+            'Ein Eintrag pro Zeile, zum Beispiel „Anhang | 5“. Die neuen Seitenzahlen werden automatisch berechnet. Verzeichniszeilen und Lesezeichen sind anklickbar.',
+          )}
         </p>
         <Button
           variant="outline"
@@ -317,7 +330,7 @@ export function CoverPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Vorhandene Lesezeichen übernehmen
+          {ui('Vorhandene Lesezeichen übernehmen')}
         </Button>
         <Button
           disabled={busy}
@@ -339,7 +352,7 @@ export function CoverPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Deckblatt und Verzeichnis erstellen
+          {ui('Deckblatt und Verzeichnis erstellen')}
         </Button>
       </section>
       <PageStage source={source} />
@@ -347,6 +360,7 @@ export function CoverPanel({ source, busy, run }: PanelProps) {
   );
 }
 export function MailMergePanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [rows, setRows] = useState<string[][]>([]),
     [fields, setFields] = useState<FormField[]>([]),
     [mapping, setMapping] = useState<Record<string, number>>({}),
@@ -357,10 +371,11 @@ export function MailMergePanel({ source, busy, run }: PanelProps) {
     <>
       <div className="advanced-grid">
         <section className="advanced-card">
-          <h2>Ein Formular, viele Empfänger</h2>
+          <h2>{ui('Ein Formular, viele Empfänger')}</h2>
           <p>
-            CSV oder TSV mit Kopfzeile auswählen und die Spalten deinen PDF-Feldern zuordnen.
-            Maximal 500 Datensätze.
+            {ui(
+              'CSV oder TSV mit Kopfzeile auswählen und die Spalten deinen PDF-Feldern zuordnen. Maximal 500 Datensätze.',
+            )}
           </p>
           <input
             ref={input}
@@ -398,12 +413,12 @@ export function MailMergePanel({ source, busy, run }: PanelProps) {
             }}
           />
           <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}>
-            Tabelle auswählen
+            {ui('Tabelle auswählen')}
           </Button>
           {!!rows.length && (
             <>
               <Choice
-                label="Dateiname aus Spalte"
+                label={ui('Dateiname aus Spalte')}
                 value={String(nameColumn)}
                 onChange={(v) => setNameColumn(Number(v))}
                 items={[
@@ -425,10 +440,15 @@ export function MailMergePanel({ source, busy, run }: PanelProps) {
                   ]}
                 />
               ))}
-              <Tick label="Ausgefüllte Felder fixieren" value={flatten} onChange={setFlatten} />
+              <Tick
+                label={ui('Ausgefüllte Felder fixieren')}
+                value={flatten}
+                onChange={setFlatten}
+              />
               <p className="fine-note">
-                Checkboxen: ja/nein, 1/0 oder x. Mehrfachauswahl: Werte mit | trennen. Unterstützt
-                werden gewöhnliche PDF-Formulare, keine XFA-Formulare.
+                {ui(
+                  'Checkboxen: ja/nein, 1/0 oder x. Mehrfachauswahl: Werte mit | trennen. Unterstützt werden gewöhnliche PDF-Formulare, keine XFA-Formulare.',
+                )}
               </p>
               <Button
                 disabled={busy}
@@ -445,7 +465,7 @@ export function MailMergePanel({ source, busy, run }: PanelProps) {
                   )
                 }
               >
-                {rows.length - 1} Formulare als ZIP erstellen
+                {rows.length - 1} {ui(' Formulare als ZIP erstellen')}
               </Button>
             </>
           )}
@@ -454,7 +474,7 @@ export function MailMergePanel({ source, busy, run }: PanelProps) {
       </div>
       {!!rows.length && (
         <section className="advanced-card">
-          <h2>Datensätze prüfen und korrigieren</h2>
+          <h2>{ui('Datensätze prüfen und korrigieren')}</h2>
           <EditTable rows={rows} onChange={setRows} />
         </section>
       )}

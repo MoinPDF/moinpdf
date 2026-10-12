@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useState } from 'react';
 import { LockKeyhole, Eye, EyeOff } from 'lucide-react';
 import {
@@ -22,6 +25,7 @@ export function PasswordPrompt({
   request: PasswordRequest | null;
   onClose: () => void;
 }) {
+  useLanguage();
   const [password, setPassword] = useState(''),
     [show, setShow] = useState(false);
   useEffect(() => {
@@ -45,10 +49,12 @@ export function PasswordPrompt({
           <div className="security-dialog-icon">
             <LockKeyhole size={26} />
           </div>
-          <DialogTitle>Diese PDF ist geschützt.</DialogTitle>
+          <DialogTitle>{ui('Diese PDF ist geschützt.')}</DialogTitle>
           <DialogDescription>
-            <span className="password-filename">{request?.name}</span>Zum Bearbeiten wird eine
-            lokale, entsperrte Arbeitskopie geöffnet. Deine Originaldatei bleibt geschützt.
+            <span className="password-filename">{request?.name}</span>
+            {ui(
+              'Zum Bearbeiten wird eine lokale, entsperrte Arbeitskopie geöffnet. Deine Originaldatei bleibt geschützt.',
+            )}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -58,21 +64,21 @@ export function PasswordPrompt({
           }}
         >
           <label className="field">
-            <span>PDF-Passwort</span>
+            <span>{ui('PDF-Passwort')}</span>
             <div className="password-input">
               <Input
                 autoFocus
                 autoComplete="off"
                 type={show ? 'text' : 'password'}
                 value={password}
-                aria-label="PDF-Passwort"
+                aria-label={ui('PDF-Passwort')}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label={show ? 'Passwort verbergen' : 'Passwort anzeigen'}
+                aria-label={show ? ui('Passwort verbergen') : ui('Passwort anzeigen')}
                 onClick={() => setShow(!show)}
               >
                 {show ? <EyeOff size={17} /> : <Eye size={17} />}
@@ -81,14 +87,14 @@ export function PasswordPrompt({
           </label>
           {request?.failed && (
             <p className="error-box" role="alert">
-              Das Passwort war nicht korrekt. Bitte erneut versuchen.
+              {ui('Das Passwort war nicht korrekt. Bitte erneut versuchen.')}
             </p>
           )}
           <div className="password-actions">
             <Button type="button" variant="ghost" onClick={() => finish(null)}>
-              Datei überspringen
+              {ui('Datei überspringen')}
             </Button>
-            <Button type="submit">PDF öffnen</Button>
+            <Button type="submit">{ui('PDF öffnen')}</Button>
           </div>
         </form>
       </DialogContent>

@@ -1,4 +1,7 @@
 'use client';
+import { ui, uiLocale } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, Plus, Download, LoaderCircle, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +33,7 @@ export function AudioWorkbench({
   onAdd: () => void;
   onBusy: (busy: boolean) => void;
 }) {
+  useLanguage();
   const [sourceId, setSourceId] = useState(sources[0]?.id || ''),
     [ocr, setOcr] = useState(false),
     [mode, setMode] = useState<'document' | 'pages' | 'chapters'>('document'),
@@ -160,32 +164,32 @@ export function AudioWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
-          Alle Werkzeuge
+          {ui('Alle Werkzeuge')}
         </Button>
         <Button variant="outline" onClick={onAdd} disabled={busy}>
           <Plus size={16} />
-          Dateien hinzufügen
+          {ui('Dateien hinzufügen')}
         </Button>
       </header>
       <div className="workbench-title">
         <div>
-          <span className="studio-kicker">DEIN DOKUMENT ZUM ANHÖREN</span>
+          <span className="studio-kicker">{ui('DEIN DOKUMENT ZUM ANHÖREN')}</span>
           <h1>
             <Headphones />
-            PDF als Hörbuch
+            {ui('PDF als Hörbuch')}
           </h1>
-          <p>Text prüfen, Stimme wählen und als Audio speichern.</p>
+          <p>{ui('Text prüfen, Stimme wählen und als Audio speichern.')}</p>
         </div>
       </div>
-      <p className="workbench-notice">{status}</p>
+      <p className="workbench-notice">{ui(status)}</p>
       <fieldset className="advanced-fields" disabled={busy} onChangeCapture={() => setResult(null)}>
         {!source ? (
-          <p>Bitte zuerst eine PDF öffnen.</p>
+          <p>{ui('Bitte zuerst eine PDF öffnen.')}</p>
         ) : (
           <div className="century-columns">
             <section className="advanced-card">
               <Choice
-                label="Dokument"
+                label={ui('Dokument')}
                 value={source.id}
                 onChange={setSourceId}
                 items={sources.map((s) => [s.id, s.name])}
@@ -200,7 +204,7 @@ export function AudioWorkbench({
                 }}
               />
               <Choice
-                label="Audio aufteilen"
+                label={ui('Audio aufteilen')}
                 value={mode}
                 onChange={(v) => {
                   setMode(v as typeof mode);
@@ -214,9 +218,9 @@ export function AudioWorkbench({
                 ]}
               />
               <p className="fine-note">
-                Die Lesereihenfolge folgt dem erkannten Seitentext. Tabellen, Spalten und OCR-Fehler
-                bitte im Vorlesetext korrigieren. Kapitelgrenzen liegen auf den Zielseiten der
-                Hauptlesezeichen.
+                {ui(
+                  'Die Lesereihenfolge folgt dem erkannten Seitentext. Tabellen, Spalten und OCR-Fehler bitte im Vorlesetext korrigieren. Kapitelgrenzen liegen auf den Zielseiten der Hauptlesezeichen.',
+                )}
               </p>
               <Button
                 onClick={() =>
@@ -235,13 +239,13 @@ export function AudioWorkbench({
                   })
                 }
               >
-                Vorlesetext vorbereiten
+                {ui('Vorlesetext vorbereiten')}
               </Button>
               <Coverage pages={pages} />
               {!!sections.length && (
                 <>
                   <Text
-                    label="Abschnitte auswählen (z. B. 1-5, 8; leer = alle)"
+                    label={ui('Abschnitte auswählen (z. B. 1-5, 8; leer = alle)')}
                     value={range}
                     onChange={setRange}
                   />
@@ -260,10 +264,10 @@ export function AudioWorkbench({
                       })
                     }
                   >
-                    Abschnittsauswahl übernehmen
+                    {ui('Abschnittsauswahl übernehmen')}
                   </Button>
                   <Choice
-                    label="Abschnitt bearbeiten"
+                    label={ui('Abschnitt bearbeiten')}
                     value={current.id}
                     onChange={setSelected}
                     items={sections.map((s, i) => [
@@ -272,7 +276,7 @@ export function AudioWorkbench({
                     ])}
                   />
                   <Tick
-                    label="Diesen Abschnitt ausgeben"
+                    label={ui('Diesen Abschnitt ausgeben')}
                     value={current.enabled}
                     onChange={(enabled) => {
                       clear();
@@ -281,7 +285,7 @@ export function AudioWorkbench({
                       );
                     }}
                   />
-                  <Field label="Abschnittstitel">
+                  <Field label={ui('Abschnittstitel')}>
                     <input
                       value={current.title}
                       maxLength={200}
@@ -295,7 +299,7 @@ export function AudioWorkbench({
                       }}
                     />
                   </Field>
-                  <Field label="Vorlesetext">
+                  <Field label={ui('Vorlesetext')}>
                     <textarea
                       className="century-audio-text"
                       rows={14}
@@ -314,9 +318,9 @@ export function AudioWorkbench({
               )}
             </section>
             <section className="advanced-card">
-              <h2>Stimme und Ausgabe</h2>
+              <h2>{ui('Stimme und Ausgabe')}</h2>
               <Choice
-                label="Deutsche Stimme"
+                label={ui('Deutsche Stimme')}
                 value={voice}
                 onChange={setVoice}
                 items={(caps?.audioVoices?.length
@@ -328,7 +332,7 @@ export function AudioWorkbench({
                 ).map((v) => [v.id, v.label])}
               />
               <NumberField
-                label="Sprechtempo"
+                label={ui('Sprechtempo')}
                 value={speed}
                 onChange={setSpeed}
                 min={0.75}
@@ -336,22 +340,23 @@ export function AudioWorkbench({
                 step={0.05}
               />
               <p>
-                {chosen.length} ausgewählte Abschnitte · {characters.toLocaleString('de-DE')} /
-                20.000 Zeichen
+                {chosen.length} {ui(' ausgewählte Abschnitte · ')}
+                {characters.toLocaleString(uiLocale())} {ui(' / 20.000 Zeichen')}
               </p>
               <p className="fine-note">
-                Bis zu 100 Abschnitte pro Auftrag. Bei langen Dokumenten bitte mehrere Aufträge
-                erstellen. Die Audioverarbeitung benötigt je nach Textlänge einige Zeit.
+                {ui(
+                  'Bis zu 100 Abschnitte pro Auftrag. Bei langen Dokumenten bitte mehrere Aufträge erstellen. Die Audioverarbeitung benötigt je nach Textlänge einige Zeit.',
+                )}
               </p>
               <Button
                 variant="outline"
                 disabled={!ready || !current?.text.trim()}
                 onClick={() => void audio(true)}
               >
-                Stimme mit diesem Text probehören
+                {ui('Stimme mit diesem Text probehören')}
               </Button>
               <Tick
-                label="Lesereihenfolge und Vorlesetext der ausgewählten Abschnitte geprüft"
+                label={ui('Lesereihenfolge und Vorlesetext der ausgewählten Abschnitte geprüft')}
                 value={reviewed}
                 onChange={setReviewed}
               />
@@ -367,7 +372,7 @@ export function AudioWorkbench({
                   }
                   onClick={() => void audio(false)}
                 >
-                  Hörbuch erstellen
+                  {ui('Hörbuch erstellen')}
                 </Button>
                 <Button
                   variant="outline"
@@ -384,12 +389,13 @@ export function AudioWorkbench({
                     }))
                   }
                 >
-                  Vorlesetext als TXT
+                  {ui('Vorlesetext als TXT')}
                 </Button>
               </div>
               <p className="fine-note">
-                Texterkennung erfolgt auf deinem Gerät. Nur der geprüfte Text geht an den
-                integrierten Dokumentenserver. Die Stimmen arbeiten dort ohne Cloud-Dienst.
+                {ui(
+                  'Texterkennung erfolgt auf deinem Gerät. Nur der geprüfte Text geht an den integrierten Dokumentenserver. Die Stimmen arbeiten dort ohne Cloud-Dienst.',
+                )}
               </p>
             </section>
           </div>
@@ -398,7 +404,7 @@ export function AudioWorkbench({
       {busy && (
         <div className="advanced-progress" role="status">
           <LoaderCircle className="spin" size={18} />
-          <span>{progress.label}</span>
+          <span>{ui(progress.label)}</span>
           <progress max={100} value={progress.percent} />
           <Button
             variant="ghost"
@@ -409,28 +415,28 @@ export function AudioWorkbench({
               );
             }}
           >
-            Abruf abbrechen
+            {ui('Abruf abbrechen')}
           </Button>
         </div>
       )}
       {error && (
         <p className="error-box" role="alert">
-          {error}
+          {ui(error)}
         </p>
       )}
       {result && (
         <section ref={output} className="advanced-result century-audio-output">
           <div>
-            <h2>Dein Ergebnis ist bereit.</h2>
+            <h2>{ui('Dein Ergebnis ist bereit.')}</h2>
             <p>{result.filename}</p>
-            {result.note && <p>{result.note}</p>}
+            {result.note && <p>{ui(result.note)}</p>}
             {result.blob.type.startsWith('audio/') && (
-              <audio controls src={url} aria-label="Erzeugte Sprachausgabe" />
+              <audio controls src={url} aria-label={ui('Erzeugte Sprachausgabe')} />
             )}
             <Button asChild>
               <a href={url} download={result.filename}>
                 <Download size={17} />
-                Herunterladen
+                {ui('Herunterladen')}
               </a>
             </Button>
           </div>

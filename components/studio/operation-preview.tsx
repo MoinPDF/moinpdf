@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState } from 'react';
 import { openSource, type Source } from '@/lib/pdf-engine';
 import type { ExportFile } from '@/lib/advanced-types';
@@ -12,6 +15,7 @@ export function OperationPreview({
   build: (signal: AbortSignal) => Promise<ExportFile>;
   busy: boolean;
 }) {
+  useLanguage();
   const [enabled, setEnabled] = useState(true),
     [preview, setPreview] = useState<Source | null>(null),
     [page, setPage] = useState(0),
@@ -60,16 +64,16 @@ export function OperationPreview({
     };
   }, [version, enabled, busy]);
   return (
-    <section aria-label="Live-Vorschau" className="advanced-card">
+    <section aria-label={ui('Live-Vorschau')} className="advanced-card">
       <Tick
-        label="Vorschau bei Änderungen automatisch aktualisieren"
+        label={ui('Vorschau bei Änderungen automatisch aktualisieren')}
         value={enabled}
         onChange={setEnabled}
       />
-      {enabled && notice && <p role="status">{notice}</p>}
+      {enabled && notice && <p role="status">{ui(notice)}</p>}
       {enabled && preview && (
         <>
-          <h3>Ergebnisvorschau</h3>
+          <h3>{ui('Ergebnisvorschau')}</h3>
           <PageSelect source={preview} page={page} onChange={setPage} />
           <PageStage source={preview} page={page} />
         </>

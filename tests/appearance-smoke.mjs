@@ -41,3 +41,43 @@ for(const preference of ['dark','light',null,'invalid']){
 }
 assert.doesNotThrow(()=>vm.runInNewContext(script,{document:{documentElement:{}},localStorage:{getItem:()=>{throw Error('blocked')}},window:{addEventListener(){}}}));
 console.log('PASS: DE/EN catalogue, all translated tool titles, search directions, slogan, theme persistence, cross-tab sync and blocked storage.');
+const extended = JSON.parse(await readFile('public/locales/en.json','utf8'));
+const {installEnglishCatalog, ui, setUiLanguage, uiLocale} = await import('../.cache/appearance/ui-language.mjs');
+installEnglishCatalog(extended);
+setUiLanguage('en');
+assert.equal(ui('EINSTELLUNGEN'),'SETTINGS');
+assert.equal(ui('Querformat'),'Landscape');
+assert.equal(ui('Seite 7 auswählen'),'Select page 7');
+assert.equal(ui('Originaldokument.pdf schließen'),'Close Originaldokument.pdf');
+assert.equal(ui('  PDF-Passwort  '),'  PDF password  ');
+assert.equal(ui('Weitere 20 Einträge anzeigen (100 von 200)'),'Show 20 more entries (100 of 200)');
+assert.equal(uiLocale(),'en-GB');
+for(const [source,target] of Object.entries(extended)) {
+ assert.deepEqual(source.match(/\{\d+\}/g)?.sort()??[],target.match(/\{\d+\}/g)?.sort()??[],source);
+ assert.ok(!/ZXQ|QXZ|\}Z/.test(target),source);
+}
+setUiLanguage('de');
+assert.equal(ui('PDF-Passwort'),'PDF-Passwort');
+assert.equal(uiLocale(),'de-DE');
+// The rendered information pages work in English without a JS translation pass.
+for(const route of ['documentation','media','legal','privacy']){
+ const html=await readFile(`public/en/${route}.html`,'utf8');
+ assert.ok(html.includes('<html lang="en">'));
+ assert.ok(html.includes('/en/privacy.html'));
+ assert.ok(html.includes('Paperwork. Sorted.'));
+}
+const languageScript=await readFile('public/language-init.js','utf8');
+for(const [path,stored,expected] of [
+ ['/dokumentation.html','en','/en/documentation.html#werkzeug-ocr'],
+ ['/en/documentation.html','de',null],
+ ['/dokumentation.html','de',null],
+]){
+ let redirected=null,listener;
+ vm.runInNewContext(languageScript,{URLSearchParams,localStorage:{getItem:()=>stored},window:{location:{pathname:path,search:'',hash:'#werkzeug-ocr',replace:(value)=>{redirected=value}},addEventListener:(_,fn)=>{listener=fn}}});
+ assert.equal(redirected,expected);
+ if(path.startsWith('/en/')){
+  listener({key:'moinpdf-language',newValue:'de'});
+  assert.equal(redirected,'/dokumentation.html#werkzeug-ocr');
+ }
+}
+console.log('PASS: full English catalogue, interpolation, PDF filenames, whitespace, information pages, cross-tab language and locale.');

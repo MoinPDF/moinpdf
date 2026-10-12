@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { Check, ChevronDown, LoaderCircle } from 'lucide-react';
 import { renderPage, type Source } from '@/lib/pdf-engine';
@@ -41,6 +44,7 @@ export function FormCanvas({
   onCreate: (rect: FieldRect) => void;
   onRect: (id: string, widget: number, rect: FieldRect) => void;
 }) {
+  useLanguage();
   const [url, setUrl] = useState(''),
     [size, setSize] = useState({ width: 595, height: 842 }),
     [error, setError] = useState(''),
@@ -156,7 +160,7 @@ export function FormCanvas({
           touchAction: creating || design ? 'none' : 'auto',
         }}
         role="region"
-        aria-label="Formular-Seitenvorschau"
+        aria-label={ui('Formular-Seitenvorschau')}
         onPointerDown={(e) => start(e)}
         onPointerMove={(e) => {
           if (drag.current) setDraft(nextRect(e));
@@ -169,7 +173,7 @@ export function FormCanvas({
         }}
       >
         {url ? (
-          <img src={url} alt={`${source.name}, Seite ${pageIndex + 1}`} draggable={false} />
+          <img src={url} alt={ui(`${source.name}, Seite ${pageIndex + 1}`)} draggable={false} />
         ) : (
           <div className="form-loading">{error || <LoaderCircle className="spin" />}</div>
         )}
@@ -201,7 +205,7 @@ export function FormCanvas({
                       height: `${r.h * 100}%`,
                     }}
                     disabled={disabled}
-                    aria-label={`Feld ${field.name} auswählen`}
+                    aria-label={ui(`Feld ${field.name} auswählen`)}
                     onClick={() => onSelect(field.id)}
                     onPointerDown={(e) => {
                       e.stopPropagation();
@@ -213,7 +217,7 @@ export function FormCanvas({
                         <Check size={18} />
                       ) : null
                     ) : field.kind === 'unsupported' ? (
-                      <span>Geschütztes Feld</span>
+                      <span>{ui('Geschütztes Feld')}</span>
                     ) : (
                       <span className={value ? '' : 'placeholder'}>{value || field.name}</span>
                     )}

@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useState } from 'react';
 import {
   Select,
@@ -22,6 +25,7 @@ export function OcrLanguagePicker({
   disabled: boolean;
   label: string;
 }) {
+  useLanguage();
   const [combining, setCombining] = useState(false);
   const selected = value
     .split('+')
@@ -31,7 +35,7 @@ export function OcrLanguagePicker({
   return (
     <div className="ocr-language-picker">
       <label className="field">
-        <span>{label}</span>
+        <span>{ui(label)}</span>
         <Select
           value={preset ? value : 'custom'}
           disabled={disabled}
@@ -43,32 +47,34 @@ export function OcrLanguagePicker({
             }
           }}
         >
-          <SelectTrigger aria-label={label}>
+          <SelectTrigger aria-label={ui(label)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {ocrLanguages.map(([code, name]) => (
               <SelectItem key={code} value={code}>
-                {name}
+                {ui(name)}
               </SelectItem>
             ))}
-            <SelectItem value="custom">Eigene Sprachkombination</SelectItem>
+            <SelectItem value="custom">{ui('Eigene Sprachkombination')}</SelectItem>
           </SelectContent>
         </Select>
       </label>
       {!expanded && (
         <Button size="sm" variant="outline" disabled={disabled} onClick={() => setCombining(true)}>
-          Sprachen kombinieren
+          {ui('Sprachen kombinieren')}
         </Button>
       )}
       {expanded && (
         <fieldset disabled={disabled} className="ocr-language-options">
           <legend>
-            Sprachkombination ({selected.length}/{MAX_OCR_LANGUAGES})
+            {ui('Sprachkombination (')}
+            {selected.length}/{MAX_OCR_LANGUAGES})
           </legend>
           <p className="fine-note">
-            Wähle nur Sprachen, die im Dokument vorkommen. Bis zu acht gleichzeitig; zusätzliche
-            Sprachen benötigen mehr Arbeitsspeicher.
+            {ui(
+              'Wähle nur Sprachen, die im Dokument vorkommen. Bis zu acht gleichzeitig; zusätzliche Sprachen benötigen mehr Arbeitsspeicher.',
+            )}
           </p>
           <div className="ocr-language-grid">
             {individualOcrLanguages.map(([code, name]) => (
@@ -91,7 +97,7 @@ export function OcrLanguagePicker({
                     )
                   }
                 />
-                <span>{name}</span>
+                <span>{ui(name)}</span>
               </label>
             ))}
           </div>

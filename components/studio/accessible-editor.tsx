@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { Button } from '@/components/ui/button';
 import { Choice, Text, Field } from './advanced-shared';
 import {
@@ -9,11 +12,11 @@ import {
 } from '@/lib/accessible-document';
 import { downloadBlob, type Source } from '@/lib/pdf-engine';
 
-export const initialAccessibleDocument: AccessibleDocument = {
-  title: 'Mein Dokument',
-  language: 'de-DE',
-  blocks: [{ kind: 'h1', text: 'Mein Dokument' }],
-};
+export const initialAccessibleDocument = (): AccessibleDocument => ({
+  title: ui('Mein Dokument'),
+  language: ui('Deutsch') === 'German' ? 'en-US' : 'de-DE',
+  blocks: [{ kind: 'h1', text: ui('Mein Dokument') }],
+});
 export function AccessibleEditor({
   value,
   onChange,
@@ -25,6 +28,7 @@ export function AccessibleEditor({
   source?: Source;
   run: (action: (signal: AbortSignal) => Promise<void>) => Promise<void>;
 }) {
+  useLanguage();
   const update = (index: number, block: AccessibleBlock) =>
     onChange({ ...value, blocks: value.blocks.map((b, i) => (i === index ? block : b)) });
   const move = (index: number, delta: number) => {
@@ -34,19 +38,19 @@ export function AccessibleEditor({
   };
   return (
     <div className="accessible-editor">
-      <h2>Inhalt und Lesereihenfolge</h2>
+      <h2>{ui('Inhalt und Lesereihenfolge')}</h2>
       <p>
-        Erstellt ein neues Dokument aus diesen Blöcken. Die Reihenfolge unten ist die
-        Lesereihenfolge. Das ursprüngliche Seitenlayout, Tabellen, Formulare und Bilder werden beim
-        Textimport nicht übernommen. Benötigte Bilder einzeln mit Beschreibung ergänzen.
+        {ui(
+          'Erstellt ein neues Dokument aus diesen Blöcken. Die Reihenfolge unten ist die Lesereihenfolge. Das ursprüngliche Seitenlayout, Tabellen, Formulare und Bilder werden beim Textimport nicht übernommen. Benötigte Bilder einzeln mit Beschreibung ergänzen.',
+        )}
       </p>
       <Text
-        label="Dokumenttitel"
+        label={ui('Dokumenttitel')}
         value={value.title}
         onChange={(title) => onChange({ ...value, title })}
       />
       <Choice
-        label="Dokumentsprache"
+        label={ui('Dokumentsprache')}
         value={value.language}
         onChange={(language) =>
           onChange({ ...value, language: language as AccessibleDocument['language'] })
@@ -76,26 +80,29 @@ export function AccessibleEditor({
           })
         }
       >
-        Text der ausgewählten PDF anhängen
+        {ui('Text der ausgewählten PDF anhängen')}
       </Button>
       <p className="fine-note">
-        Der Import ist ein Entwurf. Spalten, Trennungen, Reihenfolge und Vollständigkeit prüfen und
-        Überschriften zuweisen. Für Tabellen und komplexe Formulare das Original in einem geeigneten
-        Autorenprogramm bearbeiten.
+        {ui(
+          'Der Import ist ein Entwurf. Spalten, Trennungen, Reihenfolge und Vollständigkeit prüfen und Überschriften zuweisen. Für Tabellen und komplexe Formulare das Original in einem geeigneten Autorenprogramm bearbeiten.',
+        )}
       </p>
       {value.blocks.map((block, i) => (
-        <section className="accessible-block" key={i} aria-label={`Inhaltsblock ${i + 1}`}>
-          <strong>Block {i + 1}</strong>
+        <section className="accessible-block" key={i} aria-label={ui(`Inhaltsblock ${i + 1}`)}>
+          <strong>
+            {ui('Block ')}
+            {i + 1}
+          </strong>
           {block.kind === 'figure' ? (
             <>
               {/* Raster data is selected locally; SVG and external URLs are not accepted. */}
               <img
                 src={`data:${block.data.startsWith('iVBOR') ? 'image/png' : 'image/jpeg'};base64,${block.data}`}
-                alt={block.alt || 'Ausgewähltes Bild, Beschreibung fehlt'}
+                alt={block.alt || ui('Ausgewähltes Bild, Beschreibung fehlt')}
               />
-              <Field label={`Bildbeschreibung für Block ${i + 1}`}>
+              <Field label={ui(`Bildbeschreibung für Block ${i + 1}`)}>
                 <textarea
-                  aria-label={`Bildbeschreibung für Block ${i + 1}`}
+                  aria-label={ui(`Bildbeschreibung für Block ${i + 1}`)}
                   rows={3}
                   maxLength={2000}
                   value={block.alt}
@@ -106,7 +113,7 @@ export function AccessibleEditor({
           ) : (
             <>
               <Choice
-                label={`Rolle für Block ${i + 1}`}
+                label={ui(`Rolle für Block ${i + 1}`)}
                 value={block.kind}
                 onChange={(kind) => update(i, { ...block, kind: kind as 'p' | 'h1' | 'h2' | 'h3' })}
                 items={[
@@ -116,9 +123,9 @@ export function AccessibleEditor({
                   ['h3', 'Überschrift 3'],
                 ]}
               />
-              <Field label={`Text für Block ${i + 1}`}>
+              <Field label={ui(`Text für Block ${i + 1}`)}>
                 <textarea
-                  aria-label={`Text für Block ${i + 1}`}
+                  aria-label={ui(`Text für Block ${i + 1}`)}
                   rows={block.kind === 'p' ? 5 : 2}
                   maxLength={10000}
                   value={block.text}
@@ -131,25 +138,25 @@ export function AccessibleEditor({
             <Button
               variant="outline"
               disabled={i === 0}
-              aria-label={`Block ${i + 1} nach oben`}
+              aria-label={ui(`Block ${i + 1} nach oben`)}
               onClick={() => move(i, -1)}
             >
-              Nach oben
+              {ui('Nach oben')}
             </Button>
             <Button
               variant="outline"
               disabled={i === value.blocks.length - 1}
-              aria-label={`Block ${i + 1} nach unten`}
+              aria-label={ui(`Block ${i + 1} nach unten`)}
               onClick={() => move(i, 1)}
             >
-              Nach unten
+              {ui('Nach unten')}
             </Button>
             <Button
               variant="outline"
-              aria-label={`Block ${i + 1} entfernen`}
+              aria-label={ui(`Block ${i + 1} entfernen`)}
               onClick={() => onChange({ ...value, blocks: value.blocks.filter((_, j) => i !== j) })}
             >
-              Entfernen
+              {ui('Entfernen')}
             </Button>
           </div>
         </section>
@@ -159,11 +166,11 @@ export function AccessibleEditor({
         disabled={value.blocks.length >= 200}
         onClick={() => onChange({ ...value, blocks: [...value.blocks, { kind: 'p', text: '' }] })}
       >
-        Absatz hinzufügen
+        {ui('Absatz hinzufügen')}
       </Button>
-      <Field label="Bild hinzufügen (PNG/JPEG)">
+      <Field label={ui('Bild hinzufügen (PNG/JPEG)')}>
         <input
-          aria-label="Bild hinzufügen (PNG/JPEG)"
+          aria-label={ui('Bild hinzufügen (PNG/JPEG)')}
           type="file"
           accept="image/png,image/jpeg"
           disabled={value.blocks.length >= 200}
@@ -208,11 +215,11 @@ export function AccessibleEditor({
           })
         }
       >
-        Strukturdatei herunterladen
+        {ui('Strukturdatei herunterladen')}
       </Button>
-      <Field label="Strukturdatei öffnen">
+      <Field label={ui('Strukturdatei öffnen')}>
         <input
-          aria-label="Strukturdatei öffnen"
+          aria-label={ui('Strukturdatei öffnen')}
           type="file"
           accept=".json,application/json"
           onChange={(e) => {
@@ -229,10 +236,9 @@ export function AccessibleEditor({
         />
       </Field>
       <p className="fine-note">
-        Ausgabe: A4 mit eingebetteten Schriften, Überschriften-Tags, Absatz-Tags und
-        Bildbeschreibungen. Die ZIP-Datei enthält ein PDF nur bei bestandener technischer
-        PDF/UA-1-Prüfung, dazu den vollständigen Prüfbericht. Inhalte, Sprache, Alternativtexte und
-        Lesereihenfolge zusätzlich selbst kontrollieren.
+        {ui(
+          'Ausgabe: A4 mit eingebetteten Schriften, Überschriften-Tags, Absatz-Tags und Bildbeschreibungen. Die ZIP-Datei enthält ein PDF nur bei bestandener technischer PDF/UA-1-Prüfung, dazu den vollständigen Prüfbericht. Inhalte, Sprache, Alternativtexte und Lesereihenfolge zusätzlich selbst kontrollieren.',
+        )}
       </p>
     </div>
   );

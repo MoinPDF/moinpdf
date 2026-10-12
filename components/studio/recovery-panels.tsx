@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { MAX_BYTES, filenameStem, type Source } from '@/lib/pdf-engine';
@@ -33,6 +36,7 @@ export function RepairPanel({
   run: (job: (ctx: RunContext) => Promise<ExportFile | void>) => Promise<void>;
   initialFile?: File | null;
 }) {
+  useLanguage();
   const [file, setFile] = useState<File | null>(initialFile || null),
     [error, setError] = useState('');
   useEffect(() => {
@@ -45,17 +49,18 @@ export function RepairPanel({
       : null);
   return (
     <section className="advanced-card">
-      <h2>Beschädigte PDF wieder öffnen</h2>
+      <h2>{ui('Beschädigte PDF wieder öffnen')}</h2>
       <p>
-        Eine Datei kann direkt ausgewählt werden, auch wenn sie sich in der normalen Vorschau nicht
-        öffnen lässt.
+        {ui(
+          'Eine Datei kann direkt ausgewählt werden, auch wenn sie sich in der normalen Vorschau nicht öffnen lässt.',
+        )}
       </p>
       <label className="advanced-field">
-        <span>PDF zur Reparatur</span>
+        <span>{ui('PDF zur Reparatur')}</span>
         <input
           type="file"
           accept=".pdf,application/pdf"
-          aria-label="PDF zur Reparatur"
+          aria-label={ui('PDF zur Reparatur')}
           onChange={(e) => {
             const f = e.target.files?.[0];
             e.target.value = '';
@@ -72,19 +77,19 @@ export function RepairPanel({
       {selected && <p>{selected.name}</p>}
       {error && (
         <p role="alert" className="error-box">
-          {error}
+          {ui(error)}
         </p>
       )}
       <p className="fine-note">
-        Stellt lesbare PDF-Objekte und die Dateistruktur wieder her. Fehlende Inhalte können nicht
-        zurückgeholt werden. Das Ergebnis anschließend auf Vollständigkeit prüfen. Vorhandene
-        digitale Signaturen werden durch das Neuschreiben ungültig.
+        {ui(
+          'Stellt lesbare PDF-Objekte und die Dateistruktur wieder her. Fehlende Inhalte können nicht zurückgeholt werden. Das Ergebnis anschließend auf Vollständigkeit prüfen. Vorhandene digitale Signaturen werden durch das Neuschreiben ungültig.',
+        )}
       </p>
       <Button
         disabled={busy || !selected}
         onClick={() => selected && run((ctx) => repairFile(selected, ctx))}
       >
-        Reparatur versuchen
+        {ui('Reparatur versuchen')}
       </Button>
     </section>
   );
@@ -96,13 +101,14 @@ export function ReadingPanel({
   run,
   busy,
 }: PanelProps & { format: ReadingFormat }) {
+  useLanguage();
   const [title, setTitle] = useState(filenameStem(source.name)),
     [language, setLanguage] = useState('de');
   return (
     <section className="advanced-card">
-      <Text label="Dokumenttitel" value={title} onChange={setTitle} />
+      <Text label={ui('Dokumenttitel')} value={title} onChange={setTitle} />
       <Choice
-        label="Dokumentsprache"
+        label={ui('Dokumentsprache')}
         value={language}
         onChange={setLanguage}
         items={[
@@ -116,16 +122,16 @@ export function ReadingPanel({
         ]}
       />
       <p className="fine-note">
-        Lesbare Textausgabe mit erkannten Überschriften und einem Abschnitt pro PDF-Seite. Bilder
-        und das ursprüngliche Tabellen- und Seitenlayout werden nicht übernommen. Reine Scans zuerst
-        mit „OCR &amp; Text“ auslesen und das Ergebnis übernehmen. EPUB ist ein anpassbares E-Book
-        mit Inhaltsverzeichnis.
+        {ui(
+          'Lesbare Textausgabe mit erkannten Überschriften und einem Abschnitt pro PDF-Seite. Bilder und das ursprüngliche Tabellen- und Seitenlayout werden nicht übernommen. Reine Scans zuerst mit „OCR &amp; Text“ auslesen und das Ergebnis übernehmen. EPUB ist ein anpassbares E-Book mit Inhaltsverzeichnis.',
+        )}
       </p>
       <Button
         disabled={busy}
         onClick={() => run((ctx) => exportReading(source, format, title, language, ctx))}
       >
-        {format === 'markdown' ? 'Markdown' : format === 'html' ? 'HTML' : 'EPUB'} erstellen
+        {format === 'markdown' ? ui('Markdown') : format === 'html' ? ui('HTML') : ui('EPUB')}{' '}
+        {ui(' erstellen')}
       </Button>
     </section>
   );
@@ -137,6 +143,7 @@ export function ScanSplitPanel({
   busy,
   invalidate,
 }: PanelProps & { invalidate: () => void }) {
+  useLanguage();
   const [page, setPage] = useState(0),
     [regions, setRegions] = useState<ScanRegions>({}),
     [gap, setGap] = useState(3),
@@ -169,25 +176,26 @@ export function ScanSplitPanel({
     });
   return (
     <section className="advanced-card">
-      <h2>Mehrere Vorlagen auf einem Scan trennen</h2>
+      <h2>{ui('Mehrere Vorlagen auf einem Scan trennen')}</h2>
       <p>
-        Fotos oder Belege auf hellem Hintergrund automatisch erkennen. Vorschläge auf jeder Seite
-        prüfen, entfernen oder einen eigenen Rahmen aufziehen.
+        {ui(
+          'Fotos oder Belege auf hellem Hintergrund automatisch erkennen. Vorschläge auf jeder Seite prüfen, entfernen oder einen eigenen Rahmen aufziehen.',
+        )}
       </p>
       <div className="advanced-actions">
         <Button variant="outline" disabled={busy} onClick={() => detect(false)}>
-          Diese Seite erkennen
+          {ui('Diese Seite erkennen')}
         </Button>
         <Button
           variant="outline"
           disabled={busy || source.pdf.numPages > 50}
           onClick={() => detect(true)}
         >
-          Alle Seiten erkennen
+          {ui('Alle Seiten erkennen')}
         </Button>
       </div>
       <NumberField
-        label="Freier Abstand zwischen Vorlagen (%)"
+        label={ui('Freier Abstand zwischen Vorlagen (%)')}
         value={gap}
         min={1}
         max={12}
@@ -195,8 +203,9 @@ export function ScanSplitPanel({
         onChange={setGap}
       />
       <p className="fine-note">
-        Größere Werte vermeiden das Trennen an Absatzabständen. Bei dunklem Hintergrund, schiefen
-        oder überlappenden Vorlagen eigene Rahmen verwenden.
+        {ui(
+          'Größere Werte vermeiden das Trennen an Absatzabständen. Bei dunklem Hintergrund, schiefen oder überlappenden Vorlagen eigene Rahmen verwenden.',
+        )}
       </p>
       <PageSelect source={source} page={page} onChange={setPage} />
       <PageStage
@@ -214,24 +223,26 @@ export function ScanSplitPanel({
       {current.map((r, i) => (
         <details key={`${page}-${i}`}>
           <summary>
-            Ausschnitt {i + 1}
-            {!validRegion(r) ? ' · außerhalb der Seite' : ''}
+            {ui('Ausschnitt ')}
+            {i + 1}
+            {!validRegion(r) ? ui(' · außerhalb der Seite') : ''}
           </summary>
           <RectFields
             rect={r}
             onChange={(next) => update(current.map((old, j) => (i === j ? next : old)))}
           />
           <Button variant="outline" onClick={() => update(current.filter((_, j) => j !== i))}>
-            Ausschnitt entfernen
+            {ui('Ausschnitt entfernen')}
           </Button>
         </details>
       ))}
       <p>
-        {count} Ausschnitt(e) auf {Object.values(regions).filter((r) => r.length).length} von{' '}
-        {source.pdf.numPages} Seiten.
+        {count} {ui(' Ausschnitt(e) auf ')}
+        {Object.values(regions).filter((r) => r.length).length} {ui(' von')} {source.pdf.numPages}{' '}
+        {ui(' Seiten.')}
       </p>
       <Choice
-        label="Einzeldateien im ZIP"
+        label={ui('Einzeldateien im ZIP')}
         value={format}
         onChange={(v) => setFormat(v as typeof format)}
         items={[
@@ -241,7 +252,7 @@ export function ScanSplitPanel({
         ]}
       />
       <Choice
-        label="Auflösung"
+        label={ui('Auflösung')}
         value={String(dpi)}
         onChange={(v) => setDpi(Number(v))}
         items={[
@@ -250,12 +261,13 @@ export function ScanSplitPanel({
         ]}
       />
       <p className="fine-note">
-        Bei sehr großen Seiten ist die Auflösung auf 4096 Pixel an der längsten Seite begrenzt. Nur
-        markierte Seiten werden exportiert. Die Reihenfolge entspricht den nummerierten Rahmen.
+        {ui(
+          'Bei sehr großen Seiten ist die Auflösung auf 4096 Pixel an der längsten Seite begrenzt. Nur markierte Seiten werden exportiert. Die Reihenfolge entspricht den nummerierten Rahmen.',
+        )}
       </p>
       <label className="advanced-tick">
         <input type="checkbox" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} />
-        <span>Ich habe die Ausschnitte auf allen markierten Seiten geprüft.</span>
+        <span>{ui('Ich habe die Ausschnitte auf allen markierten Seiten geprüft.')}</span>
       </label>
       <Button
         disabled={
@@ -269,7 +281,7 @@ export function ScanSplitPanel({
         }
         onClick={() => run((ctx) => exportScanRegions(source, regions, format, dpi, ctx))}
       >
-        Ausschnitte herunterladen
+        {ui('Ausschnitte herunterladen')}
       </Button>
     </section>
   );

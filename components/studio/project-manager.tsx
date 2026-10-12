@@ -1,4 +1,6 @@
 'use client';
+import { ui, uiLocale } from '@/lib/ui-language';
+
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
@@ -219,7 +221,7 @@ export function ProjectManager({
               type="file"
               accept=".moinpdf,application/vnd.moinpdf.project,application/vnd.moinpdf.archive"
               className="sr-only"
-              aria-label="MoinPDF-Projektdatei"
+              aria-label={ui('MoinPDF-Projektdatei')}
               disabled={working || locked}
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -244,17 +246,11 @@ export function ProjectManager({
             />
           </div>
           <p className="fine-note">
-            Bewusstes Speichern in diesem Browser, ohne Upload. Die gespeicherten PDFs liegen
-            unverschlüsselt im Browserspeicher – auch zuvor entsperrte Dateien. Beim Löschen der
-            Browserdaten können Projekte verloren gehen. Eine .moinpdf-Projektdatei überträgt den
-            gewählten Stand auf einen anderen Browser oder Computer. Das Gesamtarchiv umfasst alle
-            bis zu fünf gespeicherten Stände; beim Import entsteht ein neues Projekt. Beide
-            enthalten auch Originale, frühere Bearbeitungen und gegebenenfalls entsperrte PDFs
-            unverschlüsselt. Zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden.
-            Einstellungen und Zwischenergebnisse der Spezialwerkzeuge gehören erst nach „Ergebnis
-            übernehmen“ zum Projekt.
+            {ui(
+              'Bewusstes Speichern in diesem Browser, ohne Upload. Die gespeicherten PDFs liegen unverschlüsselt im Browserspeicher – auch zuvor entsperrte Dateien. Beim Löschen der Browserdaten können Projekte verloren gehen. Eine .moinpdf-Projektdatei überträgt den gewählten Stand auf einen anderen Browser oder Computer. Das Gesamtarchiv umfasst alle bis zu fünf gespeicherten Stände; beim Import entsteht ein neues Projekt. Beide enthalten auch Originale, frühere Bearbeitungen und gegebenenfalls entsperrte PDFs unverschlüsselt. Zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden. Einstellungen und Zwischenergebnisse der Spezialwerkzeuge gehören erst nach „Ergebnis übernehmen“ zum Projekt.',
+            )}
           </p>
-          {notice && <p role="status">{notice}</p>}
+          {notice && <p role="status">{ui(notice)}</p>}
           {working && <p role="status">{t('Arbeitsstand wird verarbeitet …')}</p>}
           <div className="project-list">
             {!projects.length && !working && <p>{t('Noch keine gespeicherten Projekte.')}</p>}
@@ -262,7 +258,7 @@ export function ProjectManager({
               <section key={p.id}>
                 <h3>
                   {p.name}
-                  {current === p.id ? ' · aktiv' : ''}
+                  {current === p.id ? ui(' · aktiv') : ''}
                 </h3>
                 <Button
                   size="sm"
@@ -286,8 +282,8 @@ export function ProjectManager({
                 {p.versions.map((v, i) => (
                   <div className="project-version" key={v.id}>
                     <span>
-                      {new Date(v.created).toLocaleString('de-DE')} · {v.pages} {t('Seiten')}
-                      {i === 0 ? ' · neuester Stand' : ''}
+                      {new Date(v.created).toLocaleString(uiLocale())} · {v.pages} {t('Seiten')}
+                      {i === 0 ? ui(' · neuester Stand') : ''}
                     </span>
                     <Button
                       size="sm"
@@ -306,7 +302,7 @@ export function ProjectManager({
                       size="sm"
                       variant="outline"
                       disabled={working || locked}
-                      aria-label={`Arbeitsstand ${i + 1} von ${p.name} herunterladen`}
+                      aria-label={ui(`Arbeitsstand ${i + 1} von ${p.name} herunterladen`)}
                       onClick={() =>
                         job(async () => {
                           const saved = await loadProject(v.id);

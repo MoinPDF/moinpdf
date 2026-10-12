@@ -107,3 +107,14 @@
   .dark .docs-header, .dark .docs-sidebar { background: transparent; }
   .dark .docs-brand img, .dark .legal-brand img { content: normal; filter: none; }
 }
+.information-wordmark { display: flex; flex-direction: column; align-items: center; }
+.information-wordmark img { height: auto; }
+.information-wordmark > span { margin-top: 2px; color: var(--ui-muted, #597269); font-size: 8px; line-height: 1.3; }
+.information-wordmark .logo-dark { display: none; }
+.dark .information-wordmark .logo-light { display: none; }
+.dark .information-wordmark .logo-dark { display: block; }
+.dark .docs-brand .information-wordmark img, .dark .legal-brand .information-wordmark img { content: normal; }
+@media print {
+  .dark .information-wordmark .logo-light { display: block; }
+  .dark .information-wordmark .logo-dark { display: none; }
+}

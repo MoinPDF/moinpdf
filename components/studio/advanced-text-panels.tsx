@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { downloadBlob } from '@/lib/pdf-engine';
@@ -29,12 +32,13 @@ import {
 } from './advanced-shared';
 
 export function RenamePanel({ sources, busy, run }: PanelProps) {
+  useLanguage();
   const [template, setTemplate] = useState('{datum}_{nummer}_{titel}'),
     [rows, setRows] = useState<Awaited<ReturnType<typeof suggestNames>>>([]);
   return (
     <section className="advanced-card">
       <Text
-        label="Namensmuster"
+        label={ui('Namensmuster')}
         value={template}
         onChange={(v) => {
           setTemplate(v);
@@ -42,8 +46,9 @@ export function RenamePanel({ sources, busy, run }: PanelProps) {
         }}
       />
       <p className="fine-note">
-        Platzhalter: {'{datum}'}, {'{nummer}'}, {'{titel}'}. Ausgelesen werden die ersten drei
-        Seiten. Für Scans zuerst OCR verwenden.
+        {ui('Platzhalter: ')}
+        {ui('{datum}')}, {ui('{nummer}')}, {ui('{titel}')}
+        {ui('. Ausgelesen werden die ersten drei Seiten. Für Scans zuerst OCR verwenden.')}
       </p>
       <Button
         disabled={busy}
@@ -53,16 +58,16 @@ export function RenamePanel({ sources, busy, run }: PanelProps) {
           })
         }
       >
-        Namen vorschlagen
+        {ui('Namen vorschlagen')}
       </Button>
       {rows.map((r, i) => (
         <div className="rename-row" key={r.id}>
           <span>
             {sources[i].name}
-            {!r.hasText && <small>Kein auslesbarer Text · Dateiname übernommen</small>}
+            {!r.hasText && <small>{ui('Kein auslesbarer Text · Dateiname übernommen')}</small>}
           </span>
           <Text
-            label={`Neuer Name ${i + 1}`}
+            label={ui(`Neuer Name ${i + 1}`)}
             value={r.name}
             onChange={(v) =>
               setRows(rows.map((item, n) => (n === i ? { ...item, name: v } : item)))
@@ -82,13 +87,14 @@ export function RenamePanel({ sources, busy, run }: PanelProps) {
             )
           }
         >
-          PDFs mit diesen Namen als ZIP speichern
+          {ui('PDFs mit diesen Namen als ZIP speichern')}
         </Button>
       )}
     </section>
   );
 }
 export function SplitPanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [mode, setMode] = useState<'text' | 'bookmarks' | 'blank' | 'qr'>('text'),
     [query, setQuery] = useState('Rechnung'),
     [exclude, setExclude] = useState(true),
@@ -98,7 +104,7 @@ export function SplitPanel({ source, busy, run }: PanelProps) {
     <div className="advanced-grid">
       <section className="advanced-card">
         <Choice
-          label="Trennen nach"
+          label={ui('Trennen nach')}
           value={mode}
           onChange={(v) => {
             setMode(v as typeof mode);
@@ -113,7 +119,7 @@ export function SplitPanel({ source, busy, run }: PanelProps) {
         />
         {(mode === 'text' || mode === 'qr') && (
           <Text
-            label={mode === 'text' ? 'Trenntext' : 'Code enthält (leer = jeder Code)'}
+            label={mode === 'text' ? ui('Trenntext') : ui('Code enthält (leer = jeder Code)')}
             value={query}
             onChange={(v) => {
               setQuery(v);
@@ -123,7 +129,7 @@ export function SplitPanel({ source, busy, run }: PanelProps) {
         )}
         {(mode === 'blank' || mode === 'qr') && (
           <Tick
-            label="Trennseiten aus der Ausgabe entfernen"
+            label={ui('Trennseiten aus der Ausgabe entfernen')}
             value={exclude}
             onChange={(v) => {
               setExclude(v);
@@ -132,8 +138,9 @@ export function SplitPanel({ source, busy, run }: PanelProps) {
           />
         )}
         <p className="fine-note">
-          Die Vorschau zeigt die Originalseiten jedes Abschnitts. Textsuche benötigt auslesbaren
-          Text; Erkennungen bitte kontrollieren.
+          {ui(
+            'Die Vorschau zeigt die Originalseiten jedes Abschnitts. Textsuche benötigt auslesbaren Text; Erkennungen bitte kontrollieren.',
+          )}
         </p>
         <Button
           disabled={busy}
@@ -143,25 +150,26 @@ export function SplitPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Trennstellen suchen
+          {ui('Trennstellen suchen')}
         </Button>
         {parts.map((p, i) => (
           <div className="advanced-list-row" key={i}>
             <Text
-              label={`Abschnitt ${i + 1}`}
+              label={ui(`Abschnitt ${i + 1}`)}
               value={p.name}
               onChange={(v) =>
                 setParts(parts.map((part, n) => (n === i ? { ...part, name: v } : part)))
               }
             />
             <button className="advanced-text-button" onClick={() => setPage(p.pages[0])}>
-              Seiten {p.pages.map((n) => n + 1).join(', ')}
+              {ui('Seiten ')}
+              {p.pages.map((n) => n + 1).join(', ')}
             </button>
           </div>
         ))}
         {!!parts.length && (
           <Button disabled={busy} onClick={() => run((c) => saveSplit(source, parts, c))}>
-            Diese Abschnitte als ZIP erstellen
+            {ui('Diese Abschnitte als ZIP erstellen')}
           </Button>
         )}
       </section>
@@ -173,6 +181,7 @@ export function SplitPanel({ source, busy, run }: PanelProps) {
   );
 }
 export function TablePanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [page, setPage] = useState(0),
     [area, setArea] = useState<Rect>({ x: 0.05, y: 0.05, w: 0.9, h: 0.9 }),
     [boundaries, setBoundaries] = useState('35, 65'),
@@ -207,7 +216,11 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               setRows([]);
             }}
           />
-          <Tick label="OCR verwenden (Scans oder gedrehte Texte)" value={ocr} onChange={setOcr} />
+          <Tick
+            label={ui('OCR verwenden (Scans oder gedrehte Texte)')}
+            value={ocr}
+            onChange={setOcr}
+          />
           <RectFields
             rect={area}
             onChange={(v) => {
@@ -216,7 +229,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
             }}
           />
           <Text
-            label="Spaltengrenzen ab linkem Seitenrand (%)"
+            label={ui('Spaltengrenzen ab linkem Seitenrand (%)')}
             value={boundaries}
             onChange={(v) => {
               setBoundaries(v);
@@ -224,8 +237,9 @@ export function TablePanel({ source, busy, run }: PanelProps) {
             }}
           />
           <p className="fine-note">
-            Beispiel: 35, 65 ergibt drei Spalten. Erkennung arbeitet seitenweise. Werte und Spalten
-            vor dem Export korrigieren.
+            {ui(
+              'Beispiel: 35, 65 ergibt drei Spalten. Erkennung arbeitet seitenweise. Werte und Spalten vor dem Export korrigieren.',
+            )}
           </p>
           <Button
             disabled={busy}
@@ -239,7 +253,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               })
             }
           >
-            Tabelle erkennen
+            {ui('Tabelle erkennen')}
           </Button>
           {!!targets.length && (
             <Button
@@ -247,7 +261,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               disabled={busy}
               onClick={() => run(async () => split(targets))}
             >
-              Spalten neu aufteilen
+              {ui('Spalten neu aufteilen')}
             </Button>
           )}
         </section>
@@ -263,7 +277,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
       </div>
       {!!rows.length && (
         <section className="advanced-card">
-          <h2>Werte korrigieren</h2>
+          <h2>{ui('Werte korrigieren')}</h2>
           <EditTable rows={rows} onChange={setRows} />
           <div className="advanced-actions">
             <Button
@@ -272,17 +286,17 @@ export function TablePanel({ source, busy, run }: PanelProps) {
                 setRows([...rows, Array.from({ length: rows[0]?.length || 1 }, () => '')])
               }
             >
-              Zeile hinzufügen
+              {ui('Zeile hinzufügen')}
             </Button>
             <Button variant="outline" onClick={() => setRows(rows.map((r) => [...r, '']))}>
-              Spalte hinzufügen
+              {ui('Spalte hinzufügen')}
             </Button>
             <Button
               variant="outline"
               onClick={() => setRows(rows.map((r) => r.slice(0, -1)))}
               disabled={(rows[0]?.length || 0) <= 1}
             >
-              Letzte Spalte entfernen
+              {ui('Letzte Spalte entfernen')}
             </Button>
             <Button
               disabled={busy}
@@ -295,7 +309,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
                 }))
               }
             >
-              Excel-Datei erstellen
+              {ui('Excel-Datei erstellen')}
             </Button>
             <Button
               variant="outline"
@@ -306,7 +320,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
                 )
               }
             >
-              CSV herunterladen
+              {ui('CSV herunterladen')}
             </Button>
           </div>
         </section>
@@ -315,6 +329,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
   );
 }
 export function RedactPanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [terms, setTerms] = useState(''),
     [email, setEmail] = useState(true),
     [iban, setIban] = useState(true),
@@ -331,9 +346,9 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
   return (
     <div className="advanced-grid">
       <section className="advanced-card">
-        <Field label="Namen oder Suchbegriffe (eine Zeile pro Begriff)">
+        <Field label={ui('Namen oder Suchbegriffe (eine Zeile pro Begriff)')}>
           <textarea
-            aria-label="Namen oder Suchbegriffe"
+            aria-label={ui('Namen oder Suchbegriffe')}
             value={terms}
             rows={4}
             onChange={(e) => {
@@ -343,7 +358,7 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
           />
         </Field>
         <Tick
-          label="E-Mail-Adressen erkennen"
+          label={ui('E-Mail-Adressen erkennen')}
           value={email}
           onChange={(v) => {
             setEmail(v);
@@ -351,7 +366,7 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
           }}
         />
         <Tick
-          label="Mögliche IBANs erkennen"
+          label={ui('Mögliche IBANs erkennen')}
           value={iban}
           onChange={(v) => {
             setIban(v);
@@ -359,7 +374,7 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
           }}
         />
         <Tick
-          label="Alle Seiten mit OCR durchsuchen"
+          label={ui('Alle Seiten mit OCR durchsuchen')}
           value={ocr}
           onChange={(v) => {
             setOcr(v);
@@ -367,8 +382,9 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
           }}
         />
         <p className="fine-note">
-          Text- und OCR-Erkennung können Treffer übersehen. Es werden ganze Textblöcke bzw.
-          OCR-Wörter geschwärzt. Namen als Suchbegriffe eingeben.
+          {ui(
+            'Text- und OCR-Erkennung können Treffer übersehen. Es werden ganze Textblöcke bzw. OCR-Wörter geschwärzt. Namen als Suchbegriffe eingeben.',
+          )}
         </p>
         <Button
           disabled={busy || (!terms.trim() && !email && !iban)}
@@ -380,18 +396,19 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Fundstellen suchen
+          {ui('Fundstellen suchen')}
         </Button>
         {searched && (
           <p role="status">
-            {hits.length} Fundstellen · {hits.filter((h) => h.selected).length} ausgewählt
+            {hits.length} {ui(' Fundstellen · ')}
+            {hits.filter((h) => h.selected).length} {ui(' ausgewählt')}
           </p>
         )}
         <div className="advanced-hit-list">
           {hits.map((hit) => (
             <div className="advanced-hit" key={hit.id}>
               <Tick
-                label={`Seite ${hit.page + 1}: ${hit.text}`}
+                label={ui(`Seite ${hit.page + 1}: ${hit.text}`)}
                 value={hit.selected}
                 onChange={(v) => {
                   setHits(hits.map((h) => (h.id === hit.id ? { ...h, selected: v } : h)));
@@ -399,7 +416,7 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
                 }}
               />
               <button className="advanced-text-button" onClick={() => setPage(hit.page)}>
-                Ansehen
+                {ui('Ansehen')}
               </button>
             </div>
           ))}
@@ -407,7 +424,7 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
         {hits.some((h) => h.selected) && (
           <>
             <Tick
-              label="Ich habe die ausgewählten Bereiche in der Vorschau kontrolliert."
+              label={ui('Ich habe die ausgewählten Bereiche in der Vorschau kontrolliert.')}
               value={review}
               onChange={setReview}
             />
@@ -415,11 +432,12 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
               disabled={busy || !review}
               onClick={() => run((c) => redactHits(source, hits, c))}
             >
-              Ausgewählte Fundstellen schwärzen
+              {ui('Ausgewählte Fundstellen schwärzen')}
             </Button>
             <p className="fine-note">
-              Die Ausgabe wird vollständig als Seitenbilder neu aufgebaut; Textschichten, Anhänge
-              und Formulare werden entfernt.
+              {ui(
+                'Die Ausgabe wird vollständig als Seitenbilder neu aufgebaut; Textschichten, Anhänge und Formulare werden entfernt.',
+              )}
             </p>
           </>
         )}

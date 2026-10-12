@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useMemo, useState } from 'react';
 import {
   Search,
@@ -42,6 +45,7 @@ export function DocumentCheck({
   onCollect: (ids: string[]) => void;
   onTool: (tool: 'ocr' | 'resize') => void;
 }) {
+  useLanguage();
   const [query, setQuery] = useState(''),
     [filter, setFilter] = useState<Filter>('all'),
     [limit, setLimit] = useState(30);
@@ -95,25 +99,29 @@ export function DocumentCheck({
         {checking ? (
           <>
             <LoaderCircle className="spin" size={16} />
-            {rows.length} von {pages.length} Seiten geprüft
+            {rows.length} {ui(' von ')}
+            {pages.length} {ui(' Seiten geprüft')}
           </>
         ) : (
           <>
             <Check size={16} />
-            {rows.length - errors.length} von {pages.length} Seiten geprüft
+            {rows.length - errors.length} {ui(' von ')}
+            {pages.length} {ui(' Seiten geprüft')}
           </>
         )}
         <span>
           <ShieldCheck size={14} />
-          Auf deinem Gerät
+          {ui('Auf deinem Gerät')}
         </span>
       </div>
       <section className="page-finder">
         <div className="finder-heading">
           <FileSearch size={26} strokeWidth={1.4} />
           <div>
-            <h2>Fundstellen sammeln</h2>
-            <p>Alle geöffneten PDFs durchsuchen. Passende Seiten als ein Dokument speichern.</p>
+            <h2>{ui('Fundstellen sammeln')}</h2>
+            <p>
+              {ui('Alle geöffneten PDFs durchsuchen. Passende Seiten als ein Dokument speichern.')}
+            </p>
           </div>
         </div>
         <div className="finder-search">
@@ -124,27 +132,29 @@ export function DocumentCheck({
               setQuery(e.target.value);
               setLimit(30);
             }}
-            placeholder="Wonach suchst du?"
-            aria-label="Alle Dokumente durchsuchen"
+            placeholder={ui('Wonach suchst du?')}
+            aria-label={ui('Alle Dokumente durchsuchen')}
           />
-          <span>{isSearch ? `${matches.length} Trefferseiten` : ''}</span>
+          <span>{isSearch ? ui(`${matches.length} Trefferseiten`) : ''}</span>
         </div>
         <p className="finder-example">
-          Zum Beispiel „Rechnung“ oder „Fahrtkosten, Bewirtung“. Ein passender Begriff genügt.
+          {ui(
+            'Zum Beispiel „Rechnung“ oder „Fahrtkosten, Bewirtung“. Ein passender Begriff genügt.',
+          )}
         </p>
         {pending.length > 0 && !ocrBusy && (
           <div className="scan-search-notice">
             <span>
               <ScanText size={17} />
-              {pending.length} {pending.length === 1 ? 'Seite braucht' : 'Seiten brauchen'} noch
-              Texterkennung für die Suche.
+              {pending.length} {pending.length === 1 ? ui('Seite braucht') : ui('Seiten brauchen')}{' '}
+              {ui(' noch Texterkennung für die Suche.')}
             </span>
             <Button
               variant="outline"
               disabled={locked || checking}
               onClick={() => void index.recognize(language)}
             >
-              Scans für die Suche erkennen
+              {ui('Scans für die Suche erkennen')}
             </Button>
           </div>
         )}
@@ -153,28 +163,32 @@ export function DocumentCheck({
             <div>
               <span>
                 <LoaderCircle size={16} className="spin" />
-                {index.progress.label}
+                {ui(index.progress.label)}
               </span>
               <Button variant="ghost" onClick={index.cancel}>
-                Abbrechen
+                {ui('Abbrechen')}
               </Button>
             </div>
-            <Progress value={index.progress.percent} aria-label="Texterkennung für die Suche" />
+            <Progress
+              value={index.progress.percent}
+              aria-label={ui('Texterkennung für die Suche')}
+            />
           </div>
         )}
         {index.error && (
           <p className="check-error" role="alert">
-            {index.error}
+            {ui(index.error)}
           </p>
         )}
         {editedPageIds.length > 0 && (
           <p className="check-caveat">
-            Suche und Check beziehen sich auf die importierten Seiten. Für eine Prüfung deiner
-            Änderungen das Ergebnis anwenden und weiterbearbeiten.
+            {ui(
+              'Suche und Check beziehen sich auf die importierten Seiten. Für eine Prüfung deiner Änderungen das Ergebnis anwenden und weiterbearbeiten.',
+            )}
           </p>
         )}
       </section>
-      <div className="check-filters" aria-label="Dokumentencheck filtern">
+      <div className="check-filters" aria-label={ui('Dokumentencheck filtern')}>
         {filters.map((f) => (
           <button
             key={f.id}
@@ -183,15 +197,15 @@ export function DocumentCheck({
           >
             <f.icon size={17} />
             <strong>{f.value}</strong>
-            <span>{f.label}</span>
+            <span>{ui(f.label)}</span>
           </button>
         ))}
       </div>
       <div className="check-results-heading">
         <h3>
           {isSearch
-            ? `${matches.length} ${matches.length === 1 ? 'passende Seite' : 'passende Seiten'}`
-            : filters.find((f) => f.id === filter)?.label}
+            ? `${matches.length} ${matches.length === 1 ? ui('passende Seite') : ui('passende Seiten')}`
+            : ui(filters.find((f) => f.id === filter)?.label)}
         </h3>
         {isSearch && matches.length > 0 && (
           <Button
@@ -200,18 +214,21 @@ export function DocumentCheck({
             onClick={() => onSelect(matches.map((r) => r.pageId))}
           >
             <SquareCheck size={16} />
-            Treffer auswählen
+            {ui('Treffer auswählen')}
           </Button>
         )}
       </div>
       {query.trim() && !isSearch && (
-        <p className="check-caveat">Bitte mindestens zwei Zeichen pro Suchbegriff eingeben.</p>
+        <p className="check-caveat">
+          {ui('Bitte mindestens zwei Zeichen pro Suchbegriff eingeben.')}
+        </p>
       )}
       {!isSearch && filter === 'blank' && (
         <div className="check-advice">
           <p>
-            Vermutlich leere Seiten anhand von Text und Seitenbild. Bitte vor dem Abwählen ansehen.
-            Es wird nichts gelöscht.
+            {ui(
+              'Vermutlich leere Seiten anhand von Text und Seitenbild. Bitte vor dem Abwählen ansehen. Es wird nichts gelöscht.',
+            )}
           </p>
           <Button
             variant="outline"
@@ -223,46 +240,50 @@ export function DocumentCheck({
               )
             }
           >
-            Leere Seiten abwählen
+            {ui('Leere Seiten abwählen')}
           </Button>
         </div>
       )}
       {!isSearch && filter === 'duplicates' && (
         <div className="check-advice">
           <p>
-            Gleiche Vorschau und gleiche Seitengröße. Kleine Unterschiede können in der Vorschau
-            fehlen. Je Gruppe bleibt die erste ausgewählte Seite erhalten.
+            {ui(
+              'Gleiche Vorschau und gleiche Seitengröße. Kleine Unterschiede können in der Vorschau fehlen. Je Gruppe bleibt die erste ausgewählte Seite erhalten.',
+            )}
           </p>
           <Button
             variant="outline"
             disabled={locked || !extras.length}
             onClick={() => onSelect(extras, true)}
           >
-            Doppelte abwählen
+            {ui('Doppelte abwählen')}
           </Button>
         </div>
       )}
       {!isSearch && filter === 'scan' && (
         <div className="check-advice">
           <p>
-            Seiten mit wenig oder ohne kopierbaren Text. OCR kann sie für die Suche erschließen oder
-            über „OCR & Text“ als durchsuchbare PDF speichern.
+            {ui(
+              'Seiten mit wenig oder ohne kopierbaren Text. OCR kann sie für die Suche erschließen oder über „OCR & Text“ als durchsuchbare PDF speichern.',
+            )}
           </p>
           <Button
             variant="outline"
             disabled={locked || !scans.length}
             onClick={() => onTool('ocr')}
           >
-            OCR-Werkzeug öffnen
+            {ui('OCR-Werkzeug öffnen')}
           </Button>
         </div>
       )}
       {!isSearch && filter === 'formats' && (
         <div className="check-advice">
           <p>
-            {formats.join(' · ') || 'Seiten werden geprüft.'}
+            {formats.join(' · ') || ui('Seiten werden geprüft.')}
             {formats.length > 1
-              ? ' — Für ein einheitliches Dokument kannst du die Seiten auf ein gemeinsames Papierformat bringen.'
+              ? ui(
+                  ' — Für ein einheitliches Dokument kannst du die Seiten auf ein gemeinsames Papierformat bringen.',
+                )
               : ''}
           </p>
           <Button
@@ -270,14 +291,14 @@ export function DocumentCheck({
             disabled={locked || !rows.length}
             onClick={() => onTool('resize')}
           >
-            Seitenformat vereinheitlichen
+            {ui('Seitenformat vereinheitlichen')}
           </Button>
         </div>
       )}
       {errors.length > 0 && (
         <p className="check-caveat">
-          {errors.length} {errors.length === 1 ? 'Seite konnte' : 'Seiten konnten'} nicht geprüft
-          werden und sind möglicherweise nicht in den Suchtreffern enthalten.
+          {errors.length} {errors.length === 1 ? ui('Seite konnte') : ui('Seiten konnten')}{' '}
+          {ui(' nicht geprüft werden und sind möglicherweise nicht in den Suchtreffern enthalten.')}
         </p>
       )}
       {!shown.length && !checking ? (
@@ -285,15 +306,15 @@ export function DocumentCheck({
           <FileSearch size={34} strokeWidth={1.25} />
           <p>
             {isSearch
-              ? 'Keine passenden Textstellen gefunden.'
+              ? ui('Keine passenden Textstellen gefunden.')
               : filter === 'blank'
-                ? 'Keine möglicherweise leeren Seiten gefunden.'
+                ? ui('Keine möglicherweise leeren Seiten gefunden.')
                 : filter === 'duplicates'
-                  ? 'Keine optisch gleichen Seiten gefunden.'
-                  : 'Keine passenden Seiten.'}
+                  ? ui('Keine optisch gleichen Seiten gefunden.')
+                  : ui('Keine passenden Seiten.')}
           </p>
           {isSearch && pending.length > 0 && (
-            <span>Erkenne die Scan-Seiten, um sie in die Suche einzubeziehen.</span>
+            <span>{ui('Erkenne die Scan-Seiten, um sie in die Suche einzubeziehen.')}</span>
           )}
         </div>
       ) : (
@@ -307,17 +328,21 @@ export function DocumentCheck({
                 className="check-thumbnail"
                 disabled={locked}
                 onClick={() => onOpen(row.pageId)}
-                aria-label={`Arbeitsseite ${row.position + 1} ansehen`}
+                aria-label={ui(`Arbeitsseite ${row.position + 1} ansehen`)}
               >
                 {row.preview ? <img src={row.preview} alt="" loading="lazy" /> : <File size={23} />}
               </button>
               <div className="check-page-info">
                 <div>
-                  <strong>Seite {row.position + 1}</strong>
+                  <strong>
+                    {ui('Seite ')}
+                    {row.position + 1}
+                  </strong>
                   <span>{row.format}</span>
                 </div>
                 <p className="check-source" title={row.name}>
-                  {row.name} · Originalseite {row.originalIndex + 1}
+                  {row.name} {ui(' · Originalseite ')}
+                  {row.originalIndex + 1}
                 </p>
                 {isSearch ? (
                   <p className="match-excerpt">{excerpt(row.text, query)}</p>
@@ -325,22 +350,22 @@ export function DocumentCheck({
                   <p className="page-index-label">
                     {row.error ||
                       (edited.has(row.pageId)
-                        ? 'Visuelle Änderungen vorgemerkt'
+                        ? ui('Visuelle Änderungen vorgemerkt')
                         : row.blank
-                          ? 'Möglicherweise leer'
+                          ? ui('Möglicherweise leer')
                           : row.ocrDone
                             ? row.text.trim()
-                              ? 'Scan für die Suche erkannt'
-                              : 'OCR abgeschlossen, kein Text erkannt'
+                              ? ui('Scan für die Suche erkannt')
+                              : ui('OCR abgeschlossen, kein Text erkannt')
                             : row.needsOcr
-                              ? 'Scan · Texterkennung möglich'
-                              : 'Text direkt durchsuchbar')}
-                    {!selected.has(row.pageId) && ' · Nicht ausgewählt'}
+                              ? ui('Scan · Texterkennung möglich')
+                              : ui('Text direkt durchsuchbar'))}
+                    {!selected.has(row.pageId) && ui(' · Nicht ausgewählt')}
                   </p>
                 )}
                 {duplicateIds.has(row.pageId) && !isSearch && (
                   <small className="duplicate-note">
-                    Gleiche Vorschau:{' '}
+                    {ui('Gleiche Vorschau:')}{' '}
                     {duplicates
                       .find((g) => g.some((p) => p.pageId === row.pageId))
                       ?.filter((p) => p.pageId !== row.pageId)
@@ -354,7 +379,7 @@ export function DocumentCheck({
                 size="icon"
                 onClick={() => onOpen(row.pageId)}
                 disabled={locked}
-                aria-label={`Arbeitsseite ${row.position + 1} öffnen`}
+                aria-label={ui(`Arbeitsseite ${row.position + 1} öffnen`)}
               >
                 <Eye size={18} />
               </Button>
@@ -368,21 +393,23 @@ export function DocumentCheck({
           variant="outline"
           onClick={() => setLimit((v) => v + 30)}
         >
-          Weitere Seiten anzeigen ({shown.length - limit})
+          {ui('Weitere Seiten anzeigen (')}
+          {shown.length - limit})
         </Button>
       )}
       {isSearch && (
         <div className="collect-actions">
           <span>
-            {matches.length} Trefferseiten aus {new Set(matches.map((r) => r.sourceId)).size}{' '}
-            Dateien{pending.length > 0 ? ' · Suche noch unvollständig' : ''}
+            {matches.length} {ui(' Trefferseiten aus ')}
+            {new Set(matches.map((r) => r.sourceId)).size} {ui('Dateien')}
+            {pending.length > 0 ? ui(' · Suche noch unvollständig') : ''}
           </span>
           <Button
             disabled={locked || checking || !matches.length}
             onClick={() => onCollect(matches.map((r) => r.pageId))}
           >
             <Layers size={17} />
-            Treffer-PDF erstellen
+            {ui('Treffer-PDF erstellen')}
           </Button>
         </div>
       )}

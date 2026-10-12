@@ -1,4 +1,6 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
@@ -317,7 +319,7 @@ export function DocumentWorkbench({
           .getElementById('document-preview')
           ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
       );
-      toast.success('Deine PDF ist bereit.');
+      toast.success(ui('Deine PDF ist bereit.'));
     } catch (e) {
       if (!abort.signal.aborted) setError((e as Error).message);
     } finally {
@@ -333,15 +335,15 @@ export function DocumentWorkbench({
     disabled = false,
   ) => (
     <label className="field">
-      <span>{label}</span>
+      <span>{ui(label)}</span>
       <Select value={value} onValueChange={onChange} disabled={locked || disabled}>
-        <SelectTrigger aria-label={label}>
+        <SelectTrigger aria-label={ui(label)}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {items.map(([v, l]) => (
             <SelectItem key={v} value={v}>
-              {l}
+              {ui(l)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -358,18 +360,21 @@ export function DocumentWorkbench({
             checked={field.value === true}
             onCheckedChange={(v) => patchField(field.id, { value: v === true })}
             disabled={disabled}
-            aria-label={`Wert für ${field.name}`}
+            aria-label={ui(`Wert für ${field.name}`)}
           />
-          Angekreuzt
+          {ui('Angekreuzt')}
         </label>
       );
     if (field.kind === 'text')
       return (
         <label className="field">
-          <span>Inhalt{field.required ? ' · Pflichtfeld' : ''}</span>
+          <span>
+            {ui('Inhalt')}
+            {field.required ? ui(' · Pflichtfeld') : ''}
+          </span>
           {field.multiline ? (
             <Textarea
-              aria-label={`Wert für ${field.name}`}
+              aria-label={ui(`Wert für ${field.name}`)}
               value={value}
               maxLength={field.maxLength || 20000}
               onChange={(e) => patchField(field.id, { value: e.target.value })}
@@ -377,7 +382,7 @@ export function DocumentWorkbench({
             />
           ) : (
             <Input
-              aria-label={`Wert für ${field.name}`}
+              aria-label={ui(`Wert für ${field.name}`)}
               value={value}
               maxLength={field.maxLength || 10000}
               onChange={(e) => patchField(field.id, { value: e.target.value })}
@@ -389,7 +394,7 @@ export function DocumentWorkbench({
     if ((field.kind === 'list' || field.kind === 'dropdown') && field.multiple)
       return (
         <fieldset className="form-multiple">
-          <legend>Ausgewählte Einträge</legend>
+          <legend>{ui('Ausgewählte Einträge')}</legend>
           {field.options.map((option) => (
             <label key={option}>
               <Checkbox
@@ -419,7 +424,7 @@ export function DocumentWorkbench({
         (v) => patchField(field.id, { value: v === 'none' ? '' : field.options[Number(v)] }),
         disabled,
       );
-    return <p className="fine-note">Dieses Spezialfeld bleibt unverändert erhalten.</p>;
+    return <p className="fine-note">{ui('Dieses Spezialfeld bleibt unverändert erhalten.')}</p>;
   }
   return (
     <main className="document-workbench">
@@ -430,13 +435,13 @@ export function DocumentWorkbench({
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
-          LOKAL AUF DEINEM GERÄT
+          {ui('LOKAL AUF DEINEM GERÄT')}
         </span>
         <div className="workbench-history">
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Bearbeitung rückgängig"
+            aria-label={ui('Bearbeitung rückgängig')}
             disabled={locked || !session?.past.length}
             onClick={() => history()}
           >
@@ -445,7 +450,7 @@ export function DocumentWorkbench({
           <Button
             variant="ghost"
             size="icon"
-            aria-label="Bearbeitung wiederholen"
+            aria-label={ui('Bearbeitung wiederholen')}
             disabled={locked || !session?.future.length}
             onClick={() => history(true)}
           >
@@ -455,10 +460,10 @@ export function DocumentWorkbench({
       </header>
       <div className="workbench-title">
         <div>
-          <span className="studio-kicker">DEIN DOKUMENT. DEINE STRUKTUR.</span>
+          <span className="studio-kicker">{ui('DEIN DOKUMENT. DEINE STRUKTUR.')}</span>
           <h1>
             {isBookmarks ? <Bookmark /> : <ClipboardPen />}
-            {title}
+            {ui(title)}
           </h1>
         </div>
         <div className="workbench-modes">
@@ -470,18 +475,19 @@ export function DocumentWorkbench({
               disabled={locked}
             >
               {id === 'fill-form'
-                ? 'Ausfüllen'
+                ? ui('Ausfüllen')
                 : id === 'create-form'
-                  ? 'Felder erstellen'
-                  : 'Lesezeichen'}
+                  ? ui('Felder erstellen')
+                  : ui('Lesezeichen')}
             </Button>
           ))}
         </div>
       </div>
       {pending && (
         <p className="workbench-notice">
-          Hier wird die vollständige Originaldatei bearbeitet. Änderungen aus anderen Werkzeugen
-          zuerst dort anwenden und „Ergebnis weiterbearbeiten“ wählen.
+          {ui(
+            'Hier wird die vollständige Originaldatei bearbeitet. Änderungen aus anderen Werkzeugen zuerst dort anwenden und „Ergebnis weiterbearbeiten“ wählen.',
+          )}
         </p>
       )}
       <div className="workbench-layout">
@@ -503,7 +509,7 @@ export function DocumentWorkbench({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Vorherige Formularseite"
+              aria-label={ui('Vorherige Formularseite')}
               disabled={locked || page === 0 || showResult}
               onClick={() => setPage((p) => p - 1)}
             >
@@ -522,7 +528,7 @@ export function DocumentWorkbench({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Nächste Formularseite"
+              aria-label={ui('Nächste Formularseite')}
               disabled={locked || page === source.pdf.numPages - 1 || showResult}
               onClick={() => setPage((p) => p + 1)}
             >
@@ -567,21 +573,23 @@ export function DocumentWorkbench({
                   }}
                 >
                   <Icon size={16} />
-                  {label}
+                  {ui(label)}
                 </Button>
               ))}
             </div>
           )}
           <div className="workbench-context">
             {showResult
-              ? 'Prüfe deine gespeicherte PDF vor dem Download.'
+              ? ui('Prüfe deine gespeicherte PDF vor dem Download.')
               : creating
-                ? 'Ziehe auf der Seite einen Rahmen für das neue Feld auf.'
+                ? ui('Ziehe auf der Seite einen Rahmen für das neue Feld auf.')
                 : isBookmarks
-                  ? 'Wähle eine Seite und lege dafür ein Lesezeichen an.'
+                  ? ui('Wähle eine Seite und lege dafür ein Lesezeichen an.')
                   : design
-                    ? 'Feldtyp wählen und aufziehen. Neue Felder kannst du ziehen und skalieren.'
-                    : 'Ein Feld auf der Seite oder in der Liste auswählen und ausfüllen.'}
+                    ? ui(
+                        'Feldtyp wählen und aufziehen. Neue Felder kannst du ziehen und skalieren.',
+                      )
+                    : ui('Ein Feld auf der Seite oder in der Liste auswählen und ausfüllen.')}
             {creating && <button onClick={() => setCreating(null)}>{t('Abbrechen')}</button>}
           </div>
           <div className="workbench-canvas">
@@ -601,7 +609,7 @@ export function DocumentWorkbench({
                   <>
                     <div className="result-preview-pager">
                       <button
-                        aria-label="Vorherige gespeicherte Seite"
+                        aria-label={ui('Vorherige gespeicherte Seite')}
                         disabled={outputPage === 0}
                         onClick={() => setOutputPage((p) => p - 1)}
                       >
@@ -611,7 +619,7 @@ export function DocumentWorkbench({
                         {outputPage + 1} / {output.pages}
                       </span>
                       <button
-                        aria-label="Nächste gespeicherte Seite"
+                        aria-label={ui('Nächste gespeicherte Seite')}
                         disabled={outputPage === output.pages - 1}
                         onClick={() => setOutputPage((p) => p + 1)}
                       >
@@ -656,8 +664,8 @@ export function DocumentWorkbench({
             <ShieldCheck size={14} />
             <span>
               {isBookmarks
-                ? 'Lesezeichen und Seiten bleiben gemeinsam in einer PDF.'
-                : 'Farbige Feldrahmen dienen der Bearbeitung.'}
+                ? ui('Lesezeichen und Seiten bleiben gemeinsam in einer PDF.')
+                : ui('Farbige Feldrahmen dienen der Bearbeitung.')}
             </span>
           </div>
         </section>
@@ -670,24 +678,25 @@ export function DocumentWorkbench({
                 ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
             }
           >
-            Zur Seitenvorschau
+            {ui('Zur Seitenvorschau')}
           </button>
           <div className="workbench-inspector-head">
-            <span>{isBookmarks ? 'KAPITELSTRUKTUR' : 'FORMULARFELDER'}</span>
+            <span>{isBookmarks ? ui('KAPITELSTRUKTUR') : ui('FORMULARFELDER')}</span>
             <b>{isBookmarks ? draft?.bookmarks.length || 0 : fields.length}</b>
           </div>
           {loading ? (
             <div className="workbench-loading">
               <LoaderCircle className="spin" />
-              Dokument wird gelesen …
+              {ui('Dokument wird gelesen …')}
             </div>
           ) : (
             draft && (
               <>
                 {draft.xfa && !isBookmarks && (
                   <div className="notice">
-                    Dieses Dokument verwendet XFA. Die Formularbearbeitung unterstützt gewöhnliche
-                    PDF-Formulare (AcroForms).
+                    {ui(
+                      'Dieses Dokument verwendet XFA. Die Formularbearbeitung unterstützt gewöhnliche PDF-Formulare (AcroForms).',
+                    )}
                   </div>
                 )}
                 {isBookmarks ? (
@@ -699,7 +708,8 @@ export function DocumentWorkbench({
                       disabled={locked}
                     >
                       <Plus size={16} />
-                      Lesezeichen für Seite {page + 1}
+                      {ui('Lesezeichen für Seite ')}
+                      {page + 1}
                     </Button>
                     <div className="bookmark-tree">
                       {draft.bookmarks.length ? (
@@ -741,24 +751,24 @@ export function DocumentWorkbench({
                           >
                             <GripVertical size={13} />
                             <Bookmark size={15} />
-                            <span>{bookmark.title || 'Ohne Titel'}</span>
+                            <span>{bookmark.title || ui('Ohne Titel')}</span>
                             <small>{bookmark.page === null ? '↗' : bookmark.page + 1}</small>
                           </button>
                         ))
                       ) : (
                         <div className="workbench-empty">
                           <Bookmark size={30} strokeWidth={1.3} />
-                          <strong>Noch keine Lesezeichen</strong>
-                          <p>Gib langen Dokumenten eine klare Kapitelstruktur.</p>
+                          <strong>{ui('Noch keine Lesezeichen')}</strong>
+                          <p>{ui('Gib langen Dokumenten eine klare Kapitelstruktur.')}</p>
                         </div>
                       )}
                     </div>
                     {selectedBookmark && (
                       <div className="workbench-properties" id="document-properties">
                         <label className="field">
-                          <span>Titel</span>
+                          <span>{ui('Titel')}</span>
                           <Input
-                            aria-label="Lesezeichen-Titel"
+                            aria-label={ui('Lesezeichen-Titel')}
                             value={selectedBookmark.title}
                             maxLength={300}
                             disabled={locked}
@@ -785,9 +795,9 @@ export function DocumentWorkbench({
                           },
                         )}
                         <label className="switch-field">
-                          <span>Kapitel aufgeklappt</span>
+                          <span>{ui('Kapitel aufgeklappt')}</span>
                           <Switch
-                            aria-label="Kapitel aufgeklappt"
+                            aria-label={ui('Kapitel aufgeklappt')}
                             checked={selectedBookmark.open}
                             onCheckedChange={(v) => patchBookmark({ open: v })}
                             disabled={locked}
@@ -797,7 +807,7 @@ export function DocumentWorkbench({
                           <Button
                             variant="outline"
                             size="sm"
-                            aria-label="Lesezeichen ausrücken"
+                            aria-label={ui('Lesezeichen ausrücken')}
                             onClick={() =>
                               change({
                                 ...draft,
@@ -815,7 +825,7 @@ export function DocumentWorkbench({
                           <Button
                             variant="outline"
                             size="sm"
-                            aria-label="Lesezeichen einrücken"
+                            aria-label={ui('Lesezeichen einrücken')}
                             onClick={() =>
                               change({
                                 ...draft,
@@ -833,7 +843,7 @@ export function DocumentWorkbench({
                           <Button
                             variant="outline"
                             size="sm"
-                            aria-label="Lesezeichen nach oben"
+                            aria-label={ui('Lesezeichen nach oben')}
                             disabled={
                               locked ||
                               bookmarkSibling(
@@ -851,12 +861,12 @@ export function DocumentWorkbench({
                               });
                             }}
                           >
-                            Hoch
+                            {ui('Hoch')}
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            aria-label="Lesezeichen nach unten"
+                            aria-label={ui('Lesezeichen nach unten')}
                             disabled={
                               locked ||
                               bookmarkSibling(
@@ -874,7 +884,7 @@ export function DocumentWorkbench({
                               });
                             }}
                           >
-                            Runter
+                            {ui('Runter')}
                           </Button>
                         </div>
                         <Button
@@ -892,7 +902,7 @@ export function DocumentWorkbench({
                           disabled={locked}
                         >
                           <Trash2 size={15} />
-                          Kapitel mit Unterpunkten entfernen
+                          {ui('Kapitel mit Unterpunkten entfernen')}
                         </Button>
                       </div>
                     )}
@@ -901,8 +911,8 @@ export function DocumentWorkbench({
                   <>
                     <div className="form-field-search">
                       <Input
-                        aria-label="Formularfelder suchen"
-                        placeholder="Feld suchen …"
+                        aria-label={ui('Formularfelder suchen')}
+                        placeholder={ui('Feld suchen …')}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                       />
@@ -934,11 +944,11 @@ export function DocumentWorkbench({
                             <span>
                               <strong>{field.name}</strong>
                               <small>
-                                {fieldLabels[field.kind]}
+                                {ui(fieldLabels[field.kind])}
                                 {field.widgets.length
-                                  ? ` · Seite ${field.widgets[0].page + 1}`
+                                  ? ui(` · Seite ${field.widgets[0].page + 1}`)
                                   : ''}
-                                {field.readOnly ? ' · schreibgeschützt' : ''}
+                                {field.readOnly ? ui(' · schreibgeschützt') : ''}
                               </small>
                             </span>
                             {field.required && <b>*</b>}
@@ -948,14 +958,15 @@ export function DocumentWorkbench({
                     {!fields.length && (
                       <div className="workbench-empty">
                         <ClipboardPen size={32} strokeWidth={1.3} />
-                        <strong>Keine interaktiven Felder</strong>
+                        <strong>{ui('Keine interaktiven Felder')}</strong>
                         <p>
-                          Du kannst Textfelder, Checkboxen und Auswahllisten auf dieser PDF
-                          ergänzen.
+                          {ui(
+                            'Du kannst Textfelder, Checkboxen und Auswahllisten auf dieser PDF ergänzen.',
+                          )}
                         </p>
                         {!design && (
                           <Button variant="outline" onClick={() => onTool('create-form')}>
-                            Formularfelder erstellen
+                            {ui('Formularfelder erstellen')}
                           </Button>
                         )}
                       </div>
@@ -963,7 +974,7 @@ export function DocumentWorkbench({
                     {creating && (
                       <div className="workbench-properties" id="document-properties">
                         <p className="fine-note">
-                          Ziehe das Feld auf der Seite auf oder füge es mittig ein.
+                          {ui('Ziehe das Feld auf der Seite auf oder füge es mittig ein.')}
                         </p>
                         <Button
                           variant="outline"
@@ -981,21 +992,23 @@ export function DocumentWorkbench({
                             })
                           }
                         >
-                          Feld mittig einfügen
+                          {ui('Feld mittig einfügen')}
                         </Button>
                       </div>
                     )}
                     {selectedField && (
                       <div className="workbench-properties" id="document-properties">
                         <div className="property-heading">
-                          <strong>{fieldLabels[selectedField.kind]}</strong>
-                          <span>{selectedField.existing ? 'Vorhandenes Feld' : 'Neues Feld'}</span>
+                          <strong>{ui(fieldLabels[selectedField.kind])}</strong>
+                          <span>
+                            {selectedField.existing ? ui('Vorhandenes Feld') : ui('Neues Feld')}
+                          </span>
                         </div>
                         {design && !selectedField.existing && (
                           <label className="field">
-                            <span>Feldname</span>
+                            <span>{ui('Feldname')}</span>
                             <Input
-                              aria-label="Feldname"
+                              aria-label={ui('Feldname')}
                               value={selectedField.name}
                               maxLength={150}
                               onChange={(e) =>
@@ -1010,9 +1023,9 @@ export function DocumentWorkbench({
                           <>
                             {selectedField.kind === 'dropdown' && (
                               <label className="field">
-                                <span>Optionen · eine pro Zeile</span>
+                                <span>{ui('Optionen · eine pro Zeile')}</span>
                                 <Textarea
-                                  aria-label="Auswahloptionen"
+                                  aria-label={ui('Auswahloptionen')}
                                   value={selectedField.options.join('\n')}
                                   onChange={(e) =>
                                     patchField(selectedField.id, {
@@ -1027,9 +1040,9 @@ export function DocumentWorkbench({
                             {selectedField.kind === 'text' && (
                               <>
                                 <label className="field">
-                                  <span>Schriftgröße in pt</span>
+                                  <span>{ui('Schriftgröße in pt')}</span>
                                   <Input
-                                    aria-label="Feld-Schriftgröße"
+                                    aria-label={ui('Feld-Schriftgröße')}
                                     type="number"
                                     min={6}
                                     max={48}
@@ -1043,10 +1056,10 @@ export function DocumentWorkbench({
                                   />
                                 </label>
                                 <label className="switch-field">
-                                  <span>Mehrere Zeilen</span>
+                                  <span>{ui('Mehrere Zeilen')}</span>
                                   <Switch
                                     checked={selectedField.multiline}
-                                    aria-label="Mehrzeiliges Textfeld"
+                                    aria-label={ui('Mehrzeiliges Textfeld')}
                                     onCheckedChange={(v) =>
                                       patchField(selectedField.id, { multiline: v })
                                     }
@@ -1056,9 +1069,9 @@ export function DocumentWorkbench({
                               </>
                             )}
                             <label className="switch-field">
-                              <span>Pflichtfeld</span>
+                              <span>{ui('Pflichtfeld')}</span>
                               <Switch
-                                aria-label="Pflichtfeld"
+                                aria-label={ui('Pflichtfeld')}
                                 checked={selectedField.required}
                                 onCheckedChange={(v) =>
                                   patchField(selectedField.id, { required: v })
@@ -1069,9 +1082,13 @@ export function DocumentWorkbench({
                             <div className="position-inputs">
                               {(['x', 'y', 'w', 'h'] as const).map((key) => (
                                 <label key={key}>
-                                  {{ x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key]}
+                                  {ui(
+                                    { x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key],
+                                  )}
                                   <Input
-                                    aria-label={`Feld ${{ x: 'Links', y: 'Oben', w: 'Breite', h: 'Höhe' }[key]} in Prozent`}
+                                    aria-label={ui(
+                                      `Feld ${ui({ x: 'Links', y: 'Oben', w: 'Breite', h: 'Höhe' }[key])} in Prozent`,
+                                    )}
                                     type="number"
                                     min={key === 'x' || key === 'y' ? 0 : 1}
                                     max={100}
@@ -1094,7 +1111,7 @@ export function DocumentWorkbench({
                         )}
                         {selectedField.readOnly && (
                           <p className="fine-note">
-                            Dieses Feld ist in der Originaldatei schreibgeschützt.
+                            {ui('Dieses Feld ist in der Originaldatei schreibgeschützt.')}
                           </p>
                         )}
                         {design && selectedField.kind !== 'unsupported' && (
@@ -1108,7 +1125,7 @@ export function DocumentWorkbench({
                             disabled={locked}
                           >
                             <Trash2 size={15} />
-                            Feld entfernen
+                            {ui('Feld entfernen')}
                           </Button>
                         )}
                       </div>
@@ -1121,18 +1138,20 @@ export function DocumentWorkbench({
           <div className="workbench-save">
             {draft?.signed && (
               <p className="notice">
-                Diese PDF enthält eine digitale Signatur. Änderungen können sie ungültig machen.
-                Bewahre das Original auf.
+                {ui(
+                  'Diese PDF enthält eine digitale Signatur. Änderungen können sie ungültig machen. Bewahre das Original auf.',
+                )}
               </p>
             )}
             {!isBookmarks && (
               <label className="switch-field">
                 <span>
-                  Felder fixieren<small>Werte als feste Inhalte speichern</small>
+                  {ui('Felder fixieren')}
+                  <small>{ui('Werte als feste Inhalte speichern')}</small>
                 </span>
                 <Switch
                   checked={flatten}
-                  aria-label="Formularfelder fixieren"
+                  aria-label={ui('Formularfelder fixieren')}
                   onCheckedChange={(v) => {
                     setFlatten(v);
                     setOutput(null);
@@ -1144,7 +1163,7 @@ export function DocumentWorkbench({
             )}
             {error && (
               <p className="error-box" role="alert">
-                {error}
+                {ui(error)}
               </p>
             )}
             <Button
@@ -1155,10 +1174,10 @@ export function DocumentWorkbench({
               {busy ? <LoaderCircle className="spin" size={17} /> : <Download size={17} />}
               <span>
                 {busy
-                  ? 'PDF wird erstellt …'
+                  ? ui('PDF wird erstellt …')
                   : isBookmarks
-                    ? 'Lesezeichen speichern'
-                    : 'Formular speichern'}
+                    ? ui('Lesezeichen speichern')
+                    : ui('Formular speichern')}
               </span>
             </Button>
             {busy && (
@@ -1168,10 +1187,10 @@ export function DocumentWorkbench({
             )}
             <p className="fine-note">
               {isBookmarks
-                ? 'Speichert alle Seiten mit deiner Kapitelstruktur.'
+                ? ui('Speichert alle Seiten mit deiner Kapitelstruktur.')
                 : flatten
-                  ? 'Die gespeicherten Felder sind danach nicht mehr interaktiv.'
-                  : 'Die gespeicherte PDF bleibt in PDF-Readern ausfüllbar.'}
+                  ? ui('Die gespeicherten Felder sind danach nicht mehr interaktiv.')
+                  : ui('Die gespeicherte PDF bleibt in PDF-Readern ausfüllbar.')}
             </p>
             {output && (
               <Button

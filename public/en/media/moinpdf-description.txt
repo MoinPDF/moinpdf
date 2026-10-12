@@ -1,0 +1,12 @@
+MoinPDF – Description
+Updated: 12 October 2026
+
+SHORT
+MoinPDF is a workspace for editing, checking and converting PDFs and other documents, available in German and English. Paperwork. Sorted.
+
+DETAILED
+MoinPDF brings together tools for everyday work with PDFs and other documents, including merging, splitting, text recognition, page editing, forms and format conversion. Many tools process files directly in your browser. The built-in documentation explains each tool, its results and its limitations.
+
+CONTACT
+MoinPDF
+ahoi@moinpdf.de

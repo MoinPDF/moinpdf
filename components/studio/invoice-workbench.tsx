@@ -1,4 +1,6 @@
 'use client';
+import { ui, uiLocale } from '@/lib/ui-language';
+
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useEffect, useState } from 'react';
@@ -119,7 +121,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
     const n = Number(s);
     if (!s || !Number.isFinite(n)) return s || '—';
     try {
-      return new Intl.NumberFormat('de-DE', {
+      return new Intl.NumberFormat(uiLocale(), {
         style: 'currency',
         currency: i?.currency || 'EUR',
       }).format(n);
@@ -136,15 +138,15 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
     change: (v: string) => void,
   ) => (
     <label className="field">
-      <span>{label}</span>
+      <span>{ui(label)}</span>
       <Select value={v} onValueChange={change} disabled={locked}>
-        <SelectTrigger aria-label={label}>
+        <SelectTrigger aria-label={ui(label)}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {items.map(([id, name]) => (
             <SelectItem key={id} value={id}>
-              {name}
+              {ui(name)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -153,10 +155,10 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
   );
   const party = (label: string, p: InvoiceParty) => (
     <div className="invoice-party">
-      <span>{label}</span>
-      <h3>{p.name || 'Name fehlt'}</h3>
+      <span>{ui(label)}</span>
+      <h3>{p.name || ui('Name fehlt')}</h3>
       <p>
-        {p.address || 'Adresse nicht angegeben'}
+        {p.address || ui('Adresse nicht angegeben')}
         {p.country && (
           <>
             <br />
@@ -164,7 +166,12 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
           </>
         )}
       </p>
-      {p.vatId && <small>USt-ID {p.vatId}</small>}
+      {p.vatId && (
+        <small>
+          {ui('USt-ID ')}
+          {p.vatId}
+        </small>
+      )}
       {p.email && <small>{p.email}</small>}
     </div>
   );
@@ -179,18 +186,18 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
-          LOKAL AUF DEINEM GERÄT
+          {ui('LOKAL AUF DEINEM GERÄT')}
         </span>
         <Button variant="outline" disabled={locked} onClick={onAdd}>
-          Datei hinzufügen
+          {ui('Datei hinzufügen')}
         </Button>
       </header>
       <div className="workbench-title">
         <div>
-          <span className="studio-kicker">RECHNUNGSDATEN. AUF EINEN BLICK.</span>
+          <span className="studio-kicker">{ui('RECHNUNGSDATEN. AUF EINEN BLICK.')}</span>
           <h1>
             {checking ? <ClipboardCheck /> : <ReceiptText />}
-            {checking ? 'E-Rechnung prüfen' : 'E-Rechnung lesen'}
+            {checking ? ui('E-Rechnung prüfen') : ui('E-Rechnung lesen')}
           </h1>
         </div>
         <div className="workbench-modes">
@@ -199,14 +206,14 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
             disabled={locked}
             onClick={() => onTool('invoice-read')}
           >
-            Leseansicht
+            {ui('Leseansicht')}
           </Button>
           <Button
             variant={checking ? 'default' : 'ghost'}
             disabled={locked}
             onClick={() => onTool('invoice-check')}
           >
-            Basischeck
+            {ui('Basischeck')}
           </Button>
         </div>
       </div>
@@ -236,13 +243,13 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
           <FileCode2 size={34} />
           <h2>
             {entries.length
-              ? 'Die Ausgabe konnte nicht erstellt werden.'
-              : 'Keine lesbare E-Rechnung gefunden.'}
+              ? ui('Die Ausgabe konnte nicht erstellt werden.')
+              : ui('Keine lesbare E-Rechnung gefunden.')}
           </h2>
-          <p>{error}</p>
+          <p>{ui(error)}</p>
           {!entries.length && (
             <Button variant="outline" onClick={onAdd} disabled={locked}>
-              Rechnungsdatei hinzufügen
+              {ui('Rechnungsdatei hinzufügen')}
             </Button>
           )}
         </div>
@@ -250,7 +257,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
       {loading && (
         <div className="invoice-empty" role="status">
           <LoaderCircle className="spin" />
-          <p>Rechnungsdaten werden gelesen …</p>
+          <p>{ui('Rechnungsdaten werden gelesen …')}</p>
         </div>
       )}
       {i && entry && (
@@ -259,16 +266,22 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
             <section className="invoice-sheet">
               <div className="invoice-heading">
                 <div>
-                  <span>{i.type === '381' ? 'GUTSCHRIFT' : 'RECHNUNG'}</span>
-                  <h2>{i.number || 'Ohne Nummer'}</h2>
+                  <span>{i.type === '381' ? ui('GUTSCHRIFT') : ui('RECHNUNG')}</span>
+                  <h2>{i.number || ui('Ohne Nummer')}</h2>
                   <p>
                     {date(i.date)}
-                    {i.dueDate && <> · fällig {date(i.dueDate)}</>}
+                    {i.dueDate && (
+                      <>
+                        {' '}
+                        {ui(' · fällig ')}
+                        {date(i.dueDate)}
+                      </>
+                    )}
                   </p>
                 </div>
                 <span className="invoice-profile">
-                  {i.profileLabel}
-                  <small>laut XML</small>
+                  {ui(i.profileLabel)}
+                  <small>{ui('laut XML')}</small>
                 </span>
               </div>
               {checking ? (
@@ -278,18 +291,20 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     <div>
                       <h3>
                         {errors
-                          ? `${errors} ${errors === 1 ? 'Auffälligkeit' : 'Auffälligkeiten'} gefunden`
-                          : 'Keine Fehler im Basischeck gefunden'}
+                          ? ui(
+                              `${errors} ${errors === 1 ? 'Auffälligkeit' : 'Auffälligkeiten'} gefunden`,
+                            )
+                          : ui('Keine Fehler im Basischeck gefunden')}
                       </h3>
                       <p>
-                        {warnings} {warnings === 1 ? 'Hinweis' : 'Hinweise'} · {i.checks.length}{' '}
-                        ausgewählte Prüfungen
+                        {warnings} {warnings === 1 ? ui('Hinweis') : ui('Hinweise')} ·{' '}
+                        {i.checks.length} {ui('ausgewählte Prüfungen')}
                       </p>
                     </div>
                   </div>
                   <p className="invoice-scope">
-                    {INVOICE_CHECK_SCOPE} Ein fehlerfreier Basischeck bestätigt keine
-                    Normkonformität.
+                    {ui(INVOICE_CHECK_SCOPE)}{' '}
+                    {ui(' Ein fehlerfreier Basischeck bestätigt keine Normkonformität.')}
                   </p>
                   {i.checks.map((c, n) => (
                     <article key={n} className={`invoice-check ${c.level}`}>
@@ -301,11 +316,15 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                         <TriangleAlert size={18} />
                       )}
                       <div>
-                        <h4>{c.title}</h4>
-                        <p>{c.detail}</p>
+                        <h4>{ui(c.title)}</h4>
+                        <p>{ui(c.detail)}</p>
                       </div>
                       <span>
-                        {c.level === 'pass' ? 'OK' : c.level === 'error' ? t('Prüfen') : 'Hinweis'}
+                        {c.level === 'pass'
+                          ? ui('OK')
+                          : c.level === 'error'
+                            ? t('Prüfen')
+                            : ui('Hinweis')}
                       </span>
                     </article>
                   ))}
@@ -320,13 +339,13 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     <div className="invoice-references">
                       {i.buyerReference && (
                         <p>
-                          <span>Käuferreferenz</span>
+                          <span>{ui('Käuferreferenz')}</span>
                           {i.buyerReference}
                         </p>
                       )}
                       {i.orderReference && (
                         <p>
-                          <span>Bestellung</span>
+                          <span>{ui('Bestellung')}</span>
                           {i.orderReference}
                         </p>
                       )}
@@ -334,23 +353,23 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                   )}
                   <div className="invoice-lines">
                     <div className="invoice-section-heading">
-                      <h3>Positionen</h3>
+                      <h3>{ui('Positionen')}</h3>
                       <span>{i.lines.length}</span>
                     </div>
                     <div
                       className="invoice-table-scroll"
                       tabIndex={0}
                       role="region"
-                      aria-label="Rechnungspositionen"
+                      aria-label={ui('Rechnungspositionen')}
                     >
                       <table>
                         <thead>
                           <tr>
-                            <th>Position</th>
-                            <th>Menge</th>
-                            <th>Einzelpreis</th>
-                            <th>Steuer</th>
-                            <th>Netto</th>
+                            <th>{ui('Position')}</th>
+                            <th>{ui('Menge')}</th>
+                            <th>{ui('Einzelpreis')}</th>
+                            <th>{ui('Steuer')}</th>
+                            <th>{ui('Netto')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -358,7 +377,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                             <tr key={n}>
                               <td>
                                 <small>{l.id}</small>
-                                <strong>{l.name || 'Ohne Bezeichnung'}</strong>
+                                <strong>{l.name || ui('Ohne Bezeichnung')}</strong>
                                 {l.description && <p>{l.description}</p>}
                               </td>
                               <td>
@@ -366,7 +385,12 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                               </td>
                               <td>
                                 {displayAmount(l.price)}
-                                {l.baseQuantity !== '1' && <small>pro {l.baseQuantity}</small>}
+                                {l.baseQuantity !== '1' && (
+                                  <small>
+                                    {ui('pro ')}
+                                    {l.baseQuantity}
+                                  </small>
+                                )}
                               </td>
                               <td>{l.taxRate ? l.taxRate + ' %' : l.taxCategory || '—'}</td>
                               <td>{displayAmount(l.net)}</td>
@@ -375,16 +399,18 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                         </tbody>
                       </table>
                     </div>
-                    {!i.lines.length && <p className="fine-note">Keine Positionen ausgelesen.</p>}
+                    {!i.lines.length && (
+                      <p className="fine-note">{ui('Keine Positionen ausgelesen.')}</p>
+                    )}
                   </div>
                   {i.taxes.length > 0 && (
                     <div className="invoice-tax">
-                      <h3>Steueraufschlüsselung</h3>
+                      <h3>{ui('Steueraufschlüsselung')}</h3>
                       {i.taxes.map((t, n) => (
                         <div key={n}>
                           <span>
                             {t.category} · {t.rate || '—'} %
-                            <small>{t.reason || `Basis ${displayAmount(t.base)}`}</small>
+                            <small>{t.reason || ui(`Basis ${displayAmount(t.base)}`)}</small>
                           </span>
                           <b>{displayAmount(t.amount)}</b>
                         </div>
@@ -393,25 +419,25 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                   )}
                   {(i.payment.length > 0 || i.notes.length > 0) && (
                     <div className="invoice-payment">
-                      <h3>Zahlung & Hinweise</h3>
+                      <h3>{ui('Zahlung & Hinweise')}</h3>
                       {i.payment.map((p, n) => (
                         <div key={n}>
                           {p.name && <p>{p.name}</p>}
                           {p.iban && (
                             <p>
-                              <span>Konto</span>
+                              <span>{ui('Konto')}</span>
                               <b>{p.iban}</b>
                             </p>
                           )}
                           {p.bic && (
                             <p>
-                              <span>BIC</span>
+                              <span>{ui('BIC')}</span>
                               {p.bic}
                             </p>
                           )}
                           {p.reference && (
                             <p>
-                              <span>Referenz</span>
+                              <span>{ui('Referenz')}</span>
                               {p.reference}
                             </p>
                           )}
@@ -426,21 +452,24 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                 </>
               )}
               <details className="invoice-xml">
-                <summary>Original-XML ansehen</summary>
-                <p>Unveränderte Rechnungsdaten · {entry.name}</p>
+                <summary>{ui('Original-XML ansehen')}</summary>
+                <p>
+                  {ui('Unveränderte Rechnungsdaten · ')}
+                  {entry.name}
+                </p>
                 <pre>{entry.xml}</pre>
               </details>
             </section>
             <aside className="invoice-aside">
               <section className="invoice-total-card">
-                <span>ZAHLBETRAG</span>
+                <span>{ui('ZAHLBETRAG')}</span>
                 <strong>{displayAmount(i.totals.due)}</strong>
                 <p>
                   {i.dueDate
-                    ? `Fällig am ${date(i.dueDate)}`
+                    ? ui(`Fällig am ${date(i.dueDate)}`)
                     : i.type === '381'
-                      ? 'Gutschrift'
-                      : 'Laut Rechnungs-XML'}
+                      ? ui('Gutschrift')
+                      : ui('Laut Rechnungs-XML')}
                 </p>
                 <dl>
                   {(
@@ -458,17 +487,17 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     .filter(([, key]) => i.totals[key])
                     .map(([label, key]) => (
                       <div key={key}>
-                        <dt>{label}</dt>
+                        <dt>{ui(label)}</dt>
                         <dd>{displayAmount(i.totals[key])}</dd>
                       </div>
                     ))}
                 </dl>
               </section>
               <section className="invoice-exports">
-                <h3>{checking ? 'Prüfung speichern' : 'Rechnung exportieren'}</h3>
+                <h3>{checking ? ui('Prüfung speichern') : ui('Rechnung exportieren')}</h3>
                 <Button disabled={locked} onClick={() => void savePdf()}>
                   {busy ? <LoaderCircle size={17} className="spin" /> : <FileText size={17} />}{' '}
-                  {checking ? 'Prüfbericht als PDF' : 'Lese-PDF erstellen'}
+                  {checking ? ui('Prüfbericht als PDF') : ui('Lese-PDF erstellen')}
                 </Button>
                 {checking ? (
                   <Button
@@ -482,7 +511,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     }
                   >
                     <Download size={17} />
-                    Bericht als TXT
+                    {ui('Bericht als TXT')}
                   </Button>
                 ) : (
                   <Button
@@ -496,7 +525,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     }
                   >
                     <Table2 size={17} />
-                    Positionen als CSV
+                    {ui('Positionen als CSV')}
                   </Button>
                 )}
                 <Button
@@ -510,12 +539,15 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                   }
                 >
                   <FileCode2 size={17} />
-                  Original-XML speichern
+                  {ui('Original-XML speichern')}
                 </Button>
                 {output && (
                   <div className="invoice-output" role="status">
                     <Check size={18} />
-                    <span>PDF erstellt · {formatSize(output.blob.size)}</span>
+                    <span>
+                      {ui('PDF erstellt · ')}
+                      {formatSize(output.blob.size)}
+                    </span>
                     <a href={url} download={output.filename}>
                       <Download size={16} />
                       {t('PDF herunterladen')}
@@ -523,8 +555,9 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                   </div>
                 )}
                 <p>
-                  Die Lese-PDF zeigt ausgewählte Rechnungsangaben und enthält die Original-XML als
-                  Anhang. Sie ist keine zertifizierte ZUGFeRD- oder PDF/A-Datei.
+                  {ui(
+                    'Die Lese-PDF zeigt ausgewählte Rechnungsangaben und enthält die Original-XML als Anhang. Sie ist keine zertifizierte ZUGFeRD- oder PDF/A-Datei.',
+                  )}
                 </p>
               </section>
               {!checking && (
@@ -535,11 +568,11 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                 >
                   <ClipboardCheck size={23} />
                   <span>
-                    Angaben & Summen prüfen
+                    {ui('Angaben & Summen prüfen')}
                     <small>
                       {errors
-                        ? `${errors} Auffälligkeit${errors === 1 ? '' : 'en'} im Basischeck`
-                        : 'Basischeck ansehen'}
+                        ? ui(`${errors} Auffälligkeit${errors === 1 ? '' : 'en'} im Basischeck`)
+                        : ui('Basischeck ansehen')}
                     </small>
                   </span>
                 </button>
