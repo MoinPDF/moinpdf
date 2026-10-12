@@ -27,7 +27,7 @@ for (const tool of tools) {
   if (!guide || !guide.input || guide.steps?.length < 3 || !guide.output || !guide.note) throw new Error(`Incomplete documentation: ${tool.id}`);
 }
 
-const mode = id => ['pdf-word','optimize-pdf'].includes(id) ? ['Browser / Server','mixed'] : serverToolIds.includes(id) ? ['Dokumentenserver','server'] : ['Browser','browser'];
+const mode = id => ['pdf-word','optimize-pdf','office-pdf','certificate-sign'].includes(id) ? ['Browser / Server','mixed'] : serverToolIds.includes(id) ? ['Dokumentenserver','server'] : ['Browser','browser'];
 const toolHtml = tool => {
   const guide = guides[tool.id], [label, kind] = mode(tool.id);
   const icon = renderToStaticMarkup(createElement(tool.icon, {size:22, strokeWidth:1.6, 'aria-hidden':true}));

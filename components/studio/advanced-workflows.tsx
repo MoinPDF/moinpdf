@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { downloadBlob } from '@/lib/pdf-engine';
 import {
   stepLabels,
+  workflowTemplates,
   validateWorkflow,
   runPipeline,
   type StepKind,
@@ -85,6 +86,24 @@ export function WorkflowPanel({
           </Button>
         )}
         {!batch && <Text label={ui('Name des Arbeitsablaufs')} value={name} onChange={setName} />}
+        {!batch && (
+          <Choice
+            label={ui('Vorlage laden')}
+            value=""
+            items={[
+              ['', 'Eigener Arbeitsablauf'],
+              ...workflowTemplates.map((w, i): [string, string] => [String(i), w.name]),
+            ]}
+            onChange={(v) => {
+              if (!v) return;
+              const w = validateWorkflow(workflowTemplates[Number(v)]);
+              setName(ui(w.name));
+              setSteps(w.steps);
+              setGraph(null);
+              setPassword('');
+            }}
+          />
+        )}
         <ol className="workflow-steps">
           {steps.map((step, i) => (
             <li key={i}>

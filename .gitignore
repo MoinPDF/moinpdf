@@ -72,3 +72,5 @@ __pycache__/
 .cache/
 
 /public/en/media/MoinPDF-MediaKit-*.zip
+
+/public/vendor/office/

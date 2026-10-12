@@ -1,0 +1,14 @@
+Caladea fonts, unchanged from the LibreOffice source archive:
+368f114c078f94214a308a74c7e991bc-crosextrafonts-20130214.tar.gz
+SHA-256: c48d1c2fd613c9c06c959c34da7b8388059e2408d2bb19845dc3ed35f76e4d09
+
+Embedded font copyright notice:
+Copyright (c) 2012 Huerta Tipografia
+
+Embedded license statement:
+Licensed under the Apache License, Version 2.0
+http://www.apache.org/licenses/LICENSE-2.0
+
+The complete Apache License 2.0 is supplied in APACHE-2.0.txt and in
+LIBREOFFICE-24-LICENSES.html. The source archive contains font binaries but no
+separate license file. FONT-METADATA.json preserves the embedded statements.

@@ -52,7 +52,7 @@ const rightAligned=core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings
 const rightView=await inspect(rightAligned.bytes);assert.match(rightView.text,/Gemeinsamer Text/);assert.doesNotMatch(rightView.text,/KEEP|SECRET/);
 assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,rect:{x:0,y:0,w:.2,h:.015}}),/Textüberlauf|kleiner/);
 assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'漢字'}),/enthält das Zeichen/);
-assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'مرحبا'}),/Zeichenformung/);
+assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'مرحبا'}),/enthält das Zeichen/);
 assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,fontBytes:new Uint8Array(20)}),/TrueType/);
 assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,indices:[img.index]}),/ausschließlich Text/);
 assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'Hello',rect:{x:.99,y:.1,w:.5,h:.5}}),/Textbereich/);
@@ -76,3 +76,21 @@ try {
 assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'A\u0301 und B',styles:[{from:1,to:2,fontSize:12,color:'#000000'}]}),/Zeichenfolge/);
 assert.throws(()=>core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:richText,styles:[{from:0,to:8,fontSize:12,color:'#000000'},{from:4,to:12,fontSize:14,color:'#000000'}]}),/überschneiden/);
 console.log('PASS: shaped ligatures/combining marks, mixed font sizes/colors, grapheme-safe styles and multi-page paragraph flow with untouched later pages.');
+
+for(const angle of [0,90,180,270]) {
+ const rotated=await PDFDocument.load(bytes);rotated.getPage(0).setRotation(degrees(angle));rotated.getPage(0).setCropBox(20,20,360,460);
+ const input=await rotated.save(),objs=core.inspectNativeObjects(api,input,0),before=await inspect(input);
+ const grouped=core.groupNativeObjects(api,input,0,objs.map(o=>o.index)),after=await inspect(grouped);
+ assert.equal(core.inspectNativeObjects(api,grouped,0).length,1); assert.equal(core.inspectNativeObjects(api,grouped,0)[0].type,'group');
+ const a=before.canvas.getContext('2d').getImageData(0,0,before.canvas.width,before.canvas.height).data,b=after.canvas.getContext('2d').getImageData(0,0,after.canvas.width,after.canvas.height).data;
+ assert.equal(a.length,b.length);let diff=0;for(let i=0;i<a.length;i++)diff+=Math.abs(a[i]-b[i]);assert(diff/a.length<.05,`group rotation ${angle}: ${diff/a.length}`);
+ const dup=core.groupNativeObjects(api,input,0,[objs[0].index],true);assert.equal(core.inspectNativeObjects(api,dup,0).length,objs.length+1);
+}
+console.log('PASS: native grouping and duplication preserve vectors, rotations, CropBox and rendered pixels.');
+const rtlFont=new Uint8Array(await readFile('public/vendor/editor-fonts/DejaVuSans.ttf'));
+for(const text of ['مرحبا بالعالم','שלום עולם','ABC 123 שלום (456) مرحبا']) {
+ const out=core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text,fontBytes:rtlFont,direction:'auto'});const view=await inspect(out.bytes);assert(view.text.includes(text.includes('שלום')?'שלום':'مرحبا'),view.text);if(text.includes('456'))assert(view.text.includes('(456)'),view.text);
+}
+const baseline=core.replaceNativeParagraph(api,bytes,0,{...paragraphSettings,text:'ABC',styles:[{from:1,to:2,fontSize:10,color:'#000000',baselineShift:4}]});
+const bl=core.inspectNativeObjects(api,baseline.bytes,0).filter(o=>['A','B','C'].includes(o.text));assert.equal(bl.length,3);assert(bl.find(o=>o.text==='B').y<bl.find(o=>o.text==='A').y+.02);
+console.log('PASS: Arabic/Hebrew/mixed text with bracket extraction and shifted baseline.');

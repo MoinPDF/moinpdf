@@ -1,0 +1,1773 @@
+[
+  {
+    "filename": "/instdir/program/resource/common/fonts/opens___.ttf",
+    "start": 540099,
+    "end": 748091,
+    "bytes": 207992,
+    "sha256": "f543e6e2d7275557a839a164941c0a86e5f2c3f2a0042bfc434c88c6dde9e140",
+    "matches": []
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Alef-Bold.ttf",
+    "start": 39048912,
+    "end": 39141572,
+    "bytes": 92660,
+    "sha256": "39c262cf1aedb7f404c03f35c629fd74a62630f1544e53b999e80b000bb33d20",
+    "matches": [
+      {
+        "archive": "alef-1.001.tar.gz",
+        "path": "Alef/Alef-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Alef-Regular.ttf",
+    "start": 39141572,
+    "end": 39232932,
+    "bytes": 91360,
+    "sha256": "d424d553c4b1ab0473ca7198a980d767c1e697f2d74a1d95705c9855c02f41de",
+    "matches": [
+      {
+        "archive": "alef-1.001.tar.gz",
+        "path": "Alef/Alef-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Amiri-Bold.ttf",
+    "start": 39232932,
+    "end": 39646432,
+    "bytes": 413500,
+    "sha256": "f6d598013a0a0a00dc732d8a22e5848d52384fbcd3771bfdde0e9f85f94d90d8",
+    "matches": [
+      {
+        "archive": "Amiri-1.001.zip",
+        "path": "Amiri-1.001/Amiri-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Amiri-BoldItalic.ttf",
+    "start": 39646432,
+    "end": 40056116,
+    "bytes": 409684,
+    "sha256": "1e608ac4a4c97916937fdb1c832856d92df89aad902e675a9b15b076c41de223",
+    "matches": [
+      {
+        "archive": "Amiri-1.001.zip",
+        "path": "Amiri-1.001/Amiri-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Amiri-Italic.ttf",
+    "start": 40056116,
+    "end": 40484636,
+    "bytes": 428520,
+    "sha256": "2e4cacd084ad74eb865cd132b2d3a51aa522ec3b740b747dcb0e041c880be3fe",
+    "matches": [
+      {
+        "archive": "Amiri-1.001.zip",
+        "path": "Amiri-1.001/Amiri-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Amiri-Regular.ttf",
+    "start": 40484636,
+    "end": 40915764,
+    "bytes": 431128,
+    "sha256": "72b2702e947f423f5e553224d4bb6f5e32bfbda230a42cad2830b052de24245f",
+    "matches": [
+      {
+        "archive": "Amiri-1.001.zip",
+        "path": "Amiri-1.001/Amiri-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/AmiriQuran.ttf",
+    "start": 40915764,
+    "end": 41049140,
+    "bytes": 133376,
+    "sha256": "a406aa685f307d96327deecaae6d69322d28e30cd7ec8929badbee19a7e6c585",
+    "matches": [
+      {
+        "archive": "Amiri-1.001.zip",
+        "path": "Amiri-1.001/AmiriQuran.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Caladea-Bold.ttf",
+    "start": 41049140,
+    "end": 41108032,
+    "bytes": 58892,
+    "sha256": "74eda4fc5ffba0d8dc4aa76d41499f5ab76168d9ed6141c6417064c6244db9b6",
+    "matches": [
+      {
+        "archive": "368f114c078f94214a308a74c7e991bc-crosextrafonts-20130214.tar.gz",
+        "path": "crosextrafonts-20130214/Caladea-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Caladea-BoldItalic.ttf",
+    "start": 41108032,
+    "end": 41169860,
+    "bytes": 61828,
+    "sha256": "f47a35ad6cd0efa9914d93f9d03c93e30c55da43674bccfabac73b3c0d522c01",
+    "matches": [
+      {
+        "archive": "368f114c078f94214a308a74c7e991bc-crosextrafonts-20130214.tar.gz",
+        "path": "crosextrafonts-20130214/Caladea-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Caladea-Italic.ttf",
+    "start": 41169860,
+    "end": 41231720,
+    "bytes": 61860,
+    "sha256": "9c968bf60ba1e851cdfea77c71e3540c57792f77482dd241acc29d1425569c4e",
+    "matches": [
+      {
+        "archive": "368f114c078f94214a308a74c7e991bc-crosextrafonts-20130214.tar.gz",
+        "path": "crosextrafonts-20130214/Caladea-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Caladea-Regular.ttf",
+    "start": 41231720,
+    "end": 41290684,
+    "bytes": 58964,
+    "sha256": "d2f6cad33f191e65b68bd74e6d4f7708080a41b32db635866109df3090265d91",
+    "matches": [
+      {
+        "archive": "368f114c078f94214a308a74c7e991bc-crosextrafonts-20130214.tar.gz",
+        "path": "crosextrafonts-20130214/Caladea-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Carlito-Bold.ttf",
+    "start": 41290684,
+    "end": 41981200,
+    "bytes": 690516,
+    "sha256": "0f62ab34ad5d079a0a28fac01bcf7c7a724a4db4d6cb99cab9cabff382fbb80f",
+    "matches": [
+      {
+        "archive": "c74b7223abe75949b4af367942d96c7a-crosextrafonts-carlito-20130920.tar.gz",
+        "path": "crosextrafonts-carlito-20130920/Carlito-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Carlito-BoldItalic.ttf",
+    "start": 41981200,
+    "end": 42797916,
+    "bytes": 816716,
+    "sha256": "380764b6898d7b73ceae6384b2958b196d2a0428962ef3adf138d27947228666",
+    "matches": [
+      {
+        "archive": "c74b7223abe75949b4af367942d96c7a-crosextrafonts-carlito-20130920.tar.gz",
+        "path": "crosextrafonts-carlito-20130920/Carlito-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Carlito-Italic.ttf",
+    "start": 42797916,
+    "end": 43421332,
+    "bytes": 623416,
+    "sha256": "718a0663864d37a4868220a19b9668a5fe10a46197f6df367b4c2c30c04c026c",
+    "matches": [
+      {
+        "archive": "c74b7223abe75949b4af367942d96c7a-crosextrafonts-carlito-20130920.tar.gz",
+        "path": "crosextrafonts-carlito-20130920/Carlito-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Carlito-Regular.ttf",
+    "start": 43421332,
+    "end": 44057328,
+    "bytes": 635996,
+    "sha256": "b4ff23ba370cc95a3c349336b73f9c28514a1371210f89832efc85c4b1ea7131",
+    "matches": [
+      {
+        "archive": "c74b7223abe75949b4af367942d96c7a-crosextrafonts-carlito-20130920.tar.gz",
+        "path": "crosextrafonts-carlito-20130920/Carlito-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DavidCLM-Bold.otf",
+    "start": 44057328,
+    "end": 44115552,
+    "bytes": 58224,
+    "sha256": "38723ced9e2a7209ccc51c5a2d64681f1989dc59ddb62a6ef3affe22b18ab31b",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/DavidCLM-Bold.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DavidCLM-BoldItalic.otf",
+    "start": 44115552,
+    "end": 44180972,
+    "bytes": 65420,
+    "sha256": "5a2ba3cb759880b1063d83970ee41d2aee22556376e758f34ed99ca69dc354d6",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/DavidCLM-BoldItalic.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DavidCLM-Medium.otf",
+    "start": 44180972,
+    "end": 44236588,
+    "bytes": 55616,
+    "sha256": "e7d9c4c1dd720583c6fe8f6793bf9e2f5b7c182383acb0d151d1a63d125b6d85",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/DavidCLM-Medium.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DavidCLM-MediumItalic.otf",
+    "start": 44236588,
+    "end": 44312004,
+    "bytes": 75416,
+    "sha256": "cf41b3985e456f2d14b76f33b7629ae5794808e99333ea2fcd34d62945a2fb3a",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/DavidCLM-MediumItalic.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DavidLibre-Bold.ttf",
+    "start": 44312004,
+    "end": 44433852,
+    "bytes": 121848,
+    "sha256": "f7e9f02f5fcf400b65d8c44137e8e1a0b85945e6c874b266943c4434167b1833",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/DavidLibre-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DavidLibre-Regular.ttf",
+    "start": 44433852,
+    "end": 44550528,
+    "bytes": 116676,
+    "sha256": "127235d6c9a01b004487506968a5bf3af70de22312da68b57ba62cc2d6a0287d",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/DavidLibre-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuMathTeXGyre.ttf",
+    "start": 44550528,
+    "end": 45128236,
+    "bytes": 577708,
+    "sha256": "40da67c0b6b03076504fbda4bf3e7b4f20b35999c98063019a3392fe9b1294fe",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuMathTeXGyre.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSans-Bold.ttf",
+    "start": 45128236,
+    "end": 45833920,
+    "bytes": 705684,
+    "sha256": "e6476c1b80502924294eed40894c5b18e06c181444ca953e5334262df9c27724",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSans-BoldOblique.ttf",
+    "start": 45833920,
+    "end": 46477212,
+    "bytes": 643292,
+    "sha256": "eb436dca0c2594b73d8b603b892e374fdfd8d885d25ffb4f18df4c4c0b49e50f",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSans-BoldOblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSans-ExtraLight.ttf",
+    "start": 46477212,
+    "end": 46832592,
+    "bytes": 355380,
+    "sha256": "6cb0746a1f68d176bebe83752cee35ebdf726cb1a1e88a01fc038ddf76de9ea8",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSans-ExtraLight.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSans-Oblique.ttf",
+    "start": 46832592,
+    "end": 47468008,
+    "bytes": 635416,
+    "sha256": "4af75fa16ee6d3ad43e1ecec41862c24954af26a55c6bb1ebb27bd486a50f5f4",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSans-Oblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSans.ttf",
+    "start": 47468008,
+    "end": 48225084,
+    "bytes": 757076,
+    "sha256": "7da195a74c55bef988d0d48f9508bd5d849425c1770dba5d7bfc6ce9ed848954",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSans.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSansCondensed-Bold.ttf",
+    "start": 48225084,
+    "end": 48890112,
+    "bytes": 665028,
+    "sha256": "38098d0b8edd8430a0f53fb2831b5d36037563a998a620d3c87a4d7591766d20",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansCondensed-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSansCondensed-BoldOblique.ttf",
+    "start": 48890112,
+    "end": 49501948,
+    "bytes": 611836,
+    "sha256": "43f9fd6b77edf174553cf94857c77c63de7ddb0c6751fd1390e73223518e128f",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansCondensed-BoldOblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSansCondensed-Oblique.ttf",
+    "start": 49501948,
+    "end": 50101240,
+    "bytes": 599292,
+    "sha256": "dc3526fa25fae4278c4e34b47d4c049b6923421c70921032a0db11bfe9c1b0cf",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansCondensed-Oblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSansCondensed.ttf",
+    "start": 50101240,
+    "end": 50781504,
+    "bytes": 680264,
+    "sha256": "8550cd5ca1acb65a8fc7877c46939cd0b4d909f8e7bc1e24716873d918c5e549",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansCondensed.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSansMono-Bold.ttf",
+    "start": 50781504,
+    "end": 51113496,
+    "bytes": 331992,
+    "sha256": "bce60f1b4421acd9ea51ba6623d7024ecbe6817a953e3654df62a5e6bdf8f769",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansMono-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSansMono-BoldOblique.ttf",
+    "start": 51113496,
+    "end": 51367076,
+    "bytes": 253580,
+    "sha256": "91713a71d550bba22c2a6b2bb2a9ad8f9a159e12e4e9f0a5b2677998ba21213e",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansMono-BoldOblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSansMono-Oblique.ttf",
+    "start": 51367076,
+    "end": 51619008,
+    "bytes": 251932,
+    "sha256": "742097840c541870e8d6dc5c9b37bb1ceeea6c0dedd1d475faf903ef9df734b0",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansMono-Oblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSansMono.ttf",
+    "start": 51619008,
+    "end": 51959720,
+    "bytes": 340712,
+    "sha256": "b4a6c3e4faab8773f4ff761d56451646409f29abedd68f05d38c2df667d3c582",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSansMono.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSerif-Bold.ttf",
+    "start": 51959720,
+    "end": 52315808,
+    "bytes": 356088,
+    "sha256": "c47b5527bcdc8dcf9ea8c77054454c5a884beaca2f44851a2a823ee639cbf07f",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSerif-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSerif-BoldItalic.ttf",
+    "start": 52315808,
+    "end": 52663268,
+    "bytes": 347460,
+    "sha256": "8d3dd3d31350309042ed226af82b34539bd773518e6107cb352712853ba80308",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSerif-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSerif-Italic.ttf",
+    "start": 52663268,
+    "end": 53009264,
+    "bytes": 345996,
+    "sha256": "2e39b1d50f90b933b00c7bb54a96afd3f86419b3d717c7cf202e36f2d4973e47",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSerif-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSerif.ttf",
+    "start": 53009264,
+    "end": 53389396,
+    "bytes": 380132,
+    "sha256": "42d1edeb7952f31b1f96d767ed7030b08a39e0c372b0071641518864e2bffb51",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSerif.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSerifCondensed-Bold.ttf",
+    "start": 53389396,
+    "end": 53720640,
+    "bytes": 331244,
+    "sha256": "e09aa87c60c3e8de7f4e6c7bfeec8fd9489b6cd975e3033259bca3d6009aed18",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSerifCondensed-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSerifCondensed-BoldItalic.ttf",
+    "start": 53720640,
+    "end": 54067148,
+    "bytes": 346508,
+    "sha256": "4cfc5a3700c72413f51c4bb54f09617401a0a63eccb9ff577713e20afa047fa5",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSerifCondensed-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSerifCondensed-Italic.ttf",
+    "start": 54067148,
+    "end": 54412472,
+    "bytes": 345324,
+    "sha256": "dfe5bf5336d62ca71de419cccf7fd18ab19a57245dc392891ee76347129807e1",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSerifCondensed-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/DejaVuSerifCondensed.ttf",
+    "start": 54412472,
+    "end": 54759136,
+    "bytes": 346664,
+    "sha256": "685dcdfb8daf32a453d3426a4eb8d881c72146ddd999229354fb757511357995",
+    "matches": [
+      {
+        "archive": "33e1e61fab06a547851ed308b4ffef42-dejavu-fonts-ttf-2.37.zip",
+        "path": "dejavu-fonts-ttf-2.37/ttf/DejaVuSerifCondensed.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/FrankRuehlCLM-Bold.ttf",
+    "start": 54759136,
+    "end": 54804192,
+    "bytes": 45056,
+    "sha256": "430876278510bee884b0a11437038d568fa593243e64b71fcc81482013f9b09b",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/FrankRuehlCLM-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/FrankRuehlCLM-BoldOblique.ttf",
+    "start": 54804192,
+    "end": 54853012,
+    "bytes": 48820,
+    "sha256": "57ac6b89318200d0b04fb90c95f0aeffda1ff49e354d26d63945b4e6eadf5f54",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/FrankRuehlCLM-BoldOblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/FrankRuehlCLM-Medium.ttf",
+    "start": 54853012,
+    "end": 54896916,
+    "bytes": 43904,
+    "sha256": "07458c296f9c433399e8dd829cf4fe250be98801e5682aa375b650ba34d96c78",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/FrankRuehlCLM-Medium.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/FrankRuehlCLM-MediumOblique.ttf",
+    "start": 54896916,
+    "end": 54943656,
+    "bytes": 46740,
+    "sha256": "7e0c38e09f530b859c8257d73cd2cd55bd5cf5e5031eb836897068d2957ba8b5",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/FrankRuehlCLM-MediumOblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/FrankRuhlHofshi-Bold.otf",
+    "start": 54943656,
+    "end": 55005608,
+    "bytes": 61952,
+    "sha256": "738df99ce285d69e83e2cd2809c340591d805f4af9b2609ca9ec50c14c3f9691",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/FrankRuhlHofshi-Bold.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/FrankRuhlHofshi-Regular.otf",
+    "start": 55005608,
+    "end": 55067288,
+    "bytes": 61680,
+    "sha256": "4c949aee5e93d7f816e9e76ef807d964ab2ba821c4533b77f4d451f89f581698",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/FrankRuhlHofshi-Regular.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/GenBasB.ttf",
+    "start": 55067288,
+    "end": 55334128,
+    "bytes": 266840,
+    "sha256": "26d5d4044a4bf92f265bf3b597076aa52d0497cb102cbdbfb1131f658ce97c9c",
+    "matches": [
+      {
+        "archive": "1725634df4bb3dcb1b2c91a6175f8789-GentiumBasic_1102.zip",
+        "path": "GentiumBasic_1102/GenBasB.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/GenBasBI.ttf",
+    "start": 55334128,
+    "end": 55579980,
+    "bytes": 245852,
+    "sha256": "5bfddd753de0a9ad83940e9b6130a8082510416d7450bb8e39d90e7655a75e35",
+    "matches": [
+      {
+        "archive": "1725634df4bb3dcb1b2c91a6175f8789-GentiumBasic_1102.zip",
+        "path": "GentiumBasic_1102/GenBasBI.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/GenBasI.ttf",
+    "start": 55579980,
+    "end": 55838660,
+    "bytes": 258680,
+    "sha256": "191de1e709a691f1134775539dee8b2167baef3ee411744b5cdf3b43ce18707a",
+    "matches": [
+      {
+        "archive": "1725634df4bb3dcb1b2c91a6175f8789-GentiumBasic_1102.zip",
+        "path": "GentiumBasic_1102/GenBasI.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/GenBasR.ttf",
+    "start": 55838660,
+    "end": 56102876,
+    "bytes": 264216,
+    "sha256": "f0248c5a6d76dca62c639fdfdde97f9ae60c05c96bec03925d522531d7c0ca37",
+    "matches": [
+      {
+        "archive": "1725634df4bb3dcb1b2c91a6175f8789-GentiumBasic_1102.zip",
+        "path": "GentiumBasic_1102/GenBasR.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/GenBkBasB.ttf",
+    "start": 56102876,
+    "end": 56369900,
+    "bytes": 267024,
+    "sha256": "37fc25b7916e4055ffff0b9bda2b9a9efe7d3404773339fa8cde00a15d5589a9",
+    "matches": [
+      {
+        "archive": "1725634df4bb3dcb1b2c91a6175f8789-GentiumBasic_1102.zip",
+        "path": "GentiumBasic_1102/GenBkBasB.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/GenBkBasBI.ttf",
+    "start": 56369900,
+    "end": 56614996,
+    "bytes": 245096,
+    "sha256": "dccbca56a0d1bdbcc440e3b2070ee0ef63fd834454196baeaa8226ead9c82f07",
+    "matches": [
+      {
+        "archive": "1725634df4bb3dcb1b2c91a6175f8789-GentiumBasic_1102.zip",
+        "path": "GentiumBasic_1102/GenBkBasBI.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/GenBkBasI.ttf",
+    "start": 56614996,
+    "end": 56876324,
+    "bytes": 261328,
+    "sha256": "6879e401a0c44c6473fb796c284112f3139bd20c289cff92e6c4abb4dab7d369",
+    "matches": [
+      {
+        "archive": "1725634df4bb3dcb1b2c91a6175f8789-GentiumBasic_1102.zip",
+        "path": "GentiumBasic_1102/GenBkBasI.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/GenBkBasR.ttf",
+    "start": 56876324,
+    "end": 57143928,
+    "bytes": 267604,
+    "sha256": "f0e5c2d48408804caf9779ee2e039687b3ac5cf56edff51577fc0aedc0908994",
+    "matches": [
+      {
+        "archive": "1725634df4bb3dcb1b2c91a6175f8789-GentiumBasic_1102.zip",
+        "path": "GentiumBasic_1102/GenBkBasR.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationMono-Bold.ttf",
+    "start": 57143928,
+    "end": 57451924,
+    "bytes": 307996,
+    "sha256": "bd62a0672d0b9b6710b01df434c80ad54fa5f0835207eb7b17b7a761463067bb",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationMono-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationMono-BoldItalic.ttf",
+    "start": 57451924,
+    "end": 57735992,
+    "bytes": 284068,
+    "sha256": "79451f3c09fe25116098853b7a2ca6e2436220ccc11af022979adbcf195be130",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationMono-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationMono-Italic.ttf",
+    "start": 57735992,
+    "end": 58017528,
+    "bytes": 281536,
+    "sha256": "605c01c711b44480a7508d349dfbf3264e81fa43d69e61cfa7d10b86e764c4d1",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationMono-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationMono-Regular.ttf",
+    "start": 58017528,
+    "end": 58337036,
+    "bytes": 319508,
+    "sha256": "f2b83c763e8afd21709333370bed4774337fae82267937e2b5aea7e2fbd922c1",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationMono-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSans-Bold.ttf",
+    "start": 58337036,
+    "end": 58751492,
+    "bytes": 414456,
+    "sha256": "788abee4c806d660e8aee46689dd8540cd4bb98da03dcc9d171ce3efd99a9173",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationSans-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSans-BoldItalic.ttf",
+    "start": 58751492,
+    "end": 59160488,
+    "bytes": 408996,
+    "sha256": "698da70fc191cc5f33ad4d6d3fe830fe4624b898ea2e3169955928b7c491f1ee",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationSans-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSans-Italic.ttf",
+    "start": 59160488,
+    "end": 59576304,
+    "bytes": 415816,
+    "sha256": "e5bae5c4cde31f22142753855f4f8fb86da6ff39955ed3c0a11248b0d16948b0",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationSans-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSans-Regular.ttf",
+    "start": 59576304,
+    "end": 59987016,
+    "bytes": 410712,
+    "sha256": "76d04c18ea243f426b7de1f3ad208e927008f961dc5945e5aad352d0dfde8ee8",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationSans-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSansNarrow-Bold.ttf",
+    "start": 59987016,
+    "end": 60097276,
+    "bytes": 110260,
+    "sha256": "8e5eb5090ef4a3143794c230b82f174f7f2fbbfcd6cb789ccfa1f90bf8795d54",
+    "matches": [
+      {
+        "archive": "liberation-narrow-fonts-ttf-1.07.6.tar.gz",
+        "path": "liberation-narrow-fonts-ttf-1.07.6/LiberationSansNarrow-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSansNarrow-BoldItalic.ttf",
+    "start": 60097276,
+    "end": 60225752,
+    "bytes": 128476,
+    "sha256": "57fe1513fa84379d36e7da6fd9a45d053ded5e895042ab36692d8d05a8c4f4d8",
+    "matches": [
+      {
+        "archive": "liberation-narrow-fonts-ttf-1.07.6.tar.gz",
+        "path": "liberation-narrow-fonts-ttf-1.07.6/LiberationSansNarrow-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSansNarrow-Italic.ttf",
+    "start": 60225752,
+    "end": 60358212,
+    "bytes": 132460,
+    "sha256": "c5de4127c273dbcfc173414d170448cbe800c3a7fb1f97beaeee1b076d6a5eea",
+    "matches": [
+      {
+        "archive": "liberation-narrow-fonts-ttf-1.07.6.tar.gz",
+        "path": "liberation-narrow-fonts-ttf-1.07.6/LiberationSansNarrow-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSansNarrow-Regular.ttf",
+    "start": 60358212,
+    "end": 60471248,
+    "bytes": 113036,
+    "sha256": "546e8957e5dccece4ac07ea02f57a5cdb3dc3b0e902ea75a837a7784ba4b7eef",
+    "matches": [
+      {
+        "archive": "liberation-narrow-fonts-ttf-1.07.6.tar.gz",
+        "path": "liberation-narrow-fonts-ttf-1.07.6/LiberationSansNarrow-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSerif-Bold.ttf",
+    "start": 60471248,
+    "end": 60841344,
+    "bytes": 370096,
+    "sha256": "d754ba427cfe0bca54ae052384baa8f842da5bd6550ad4da024ac441e7a7d5ce",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationSerif-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSerif-BoldItalic.ttf",
+    "start": 60841344,
+    "end": 61218116,
+    "bytes": 376772,
+    "sha256": "f17db8af71e24d2066b587546021d4f0b296be389512b658dec3c09affeb11a7",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationSerif-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSerif-Italic.ttf",
+    "start": 61218116,
+    "end": 61593748,
+    "bytes": 375632,
+    "sha256": "0e3dea9f8d613e006ccfa62201f33e265d19167bd0907725c3e145368b04fc2e",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationSerif-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LiberationSerif-Regular.ttf",
+    "start": 61593748,
+    "end": 61987324,
+    "bytes": 393576,
+    "sha256": "058ea80864aef09a23f45cbec2bb5400bc3dfbdea01c3f10538a21fcb497fb74",
+    "matches": [
+      {
+        "archive": "liberation-fonts-ttf-2.1.5.tar.gz",
+        "path": "liberation-fonts-ttf-2.1.5/LiberationSerif-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinBiolinum_RB_G.ttf",
+    "start": 61987324,
+    "end": 63975416,
+    "bytes": 1988092,
+    "sha256": "a6071ef33992942eeb6cd476fc7f94c5c886ea504b5f2329296ddb129416d649",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinBiolinum_RB_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinBiolinum_RI_G.ttf",
+    "start": 63975416,
+    "end": 65976632,
+    "bytes": 2001216,
+    "sha256": "c575bb983083bb6939a17d8d605b3a353a514b6bd9a576ac653b166ad7a22913",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinBiolinum_RI_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinBiolinum_R_G.ttf",
+    "start": 65976632,
+    "end": 67914276,
+    "bytes": 1937644,
+    "sha256": "b4928a849043c5e5d82b258bf485861a7b2e3f11d7fc2fc38127a7479f942ef2",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinBiolinum_R_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinLibertine_DR_G.ttf",
+    "start": 67914276,
+    "end": 69921640,
+    "bytes": 2007364,
+    "sha256": "ca753adfa44deeb4dd0508d385911d96df27ae107cf70899b1c4ade4e594f4b4",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinLibertine_DR_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinLibertine_RBI_G.ttf",
+    "start": 69921640,
+    "end": 71499936,
+    "bytes": 1578296,
+    "sha256": "ac81a23c8436e2c00dbb32b12bf346e7d091e18fb2e6ef986441faed818558fb",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinLibertine_RBI_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinLibertine_RB_G.ttf",
+    "start": 71499936,
+    "end": 73605884,
+    "bytes": 2105948,
+    "sha256": "392338c6e2926d7b435ecea51807b597b0937ce718226bf8468f60cfdd109a14",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinLibertine_RB_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinLibertine_RI_G.ttf",
+    "start": 73605884,
+    "end": 75655924,
+    "bytes": 2050040,
+    "sha256": "96f10a95e199601143b0d511c8c2731f9fc8d1482abe48e9d832abd097e0ee04",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinLibertine_RI_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinLibertine_RZI_G.ttf",
+    "start": 75655924,
+    "end": 77611388,
+    "bytes": 1955464,
+    "sha256": "0673c58840e04974af40c7661883541e05f9012c0473d3402590625390fa5954",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinLibertine_RZI_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinLibertine_RZ_G.ttf",
+    "start": 77611388,
+    "end": 79584144,
+    "bytes": 1972756,
+    "sha256": "8980dee9eb4c43b75392a1d2ab6a1fa3d00cd223b214c0fb74abcdab80f887ca",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinLibertine_RZ_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/LinLibertine_R_G.ttf",
+    "start": 79584144,
+    "end": 82151636,
+    "bytes": 2567492,
+    "sha256": "dbbdbc37105a59dbd64a4a552b5841002c0990c30fd225fdcac198058e60266a",
+    "matches": [
+      {
+        "archive": "e7a384790b13c29113e22e596ade9687-LinLibertineG-20120116.zip",
+        "path": "LinLibertineG/LinLibertine_R_G.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/MiriamCLM-Bold.ttf",
+    "start": 82151636,
+    "end": 82172480,
+    "bytes": 20844,
+    "sha256": "d61989de2178457c5678407451ceb3f3fbe1df90969693f811389d9419084e1b",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/MiriamCLM-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/MiriamCLM-Book.ttf",
+    "start": 82172480,
+    "end": 82193348,
+    "bytes": 20868,
+    "sha256": "993b06e10454cbf2d85bdd1c22549bdb98a7561a58900ed0d1b4cd5bd2c52624",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/MiriamCLM-Book.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/MiriamLibre-Bold.otf",
+    "start": 82193348,
+    "end": 82259268,
+    "bytes": 65920,
+    "sha256": "8c88ae118709ac4606f42356bed7a1ec68f6493a66424d030de5b270f6421c4b",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/MiriamLibre-Bold.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/MiriamLibre-Regular.otf",
+    "start": 82259268,
+    "end": 82323520,
+    "bytes": 64252,
+    "sha256": "6c366f3f075dedfd88824caba785ab5374c1c45eb5d97994137e5fdbe982a635",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/MiriamLibre-Regular.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/MiriamMonoCLM-Bold.ttf",
+    "start": 82323520,
+    "end": 82357520,
+    "bytes": 34000,
+    "sha256": "939fa9d184f4f33396fe808371b5c7a70dcc4d7b78d89ad2dcba3ce632ea6adf",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/MiriamMonoCLM-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/MiriamMonoCLM-BoldOblique.ttf",
+    "start": 82357520,
+    "end": 82394252,
+    "bytes": 36732,
+    "sha256": "e997734ec644d94f360dca5696fa888609baa5d1eb88b7ee98af3c6aa9e7e844",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/MiriamMonoCLM-BoldOblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/MiriamMonoCLM-Book.ttf",
+    "start": 82394252,
+    "end": 82425424,
+    "bytes": 31172,
+    "sha256": "93398590b717bbebcad84e7251afd3197893ea1835b7816139b44a11d69644c5",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/MiriamMonoCLM-Book.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/MiriamMonoCLM-BookOblique.ttf",
+    "start": 82425424,
+    "end": 82459476,
+    "bytes": 34052,
+    "sha256": "cce7365d09c01b4c7bfbf50071739bfb3a61e14783c58c10090da31e0720ba86",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/MiriamMonoCLM-BookOblique.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NachlieliCLM-Bold.otf",
+    "start": 82459476,
+    "end": 82498148,
+    "bytes": 38672,
+    "sha256": "813acb04cf0e95f07fe13445d5b94a36b125b7034c0f76113816977afdc27121",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/NachlieliCLM-Bold.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NachlieliCLM-BoldOblique.otf",
+    "start": 82498148,
+    "end": 82552252,
+    "bytes": 54104,
+    "sha256": "b17c7b682c2ffbcd0843845030854f4f3a588a80dcd4aafb79d331be0e0302c7",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/NachlieliCLM-BoldOblique.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NachlieliCLM-Light.otf",
+    "start": 82552252,
+    "end": 82580728,
+    "bytes": 28476,
+    "sha256": "45999697b1497c3891e2cdef0107a1640c2c9f74428a9efbfc4e29e91ffb620d",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/NachlieliCLM-Light.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NachlieliCLM-LightOblique.otf",
+    "start": 82580728,
+    "end": 82629804,
+    "bytes": 49076,
+    "sha256": "f697727a45374cff785fa9113cc601e67d6a042fafda6d94fbef11d418bf2ea3",
+    "matches": [
+      {
+        "archive": "culmus-0.133.tar.gz",
+        "path": "culmus-0.133/NachlieliCLM-LightOblique.otf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoKufiArabic-Bold.ttf",
+    "start": 82629804,
+    "end": 82925752,
+    "bytes": 295948,
+    "sha256": "4489bfae8552f3edfc66120f092c775453963c4ca376f5fe2d13d85b517a112d",
+    "matches": [
+      {
+        "archive": "NotoKufiArabic-v2.109.zip",
+        "path": "NotoKufiArabic/full/ttf/NotoKufiArabic-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoKufiArabic-Regular.ttf",
+    "start": 82925752,
+    "end": 83199056,
+    "bytes": 273304,
+    "sha256": "03ea6bc2758f2a8b01e73a9a5fc60fdcf2ae03709cc6c43cc43ff2a13a5c5ad8",
+    "matches": [
+      {
+        "archive": "NotoKufiArabic-v2.109.zip",
+        "path": "NotoKufiArabic/full/ttf/NotoKufiArabic-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoNaskhArabic-Bold.ttf",
+    "start": 83199056,
+    "end": 83525100,
+    "bytes": 326044,
+    "sha256": "f4593fe6c70d2b29a5ecf5716d669f040114861204272199b62a24d49c1a275b",
+    "matches": [
+      {
+        "archive": "NotoNaskhArabic-v2.019.zip",
+        "path": "NotoNaskhArabic/full/ttf/NotoNaskhArabic-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoNaskhArabic-Regular.ttf",
+    "start": 83525100,
+    "end": 83818276,
+    "bytes": 293176,
+    "sha256": "eb5cde7fecba8c6a481039257fe02d5fd69b7b0e36f8afc56ee22f4b1d7e8c21",
+    "matches": [
+      {
+        "archive": "NotoNaskhArabic-v2.019.zip",
+        "path": "NotoNaskhArabic/full/ttf/NotoNaskhArabic-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSans-Bold.ttf",
+    "start": 83818276,
+    "end": 84656348,
+    "bytes": 838072,
+    "sha256": "3a08a47daa00cade516425c15c57615aef2fd418ec9811a7b9f465088f92cc05",
+    "matches": [
+      {
+        "archive": "NotoSans-v2.015.zip",
+        "path": "NotoSans/full/ttf/NotoSans-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSans-BoldItalic.ttf",
+    "start": 84656348,
+    "end": 85509692,
+    "bytes": 853344,
+    "sha256": "2e34b41a4b9c234b1be7dff6d06cba18811ecb694b41350873edf0ec16a0f0fa",
+    "matches": [
+      {
+        "archive": "NotoSans-v2.015.zip",
+        "path": "NotoSans/full/ttf/NotoSans-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSans-Italic.ttf",
+    "start": 85509692,
+    "end": 86355004,
+    "bytes": 845312,
+    "sha256": "126522ae1bb9cd92120287fc47dfc74ef981e73931d93e52c565fb7e09b2d74a",
+    "matches": [
+      {
+        "archive": "NotoSans-v2.015.zip",
+        "path": "NotoSans/full/ttf/NotoSans-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSans-Regular.ttf",
+    "start": 86355004,
+    "end": 87180632,
+    "bytes": 825628,
+    "sha256": "f5f552c8c5edb61fe6efb824baf4d4de47b1a8689ab4925ff43f7bd6a4ebece5",
+    "matches": [
+      {
+        "archive": "NotoSans-v2.015.zip",
+        "path": "NotoSans/full/ttf/NotoSans-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansArabic-Bold.ttf",
+    "start": 87180632,
+    "end": 87441536,
+    "bytes": 260904,
+    "sha256": "457926cb001ac787dc7415c89e6f5b1c4ce3a0f2c91d0cabc1bc19a05638e7de",
+    "matches": [
+      {
+        "archive": "NotoSansArabic-v2.010.zip",
+        "path": "NotoSansArabic/hinted/ttf/NotoSansArabic-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansArabic-Regular.ttf",
+    "start": 87441536,
+    "end": 87692416,
+    "bytes": 250880,
+    "sha256": "d6efa4c9fac8ecefd2de19676acc3a396ba7aee99ba7a2d513950246841b6725",
+    "matches": [
+      {
+        "archive": "NotoSansArabic-v2.010.zip",
+        "path": "NotoSansArabic/hinted/ttf/NotoSansArabic-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansArmenian-Bold.ttf",
+    "start": 87692416,
+    "end": 87761388,
+    "bytes": 68972,
+    "sha256": "1607ef2d90b3c7c7796a9dcee7c8f5e323c7196c5753e4219bcc80b0cb7ec542",
+    "matches": [
+      {
+        "archive": "NotoSansArmenian-v2.008.zip",
+        "path": "NotoSansArmenian/full/ttf/NotoSansArmenian-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansArmenian-Regular.ttf",
+    "start": 87761388,
+    "end": 87830560,
+    "bytes": 69172,
+    "sha256": "ae242d055bb82f7c00ae02f10e8880197725805b0e4586d1b33b384a099f362a",
+    "matches": [
+      {
+        "archive": "NotoSansArmenian-v2.008.zip",
+        "path": "NotoSansArmenian/full/ttf/NotoSansArmenian-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansGeorgian-Bold.ttf",
+    "start": 87830560,
+    "end": 87921020,
+    "bytes": 90460,
+    "sha256": "0c9a27690575bc2753b7a24d0a823bb0d33936ce8828dd8ad4c294b778abf053",
+    "matches": [
+      {
+        "archive": "NotoSansGeorgian-v2.005.zip",
+        "path": "NotoSansGeorgian/full/ttf/NotoSansGeorgian-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansGeorgian-Regular.ttf",
+    "start": 87921020,
+    "end": 88009680,
+    "bytes": 88660,
+    "sha256": "89207521ae620f9988e85f0afc26070af34fffd454c3f0cb0655e494f3f3364d",
+    "matches": [
+      {
+        "archive": "NotoSansGeorgian-v2.005.zip",
+        "path": "NotoSansGeorgian/full/ttf/NotoSansGeorgian-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansHebrew-Bold.ttf",
+    "start": 88009680,
+    "end": 88076288,
+    "bytes": 66608,
+    "sha256": "96f88305d31a8432f0fe6648c853cb9ef77db8e52ada8948ed0c577037d45423",
+    "matches": [
+      {
+        "archive": "NotoSansHebrew-v3.001.zip",
+        "path": "NotoSansHebrew/full/ttf/NotoSansHebrew-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansHebrew-Regular.ttf",
+    "start": 88076288,
+    "end": 88142444,
+    "bytes": 66156,
+    "sha256": "671951828bd5c95db818e5bb12dcea2d0c0dda00311888522be061ee6835125e",
+    "matches": [
+      {
+        "archive": "NotoSansHebrew-v3.001.zip",
+        "path": "NotoSansHebrew/full/ttf/NotoSansHebrew-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansLao-Bold.ttf",
+    "start": 88142444,
+    "end": 88218540,
+    "bytes": 76096,
+    "sha256": "9f7d30ce049ceac2a24e9d3b8799249e734bc2b42be9f240dbed5dc451a1796e",
+    "matches": [
+      {
+        "archive": "NotoSansLao-v2.003.zip",
+        "path": "NotoSansLao/full/ttf/NotoSansLao-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansLao-Regular.ttf",
+    "start": 88218540,
+    "end": 88294020,
+    "bytes": 75480,
+    "sha256": "123d912762592efc26466671be8443958bd117aeac2e4beee0310b5b834e63f9",
+    "matches": [
+      {
+        "archive": "NotoSansLao-v2.003.zip",
+        "path": "NotoSansLao/full/ttf/NotoSansLao-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansLisu-Bold.ttf",
+    "start": 88294020,
+    "end": 88348300,
+    "bytes": 54280,
+    "sha256": "2940c8397a096f2bb295a869a318a5d91fbbf3b70e09995308febe9c483eb9e2",
+    "matches": [
+      {
+        "archive": "NotoSansLisu-v2.102.zip",
+        "path": "NotoSansLisu/full/ttf/NotoSansLisu-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSansLisu-Regular.ttf",
+    "start": 88348300,
+    "end": 88402808,
+    "bytes": 54508,
+    "sha256": "7aa2279848cc8647198185807616555759bd68b8a3edb21ecc467d071aa7a6a4",
+    "matches": [
+      {
+        "archive": "NotoSansLisu-v2.102.zip",
+        "path": "NotoSansLisu/full/ttf/NotoSansLisu-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerif-Bold.ttf",
+    "start": 88402808,
+    "end": 89149952,
+    "bytes": 747144,
+    "sha256": "96656aa5cec8f1d6fd0e804c1fad397e1a1cfa082e6642124e0bda68cd8363ce",
+    "matches": [
+      {
+        "archive": "NotoSerif-v2.015.zip",
+        "path": "NotoSerif/hinted/ttf/NotoSerif-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerif-BoldItalic.ttf",
+    "start": 89149952,
+    "end": 89929188,
+    "bytes": 779236,
+    "sha256": "c710c5b9cf354ae46e7a10472a08019b28220fafeb5887a482a76856f8f6fc0b",
+    "matches": [
+      {
+        "archive": "NotoSerif-v2.015.zip",
+        "path": "NotoSerif/hinted/ttf/NotoSerif-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerif-Italic.ttf",
+    "start": 89929188,
+    "end": 90685984,
+    "bytes": 756796,
+    "sha256": "749e80e313ef711f9373c6cce17c72297ef05490b3dcda7967d1d5d90bf1183f",
+    "matches": [
+      {
+        "archive": "NotoSerif-v2.015.zip",
+        "path": "NotoSerif/hinted/ttf/NotoSerif-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerif-Regular.ttf",
+    "start": 90685984,
+    "end": 91398428,
+    "bytes": 712444,
+    "sha256": "19e72cd8d595fae5bd74a5206f5d938512e1183d4fed7abb1ec1be1d7efa5f88",
+    "matches": [
+      {
+        "archive": "NotoSerif-v2.015.zip",
+        "path": "NotoSerif/hinted/ttf/NotoSerif-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerifArmenian-Bold.ttf",
+    "start": 91398428,
+    "end": 91475776,
+    "bytes": 77348,
+    "sha256": "5b972a930590304f9e853ea6a4dfd956980365d726536f8514025188d463ecce",
+    "matches": [
+      {
+        "archive": "NotoSerifArmenian-v2.008.zip",
+        "path": "NotoSerifArmenian/full/ttf/NotoSerifArmenian-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerifArmenian-Regular.ttf",
+    "start": 91475776,
+    "end": 91552584,
+    "bytes": 76808,
+    "sha256": "240b3884bb5002e049bb1ea945e904777fada7bb86214e01da5c8774881937b2",
+    "matches": [
+      {
+        "archive": "NotoSerifArmenian-v2.008.zip",
+        "path": "NotoSerifArmenian/full/ttf/NotoSerifArmenian-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerifGeorgian-Bold.ttf",
+    "start": 91552584,
+    "end": 91661220,
+    "bytes": 108636,
+    "sha256": "f7fc391a93f8d50a5e19649c2e6706a00c9c8412cd820c860fc2e3c28c2c5084",
+    "matches": [
+      {
+        "archive": "NotoSerifGeorgian-v2.003.zip",
+        "path": "NotoSerifGeorgian/full/ttf/NotoSerifGeorgian-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerifGeorgian-Regular.ttf",
+    "start": 91661220,
+    "end": 91765880,
+    "bytes": 104660,
+    "sha256": "eea3e8415a37dd496dbb6fad16e95b1513d3fc14863c6cc8886456f273eb1cdf",
+    "matches": [
+      {
+        "archive": "NotoSerifGeorgian-v2.003.zip",
+        "path": "NotoSerifGeorgian/full/ttf/NotoSerifGeorgian-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerifHebrew-Bold.ttf",
+    "start": 91765880,
+    "end": 91845184,
+    "bytes": 79304,
+    "sha256": "8b450085462e6692df13688585ffe2bc1537a38fd2cccbdffec19b807b5e7071",
+    "matches": [
+      {
+        "archive": "NotoSerifHebrew-v2.004.zip",
+        "path": "NotoSerifHebrew/full/ttf/NotoSerifHebrew-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerifHebrew-Regular.ttf",
+    "start": 91845184,
+    "end": 91922720,
+    "bytes": 77536,
+    "sha256": "1aa72c35d0510d1ce8a61389db01ed5b765026bee0f26b7f4b52492e90276193",
+    "matches": [
+      {
+        "archive": "NotoSerifHebrew-v2.004.zip",
+        "path": "NotoSerifHebrew/full/ttf/NotoSerifHebrew-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerifLao-Bold.ttf",
+    "start": 91922720,
+    "end": 92016076,
+    "bytes": 93356,
+    "sha256": "bdf8a669685277125be9a0071ede42baf80147180bbd4bbb541301c7266250a4",
+    "matches": [
+      {
+        "archive": "NotoSerifLao-v2.003.zip",
+        "path": "NotoSerifLao/full/ttf/NotoSerifLao-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/NotoSerifLao-Regular.ttf",
+    "start": 92016076,
+    "end": 92105884,
+    "bytes": 89808,
+    "sha256": "ff5ab4f3270c448b99b113a8ac6275bc6e4a4ca922ed2271df9a95132b5c2db6",
+    "matches": [
+      {
+        "archive": "NotoSerifLao-v2.003.zip",
+        "path": "NotoSerifLao/full/ttf/NotoSerifLao-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/ReemKufi-Bold.ttf",
+    "start": 92105884,
+    "end": 92190932,
+    "bytes": 85048,
+    "sha256": "9fcd22f895f9b81906bc5cc7b607ec901de07a4d4fda84df5a8c0ed8071f5d01",
+    "matches": [
+      {
+        "archive": "ReemKufi-1.7.zip",
+        "path": "ReemKufi-1.7/ttf/ReemKufi-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/ReemKufi-Regular.ttf",
+    "start": 92190932,
+    "end": 92276656,
+    "bytes": 85724,
+    "sha256": "75d55c00b2c9e4286741bf034ee5b20da056e7befe201af89fa7ae7f17e6b0e1",
+    "matches": [
+      {
+        "archive": "ReemKufi-1.7.zip",
+        "path": "ReemKufi-1.7/ttf/ReemKufi-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Rubik-Bold.ttf",
+    "start": 92276656,
+    "end": 92417052,
+    "bytes": 140396,
+    "sha256": "b1c36dfcbc5fe5011c552c76725c84d989a71d56440e8bfbfa0cb68b593dbad6",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/Rubik-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Rubik-BoldItalic.ttf",
+    "start": 92417052,
+    "end": 92563180,
+    "bytes": 146128,
+    "sha256": "38638b7aef713b932ad19976f614d5ae14658269c4c9d879b409022675525fbf",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/Rubik-BoldItalic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Rubik-Italic.ttf",
+    "start": 92563180,
+    "end": 92706572,
+    "bytes": 143392,
+    "sha256": "be159c7ef033367c65fb31d4a8461edfbdb23665e37a0bc75d6adccc0b7444dc",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/Rubik-Italic.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Rubik-Regular.ttf",
+    "start": 92706572,
+    "end": 92843196,
+    "bytes": 136624,
+    "sha256": "bd1490f4314d27ca1ac5d8869fdda068852edd623318c9bee13e812b793b301b",
+    "matches": [
+      {
+        "archive": "libre-hebrew-1.0.tar.gz",
+        "path": "libre-hebrew/Rubik-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Scheherazade-Bold.ttf",
+    "start": 92843196,
+    "end": 93390968,
+    "bytes": 547772,
+    "sha256": "62dde529b296df074efbf75b40a986e8ff82e997b98cec9ad7ab6795bb17a622",
+    "matches": [
+      {
+        "archive": "Scheherazade-2.100.zip",
+        "path": "Scheherazade-2.100/Scheherazade-Bold.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/Scheherazade-Regular.ttf",
+    "start": 93390968,
+    "end": 93891364,
+    "bytes": 500396,
+    "sha256": "034c3ed203ccf91e20a75181350759cc5878e0e369bb0e2e83acee15a829184f",
+    "matches": [
+      {
+        "archive": "Scheherazade-2.100.zip",
+        "path": "Scheherazade-2.100/Scheherazade-Regular.ttf"
+      }
+    ]
+  },
+  {
+    "filename": "/instdir/share/fonts/truetype/opens___.ttf",
+    "start": 93892232,
+    "end": 94100224,
+    "bytes": 207992,
+    "sha256": "f543e6e2d7275557a839a164941c0a86e5f2c3f2a0042bfc434c88c6dde9e140",
+    "matches": []
+  }
+]

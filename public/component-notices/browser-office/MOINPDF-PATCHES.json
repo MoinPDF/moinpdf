@@ -1,0 +1,33 @@
+{
+  "id": "moinpdf-conversion-worker-4",
+  "upstream": "@matbee/libreoffice-converter@2.7.2",
+  "license": "MPL-2.0",
+  "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
+  "replacements": [
+    {
+      "description": "PDF export does not use image page/part metadata. Match the upstream Node converter's direct load/save path and query editor parts only for actual image exports.",
+      "before": "let u=c.documentGetParts(d),g=c.documentGetDocumentType(d);",
+      "after": "let u=i?c.documentGetParts(d):1,g=i?c.documentGetDocumentType(d):0;"
+    },
+    {
+      "description": "LibreOfficeKit initializes its own headless application. Prevent Emscripten from also starting the full soffice main function on a pthread: it races with Kit initialization and document export.",
+      "before": "mainScriptUrlOrBlob:e,locateFile:",
+      "after": "noInitialRun:true,mainScriptUrlOrBlob:e,locateFile:"
+    },
+    {
+      "description": "Honor the supplied verbose flag for LibreOffice stdout and stderr; no synthetic document contents are written to the browser console in normal use.",
+      "before": "print:console.log,printErr:console.error",
+      "after": "print:o?console.log:()=>{},printErr:o?console.error:()=>{}"
+    },
+    {
+      "description": "Keep warnings enabled without forcing all LibreOffice diagnostic categories.",
+      "before": "a.ENV.SAL_LOG=\"+ALL\"",
+      "after": "a.ENV.SAL_LOG=\"-INFO\""
+    },
+    {
+      "description": "Keep the diagnostic label consistent with the changed setting.",
+      "before": "[Worker] Set SAL_LOG to +ALL",
+      "after": "[MoinPDF Office] Disabled verbose LibreOffice diagnostics"
+    }
+  ]
+}
