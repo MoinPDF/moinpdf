@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 12. Oktober 2026, Version 0.12.0.
+Stand: 12. Oktober 2026, Version 0.12.1.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
