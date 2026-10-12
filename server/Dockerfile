@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.14-slim-bookworm AS runtime
 ARG MOINPDF_UID=10001
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 MOINPDF_TOOLS=/opt/moinpdf-tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
