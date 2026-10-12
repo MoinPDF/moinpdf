@@ -295,14 +295,6 @@ body {
   color: var(--ui-copy);
   white-space: normal;
 }
-.moinpdf-shell .upload-alternatives button {
-  color: var(--ui-copy);
-  min-height: 44px;
-  font-size: 12px;
-}
-.moinpdf-shell .upload-alternatives button:hover {
-  color: var(--ui-heading);
-}
 .dark .upload-document-icon > path:nth-of-type(2) {
   fill: #344740;
   stroke: #74c5b5;

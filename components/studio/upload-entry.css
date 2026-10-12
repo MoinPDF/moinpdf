@@ -27,12 +27,132 @@
 
 .upload-entry-branded .upload-alternatives {
   position: static;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px 8px;
   width: min(100%, 600px);
-  line-height: 1.6;
+  margin-block: 8px;
   text-align: center;
+}
+
+.upload-entry-branded .upload-alternatives .upload-shortcut {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--ui-control-line, #bce0e1);
+  border-radius: 12px;
+  background: var(--ui-control, #ffffffcc);
+  color: var(--ui-heading, #075466);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-decoration: none;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    opacity 140ms ease;
+}
+
+/* Keep a 44px touch target around each slim pill without overlapping its neighbours. */
+.upload-entry-branded .upload-shortcut::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -1px;
+  left: -1px;
+  height: 100%;
+  min-height: 44px;
+  border-radius: inherit;
+  transform: translateY(-50%);
+}
+
+.upload-entry-branded .upload-shortcut > svg {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  color: var(--ui-teal, #059a98);
+}
+
+.upload-entry-branded .upload-shortcut > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.upload-entry-branded .upload-alternatives .upload-shortcut--all {
+  border-color: #a8dbb5;
+  background: linear-gradient(110deg, #edf9f2, #f5fae9);
+}
+
+.upload-entry-branded .upload-shortcut--all > svg {
+  color: #148762;
+}
+
+.dark .upload-entry-branded .upload-alternatives .upload-shortcut--all {
+  border-color: #548568;
+  background: linear-gradient(110deg, #273c34, #303a2c);
+  color: #d3efdf;
+}
+
+.dark .upload-entry-branded .upload-shortcut--all > svg {
+  color: #8ed4b0;
+}
+
+@media (hover: hover) {
+  .upload-entry-branded .upload-alternatives .upload-shortcut:hover:not(:disabled) {
+    border-color: var(--ui-teal, #059a98);
+    text-decoration: none;
+  }
+}
+
+.upload-entry-branded .upload-alternatives .upload-shortcut:focus-visible {
+  outline: 2px solid var(--ui-teal, #059a98);
+  outline-offset: 3px;
+}
+
+.upload-entry-branded .upload-alternatives .upload-shortcut:active:not(:disabled) {
+  opacity: 0.8;
+}
+
+.upload-entry-branded .upload-alternatives .upload-shortcut:disabled {
+  cursor: progress;
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-entry-branded .upload-alternatives .upload-shortcut {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .upload-entry-branded .upload-alternatives .upload-shortcut,
+  .dark .upload-entry-branded .upload-alternatives .upload-shortcut {
+    border-color: ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+  .upload-entry-branded .upload-shortcut > svg,
+  .dark .upload-entry-branded .upload-shortcut > svg {
+    color: ButtonText;
+  }
+  .upload-entry-branded .upload-alternatives .upload-shortcut--all,
+  .dark .upload-entry-branded .upload-alternatives .upload-shortcut--all {
+    border-color: Highlight;
+  }
+}
+
+@media (max-width: 700px) {
+  .upload-entry-branded .upload-alternatives {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(100%, 296px);
+  }
 }
 
 @media (max-width: 600px) {
@@ -46,15 +166,6 @@
   }
   .upload-entry-logo {
     width: min(320px, 100%);
-  }
-  .upload-entry-branded .upload-alternatives {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 12px;
-    width: min(100%, 340px);
-  }
-  .upload-entry-branded .upload-alternatives > span {
-    display: none;
   }
 }
 

@@ -4,7 +4,17 @@ import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useId, type CSSProperties } from 'react';
-import { File, FileText, Plus, Check, LoaderCircle } from 'lucide-react';
+import {
+  File,
+  FileText,
+  Plus,
+  Check,
+  LoaderCircle,
+  ScanLine,
+  FileOutput,
+  Mail,
+  LayoutGrid,
+} from 'lucide-react';
 import { APP_VERSION } from '@/lib/version';
 import './upload-entry.css';
 
@@ -163,20 +173,26 @@ export function UploadEntry({
         </button>
       </div>
       <div className="upload-alternatives">
-        <button disabled={loading} onClick={onCamera}>
-          {t('Kamera-Scanner')}
+        <button type="button" className="upload-shortcut" disabled={loading} onClick={onCamera}>
+          <ScanLine size={14} strokeWidth={1.7} aria-hidden="true" focusable="false" />
+          <span>{t('Kamera-Scanner')}</span>
         </button>
-        <span>·</span>
-        <button disabled={loading} onClick={onOffice}>
-          {t('Office zu PDF')}
+        <button type="button" className="upload-shortcut" disabled={loading} onClick={onOffice}>
+          <FileOutput size={14} strokeWidth={1.7} aria-hidden="true" focusable="false" />
+          <span>{t('Office zu PDF')}</span>
         </button>
-        <span>·</span>
-        <button disabled={loading} onClick={onEmail}>
-          {t('E-Mails zu PDF')}
+        <button type="button" className="upload-shortcut" disabled={loading} onClick={onEmail}>
+          <Mail size={14} strokeWidth={1.7} aria-hidden="true" focusable="false" />
+          <span>{t('E-Mails zu PDF')}</span>
         </button>
-        <span>·</span>
-        <button disabled={loading} onClick={onTools}>
-          {t('Alle Werkzeuge')}
+        <button
+          type="button"
+          className="upload-shortcut upload-shortcut--all"
+          disabled={loading}
+          onClick={onTools}
+        >
+          <LayoutGrid size={14} strokeWidth={1.7} aria-hidden="true" focusable="false" />
+          <span>{t('Alle Werkzeuge')}</span>
         </button>
       </div>
       <span className="sr-only" role="status" aria-live="polite">
