@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Choice, Text, NumberField, type PanelProps } from './advanced-shared';
@@ -22,6 +25,7 @@ export function WorkflowGraphPanel({
   PanelProps,
   'sources' | 'busy' | 'run'
 >) {
+  useLanguage();
   const [selected, setSelected] = useState(value.entry),
     [notice, setNotice] = useState(''),
     [password, setPassword] = useState(''),
@@ -70,18 +74,18 @@ export function WorkflowGraphPanel({
     <div className="advanced-grid">
       <section className="advanced-card">
         <Button variant="outline" disabled={busy} onClick={onBack}>
-          Zur Schrittliste
+          {ui('Zur Schrittliste')}
         </Button>
-        <h2>Freies Ablaufdiagramm</h2>
+        <h2>{ui('Freies Ablaufdiagramm')}</h2>
         <Text
-          label="Name des Arbeitsablaufs"
+          label={ui('Name des Arbeitsablaufs')}
           value={value.name}
           onChange={(name) => onChange({ ...value, name })}
         />
         <p className="fine-note">
-          Knoten ziehen oder ihre Position eingeben. Verbindungen rechts festlegen. Jede Bedingung
-          besitzt einen Ja- und Nein-Zweig; weitere Bedingungen können in beiden Zweigen folgen. Vor
-          der Ausführung werden Schleifen, fehlende Ziele und unerreichbare Knoten geprüft.
+          {ui(
+            'Knoten ziehen oder ihre Position eingeben. Verbindungen rechts festlegen. Jede Bedingung besitzt einen Ja- und Nein-Zweig; weitere Bedingungen können in beiden Zweigen folgen. Vor der Ausführung werden Schleifen, fehlende Ziele und unerreichbare Knoten geprüft.',
+          )}
         </p>
         <div
           style={{
@@ -93,7 +97,7 @@ export function WorkflowGraphPanel({
         >
           <svg
             role="img"
-            aria-label="Arbeitsablauf als Knotendiagramm"
+            aria-label={ui('Arbeitsablauf als Knotendiagramm')}
             width={width}
             height={height}
             viewBox={`0 0 ${width} ${height}`}
@@ -168,7 +172,7 @@ export function WorkflowGraphPanel({
                           markerEnd="url(#workflow-arrow)"
                         />
                         <text x={x + 5} y={y + 22} fill="currentColor" fontSize="13">
-                          {label}
+                          {ui(label)}
                         </text>
                       </g>
                     );
@@ -180,7 +184,7 @@ export function WorkflowGraphPanel({
                 transform={`translate(${n.x},${n.y + 10})`}
                 role="button"
                 tabIndex={0}
-                aria-label={`${n.id}: ${n.type === 'action' ? stepLabels[n.action.kind] : n.type === 'condition' ? 'Bedingung' : 'Ende'}`}
+                aria-label={`${n.id}: ${n.type === 'action' ? stepLabels[n.action.kind] : n.type === 'condition' ? ui('Bedingung') : ui('Ende')}`}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
@@ -212,14 +216,14 @@ export function WorkflowGraphPanel({
                 />
                 <text x="12" y="22" fill="#334155" fontSize="12">
                   {n.id}
-                  {value.entry === n.id ? ' · Start' : ''}
+                  {value.entry === n.id ? ui(' · Start') : ''}
                 </text>
                 <text x="12" y="44" fill="#0f172a" fontSize="14">
                   {n.type === 'action'
                     ? stepLabels[n.action.kind]
                     : n.type === 'condition'
                       ? `${n.condition.field} ${n.condition.operator}`
-                      : 'Ende'}
+                      : ui('Ende')}
                 </text>
               </g>
             ))}
@@ -249,7 +253,7 @@ export function WorkflowGraphPanel({
               setSelected(id);
             }}
           >
-            Knoten hinzufügen
+            {ui('Knoten hinzufügen')}
           </Button>
           <Button
             variant="outline"
@@ -261,26 +265,26 @@ export function WorkflowGraphPanel({
               })
             }
           >
-            Verbindungen prüfen
+            {ui('Verbindungen prüfen')}
           </Button>
         </div>
       </section>
       <section className="advanced-card">
-        <h3>Knoten bearbeiten</h3>
+        <h3>{ui('Knoten bearbeiten')}</h3>
         <Choice
-          label="Ausgewählter Knoten"
+          label={ui('Ausgewählter Knoten')}
           value={node.id}
           onChange={setSelected}
           items={value.nodes.map((n) => [n.id, n.id])}
         />
         <Choice
-          label="Startknoten"
+          label={ui('Startknoten')}
           value={value.entry}
           onChange={(entry) => onChange({ ...value, entry })}
           items={value.nodes.map((n) => [n.id, n.id])}
         />
         <Choice
-          label="Knotentyp"
+          label={ui('Knotentyp')}
           value={node.type}
           onChange={(type) => {
             const base = { id: node.id, x: node.x, y: node.y },
@@ -312,14 +316,14 @@ export function WorkflowGraphPanel({
         />
         <div className="pro-rule">
           <NumberField
-            label="Horizontale Position"
+            label={ui('Horizontale Position')}
             value={node.x}
             min={0}
             max={4000}
             onChange={(x) => setNode({ ...node, x })}
           />
           <NumberField
-            label="Vertikale Position"
+            label={ui('Vertikale Position')}
             value={node.y}
             min={0}
             max={10000}
@@ -329,21 +333,21 @@ export function WorkflowGraphPanel({
         {node.type === 'action' && (
           <>
             <Choice
-              label="Aktion"
+              label={ui('Aktion')}
               value={node.action.kind}
               onChange={(kind) => setNode({ ...node, action: { kind: kind as StepKind } })}
               items={Object.entries(stepLabels)}
             />
             {['stamp', 'watermark'].includes(node.action.kind) && (
               <Text
-                label="Text der Aktion"
+                label={ui('Text der Aktion')}
                 value={node.action.text || ''}
                 onChange={(text) => setNode({ ...node, action: { ...node.action, text } })}
               />
             )}
             {node.action.kind === 'numbers' && (
               <NumberField
-                label="Startnummer"
+                label={ui('Startnummer')}
                 value={node.action.number || 1}
                 min={1}
                 max={999999}
@@ -351,7 +355,7 @@ export function WorkflowGraphPanel({
               />
             )}
             <Choice
-              label="Danach"
+              label={ui('Danach')}
               value={node.next}
               onChange={(next) => setNode({ ...node, next })}
               items={available}
@@ -361,7 +365,7 @@ export function WorkflowGraphPanel({
         {node.type === 'condition' && (
           <>
             <Choice
-              label="Bedingung prüft"
+              label={ui('Bedingung prüft')}
               value={node.condition.field}
               onChange={(field) =>
                 setNode({
@@ -380,7 +384,7 @@ export function WorkflowGraphPanel({
               ]}
             />
             <Choice
-              label="Vergleich"
+              label={ui('Vergleich')}
               value={node.condition.operator}
               onChange={(operator) =>
                 setNode({
@@ -404,20 +408,20 @@ export function WorkflowGraphPanel({
               }
             />
             <Text
-              label="Vergleichswert"
+              label={ui('Vergleichswert')}
               value={node.condition.value}
               onChange={(text) =>
                 setNode({ ...node, condition: { ...node.condition, value: text } })
               }
             />
             <Choice
-              label="Bei Ja"
+              label={ui('Bei Ja')}
               value={node.yes}
               onChange={(yes) => setNode({ ...node, yes })}
               items={available}
             />
             <Choice
-              label="Bei Nein"
+              label={ui('Bei Nein')}
               value={node.no}
               onChange={(no) => setNode({ ...node, no })}
               items={available}
@@ -432,11 +436,11 @@ export function WorkflowGraphPanel({
             setSelected(value.nodes.find((n) => n.id !== node.id)!.id);
           }}
         >
-          Knoten entfernen
+          {ui('Knoten entfernen')}
         </Button>
         {value.nodes.some((n) => n.type === 'action' && n.action.kind === 'protect') && (
           <Text
-            label="Ergebnispasswort (wird nicht im Ablauf gespeichert)"
+            label={ui('Ergebnispasswort (wird nicht im Ablauf gespeichert)')}
             type="password"
             value={password}
             onChange={setPassword}
@@ -447,7 +451,7 @@ export function WorkflowGraphPanel({
             disabled={busy || !sources.length}
             onClick={() => run((ctx) => runWorkflowGraph(sources, validate(), password, ctx))}
           >
-            Ablauf auf alle Dateien anwenden
+            {ui('Ablauf auf alle Dateien anwenden')}
           </Button>
           <Button
             variant="outline"
@@ -461,7 +465,7 @@ export function WorkflowGraphPanel({
               })
             }
           >
-            Ablauf speichern
+            {ui('Ablauf speichern')}
           </Button>
           <Button
             variant="outline"
@@ -475,17 +479,17 @@ export function WorkflowGraphPanel({
               )
             }
           >
-            JSON exportieren
+            {ui('JSON exportieren')}
           </Button>
           <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}>
-            JSON importieren
+            {ui('JSON importieren')}
           </Button>
           <input
             className="sr-only"
             ref={input}
             type="file"
             accept=".json,application/json"
-            aria-label="Arbeitsablauf importieren"
+            aria-label={ui('Arbeitsablauf importieren')}
             onChange={async (event) => {
               const file = event.target.files?.[0];
               event.target.value = '';
@@ -504,7 +508,7 @@ export function WorkflowGraphPanel({
         </div>
         {saved.length > 0 && (
           <Choice
-            label="Gespeichertes Diagramm laden"
+            label={ui('Gespeichertes Diagramm laden')}
             value=""
             onChange={(name) => {
               const graph = saved.find((g) => g.name === name);
@@ -516,7 +520,7 @@ export function WorkflowGraphPanel({
             items={[['', 'Auswählen'], ...saved.map((g) => [g.name, g.name] as [string, string])]}
           />
         )}
-        {notice && <p role="status">{notice}</p>}
+        {notice && <p role="status">{ui(notice)}</p>}
       </section>
     </div>
   );

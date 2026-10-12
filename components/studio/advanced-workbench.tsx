@@ -1,4 +1,6 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -173,30 +175,31 @@ export function AdvancedWorkbench({
           </Button>
           <span className="device-tag">
             <ShieldCheck size={14} />
-            LOKAL AUF DEINEM GERÄT
+            {ui('LOKAL AUF DEINEM GERÄT')}
           </span>
         </div>
       </header>
       <div className="workbench-title">
         <div>
-          <span className="studio-kicker">MEHR MÖGLICHKEITEN FÜR DEINE DOKUMENTE</span>
+          <span className="studio-kicker">{ui('MEHR MÖGLICHKEITEN FÜR DEINE DOKUMENTE')}</span>
           <h1>
             <info.icon />
-            {info.title}
+            {ui(info.title)}
           </h1>
-          <p>{info.description}</p>
+          <p>{ui(info.description)}</p>
         </div>
       </div>
       {pending && (
         <p className="workbench-notice">
-          Dieses Werkzeug verarbeitet die vollständigen geöffneten Dateien. Änderungen aus anderen
-          Werkzeugen zuerst anwenden und als Arbeitsdokument übernehmen.
+          {ui(
+            'Dieses Werkzeug verarbeitet die vollständigen geöffneten Dateien. Änderungen aus anderen Werkzeugen zuerst anwenden und als Arbeitsdokument übernehmen.',
+          )}
         </p>
       )}
       {!multi && tool !== 'camera-scan' && source && (
         <fieldset disabled={busy} className="advanced-fields advanced-source">
           <Choice
-            label={tool === 'visual-compare' ? 'Erste Datei' : t('Dokument')}
+            label={tool === 'visual-compare' ? ui('Erste Datei') : t('Dokument')}
             value={source.id}
             onChange={setSourceId}
             items={sources.map((s) => [s.id, s.name])}
@@ -214,7 +217,7 @@ export function AdvancedWorkbench({
         ) : tool === 'camera-scan' ? (
           <CameraPanel busy={busy} run={run} />
         ) : !source ? (
-          <div className="advanced-empty">Bitte zuerst eine PDF öffnen.</div>
+          <div className="advanced-empty">{ui('Bitte zuerst eine PDF öffnen.')}</div>
         ) : (
           <>
             {tool === 'local-assistant' && <LocalAssistantPanel {...props} />}
@@ -268,7 +271,7 @@ export function AdvancedWorkbench({
       {busy && (
         <div className="advanced-progress" role="status">
           <LoaderCircle className="spin" size={18} />
-          <span>{progress.label}</span>
+          <span>{ui(progress.label)}</span>
           <progress max={100} value={progress.percent} />
           <Button variant="ghost" onClick={() => controller.current?.abort()}>
             {t('Abbrechen')}
@@ -277,7 +280,7 @@ export function AdvancedWorkbench({
       )}
       {error && (
         <p className="error-box" role="alert">
-          {error}
+          {ui(error)}
         </p>
       )}
       {result && (
@@ -290,7 +293,7 @@ export function AdvancedWorkbench({
             <p>
               {result.filename} · {formatSize(result.blob.size)}
             </p>
-            {result.note && <p>{result.note}</p>}
+            {result.note && <p>{ui(result.note)}</p>}
             <div className="advanced-actions">
               <Button asChild>
                 <a href={url} download={result.filename}>

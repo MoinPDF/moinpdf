@@ -1,4 +1,6 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+
 import { useLanguage } from '@/components/studio/appearance';
 import { AppearanceProvider, AppearanceControls, useTools } from '@/components/studio/appearance';
 
@@ -191,6 +193,7 @@ const defaults: StudioOptions = {
 };
 type Snapshot = { pages: PageItem[]; edits: Edits };
 export default function Home() {
+  useLanguage();
   return (
     <AppearanceProvider>
       <WorkspaceShell />
@@ -447,12 +450,14 @@ function Studio() {
       if (conversionFile) {
         if (files.length !== 1) {
           toast.error(
-            'Bitte Office-Dateien, E-Mails, E-Books und Webseiten einzeln umwandeln. PDFs und Bilder kannst du weiterhin gemeinsam öffnen.',
+            ui(
+              'Bitte Office-Dateien, E-Mails, E-Books und Webseiten einzeln umwandeln. PDFs und Bilder kannst du weiterhin gemeinsam öffnen.',
+            ),
           );
           return;
         }
         if (conversionFile.size > MAX_BYTES) {
-          toast.error('Bitte eine Datei mit höchstens 80 MB auswählen.');
+          toast.error(ui('Bitte eine Datei mit höchstens 80 MB auswählen.'));
           return;
         }
         const nextTool = conversionToolForFile(conversionFile.name)!;
@@ -495,7 +500,7 @@ function Studio() {
           } catch (err) {
             if ((err as Error).name !== 'AbortError')
               toast.error(file.name, {
-                description: (err as Error).message,
+                description: ui((err as Error).message),
                 duration: 8000,
                 ...(/\.pdf$/i.test(file.name)
                   ? {
@@ -599,7 +604,9 @@ function Studio() {
     const chosen = pages.filter((p) => (id ? p.id === id : p.selected));
     if (countEdits(edits, chosen)) {
       toast.info(
-        'Bitte die visuellen Änderungen zuerst anwenden. Danach kannst du das Ergebnis weiterbearbeiten und drehen.',
+        ui(
+          'Bitte die visuellen Änderungen zuerst anwenden. Danach kannst du das Ergebnis weiterbearbeiten und drehen.',
+        ),
       );
       return;
     }
@@ -612,7 +619,7 @@ function Studio() {
   }
   function duplicate(id: string) {
     if (pages.length >= MAX_PAGES) {
-      toast.error('Maximal 200 Seiten.');
+      toast.error(ui('Maximal 200 Seiten.'));
       return;
     }
     const index = pages.findIndex((p) => p.id === id),
@@ -634,7 +641,7 @@ function Studio() {
       const selection = selectRange(range, pages.length);
       commit({ pages: pages.map((p, i) => ({ ...p, selected: selection.has(i) })), edits });
     } catch (err) {
-      toast.error((err as Error).message);
+      toast.error(ui((err as Error).message));
     }
   }
   function mark(mark: Mark) {
@@ -687,7 +694,7 @@ function Studio() {
       y: 0.18,
       w: 0.64,
       h: 0.15,
-      text: 'Dein Text',
+      text: ui('Dein Text'),
       fontScale: 16 / editorDims.width,
       fontFamily: 'sans',
       color: '#222222',
@@ -751,9 +758,11 @@ function Studio() {
       mark({ id: uid(), kind: 'image', x: 0.12, y: 0.18, w, h, image, opacity: 1 });
       setEditorAction('select');
       setView('document');
-      toast.success('Bild eingefügt');
+      toast.success(ui('Bild eingefügt'));
     } catch (err) {
-      toast.error('Bild konnte nicht eingefügt werden', { description: (err as Error).message });
+      toast.error(ui('Bild konnte nicht eingefügt werden'), {
+        description: ui((err as Error).message),
+      });
     } finally {
       bitmap?.close();
       setImageBusy(false);
@@ -805,7 +814,7 @@ function Studio() {
     try {
       await addFiles([await makeDemoFile()]);
     } catch {
-      toast.error('Das Beispieldokument konnte nicht geöffnet werden.');
+      toast.error(ui('Das Beispieldokument konnte nicht geöffnet werden.'));
     }
   }
   async function blank() {
@@ -846,13 +855,13 @@ function Studio() {
       setResult(output);
       setResultText(output.text || '');
       setView('result');
-      toast.success('Fertig. Dein Ergebnis ist bereit.');
+      toast.success(ui('Fertig. Dein Ergebnis ist bereit.'));
     } catch (err) {
-      if (ctrl.signal.aborted) toast.info('Abgebrochen. Deine Bearbeitung bleibt geöffnet.');
+      if (ctrl.signal.aborted) toast.info(ui('Abgebrochen. Deine Bearbeitung bleibt geöffnet.'));
       else {
         setError((err as Error).message);
-        toast.error('Verarbeitung fehlgeschlagen', {
-          description: (err as Error).message,
+        toast.error(ui('Verarbeitung fehlgeschlagen'), {
+          description: ui((err as Error).message),
           duration: 8000,
         });
       }
@@ -870,7 +879,7 @@ function Studio() {
       })),
       edits,
     });
-    toast.success(exclude ? 'Seitenauswahl angepasst' : 'Fundstellen ausgewählt');
+    toast.success(exclude ? ui('Seitenauswahl angepasst') : ui('Fundstellen ausgewählt'));
   }
   async function collectFound(ids: string[]) {
     const found = new Set(ids),
@@ -895,9 +904,9 @@ function Studio() {
       setResult({ ...output, filename: 'Fundstellen.pdf' });
       setResultText('');
       setView('result');
-      toast.success(`${items.length} Fundstellen in einer PDF gesammelt`);
+      toast.success(ui(`${items.length} Fundstellen in einer PDF gesammelt`));
     } catch (err) {
-      if (ctrl.signal.aborted) toast.info('Abgebrochen. Deine Dokumente bleiben geöffnet.');
+      if (ctrl.signal.aborted) toast.info(ui('Abgebrochen. Deine Dokumente bleiben geöffnet.'));
       else setError((err as Error).message);
     } finally {
       setBusy(false);
@@ -923,7 +932,7 @@ function Studio() {
       setToolId('organize');
       setView('pages');
       setRange('');
-      toast.success('Ergebnis als neues Arbeitsdokument geöffnet');
+      toast.success(ui('Ergebnis als neues Arbeitsdokument geöffnet'));
     } finally {
       setLoading(false);
     }
@@ -948,9 +957,9 @@ function Studio() {
       setToolId('organize');
       setView('pages');
       setRange('');
-      toast.success('Ergebnis als neues Arbeitsdokument geöffnet');
+      toast.success(ui('Ergebnis als neues Arbeitsdokument geöffnet'));
     } catch (err) {
-      toast.error((err as Error).message);
+      toast.error(ui((err as Error).message));
     } finally {
       setLoading(false);
     }
@@ -960,7 +969,7 @@ function Studio() {
     try {
       await downloadWord(resultText, `${filenameStem(result!.filename)}.docx`);
     } catch {
-      toast.error('Word-Export fehlgeschlagen.');
+      toast.error(ui('Word-Export fehlgeschlagen.'));
     } finally {
       setWordBusy(false);
     }
@@ -971,7 +980,7 @@ function Studio() {
       { x: manualRect.x + manualRect.w, y: manualRect.y + manualRect.h },
     );
     if (r.w < 0.01 || r.h < 0.01) {
-      toast.error('Bitte einen größeren Bereich wählen.');
+      toast.error(ui('Bitte einen größeren Bereich wählen.'));
       return;
     }
     if (editMode === 'crop') crop(r);
@@ -1081,19 +1090,19 @@ function Studio() {
     items: [string, string][],
   ) => (
     <label className="field">
-      <span>{label}</span>
+      <span>{ui(label)}</span>
       <Select
         value={options[key]}
         onValueChange={(v) => setOptions({ ...options, [key]: v })}
         disabled={locked}
       >
-        <SelectTrigger aria-label={label}>
+        <SelectTrigger aria-label={ui(label)}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {items.map(([value, text]) => (
             <SelectItem key={value} value={value}>
-              {text}
+              {ui(text)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -1108,7 +1117,7 @@ function Studio() {
         accept={documentAccept}
         multiple
         className="sr-only"
-        aria-label="PDFs, Office-Dateien, E-Mails, E-Books oder Bilder auswählen"
+        aria-label={ui('PDFs, Office-Dateien, E-Mails, E-Books oder Bilder auswählen')}
         disabled={locked}
         onChange={(e) => {
           void addFiles(
@@ -1285,7 +1294,7 @@ function Studio() {
         type="file"
         accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
         className="sr-only"
-        aria-label="Bild zum Einfügen auswählen"
+        aria-label={ui('Bild zum Einfügen auswählen')}
         disabled={locked}
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -1332,7 +1341,7 @@ function Studio() {
                       >
                         <t.icon size={18} />
                         <span>{t.title}</span>
-                        {'fresh' in t && <span className="new-tick" aria-label="Neu" />}
+                        {'fresh' in t && <span className="new-tick" aria-label={ui('Neu')} />}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
@@ -1352,14 +1361,16 @@ function Studio() {
           <button onClick={() => setHelp('help')}>
             <CircleHelp size={16} />
             <span>{t('Hilfe & Tastenkürzel')}</span>
-            <small>{tools.length} Tools</small>
+            <small>
+              {tools.length} {ui(' Tools')}
+            </small>
           </button>
         </SidebarFooter>
       </Sidebar>
       <main className="studio-main">
         <header className="studio-topbar">
           <div className="workspace-brand">
-            <SidebarTrigger aria-label="Werkzeugleiste einblenden" />
+            <SidebarTrigger aria-label={ui('Werkzeugleiste einblenden')} />
             <button
               className="back-to-tools"
               onClick={() => {
@@ -1373,7 +1384,7 @@ function Studio() {
             <span className="header-slash">/</span>
             <strong>
               {sources.length
-                ? `${sources.length} ${sources.length === 1 ? t('Dokument') : 'Dokumente'}`
+                ? `${sources.length} ${sources.length === 1 ? t('Dokument') : ui('Dokumente')}`
                 : t('Neues Dokument')}
             </strong>
           </div>
@@ -1397,7 +1408,7 @@ function Studio() {
             <div className="studio-kicker">{t('DEIN ARBEITSBEREICH')}</div>
             <h1>
               <tool.icon size={29} strokeWidth={1.5} />
-              {tool.title}
+              {ui(tool.title)}
             </h1>
           </div>
           <div className="history-tools">
@@ -1405,7 +1416,7 @@ function Studio() {
               variant="ghost"
               size="icon"
               aria-label={t('Rückgängig')}
-              title="Rückgängig · Strg+Z"
+              title={ui('Rückgängig · Strg+Z')}
               disabled={!history.length || locked}
               onClick={undo}
             >
@@ -1415,7 +1426,7 @@ function Studio() {
               variant="ghost"
               size="icon"
               aria-label={t('Wiederholen')}
-              title="Wiederholen · Strg+Umschalt+Z"
+              title={ui('Wiederholen · Strg+Umschalt+Z')}
               disabled={!future.length || locked}
               onClick={redo}
             >
@@ -1457,7 +1468,7 @@ function Studio() {
                 <TabsList variant="line">
                   <TabsTrigger value="check">
                     <FileSearch size={15} />
-                    <span>Check</span>
+                    <span>{ui('Check')}</span>
                   </TabsTrigger>
                   <TabsTrigger value="pages">
                     <LayoutGrid size={15} />
@@ -1474,7 +1485,7 @@ function Studio() {
                   </TabsTrigger>
                 </TabsList>
                 <span className="stage-format">
-                  {pages.length ? `${selected.length} AUSGEWÄHLT` : 'PDF · JPG · PNG'}
+                  {pages.length ? ui(`${selected.length} AUSGEWÄHLT`) : ui('PDF · JPG · PNG')}
                 </span>
               </div>
               {sources.length > 0 && (
@@ -1486,7 +1497,7 @@ function Studio() {
                       <button
                         disabled={locked}
                         onClick={() => removeFile(s.id)}
-                        aria-label={`${s.name} schließen`}
+                        aria-label={ui(`${s.name} schließen`)}
                       >
                         <X size={13} />
                       </button>
@@ -1535,7 +1546,7 @@ function Studio() {
                   <div className="empty-stage-bottom">
                     <span>
                       <MousePointer2 size={14} />
-                      DRAG. DROP. DONE.
+                      {ui('DRAG. DROP. DONE.')}
                     </span>
                     <span>{t('80 MB / 200 Seiten')}</span>
                   </div>
@@ -1583,7 +1594,7 @@ function Studio() {
                       </label>
                       <div className="selection-range">
                         <Input
-                          aria-label="Seitenbereich"
+                          aria-label={ui('Seitenbereich')}
                           value={range}
                           onChange={(e) => setRange(e.target.value.replace(/[–—]/g, '-'))}
                           onKeyDown={(e) => {
@@ -1595,7 +1606,7 @@ function Studio() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label="Seitenbereich anwenden"
+                          aria-label={ui('Seitenbereich anwenden')}
                           disabled={locked}
                           onClick={applyRange}
                         >
@@ -1604,7 +1615,7 @@ function Studio() {
                       </div>
                       <div className="page-batch-tools">
                         <Button
-                          aria-label="Ausgewählte Seiten drehen"
+                          aria-label={ui('Ausgewählte Seiten drehen')}
                           variant="ghost"
                           size="sm"
                           disabled={!selected.length || locked}
@@ -1614,7 +1625,7 @@ function Studio() {
                           <span>{t('Drehen')}</span>
                         </Button>
                         <Button
-                          aria-label="Seitenreihenfolge umkehren"
+                          aria-label={ui('Seitenreihenfolge umkehren')}
                           variant="ghost"
                           size="sm"
                           disabled={locked || pages.length < 2}
@@ -1624,7 +1635,7 @@ function Studio() {
                           <span>{t('Umkehren')}</span>
                         </Button>
                         <Button
-                          aria-label="Leerseite einfügen"
+                          aria-label={ui('Leerseite einfügen')}
                           variant="ghost"
                           size="sm"
                           disabled={locked}
@@ -1666,7 +1677,7 @@ function Studio() {
                         >
                           <div className="tile-top">
                             <Checkbox
-                              aria-label={`Seite ${index + 1} auswählen`}
+                              aria-label={ui(`Seite ${index + 1} auswählen`)}
                               checked={page.selected}
                               disabled={locked}
                               onCheckedChange={(v) =>
@@ -1683,7 +1694,7 @@ function Studio() {
                           </div>
                           <button
                             className="thumbnail-button"
-                            aria-label={`Seite ${index + 1} in Einzelansicht öffnen`}
+                            aria-label={ui(`Seite ${index + 1} in Einzelansicht öffnen`)}
                             onClick={() => {
                               setActiveId(page.id);
                               setView('document');
@@ -1709,35 +1720,35 @@ function Studio() {
                           </div>
                           <div className="tile-actions">
                             <button
-                              aria-label={`Seite ${index + 1} nach vorne`}
+                              aria-label={ui(`Seite ${index + 1} nach vorne`)}
                               disabled={locked || index === 0}
                               onClick={() => movePage(page.id, index - 1)}
                             >
                               <ChevronLeft size={16} />
                             </button>
                             <button
-                              aria-label={`Seite ${index + 1} drehen`}
+                              aria-label={ui(`Seite ${index + 1} drehen`)}
                               disabled={locked}
                               onClick={() => rotate(page.id)}
                             >
                               <RotateCw size={15} />
                             </button>
                             <button
-                              aria-label={`Seite ${index + 1} duplizieren`}
+                              aria-label={ui(`Seite ${index + 1} duplizieren`)}
                               disabled={locked}
                               onClick={() => duplicate(page.id)}
                             >
                               <Copy size={15} />
                             </button>
                             <button
-                              aria-label={`Seite ${index + 1} entfernen`}
+                              aria-label={ui(`Seite ${index + 1} entfernen`)}
                               disabled={locked}
                               onClick={() => deletePage(page.id)}
                             >
                               <Trash2 size={15} />
                             </button>
                             <button
-                              aria-label={`Seite ${index + 1} nach hinten`}
+                              aria-label={ui(`Seite ${index + 1} nach hinten`)}
                               disabled={locked || index === pages.length - 1}
                               onClick={() => movePage(page.id, index + 1)}
                             >
@@ -1770,7 +1781,7 @@ function Studio() {
                             <Button
                               size="icon"
                               variant="ghost"
-                              aria-label="Vorherige Seite"
+                              aria-label={ui('Vorherige Seite')}
                               disabled={pages.indexOf(activePage) === 0 || locked}
                               onClick={() => setActiveId(pages[pages.indexOf(activePage) - 1].id)}
                             >
@@ -1781,7 +1792,7 @@ function Studio() {
                               onValueChange={setActiveId}
                               disabled={locked}
                             >
-                              <SelectTrigger aria-label="Aktuelle Seite">
+                              <SelectTrigger aria-label={ui('Aktuelle Seite')}>
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -1796,7 +1807,7 @@ function Studio() {
                             <Button
                               size="icon"
                               variant="ghost"
-                              aria-label="Nächste Seite"
+                              aria-label={ui('Nächste Seite')}
                               disabled={pages.indexOf(activePage) === pages.length - 1 || locked}
                               onClick={() => setActiveId(pages[pages.indexOf(activePage) + 1].id)}
                             >
@@ -1805,7 +1816,7 @@ function Studio() {
                           </div>
                           <div className="zoom-controls">
                             <button
-                              aria-label="Verkleinern"
+                              aria-label={ui('Verkleinern')}
                               disabled={zoom <= 60}
                               onClick={() => setZoom((v) => v - 20)}
                             >
@@ -1813,7 +1824,7 @@ function Studio() {
                             </button>
                             <span>{zoom}%</span>
                             <button
-                              aria-label="Vergrößern"
+                              aria-label={ui('Vergrößern')}
                               disabled={zoom >= 160}
                               onClick={() => setZoom((v) => v + 20)}
                             >
@@ -1826,23 +1837,27 @@ function Studio() {
                           <span>
                             {isEditor
                               ? toolId === 'edit-text'
-                                ? 'Textstelle auswählen oder einen Bereich ersetzen.'
+                                ? ui('Textstelle auswählen oder einen Bereich ersetzen.')
                                 : toolId === 'erase'
-                                  ? 'Rahmen um den zu entfernenden Inhalt ziehen.'
-                                  : 'Bild auswählen oder hier auf die Seite ziehen.'
+                                  ? ui('Rahmen um den zu entfernenden Inhalt ziehen.')
+                                  : ui('Bild auswählen oder hier auf die Seite ziehen.')
                               : editMode === 'redact'
-                                ? 'Bereiche zum Schwärzen aufziehen.'
+                                ? ui('Bereiche zum Schwärzen aufziehen.')
                                 : editMode === 'crop'
-                                  ? 'Ausschnitt auf der Seite aufziehen.'
+                                  ? ui('Ausschnitt auf der Seite aufziehen.')
                                   : editMode === 'text'
-                                    ? 'Auf die Seite klicken, um deine Notiz zu platzieren.'
+                                    ? ui('Auf die Seite klicken, um deine Notiz zu platzieren.')
                                     : editMode === 'highlight'
-                                      ? 'Textbereiche mit der Maus oder dem Finger markieren.'
+                                      ? ui('Textbereiche mit der Maus oder dem Finger markieren.')
                                       : editMode === 'signature'
                                         ? signature
-                                          ? 'Auf die Seite klicken, um die Unterschrift zu platzieren.'
-                                          : 'Erstelle rechts zuerst deine Unterschrift.'
-                                        : 'Dokumentvorschau. Wähle links ein Bearbeitungswerkzeug.'}
+                                          ? ui(
+                                              'Auf die Seite klicken, um die Unterschrift zu platzieren.',
+                                            )
+                                          : ui('Erstelle rechts zuerst deine Unterschrift.')
+                                        : ui(
+                                            'Dokumentvorschau. Wähle links ein Bearbeitungswerkzeug.',
+                                          )}
                           </span>
                         </div>
                         {!activePage.selected && (
@@ -1949,8 +1964,10 @@ function Studio() {
                               {formatSize(result.blob.size)}
                               {toolId === 'compress'
                                 ? result.blob.size < result.inputSize
-                                  ? ` · ${Math.round((1 - result.blob.size / result.inputSize) * 100)} % kleiner`
-                                  : ' · diesmal keine Verkleinerung'
+                                  ? ui(
+                                      ` · ${Math.round((1 - result.blob.size / result.inputSize) * 100)} % kleiner`,
+                                    )
+                                  : ui(' · diesmal keine Verkleinerung')
                                 : ''}
                             </p>
                           </div>
@@ -1977,17 +1994,18 @@ function Studio() {
                                     <button
                                       disabled={resultPage === 0}
                                       onClick={() => setResultPage((p) => p - 1)}
-                                      aria-label="Vorherige OCR-Seite"
+                                      aria-label={ui('Vorherige OCR-Seite')}
                                     >
                                       <ChevronLeft size={17} />
                                     </button>
                                     <span>
-                                      PDF · {resultPage + 1}/{resultSource.pdf.numPages}
+                                      {ui('PDF · ')}
+                                      {resultPage + 1}/{resultSource.pdf.numPages}
                                     </span>
                                     <button
                                       disabled={resultPage >= resultSource.pdf.numPages - 1}
                                       onClick={() => setResultPage((p) => p + 1)}
-                                      aria-label="Nächste OCR-Seite"
+                                      aria-label={ui('Nächste OCR-Seite')}
                                     >
                                       <ChevronRight size={17} />
                                     </button>
@@ -2045,7 +2063,7 @@ function Studio() {
                                   }
                                 >
                                   <FileText size={15} />
-                                  TXT
+                                  {ui('TXT')}
                                 </Button>
                                 <Button variant="outline" disabled={wordBusy} onClick={word}>
                                   {wordBusy ? (
@@ -2053,7 +2071,7 @@ function Studio() {
                                   ) : (
                                     <FileText size={15} />
                                   )}
-                                  Word
+                                  {ui('Word')}
                                 </Button>
                               </div>
                               <p className="export-note">
@@ -2071,7 +2089,7 @@ function Studio() {
                                   <button
                                     disabled={resultPage === 0}
                                     onClick={() => setResultPage((p) => p - 1)}
-                                    aria-label="Vorherige Ergebnisseite"
+                                    aria-label={ui('Vorherige Ergebnisseite')}
                                   >
                                     <ChevronLeft size={17} />
                                   </button>
@@ -2082,7 +2100,7 @@ function Studio() {
                                   <button
                                     disabled={resultPage >= resultSource.pdf.numPages - 1}
                                     onClick={() => setResultPage((p) => p + 1)}
-                                    aria-label="Nächste Ergebnisseite"
+                                    aria-label={ui('Nächste Ergebnisseite')}
                                   >
                                     <ChevronRight size={17} />
                                   </button>
@@ -2114,7 +2132,7 @@ function Studio() {
                             <strong>{t('Alle Dateien. Ein Download.')}</strong>
                             <p>
                               {result.note ||
-                                'Entpacke die ZIP-Datei, um die einzelnen Dateien zu öffnen.'}
+                                ui('Entpacke die ZIP-Datei, um die einzelnen Dateien zu öffnen.')}
                             </p>
                           </div>
                         )}
@@ -2140,12 +2158,12 @@ function Studio() {
               </span>
               <span>
                 {sources.length
-                  ? `${formatSize(sourceBytes)} · ${pages.length} Seiten`
+                  ? ui(`${formatSize(sourceBytes)} · ${pages.length} Seiten`)
                   : t('Keine Dateien geöffnet')}
               </span>
               <span>
                 {editCount
-                  ? `${editCount} ${editCount === 1 ? 'Änderung' : t('Änderungen')}`
+                  ? `${editCount} ${editCount === 1 ? ui('Änderung') : t('Änderungen')}`
                   : t('Originale bleiben erhalten')}
               </span>
             </div>
@@ -2162,8 +2180,8 @@ function Studio() {
               <div className="inspector-tool-icon">
                 <tool.icon size={30} strokeWidth={1.35} />
               </div>
-              <h2>{tool.title}</h2>
-              <p className="tool-description">{tool.description}</p>
+              <h2>{ui(tool.title)}</h2>
+              <p className="tool-description">{ui(tool.description)}</p>
               {isEditor && (
                 <EditorPanel
                   tool={toolId}
@@ -2192,7 +2210,7 @@ function Studio() {
               {toolId === 'inspect' && (
                 <>
                   <OcrLanguagePicker
-                    label="Sprache für Scan-Suche"
+                    label={ui('Sprache für Scan-Suche')}
                     value={options.language}
                     disabled={locked}
                     onChange={(language) => setOptions((old) => ({ ...old, language }))}
@@ -2236,7 +2254,7 @@ function Studio() {
                     </p>
                   )}
                   <OcrLanguagePicker
-                    label="Erkennungssprache"
+                    label={ui('Erkennungssprache')}
                     value={options.language}
                     disabled={locked || !!options.autoLanguage}
                     onChange={(language) => setOptions((old) => ({ ...old, language }))}
@@ -2307,7 +2325,7 @@ function Studio() {
                       disabled={locked}
                     />
                   </label>
-                  <div className="watermark-sample">{options.watermark || 'DEIN TEXT'}</div>
+                  <div className="watermark-sample">{options.watermark || ui('DEIN TEXT')}</div>
                   <p className="fine-note">
                     {t('Transparentes Türkis, mittig auf jeder ausgewählten Seite.')}
                   </p>
@@ -2366,7 +2384,7 @@ function Studio() {
                     <TabsList className="annotation-tabs">
                       <TabsTrigger value="text">
                         <Type size={15} />
-                        Text
+                        {ui('Text')}
                       </TabsTrigger>
                       <TabsTrigger value="highlight">
                         <Highlighter size={15} />
@@ -2388,7 +2406,9 @@ function Studio() {
                       <label className="field">
                         <span>
                           {t('Schriftgröße')}
-                          <b>{fontSize} pt</b>
+                          <b>
+                            {fontSize} {ui(' pt')}
+                          </b>
                         </span>
                         <Slider
                           value={[fontSize]}
@@ -2415,11 +2435,11 @@ function Studio() {
                     disabled={locked}
                   >
                     <PenLine size={16} />
-                    {signature ? 'Unterschrift ändern' : 'Unterschrift zeichnen'}
+                    {signature ? ui('Unterschrift ändern') : ui('Unterschrift zeichnen')}
                   </Button>
                   {signature && (
                     <div className="signature-sample">
-                      <img src={signature.image} alt="Deine gezeichnete Unterschrift" />
+                      <img src={signature.image} alt={ui('Deine gezeichnete Unterschrift')} />
                     </div>
                   )}
                   <p className="fine-note">
@@ -2443,15 +2463,15 @@ function Studio() {
                         (key) => (
                           <div key={key}>
                             <b>
-                              {
+                              {ui(
                                 {
                                   Title: 'Titel',
                                   Author: 'Autor',
                                   Creator: 'Ersteller',
                                   Producer: 'PDF-Software',
                                   CreationDate: 'Erstellt',
-                                }[key]
-                              }
+                                }[key],
+                              )}
                             </b>
                             <span>{String(metadata[key] || '—')}</span>
                           </div>
@@ -2492,7 +2512,7 @@ function Studio() {
                     <div className="position-inputs">
                       {(['x', 'y', 'w', 'h'] as const).map((key) => (
                         <label key={key}>
-                          {{ x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key]}
+                          {ui({ x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key])}
                           <Input
                             type="number"
                             min={0}
@@ -2543,7 +2563,7 @@ function Studio() {
                             }
                           </span>
                           <button
-                            aria-label={`Änderung ${i + 1} entfernen`}
+                            aria-label={ui(`Änderung ${i + 1} entfernen`)}
                             disabled={locked}
                             onClick={() => removeMark(m.id)}
                           >
@@ -2560,13 +2580,13 @@ function Studio() {
               {editCount > 0 && (
                 <p className="pending-note">
                   {sourceOnlyTools.includes(toolId)
-                    ? 'Visuelle Änderungen sind noch nicht im Original gespeichert.'
-                    : `${editCount} visuelle Änderungen werden mit übernommen.`}
+                    ? ui('Visuelle Änderungen sind noch nicht im Original gespeichert.')
+                    : ui(`${editCount} visuelle Änderungen werden mit übernommen.`)}
                 </p>
               )}
               {error && (
                 <p className="error-box" role="alert">
-                  {error}
+                  {ui(error)}
                 </p>
               )}
               {busy ? (
@@ -2575,8 +2595,8 @@ function Studio() {
                     <LoaderCircle className="spin" size={17} />
                     <strong>{Math.round(progress.percent)} %</strong>
                   </div>
-                  <Progress value={progress.percent} aria-label="Verarbeitungsfortschritt" />
-                  <p>{progress.label}</p>
+                  <Progress value={progress.percent} aria-label={ui('Verarbeitungsfortschritt')} />
+                  <p>{ui(progress.label)}</p>
                   <Button variant="outline" onClick={() => job.current?.abort()}>
                     {t('Abbrechen')}
                   </Button>
@@ -2599,8 +2619,8 @@ function Studio() {
               )}
               <div className="apply-detail">
                 {pages.length
-                  ? `${selected.length} von ${pages.length} Seiten ausgewählt`
-                  : 'Öffne zuerst ein Dokument'}
+                  ? ui(`${selected.length} von ${pages.length} Seiten ausgewählt`)
+                  : ui('Öffne zuerst ein Dokument')}
               </div>
             </div>
           </aside>
@@ -2632,116 +2652,95 @@ function Studio() {
         <DialogContent className="help-dialog">
           <DialogHeader>
             <DialogTitle>
-              {help === 'privacy' ? 'Deine Dokumente. Deine Entscheidung.' : 'So funktioniert’s.'}
+              {help === 'privacy'
+                ? ui('Deine Dokumente. Deine Entscheidung.')
+                : ui('So funktioniert’s.')}
             </DialogTitle>
             <DialogDescription>
               {help === 'privacy'
-                ? 'Lokale Verarbeitung und Speicherung.'
-                : 'Dateien öffnen, bearbeiten, anwenden.'}
+                ? ui('Lokale Verarbeitung und Speicherung.')
+                : ui('Dateien öffnen, bearbeiten, anwenden.')}
             </DialogDescription>
           </DialogHeader>
           {help === 'privacy' ? (
             <div className="help-body">
-              <h3>Verarbeitung auf deinem Gerät</h3>
+              <h3>{ui('Verarbeitung auf deinem Gerät')}</h3>
               <p>
-                PDFs, Bilder, Texterkennung und Unterschriften werden in deinem Browser verarbeitet.
-                Die Browserwerkzeuge senden Dokumentinhalte nicht an einen Server oder KI-Dienst.
-                Einige Funktionen, etwa Office-Konvertierungen, werden von MoinPDF verarbeitet. Erst
-                mit dem Start der jeweiligen Verarbeitung wird die ausgewählte Datei übertragen.
-                Beim bloßen Auswählen eines Dokuments erfolgt kein Upload.
+                {ui(
+                  'PDFs, Bilder, Texterkennung und Unterschriften werden in deinem Browser verarbeitet. Die Browserwerkzeuge senden Dokumentinhalte nicht an einen Server oder KI-Dienst. Einige Funktionen, etwa Office-Konvertierungen, werden von MoinPDF verarbeitet. Erst mit dem Start der jeweiligen Verarbeitung wird die ausgewählte Datei übertragen. Beim bloßen Auswählen eines Dokuments erfolgt kein Upload.',
+                )}
               </p>
-              <h3>Sitzung und gespeicherte Projekte</h3>
+              <h3>{ui('Sitzung und gespeicherte Projekte')}</h3>
               <p>
-                Ohne Speichern bleiben Dokumente und Änderungen im Arbeitsspeicher. Über „Projekte“
-                kannst du bis zu fünf Arbeitsstände lokal im Browser speichern und eine Projektdatei
-                herunterladen. Diese enthält Originale und den Bearbeitungsverlauf unverschlüsselt,
-                auch zuvor entsperrte PDFs. Projekte lassen sich in der App löschen; auch das
-                Löschen der Browserdaten entfernt sie. Ungespeicherte Änderungen gehen beim Neuladen
-                verloren. Die Website und Sprachpakete werden vom Hostinganbieter geladen; dabei
-                entstehen übliche Zugriffsdaten. Es gibt keine eigenen Analyse- oder Werbetracker.
+                {ui(
+                  'Ohne Speichern bleiben Dokumente und Änderungen im Arbeitsspeicher. Über „Projekte“ kannst du bis zu fünf Arbeitsstände lokal im Browser speichern und eine Projektdatei herunterladen. Diese enthält Originale und den Bearbeitungsverlauf unverschlüsselt, auch zuvor entsperrte PDFs. Projekte lassen sich in der App löschen; auch das Löschen der Browserdaten entfernt sie. Ungespeicherte Änderungen gehen beim Neuladen verloren. Die Website und Sprachpakete werden vom Hostinganbieter geladen; dabei entstehen übliche Zugriffsdaten. Es gibt keine eigenen Analyse- oder Werbetracker.',
+                )}
               </p>
-              <h3>Vorlagen und Einstellungen</h3>
+              <h3>{ui('Vorlagen und Einstellungen')}</h3>
               <p>
-                Der Browser kann Programmdaten und Sprachpakete zwischenspeichern. Gespeicherte
-                Arbeitsabläufe bleiben als Einstellungen im Browser erhalten. Darin werden keine
-                Dokumente oder Passwörter gespeichert. Der geöffnete Zustand der Werkzeugleiste gilt
-                nur für die aktuelle Sitzung.
+                {ui(
+                  'Der Browser kann Programmdaten und Sprachpakete zwischenspeichern. Gespeicherte Arbeitsabläufe bleiben als Einstellungen im Browser erhalten. Darin werden keine Dokumente oder Passwörter gespeichert. Der geöffnete Zustand der Werkzeugleiste gilt nur für die aktuelle Sitzung.',
+                )}
               </p>
             </div>
           ) : (
             <div className="help-body">
-              <h3>01 / Öffnen</h3>
+              <h3>{ui('01 / Öffnen')}</h3>
               <p>
-                PDFs, Rechnungs-XML, JPGs und PNGs überall ins Fenster ziehen oder auswählen.
-                Einzelne Office-Dateien, E-Mails und HTML-Dateien öffnen direkt das passende
-                Konvertierungswerkzeug. Bis zu 80 MB und 200 Seiten gleichzeitig.
+                {ui(
+                  'PDFs, Rechnungs-XML, JPGs und PNGs überall ins Fenster ziehen oder auswählen. Einzelne Office-Dateien, E-Mails und HTML-Dateien öffnen direkt das passende Konvertierungswerkzeug. Bis zu 80 MB und 200 Seiten gleichzeitig.',
+                )}
               </p>
-              <h3>Dokumentencheck & Seitenfinder</h3>
+              <h3>{ui('Dokumentencheck & Seitenfinder')}</h3>
               <p>
-                Nach dem Import beschreibst du unter „Was möchtest du tun?“ dein Vorhaben oder
-                wählst ein Werkzeugsymbol. Über „Werkzeug wechseln“ kommst du jederzeit zurück. Die
-                Seiten werden nebenbei lokal geprüft. Mit der Suche findest du Begriffe über alle
-                geöffneten Dateien. Für Scans die Texterkennung starten. „Treffer-PDF erstellen“
-                sammelt passende Seiten in ihrer aktuellen Reihenfolge; vorhandene visuelle
-                Änderungen werden übernommen. Die Suche erstellt selbst keine neue Textebene im PDF.
-                Check und Suche beziehen sich bis zur Ergebnisübernahme auf die importierten
-                Inhalte.
+                {ui(
+                  'Nach dem Import beschreibst du unter „Was möchtest du tun?“ dein Vorhaben oder wählst ein Werkzeugsymbol. Über „Werkzeug wechseln“ kommst du jederzeit zurück. Die Seiten werden nebenbei lokal geprüft. Mit der Suche findest du Begriffe über alle geöffneten Dateien. Für Scans die Texterkennung starten. „Treffer-PDF erstellen“ sammelt passende Seiten in ihrer aktuellen Reihenfolge; vorhandene visuelle Änderungen werden übernommen. Die Suche erstellt selbst keine neue Textebene im PDF. Check und Suche beziehen sich bis zur Ergebnisübernahme auf die importierten Inhalte.',
+                )}
               </p>
               <p>
-                Leerseiten und optisch gleiche Seiten sind Hinweise anhand der Vorschau. Vor dem
-                Abwählen bitte ansehen. Es wird nichts automatisch gelöscht.
+                {ui(
+                  'Leerseiten und optisch gleiche Seiten sind Hinweise anhand der Vorschau. Vor dem Abwählen bitte ansehen. Es wird nichts automatisch gelöscht.',
+                )}
               </p>
-              <h3>02 / Bearbeiten</h3>
+              <h3>{ui('02 / Bearbeiten')}</h3>
               <p>
-                Links ein Werkzeug wählen. In der Seitenübersicht kannst du sortieren, drehen,
-                duplizieren und entfernen. In der Einzelansicht platzierst du Notizen, Markierungen,
-                Schwärzungen und Unterschriften. Bereiche lassen sich auch über Zahlen eingeben.
+                {ui(
+                  'Links ein Werkzeug wählen. In der Seitenübersicht kannst du sortieren, drehen, duplizieren und entfernen. In der Einzelansicht platzierst du Notizen, Markierungen, Schwärzungen und Unterschriften. Bereiche lassen sich auch über Zahlen eingeben.',
+                )}
               </p>
-              <h3>03 / Anwenden</h3>
+              <h3>{ui('03 / Anwenden')}</h3>
               <p>
-                PDF-Werkzeuge verarbeiten ausgewählte Seiten. Beim Vergleich, abwechselnden
-                Zusammenfügen und Überlagern wählst du zusätzlich zwei Dateien. Dokumentberichte und
-                Anhänge beziehen sich auf die Originaldateien. Ausstehende visuelle Änderungen
-                werden bei der PDF-Ausgabe übernommen. Mit „Ergebnis weiterbearbeiten“ wird die
-                erzeugte PDF dein neues Arbeitsdokument.
+                {ui(
+                  'PDF-Werkzeuge verarbeiten ausgewählte Seiten. Beim Vergleich, abwechselnden Zusammenfügen und Überlagern wählst du zusätzlich zwei Dateien. Dokumentberichte und Anhänge beziehen sich auf die Originaldateien. Ausstehende visuelle Änderungen werden bei der PDF-Ausgabe übernommen. Mit „Ergebnis weiterbearbeiten“ wird die erzeugte PDF dein neues Arbeitsdokument.',
+                )}
               </p>
-              <h3>Passwortschutz & E-Rechnungen</h3>
+              <h3>{ui('Passwortschutz & E-Rechnungen')}</h3>
               <p>
-                „PDF schützen“ verschlüsselt das gesamte geöffnete Dokument mit AES-256.
-                Berechtigungen hängen vom PDF-Programm ab. „E-Rechnung lesen“ unterstützt UBL und
-                CII aus XML oder PDF-Anhängen. Der Basischeck prüft ausgewählte Angaben und Summen,
-                ersetzt aber keine vollständige Normvalidierung. Lese-PDFs enthalten die
-                Original-XML; sie sind keine zertifizierten PDF/A- oder ZUGFeRD-Dateien.
+                {ui(
+                  '„PDF schützen“ verschlüsselt das gesamte geöffnete Dokument mit AES-256. Berechtigungen hängen vom PDF-Programm ab. „E-Rechnung lesen“ unterstützt UBL und CII aus XML oder PDF-Anhängen. Der Basischeck prüft ausgewählte Angaben und Summen, ersetzt aber keine vollständige Normvalidierung. Lese-PDFs enthalten die Original-XML; sie sind keine zertifizierten PDF/A- oder ZUGFeRD-Dateien.',
+                )}
               </p>
-              <h3>Rückgängig und Tastatur</h3>
+              <h3>{ui('Rückgängig und Tastatur')}</h3>
               <p>
-                Strg/⌘ + Z: letzte Seiten- oder Bereichsänderung zurücknehmen. Strg/⌘ + Umschalt +
-                Z: wiederholen. Nach dem Hinzufügen oder Schließen von Dateien beginnt der Verlauf
-                neu.
+                {ui(
+                  'Strg/⌘ + Z: letzte Seiten- oder Bereichsänderung zurücknehmen. Strg/⌘ + Umschalt + Z: wiederholen. Nach dem Hinzufügen oder Schließen von Dateien beginnt der Verlauf neu.',
+                )}
               </p>
-              <h3>Gut zu wissen</h3>
+              <h3>{ui('Gut zu wissen')}</h3>
               <p>
-                OCR-Ergebnisse, besonders Namen und Beträge, bitte prüfen. Originale aufbewahren:
-                Die Werkzeuge „Formular ausfüllen“, „Formular erstellen“ und „Lesezeichen
-                bearbeiten“ speichern die vollständige Originaldatei mit ihren interaktiven Feldern
-                und Lesezeichen. Andere Werkzeuge können diese dokumentweiten Funktionen verlieren
-                oder Formularfelder zu festen Inhalten umwandeln. Bearbeitungen können digitale
-                Signaturen ungültig machen. Geschützte PDFs werden nach Eingabe des Passworts lokal
-                entsperrt. Ergebnisse anderer Werkzeuge sind ungeschützt; zum erneuten Schützen das
-                Werkzeug „PDF schützen“ verwenden.
+                {ui(
+                  'OCR-Ergebnisse, besonders Namen und Beträge, bitte prüfen. Originale aufbewahren: Die Werkzeuge „Formular ausfüllen“, „Formular erstellen“ und „Lesezeichen bearbeiten“ speichern die vollständige Originaldatei mit ihren interaktiven Feldern und Lesezeichen. Andere Werkzeuge können diese dokumentweiten Funktionen verlieren oder Formularfelder zu festen Inhalten umwandeln. Bearbeitungen können digitale Signaturen ungültig machen. Geschützte PDFs werden nach Eingabe des Passworts lokal entsperrt. Ergebnisse anderer Werkzeuge sind ungeschützt; zum erneuten Schützen das Werkzeug „PDF schützen“ verwenden.',
+                )}
               </p>
               <p>
-                „Text bearbeiten“ erkennt gerade Textstellen. „Bereich ersetzen“ funktioniert auch
-                für Scans; den Ersatztext gibst du selbst ein. Eigene Texte und Bilder lassen sich
-                auswählen, ziehen, skalieren und per Koordinaten setzen. Ersatzschriften können vom
-                Original abweichen. Entfernen und Ersetzen bauen betroffene Seiten neu auf: Die alte
-                Textebene, Links und Formularfelder entfallen. Neuer Text bleibt kopierbar, solange
-                die Seite nicht zusätzlich geschwärzt, zugeschnitten oder als Bild exportiert wird.
+                {ui(
+                  '„Text bearbeiten“ erkennt gerade Textstellen. „Bereich ersetzen“ funktioniert auch für Scans; den Ersatztext gibst du selbst ein. Eigene Texte und Bilder lassen sich auswählen, ziehen, skalieren und per Koordinaten setzen. Ersatzschriften können vom Original abweichen. Entfernen und Ersetzen bauen betroffene Seiten neu auf: Die alte Textebene, Links und Formularfelder entfallen. Neuer Text bleibt kopierbar, solange die Seite nicht zusätzlich geschwärzt, zugeschnitten oder als Bild exportiert wird.',
+                )}
               </p>
               <p>
-                Schwärzen und Zuschneiden erzeugen auf betroffenen Seiten neue Bildinhalte. Für
-                reine Textnotizen und Unterschriften bleibt vorhandener Text erhalten. Vor dem
-                Drehen visuelle Änderungen anwenden.
+                {ui(
+                  'Schwärzen und Zuschneiden erzeugen auf betroffenen Seiten neue Bildinhalte. Für reine Textnotizen und Unterschriften bleibt vorhandener Text erhalten. Vor dem Drehen visuelle Änderungen anwenden.',
+                )}
               </p>
             </div>
           )}

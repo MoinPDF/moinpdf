@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import type { ServerTool } from '@/lib/advanced-types';
 import { Choice, Field, NumberField } from './advanced-shared';
 export type ExtraSettings = {
@@ -67,6 +70,7 @@ export function ServerExtraFields({
   value: ExtraSettings;
   onChange: (v: ExtraSettings) => void;
 }) {
+  useLanguage();
   const set = <K extends keyof ExtraSettings>(key: K, next: ExtraSettings[K]) =>
     onChange({ ...value, [key]: next });
   return (
@@ -74,7 +78,7 @@ export function ServerExtraFields({
       {tool === 'optimize-pdf' && (
         <>
           <NumberField
-            label="Gewünschte maximale Größe (MB)"
+            label={ui('Gewünschte maximale Größe (MB)')}
             value={value.targetMB}
             min={0.05}
             max={80}
@@ -82,7 +86,7 @@ export function ServerExtraFields({
             onChange={(v) => set('targetMB', v)}
           />
           <Choice
-            label="Komprimierung"
+            label={ui('Komprimierung')}
             value={value.optimizeMode}
             onChange={(v) => set('optimizeMode', v)}
             items={[
@@ -91,17 +95,16 @@ export function ServerExtraFields({
             ]}
           />
           <p className="fine-note">
-            Text, Links und Formularfelder bleiben erhalten. Die Bildqualität kann sinken. Jede
-            Variante wird nachgemessen; ist die Zielgröße nicht erreichbar, erhältst du die kleinste
-            gefundene Datei mit einem Hinweis. Eine neu geschriebene PDF verliert vorhandene
-            digitale Signaturen.
+            {ui(
+              'Text, Links und Formularfelder bleiben erhalten. Die Bildqualität kann sinken. Jede Variante wird nachgemessen; ist die Zielgröße nicht erreichbar, erhältst du die kleinste gefundene Datei mit einem Hinweis. Eine neu geschriebene PDF verliert vorhandene digitale Signaturen.',
+            )}
           </p>
         </>
       )}
       {tool === 'ebook-pdf' && (
         <>
           <Choice
-            label="Seitenformat"
+            label={ui('Seitenformat')}
             value={value.paper}
             onChange={(v) => set('paper', v)}
             items={[
@@ -110,46 +113,44 @@ export function ServerExtraFields({
             ]}
           />
           <NumberField
-            label="Grundschriftgröße (pt)"
+            label={ui('Grundschriftgröße (pt)')}
             value={value.fontSize}
             min={8}
             max={24}
             onChange={(v) => set('fontSize', v)}
           />
           <p className="fine-note">
-            Ungeschützte EPUB-Dateien, maximal 40 MB und 200 Ausgabeseiten. EPUBs mit
-            verschlüsselten Inhalten oder geschützten Schriftdateien werden nicht unterstützt. Text
-            und eingebettete Bilder werden neu umbrochen; vom Buch festgelegte Schriftgrößen können
-            die Grundschriftgröße übersteuern. Externe Ressourcen werden nicht geladen. Interaktive
-            Inhalte und Links werden nicht übernommen.
+            {ui(
+              'Ungeschützte EPUB-Dateien, maximal 40 MB und 200 Ausgabeseiten. EPUBs mit verschlüsselten Inhalten oder geschützten Schriftdateien werden nicht unterstützt. Text und eingebettete Bilder werden neu umbrochen; vom Buch festgelegte Schriftgrößen können die Grundschriftgröße übersteuern. Externe Ressourcen werden nicht geladen. Interaktive Inhalte und Links werden nicht übernommen.',
+            )}
           </p>
         </>
       )}
       {tool === 'svg-export' && (
         <p className="fine-note">
-          ZIP mit einer SVG je Seite. Text wird als Kontur gespeichert; vorhandene Fotos bleiben
-          eingebettete Bilder. Höchstens 20 MB je SVG und 80 MB insgesamt.
+          {ui(
+            'ZIP mit einer SVG je Seite. Text wird als Kontur gespeichert; vorhandene Fotos bleiben eingebettete Bilder. Höchstens 20 MB je SVG und 80 MB insgesamt.',
+          )}
         </p>
       )}
       {tool === 'font-outlines' && (
         <p className="fine-note">
-          Text wird zu Vektorkonturen und ist danach nicht mehr auswählbar oder durchsuchbar. Das
-          Ergebnis ist eine neue PDF; Formulare, Tags, Links und digitale Signaturen werden nicht
-          garantiert übernommen.
+          {ui(
+            'Text wird zu Vektorkonturen und ist danach nicht mehr auswählbar oder durchsuchbar. Das Ergebnis ist eine neue PDF; Formulare, Tags, Links und digitale Signaturen werden nicht garantiert übernommen.',
+          )}
         </p>
       )}
       {tool === 'flatten-layers' && (
         <p className="fine-note">
-          Verwendet die anfängliche Ebenensichtbarkeit der ausgewählten PDF. Diese zuerst unter
-          „PDF-Ebenen“ einstellen und das Ergebnis übernehmen. Ausgeblendete Ebeneninhalte werden
-          entfernt. Das Ergebnis ist eine neue PDF; Formulare, Tags, Links und digitale Signaturen
-          werden nicht garantiert übernommen.
+          {ui(
+            'Verwendet die anfängliche Ebenensichtbarkeit der ausgewählten PDF. Diese zuerst unter „PDF-Ebenen“ einstellen und das Ergebnis übernehmen. Ausgeblendete Ebeneninhalte werden entfernt. Das Ergebnis ist eine neue PDF; Formulare, Tags, Links und digitale Signaturen werden nicht garantiert übernommen.',
+          )}
         </p>
       )}
       {tool === 'pdf-powerpoint' && (
         <>
           <Choice
-            label="Folieninhalt"
+            label={ui('Folieninhalt')}
             value={value.powerpointMode}
             onChange={(v) => set('powerpointMode', v)}
             items={[
@@ -158,38 +159,39 @@ export function ServerExtraFields({
             ]}
           />
           <p className="fine-note">
-            Eine Folie je PDF-Seite, höchstens 100 Seiten. Im Textmodus bleiben Texte einzeln
-            bearbeitbar; Grafiken bilden einen Bildhintergrund. Schriften müssen auf dem Zielgerät
-            verfügbar sein. Gedrehte Textobjekte benötigen den Seitenbild-Modus.
+            {ui(
+              'Eine Folie je PDF-Seite, höchstens 100 Seiten. Im Textmodus bleiben Texte einzeln bearbeitbar; Grafiken bilden einen Bildhintergrund. Schriften müssen auf dem Zielgerät verfügbar sein. Gedrehte Textobjekte benötigen den Seitenbild-Modus.',
+            )}
           </p>
         </>
       )}
       {tool === 'html-pdf' && (
         <p className="fine-note">
-          Die Webseite zuerst als HTML speichern und hier auswählen. Überschriften, Absätze und
-          Tabellen werden neu gesetzt. JavaScript, Bilder, externe Schriftdateien und CSS werden
-          nicht übernommen.
+          {ui(
+            'Die Webseite zuerst als HTML speichern und hier auswählen. Überschriften, Absätze und Tabellen werden neu gesetzt. JavaScript, Bilder, externe Schriftdateien und CSS werden nicht übernommen.',
+          )}
         </p>
       )}
       {tool === 'auto-orient' && (
         <>
           <NumberField
-            label="Mindestvertrauen der Erkennung"
+            label={ui('Mindestvertrauen der Erkennung')}
             value={value.confidence}
             min={5}
             max={30}
             onChange={(v) => set('confidence', v)}
           />
           <p className="fine-note">
-            15 ist der empfohlene Ausgangswert. Textarme oder unsichere Seiten bleiben unverändert.
-            ZIP mit PDF und seitenweisem Bericht; höchstens 50 Seiten.
+            {ui(
+              '15 ist der empfohlene Ausgangswert. Textarme oder unsichere Seiten bleiben unverändert. ZIP mit PDF und seitenweisem Bericht; höchstens 50 Seiten.',
+            )}
           </p>
         </>
       )}
       {tool === 'book-dewarp' && (
         <>
           <Choice
-            label="Buchfalz auf der Seite"
+            label={ui('Buchfalz auf der Seite')}
             value={value.side}
             onChange={(v) => set('side', v)}
             items={[
@@ -198,7 +200,7 @@ export function ServerExtraFields({
             ]}
           />
           <NumberField
-            label="Kurve am Falz (% der Seitenhöhe)"
+            label={ui('Kurve am Falz (% der Seitenhöhe)')}
             value={value.curve}
             min={-20}
             max={20}
@@ -206,43 +208,41 @@ export function ServerExtraFields({
             onChange={(v) => set('curve', v)}
           />
           <p className="fine-note">
-            Eine manuell einstellbare, quadratische Spaltenkorrektur für gebogene Textzeilen.
-            Positive Werte heben den Inhalt am Falz, negative senken ihn. Bei komplexen Wölbungen
-            ist eine vollständige Entzerrung nicht garantiert. Ergebnis als neue Seitenbilder;
-            danach bei Bedarf OCR ausführen.
+            {ui(
+              'Eine manuell einstellbare, quadratische Spaltenkorrektur für gebogene Textzeilen. Positive Werte heben den Inhalt am Falz, negative senken ihn. Bei komplexen Wölbungen ist eine vollständige Entzerrung nicht garantiert. Ergebnis als neue Seitenbilder; danach bei Bedarf OCR ausführen.',
+            )}
           </p>
         </>
       )}
       {tool === 'form-detect' && (
         <p className="fine-note">
-          Leere Rechtecke und Linien werden als Textfelder oder Checkboxen vorgeschlagen; bei Scans
-          werden rechteckige Konturen gesucht. Ergebnis übernehmen und im Werkzeug „Formular
-          erstellen“ Feldnamen, Typen und Positionen prüfen. Höchstens 50 Seiten und 500 neue
-          Felder.
+          {ui(
+            'Leere Rechtecke und Linien werden als Textfelder oder Checkboxen vorgeschlagen; bei Scans werden rechteckige Konturen gesucht. Ergebnis übernehmen und im Werkzeug „Formular erstellen“ Feldnamen, Typen und Positionen prüfen. Höchstens 50 Seiten und 500 neue Felder.',
+          )}
         </p>
       )}
       {tool === 'redaction-check' && (
         <>
-          <Field label="Vertrauliche Begriffe zur Kontrolle (einer pro Zeile)">
+          <Field label={ui('Vertrauliche Begriffe zur Kontrolle (einer pro Zeile)')}>
             <textarea
-              aria-label="Vertrauliche Begriffe zur Kontrolle"
+              aria-label={ui('Vertrauliche Begriffe zur Kontrolle')}
               rows={5}
               value={value.terms}
               onChange={(e) => set('terms', e.target.value)}
-              placeholder="Name, Kennnummer oder Textstelle"
+              placeholder={ui('Name, Kennnummer oder Textstelle')}
             />
           </Field>
           <p className="fine-note">
-            Sucht auslesbaren Text und mögliche dunkle Vektor-Überdeckungen. Ein Bericht ohne
-            Treffer beweist keine sichere Schwärzung. Bildinhalte, frühere Revisionen und Anlagen
-            zusätzlich prüfen.
+            {ui(
+              'Sucht auslesbaren Text und mögliche dunkle Vektor-Überdeckungen. Ein Bericht ohne Treffer beweist keine sichere Schwärzung. Bildinhalte, frühere Revisionen und Anlagen zusätzlich prüfen.',
+            )}
           </p>
         </>
       )}
       {tool === 'print-check' && (
         <>
           <NumberField
-            label="Mindestauflösung für Bilder (dpi)"
+            label={ui('Mindestauflösung für Bilder (dpi)')}
             value={value.dpi}
             min={72}
             max={600}
@@ -250,34 +250,35 @@ export function ServerExtraFields({
             onChange={(v) => set('dpi', v)}
           />
           <p className="fine-note">
-            Basischeck für effektive Bildauflösung, eingebettete Schriften und Seitenboxen.
-            Farbseparation, Überdruck und konkrete Druckerei-Vorgaben sind nicht Teil dieser
-            Prüfung.
+            {ui(
+              'Basischeck für effektive Bildauflösung, eingebettete Schriften und Seitenboxen. Farbseparation, Überdruck und konkrete Druckerei-Vorgaben sind nicht Teil dieser Prüfung.',
+            )}
           </p>
         </>
       )}
       {tool === 'accessibility-check' && (
         <p className="fine-note">
-          Technischer Basischeck. Lesereihenfolge, Alternativtexte, Kontraste und Bedienbarkeit
-          zusätzlich prüfen. Dieser Bericht bestätigt keine PDF/UA- oder WCAG-Konformität.
+          {ui(
+            'Technischer Basischeck. Lesereihenfolge, Alternativtexte, Kontraste und Bedienbarkeit zusätzlich prüfen. Dieser Bericht bestätigt keine PDF/UA- oder WCAG-Konformität.',
+          )}
         </p>
       )}
       {tool === 'translate-pdf' && (
         <>
           <Choice
-            label="Ausgangssprache"
+            label={ui('Ausgangssprache')}
             value={value.language}
             onChange={(v) => set('language', v)}
             items={[['auto', 'Automatisch erkennen'], ...languages]}
           />
           <Choice
-            label="Zielsprache"
+            label={ui('Zielsprache')}
             value={value.target}
             onChange={(v) => set('target', v)}
             items={languages}
           />
           <Choice
-            label="Anordnung der Übersetzung"
+            label={ui('Anordnung der Übersetzung')}
             value={value.translationLayout}
             onChange={(v) => set('translationLayout', v)}
             items={[
@@ -287,7 +288,7 @@ export function ServerExtraFields({
           />
           {value.translationLayout === 'original' && (
             <NumberField
-              label="Kleinste Schriftgröße (pt)"
+              label={ui('Kleinste Schriftgröße (pt)')}
               value={value.minimumFontSize}
               min={6}
               max={18}
@@ -295,19 +296,20 @@ export function ServerExtraFields({
             />
           )}
           <p className="fine-note">
-            Höchstens 60.000 Zeichen; maschinelle Übersetzungen bitte prüfen. Im Original-Layout
-            bleiben Bilder und Grafiken erhalten. Absätze verwenden eine einheitliche Ersatzschrift;
-            bei Textüberlauf oder überlappenden/gedrehten Textbereichen wird keine unvollständige
-            PDF ausgegeben.
+            {ui(
+              'Höchstens 60.000 Zeichen; maschinelle Übersetzungen bitte prüfen. Im Original-Layout bleiben Bilder und Grafiken erhalten. Absätze verwenden eine einheitliche Ersatzschrift; bei Textüberlauf oder überlappenden/gedrehten Textbereichen wird keine unvollständige PDF ausgegeben.',
+            )}
           </p>
         </>
       )}
       {tool === 'word-mail-merge' && (
         <p className="fine-note">
-          Platzhalter in Word: <code>{'{{Name}}'}</code> oder <code>{'{{Adresse}}'}</code>.
-          Spaltennamen stehen in der ersten Zeile des ersten Excel-Tabellenblatts. Maximal 50
-          Datensätze und 50 Spalten; Formeln vorher in Werte umwandeln. Verknüpfte externe Bilder
-          werden nicht geladen.
+          {ui('Platzhalter in Word: ')}
+          <code>{ui('{{Name}}')}</code> {ui(' oder ')}
+          <code>{ui('{{Adresse}}')}</code>
+          {ui(
+            '. Spaltennamen stehen in der ersten Zeile des ersten Excel-Tabellenblatts. Maximal 50 Datensätze und 50 Spalten; Formeln vorher in Werte umwandeln. Verknüpfte externe Bilder werden nicht geladen.',
+          )}
         </p>
       )}
     </>
@@ -315,6 +317,7 @@ export function ServerExtraFields({
 }
 
 export function StructuredReport({ raw }: { raw: string }) {
+  useLanguage();
   let data: { title?: string; items?: Record<string, unknown>[]; note?: string };
   try {
     data = JSON.parse(raw);
@@ -354,24 +357,28 @@ export function StructuredReport({ raw }: { raw: string }) {
           : String(value);
   return (
     <div className="document-report">
-      <h3>{data.title}</h3>
-      <p>{data.note}</p>
+      <h3>{ui(data.title)}</h3>
+      <p>{ui(data.note)}</p>
       {!data.items.length ? (
-        <p>Keine Treffer in den ausgeführten Prüfungen.</p>
+        <p>{ui('Keine Treffer in den ausgeführten Prüfungen.')}</p>
       ) : (
         data.items.map((item, i) => (
           <details key={i} open={i < 3}>
             <summary>
-              {item.page ? `Seite ${item.page}` : String(item.scope || `Befund ${i + 1}`)}
-              {item.status ? ` · ${item.status}` : ''}
+              {item.page ? ui(`Seite ${item.page}`) : ui(String(item.scope || `Befund ${i + 1}`))}
+              {item.status ? ` · ${ui(String(item.status))}` : ''}
             </summary>
             <dl>
               {Object.entries(item)
                 .filter(([key]) => !['page', 'scope', 'status'].includes(key))
                 .map(([key, value]) => (
                   <div key={key}>
-                    <dt>{labels[key] || key}</dt>
-                    <dd>{format(value) || 'Keine'}</dd>
+                    <dt>{ui(labels[key] || key)}</dt>
+                    <dd>
+                      {(['text', 'title', 'files'].includes(key)
+                        ? format(value)
+                        : ui(format(value))) || ui('Keine')}
+                    </dd>
                   </div>
                 ))}
             </dl>

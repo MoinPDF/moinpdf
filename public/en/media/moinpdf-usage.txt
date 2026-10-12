@@ -1,0 +1,15 @@
+MoinPDF – Media kit usage
+
+Updated: 12 October 2026
+
+You may use the supplied banners, promotional video, logo and wordmark in editorial articles and to introduce or promote MoinPDF, including in magazines, on websites, in newsletters and on social media. Please credit MoinPDF and, where possible, link to the MoinPDF instance featured in your online article.
+
+Please do not misrepresent or distort the artwork or lettering. Proportional resizing is permitted. Use as your own brand or for unrelated products is not included.
+
+The six original banners are supplied as JPG files at their original size, without artificial upscaling. A width of 1536 pixels corresponds to approximately 13 cm at 300 dpi. Please agree the intended print size with your editor. The original logo is a 1536 × 1536 pixel JPG on a light background. The wordmark is a scalable SVG with a transparent background and outlined lettering, so no additional fonts are required.
+
+The promotional video “Printer overboard?” is an MP4 with sound: 15 seconds, 1280 × 720 pixels, landscape 16:9. The original video and banners retain their German artwork. English subtitles are supplied with the video and displayed in the English media area.
+
+Contact: MoinPDF, ahoi@moinpdf.de
+
+Font licences are included in Wordmark-Licences.txt.

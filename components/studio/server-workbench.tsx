@@ -1,4 +1,6 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -47,6 +49,7 @@ type Props = {
 };
 
 export function ServerWorkbench(props: Props) {
+  useLanguage();
   return props.tool === 'pdf-audio' ? (
     <AudioWorkbench {...props} />
   ) : (
@@ -251,22 +254,24 @@ function StandardServerWorkbench({
     onChange: (value: File | null) => void,
   ) => (
     <div className="conversion-file-field">
-      <p>{label}</p>
+      <p>{ui(label)}</p>
       <label className="conversion-file-picker">
         <FileText size={23} />
         <span>
           {current ? (
             <>
               <strong>{current.name}</strong>
-              <small>{formatSize(current.size)} · Datei ändern</small>
+              <small>
+                {formatSize(current.size)} {ui(' · Datei ändern')}
+              </small>
             </>
           ) : (
-            <strong>Datei auswählen</strong>
+            <strong>{ui('Datei auswählen')}</strong>
           )}
         </span>
         <input
           className="sr-only"
-          aria-label={label}
+          aria-label={ui(label)}
           type="file"
           accept={accept}
           onChange={(e) => {
@@ -412,30 +417,31 @@ function StandardServerWorkbench({
       </header>
       <div className="workbench-title">
         <div>
-          <span className="studio-kicker">DATEI REIN. ERGEBNIS RAUS.</span>
+          <span className="studio-kicker">{ui('DATEI REIN. ERGEBNIS RAUS.')}</span>
           <h1>
             <info.icon />
-            {info.title}
+            {ui(info.title)}
           </h1>
-          <p>{info.description}</p>
+          <p>{ui(info.description)}</p>
         </div>
       </div>
-      <ol className="conversion-steps" aria-label="Arbeitsschritte">
+      <ol className="conversion-steps" aria-label={ui('Arbeitsschritte')}>
         <li className={hasInput ? 'is-complete' : 'is-current'}>
           <span>{hasInput ? <Check size={14} /> : 1}</span>
           {tool === 'accessibility-check' && uaMode === 'create'
-            ? 'Struktur vorbereiten'
-            : 'Datei auswählen'}
+            ? ui('Struktur vorbereiten')
+            : ui('Datei auswählen')}
         </li>
         <li className={busy ? 'is-current' : ''}>
-          <span>2</span>Verarbeiten
+          <span>2</span>
+          {ui('Verarbeiten')}
         </li>
         <li className={result ? 'is-complete' : ''}>
           <span>3</span>
           {t('Herunterladen')}
         </li>
       </ol>
-      <section className="advanced-card conversion-card" aria-label={info.title}>
+      <section className="advanced-card conversion-card" aria-label={ui(info.title)}>
         <fieldset disabled={busy} className="advanced-fields conversion-fields">
           {tool === 'office-pdf' ? (
             pick(
@@ -458,11 +464,16 @@ function StandardServerWorkbench({
           ) : tool === 'xrechnung-validate' ? (
             <>
               {pick('XRechnung als XML', '.xml,application/xml,text/xml', file, setFile)}
-              {source?.invoiceOriginal && !file && <p>Ausgewählt: {source.invoiceOriginal.name}</p>}
+              {source?.invoiceOriginal && !file && (
+                <p>
+                  {ui('Ausgewählt: ')}
+                  {source.invoiceOriginal.name}
+                </p>
+              )}
             </>
           ) : sources.length > 1 ? (
             <Choice
-              label="PDF-Dokument"
+              label={ui('PDF-Dokument')}
               value={source?.id || ''}
               onChange={setSourceId}
               items={sources.map((s) => [s.id, s.name])}
@@ -478,19 +489,19 @@ function StandardServerWorkbench({
                 </span>
               </div>
               <Button variant="ghost" onClick={onAdd}>
-                Ändern
+                {ui('Ändern')}
               </Button>
             </div>
           ) : (
             <Button variant="outline" onClick={onAdd}>
               <Plus size={17} />
-              PDF auswählen
+              {ui('PDF auswählen')}
             </Button>
           )}
           {tool === 'accessibility-check' ? (
             <>
               <Choice
-                label="Barrierefreiheit: Aktion"
+                label={ui('Barrierefreiheit: Aktion')}
                 value={uaMode}
                 onChange={setUaMode}
                 items={[
@@ -502,14 +513,15 @@ function StandardServerWorkbench({
               />
               {uaMode === 'basic' && (
                 <p className="fine-note">
-                  Basischeck für Titel, Sprache und vorhandene Tags. Für die Normprüfung „PDF/UA mit
-                  veraPDF prüfen“ wählen.
+                  {ui(
+                    'Basischeck für Titel, Sprache und vorhandene Tags. Für die Normprüfung „PDF/UA mit veraPDF prüfen“ wählen.',
+                  )}
                 </p>
               )}
               {['validate', 'repair'].includes(uaMode) && (
                 <>
                   <Choice
-                    label="PDF/UA-Prüfprofil"
+                    label={ui('PDF/UA-Prüfprofil')}
                     value={uaProfile}
                     onChange={setUaProfile}
                     items={[
@@ -518,8 +530,9 @@ function StandardServerWorkbench({
                     ]}
                   />
                   <p className="fine-note">
-                    Vollständiger maschineller Prüfbericht als ZIP. Lesereihenfolge, Bedeutung der
-                    Alternativtexte und Bedienbarkeit zusätzlich manuell prüfen.
+                    {ui(
+                      'Vollständiger maschineller Prüfbericht als ZIP. Lesereihenfolge, Bedeutung der Alternativtexte und Bedienbarkeit zusätzlich manuell prüfen.',
+                    )}
                   </p>
                 </>
               )}
@@ -546,43 +559,48 @@ function StandardServerWorkbench({
           )}
           {localOptimize && (
             <p className="fine-note">
-              Die Verarbeitung erfolgt lokal. In dieser Ausgabe werden geeignete Bilder als JPEG
-              komprimiert; ihre Auflösung bleibt unverändert. Mit integriertem Dokumentenserver kann
-              MoinPDF zusätzlich die Bildauflösung reduzieren.
+              {ui(
+                'Die Verarbeitung erfolgt lokal. In dieser Ausgabe werden geeignete Bilder als JPEG komprimiert; ihre Auflösung bleibt unverändert. Mit integriertem Dokumentenserver kann MoinPDF zusätzlich die Bildauflösung reduzieren.',
+              )}
             </p>
           )}
           {tool === 'pdf-word' && (
             <p className="fine-note">
               {localWord
-                ? 'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.'
-                : 'Text, Tabellen und Bilder werden für Word übernommen. Bei komplexen Layouts kann die Anordnung abweichen.'}{' '}
-              Reine Scans zuerst mit{' '}
+                ? ui(
+                    'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.',
+                  )
+                : ui(
+                    'Text, Tabellen und Bilder werden für Word übernommen. Bei komplexen Layouts kann die Anordnung abweichen.',
+                  )}{' '}
+              {ui('Reine Scans zuerst mit')}{' '}
               <button className="conversion-text-link" onClick={() => onChoose('ocr')}>
-                OCR &amp; Text
+                {ui('OCR &amp; Text')}
               </button>{' '}
-              auslesen.
+              {ui('auslesen.')}
             </p>
           )}
           {tool === 'email-pdf' && (
             <>
               <details className="conversion-options">
-                <summary>Weitere Optionen</summary>
+                <summary>{ui('Weitere Optionen')}</summary>
                 <Tick
-                  label="Anlagen zusätzlich in einer ZIP-Datei herunterladen"
+                  label={ui('Anlagen zusätzlich in einer ZIP-Datei herunterladen')}
                   value={attachments}
                   onChange={setAttachments}
                 />
               </details>
               <p className="fine-note">
-                Die Nachricht wird mit Absender und Betreff als PDF gespeichert. Externe Bilder
-                werden nicht geladen.
+                {ui(
+                  'Die Nachricht wird mit Absender und Betreff als PDF gespeichert. Externe Bilder werden nicht geladen.',
+                )}
               </p>
             </>
           )}
           {tool === 'pdfa' && (
             <>
               <Choice
-                label="Aktion"
+                label={ui('Aktion')}
                 value={mode}
                 onChange={setMode}
                 items={[
@@ -591,9 +609,9 @@ function StandardServerWorkbench({
                 ]}
               />
               <details className="conversion-options">
-                <summary>Weitere Optionen</summary>
+                <summary>{ui('Weitere Optionen')}</summary>
                 <Choice
-                  label="PDF/A-Profil"
+                  label={ui('PDF/A-Profil')}
                   value={profile}
                   onChange={setProfile}
                   items={[
@@ -604,15 +622,16 @@ function StandardServerWorkbench({
                 />
               </details>
               <p className="fine-note">
-                Du erhältst eine ZIP-Datei mit PDF und Prüfbericht. Interaktive Elemente und Anhänge
-                können in der Archivkopie entfallen. Bitte den Bericht vor der Archivierung prüfen.
+                {ui(
+                  'Du erhältst eine ZIP-Datei mit PDF und Prüfbericht. Interaktive Elemente und Anhänge können in der Archivkopie entfallen. Bitte den Bericht vor der Archivierung prüfen.',
+                )}
               </p>
             </>
           )}
           {tool === 'zugferd-create' && (
             <>
               <Choice
-                label="Aktion"
+                label={ui('Aktion')}
                 value={mode}
                 onChange={setMode}
                 items={[
@@ -624,7 +643,7 @@ function StandardServerWorkbench({
                 <>
                   {pick('Zur Rechnung passende CII-XML', '.xml', file, setFile)}
                   <Choice
-                    label="Rechnungsprofil"
+                    label={ui('Rechnungsprofil')}
                     value={profile}
                     onChange={setProfile}
                     items={[
@@ -637,16 +656,16 @@ function StandardServerWorkbench({
                 </>
               )}
               <p className="fine-note">
-                Die sichtbare Rechnung und die XML müssen dieselben Rechnungsdaten enthalten. Das
-                Ergebnis enthält einen Prüfbericht; fehlgeschlagene Prüfungen werden ausdrücklich
-                markiert.
+                {ui(
+                  'Die sichtbare Rechnung und die XML müssen dieselben Rechnungsdaten enthalten. Das Ergebnis enthält einen Prüfbericht; fehlgeschlagene Prüfungen werden ausdrücklich markiert.',
+                )}
               </p>
             </>
           )}
           {tool === 'certificate-sign' && (
             <>
               <Choice
-                label="Aktion"
+                label={ui('Aktion')}
                 value={mode}
                 onChange={setMode}
                 items={[
@@ -660,7 +679,7 @@ function StandardServerWorkbench({
               {mode === 'sign' && (
                 <>
                   <Choice
-                    label="Signaturprofil"
+                    label={ui('Signaturprofil')}
                     value={signLevel}
                     onChange={setSignLevel}
                     items={(['basic', 'timestamp', 'lt', 'lta'] as const)
@@ -679,24 +698,22 @@ function StandardServerWorkbench({
                   />
                   {pick('Zertifikat (.p12 oder .pfx)', '.p12,.pfx', cert, setCert)}
                   <Text
-                    label="Zertifikatspasswort"
+                    label={ui('Zertifikatspasswort')}
                     type="password"
                     value={password}
                     onChange={setPassword}
                   />
                   <p className="fine-note">
-                    Mit „Signieren“ werden auch das ausgewählte Zertifikat samt privatem Schlüssel
-                    und das Passwort für diesen Auftrag übertragen.
+                    {ui(
+                      'Mit „Signieren“ werden auch das ausgewählte Zertifikat samt privatem Schlüssel und das Passwort für diesen Auftrag übertragen.',
+                    )}
                   </p>
                 </>
               )}
               <p className="fine-note">
-                Integrität, Zertifikatsvertrauen, Sperrnachweise und Zeitstempel werden getrennt
-                geprüft. CRL-/OCSP-Nachweise werden offline aus der PDF und dem konfigurierten
-                Nachweisspeicher gelesen; fehlende Nachweise ergeben kein Vertrauensurteil. Für neue
-                Zeitstempel wird der konfigurierte Zeitstempeldienst kontaktiert. Langzeitprofile
-                erscheinen nach dessen Einrichtung durch den Betreiber. Es wird keine qualifizierte
-                Signatur bestätigt.
+                {ui(
+                  'Integrität, Zertifikatsvertrauen, Sperrnachweise und Zeitstempel werden getrennt geprüft. CRL-/OCSP-Nachweise werden offline aus der PDF und dem konfigurierten Nachweisspeicher gelesen; fehlende Nachweise ergeben kein Vertrauensurteil. Für neue Zeitstempel wird der konfigurierte Zeitstempeldienst kontaktiert. Langzeitprofile erscheinen nach dessen Einrichtung durch den Betreiber. Es wird keine qualifizierte Signatur bestätigt.',
+                )}
               </p>
             </>
           )}
@@ -708,25 +725,25 @@ function StandardServerWorkbench({
             {busy ? (
               <>
                 <LoaderCircle className="spin" size={18} />
-                Wird verarbeitet …
+                {ui('Wird verarbeitet …')}
               </>
             ) : tool === 'accessibility-check' ? (
               uaMode === 'create' ? (
-                'PDF/UA erstellen und prüfen'
+                ui('PDF/UA erstellen und prüfen')
               ) : uaMode === 'repair' ? (
-                'Tags reparieren und PDF/UA prüfen'
+                ui('Tags reparieren und PDF/UA prüfen')
               ) : uaMode === 'validate' ? (
-                'PDF/UA prüfen'
+                ui('PDF/UA prüfen')
               ) : (
                 info.action
               )
             ) : tool === 'certificate-sign' ? (
               mode === 'renew' ? (
-                'Langzeit-Zeitstempel erneuern'
+                ui('Langzeit-Zeitstempel erneuern')
               ) : mode === 'sign' ? (
-                'Signieren'
+                ui('Signieren')
               ) : (
-                'Signaturen prüfen'
+                ui('Signaturen prüfen')
               )
             ) : (
               info.action
@@ -735,22 +752,26 @@ function StandardServerWorkbench({
           {status === 'checking' && (
             <p className="conversion-status" role="status">
               <LoaderCircle className="spin" size={15} />
-              Wird vorbereitet …
+              {ui('Wird vorbereitet …')}
             </p>
           )}
           {status !== 'checking' && !available && (
             <div className="conversion-unavailable" role="status">
               <p>
                 {!integratedDocumentServer
-                  ? 'Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.'
+                  ? ui('Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.')
                   : tool === 'translate-pdf' && capabilities?.translationStatus === 'starting'
-                    ? 'Die Übersetzung wird noch vorbereitet. Bitte versuche es in wenigen Minuten erneut.'
-                    : 'Diese Funktion ist gerade nicht verfügbar. Bitte versuche es gleich noch einmal.'}
+                    ? ui(
+                        'Die Übersetzung wird noch vorbereitet. Bitte versuche es in wenigen Minuten erneut.',
+                      )
+                    : ui(
+                        'Diese Funktion ist gerade nicht verfügbar. Bitte versuche es gleich noch einmal.',
+                      )}
               </p>
               {integratedDocumentServer && (
                 <Button variant="outline" onClick={() => void checkConnection()}>
                   <RefreshCw size={15} />
-                  Erneut versuchen
+                  {ui('Erneut versuchen')}
                 </Button>
               )}
             </div>
@@ -758,11 +779,15 @@ function StandardServerWorkbench({
           {available && !localMode && (
             <p className="conversion-privacy">
               {tool === 'accessibility-check' && uaMode === 'create'
-                ? 'Mit dem Start werden die Inhaltsblöcke und Bilder aus dem Struktureditor für diesen Auftrag übertragen.'
-                : 'Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen.'}{' '}
-              Die Daten werden nicht dauerhaft gespeichert.{' '}
+                ? ui(
+                    'Mit dem Start werden die Inhaltsblöcke und Bilder aus dem Struktureditor für diesen Auftrag übertragen.',
+                  )
+                : ui(
+                    'Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen.',
+                  )}{' '}
+              {ui('Die Daten werden nicht dauerhaft gespeichert.')}{' '}
               <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">
-                Datenschutz
+                {ui('Datenschutz')}
               </a>
             </p>
           )}
@@ -771,7 +796,7 @@ function StandardServerWorkbench({
       {busy && (
         <div className="advanced-progress" role="status">
           <LoaderCircle className="spin" size={18} />
-          <span>Deine Datei wird verarbeitet …</span>
+          <span>{ui('Deine Datei wird verarbeitet …')}</span>
           <Button variant="ghost" onClick={() => controller.current?.abort()}>
             {t('Abbrechen')}
           </Button>
@@ -779,7 +804,7 @@ function StandardServerWorkbench({
       )}
       {error && (
         <p className="error-box" role="alert">
-          {error}
+          {ui(error)}
         </p>
       )}
       {result && (
@@ -792,12 +817,12 @@ function StandardServerWorkbench({
             <p>
               {result.filename} · {formatSize(result.blob.size)}
             </p>
-            {result.note && <p>{result.note}</p>}
+            {result.note && <p>{ui(result.note)}</p>}
             <Button asChild>
               <a href={url || undefined} download={result.filename}>
                 <Download size={17} />
                 {result.filename.toLowerCase().endsWith('.docx')
-                  ? 'Word herunterladen'
+                  ? ui('Word herunterladen')
                   : result.kind === 'pdf'
                     ? t('PDF herunterladen')
                     : result.kind === 'zip'

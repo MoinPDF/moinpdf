@@ -48,7 +48,7 @@ const html = `<!doctype html>
   <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=43c33290ac2f" sizes="180x180">
   <link rel="stylesheet" href="/docs/documentation.css?v=${escape(version)}">
   <script src="/docs/documentation.js?v=${escape(version)}" defer></script>
-<script src="/appearance-init.js"></script><link rel="stylesheet" href="/appearance.css">
+<script src="/appearance-init.js"></script><script src="/language-init.js"></script><link rel="stylesheet" href="/appearance.css">
 </head>
 <body>
   <a class="docs-skip" href="#inhalt">Zum Inhalt</a>

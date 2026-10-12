@@ -70,3 +70,5 @@ __pycache__/
 /public/media/MoinPDF-Medienpaket-*.zip
 
 .cache/
+
+/public/en/media/MoinPDF-MediaKit-*.zip

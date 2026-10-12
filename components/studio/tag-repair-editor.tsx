@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Choice, Text, NumberField } from './advanced-shared';
@@ -91,6 +94,7 @@ export function TagRepairEditor({
   run: (action: (signal: AbortSignal) => Promise<void>) => Promise<void>;
   available: boolean;
 }) {
+  useLanguage();
   const [selected, setSelected] = useState('n0');
   const node = value?.nodes.find((n) => n.id === selected) || value?.nodes[0];
   const current = node ? { ...node, ...value?.changes[node.id] } : undefined;
@@ -138,21 +142,22 @@ export function TagRepairEditor({
   return (
     <div className="accessible-editor">
       <p className="fine-note">
-        Vorhandene Tags bei unverändertem Seitenlayout bearbeiten. Eine ungetaggte PDF braucht
-        zunächst eine vollständige Strukturierung. Signierte PDFs werden zur Reparatur abgewiesen.
+        {ui(
+          'Vorhandene Tags bei unverändertem Seitenlayout bearbeiten. Eine ungetaggte PDF braucht zunächst eine vollständige Strukturierung. Signierte PDFs werden zur Reparatur abgewiesen.',
+        )}
       </p>
       <Button variant="outline" disabled={!source || !available} onClick={() => void load()}>
-        Vorhandene PDF-Struktur laden
+        {ui('Vorhandene PDF-Struktur laden')}
       </Button>
       {value && node && current && (
         <>
           <Text
-            label="Dokumentsprache (z. B. de-DE)"
+            label={ui('Dokumentsprache (z. B. de-DE)')}
             value={value.language}
             onChange={(language) => onChange({ ...value, language })}
           />
           <Choice
-            label="Strukturknoten"
+            label={ui('Strukturknoten')}
             value={node.id}
             onChange={setSelected}
             items={value.nodes.map((n) => [
@@ -162,22 +167,26 @@ export function TagRepairEditor({
           />
           {node.role !== 'StructTreeRoot' && (
             <Choice
-              label="Strukturrolle"
+              label={ui('Strukturrolle')}
               value={current.role}
               onChange={(role) => change({ role })}
               items={[...new Set([...roles, current.role])].map((role) => [role, role])}
             />
           )}
-          <Text label="Alternativtext" value={current.alt} onChange={(alt) => change({ alt })} />
           <Text
-            label="Sprache dieses Knotens (leer: vererben)"
+            label={ui('Alternativtext')}
+            value={current.alt}
+            onChange={(alt) => change({ alt })}
+          />
+          <Text
+            label={ui('Sprache dieses Knotens (leer: vererben)')}
             value={current.language}
             onChange={(language) => change({ language })}
           />
           {['TH', 'TD'].includes(current.role) && (
             <>
               <Choice
-                label="Tabellenkopf gilt für"
+                label={ui('Tabellenkopf gilt für')}
                 value={current.scope}
                 onChange={(scope) => change({ scope })}
                 items={[
@@ -188,14 +197,14 @@ export function TagRepairEditor({
                 ]}
               />
               <NumberField
-                label="Zellenspanne über Zeilen"
+                label={ui('Zellenspanne über Zeilen')}
                 min={1}
                 max={1000}
                 value={current.rowSpan}
                 onChange={(rowSpan) => change({ rowSpan })}
               />
               <NumberField
-                label="Zellenspanne über Spalten"
+                label={ui('Zellenspanne über Spalten')}
                 min={1}
                 max={1000}
                 value={current.colSpan}
@@ -205,14 +214,14 @@ export function TagRepairEditor({
           )}
           {node.fieldLabel !== null && (
             <Text
-              label="Zugängliche Formularbeschreibung"
+              label={ui('Zugängliche Formularbeschreibung')}
               value={current.fieldLabel || ''}
               onChange={(fieldLabel) => change({ fieldLabel })}
             />
           )}
           {node.reorderable && order.length > 1 && (
             <div>
-              <p>Lesereihenfolge der untergeordneten Tags</p>
+              <p>{ui('Lesereihenfolge der untergeordneten Tags')}</p>
               {order.map((id, index) => (
                 <div className="project-version" key={id}>
                   <span>
@@ -222,36 +231,37 @@ export function TagRepairEditor({
                     size="sm"
                     variant="outline"
                     disabled={index === 0}
-                    aria-label={`${id} früher lesen`}
+                    aria-label={ui(`${id} früher lesen`)}
                     onClick={() => {
                       const next = [...order];
                       [next[index - 1], next[index]] = [next[index], next[index - 1]];
                       change({ order: next });
                     }}
                   >
-                    Nach oben
+                    {ui('Nach oben')}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     disabled={index === order.length - 1}
-                    aria-label={`${id} später lesen`}
+                    aria-label={ui(`${id} später lesen`)}
                     onClick={() => {
                       const next = [...order];
                       [next[index + 1], next[index]] = [next[index], next[index + 1]];
                       change({ order: next });
                     }}
                   >
-                    Nach unten
+                    {ui('Nach unten')}
                   </Button>
                 </div>
               ))}
             </div>
           )}
           <p className="fine-note">
-            {Object.keys(value.changes).length} geänderte Knoten. Die reparierte PDF wird nur nach
-            bestandener maschineller PDF/UA-Prüfung ausgegeben. Alternativtexte, Tabellenbeziehungen
-            und Lesereihenfolge anschließend inhaltlich prüfen.
+            {Object.keys(value.changes).length}{' '}
+            {ui(
+              ' geänderte Knoten. Die reparierte PDF wird nur nach bestandener maschineller PDF/UA-Prüfung ausgegeben. Alternativtexte, Tabellenbeziehungen und Lesereihenfolge anschließend inhaltlich prüfen.',
+            )}
           </p>
         </>
       )}

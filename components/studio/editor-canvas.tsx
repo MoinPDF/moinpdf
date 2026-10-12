@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useRef, useState, type PointerEvent, type CSSProperties } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
@@ -18,6 +21,7 @@ const box = (r: Rect): CSSProperties => ({
   height: `${r.h * 100}%`,
 });
 export function MarkContent({ mark, width }: { mark: Mark; width: number }) {
+  useLanguage();
   if (mark.kind === 'text')
     return (
       <span
@@ -39,7 +43,7 @@ export function MarkContent({ mark, width }: { mark: Mark; width: number }) {
       <img
         className="editor-image-content"
         src={mark.image}
-        alt={mark.kind === 'signature' ? 'Unterschrift' : 'Eingefügtes Bild'}
+        alt={mark.kind === 'signature' ? ui('Unterschrift') : ui('Eingefügtes Bild')}
         draggable={false}
         style={{ opacity: mark.opacity ?? 1 }}
       />
@@ -47,6 +51,7 @@ export function MarkContent({ mark, width }: { mark: Mark; width: number }) {
   return null;
 }
 export function MarkLayers({ marks, width }: { marks: Mark[]; width: number }) {
+  useLanguage();
   return (
     <>
       {marks
@@ -94,6 +99,7 @@ export function EditorCanvas({
   onSelect: (id: string) => void;
   onDimensions: (dims: { width: number; height: number }) => void;
 }) {
+  useLanguage();
   const [url, setUrl] = useState(''),
     [dims, setDims] = useState({ width: 595.28, height: 841.89 }),
     [displayWidth, setDisplayWidth] = useState(595),
@@ -271,10 +277,12 @@ export function EditorCanvas({
       {action === 'pick' && (
         <p className="editor-detection" aria-live="polite">
           {loadingText
-            ? 'Textstellen werden erkannt …'
+            ? ui('Textstellen werden erkannt …')
             : available.length
-              ? `${available.length} Textstellen · anklicken und bearbeiten`
-              : 'Keine weiteren geraden Textstellen erkannt. Bei Scans oder gedrehter Schrift „Bereich ersetzen“ verwenden.'}
+              ? ui(`${available.length} Textstellen · anklicken und bearbeiten`)
+              : ui(
+                  'Keine weiteren geraden Textstellen erkannt. Bei Scans oder gedrehter Schrift „Bereich ersetzen“ verwenden.',
+                )}
         </p>
       )}
       <div className="canvas-holder">
@@ -294,11 +302,11 @@ export function EditorCanvas({
             setDraft(null);
             setMoving(null);
           }}
-          aria-label="PDF-Bearbeitungsfläche"
+          aria-label={ui('PDF-Bearbeitungsfläche')}
           role="region"
         >
           {url ? (
-            <img src={url} alt={`${source.name}, Seite ${page.index + 1}`} draggable={false} />
+            <img src={url} alt={ui(`${source.name}, Seite ${page.index + 1}`)} draggable={false} />
           ) : (
             <div className="canvas-loading">{error || <LoaderCircle className="spin" />}</div>
           )}
@@ -317,7 +325,7 @@ export function EditorCanvas({
                 key={t.id}
                 style={box(t)}
                 disabled={disabled}
-                aria-label={`Text bearbeiten: ${t.text}`}
+                aria-label={ui(`Text bearbeiten: ${t.text}`)}
                 title={t.text}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => pick(t)}
@@ -337,7 +345,9 @@ export function EditorCanvas({
               }}
               tabIndex={disabled ? -1 : 0}
               role="button"
-              aria-label={`${m.kind === 'text' ? 'Textfeld' : m.kind === 'erase' ? 'Entfernter Bereich' : m.kind === 'image' ? 'Bild' : 'Markierung'} auswählen${m.kind === 'text' && m.text ? `: ${m.text.slice(0, 60)}` : ''}`}
+              aria-label={ui(
+                `${m.kind === 'text' ? 'Textfeld' : m.kind === 'erase' ? 'Entfernter Bereich' : m.kind === 'image' ? 'Bild' : 'Markierung'} auswählen${m.kind === 'text' && m.text ? `: ${m.text.slice(0, 60)}` : ''}`,
+              )}
               aria-pressed={selectedId === m.id}
               onClick={(e) => {
                 e.stopPropagation();
@@ -375,7 +385,7 @@ export function EditorCanvas({
               {selectedId === m.id && (
                 <span
                   className="editor-resize"
-                  title="Größe ändern"
+                  title={ui('Größe ändern')}
                   onPointerDown={(e) => begin(e, m, true)}
                 />
               )}
@@ -383,7 +393,7 @@ export function EditorCanvas({
           ))}
           {crop && (
             <div className="crop-selection" style={box(crop)}>
-              <span>AUSSCHNITT</span>
+              <span>{ui('AUSSCHNITT')}</span>
             </div>
           )}
           {draft && <div className="editor-area-draft" style={box(draft)} />}

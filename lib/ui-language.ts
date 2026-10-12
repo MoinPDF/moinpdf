@@ -203,5 +203,99 @@ export const english: Record<string, string> = {
 };
 
 export function translate(text: string, language: Language, fallback?: string) {
-  return language === 'en' ? (fallback ?? english[text] ?? text) : text;
+  return language === 'en' ? (fallback ?? englishMessage(text)) : text;
+}
+
+// Extended copy is loaded once on demand, so German startup does not download
+// thousands of English tool messages. No content is sent to a translation API.
+let currentLanguage: Language = 'de';
+let catalogRequest: Promise<void> | undefined;
+let patterns: { pattern: RegExp; target: string; slots: string[]; weight: number }[] = [];
+const translated = new Map<string, string>();
+
+export function setUiLanguage(language: Language) {
+  currentLanguage = language;
+}
+
+export function uiLocale() {
+  return currentLanguage === 'en' ? 'en-GB' : 'de-DE';
+}
+
+export function installEnglishCatalog(catalog: Record<string, string>) {
+  for (const [key, value] of Object.entries(catalog)) {
+    if (typeof value === 'string' && key !== '__proto__') english[key] = value;
+  }
+  patterns = Object.entries(english)
+    .filter(
+      ([key]) =>
+        /\{\d+\}/.test(key) &&
+        key.replace(/\{\d+\}/g, '').replace(/[^A-Za-zÄÖÜäöüß]/g, '').length >= 3,
+    )
+    .map(([key, target]) => {
+      const slots: string[] = [];
+      const source = key
+        .split(/(\{\d+\})/)
+        .map((part) => {
+          if (/^\{\d+\}$/.test(part)) {
+            slots.push(part);
+            return '([\\s\\S]*?)';
+          }
+          return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        })
+        .join('');
+      return {
+        pattern: new RegExp('^' + source + '$'),
+        target,
+        slots,
+        weight: key.replace(/\{\d+\}/g, '').length,
+      };
+    })
+    .sort((a, b) => b.weight - a.weight);
+  translated.clear();
+}
+
+export function loadEnglishCatalog(version: string): Promise<void> {
+  catalogRequest ??= fetch(`/locales/en.json?v=${encodeURIComponent(version)}`)
+    .then(async (response) => {
+      if (!response.ok)
+        throw new Error('English language files could not be loaded. Please try again.');
+      const catalog: unknown = await response.json();
+      if (!catalog || typeof catalog !== 'object' || Array.isArray(catalog))
+        throw new Error('Invalid English language file.');
+      installEnglishCatalog(catalog as Record<string, string>);
+    })
+    .catch((error: unknown) => {
+      catalogRequest = undefined;
+      throw error;
+    });
+  return catalogRequest;
+}
+
+function englishMessage(text: string): string {
+  const key = text.replace(/\s+/g, ' ').trim();
+  const before = text.match(/^\s*/)?.[0] ?? '';
+  const after = text.match(/\s*$/)?.[0] ?? '';
+  let result = english[text] ?? english[key];
+  if (result !== undefined) return before + result.trim() + after;
+  if (translated.has(text)) return translated.get(text)!;
+  for (const entry of patterns) {
+    const match = entry.pattern.exec(key);
+    if (!match) continue;
+    const values = new Map(entry.slots.map((slot, index) => [slot, match[index + 1]]));
+    result = entry.target.replace(/\{\d+\}/g, (slot) => values.get(slot) ?? slot);
+    if (translated.size > 5000) translated.clear();
+    translated.set(text, before + result + after);
+    return before + result + after;
+  }
+  // Joined reports and third-party error wrappers can contain several authored
+  // messages. Translate each line without rewriting document text or filenames.
+  if (text.includes('\n')) return text.split('\n').map(englishMessage).join('\n');
+  return text;
+}
+
+/** Translate only application-authored copy at its rendering boundary. */
+export function ui(text: string | number | null | undefined): string {
+  if (text === null || text === undefined) return '';
+  const value = String(text);
+  return currentLanguage === 'en' ? englishMessage(value) : value;
 }

@@ -1,17 +1,21 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { splitBySize, sizeSplitZip, type SizePart } from '@/lib/size-split';
 import { NumberField, type PanelProps } from './advanced-shared';
 
 export function SplitSizePanel({ source, run }: PanelProps) {
+  useLanguage();
   const [limit, setLimit] = useState(10),
     [parts, setParts] = useState<SizePart[]>([]);
   return (
     <section className="advanced-card">
-      <h2>Passend für dein Upload-Limit</h2>
+      <h2>{ui('Passend für dein Upload-Limit')}</h2>
       <NumberField
-        label="Maximale Größe pro PDF (MB)"
+        label={ui('Maximale Größe pro PDF (MB)')}
         value={limit}
         min={0.1}
         max={80}
@@ -22,9 +26,9 @@ export function SplitSizePanel({ source, run }: PanelProps) {
         }}
       />
       <p className="fine-note">
-        1 MB = 1.000.000 Bytes. Die tatsächliche Dateigröße wird gemessen. Seiten bleiben in ihrer
-        Reihenfolge und werden nicht als Bilder neu komprimiert. Lesezeichen, Signaturen und
-        interaktive Formularfunktionen werden nicht übernommen.
+        {ui(
+          '1 MB = 1.000.000 Bytes. Die tatsächliche Dateigröße wird gemessen. Seiten bleiben in ihrer Reihenfolge und werden nicht als Bilder neu komprimiert. Lesezeichen, Signaturen und interaktive Formularfunktionen werden nicht übernommen.',
+        )}
       </p>
       <Button
         onClick={() =>
@@ -35,7 +39,7 @@ export function SplitSizePanel({ source, run }: PanelProps) {
           })
         }
       >
-        Teildateien berechnen
+        {ui('Teildateien berechnen')}
       </Button>
       {parts.length > 0 && (
         <>
@@ -43,9 +47,9 @@ export function SplitSizePanel({ source, run }: PanelProps) {
             <table className="advanced-table">
               <thead>
                 <tr>
-                  <th>Datei</th>
-                  <th>Seiten</th>
-                  <th>Größe</th>
+                  <th>{ui('Datei')}</th>
+                  <th>{ui('Seiten')}</th>
+                  <th>{ui('Größe')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -55,14 +59,16 @@ export function SplitSizePanel({ source, run }: PanelProps) {
                     <td>
                       {part.first}–{part.last}
                     </td>
-                    <td>{(part.bytes.length / 1e6).toFixed(3)} MB</td>
+                    <td>
+                      {(part.bytes.length / 1e6).toFixed(3)} {ui(' MB')}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <Button onClick={() => run((ctx) => sizeSplitZip(source, parts, ctx))}>
-            Alle Teildateien als ZIP speichern
+            {ui('Alle Teildateien als ZIP speichern')}
           </Button>
         </>
       )}

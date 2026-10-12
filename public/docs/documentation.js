@@ -1,4 +1,5 @@
 (() => {
+  const english = document.documentElement.lang === 'en';
   const search = document.querySelector('#docs-search');
   const reset = document.querySelector('#docs-reset');
   const buttons = [...document.querySelectorAll('.docs-filters button')];
@@ -20,10 +21,10 @@
         if (!entry.hidden) visible++;
       }
       group.hidden = visible === 0;
-      group.querySelector('.docs-group-count').textContent = `${visible} ${visible === 1 ? 'Werkzeug' : 'Werkzeuge'}`;
+      group.querySelector('.docs-group-count').textContent = `${visible} ${english ? (visible === 1 ? 'tool' : 'tools') : (visible === 1 ? 'Werkzeug' : 'Werkzeuge')}`;
       count += visible;
     }
-    status.textContent = `${count} von ${entries.length} Anleitungen`;
+    status.textContent = english ? `${count} of ${entries.length} guides` : `${count} von ${entries.length} Anleitungen`;
     document.querySelector('#docs-empty').hidden = count !== 0;
     reset.hidden = !search.value && category === 'all';
     buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.group === category)));

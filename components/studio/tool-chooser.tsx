@@ -1,4 +1,6 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
 import './tool-chooser.css';
@@ -110,7 +112,7 @@ export function ToolChooser({
               <button
                 onClick={() => onRemove(s.id)}
                 disabled={locked}
-                aria-label={`${s.name} schließen`}
+                aria-label={ui(`${s.name} schließen`)}
               >
                 <X size={13} />
               </button>
@@ -162,8 +164,8 @@ export function ToolChooser({
                           <tool.icon size={22} strokeWidth={1.6} />
                         </span>
                         <span>
-                          <strong>{tool.title}</strong>
-                          <small>{tool.description}</small>
+                          <strong>{ui(tool.title)}</strong>
+                          <small>{ui(tool.description)}</small>
                         </span>
                         {i === 0 && <kbd>↵</kbd>}
                       </CommandItem>
@@ -199,7 +201,7 @@ export function ToolChooser({
                 type="button"
                 className={`chooser-category category-${group}`}
                 key={group}
-                title={label}
+                title={ui(label)}
                 aria-pressed={activeGroup === group}
                 aria-controls="chooser-all-tools"
                 disabled={locked}
@@ -218,11 +220,11 @@ export function ToolChooser({
           {groups.map(
             (label, group) =>
               (activeGroup === null || activeGroup === group) && (
-                <section className="chooser-tool-section" key={group} aria-label={label}>
+                <section className="chooser-tool-section" key={group} aria-label={ui(label)}>
                   <div className="chooser-section-heading">
-                    <h3>{label}</h3>
+                    <h3>{ui(label)}</h3>
                   </div>
-                  <nav className="chooser-tool-grid" aria-label={`Werkzeuge: ${label}`}>
+                  <nav className="chooser-tool-grid" aria-label={ui(`Werkzeuge: ${label}`)}>
                     {visibleTools
                       .filter((tool) => tool.group === group)
                       .map((tool) => (
@@ -230,13 +232,13 @@ export function ToolChooser({
                           key={tool.id}
                           disabled={locked}
                           onClick={() => onChoose(tool.id)}
-                          title={tool.description}
+                          title={ui(tool.description)}
                           className={`chooser-tool tone-${tool.group}`}
                         >
                           <span>
                             <tool.icon size={27} strokeWidth={1.45} />
                           </span>
-                          <strong>{tool.title}</strong>
+                          <strong>{ui(tool.title)}</strong>
                         </button>
                       ))}
                   </nav>

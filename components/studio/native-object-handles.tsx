@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useRef, type PointerEvent } from 'react';
 import type { NativeObject } from '@/lib/native-pdf';
 type Transform = { dx: number; dy: number; scale: number; rotation: number };
@@ -17,6 +20,7 @@ export function NativeObjectHandles({
   onSelect: (id: number) => void;
   disabled: boolean;
 }) {
+  useLanguage();
   const root = useRef<HTMLDivElement>(null);
   const drag = useRef<{
     kind: 'move' | 'scale' | 'rotate';
@@ -121,7 +125,7 @@ export function NativeObjectHandles({
           <button
             type="button"
             disabled={disabled}
-            aria-label="Objekt auf der Seite verschieben"
+            aria-label={ui('Objekt auf der Seite verschieben')}
             style={{
               position: 'absolute',
               inset: 0,
@@ -163,7 +167,7 @@ export function NativeObjectHandles({
           <button
             type="button"
             disabled={disabled}
-            aria-label="Objekt proportional skalieren"
+            aria-label={ui('Objekt proportional skalieren')}
             style={{
               position: 'absolute',
               right: -9,
@@ -191,7 +195,7 @@ export function NativeObjectHandles({
           <button
             type="button"
             disabled={disabled}
-            aria-label="Objekt drehen"
+            aria-label={ui('Objekt drehen')}
             style={{
               position: 'absolute',
               left: 'calc(50% - 9px)',

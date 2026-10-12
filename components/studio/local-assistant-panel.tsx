@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Text, Tick, PageStage, type PanelProps } from './advanced-shared';
@@ -16,6 +19,7 @@ import {
   type GroundedAnswer,
 } from '@/lib/grounded-assistant';
 export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
+  const { language } = useLanguage();
   const [file, setFile] = useState<Blob | null>(null),
     [remember, setRemember] = useState(false),
     [question, setQuestion] = useState(''),
@@ -48,30 +52,33 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
   return (
     <div className="advanced-grid">
       <section className="advanced-card">
-        <h2>Fragen an deine PDFs</h2>
+        <h2>{ui('Fragen an deine PDFs')}</h2>
         <p>
-          Das Sprachmodell läuft auf diesem Gerät. Dokumente, Fragen und Antworten werden nicht an
-          einen KI-Dienst übertragen.
+          {ui(
+            'Das Sprachmodell läuft auf diesem Gerät. Dokumente, Fragen und Antworten werden nicht an einen KI-Dienst übertragen.',
+          )}
         </p>
         <p className="fine-note">
-          Einmalig {localModelInfo.name} herunterladen (409 MB, Apache-2.0) und hier auswählen. Die
-          Prüfsumme wird vor der Verwendung kontrolliert. Die Berechnung benötigt zusätzlichen
-          Arbeitsspeicher und kann auf kleinen Geräten langsam sein.
+          {ui('Einmalig ')}
+          {localModelInfo.name}{' '}
+          {ui(
+            ' herunterladen (409 MB, Apache-2.0) und hier auswählen. Die Prüfsumme wird vor der Verwendung kontrolliert. Die Berechnung benötigt zusätzlichen Arbeitsspeicher und kann auf kleinen Geräten langsam sein.',
+          )}
         </p>
         <a href={localModelInfo.url} target="_blank" rel="noreferrer">
-          Geprüfte Modelldatei herunterladen
+          {ui('Geprüfte Modelldatei herunterladen')}
         </a>
         <Tick
-          label="Modelldatei für spätere Sitzungen auf diesem Gerät speichern"
+          label={ui('Modelldatei für spätere Sitzungen auf diesem Gerät speichern')}
           value={remember}
           onChange={setRemember}
         />
         <label className="advanced-field">
-          <span>Lokale Modelldatei (.gguf)</span>
+          <span>{ui('Lokale Modelldatei (.gguf)')}</span>
           <input
             type="file"
             accept=".gguf"
-            aria-label="Lokale Modelldatei"
+            aria-label={ui('Lokale Modelldatei')}
             disabled={busy}
             onChange={(event) => {
               const next = event.target.files?.[0];
@@ -89,7 +96,11 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
             }}
           />
         </label>
-        {file && <p role="status">{localModelInfo.name} · Modelldatei verfügbar</p>}
+        {file && (
+          <p role="status">
+            {localModelInfo.name} {ui(' · Modelldatei verfügbar')}
+          </p>
+        )}
         <Button
           variant="outline"
           disabled={busy}
@@ -103,9 +114,13 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
             })
           }
         >
-          Modell entladen und gespeicherte Kopie löschen
+          {ui('Modell entladen und gespeicherte Kopie löschen')}
         </Button>
-        <Text label="Frage zu den geöffneten Dokumenten" value={question} onChange={setQuestion} />
+        <Text
+          label={ui('Frage zu den geöffneten Dokumenten')}
+          value={question}
+          onChange={setQuestion}
+        />
         <Button
           disabled={busy || !file || !question.trim() || question.length > 600}
           onClick={() =>
@@ -123,7 +138,9 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
                 await model.current.load(file, ctx);
                 ctx.report({ percent: 40, label: 'Lokale Antwort mit Quellen erzeugen' });
                 const raw = await model.current.answer(
-                  assistantSystem,
+                  language === 'en'
+                    ? assistantSystem.replace('in German', 'in English')
+                    : assistantSystem,
                   assistantPrompt(question, passages),
                   assistantSchema(passages),
                   ctx.signal,
@@ -160,34 +177,38 @@ export function LocalAssistantPanel({ sources, busy, run }: PanelProps) {
             })
           }
         >
-          Frage lokal beantworten
+          {ui('Frage lokal beantworten')}
         </Button>
-        {notice && <p role="status">{notice}</p>}
+        {notice && <p role="status">{ui(notice)}</p>}
         {answer && (
-          <section aria-label="Antwort des lokalen Assistenten" aria-live="polite">
-            <h3>{answer.abstain ? 'Keine belegte Antwort' : 'Modellantwort'}</h3>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{answer.answer}</p>
+          <section aria-label={ui('Antwort des lokalen Assistenten')} aria-live="polite">
+            <h3>{answer.abstain ? ui('Keine belegte Antwort') : ui('Modellantwort')}</h3>
+            <p style={{ whiteSpace: 'pre-wrap' }}>
+              {answer.abstain ? ui(answer.answer) : answer.answer}
+            </p>
             {answer.citations.map((citation, index) => (
               <div key={index}>
                 <blockquote>{citation.quote}</blockquote>
                 <Button variant="outline" onClick={() => setFocus(citation)}>
-                  {citation.name} · Seite {citation.page + 1} anzeigen
+                  {citation.name} {ui(' · Seite ')}
+                  {citation.page + 1} {ui(' anzeigen')}
                 </Button>
               </div>
             ))}
             <p className="fine-note">
-              Zitate werden unverändert aus den ausgewählten Originalpassagen übernommen. Die
-              Auslegung durch das Modell kann trotzdem falsch sein; bei OCR zusätzlich das
-              Seitenbild kontrollieren. Für die Antwort wurden lokal ausgewählte Passagen verwendet.
+              {ui(
+                'Zitate werden unverändert aus den ausgewählten Originalpassagen übernommen. Die Auslegung durch das Modell kann trotzdem falsch sein; bei OCR zusätzlich das Seitenbild kontrollieren. Für die Antwort wurden lokal ausgewählte Passagen verwendet.',
+              )}
             </p>
           </section>
         )}
       </section>
       {source && focus && (
         <aside className="advanced-card">
-          <h3>Fundstelle im Original</h3>
+          <h3>{ui('Fundstelle im Original')}</h3>
           <p>
-            {source.name} · Seite {focus.page + 1}
+            {source.name} {ui(' · Seite ')}
+            {focus.page + 1}
           </p>
           <PageStage source={source} page={focus.page} rects={focus.rects} />
         </aside>

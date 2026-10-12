@@ -1,9 +1,13 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useState } from 'react';
 import { FileSearch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { PdfReport } from '@/lib/pdf-report';
 export function ReportView({ report }: { report: PdfReport }) {
+  useLanguage();
   const [showSame, setShowSame] = useState(false),
     [limit, setLimit] = useState(100);
   const unchanged = (s: PdfReport['sections'][number]) =>
@@ -14,14 +18,14 @@ export function ReportView({ report }: { report: PdfReport }) {
     <div className="pdf-report">
       <div className="report-heading">
         <FileSearch size={24} />
-        <h2>{report.title}</h2>
+        <h2>{ui(report.title)}</h2>
       </div>
-      <p className="report-description">{report.description}</p>
+      <p className="report-description">{ui(report.description)}</p>
       <div className="report-stats">
         {report.stats.map((stat) => (
           <div key={stat.label}>
-            <strong>{stat.value}</strong>
-            <span>{stat.label}</span>
+            <strong>{ui(stat.value)}</strong>
+            <span>{ui(stat.label)}</span>
           </div>
         ))}
       </div>
@@ -35,13 +39,14 @@ export function ReportView({ report }: { report: PdfReport }) {
               setLimit(100);
             }}
           />
-          Unveränderte Textblöcke ebenfalls anzeigen
+          {ui('Unveränderte Textblöcke ebenfalls anzeigen')}
         </label>
       )}
       {hasSame && !sections.length && (
         <p>
-          Keine Textänderungen in den auslesbaren Inhalten gefunden. Unveränderte Texte kannst du
-          oben einblenden.
+          {ui(
+            'Keine Textänderungen in den auslesbaren Inhalten gefunden. Unveränderte Texte kannst du oben einblenden.',
+          )}
         </p>
       )}
       <div className="report-sections">
@@ -51,7 +56,7 @@ export function ReportView({ report }: { report: PdfReport }) {
             open={section.status ? !section.status.startsWith('Text gleich') : index === 0}
           >
             <summary>
-              <span>{section.title}</span>
+              <span>{ui(section.title)}</span>
               {section.status && (
                 <b
                   className={
@@ -62,7 +67,7 @@ export function ReportView({ report }: { report: PdfReport }) {
                         : 'incomplete'
                   }
                 >
-                  {section.status}
+                  {ui(section.status)}
                 </b>
               )}
             </summary>
@@ -70,7 +75,7 @@ export function ReportView({ report }: { report: PdfReport }) {
               <dl>
                 {section.details.map((detail, i) => (
                   <div key={i}>
-                    <dt>{detail.label}</dt>
+                    <dt>{ui(detail.label)}</dt>
                     <dd>{detail.value}</dd>
                   </div>
                 ))}
@@ -83,9 +88,9 @@ export function ReportView({ report }: { report: PdfReport }) {
                     <span
                       aria-label={
                         line.kind === 'added'
-                          ? 'Hinzugefügt'
+                          ? ui('Hinzugefügt')
                           : line.kind === 'removed'
-                            ? 'Entfernt'
+                            ? ui('Entfernt')
                             : undefined
                       }
                     >
@@ -97,7 +102,11 @@ export function ReportView({ report }: { report: PdfReport }) {
                             ? '!'
                             : ''}
                     </span>
-                    <p>{line.text}</p>
+                    <p>
+                      {line.kind === 'note' || report.title === 'PDF-Dokumentbericht'
+                        ? ui(line.text)
+                        : line.text}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -107,8 +116,9 @@ export function ReportView({ report }: { report: PdfReport }) {
       </div>
       {sections.length > limit && (
         <Button variant="outline" onClick={() => setLimit((old) => old + 100)}>
-          Weitere {Math.min(100, sections.length - limit)} Einträge anzeigen ({limit} von{' '}
-          {sections.length})
+          {ui(
+            `Weitere ${Math.min(100, sections.length - limit)} Einträge anzeigen (${limit} von ${sections.length})`,
+          )}
         </Button>
       )}
     </div>

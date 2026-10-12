@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,11 +52,12 @@ async function replacementImage(file: File) {
   }
 }
 export function NativePanel(props: PanelProps) {
+  useLanguage();
   const [mode, setMode] = useState('object');
   return (
     <>
       <Choice
-        label="Bearbeitung"
+        label={ui('Bearbeitung')}
         value={mode}
         onChange={setMode}
         items={[
@@ -70,6 +74,7 @@ export function NativePanel(props: PanelProps) {
   );
 }
 function SingleObjectPanel({ source, busy, run }: PanelProps) {
+  useLanguage();
   const [page, setPage] = useState(0),
     [objects, setObjects] = useState<NativeObject[]>([]),
     [selected, setSelected] = useState(-1),
@@ -116,10 +121,11 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
   return (
     <div className="century-columns">
       <section className="advanced-card">
-        <h2>Vorhandene Objekte bearbeiten</h2>
+        <h2>{ui('Vorhandene Objekte bearbeiten')}</h2>
         <p>
-          Text in der Originalschrift ändern. Bilder und Grafiken verschieben, drehen, skalieren
-          oder löschen.
+          {ui(
+            'Text in der Originalschrift ändern. Bilder und Grafiken verschieben, drehen, skalieren oder löschen.',
+          )}
         </p>
         <PageSelect
           source={source}
@@ -143,14 +149,14 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
             })
           }
         >
-          Seitenobjekte laden
+          {ui('Seitenobjekte laden')}
         </Button>
         {loaded && !objects.length && (
-          <p>Keine einzeln bearbeitbaren Objekte auf dieser Seite gefunden.</p>
+          <p>{ui('Keine einzeln bearbeitbaren Objekte auf dieser Seite gefunden.')}</p>
         )}
         {!!objects.length && (
           <Choice
-            label="Objekt auswählen"
+            label={ui('Objekt auswählen')}
             value={String(selected)}
             onChange={(v) => select(Number(v))}
             items={[
@@ -167,22 +173,26 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
         )}
         {object && (
           <>
-            {object.type === 'text' && <Text label="Textinhalt" value={text} onChange={setText} />}
+            {object.type === 'text' && (
+              <Text label={ui('Textinhalt')} value={text} onChange={setText} />
+            )}
             {object.type === 'image' && (
               <label className="advanced-field">
-                <span>Bild ersetzen (PNG, JPG, WebP)</span>
+                <span>{ui('Bild ersetzen (PNG, JPG, WebP)')}</span>
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   onChange={(e) => setImage(e.target.files?.[0] || null)}
                 />
                 {image && (
-                  <small>{image.name} · wird in die vorhandene Bildfläche eingesetzt</small>
+                  <small>
+                    {image.name} {ui(' · wird in die vorhandene Bildfläche eingesetzt')}
+                  </small>
                 )}
               </label>
             )}
             <NumberField
-              label="Verschiebung nach rechts (% Seitenbreite)"
+              label={ui('Verschiebung nach rechts (% Seitenbreite)')}
               value={dx}
               onChange={setDx}
               min={-100}
@@ -190,23 +200,29 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
               step={0.5}
             />
             <NumberField
-              label="Verschiebung nach unten (% Seitenhöhe)"
+              label={ui('Verschiebung nach unten (% Seitenhöhe)')}
               value={dy}
               onChange={setDy}
               min={-100}
               max={100}
               step={0.5}
             />
-            <NumberField label="Größe (%)" value={scale} onChange={setScale} min={10} max={1000} />
             <NumberField
-              label="Drehung im Uhrzeigersinn (Grad)"
+              label={ui('Größe (%)')}
+              value={scale}
+              onChange={setScale}
+              min={10}
+              max={1000}
+            />
+            <NumberField
+              label={ui('Drehung im Uhrzeigersinn (Grad)')}
               value={rotation}
               onChange={setRotation}
               min={-360}
               max={360}
             />
             <Choice
-              label="Zeichenreihenfolge"
+              label={ui('Zeichenreihenfolge')}
               value={order}
               onChange={(v) => setOrder(v as typeof order)}
               items={[
@@ -237,27 +253,29 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
                 )
               }
             >
-              Objektänderung exportieren
+              {ui('Objektänderung exportieren')}
             </Button>
             <Button
               disabled={busy}
               variant="outline"
               onClick={() => run((ctx) => save([{ index: selected, remove: true }], ctx.signal))}
             >
-              Objekt aus Ausgabe löschen
+              {ui('Objekt aus Ausgabe löschen')}
             </Button>
           </>
         )}
         {!!objects.length && (
           <>
-            <h3>Suchen und ersetzen auf dieser Seite</h3>
+            <h3>{ui('Suchen und ersetzen auf dieser Seite')}</h3>
             <Text
-              label="Suchtext (Groß-/Kleinschreibung beachten)"
+              label={ui('Suchtext (Groß-/Kleinschreibung beachten)')}
               value={find}
               onChange={setFind}
             />
-            <Text label="Ersetzen durch" value={replace} onChange={setReplace} />
-            <p>{matches.length} passende Textobjekte</p>
+            <Text label={ui('Ersetzen durch')} value={replace} onChange={setReplace} />
+            <p>
+              {matches.length} {ui(' passende Textobjekte')}
+            </p>
             <Button
               disabled={busy || !matches.length}
               variant="outline"
@@ -273,18 +291,14 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
                 )
               }
             >
-              Ersetzungen exportieren
+              {ui('Ersetzungen exportieren')}
             </Button>
           </>
         )}
         <p className="fine-note">
-          Objekte in der Vorschau auswählen; am Rahmen verschieben, am Eckpunkt skalieren und am
-          runden Griff drehen. Die Pfeiltasten bedienen den fokussierten Griff. Jede Ausgabe basiert
-          auf der geöffneten Datei; für weitere Änderungen „Ergebnis übernehmen“ verwenden.
-          Bearbeitet werden einzelne Textobjekte. Für mehrere Texte und automatischen Umbruch oben
-          „Absatz“ wählen. Fehlende Zeichen in eingebetteten Schriften werden gemeldet. Inhalte in
-          Objektgruppen sind hier gemeinsam bearbeitbar. Das Löschen ist keine
-          Sicherheitsbereinigung.
+          {ui(
+            'Objekte in der Vorschau auswählen; am Rahmen verschieben, am Eckpunkt skalieren und am runden Griff drehen. Die Pfeiltasten bedienen den fokussierten Griff. Jede Ausgabe basiert auf der geöffneten Datei; für weitere Änderungen „Ergebnis übernehmen“ verwenden. Bearbeitet werden einzelne Textobjekte. Für mehrere Texte und automatischen Umbruch oben „Absatz“ wählen. Fehlende Zeichen in eingebetteten Schriften werden gemeldet. Inhalte in Objektgruppen sind hier gemeinsam bearbeitbar. Das Löschen ist keine Sicherheitsbereinigung.',
+          )}
         </p>
       </section>
       <section className="advanced-card">

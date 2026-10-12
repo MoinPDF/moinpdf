@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,follow">
+  <meta name="description" content="MoinPDF privacy information: local document editing, the controller's server, Cloudflare, Tuta and browser storage.">
+  <meta name="theme-color" content="#176c64">
+  <title>Privacy policy · MoinPDF</title>
+  <link rel="icon" href="/favicon.png?v=43c33290ac2f" type="image/png" sizes="256x256">
+  <link rel="shortcut icon" href="/favicon.ico?v=43c33290ac2f">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=43c33290ac2f" sizes="180x180">
+  <link rel="stylesheet" href="/legal/legal.css?v=42a9f0479ef4">
+<script src="/appearance-init.js"></script><script src="/language-init.js"></script><link rel="stylesheet" href="/appearance.css">
+</head>
+<body>
+  <a class="legal-skip" href="#inhalt">Skip to content</a>
+  <header class="legal-header">
+    <a class="legal-brand" href="/?lang=en" aria-label="MoinPDF homepage"><span class="information-wordmark"><img class="logo-light" src="/branding/moinpdf-wordmark.svg" width="680" height="170" alt="MoinPDF"><img class="logo-dark" src="/branding/moinpdf-wordmark-dark.svg" width="680" height="170" alt="MoinPDF"><span>Paperwork. Sorted.</span></span></a>
+    <a class="legal-back" href="/?lang=en"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>Back to app</a>
+  </header>
+  <main class="legal-main">
+    <nav class="legal-nav" aria-label="About MoinPDF"><a href="/en/documentation.html">Documentation</a><a href="/en/media.html">Media</a><a href="/en/legal.html">Legal notice</a><a href="/en/privacy.html" aria-current="page">Privacy policy</a></nav>
+    <article class="legal-card" id="inhalt">
+      <div class="legal-meta"><span>Data protection and processing</span><time datetime="2026-10-11">Updated: 11 October 2026</time></div>
+      <h1>Privacy policy</h1>
+      <p class="legal-intro">Many tools work directly on your device. For server tools, you explicitly choose which files are transferred.</p>
+
+      <section id="verantwortlicher">
+        <h2>1. Responsible and contact</h2>
+        <address><strong>Denny Wenke</strong><br>Am Eichenhof 13<br>28832 Achim<br>Germany</address>
+        <p>Email for data protection requests: <a href="mailto:post@moinpdf.de">post@moinpdf.de</a></p>
+        <p>These provider details apply to the MoinPDF service offered by the controller named above. For an independently operated installation, its operator is responsible for their own processing and must adapt this information accordingly.</p>
+      </section>
+
+      <section id="lokale-verarbeitung">
+        <h2>2. Documents and local processing</h2>
+        <p>When you select files or drag them onto the start page, MoinPDF first reads them in your browser. It processes the document contents, filenames and metadata you select, along with your editing inputs. These may contain personal and confidential information.</p>
+        <p>Browser tools such as merging, splitting, rotating, text recognition, image editing and generating export files run on your device. These functions do not upload your documents to a document server or AI service. The necessary program libraries, fonts and OCR language files are supplied with MoinPDF.</p>
+        <p>Open files, previews, editing steps and results are held in memory during the session. Unless you save a project, the session ends when you reload or close the app. “Projects” lets you save documents and edits persistently in this browser; the current session is also saved locally before you open another project snapshot. Original files and downloaded results on your device are retained independently. Local storage is described in Section 5.</p>
+        <p>Selecting documents and using the tools is voluntary. A tool cannot work without a suitable file. If you use other people's documents, you must be authorised to process them and ensure that the necessary legal basis exists.</p>
+      </section>
+
+      <section id="dokumentenserver">
+        <h2>3. Document servers and translations</h2>
+        <p>Certain tools require a document server, including Office conversions, PDF/A, full invoice validation and certificate signatures. This server is integrated into the complete Docker installation and connects automatically. Users do not need to enter a server address or access key. An edition without an integrated document service offers only the local functions available in that edition. Checking the connection does not transmit document files.</p>
+        <p>The app sends the selected file and required settings to this server only when you start processing with the relevant action button. Depending on the tool, this may also include invoice XML, email attachments, Word templates or Excel spreadsheets. Signing transmits the selected certificate, including its private key, and the certificate password you enter for that signing job.</p>
+        <p>For jobs submitted through the access protected by Cloudflare, the transmitted documents, settings and results also pass through Cloudflare's infrastructure. Further details are provided in <a href="#cloudflare">Section 4</a>. Local editing in the browser does not trigger this transmission.</p>
+        <p>For PDF translation, the document server forwards the extracted text to the configured translation service. The complete Docker installation uses its own LibreTranslate service on the internal network. The tool view offers the supported source and target languages.</p>
+        <p>The supplied server uses temporary working directories for each job and removes them after processing, including when errors are handled normally. It does not maintain a permanent document repository. Docker volumes contain operational data such as language models and internal keys; they are not intended as document archives. Cancelling the wait in your browser does not necessarily stop a server job that has already started immediately.</p>
+        <p>Technical processing serves only the job you initiate. Where your own personal user data is necessary to provide the requested service, the legal basis is Article 6(1)(b) GDPR. For documents relating to other people, the roles and legal bases depend on the particular use. Approval in the interface does not replace the necessary legal basis or any required data processing agreement.</p>
+        <p>For independently operated document or translation servers, their operators' information also applies. This web app cannot control their actual storage or disclosure practices.</p>
+      </section>
+
+      <section id="hosting">
+        <h2>4. Website access, hosting and registration</h2>
+        <p>Visiting the website involves processing technically necessary connection data, particularly your IP address, the time, the requested address and technical browser information. This is separate from documents opened locally. The purposes are delivering the app, resolving faults and preventing misuse. The legal basis is Article 6(1)(f) GDPR, with a legitimate interest in secure, functional operation.</p>
+        <h3>Own server</h3>
+        <p>The self-hosted version of MoinPDF runs on the controller's own server. It hosts the web app, document server and translation service included in Docker. HTTP access logging is disabled in the supplied document server, and the supplied web proxy does not enable its own HTTP access log. Technical operational and error messages may still be generated. Their necessary retention period depends on resolving a fault, investigating a security incident and any statutory retention obligations.</p>
+        <p>When password protection is enabled, the web server checks the login. The browser may retain the credentials for the session. Document jobs are not made publicly available as an archive.</p>
+        <h3 id="cloudflare">Cloudflares</h3>
+        <p>Cloudflare sits in front of the controller's server to deliver and secure the website. The provider is Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, USA. In particular, Cloudflare processes IP addresses, connection and request data, and security information to forward requests and detect attacks or misuse. Its use is based on Article 6(1)(f) GDPR and the interest in reliable, secure delivery.</p>
+        <p>As an intermediary, Cloudflare also processes the content of requests and responses transmitted through this access. For server tools, this includes the data described in Section 3. HTTPS protects data in transit; however, Cloudflare is part of the processing chain and can access decrypted content while forwarding it. The purposes and legal bases explained in Section 3 apply to processing job content.</p>
+        <p>Cloudflare's global network may involve processing outside the EU or EEA, particularly in the USA. Cloudflare identifies the EU–US Data Privacy Framework for covered transfers to the USA and EU standard contractual clauses with additional safeguards for other restricted transfers to third countries. The conditions and intended safeguards are set out in the <a href="https://www.cloudflare.com/cloudflare-customer-dpa/" target="_blank" rel="noopener noreferrer">Data Processing Addendum</a> described.</p>
+        <p>Retention of connection and security data depends on the service, its settings and the purpose of processing. Cloudflare cites the need to provide and secure the service and statutory obligations as relevant criteria. Completing a document job therefore does not automatically delete all connection data held by Cloudflare. Further information is provided in the <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Cloudflare privacy policy</a>; Information about security cookies is provided in Section 5.</p>
+      </section>
+
+      <section id="browser-speicher">
+        <h2>5. Browser storage, cookies and analysis</h2>
+        <p>MoinPDF has no built-in advertising or analytics trackers. The interface does not require persistent cookies of its own. Technically necessary cookies used by an upstream login or hosting service are separate.</p>
+        <p>Depending on the protection features enabled, Cloudflare may set security cookies, such as “__cf_bm” to detect bots or “cf_clearance” to remember a completed security check. “__cf_bm” expires after 30 minutes of inactivity; the validity of “cf_clearance” depends on the configured protection feature. Where access is strictly necessary for secure delivery, it is based on Section 25(2)(2) TDDDG. Processing personal security data is based on Article 6(1)(f) GDPR. Details are explained in Cloudflare's <a href="https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/" target="_blank" rel="noopener noreferrer">Overview of security cookies</a>.</p>
+        <dl class="legal-storage">
+          <div><dt>Local PDF projects</dt><dd>Document files, filenames, page order, editor changes, forms, bookmarks and undo history saved through “Projects” are stored unencrypted in IndexedDB under “moinpdf.projects.v1”. This also applies to PDFs that were previously unlocked. The last five saved snapshots can be restored. You can save a selected snapshot as a .moinpdf project file on your device and open it in another browser. This file contains originals, edits and undo history without encryption. Before opening another project snapshot, the current session is saved locally. Nothing is uploaded. Projects remain until you delete them in the app or remove the website's data; the browser may also remove data when storage is low.</dd></div>
+          <div><dt>Stored workflows</dt><dd>If you explicitly select “Save workflow”, the browser stores its name, steps and settings in localStorage under “moinpdf.workflows.v1”. This may include stamp or watermark text you enter. Document files and opening passwords are not saved with it. Entries remain until you remove the workflow or delete the website's data.</dd></div>
+          <div><dt>Connection and certificate password</dt><dd>The interface does not store server addresses or API keys. An entry named “moinpdf.document-server” left by an older version is no longer used and can be removed by deleting website data. Certificate passwords remain in memory for the current signing job and are removed from the input field when it finishes.</dd></div>
+          <div><dt>Optionally stored assistant model</dt><dd>If you enable “Save model file on this device for later sessions” in the local assistant, only the verified model file is stored in IndexedDB under “moinpdf.local-model.v1”. Document contents, questions and answers are not stored there. You can delete the file through “Unload model and delete saved copy” or by removing the website's data. Without this option, the model is held in memory only for the current use.</dd></div>
+          <div><dt>Program and language files</dt><dd>The browser may cache program files and also store OCR language models in IndexedDB, so they do not need to be downloaded for every text recognition operation. These caches contain no document files placed there by the app. You can clear them through your browser's website data settings.</dd></div>
+        </dl>
+        <p>These storage operations support the functions you explicitly request. Where strictly necessary for those functions, Section 25(2)(2) TDDDG applies. Personal settings are processed to provide the requested function on the basis of Article 6(1)(b) GDPR. MoinPDF does not initiate unnecessary analytics or advertising access.</p>
+      </section>
+
+      <section id="kamera-assistent">
+        <h2>6. Photo selection and optional assistants</h2>
+        <p>The camera scanner uses your device's photo or file picker. A supported browser may offer the camera. Selected images are initially edited locally; the app does not start a continuous camera stream. The operating system and browser control the required permissions.</p>
+        <p>The local document assistant runs the Qwen2.5 0.5B Instruct language model on your device. Selected document text, your question and the generated answer are processed locally and are not sent to a model provider by this function. Questions and answers remain in the open session unless you explicitly export them to a file. “Unload model and delete saved copy” ends the model runtime.</p>
+        <p>The model file is not automatically downloaded from a third party. The download link opens Hugging Face, Inc. as an external service; you then select the downloaded file yourself. When you visit and download, this provider receives technically necessary connection data, including your IP address and browser and device information. Its privacy policy also allows for processing in the USA. Documents and questions are not included in the download request. Details are provided in the <a href="https://huggingface.co/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy of Hugging Face</a>. An existing suitable model file can be selected without another external download.</p>
+        <p>If you use a compatible browser assistant, the provided interface lets it query filenames, page counts, selected pages, the number of edits and processing status, and select a tool and page range. This interface does not provide document contents. What else your assistant can perceive or process in the browser depends on its permissions, provider and settings.</p>
+      </section>
+
+      <section id="kontakt">
+        <h2>7. Contact details</h2>
+        <p>If you write to <a href="mailto:ahoi@moinpdf.de">ahoi@moinpdf.de</a> or in the case of data protection requests <a href="mailto:post@moinpdf.de">post@moinpdf.de</a> , your sender address, message and any information you voluntarily provide are used to handle your enquiry. For contractual or pre-contractual enquiries, the legal basis is Article 6(1)(b) GDPR. Other enquiries are handled under Article 6(1)(f) GDPR, with an interest in responding to your request.</p>
+        <p>Email communication is handled through Tuta. The provider is Tutao GmbH, Deisterstr. 17a, 30449 Hannover, Germany. Tuta processes email to deliver messages and provide the mailbox, and states that it stores data in data centres in Germany. MoinPDF does not automatically send edited documents to these contact addresses.</p>
+        <p>Tuta stores message contents and attachments in encrypted form. Technically necessary metadata, such as sender and recipient addresses and the time of an email, remains readable by the service. Ordinary emails from other providers are not automatically encrypted end to end. This encryption applies to communication between Tuta accounts or to a separately agreed password-protected exchange. Tuta provides further information about <a href="https://tuta.com/encryption" target="_blank" rel="noopener noreferrer">Email encryption</a>.</p>
+        <p>Messages are kept for as long as necessary to handle the enquiry, protect legitimate evidentiary interests or fulfil statutory retention obligations. They are deleted once these purposes no longer apply. According to its privacy policy, Tuta keeps mail server logs containing sender and recipient addresses and connection times for no more than seven days. Details are provided in the <a href="https://tuta.com/de/privacy-policy" target="_blank" rel="noopener noreferrer">Tuta privacy policy</a>. Please send as anonymized examples as possible for technical queries.</p>
+      </section>
+
+      <section id="rechte">
+        <h2>8. Your rights</h2>
+        <p>To the extent provided by law, you have rights of access, rectification, erasure, restriction of processing and data portability. You may withdraw consent at any time with effect for the future; this does not affect the lawfulness of previous processing.</p>
+        <p><strong>Objection:</strong> You may object to processing based on Article 6(1)(f) GDPR on grounds relating to your particular situation. To do so, contact <a href="mailto:post@moinpdf.de">post@moinpdf.de</a>.</p>
+        <p>You may lodge a complaint with a data protection supervisory authority, particularly where you live or work or where a suspected infringement occurred. For the operator in Lower Saxony, the relevant authority is the <a href="https://www.lfd.niedersachsen.de/startseite/wir_uber_uns/kontakt_und_anfahrt/kontakt-und-anreise-56182.html" target="_blank" rel="noopener noreferrer">State Commissioner for Data Protection in Lower Saxony</a> a point of contact.</p>
+        <p>MoinPDF does not make automated decisions that have legal or similarly significant effects and does not create user profiles. Technical document checks and translations are tool outputs and do not replace your own review.</p>
+      </section>
+
+      <section class="legal-sources">
+        <h2>Legal basis</h2>
+        <p><a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj/deu" target="_blank" rel="noopener noreferrer">General Data Protection Regulation</a> · <a href="https://www.gesetze-im-internet.de/ttdsg/__25.html" target="_blank" rel="noopener noreferrer">§ 25 TDDDG</a></p>
+      </section>
+    </article>
+    <footer class="legal-footer"><span>© 2026 MoinPDF</span><nav class="legal-nav" aria-label="About MoinPDF"><a href="/en/documentation.html">Documentation</a><a href="/en/media.html">Media</a><a href="/en/legal.html">Legal notice</a><a href="/en/privacy.html" aria-current="page">Privacy policy</a></nav></footer>
+  </main>
+</body>
+</html>

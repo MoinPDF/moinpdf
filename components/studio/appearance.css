@@ -112,23 +112,24 @@ body {
 .appearance-controls {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   flex-shrink: 0;
 }
 .appearance-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  min-height: 48px;
+  gap: 7px;
+  min-height: 36px;
   border: 1px solid var(--ui-control-line);
-  border-radius: 13px;
-  background: var(--ui-control);
-  color: var(--ui-heading);
-  box-shadow: var(--ui-shadow);
-  padding: 10px 13px;
-  font-size: 13px;
-  font-weight: 550;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ui-copy);
+  box-shadow: none;
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 500;
 }
 .appearance-button:hover,
 .appearance-button[data-state='open'] {
@@ -139,10 +140,17 @@ body {
   outline: 2px solid var(--ring);
   outline-offset: 4px;
 }
+@media (pointer: coarse) {
+  .appearance-button::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+  }
+}
 .language-flag {
-  width: 23px;
-  height: 16px;
-  flex: 0 0 23px;
+  width: 19px;
+  height: 13px;
+  flex: 0 0 19px;
   border-radius: 3px;
   overflow: hidden;
   box-shadow: 0 0 0 1px #0000000d;
@@ -160,17 +168,18 @@ body {
   font-size: 13px;
 }
 .language-menu .language-flag {
+  flex-basis: 23px;
   width: 23px;
   height: 16px;
 }
 .theme-toggle {
-  width: 48px;
-  padding: 6px;
+  width: 36px;
+  padding: 3px;
   color: #168c76;
 }
 .lighthouse {
-  width: 29px;
-  height: 33px;
+  width: 23px;
+  height: 27px;
   overflow: visible;
 }
 .lighthouse-glass {
@@ -407,14 +416,14 @@ body {
     gap: 7px;
   }
   .appearance-button {
-    min-height: 44px;
-    border-radius: 12px;
-    padding: 8px 10px;
-    gap: 8px;
+    min-height: 34px;
+    border-radius: 9px;
+    padding: 5px 8px;
+    gap: 6px;
   }
   .theme-toggle {
-    width: 44px;
-    padding: 5px;
+    width: 34px;
+    padding: 2px;
   }
   .app-toolbar .project-toggle {
     font-size: 11px;
@@ -529,5 +538,11 @@ body {
 @media (min-width: 1031px) {
   .moinpdf-shell .studio-main {
     height: calc(100dvh - var(--project-bar-height));
+  }
+}
+
+@media (pointer: coarse) {
+  .appearance-controls {
+    gap: 10px;
   }
 }

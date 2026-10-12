@@ -1,4 +1,6 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useId, type CSSProperties } from 'react';
@@ -48,7 +50,7 @@ export function UploadEntry({
             src={`/branding/moinpdf-wordmark.svg?v=${APP_VERSION}`}
             width={680}
             height={170}
-            alt="MoinPDF"
+            alt={ui('MoinPDF')}
             draggable={false}
           />
           <img
@@ -56,7 +58,7 @@ export function UploadEntry({
             src={`/branding/moinpdf-wordmark-dark.svg?v=${APP_VERSION}`}
             width={680}
             height={170}
-            alt="MoinPDF"
+            alt={ui('MoinPDF')}
             draggable={false}
           />
           <p className="upload-tagline">{t('Papierkram. Läuft.')}</p>

@@ -1,4 +1,7 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+import { useLanguage } from '@/components/studio/appearance';
+
 import { useEffect, useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { downloadBlob } from '@/lib/pdf-engine';
@@ -20,12 +23,13 @@ export function WorkflowPanel({
   run,
   batch = false,
 }: PanelProps & { batch?: boolean }) {
+  useLanguage();
   const [steps, setSteps] = useState<WorkflowStep[]>(
       batch
         ? [{ kind: 'stamp', text: 'GEPRÜFT' }]
         : [{ kind: 'ocr' }, { kind: 'removeBlank' }, { kind: 'numbers', number: 1 }],
     ),
-    [name, setName] = useState('Mein Arbeitsablauf'),
+    [name, setName] = useState(() => ui('Mein Arbeitsablauf')),
     [password, setPassword] = useState(''),
     [saved, setSaved] = useState<SavedWorkflow[]>([]),
     [notice, setNotice] = useState('');
@@ -60,7 +64,9 @@ export function WorkflowPanel({
     <div className="advanced-grid">
       <section className="advanced-card">
         <h2>
-          {batch ? 'Ein Arbeitsschritt für alle Dateien' : 'Dein Ablauf, Schritt für Schritt'}
+          {batch
+            ? ui('Ein Arbeitsschritt für alle Dateien')
+            : ui('Dein Ablauf, Schritt für Schritt')}
         </h2>
         {!batch && (
           <Button
@@ -75,17 +81,17 @@ export function WorkflowPanel({
               }
             }}
           >
-            Freies Knotendiagramm öffnen
+            {ui('Freies Knotendiagramm öffnen')}
           </Button>
         )}
-        {!batch && <Text label="Name des Arbeitsablaufs" value={name} onChange={setName} />}
+        {!batch && <Text label={ui('Name des Arbeitsablaufs')} value={name} onChange={setName} />}
         <ol className="workflow-steps">
           {steps.map((step, i) => (
             <li key={i}>
               <span className="step-index">{i + 1}</span>
               <div>
                 <Choice
-                  label={`Schritt ${i + 1}`}
+                  label={ui(`Schritt ${i + 1}`)}
                   value={step.kind}
                   onChange={(v) =>
                     setSteps(steps.map((s, j) => (j === i ? { kind: v as StepKind } : s)))
@@ -95,7 +101,7 @@ export function WorkflowPanel({
                 {!batch && (
                   <>
                     <Choice
-                      label={`Schritt ${i + 1} ausführen`}
+                      label={ui(`Schritt ${i + 1} ausführen`)}
                       value={step.condition?.field || 'always'}
                       items={[
                         ['always', 'Immer'],
@@ -127,7 +133,7 @@ export function WorkflowPanel({
                     {step.condition && (
                       <div className="pro-rule">
                         <Choice
-                          label={`Bedingung ${i + 1}`}
+                          label={ui(`Bedingung ${i + 1}`)}
                           value={step.condition.operator}
                           items={
                             step.condition.field === 'pages'
@@ -157,7 +163,7 @@ export function WorkflowPanel({
                           }
                         />
                         <Text
-                          label={`Vergleichswert ${i + 1}`}
+                          label={ui(`Vergleichswert ${i + 1}`)}
                           value={step.condition.value}
                           onChange={(v) =>
                             setSteps(
@@ -168,7 +174,7 @@ export function WorkflowPanel({
                           }
                         />
                         <Choice
-                          label={`Sonst ${i + 1}`}
+                          label={ui(`Sonst ${i + 1}`)}
                           value={step.otherwise?.kind || 'skip'}
                           items={[
                             ['skip', 'Diesen Schritt überspringen'],
@@ -190,7 +196,7 @@ export function WorkflowPanel({
                         {(step.otherwise?.kind === 'stamp' ||
                           step.otherwise?.kind === 'watermark') && (
                           <Text
-                            label={`Text im Sonst-Zweig ${i + 1}`}
+                            label={ui(`Text im Sonst-Zweig ${i + 1}`)}
                             value={step.otherwise.text || ''}
                             onChange={(v) =>
                               setSteps(
@@ -203,7 +209,7 @@ export function WorkflowPanel({
                         )}
                         {step.otherwise?.kind === 'numbers' && (
                           <NumberField
-                            label={`Startnummer im Sonst-Zweig ${i + 1}`}
+                            label={ui(`Startnummer im Sonst-Zweig ${i + 1}`)}
                             value={step.otherwise.number || 1}
                             min={1}
                             max={999999}
@@ -222,7 +228,7 @@ export function WorkflowPanel({
                 )}
                 {(step.kind === 'stamp' || step.kind === 'watermark') && (
                   <Text
-                    label={`Text für Schritt ${i + 1}`}
+                    label={ui(`Text für Schritt ${i + 1}`)}
                     value={step.text || ''}
                     onChange={(v) =>
                       setSteps(steps.map((s, j) => (j === i ? { ...s, text: v } : s)))
@@ -231,7 +237,7 @@ export function WorkflowPanel({
                 )}{' '}
                 {step.kind === 'numbers' && (
                   <NumberField
-                    label="Erste Seitennummer"
+                    label={ui('Erste Seitennummer')}
                     value={step.number || 1}
                     min={1}
                     max={999999}
@@ -244,7 +250,7 @@ export function WorkflowPanel({
               {!batch && (
                 <div className="step-buttons">
                   <button
-                    aria-label={`Schritt ${i + 1} nach oben`}
+                    aria-label={ui(`Schritt ${i + 1} nach oben`)}
                     disabled={i === 0}
                     onClick={() => {
                       const next = [...steps];
@@ -255,7 +261,7 @@ export function WorkflowPanel({
                     ↑
                   </button>
                   <button
-                    aria-label={`Schritt ${i + 1} nach unten`}
+                    aria-label={ui(`Schritt ${i + 1} nach unten`)}
                     disabled={i === steps.length - 1}
                     onClick={() => {
                       const next = [...steps];
@@ -266,7 +272,7 @@ export function WorkflowPanel({
                     ↓
                   </button>
                   <button
-                    aria-label={`Schritt ${i + 1} entfernen`}
+                    aria-label={ui(`Schritt ${i + 1} entfernen`)}
                     disabled={steps.length === 1}
                     onClick={() => setSteps(steps.filter((_, j) => j !== i))}
                   >
@@ -283,28 +289,28 @@ export function WorkflowPanel({
             disabled={steps.length >= 12}
             onClick={() => setSteps([...steps, { kind: 'numbers', number: 1 }])}
           >
-            Schritt hinzufügen
+            {ui('Schritt hinzufügen')}
           </Button>
         )}
         {steps.some((s) => s.kind === 'protect' || s.otherwise?.kind === 'protect') && (
           <>
             <Text
-              label="Öffnungspasswort für diesen Durchlauf"
+              label={ui('Öffnungspasswort für diesen Durchlauf')}
               type="password"
               value={password}
               onChange={setPassword}
             />
             <p className="fine-note">
-              Mindestens 8 Zeichen. Passwortschutz muss am Ende stehen. Das Passwort wird nicht mit
-              dem Ablauf gespeichert.
+              {ui(
+                'Mindestens 8 Zeichen. Passwortschutz muss am Ende stehen. Das Passwort wird nicht mit dem Ablauf gespeichert.',
+              )}
             </p>
           </>
         )}
         <p className="fine-note">
-          Bedingungen werden am jeweiligen Zwischenstand geprüft. Textbedingungen lesen vorhandenen
-          PDF-Text; bei Scans zuerst einen OCR-Schritt einsetzen. Das ZIP enthält ein Protokoll der
-          ausgeführten und übersprungenen Schritte. Die Dateien werden einzeln verarbeitet. Bei OCR
-          und Leerseitenerkennung bitte die Ausgabe kontrollieren.
+          {ui(
+            'Bedingungen werden am jeweiligen Zwischenstand geprüft. Textbedingungen lesen vorhandenen PDF-Text; bei Scans zuerst einen OCR-Schritt einsetzen. Das ZIP enthält ein Protokoll der ausgeführten und übersprungenen Schritte. Die Dateien werden einzeln verarbeitet. Bei OCR und Leerseitenerkennung bitte die Ausgabe kontrollieren.',
+          )}
         </p>
         <Button
           disabled={busy || !sources.length}
@@ -318,13 +324,13 @@ export function WorkflowPanel({
             })
           }
         >
-          {sources.length} {sources.length === 1 ? 'Datei' : 'Dateien'} verarbeiten
+          {sources.length} {sources.length === 1 ? ui('Datei') : ui('Dateien')} {ui(' verarbeiten')}
         </Button>
       </section>
       <section className="advanced-card">
         {!batch && (
           <>
-            <h2>Gespeicherte Abläufe</h2>
+            <h2>{ui('Gespeicherte Abläufe')}</h2>
             <div className="advanced-actions">
               <Button
                 variant="outline"
@@ -336,7 +342,7 @@ export function WorkflowPanel({
                   })
                 }
               >
-                Ablauf speichern
+                {ui('Ablauf speichern')}
               </Button>
               <Button
                 variant="outline"
@@ -350,10 +356,10 @@ export function WorkflowPanel({
                   })
                 }
               >
-                JSON exportieren
+                {ui('JSON exportieren')}
               </Button>
               <Button variant="outline" onClick={() => input.current?.click()}>
-                JSON importieren
+                {ui('JSON importieren')}
               </Button>
             </div>
             <input
@@ -386,29 +392,33 @@ export function WorkflowPanel({
                       setSteps(structuredClone(v.steps));
                     }}
                   >
-                    Laden
+                    {ui('Laden')}
                   </Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => run(async () => persist(saved.filter((_, j) => j !== i)))}
                   >
-                    Entfernen
+                    {ui('Entfernen')}
                   </Button>
                 </div>
               </div>
             ))}
             <p className="fine-note">
-              Gespeichert werden ausschließlich Schritte und Einstellungen in diesem Browser.
+              {ui(
+                'Gespeichert werden ausschließlich Schritte und Einstellungen in diesem Browser.',
+              )}
             </p>
-            <p role="status">{notice}</p>
+            <p role="status">{ui(notice)}</p>
           </>
         )}
-        <h2>Dokumente im Stapel</h2>
+        <h2>{ui('Dokumente im Stapel')}</h2>
         {sources.map((s) => (
           <p className="advanced-file-row" key={s.id}>
             <span>{s.name}</span>
-            <small>{s.pdf.numPages} Seiten</small>
+            <small>
+              {s.pdf.numPages} {ui(' Seiten')}
+            </small>
           </p>
         ))}
       </section>

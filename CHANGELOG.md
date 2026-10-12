@@ -9,6 +9,21 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.10.1 – 2026-10-12
+
+- Sprach- und Leuchtturm-Schalter kleiner und dezenter gestaltet; auf Touch-Geräten
+  bleibt die unsichtbare Berührungsfläche ausreichend groß.
+- Englische Texte für sämtliche Werkzeugansichten, Auswahlmenüs, Dialoge,
+  Hinweise, Fortschritts- und Fehlermeldungen ergänzt. Übersetzungen werden als
+  lokale App-Datei geladen; Dokumentinhalte werden dafür nicht übertragen.
+- Englische Dokumentation für alle 112 Werkzeuge, Medienbereich, Impressum und
+  Datenschutz ergänzt. Medienpaket mit englischen Begleittexten, Wortmarke und
+  Untertiteln für den unveränderten Originalclip.
+- Sprachwahl bleibt nach Neuladen erhalten und synchronisiert Informationsseiten
+  zwischen Tabs. Geöffnete Dokumente und Bearbeitungen bleiben beim Wechsel erhalten.
+- Zusätzliche Browserprüfung kontrolliert englische Werkzeugansichten und Menüs,
+  mobile Informationsseiten, Downloads und Sprachwechsel mit geöffnetem Dokument.
+
 ## 0.10.0 – 2026-10-12
 
 - Startseite nach dem freigegebenen Konzept mit Mintverlauf, ruhiger Wortmarke,

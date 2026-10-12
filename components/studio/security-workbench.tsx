@@ -1,4 +1,6 @@
 'use client';
+import { ui } from '@/lib/ui-language';
+
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useEffect, useRef, useState } from 'react';
@@ -133,15 +135,15 @@ export function SecurityWorkbench({
     change: (v: string) => void,
   ) => (
     <label className="field">
-      <span>{label}</span>
+      <span>{ui(label)}</span>
       <Select value={v} onValueChange={change} disabled={busy}>
-        <SelectTrigger aria-label={label}>
+        <SelectTrigger aria-label={ui(label)}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           {items.map(([id, name]) => (
             <SelectItem key={id} value={id}>
-              {name}
+              {ui(name)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -150,12 +152,12 @@ export function SecurityWorkbench({
   );
   const passwordField = (label: string, v: string, change: (v: string) => void) => (
     <label className="field">
-      <span>{label}</span>
+      <span>{ui(label)}</span>
       <div className="password-input">
         <Input
           type={show ? 'text' : 'password'}
           autoComplete="new-password"
-          aria-label={label}
+          aria-label={ui(label)}
           value={v}
           disabled={busy}
           onChange={(e) => {
@@ -167,7 +169,7 @@ export function SecurityWorkbench({
           type="button"
           variant="ghost"
           size="icon"
-          aria-label={`${label} ${show ? 'verbergen' : 'anzeigen'}`}
+          aria-label={`${ui(label)} ${show ? ui('verbergen') : ui('anzeigen')}`}
           onClick={() => setShow(!show)}
         >
           {show ? <EyeOff size={17} /> : <Eye size={17} />}
@@ -184,15 +186,15 @@ export function SecurityWorkbench({
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
-          LOKAL AUF DEINEM GERÄT
+          {ui('LOKAL AUF DEINEM GERÄT')}
         </span>
       </header>
       <div className="workbench-title">
         <div>
-          <span className="studio-kicker">DEIN DOKUMENT. DEIN ZUGANG.</span>
+          <span className="studio-kicker">{ui('DEIN DOKUMENT. DEIN ZUGANG.')}</span>
           <h1>
             {protect ? <LockKeyhole /> : <LockKeyholeOpen />}
-            {protect ? 'PDF schützen' : 'PDF entsperren'}
+            {protect ? ui('PDF schützen') : ui('PDF entsperren')}
           </h1>
         </div>
         <div className="workbench-modes">
@@ -201,21 +203,22 @@ export function SecurityWorkbench({
             disabled={busy}
             onClick={() => onTool('protect')}
           >
-            Schützen
+            {ui('Schützen')}
           </Button>
           <Button
             variant={!protect ? 'default' : 'ghost'}
             disabled={busy}
             onClick={() => onTool('unlock')}
           >
-            Entsperren
+            {ui('Entsperren')}
           </Button>
         </div>
       </div>
       {pending && (
         <p className="workbench-notice">
-          Hier wird die vollständige geöffnete Datei verarbeitet. Änderungen aus anderen Werkzeugen
-          bitte zuerst anwenden und als Arbeitsdokument übernehmen.
+          {ui(
+            'Hier wird die vollständige geöffnete Datei verarbeitet. Änderungen aus anderen Werkzeugen bitte zuerst anwenden und als Arbeitsdokument übernehmen.',
+          )}
         </p>
       )}
       <div className="security-layout">
@@ -248,9 +251,9 @@ export function SecurityWorkbench({
               {source.pdf.numPages} {source.pdf.numPages === 1 ? t('Seite') : t('Seiten')}
             </span>
             <span>{formatSize(source.size)}</span>
-            <span>{source.wasEncrypted ? 'Lokal entsperrt' : 'Geöffnete PDF'}</span>
+            <span>{source.wasEncrypted ? ui('Lokal entsperrt') : ui('Geöffnete PDF')}</span>
           </div>
-          <p>Alle Seiten, Formularfelder, Lesezeichen und Anhänge bleiben erhalten.</p>
+          <p>{ui('Alle Seiten, Formularfelder, Lesezeichen und Anhänge bleiben erhalten.')}</p>
         </section>
         <section className="security-settings">
           <div className="security-method">
@@ -258,11 +261,13 @@ export function SecurityWorkbench({
               {protect ? <LockKeyhole size={21} /> : <LockKeyholeOpen size={21} />}
             </span>
             <div>
-              <h2>{protect ? 'Nur mit deinem Passwort.' : 'Ohne erneute Passwortabfrage.'}</h2>
+              <h2>
+                {protect ? ui('Nur mit deinem Passwort.') : ui('Ohne erneute Passwortabfrage.')}
+              </h2>
               <p>
                 {protect
-                  ? 'AES-256-Verschlüsselung für die gesamte PDF.'
-                  : 'Die beim Öffnen entsperrte Arbeitskopie als neue Datei speichern.'}
+                  ? ui('AES-256-Verschlüsselung für die gesamte PDF.')
+                  : ui('Die beim Öffnen entsperrte Arbeitskopie als neue Datei speichern.')}
               </p>
             </div>
           </div>
@@ -272,13 +277,15 @@ export function SecurityWorkbench({
                 {passwordField('Öffnungspasswort', password, setPassword)}
                 {passwordField('Passwort wiederholen', repeat, setRepeat)}
                 <p className="fine-note">
-                  Mindestens 8 Zeichen. Bewahre dein Passwort sicher auf – es wird hier nicht
-                  gespeichert.
+                  {ui(
+                    'Mindestens 8 Zeichen. Bewahre dein Passwort sicher auf – es wird hier nicht gespeichert.',
+                  )}
                 </p>
               </div>
               <details className="security-permissions">
                 <summary>
-                  Berechtigungen anpassen<span>Optional</span>
+                  {ui('Berechtigungen anpassen')}
+                  <span>{ui('Optional')}</span>
                 </summary>
                 <div>
                   {select(
@@ -295,7 +302,7 @@ export function SecurityWorkbench({
                     },
                   )}
                   <label className="switch-field">
-                    <span>Text und Bilder kopieren</span>
+                    <span>{ui('Text und Bilder kopieren')}</span>
                     <Switch
                       checked={copying}
                       disabled={busy}
@@ -306,7 +313,7 @@ export function SecurityWorkbench({
                     />
                   </label>
                   <label className="switch-field">
-                    <span>Bearbeiten und Formulare ändern</span>
+                    <span>{ui('Bearbeiten und Formulare ändern')}</span>
                     <Switch
                       checked={editing}
                       disabled={busy}
@@ -318,9 +325,9 @@ export function SecurityWorkbench({
                   </label>
                   {passwordField('Berechtigungspasswort (optional)', owner, setOwner)}
                   <p className="fine-note">
-                    Leer lassen für ein zufällig erzeugtes Berechtigungspasswort. Druck-, Kopier-
-                    und Bearbeitungsregeln sind Hinweise an PDF-Programme; nicht alle Programme
-                    beachten sie. Der Öffnungsschutz verschlüsselt die Datei.
+                    {ui(
+                      'Leer lassen für ein zufällig erzeugtes Berechtigungspasswort. Druck-, Kopier- und Bearbeitungsregeln sind Hinweise an PDF-Programme; nicht alle Programme beachten sie. Der Öffnungsschutz verschlüsselt die Datei.',
+                    )}
                   </p>
                 </div>
               </details>
@@ -330,26 +337,30 @@ export function SecurityWorkbench({
               <Check size={22} />
               <h3>
                 {source.wasEncrypted
-                  ? 'Passwort bereits beim Öffnen geprüft.'
-                  : 'Diese Arbeitsdatei ist bereits ungeschützt.'}
+                  ? ui('Passwort bereits beim Öffnen geprüft.')
+                  : ui('Diese Arbeitsdatei ist bereits ungeschützt.')}
               </h3>
               <p>
                 {source.wasEncrypted
-                  ? 'Du kannst sie jetzt ohne Passwort speichern oder direkt weiterbearbeiten.'
-                  : 'Du kannst eine ungeschützte Kopie speichern. Für eine andere Datei gehe zurück und füge die geschützte PDF hinzu.'}
+                  ? ui('Du kannst sie jetzt ohne Passwort speichern oder direkt weiterbearbeiten.')
+                  : ui(
+                      'Du kannst eine ungeschützte Kopie speichern. Für eine andere Datei gehe zurück und füge die geschützte PDF hinzu.',
+                    )}
               </p>
             </div>
           )}
           {error && (
             <p className="error-box" role="alert">
-              {error}
+              {ui(error)}
             </p>
           )}
           {result ? (
             <div className="security-result" role="status">
               <span>
                 <Check size={20} />
-                {protect ? 'Deine geschützte PDF ist bereit.' : 'Deine entsperrte PDF ist bereit.'}
+                {protect
+                  ? ui('Deine geschützte PDF ist bereit.')
+                  : ui('Deine entsperrte PDF ist bereit.')}
               </span>
               <p>
                 {result.filename} · {formatSize(result.blob.size)}
@@ -384,17 +395,17 @@ export function SecurityWorkbench({
               {busy ? (
                 <>
                   <LoaderCircle className="spin" size={17} />
-                  Wird verarbeitet …
+                  {ui('Wird verarbeitet …')}
                 </>
               ) : protect ? (
                 <>
                   <LockKeyhole size={17} />
-                  Geschützte PDF erstellen
+                  {ui('Geschützte PDF erstellen')}
                 </>
               ) : (
                 <>
                   <LockKeyholeOpen size={17} />
-                  Entsperrte PDF erstellen
+                  {ui('Entsperrte PDF erstellen')}
                 </>
               )}
             </Button>
@@ -405,7 +416,9 @@ export function SecurityWorkbench({
             </Button>
           )}
           <p className="security-footer-note">
-            Die Verarbeitung bleibt auf deinem Gerät. Deine Originaldatei wird nicht überschrieben.
+            {ui(
+              'Die Verarbeitung bleibt auf deinem Gerät. Deine Originaldatei wird nicht überschrieben.',
+            )}
           </p>
         </section>
       </div>
