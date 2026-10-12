@@ -154,8 +154,32 @@ export async function convertOfficeLocally(
         settled = true;
         clearTimeout(timer);
         signal.removeEventListener('abort', abort);
-        worker?.terminate();
-        error ? reject(error) : resolve(value!);
+        // Let LibreOffice destroy the document and its pthreads before terminating
+        // their owner. In particular, a result is posted before worker-side finally.
+        const activeWorker = worker!;
+        let cleaned = false;
+        const complete = () => {
+          if (cleaned) return;
+          cleaned = true;
+          clearTimeout(cleanupTimer);
+          activeWorker.onmessage = null;
+          activeWorker.onerror = null;
+          activeWorker.terminate();
+          worker = undefined;
+          error ? reject(error) : resolve(value!);
+        };
+        // A synchronous WASM call cannot receive destroy. Cancellation must still
+        // finish promptly; terminate is the bounded fallback for an unresponsive worker.
+        const cleanupTimer = setTimeout(complete, 1000);
+        activeWorker.onmessage = ({ data }) => {
+          if (data.type === 'ready' && data.id === 3) complete();
+        };
+        activeWorker.onerror = complete;
+        try {
+          activeWorker.postMessage({ type: 'destroy', id: 3 });
+        } catch {
+          complete();
+        }
       };
       const abort = () => finish(new DOMException('Abgebrochen', 'AbortError')),
         timer = setTimeout(

@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.12.2 — 2026-10-12
+
+- Kompakte Startseiten-Buttons mit Icons, hervorgehobenem „Alle Werkzeuge“ und zusätzlichem Abstand zum Footer in Light- und Darkmode.
+- Lokale Office-Konvertierung räumt Dokument und Hintergrundprozesse vor dem Beenden auf, auch bei Abbruch während der Initialisierung; begrenzter harter Abbruch bleibt für blockierte Laufzeiten erhalten.
+- Docker-Veröffentlichungen prüfen den erfolgreichen Testlauf direkt über seine ID. Alle drei Images und die Release-Freigabe verwenden denselben belegten Quellstand und Testlauf.
+- Regressionstests für Aufräumen, Abbrechen, erneute Konvertierung und die Freigabe unveränderlicher Images.
+
 ## 0.12.1 — 2026-10-12
 
 - LibreTranslate auf 1.9.6, Uvicorn auf 0.54.0 und pycparser auf 3.1 aktualisiert.

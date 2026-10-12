@@ -25,6 +25,7 @@ jobs:
       actions: read
     outputs:
       source: ${{ steps.verify.outputs.source }}
+      run_id: ${{ steps.verify.outputs.run_id }}
     steps:
       - name: Require successful complete verification for this exact main commit
         id: verify
@@ -35,14 +36,29 @@ jobs:
           script: |
             const sha = process.env.SOURCE_SHA;
             if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error('Invalid source commit');
-            const {data} = await github.rest.actions.listWorkflowRuns({
-              ...context.repo, workflow_id: 'docker.yml', head_sha: sha,
-              branch: 'main', event: 'push', status: 'success', per_page: 100,
-            });
-            if (!data.workflow_runs.some(run => run.head_sha === sha && run.conclusion === 'success')) {
+            const repository = context.repo.owner + '/' + context.repo.repo;
+            const verified = run => run.path === '.github/workflows/docker.yml'
+              && run.status === 'completed' && run.conclusion === 'success'
+              && run.head_sha === sha && run.head_branch === 'main' && run.event === 'push'
+              && run.repository?.full_name === repository && run.head_repository?.full_name === repository;
+            let run;
+            if (context.eventName === 'workflow_run') {
+              // The list/search index can lag behind the completed webhook. Read
+              // the triggering run directly and still validate its exact source.
+              const runId = context.payload.workflow_run.id;
+              if (!Number.isSafeInteger(runId) || runId <= 0) throw new Error('Invalid verification run');
+              ({data: run} = await github.rest.actions.getWorkflowRun({...context.repo, run_id: runId}));
+            } else {
+              const {data} = await github.rest.actions.listWorkflowRuns({
+                ...context.repo, workflow_id: 'docker.yml', head_sha: sha, per_page: 100,
+              });
+              run = data.workflow_runs.find(verified);
+            }
+            if (!run || !verified(run)) {
               throw new Error('A successful complete Docker verification on main is required');
             }
             core.setOutput('source', sha);
+            core.setOutput('run_id', run.id);
   image:
     needs: verified
     name: ${{ matrix.name }} (amd64 and arm64)
@@ -100,11 +116,12 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
           IMAGE_NAME: ${{ matrix.name }}
           SOURCE_SHA: ${{ needs.verified.outputs.source }}
+          VERIFICATION_RUN_ID: ${{ needs.verified.outputs.run_id }}
         run: |
           docker buildx imagetools inspect "$IMAGE@$DIGEST" --raw > index.json
           jq -e 'any(.manifests[]; .platform.os == "linux" and .platform.architecture == "amd64") and any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")' index.json
           mkdir -p image-reference
-          jq -n --arg image "$IMAGE" --arg digest "$DIGEST" --arg source "$SOURCE_SHA" '{image:$image,digest:$digest,source:$source,platforms:["linux/amd64","linux/arm64"]}' > "image-reference/${IMAGE_NAME}.json"
+          jq -n --arg image "$IMAGE" --arg digest "$DIGEST" --arg source "$SOURCE_SHA" --argjson verificationRun "$VERIFICATION_RUN_ID" '{image:$image,digest:$digest,source:$source,verificationRun:$verificationRun,platforms:["linux/amd64","linux/arm64"]}' > "image-reference/${IMAGE_NAME}.json"
           echo "### ${IMAGE_NAME}" >> "$GITHUB_STEP_SUMMARY"
           echo "$IMAGE@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4

@@ -58,8 +58,11 @@ jobs:
               const prefix = `ghcr.io/${context.repo.owner.toLowerCase()}/moinpdf-${names[index]}:${version}-${source.slice(0, 12)}`;
               if (ref.image !== prefix || !/^sha256:[0-9a-f]{64}$/.test(ref.digest) || JSON.stringify(ref.platforms) !== JSON.stringify(['linux/amd64', 'linux/arm64'])) throw new Error('Image reference must match this release version and both platforms');
             }
-            const {data: dockerRuns} = await github.rest.actions.listWorkflowRuns({...context.repo, workflow_id: 'docker.yml', head_sha: context.sha, branch: 'main', event: 'push', status: 'success', per_page: 100});
-            if (!dockerRuns.workflow_runs.some(run => run.head_sha === context.sha && run.conclusion === 'success')) throw new Error('Missing successful Docker verification of the release source');
+            const verificationRun = refs[0].verificationRun;
+            if (!Number.isSafeInteger(verificationRun) || verificationRun <= 0 || refs.some(ref => ref.verificationRun !== verificationRun)) throw new Error('Mixed or missing Docker verification runs');
+            const {data: dockerRun} = await github.rest.actions.getWorkflowRun({...context.repo, run_id: verificationRun});
+            const repository = context.repo.owner + '/' + context.repo.repo;
+            if (dockerRun.path !== '.github/workflows/docker.yml' || dockerRun.status !== 'completed' || dockerRun.conclusion !== 'success' || dockerRun.head_sha !== source || dockerRun.head_branch !== 'main' || dockerRun.event !== 'push' || dockerRun.repository?.full_name !== repository || dockerRun.head_repository?.full_name !== repository) throw new Error('Missing successful Docker verification of the release source');
             const {data: main} = await github.rest.repos.getBranch({...context.repo, branch: 'main'});
             if (main.commit.sha !== source) throw new Error('The tested release source has been superseded on main');
             const heading = `## ${version} `;

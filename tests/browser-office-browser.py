@@ -51,8 +51,16 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             r.abort()
         else: r.continue_()
     page.route('**/*', route)
+    def wait_office_closed():
+        deadline = time.monotonic() + 10
+        while True:
+            workers = [t['url'] for t in browser_session.send('Target.getTargets')['targetInfos'] if t['type']=='worker' and '/vendor/office/' in t['url']]
+            if not workers: return workers
+            assert time.monotonic() < deadline, 'Office workers survived cleanup: ' + repr(workers)
+            page.wait_for_timeout(100)
     def choose(path, reload=True):
         if reload: page.goto(origin)
+        else: page.evaluate('window.__officeProgress = []')
         assert page.evaluate('crossOriginIsolated'), 'Office requires COOP/COEP'
         page.locator('input[type="file"]').first.set_input_files(str(path))
         expect(page.get_by_role('heading', name='Office zu PDF', exact=True)).to_be_visible()
@@ -79,7 +87,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                 if path.suffix == '.pptx':
                     assert len(pdf) == 2 and 'ENDE DER PRÜFDATEI' in text, text
             pdf[0].get_pixmap().save(str(evidence / (path.name+suffix+'.png')))
-            workers = [t['url'] for t in browser_session.send('Target.getTargets')['targetInfos'] if t['type']=='worker' and '/vendor/office/' in t['url']]
+            workers = wait_office_closed()
             results.append({'file':path.name+suffix,'pages':len(pdf),'images':images,'text':text,'seconds':round(time.monotonic()-started,2),'progress':page.evaluate('window.__officeProgress'),'remainingOfficeWorkers':workers})
         print('PASS: Office '+path.name+suffix+' in '+str(results[-1]['seconds'])+'s', flush=True)
     try:
@@ -87,20 +95,23 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             convert(folder/'fixtures'/name)
         for name in ['sample.docx','sample.xlsx','sample.pptx','sample.odt','sample.ods','sample.odp']:
             convert(root/'tests/fixtures/office'/name)
-        choose(folder/'fixtures/rich.docx')
-        page.get_by_role('button', name='PDF erstellen', exact=True).click()
-        # Cancel the actual running WASM worker, after asset preparation.
-        page.wait_for_function("window.__officeProgress.some(e => e.progress?.phase === 'compile')")
-        page.get_by_role('button', name='Abbrechen', exact=True).click()
-        expect(page.get_by_role('button', name='PDF erstellen', exact=True)).to_be_enabled()
-        expect(page.get_by_role('link', name='PDF herunterladen', exact=True)).not_to_be_visible()
-        cached_only = True
-        convert(folder/'fixtures/rich.xlsx', '-cached-after-abort', reload=False)
+        for cycle in range(2):
+            choose(folder/'fixtures/rich.docx', reload=(cycle == 0))
+            page.get_by_role('button', name='PDF erstellen', exact=True).click()
+            # Cancel the actual running WASM worker, after asset preparation.
+            page.wait_for_function("window.__officeProgress.some(e => e.progress?.phase === 'compile')")
+            page.get_by_role('button', name='Abbrechen', exact=True).click()
+            expect(page.get_by_role('button', name='PDF erstellen', exact=True)).to_be_enabled()
+            expect(page.get_by_role('link', name='PDF herunterladen', exact=True)).not_to_be_visible()
+            wait_office_closed()
+            cached_only = True
+            convert(folder/'fixtures/rich.xlsx', '-cached-after-abort-' + str(cycle), reload=False)
+            convert(folder/'fixtures/rich.docx', '-cached-after-success-' + str(cycle), reload=False)
         assert not uploads, uploads
         assert not external, external
         assert not errors, errors
         (evidence/'browser-office.json').write_text(json.dumps({'results':results,'uploads':uploads,'external':external,'errors':errors}, ensure_ascii=False, indent=2))
-        print('PASS: real browser Office conversion, cached binary assets, hard abort/restart and no document uploads.', flush=True)
+        print('PASS: real browser Office conversion, cached binary assets, repeated abort/restart, no surviving Office workers and no document uploads.', flush=True)
     except BaseException:
         print(page.locator('body').inner_text()[:8000], flush=True)
         print('Browser errors: '+repr(errors), flush=True)

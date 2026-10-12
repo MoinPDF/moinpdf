@@ -9,7 +9,7 @@ assert.ok(script, 'Release verification script exists');
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 const verify = new AsyncFunction('require', 'github', 'context', 'core', 'process', script);
 const source = 'a'.repeat(40);
-const image = name => ({ source, image: `ghcr.io/moinpdf/moinpdf-${name}:0.9.2-${source.slice(0, 12)}`, digest: `sha256:${'b'.repeat(64)}`, platforms: ['linux/amd64', 'linux/arm64'] });
+const image = name => ({ source, verificationRun: 456, image: `ghcr.io/moinpdf/moinpdf-${name}:0.9.2-${source.slice(0, 12)}`, digest: `sha256:${'b'.repeat(64)}`, platforms: ['linux/amd64', 'linux/arm64'] });
 async function run(patch = {}) {
   const imageRun = { path: '.github/workflows/publish-images.yml', conclusion: 'success', head_branch: 'main', repository: { full_name: 'MoinPDF/moinpdf' }, event: 'workflow_run', ...patch.run };
   const images = ['web', 'documents', 'translation'].map(image);
@@ -27,12 +27,10 @@ async function run(patch = {}) {
   };
   const github = { rest: {
     actions: {
-      getWorkflowRun: async () => ({ data: imageRun }),
-      listWorkflowRuns: async args => {
-        assert.equal(args.head_sha, source);
-        assert.equal(args.branch, 'main');
-        assert.equal(args.event, 'push');
-        return { data: { workflow_runs: patch.noTests ? [] : [{ head_sha: source, conclusion: 'success' }] } };
+      getWorkflowRun: async ({run_id}) => {
+        if (run_id === 123) return { data: imageRun };
+        assert.equal(run_id, 456);
+        return { data: { path: '.github/workflows/docker.yml', status: 'completed', conclusion: patch.noTests ? 'failure' : 'success', head_sha: source, head_branch: 'main', event: 'push', repository: {full_name: 'MoinPDF/moinpdf'}, head_repository: {full_name: 'MoinPDF/moinpdf'}, ...patch.docker } };
       },
     },
     repos: { getBranch: async () => ({ data: { commit: { sha: patch.current || source } } }) },
@@ -57,3 +55,36 @@ await assert.rejects(() => run({ images: refs => { refs[0].platforms = ['linux/a
 await assert.rejects(() => run({ images: refs => { refs[0].image = 'ghcr.io/other/app:latest'; } }), /Image reference/);
 await assert.rejects(() => run({ images: refs => { refs[0].digest = 'latest'; } }), /Image reference/);
 console.log('PASS: release accepts verified images and rejects failed tests, stale or mixed commits, foreign workflows/repos, wrong tags, missing platforms and invalid digests.');
+
+for (const docker of [{ head_sha: 'c'.repeat(40) }, { head_branch: 'feature' }, { event: 'pull_request' }, { status: 'in_progress' }, { path: '.github/workflows/other.yml' }, { head_repository: { full_name: 'Other/fork' } }]) await assert.rejects(() => run({ docker }), /Missing successful Docker/);
+await assert.rejects(() => run({ images: refs => { delete refs[0].verificationRun; } }), /Mixed or missing Docker/);
+await assert.rejects(() => run({ images: refs => { refs[1].verificationRun = 789; } }), /Mixed or missing Docker/);
+
+const publishWorkflow = await readFile('.github/workflows/publish-images.yml', 'utf8');
+const publishScript = publishWorkflow.match(/          script: \|\n([\s\S]*?)\n  image:/)?.[1]
+  .split('\n').map(line => line.replace(/^            /, '')).join('\n');
+assert.ok(publishScript);
+const publishVerify = new AsyncFunction('github', 'context', 'core', 'process', publishScript);
+async function publish(patch = {}, eventName = 'workflow_run') {
+  const outputs = {}, calls = [];
+  const run = { id: 456, path: '.github/workflows/docker.yml', status: 'completed', conclusion: 'success', head_sha: source, head_branch: 'main', event: 'push', repository: { full_name: 'MoinPDF/moinpdf' }, head_repository: { full_name: 'MoinPDF/moinpdf' }, ...patch };
+  const github = { rest: { actions: {
+    getWorkflowRun: async ({ run_id }) => { calls.push('get'); assert.equal(run_id, 456); return { data: run }; },
+    // Reproduce the production incident: the list index has not caught up yet.
+    listWorkflowRuns: async () => { calls.push('list'); return { data: { workflow_runs: eventName === 'workflow_run' ? [] : [run] } }; },
+  } } };
+  await publishVerify(github, { repo: { owner: 'MoinPDF', repo: 'moinpdf' }, eventName, payload: { workflow_run: { id: 456 } } }, { setOutput: (key, value) => { outputs[key] = value; } }, { env: { SOURCE_SHA: source } });
+  return { outputs, calls };
+}
+const published = await publish();
+assert.deepEqual(published, { outputs: { source, run_id: 456 }, calls: ['get'] });
+assert.equal((await publish({}, 'workflow_dispatch')).outputs.source, source);
+for (const patch of [
+  { conclusion: 'failure' }, { status: 'in_progress' }, { head_sha: 'c'.repeat(40) },
+  { path: '.github/workflows/other.yml' }, { head_branch: 'feature' }, { event: 'pull_request' },
+  { repository: { full_name: 'Other/fork' } }, { head_repository: { full_name: 'Other/fork' } },
+]) {
+  await assert.rejects(() => publish(patch), /successful complete Docker/);
+  await assert.rejects(() => publish(patch, 'workflow_dispatch'), /successful complete Docker/);
+}
+console.log('PASS: image publication uses the completed run directly despite a stale list index and rejects unverified sources; releases retain the same verification run.');
