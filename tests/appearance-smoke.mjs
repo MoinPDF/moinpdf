@@ -52,6 +52,11 @@ assert.equal(ui('Originaldokument.pdf schließen'),'Close Originaldokument.pdf')
 assert.equal(ui('  PDF-Passwort  '),'  PDF password  ');
 assert.equal(ui('Weitere 20 Einträge anzeigen (100 von 200)'),'Show 20 more entries (100 of 200)');
 assert.equal(uiLocale(),'en-GB');
+assert.equal(ui('Textfeld auswählen: Abbrechen'),'Select text field: Abbrechen');
+assert.equal(ui('Bild auswählen'),'Select image');
+assert.equal(ui('1 Auffälligkeit gefunden'),'1 issue found');
+assert.equal(ui('3 Auffälligkeiten gefunden'),'3 issues found');
+assert.equal(ui('2 Auffälligkeiten im Basischeck'),'2 issues in the basic check');
 for(const [source,target] of Object.entries(extended)) {
  assert.deepEqual(source.match(/\{\d+\}/g)?.sort()??[],target.match(/\{\d+\}/g)?.sort()??[],source);
  assert.ok(!/ZXQ|QXZ|\}Z/.test(target),source);

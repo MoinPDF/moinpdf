@@ -4270,5 +4270,13 @@
   "schreibst,": "write,",
   "Wenn du an diese Adresse": "If you write to this address",
   "A: Seite {0} · B: keine Seite": "A: page {0} · B: no page",
-  "A: keine Seite · B: Seite {0}": "A: no page · B: page {0}"
+  "A: keine Seite · B: Seite {0}": "A: no page · B: page {0}",
+  "1 Auffälligkeit gefunden": "1 issue found",
+  "{0} Auffälligkeiten gefunden": "{0} issues found",
+  "1 Auffälligkeit im Basischeck": "1 issue in the basic check",
+  "{0} Auffälligkeiten im Basischeck": "{0} issues in the basic check",
+  "Textfeld auswählen{0}": "Select text field{0}",
+  "Entfernter Bereich auswählen{0}": "Select removed area{0}",
+  "Bild auswählen{0}": "Select image{0}",
+  "Markierung auswählen{0}": "Select annotation{0}"
 }
