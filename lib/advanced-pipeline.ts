@@ -1,12 +1,24 @@
+import { PDFDocument, degrees } from 'pdf-lib';
 import JSZip from 'jszip';
-import { openSource, sourcePages, extractPageText, type Source } from './pdf-engine';
+import {
+  openSource,
+  sourcePages,
+  extractPageText,
+  requireAcroForm,
+  type Source,
+} from './pdf-engine';
 import { runStudioJob, emptyEdits } from './studio-engine';
 import { inspectPage } from './document-check';
-import { protectPdf, linearizePdf } from './pdf-security';
+import { protectPdf, linearizePdf, optimizePdf } from './pdf-security';
 import { workflowOptions } from './advanced-text';
 import { checkAbort, uniqueNames, type RunContext, type ExportFile } from './advanced-types';
 
 export const stepLabels = {
+  rotate90: 'Seiten um 90° drehen',
+  rotate180: 'Seiten um 180° drehen',
+  reverse: 'Seitenreihenfolge umkehren',
+  flattenForms: 'Formularfelder festschreiben',
+  optimizeLossless: 'Verlustfrei optimieren',
   ocr: 'OCR',
   removeBlank: 'Leerseiten entfernen',
   numbers: 'Seitennummern',
@@ -37,6 +49,29 @@ export type WorkflowStep = WorkflowAction & {
   otherwise?: WorkflowAction;
 };
 export type SavedWorkflow = { version: 1; name: string; steps: WorkflowStep[] };
+export const workflowTemplates: SavedWorkflow[] = [
+  {
+    version: 1,
+    name: 'Scanablage',
+    steps: [{ kind: 'ocr' }, { kind: 'removeBlank' }, { kind: 'optimizeLossless' }],
+  },
+  {
+    version: 1,
+    name: 'Zum Teilen vorbereiten',
+    steps: [{ kind: 'metadata' }, { kind: 'remove-annotations' }, { kind: 'optimizeLossless' }],
+  },
+  {
+    version: 1,
+    name: 'Formular abschließen',
+    steps: [{ kind: 'flattenForms' }, { kind: 'optimizeLossless' }],
+  },
+  { version: 1, name: 'Vertraulich versenden', steps: [{ kind: 'metadata' }, { kind: 'protect' }] },
+  {
+    version: 1,
+    name: 'Rückwärts gescannte Seiten',
+    steps: [{ kind: 'reverse' }, { kind: 'rotate180' }],
+  },
+];
 export function validateWorkflow(value: unknown): SavedWorkflow {
   const v = value as SavedWorkflow;
   if (
@@ -141,6 +176,27 @@ export async function applyWorkflowAction(
   ctx: RunContext,
 ): Promise<Uint8Array> {
   checkAbort(ctx.signal);
+  if (
+    (step.kind === 'rotate90' || step.kind === 'rotate180' || step.kind === 'reverse' || step.kind === 'flattenForms' || step.kind === 'optimizeLossless')
+  ) {
+    const doc = await PDFDocument.load(source.bytes);
+    const form = requireAcroForm(doc);
+    if (step.kind === 'optimizeLossless') return optimizePdf(source.bytes, undefined, ctx.signal);
+    if (step.kind === 'flattenForms') form.flatten();
+    if (step.kind.startsWith('rotate')) {
+      const angle = step.kind === 'rotate90' ? 90 : 180;
+      for (const page of doc.getPages())
+        page.setRotation(degrees((page.getRotation().angle + angle) % 360));
+    }
+    if (step.kind === 'reverse') {
+      // Reinsert the same page objects: field widgets and bookmark destinations keep their refs.
+      const pages = doc.getPages();
+      while (doc.getPageCount()) doc.removePage(0);
+      for (const page of pages.reverse()) doc.addPage(page);
+    }
+    checkAbort(ctx.signal);
+    return doc.save();
+  }
   if (step.kind === 'protect')
     return protectPdf(
       source.bytes,
@@ -235,7 +291,9 @@ export async function runPipeline(
     JSON.stringify({ workflow: workflow.name, steps: log }, null, 2),
   );
   return {
-    blob: await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }),
+    blob: await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }, () =>
+      checkAbort(ctx.signal),
+    ),
     filename: 'PDF-Arbeitsablauf.zip',
     kind: 'zip',
     pages: totalPages,

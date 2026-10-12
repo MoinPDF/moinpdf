@@ -19,6 +19,7 @@ import {
   type NativeChange,
 } from '@/lib/native-pdf';
 import { packagePdfs } from '@/lib/pro-tools';
+import { NativeSelectionPanel } from './native-selection-panel';
 import { NativeParagraphPanel } from './native-paragraph-panel';
 import { NativeObjectHandles } from './native-object-handles';
 import { OperationPreview } from './operation-preview';
@@ -62,10 +63,13 @@ export function NativePanel(props: PanelProps) {
         onChange={setMode}
         items={[
           ['object', 'Einzelne Objekte'],
+          ['selection', 'Mehrere Objekte'],
           ['paragraph', 'Absatz mit automatischem Umbruch'],
         ]}
       />
-      {mode === 'paragraph' ? (
+      {mode === 'selection' ? (
+        <NativeSelectionPanel {...props} />
+      ) : mode === 'paragraph' ? (
         <NativeParagraphPanel {...props} />
       ) : (
         <SingleObjectPanel {...props} />

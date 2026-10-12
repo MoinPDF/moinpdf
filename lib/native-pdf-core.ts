@@ -1,5 +1,7 @@
 import { init, type WrappedPdfiumModule } from '@embedpdf/pdfium';
 import fontkit from '@pdf-lib/fontkit';
+import bidiFactory from 'bidi-js';
+const bidi = bidiFactory();
 
 export type NativeRect = { x: number; y: number; w: number; h: number };
 export type NativeObject = NativeRect & {
@@ -11,6 +13,8 @@ export type NativeObject = NativeRect & {
 export type NativeChange = {
   index: number;
   order?: 'front' | 'back';
+  flipX?: boolean;
+  flipY?: boolean;
   remove?: boolean;
   text?: string;
   dx?: number;
@@ -26,8 +30,10 @@ export type NativeParagraphStyle = {
   fontSize: number;
   color: string;
   fontBytes?: Uint8Array;
+  baselineShift?: number;
 };
 export type NativeParagraph = {
+  direction?: 'auto' | 'ltr' | 'rtl';
   styles?: NativeParagraphStyle[];
   flow?: boolean;
   indices: number[];
@@ -340,7 +346,7 @@ export function editNativeObjects(
           Math.abs(rotation) > 360
         )
           throw new Error('Ungültige Verschiebung, Größe oder Drehung.');
-        if (dx || dy || scale !== 1 || rotation) {
+        if (dx || dy || scale !== 1 || rotation || change.flipX || change.flipY) {
           const r = objectRect(ctx, page, obj);
           if (!r) throw new Error('Die Objektposition ist nicht lesbar.');
           const center = [(r.left + r.right) / 2, (r.bottom + r.top) / 2],
@@ -349,14 +355,22 @@ export function editNativeObjects(
             rad = (-rotation * Math.PI) / 180,
             c = Math.cos(rad) * scale,
             s = Math.sin(rad) * scale;
+          const viewX = toPdf(ctx, page, 1, 0),
+            swapped = Math.abs(viewX[1] - origin[1]) > Math.abs(viewX[0] - origin[0]);
+          const fx = (swapped ? change.flipY : change.flipX) ? -1 : 1,
+            fy = (swapped ? change.flipX : change.flipY) ? -1 : 1;
+          const a = c * fx,
+            b = s * fx,
+            cc = -s * fy,
+            d = c * fy;
           api.FPDFPageObj_Transform(
             obj,
-            c,
-            s,
-            -s,
-            c,
-            center[0] - c * center[0] + s * center[1] + offset[0] - origin[0],
-            center[1] - s * center[0] - c * center[1] + offset[1] - origin[1],
+            a,
+            b,
+            cc,
+            d,
+            center[0] - a * center[0] - cc * center[1] + offset[0] - origin[0],
+            center[1] - b * center[0] - d * center[1] + offset[1] - origin[1],
           );
         }
       }
@@ -368,7 +382,95 @@ export function editNativeObjects(
     }
   });
 }
-/** Shape LTR text with its real glyph advances, then lay it out before changing the PDF. */
+/** Copy selected vector objects into a Form XObject; preserve the page's PDF coordinate space. */
+export function groupNativeObjects(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+  indices: number[],
+  duplicate = false,
+) {
+  const sorted = [...new Set(indices)].sort((a, b) => a - b);
+  if (
+    !sorted.length ||
+    sorted.length > 500 ||
+    (!duplicate && sorted.some((id, i) => id !== sorted[0] + i))
+  )
+    throw new Error('Zum Gruppieren aufeinanderfolgende Objekte in der Zeichenreihenfolge wählen.');
+  return open(api, bytes, (target) =>
+    open(api, bytes, (copy) => {
+      const page = pageHandle(target, index),
+        temp = pageHandle(copy, index);
+      let xobject = 0;
+      try {
+        const handles = Array.from({ length: api.FPDFPage_CountObjects(page) }, (_, i) =>
+          api.FPDFPage_GetObject(page, i),
+        );
+        if (sorted.some((id) => !Number.isInteger(id) || !handles[id]))
+          throw new Error('Ungültige Objektauswahl.');
+        for (let i = api.FPDFPage_CountObjects(temp) - 1; i >= 0; i--)
+          if (!sorted.includes(i)) {
+            const obj = api.FPDFPage_GetObject(temp, i);
+            if (!api.FPDFPage_RemoveObject(temp, obj))
+              throw new Error('Die Objektkopie konnte nicht vorbereitet werden.');
+            api.FPDFPageObj_Destroy(obj);
+          }
+        const box = copy.alloc(16);
+        let l = 0,
+          b = 0,
+          r = 0,
+          t = 0;
+        try {
+          if (!api.FPDFPage_GetMediaBox(temp, box, box + 4, box + 8, box + 12))
+            throw new Error('Ungültige Seitengröße.');
+          [l, b, r, t] = [0, 4, 8, 12].map((n) => api.pdfium.getValue(box + n, 'float'));
+        } finally {
+          copy.free(box);
+        }
+        api.FPDFPage_SetCropBox(temp, l, b, r, t);
+        api.FPDFPage_SetRotation(temp, 0);
+        if (!api.FPDFPage_GenerateContent(temp))
+          throw new Error('Die Objektkopie konnte nicht aufgebaut werden.');
+        xobject = api.FPDF_NewXObjectFromPage(target.doc, copy.doc, index);
+        if (!xobject) throw new Error('Die Objektgruppe konnte nicht erstellt werden.');
+        const group = api.FPDF_NewFormObjectFromXObject(xobject);
+        if (!group) throw new Error('Die Objektgruppe konnte nicht eingefügt werden.');
+        const origin = toPdf(target, page, 0, 0),
+          offset = toPdf(target, page, duplicate ? 0.02 : 0, duplicate ? 0.02 : 0);
+        api.FPDFPageObj_Transform(
+          group,
+          1,
+          0,
+          0,
+          1,
+          l + offset[0] - origin[0],
+          b + offset[1] - origin[1],
+        );
+        if (!duplicate)
+          for (const id of sorted) {
+            if (!api.FPDFPage_RemoveObject(page, handles[id])) {
+              api.FPDFPageObj_Destroy(group);
+              throw new Error('Ein Originalobjekt konnte nicht entfernt werden.');
+            }
+            api.FPDFPageObj_Destroy(handles[id]);
+          }
+        if (duplicate) api.FPDFPage_InsertObject(page, group);
+        else if (!api.FPDFPage_InsertObjectAtIndex(page, group, sorted[0])) {
+          api.FPDFPageObj_Destroy(group);
+          throw new Error('Die Zeichenreihenfolge konnte nicht erhalten werden.');
+        }
+        if (!api.FPDFPage_GenerateContent(page))
+          throw new Error('Die Objektgruppe konnte nicht gespeichert werden.');
+        return saved(target);
+      } finally {
+        if (xobject) api.FPDF_CloseXObject(xobject);
+        api.FPDF_ClosePage(temp);
+        api.FPDF_ClosePage(page);
+      }
+    }),
+  );
+}
+/** Shape Unicode text with measured glyph advances before changing the PDF. */
 export function replaceNativeParagraph(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
@@ -396,15 +498,29 @@ export function replaceNativeParagraph(
   const text = settings.text.replace(/\r\n?/g, '\n').replace(/\t/g, '    ');
   if (!text.trim() || text.length > 20000 || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(text))
     throw new Error('Bitte 1 bis 20.000 Zeichen ohne Steuerzeichen eingeben.');
-  // Fontkit shapes glyphs, but does not provide the paragraph bidi/line-breaking algorithm.
+  if (!['auto', 'ltr', 'rtl'].includes(settings.direction || 'auto'))
+    throw new Error('Ungültige Schreibrichtung.');
   if (
-    /[\u0590-\u109f]|[\u1780-\u18af]|[\u200b-\u200f]|[\u202a-\u202e]|[\u2060-\u206f]|[\ua980-\ua9df]|[\uaa00-\uaaff]|[\ufb1d-\ufeff]/u.test(
-      text,
-    )
+    Array.from(text).some((ch) => {
+      const cp = ch.codePointAt(0)!;
+      return (
+        (cp >= 0x900 && cp <= 0x109f) ||
+        (cp >= 0x1780 && cp <= 0x18af) ||
+        (cp >= 0x200b && cp <= 0x200f) ||
+        (cp >= 0x202a && cp <= 0x202e) ||
+        (cp >= 0x2060 && cp <= 0x206f) ||
+        (cp >= 0xa980 && cp <= 0xa9df) ||
+        (cp >= 0xaa00 && cp <= 0xaaff)
+      );
+    })
   )
     throw new Error(
-      'Dieser Absatzeditor unterstützt links-nach-rechts gesetzte Schrift. Bidirektionale und komplexe nichtlateinische Zeichenformung ist noch nicht freigegeben.',
+      'Diese komplexe Schrift oder explizite Richtungssteuerung ist noch nicht freigegeben.',
     );
+  const embedding = bidi.getEmbeddingLevels(
+    text,
+    settings.direction === 'auto' ? undefined : settings.direction,
+  );
   type Glyph = { id: number; codePoints: number[] };
   type Position = { xAdvance: number; yAdvance: number; xOffset: number; yOffset: number };
   type Face = {
@@ -413,7 +529,13 @@ export function replaceNativeParagraph(
     descent: number;
     characterSet: number[];
     variationAxes?: object;
-    layout: (text: string) => { direction: string; glyphs: Glyph[]; positions: Position[] };
+    layout: (
+      text: string,
+      features?: string[],
+      script?: string,
+      language?: string,
+      direction?: string,
+    ) => { direction: string; glyphs: Glyph[]; positions: Position[] };
   };
   type Font = {
     bytes: Uint8Array;
@@ -421,9 +543,11 @@ export function replaceNativeParagraph(
     cids: Map<string, { cid: number; glyph: Glyph }>;
     handle: number;
   };
-  type Style = { font: Font; size: number; color: string };
+  type Style = { font: Font; size: number; color: string; shift: number };
   const fonts: Font[] = [];
-  const getStyle = (fontBytes: Uint8Array, size: number, color: string): Style => {
+  const getStyle = (fontBytes: Uint8Array, size: number, color: string, shift = 0): Style => {
+    if (!Number.isFinite(shift) || Math.abs(shift) > 72)
+      throw new Error('Ungültige Grundlinienverschiebung.');
     if (!Number.isFinite(size) || size < 6 || size > 144 || !/^#[0-9a-f]{6}$/i.test(color))
       throw new Error('Bitte Schriftgröße und Farbe prüfen.');
     let font = fonts.find((f) => f.bytes === fontBytes);
@@ -456,7 +580,7 @@ export function replaceNativeParagraph(
       if (fonts.reduce((n, f) => n + f.bytes.length, 0) > 40 * 1024 * 1024)
         throw new Error('Die Absatzschriften dürfen zusammen höchstens 40 MB groß sein.');
     }
-    return { font, size, color };
+    return { font, size, color, shift };
   };
   const base = getStyle(settings.fontBytes, settings.fontSize, settings.color);
   const ranges = [...(settings.styles || [])].sort((a, b) => a.from - b.from);
@@ -482,12 +606,19 @@ export function replaceNativeParagraph(
     last = range.to;
     return {
       ...range,
-      style: getStyle(range.fontBytes || settings.fontBytes, range.fontSize, range.color),
+      style: getStyle(
+        range.fontBytes || settings.fontBytes,
+        range.fontSize,
+        range.color,
+        range.baselineShift,
+      ),
     };
   });
-  type Part = { text: string; style: Style };
+  type Part = { text: string; style: Style; start: number; level: number };
   const pieces: Part[] = graphemes.map((g) => ({
     text: g.segment,
+    start: g.index,
+    level: embedding.levels[g.index],
     style: styled.find((s) => g.index >= s.from && g.index < s.to)?.style || base,
   }));
   for (const p of pieces)
@@ -499,32 +630,58 @@ export function replaceNativeParagraph(
         );
     }
   const shape = (parts: Part[]) => {
+    if (!parts.length) return [];
+    const start = parts[0].start,
+      end = parts.at(-1)!.start + parts.at(-1)!.text.length - 1;
+    const visual = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    for (const [a, b] of bidi.getReorderSegments(text, embedding, start, end))
+      visual.splice(a - start, b - a + 1, ...visual.slice(a - start, b - start + 1).reverse());
+    const rank = new Map(visual.map((value, i) => [value, i]));
     const groups: Part[] = [];
     for (const p of parts) {
       const prev = groups.at(-1);
-      if (prev?.style === p.style) prev.text += p.text;
+      if (prev?.style === p.style && prev.level === p.level) prev.text += p.text;
       else groups.push({ ...p });
     }
-    return groups.map((p) => {
-      const run = p.style.font.face.layout(p.text),
-        factor = p.style.size / p.style.font.face.unitsPerEm;
-      if (
-        run.direction !== 'ltr' ||
-        run.glyphs.length !== run.positions.length ||
-        run.positions.some(
-          (pos) => ![pos.xAdvance, pos.yAdvance, pos.xOffset, pos.yOffset].every(Number.isFinite),
+    return groups
+      .sort((a, b) => rank.get(a.start)! - rank.get(b.start)!)
+      .map((p) => {
+        const rtl = !!(p.level & 1);
+        const mirrored = Array.from(p.text, (ch) =>
+          rtl ? bidi.getMirroredCharacter(ch) || ch : ch,
+        ).join('');
+        const run = p.style.font.face.layout(
+            mirrored,
+            undefined,
+            undefined,
+            undefined,
+            rtl ? 'rtl' : 'ltr',
+          ),
+          factor = p.style.size / p.style.font.face.unitsPerEm;
+        if (
+          run.glyphs.length !== run.positions.length ||
+          run.positions.some(
+            (pos) => ![pos.xAdvance, pos.yAdvance, pos.xOffset, pos.yOffset].every(Number.isFinite),
+          )
         )
-      )
-        throw new Error(
-          'Die Zeichenformung der gewählten Schrift kann nicht zuverlässig gesetzt werden.',
-        );
-      return {
-        ...p,
-        run,
-        factor,
-        width: run.positions.reduce((n, pos) => n + pos.xAdvance * factor, 0),
-      };
-    });
+          throw new Error(
+            'Die Zeichenformung der gewählten Schrift kann nicht zuverlässig gesetzt werden.',
+          );
+        // Keep logical Unicode in ToUnicode even where the displayed bracket is mirrored.
+        if (rtl)
+          for (const glyph of run.glyphs)
+            glyph.codePoints = glyph.codePoints.map((cp) =>
+              (
+                bidi.getMirroredCharacter(String.fromCodePoint(cp)) || String.fromCodePoint(cp)
+              ).codePointAt(0)!,
+            );
+        return {
+          ...p,
+          run,
+          factor,
+          width: run.positions.reduce((n, pos) => n + pos.xAdvance * factor, 0),
+        };
+      });
   };
   return open(api, bytes, (ctx) => {
     const first = pageHandle(ctx, index),
@@ -604,10 +761,12 @@ export function replaceNativeParagraph(
       for (const groups of lines) {
         const styles = groups.length ? groups.map((g) => g.style) : [base];
         const ascent = Math.max(
-            ...styles.map((s) => (s.font.face.ascent * s.size) / s.font.face.unitsPerEm),
+            ...styles.map((s) => (s.font.face.ascent * s.size) / s.font.face.unitsPerEm + s.shift),
           ),
           descent = Math.max(
-            ...styles.map((s) => (Math.abs(s.font.face.descent) * s.size) / s.font.face.unitsPerEm),
+            ...styles.map(
+              (s) => (Math.abs(s.font.face.descent) * s.size) / s.font.face.unitsPerEm - s.shift,
+            ),
           );
         const advance = Math.max(ascent + descent, ...styles.map((s) => s.size * lineHeight));
         if (ascent + descent > vertical + 0.01)
@@ -730,7 +889,14 @@ export function replaceNativeParagraph(
               ctx.free(cp);
             }
             const nx = r.x + (x + pos.xOffset * group.factor) / width,
-              ny = r.y + (padding + line.top + line.ascent - pos.yOffset * group.factor) / height;
+              ny =
+                r.y +
+                (padding +
+                  line.top +
+                  line.ascent -
+                  group.style.shift -
+                  pos.yOffset * group.factor) /
+                  height;
             api.FPDFPageObj_Transform(
               obj,
               u[0] / width,

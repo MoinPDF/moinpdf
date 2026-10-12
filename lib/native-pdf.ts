@@ -66,3 +66,11 @@ export const replaceParagraph = (
   settings: NativeParagraph,
   signal?: AbortSignal,
 ) => nativeJob<NativeParagraphResult>(bytes, { action: 'paragraph', page, settings }, signal);
+
+export const groupObjects = (
+  bytes: Uint8Array,
+  page: number,
+  indices: number[],
+  duplicate: boolean,
+  signal?: AbortSignal,
+) => nativeJob<Uint8Array>(bytes, { action: 'group', page, indices, duplicate }, signal);

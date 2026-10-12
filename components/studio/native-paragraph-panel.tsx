@@ -14,6 +14,7 @@ import {
 } from '@/lib/native-pdf';
 import { packagePdfs } from '@/lib/pro-tools';
 import {
+  Text,
   Choice,
   Tick,
   Field,
@@ -36,6 +37,10 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
     [lineHeight, setLineHeight] = useState(1.4),
     [padding, setPadding] = useState(4),
     [align, setAlign] = useState<'left' | 'center' | 'right'>('left'),
+    [direction, setDirection] = useState<'auto' | 'ltr' | 'rtl'>('auto'),
+    [spellLanguage, setSpellLanguage] = useState('de'),
+    [find, setFind] = useState(''),
+    [replacement, setReplacement] = useState(''),
     [color, setColor] = useState('#000000'),
     [fontChoice, setFontChoice] = useState('noto'),
     [fontFile, setFontFile] = useState<File | null>(null);
@@ -60,6 +65,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
     lineHeight,
     padding,
     align,
+    direction,
     color,
     fontChoice,
     fontFile: fontFile && [fontFile.name, fontFile.size, fontFile.lastModified],
@@ -99,7 +105,12 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
         throw new Error('Bitte eine statische TrueType-Schrift mit höchstens 10 MB auswählen.');
       fontBytes = new Uint8Array(await fontFile.arrayBuffer());
     } else {
-      const response = await fetch('/vendor/invoice-font/NotoSans-Regular.ttf', { signal });
+      const response = await fetch(
+        fontChoice === 'noto'
+          ? '/vendor/invoice-font/NotoSans-Regular.ttf'
+          : '/vendor/editor-fonts/' + fontChoice + '.ttf',
+        { signal },
+      );
       if (!response.ok) throw new Error('Die lokale Schrift konnte nicht geladen werden.');
       fontBytes = new Uint8Array(await response.arrayBuffer());
     }
@@ -115,6 +126,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
         lineHeight,
         padding,
         align,
+        direction,
         color,
         flow,
         styles: await Promise.all(
@@ -123,6 +135,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             to: style.to,
             fontSize: style.fontSize,
             color: style.color,
+            baselineShift: style.baselineShift,
             ...(style.fontFile
               ? { fontBytes: new Uint8Array(await style.fontFile.arrayBuffer()) }
               : {}),
@@ -209,6 +222,9 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
           <textarea
             aria-label={ui('Neuer Absatztext')}
             rows={8}
+            dir={direction}
+            lang={spellLanguage}
+            spellCheck={spellLanguage !== 'off'}
             maxLength={20000}
             value={text}
             onChange={(e) => {
@@ -222,9 +238,83 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
         </Field>
         <p className="fine-note">
           {ui(
-            'Textreihenfolge nach dem Übernehmen prüfen. Eingabetaste beginnt eine neue Zeile; weitere Umbrüche setzt MoinPDF automatisch. Unterstützt werden lateinische, griechische und kyrillische Schriften.',
+            'Textreihenfolge nach dem Übernehmen prüfen. Eingabetaste beginnt eine neue Zeile; weitere Umbrüche setzt MoinPDF automatisch. Lateinische, griechische, kyrillische, arabische und hebräische Schriften werden unterstützt, wenn die gewählte Schrift die Zeichen enthält.',
           )}
         </p>
+        <Choice
+          label={ui('Schreibrichtung')}
+          value={direction}
+          onChange={(v) => setDirection(v as typeof direction)}
+          items={[
+            ['auto', 'Automatisch'],
+            ['ltr', 'Links nach rechts'],
+            ['rtl', 'Rechts nach links'],
+          ]}
+        />
+        <Choice
+          label={ui('Rechtschreibprüfung des Browsers')}
+          value={spellLanguage}
+          onChange={setSpellLanguage}
+          items={[
+            ['de', 'Deutsch'],
+            ['en', 'English'],
+            ['fr', 'Français'],
+            ['es', 'Español'],
+            ['ar', 'العربية'],
+            ['he', 'עברית'],
+            ['off', 'Aus'],
+          ]}
+        />
+        <p className="fine-note">
+          {ui('Die Rechtschreibprüfung verwendet die verfügbaren Wörterbücher deines Browsers.')}
+        </p>
+        <Text label={ui('Im Absatz suchen')} value={find} onChange={setFind} />
+        <Text label={ui('Ersetzen durch')} value={replacement} onChange={setReplacement} />
+        <Button
+          variant="outline"
+          disabled={
+            busy ||
+            !find ||
+            !text.includes(find) ||
+            text.split(find).join(replacement).length > 20000
+          }
+          onClick={() => {
+            setText(text.split(find).join(replacement));
+            setStyles([]);
+          }}
+        >
+          {ui('Alle Treffer im Absatz ersetzen')}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={busy || !text || text.length + text.split('\n').length * 2 > 20000}
+          onClick={() => {
+            setText(
+              text
+                .split('\n')
+                .map((line) => (line.trim() ? '• ' + line : line))
+                .join('\n'),
+            );
+            setStyles([]);
+          }}
+        >
+          {ui('Aufzählung einfügen')}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={busy || !text || text.length + text.split('\n').length * 8 > 20000}
+          onClick={() => {
+            setText(
+              text
+                .split('\n')
+                .map((line, i) => (line.trim() ? `${i + 1}. ${line}` : line))
+                .join('\n'),
+            );
+            setStyles([]);
+          }}
+        >
+          {ui('Nummerierte Liste einfügen')}
+        </Button>
         <Button
           variant="outline"
           disabled={busy || selection[1] <= selection[0] || styles.length >= 32}
@@ -240,6 +330,20 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
               {ui('Formatierung ')}
               {i + 1}: {text.slice(style.from, style.to).slice(0, 60)}
             </legend>
+            <Choice
+              label={ui('Grundlinie')}
+              value={String(style.baselineShift || 0)}
+              items={[
+                ['0', 'Normal'],
+                ['4', 'Hochstellen'],
+                ['-3', 'Tiefstellen'],
+              ]}
+              onChange={(v) =>
+                setStyles((all) =>
+                  all.map((s, n) => (n === i ? { ...s, baselineShift: Number(v) } : s)),
+                )
+              }
+            />
             <NumberField
               label={ui(`Formatierung ${i + 1}: Schriftgröße`)}
               value={style.fontSize}
@@ -304,6 +408,14 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
           onChange={setFontChoice}
           items={[
             ['noto', 'Noto Sans'],
+            ['DejaVuSans', 'DejaVu Sans – Arabisch/Hebräisch'],
+            ['DejaVuSans-Bold', 'DejaVu Sans Bold'],
+            ['DejaVuSans-Oblique', 'DejaVu Sans Oblique'],
+            ['DejaVuSans-BoldOblique', 'DejaVu Sans Bold Oblique'],
+            ['DejaVuSerif', 'DejaVu Serif'],
+            ['DejaVuSerif-Bold', 'DejaVu Serif Bold'],
+            ['DejaVuSerif-Italic', 'DejaVu Serif Italic'],
+            ['DejaVuSansMono', 'DejaVu Sans Mono'],
             ['custom', 'Eigene TrueType-Schrift'],
           ]}
         />
