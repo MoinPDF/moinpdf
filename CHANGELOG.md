@@ -9,6 +9,13 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.10.2 – 2026-10-12
+
+- Sprach- und Leuchtturm-Schalter nochmals verkleinert: 32 Pixel am Desktop,
+  30 Pixel auf schmalen Bildschirmen, mit weiterhin ausreichend großen Touch-Flächen.
+- Der Leuchtturm wippt beim Umschalten kurz mit einem dezenten Lichtimpuls.
+  Jeder Klick startet die Animation neu; reduzierte Bewegung wird berücksichtigt.
+
 ## 0.10.1 – 2026-10-12
 
 - Sprach- und Leuchtturm-Schalter kleiner und dezenter gestaltet; auf Touch-Geräten

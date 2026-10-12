@@ -112,7 +112,7 @@ body {
 .appearance-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 .appearance-button {
@@ -120,14 +120,14 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 36px;
+  gap: 5px;
+  min-height: 32px;
   border: 1px solid var(--ui-control-line);
-  border-radius: 10px;
+  border-radius: 9px;
   background: transparent;
   color: var(--ui-copy);
   box-shadow: none;
-  padding: 6px 9px;
+  padding: 4px 7px;
   font-size: 11px;
   font-weight: 500;
 }
@@ -144,13 +144,13 @@ body {
   .appearance-button::before {
     content: '';
     position: absolute;
-    inset: -5px;
+    inset: -8px;
   }
 }
 .language-flag {
-  width: 19px;
-  height: 13px;
-  flex: 0 0 19px;
+  width: 17px;
+  height: 12px;
+  flex: 0 0 17px;
   border-radius: 3px;
   overflow: hidden;
   box-shadow: 0 0 0 1px #0000000d;
@@ -173,14 +173,54 @@ body {
   height: 16px;
 }
 .theme-toggle {
-  width: 36px;
-  padding: 3px;
+  width: 32px;
+  padding: 2px;
   color: #168c76;
 }
 .lighthouse {
-  width: 23px;
-  height: 27px;
+  width: 20px;
+  height: 24px;
   overflow: visible;
+  transform-origin: 50% 90%;
+}
+.lighthouse.is-clicked {
+  animation: lighthouse-sway 520ms ease-in-out;
+}
+.lighthouse.is-clicked .lighthouse-beams {
+  animation: lighthouse-flash 520ms ease-out;
+}
+.lighthouse.is-clicked .lighthouse-glass {
+  animation: lighthouse-glow 520ms ease-out;
+}
+@keyframes lighthouse-sway {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-8deg);
+  }
+  55% {
+    transform: rotate(6deg);
+  }
+  80% {
+    transform: rotate(-2deg);
+  }
+}
+@keyframes lighthouse-flash {
+  30% {
+    opacity: 1;
+    transform: scaleX(1.18);
+  }
+  65% {
+    opacity: 0.65;
+    transform: scaleX(0.95);
+  }
+}
+@keyframes lighthouse-glow {
+  30% {
+    fill: #ddffab;
+  }
 }
 .lighthouse-glass {
   fill: #879c9518;
@@ -413,16 +453,15 @@ body {
     padding: 10px max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
   }
   .appearance-controls {
-    gap: 7px;
-  }
-  .appearance-button {
-    min-height: 34px;
-    border-radius: 9px;
-    padding: 5px 8px;
     gap: 6px;
   }
+  .appearance-button {
+    min-height: 30px;
+    border-radius: 8px;
+    padding: 3px 6px;
+  }
   .theme-toggle {
-    width: 34px;
+    width: 30px;
     padding: 2px;
   }
   .app-toolbar .project-toggle {
@@ -495,6 +534,7 @@ body {
   html {
     scroll-behavior: auto;
   }
+  .lighthouse,
   .lighthouse *,
   .chooser-file,
   .result-banner,
@@ -543,6 +583,6 @@ body {
 
 @media (pointer: coarse) {
   .appearance-controls {
-    gap: 10px;
+    gap: 14px;
   }
 }

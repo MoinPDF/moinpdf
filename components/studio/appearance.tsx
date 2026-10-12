@@ -150,10 +150,10 @@ export function CountryFlag({ language }: { language: Language }) {
   );
 }
 
-export function Lighthouse({ lit }: { lit: boolean }) {
+export function Lighthouse({ lit, animate = false }: { lit: boolean; animate?: boolean }) {
   return (
     <svg
-      className={`lighthouse ${lit ? 'is-lit' : ''}`}
+      className={`lighthouse ${lit ? 'is-lit' : ''} ${animate ? 'is-clicked' : ''}`}
       viewBox="0 0 40 44"
       fill="none"
       stroke="currentColor"
@@ -178,6 +178,7 @@ export function AppearanceControls() {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [lighthouseClick, setLighthouseClick] = useState(0);
   useEffect(() => setMounted(true), []);
   const dark = mounted && resolvedTheme === 'dark';
   return (
@@ -222,12 +223,15 @@ export function AppearanceControls() {
       <button
         type="button"
         className="appearance-button theme-toggle"
-        onClick={() => setTheme(dark ? 'light' : 'dark')}
+        onClick={() => {
+          setLighthouseClick((click) => click + 1);
+          setTheme(dark ? 'light' : 'dark');
+        }}
         aria-label={t(dark ? 'Hellen Modus einschalten' : 'Dunklen Modus einschalten')}
         title={t(dark ? 'Hellen Modus einschalten' : 'Dunklen Modus einschalten')}
         aria-pressed={dark}
       >
-        <Lighthouse lit={!dark} />
+        <Lighthouse key={lighthouseClick} lit={!dark} animate={lighthouseClick > 0} />
       </button>
     </div>
   );
