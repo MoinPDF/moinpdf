@@ -9,19 +9,19 @@ export function LegalFooter() {
       <nav aria-label={t('Informationen zu MoinPDF')}>
         <a href="/dokumentation.html" target="_blank" rel="noopener noreferrer">
           {t('Dokumentation')}
-          <span className="sr-only"> (neuer Tab)</span>
+          <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
         <a href="/medienbereich.html" target="_blank" rel="noopener noreferrer">
           {t('Medienbereich')}
-          <span className="sr-only"> (neuer Tab)</span>
+          <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
         <a href="/impressum.html" target="_blank" rel="noopener noreferrer">
           {t('Impressum')}
-          <span className="sr-only"> (neuer Tab)</span>
+          <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
         <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">
           {t('Datenschutzerklärung')}
-          <span className="sr-only"> (neuer Tab)</span>
+          <span className="sr-only">{t(' (neuer Tab)')}</span>
         </a>
       </nav>
       <div className="moinpdf-footer-brand">

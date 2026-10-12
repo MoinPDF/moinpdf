@@ -286,8 +286,7 @@ export function ProjectManager({
                 {p.versions.map((v, i) => (
                   <div className="project-version" key={v.id}>
                     <span>
-                      {new Date(v.created).toLocaleString('de-DE')} · {v.pages}
-                      {t('Seiten')}
+                      {new Date(v.created).toLocaleString('de-DE')} · {v.pages} {t('Seiten')}
                       {i === 0 ? ' · neuester Stand' : ''}
                     </span>
                     <Button

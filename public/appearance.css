@@ -70,3 +70,40 @@
 .dark .docs-shell, .dark .legal-shell { background: transparent; }
 .dark .docs-header, .dark .docs-sidebar { background: #252c30; }
 .dark .docs-logo, .dark .legal-logo { filter: brightness(1.45); }
+
+/* Standalone pages use these names for text rather than component surfaces. */
+:root.dark {
+  --ink: #dce8e6;
+  --muted: #acbfba;
+  --teal: #88d6ca;
+  --line: #46534f;
+  --paper: #292f33;
+  --mint: #2d4442;
+  --lime: #35432f;
+}
+.dark .docs-brand img, .dark .legal-brand img {
+  content: url('/branding/moinpdf-logo-dark.svg');
+}
+@media print {
+  :root.dark {
+    color-scheme: light;
+    --ink: #213e36;
+    --muted: #597269;
+    --teal: #176c64;
+    --line: #dce8e1;
+    --paper: #ffffff;
+    --mint: #e6f3ed;
+    --lime: #dcedc3;
+    --ui-ink: #213e36;
+    --ui-muted: #597269;
+    --ui-faint: #597269;
+    --ui-surface: #ffffff;
+    --ui-soft: #f0f6f0;
+    --ui-line: #dce8e1;
+    --ui-green-soft: #e6f3ed;
+    --ui-teal-soft: #e6f3ed;
+  }
+  .dark body { background: #ffffff; color: #213e36; }
+  .dark .docs-header, .dark .docs-sidebar { background: transparent; }
+  .dark .docs-brand img, .dark .legal-brand img { content: normal; filter: none; }
+}

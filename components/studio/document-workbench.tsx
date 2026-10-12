@@ -496,9 +496,7 @@ export function DocumentWorkbench({
               )}
             </div>
             <span>
-              {source.pdf.numPages}
-              {t('Seiten ·')}
-              {formatSize(source.size)}
+              {source.pdf.numPages} {t('Seiten ·')} {formatSize(source.size)}
             </span>
           </div>
           <div className="workbench-pagebar">
