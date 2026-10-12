@@ -1,4 +1,4 @@
-FROM libretranslate/libretranslate:v1.8.4
+FROM libretranslate/libretranslate:v1.9.6
 ARG MOINPDF_UID=1032
 ENV ARGOS_CHUNK_TYPE=MINISBD PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 USER root

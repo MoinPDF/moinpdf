@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.12.1 — 2026-10-12
+
+- LibreTranslate auf 1.9.6, Uvicorn auf 0.54.0 und pycparser auf 3.1 aktualisiert.
+- TypeScript 6.0.3 und ESLint 10.12.0 sowie die aktuellen Checkout- und Container-Anmeldeaktionen übernommen.
+- Python 3.12 und die zu Node.js ab 22.13 passenden Typdefinitionen bleiben erhalten. Das separate pyHanko-Update wird wegen eines Konflikts mit dem festgelegten Zertifikatsprüfer nicht übernommen.
+
 ## 0.12.0 — 2026-10-12
 
 - Absatzeditor mit HarfBuzz und 14 lokalen Noto-Schriften für indische und südostasiatische Schriftsysteme; passende Schriften werden bei Bedarf ergänzt.
