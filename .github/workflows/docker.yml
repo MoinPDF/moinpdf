@@ -39,8 +39,16 @@ jobs:
           MOINPDF_TEST_URL: http://localhost:8080
         run: python tests/xfa-browser.py
       - name: Real local Office conversion without document uploads
+        id: office
         env:
           MOINPDF_TEST_URL: http://localhost:8080
+        run: python tests/browser-office-browser.py
+      - name: Diagnose a failed Office conversion with synthetic fixtures
+        if: failure() && steps.office.outcome == 'failure'
+        timeout-minutes: 5
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+          MOINPDF_OFFICE_VERBOSE: "1"
         run: python tests/browser-office-browser.py
       - name: Real local language model with offline document questions
         env:

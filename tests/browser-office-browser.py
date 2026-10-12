@@ -27,6 +27,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         console.append(message.type+': '+message.text[:1500])
         del console[:-100]
     page.on('console', log)
+    page.add_init_script('window.__officeVerbose = ' + json.dumps(os.environ.get('MOINPDF_OFFICE_VERBOSE') == '1'))
     page.add_init_script('''(() => {
       const NativeWorker = window.Worker;
       window.__officeProgress = [];
@@ -40,7 +41,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
           }
         }
         postMessage(data, ...args) {
-          if (data?.type === 'init' && data.sofficeJs) data = {...data, verbose: true};
+          if (data?.type === 'init' && data.sofficeJs) data = {...data, verbose: window.__officeVerbose};
           return super.postMessage(data, ...args);
         }
       };
