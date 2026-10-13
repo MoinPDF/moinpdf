@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.13.7 – 13. Oktober 2026
+
+- Eckige Schnellzugriff-Kacheln mit den Originalsymbolen aus „Alle Werkzeuge“, ohne zusätzliche Dokumentillustrationen.
+- Werkzeugaufrufe von der Startseite und aus der Übersicht funktionieren auch ohne bereits geöffnetes PDF.
+- Die Werkzeugauswahl bleibt beim anschließenden Dateiöffnen und beim Ablegen einer PDF erhalten; mobile Aufrufe zeigen den Arbeitsbereich direkt von oben.
+- Browserprüfung für sämtliche Schnellzugriffe ohne Dokument, identische Symbole und Dateiimport im gewählten Werkzeug ergänzt.
+
 ## 0.13.6 – 13. Oktober 2026
 
 - Werkzeug-Kacheln mit feiner Umrandung, dezentem Lichtverlauf und kompakten, leicht plastischen Icons.

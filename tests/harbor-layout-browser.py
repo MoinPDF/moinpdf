@@ -26,6 +26,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.evaluate('document.fonts.ready')
         expect(page.locator('.harbor-photo img')).to_have_js_property('complete', True)
         assert page.locator('.harbor-photo img').evaluate('(img) => img.naturalWidth > 1000')
+        pdf = Path(temporary)/'harbor-retention.pdf'
+        with pymupdf.open() as document:
+            for text in ('Unchanged document one', 'Unchanged document two'):
+                document.new_page().insert_text((50, 60), text)
+            document.save(pdf)
         for theme in ('light', 'dark'):
             if theme == 'dark':
                 page.locator('.theme-toggle').click()
@@ -41,11 +46,70 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 assert page.locator('.harbor-upload-cta').bounding_box()['height'] >= 44
                 assert page.get_by_text('Papierkram. Läuft.', exact=True).count() == 1
                 assert page.locator('.harbor-tool-card').count() == 4
+                assert page.locator('.harbor-tool-card').first.evaluate('(el) => getComputedStyle(el).borderRadius') == '0px'
                 nav = page.locator('.harbor-desktop-nav' if width > 1000 else '.harbor-mobile-nav')
                 expect(nav).to_be_visible()
                 if width in (390, 768, 1440):
                     page.screenshot(path=str(out/f'harbor-home-{width}-{theme}.png'), full_page=True)
                 checks.append(f'{width}px {theme}: image, upload, search, cards, navigation, no overflow')
+        # Every home tile must actually leave the start page before a PDF exists.
+        # This covers the formerly blocked core tools as well as specialized tools.
+        icons = {}
+        for width in (390, 1440):
+            page.set_viewport_size({'width':width, 'height':900})
+            nav = page.locator('.harbor-mobile-nav' if width == 390 else '.harbor-desktop-nav')
+            categories = page.locator('.harbor-categories button').all_text_contents()
+            for category in categories:
+                page.locator('.harbor-categories').get_by_role('button', name=category, exact=True).click()
+                titles = page.locator('.harbor-tool-card strong').all_text_contents()
+                for title in titles:
+                    page.locator('.harbor-categories').get_by_role('button', name=category, exact=True).click()
+                    card = page.locator('.harbor-tool-card').filter(has=page.get_by_text(title, exact=True))
+                    icons[title] = card.locator('svg').inner_html()
+                    card.click()
+                    expect(page.locator('.harbor-home')).to_have_count(0)
+                    expect(page.locator('main h1')).to_have_text(title)
+                    nav.get_by_role('button', name='Start', exact=True).click()
+                    expect(page.locator('.harbor-home')).to_be_visible()
+                checks.append(f'{width}px: all {len(titles)} {category} tiles open their named tool without a PDF')
+            page.locator('.harbor-text-button').click()
+            expect(page.locator('.chooser-tool')).to_have_count(112)
+            for title, icon in icons.items():
+                card = page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True))
+                assert card.locator('svg').inner_html() == icon, title
+            # The shared entry path must also work from the full catalogue.
+            title = next(iter(icons))
+            page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
+            expect(page.locator('main h1')).to_have_text(title)
+            page.get_by_role('button', name='Werkzeug wechseln', exact=True).click()
+            expect(page.locator('.chooser-tool')).to_have_count(112)
+            nav.get_by_role('button', name='Start', exact=True).click()
+        checks.append('Home and catalogue use identical SVG symbols; empty-tool back navigation works')
+        # Importing after choosing a core tool must keep that tool selected.
+        for index, method in ((0, 'drop'), (1, 'picker'), (3, 'picker')):
+            imported = browser.new_context(viewport={'width':390, 'height':844}, reduced_motion='reduce')
+            test = imported.new_page()
+            test.on('pageerror', lambda error: errors.append(str(error)))
+            test.goto(origin)
+            card = test.locator('.harbor-tool-card').nth(index)
+            title = card.locator('strong').inner_text()
+            card.click()
+            expect(test.locator('main h1')).to_have_text(title)
+            if method == 'drop':
+                test.evaluate('''({bytes, name}) => {
+                    const transfer = new DataTransfer();
+                    transfer.items.add(new File([new Uint8Array(bytes)], name, {type:'application/pdf'}));
+                    window.dispatchEvent(new DragEvent('drop', {dataTransfer:transfer, bubbles:true, cancelable:true}));
+                }''', {'bytes':list(pdf.read_bytes()), 'name':pdf.name})
+            else:
+                test.locator('input[type=file]').first.set_input_files(str(pdf))
+            expect(test.locator('.file-tab').first).to_contain_text(pdf.name)
+            expect(test.locator('main h1')).to_have_text(title)
+            if index == 3:
+                expect(test.get_by_role('tab', name='Dokument', exact=True)).to_have_attribute('aria-selected', 'true')
+            test.screenshot(path=str(out/f'harbor-selected-import-{index}.png'), full_page=True)
+            imported.close()
+            checks.append(f'{title}: {method} import keeps the chosen tool and two-page PDF')
         page.set_viewport_size({'width':390, 'height':844})
         page.locator('.language-trigger').click()
         page.get_by_role('menuitemradio', name='English', exact=True).click()
@@ -53,17 +117,17 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.get_by_role('heading', name='Quick access', exact=True)).to_be_visible()
         page.locator('.harbor-search input').fill('merge')
         expect(page.locator('.harbor-search-result').first).to_contain_text('Merge')
-        page.locator('.harbor-search-clear').click()
+        title = page.locator('.harbor-search-result strong').first.inner_text()
+        page.locator('.harbor-search-result').first.press('Enter')
+        expect(page.locator('main h1')).to_have_text(title)
+        page.locator('.harbor-mobile-nav').get_by_role('button', name='Home', exact=True).click()
+        expect(page.locator('.harbor-home')).to_be_visible()
+        checks.append('English search opens the selected empty tool with the keyboard')
         page.locator('.harbor-mobile-nav').get_by_role('button', name='More', exact=True).click()
         expect(page.get_by_role('menuitem', name='Documentation (new tab)', exact=True)).to_be_visible()
         page.keyboard.press('Escape')
         page.locator('.language-trigger').click()
         page.get_by_role('menuitemradio', name='Deutsch', exact=True).click()
-        pdf = Path(temporary)/'harbor-retention.pdf'
-        with pymupdf.open() as document:
-            for text in ('Unchanged document one', 'Unchanged document two'):
-                document.new_page().insert_text((50, 60), text)
-            document.save(pdf)
         page.locator('input[type=file]').first.set_input_files(str(pdf))
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
         page.locator('.harbor-mobile-nav').get_by_role('button', name='Start', exact=True).click()

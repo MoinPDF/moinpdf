@@ -556,7 +556,11 @@ function Studio() {
             setToolId('inspect');
             setView('check');
             setSearch('');
-          } else setView('pages');
+          } else {
+            setView(
+              toolId === 'inspect' ? 'check' : visualTools.includes(toolId) ? 'document' : 'pages',
+            );
+          }
           toast.success(
             `${added.length} ${t(added.length === 1 ? 'Datei geöffnet' : 'Dateien geöffnet')}`,
           );
@@ -567,7 +571,7 @@ function Studio() {
         setImportState({ phase: 'idle', name: '', completed: 0, total: 0 });
       }
     },
-    [t],
+    [t, toolId],
   );
   useEffect(() => {
     const over = (e: DragEvent) => {
@@ -583,7 +587,7 @@ function Studio() {
       if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
       e.preventDefault();
       setDragOver(false);
-      void addFiles(Array.from(e.dataTransfer?.files || []));
+      void addFiles(Array.from(e.dataTransfer?.files || []), choosingTool);
     };
     window.addEventListener('dragover', over);
     window.addEventListener('dragleave', leave);
@@ -593,10 +597,11 @@ function Studio() {
       window.removeEventListener('dragleave', leave);
       window.removeEventListener('drop', drop);
     };
-  }, [addFiles]);
+  }, [addFiles, choosingTool]);
   function chooseTool(id: WorkspaceTool) {
     if (locked) return;
     setHomeRequested(false);
+    setBrowseEmpty(true);
     setSelectedMarkId('');
     setEditorAction(id === 'erase' ? 'erase' : id === 'insert-image' ? 'image' : 'pick');
     setChoosingTool(false);
@@ -604,6 +609,10 @@ function Studio() {
     setView(id === 'inspect' ? 'check' : visualTools.includes(id) ? 'document' : 'pages');
     setError('');
     setOpenMobile(false);
+    requestAnimationFrame(() => {
+      document.getElementById('moinpdf-content')?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
   }
   function movePage(id: string, to: number) {
     const next = [...pages],
@@ -1122,11 +1131,7 @@ function Studio() {
       </Select>
     </label>
   );
-  const homeVisible =
-    homeRequested ||
-    (!sources.length &&
-      !(choosingTool && browseEmpty) &&
-      (choosingTool || (!isAdvancedTool(toolId) && !isServerTool(toolId))));
+  const homeVisible = homeRequested || (!sources.length && choosingTool && !browseEmpty);
   function showTools() {
     if (locked) return;
     setHomeRequested(false);
@@ -1164,10 +1169,7 @@ function Studio() {
         aria-label={ui('PDFs, Office-Dateien, E-Mails, E-Books oder Bilder auswählen')}
         disabled={locked}
         onChange={(e) => {
-          void addFiles(
-            Array.from(e.target.files || []),
-            choosingTool || !(isAdvancedTool(toolId) || isServerTool(toolId)),
-          );
+          void addFiles(Array.from(e.target.files || []), choosingTool);
           e.target.value = '';
         }}
       />

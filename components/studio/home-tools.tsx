@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { ChevronRight, LayoutGrid, X } from 'lucide-react';
 import { useLanguage, useTools } from './appearance';
-import { HomeToolIcon } from './home-tool-icon';
 import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { searchTools } from '@/lib/localized-search';
 import type { WorkspaceTool } from '@/lib/tool-catalog';
@@ -129,7 +128,7 @@ export function HomeTools({
             title={tool.description}
           >
             <span className="harbor-tool-icon">
-              <HomeToolIcon id={tool.id} icon={tool.icon} />
+              <tool.icon size={23} strokeWidth={1.5} aria-hidden="true" />
             </span>
             <strong>{tool.title}</strong>
           </button>

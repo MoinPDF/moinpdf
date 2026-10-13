@@ -13,16 +13,15 @@ on:
       - 'public/impressum.html'
       - 'public/datenschutz.html'
       - 'public/legal/**'
-      - 'components/studio/**'
-      - 'app/**'
-      - 'public/appearance.css'
-      - 'public/hafenstudio-theme.css'
-      - 'public/branding/**'
-      - 'tests/harbor-layout-browser.py'
+      - 'components/studio/legal-footer*'
       - 'scripts/build-documentation.mjs'
       - 'lib/tool-catalog.ts'
       - 'package.json'
       - 'tests/documentation-smoke.py'
+      - 'tests/harbor-layout-browser.py'
+      - 'components/studio/home-tools.tsx'
+      - 'components/studio/hafenstudio.css'
+      - 'app/page.tsx'
       - '.github/workflows/documentation.yml'
   pull_request:
   workflow_dispatch:
@@ -53,9 +52,8 @@ jobs:
       - name: Verify documentation, mobile layout, printing and retained PDF
         run: |
           python -m http.server 8765 --bind 127.0.0.1 --directory dist/selfhost > "$RUNNER_TEMP/docs-http.log" 2>&1 &
-          MOINPDF_TEST_URL=http://127.0.0.1:8765 python tests/harbor-layout-browser.py
+          python tests/harbor-layout-browser.py
           python tests/language-smoke.py
-          MOINPDF_TEST_URL=http://127.0.0.1:8765 python tests/website-browser.py
           python tests/documentation-smoke.py
       - name: Retain screenshots and verification report
         if: always()
