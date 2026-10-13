@@ -216,19 +216,11 @@
 }
 .harbor-welcome {
   width: 100%;
-  padding: 20px 18px 8px;
+  padding: 18px 18px 8px;
   background: var(--harbor-panel);
   border: 1px solid var(--ui-line);
   border-radius: 25px;
   box-shadow: var(--harbor-shadow);
-}
-.harbor-welcome h1 {
-  margin: 0 10px 16px;
-  font-size: clamp(18px, 2vw, 25px);
-  font-weight: 550;
-  line-height: 1.4;
-  letter-spacing: -0.6px;
-  text-wrap: balance;
 }
 .harbor-photo {
   overflow: hidden;
@@ -455,18 +447,28 @@
 .harbor-search-result > svg {
   flex-shrink: 0;
 }
-.harbor-discovery-heading {
+.harbor-discovery-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 23px;
   margin-top: 2px;
 }
-.harbor-discovery-heading h2 {
-  margin: 0;
-  font-size: 13px;
+.harbor-quick-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 2px -2px;
+  font-size: 12px;
+  line-height: 1.5;
   color: var(--ui-copy);
-  font-weight: 500;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.harbor-quick-heading::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--ui-line);
 }
 .harbor-all-tools {
   display: inline-flex;
@@ -819,14 +821,8 @@
     gap: 16px;
   }
   .harbor-welcome {
-    padding: 14px 10px 5px;
+    padding: 10px 10px 5px;
     border-radius: 22px;
-  }
-  .harbor-welcome h1 {
-    font-size: clamp(16px, 4.5vw, 21px);
-    letter-spacing: -0.5px;
-    margin: 2px 6px 13px;
-    text-wrap: initial;
   }
   .moinpdf-shell .harbor-photo {
     aspect-ratio: 1.72;
@@ -881,11 +877,8 @@
     top: 3px;
     right: 4px;
   }
-  .harbor-discovery-heading {
-    gap: 12px 19px;
-  }
-  .harbor-discovery-heading h2 {
-    font-size: 12px;
+  .harbor-quick-heading {
+    font-size: 11px;
   }
   .harbor-all-tools {
     padding: 9px 17px;

@@ -89,12 +89,11 @@ export function HomeTools({
           </CommandList>
         )}
       </Command>
-      <div className="harbor-discovery-heading">
+      <div className="harbor-discovery-actions">
         <button className="harbor-all-tools" type="button" disabled={locked} onClick={onTools}>
           <LayoutGrid size={18} aria-hidden="true" />
           {t('Alle Werkzeuge')}
         </button>
-        <h2>{t('Schnellzugriff', 'Quick access')}</h2>
       </div>
       <div className="harbor-categories" role="group" aria-label={t('Werkzeugkategorien')}>
         <button
@@ -117,6 +116,7 @@ export function HomeTools({
           </button>
         ))}
       </div>
+      <h2 className="harbor-quick-heading">{t('Schnellzugriff', 'Quick access')}</h2>
       <div className="harbor-tool-grid">
         {cards.map((tool) => (
           <button

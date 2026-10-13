@@ -48,10 +48,8 @@ export function UploadEntry({
   const phase = state.phase === 'idle' && dragOver ? 'drag' : state.phase;
   return (
     <main className="upload-entry harbor-home">
-      <section className="harbor-welcome" aria-labelledby="harbor-title">
-        <h1 id="harbor-title">
-          {t('Bring deine Dokumente auf Kurs.', 'Get your documents on course.')}
-        </h1>
+      <h1 className="sr-only">MoinPDF</h1>
+      <section className="harbor-welcome" aria-label={t('Dateien öffnen')}>
         <div className="harbor-photo">
           <img
             src="/branding/moinpdf-harbor.webp"

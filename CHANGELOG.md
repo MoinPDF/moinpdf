@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.13.2 – 13. Oktober 2026
+
+- Startseite beginnt direkt mit dem Seemannmotiv; die zusätzliche Überschrift entfällt.
+- Schnellzugriff steht als eigene Abschnittsüberschrift mit Trennlinie über den Werkzeugkarten und ist deutlich vom Button „Alle Werkzeuge“ getrennt.
+
 ## 0.13.1 – 13. Oktober 2026
 
 - Einheitliches Hafenstudio-Layout mit Seemannmotiv über dem Upload, Suche und Schnellzugriff; der Slogan erscheint nur am Logo.
