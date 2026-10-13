@@ -594,22 +594,22 @@
   color: var(--ui-purple);
   background: linear-gradient(145deg, var(--ui-surface), var(--ui-purple-soft));
 }
-.harbor-tool-card > .harbor-tool-icon {
+.moinpdf-shell .harbor-tool-card > .harbor-tool-icon {
   width: 46px;
   height: 46px;
-  border: 0;
+  border: 1px solid var(--ui-line);
   border-radius: 0;
   background: var(--ui-teal-soft);
   box-shadow: none;
 }
-.harbor-tool-card.tone-0 > .harbor-tool-icon,
-.harbor-tool-card.tone-3 > .harbor-tool-icon {
+.moinpdf-shell .harbor-tool-card.tone-0 > .harbor-tool-icon,
+.moinpdf-shell .harbor-tool-card.tone-3 > .harbor-tool-icon {
   background: var(--ui-green-soft);
 }
-.harbor-tool-card.tone-2 > .harbor-tool-icon {
+.moinpdf-shell .harbor-tool-card.tone-2 > .harbor-tool-icon {
   background: var(--ui-blue-soft);
 }
-.harbor-tool-card.tone-4 > .harbor-tool-icon {
+.moinpdf-shell .harbor-tool-card.tone-4 > .harbor-tool-icon {
   background: var(--ui-purple-soft);
 }
 .harbor-search-result .harbor-tool-icon {
@@ -692,7 +692,38 @@
   box-shadow: var(--harbor-shadow);
 }
 .moinpdf-shell .chooser-tool > span {
+  border: 1px solid var(--ui-line);
   border-radius: 14px;
+}
+.moinpdf-shell .harbor-tool-card {
+  border: 1px solid var(--ui-line);
+}
+.moinpdf-shell .harbor-tool-card.tone-1 > .harbor-tool-icon,
+.moinpdf-shell .chooser-tool.tone-1 > span {
+  color: var(--ui-teal);
+  background: var(--ui-teal-soft);
+}
+.tool-file-card.is-drag {
+  outline: 2px dashed var(--ui-teal);
+  outline-offset: 4px;
+}
+.tool-file-alternatives {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 14px;
+}
+.tool-file-alternatives button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  color: var(--ui-copy);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .moinpdf-shell .chooser-tool strong {
   color: var(--ui-heading);

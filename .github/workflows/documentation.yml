@@ -20,6 +20,8 @@ on:
       - 'tests/documentation-smoke.py'
       - 'tests/harbor-layout-browser.py'
       - 'components/studio/home-tools.tsx'
+      - 'components/studio/tool-file-entry.tsx'
+      - 'components/studio/server-workbench.tsx'
       - 'components/studio/hafenstudio.css'
       - 'app/page.tsx'
       - '.github/workflows/documentation.yml'

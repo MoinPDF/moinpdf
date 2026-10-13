@@ -734,7 +734,7 @@ function StandardServerWorkbench({
                   )}{' '}
               {ui('Reine Scans zuerst mit')}{' '}
               <button className="conversion-text-link" onClick={() => onChoose('ocr')}>
-                {ui('OCR &amp; Text')}
+                {ui('OCR & Text')}
               </button>{' '}
               {ui('auslesen.')}
             </p>

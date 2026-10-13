@@ -125,8 +125,6 @@ export const english: Record<string, string> = {
   'Lokal. Privat. Bei dir.': 'Local. Private. Yours.',
   'Hilfe & Tastenkürzel': 'Help & shortcuts',
   '01 — DOKUMENT ÖFFNEN': '01 — OPEN DOCUMENT',
-  'PDF rein.': 'Add a PDF.',
-  'Und los.': 'Get started.',
   'Dateien hierher ziehen.': 'Drop your files here.',
   'Danach kannst du sie bearbeiten.': 'Then start editing.',
   'Dateien auswählen': 'Choose files',

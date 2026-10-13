@@ -21,7 +21,6 @@ import {
   FileText,
   Layers,
   LayoutGrid,
-  Upload,
   Plus,
   X,
   ShieldCheck,
@@ -41,12 +40,10 @@ import {
   Type,
   Highlighter,
   Search,
-  MousePointer2,
   ZoomIn,
   ZoomOut,
   FilePlus2,
   MoveVertical,
-  CornerDownLeft,
   CheckCheck,
   FileSearch,
 } from 'lucide-react';
@@ -100,6 +97,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { UploadEntry, type ImportState } from '@/components/studio/upload-entry';
+import { ToolFileEntry } from '@/components/studio/tool-file-entry';
 import { LegalFooter } from '@/components/studio/legal-footer';
 import { HarborBrand, HarborNavigation } from '@/components/studio/harbor-navigation';
 const DocumentWorkbench = lazy(() =>
@@ -834,7 +832,7 @@ function Studio() {
   async function demo() {
     if (locked) return;
     try {
-      await addFiles([await makeDemoFile()]);
+      await addFiles([await makeDemoFile()], false);
     } catch {
       toast.error(ui('Das Beispieldokument konnte nicht geöffnet werden.'));
     }
@@ -1330,6 +1328,23 @@ function Studio() {
         />
       </>
     );
+  if (!pages.length)
+    return (
+      <>
+        <Toaster position="bottom-right" richColors closeButton />
+        {fileInput}
+        <ToolFileEntry
+          tool={tool}
+          locked={locked}
+          loading={loading}
+          dragOver={dragOver}
+          onBack={() => setChoosingTool(true)}
+          onAdd={() => picker.current?.click()}
+          onDemo={demo}
+          onBlank={blank}
+        />
+      </>
+    );
   const toolMatches = new Set(searchTools(search, tools).map((t) => t.id));
   return (
     <>
@@ -1559,45 +1574,7 @@ function Studio() {
                   </button>
                 </div>
               )}
-              {!pages.length ? (
-                <div className={`empty-stage ${dragOver ? 'hovered' : ''}`}>
-                  <div className="empty-coordinate">{t('01 — DOKUMENT ÖFFNEN')}</div>
-                  <div className="drop-composition">
-                    <div className="drop-cross">
-                      <Plus size={52} strokeWidth={1} />
-                    </div>
-                    <h2>
-                      {t('PDF rein.')}
-                      <br />
-                      <span>{t('Und los.')}</span>
-                    </h2>
-                    <p>
-                      {t('Dateien hierher ziehen.')}
-                      <br />
-                      {t('Danach kannst du sie bearbeiten.')}
-                    </p>
-                    <Button
-                      className="start-button"
-                      disabled={loading}
-                      onClick={() => picker.current?.click()}
-                    >
-                      {loading ? <LoaderCircle className="spin" size={17} /> : <Upload size={17} />}
-                      {t('Dateien auswählen')}
-                    </Button>
-                    <button className="try-demo" disabled={loading} onClick={demo}>
-                      {t('Mit Beispieldokument ausprobieren')}
-                      <CornerDownLeft size={14} />
-                    </button>
-                  </div>
-                  <div className="empty-stage-bottom">
-                    <span>
-                      <MousePointer2 size={14} />
-                      {ui('DRAG. DROP. DONE.')}
-                    </span>
-                    <span>{t('80 MB / 200 Seiten')}</span>
-                  </div>
-                </div>
-              ) : (
+              {pages.length > 0 && (
                 <>
                   <TabsContent value="check" className="check-view">
                     <DocumentCheck

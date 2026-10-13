@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.13.8 – 13. Oktober 2026
+
+- Einheitlich umrandete Werkzeugkacheln und Symbole, auch in der Kategorie „Umwandeln“.
+- Leere PDF-Arbeitsbereiche verwenden den kompakten Aufbau der Konverter: Werkzeugbeschreibung, drei Arbeitsschritte und Dateiauswahl in einer Karte. Die frühere große Begrüßung entfällt vollständig.
+- Dateiauswahl, Drag-and-drop, Beispieldokument und Leerseite bleiben erreichbar; das gewählte Werkzeug bleibt erhalten.
+- Fehlerhafte Zeichenfolge im OCR-Verweis der Word-Konvertierung korrigiert.
+
 ## 0.13.7 – 13. Oktober 2026
 
 - Eckige Schnellzugriff-Kacheln mit den Originalsymbolen aus „Alle Werkzeuge“, ohne zusätzliche Dokumentillustrationen.

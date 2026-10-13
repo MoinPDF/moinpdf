@@ -15,6 +15,15 @@ def within_viewport(page, name):
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), name
     assert page.locator('.app-toolbar').bounding_box()['height'] <= 90, name
 
+def framed(locator):
+    assert locator.count() > 0
+    for el in locator.all():
+        style = el.evaluate('''(el) => {
+            const style = getComputedStyle(el);
+            return [style.borderTopWidth, style.borderTopStyle, style.borderTopColor];
+        }''')
+        assert style[0] == '1px' and style[1] == 'solid' and style[2] not in ('transparent', 'rgba(0, 0, 0, 0)'), style
+
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
     context = browser.new_context(viewport={'width':1440, 'height':1000}, reduced_motion='reduce')
@@ -52,6 +61,22 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 if width in (390, 768, 1440):
                     page.screenshot(path=str(out/f'harbor-home-{width}-{theme}.png'), full_page=True)
                 checks.append(f'{width}px {theme}: image, upload, search, cards, navigation, no overflow')
+                if width in (390, 1440):
+                    page.locator('.harbor-categories').get_by_role('button', name='Umwandeln', exact=True).click()
+                    framed(page.locator('.harbor-tool-card'))
+                    framed(page.locator('.harbor-tool-card > .harbor-tool-icon'))
+                    page.locator('.harbor-discovery').screenshot(path=str(out/f'harbor-convert-{width}-{theme}.png'))
+                    page.locator('.harbor-categories').get_by_role('button', name='Empfohlen', exact=True).click()
+                    page.locator('.harbor-tool-card').nth(1).click()
+                    expect(page.locator('.tool-file-entry')).to_be_visible()
+                    expect(page.locator('.conversion-steps li')).to_have_count(3)
+                    framed(page.locator('.tool-file-card'))
+                    expect(page.get_by_role('button', name='Dateien auswählen', exact=True)).to_be_enabled()
+                    expect(page.locator('.conversion-submit')).to_be_disabled()
+                    within_viewport(page, f'empty tool {width} {theme}')
+                    page.screenshot(path=str(out/f'harbor-tool-entry-{width}-{theme}.png'), full_page=True)
+                    nav.get_by_role('button', name='Start', exact=True).click()
+                    checks.append(f'{width}px {theme}: framed conversion tiles/icons and compact tool entry')
         # Every home tile must actually leave the start page before a PDF exists.
         # This covers the formerly blocked core tools as well as specialized tools.
         icons = {}
@@ -69,11 +94,14 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     card.click()
                     expect(page.locator('.harbor-home')).to_have_count(0)
                     expect(page.locator('main h1')).to_have_text(title)
+                    expect(page.locator('.empty-stage')).to_have_count(0)
                     nav.get_by_role('button', name='Start', exact=True).click()
                     expect(page.locator('.harbor-home')).to_be_visible()
                 checks.append(f'{width}px: all {len(titles)} {category} tiles open their named tool without a PDF')
             page.locator('.harbor-text-button').click()
             expect(page.locator('.chooser-tool')).to_have_count(112)
+            framed(page.locator('.chooser-tool.tone-1'))
+            framed(page.locator('.chooser-tool.tone-1 > span'))
             for title, icon in icons.items():
                 card = page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True))
                 assert card.locator('svg').inner_html() == icon, title
@@ -81,12 +109,12 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             title = next(iter(icons))
             page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
             expect(page.locator('main h1')).to_have_text(title)
-            page.get_by_role('button', name='Werkzeug wechseln', exact=True).click()
+            page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
             expect(page.locator('.chooser-tool')).to_have_count(112)
             nav.get_by_role('button', name='Start', exact=True).click()
         checks.append('Home and catalogue use identical SVG symbols; empty-tool back navigation works')
         # Importing after choosing a core tool must keep that tool selected.
-        for index, method in ((0, 'drop'), (1, 'picker'), (3, 'picker')):
+        for index, method in ((0, 'drop'), (1, 'picker'), (3, 'picker'), (0, 'demo'), (3, 'blank')):
             imported = browser.new_context(viewport={'width':390, 'height':844}, reduced_motion='reduce')
             test = imported.new_page()
             test.on('pageerror', lambda error: errors.append(str(error)))
@@ -101,15 +129,23 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     transfer.items.add(new File([new Uint8Array(bytes)], name, {type:'application/pdf'}));
                     window.dispatchEvent(new DragEvent('drop', {dataTransfer:transfer, bubbles:true, cancelable:true}));
                 }''', {'bytes':list(pdf.read_bytes()), 'name':pdf.name})
+            elif method == 'picker':
+                with test.expect_file_chooser() as chooser:
+                    test.get_by_role('button', name='Dateien auswählen', exact=True).click()
+                chooser.value.set_files(str(pdf))
+            elif method == 'demo':
+                test.get_by_role('button', name='Mit Beispieldokument ausprobieren', exact=True).click()
             else:
-                test.locator('input[type=file]').first.set_input_files(str(pdf))
-            expect(test.locator('.file-tab').first).to_contain_text(pdf.name)
+                test.get_by_role('button', name='Leerseite', exact=True).click()
+            expect(test.locator('.file-tab')).to_have_count(1)
+            if method in ('drop', 'picker'):
+                expect(test.locator('.file-tab').first).to_contain_text(pdf.name)
             expect(test.locator('main h1')).to_have_text(title)
             if index == 3:
                 expect(test.get_by_role('tab', name='Dokument', exact=True)).to_have_attribute('aria-selected', 'true')
-            test.screenshot(path=str(out/f'harbor-selected-import-{index}.png'), full_page=True)
+            test.screenshot(path=str(out/f'harbor-selected-import-{index}-{method}.png'), full_page=True)
             imported.close()
-            checks.append(f'{title}: {method} import keeps the chosen tool and two-page PDF')
+            checks.append(f'{title}: {method} import keeps the chosen tool and document')
         page.set_viewport_size({'width':390, 'height':844})
         page.locator('.language-trigger').click()
         page.get_by_role('menuitemradio', name='English', exact=True).click()
