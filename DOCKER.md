@@ -1,10 +1,10 @@
 # Vollständige Installation mit Docker Compose
 
-Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den Dokumentenserver und LibreTranslate. Alle Werkzeugansichten sind enthalten. Der Browser verbindet sich automatisch mit dem eigenen Dokumentenserver; Serveradressen und API-Schlüssel müssen nicht eingetragen werden. Die dokumentbezogenen Grenzen der einzelnen Werkzeuge gelten auch in Docker.
+Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den Dokumentenserver, den Webseiten-Konverter und LibreTranslate. Alle Werkzeugansichten sind enthalten. Der Browser verbindet sich automatisch mit dem eigenen Dokumentenserver; Serveradressen und API-Schlüssel müssen nicht eingetragen werden. Die dokumentbezogenen Grenzen der einzelnen Werkzeuge gelten auch in Docker.
 
 ## Start
 
-Voraussetzungen: Docker Engine mit Compose v2 oder Docker Desktop, Internet beim ersten Aufbau sowie ausreichend Speicher. Für den vollständigen Stack sind **8 GB verfügbarer RAM und 20 GB freier Plattenplatz** als Ausgangspunkt vorgesehen. Die Containergrenzen sind in `.env.example` anpassbar. Die Installation baut lokal; es werden keine privaten Container-Registry-Zugangsdaten benötigt. Der Quellcode ist öffentlich; zum Klonen des Repositorys ist keine GitHub-Anmeldung erforderlich.
+Voraussetzungen: Docker Engine mit Compose v2 oder Docker Desktop, Internet beim ersten Aufbau und für Website-Link-Konvertierungen sowie ausreichend Speicher. Für den vollständigen Stack sind **8 GB verfügbarer RAM und 20 GB freier Plattenplatz** als Ausgangspunkt vorgesehen. Die Containergrenzen sind in `.env.example` anpassbar. Die Installation baut lokal; es werden keine privaten Container-Registry-Zugangsdaten benötigt. Der Quellcode ist öffentlich; zum Klonen des Repositorys ist keine GitHub-Anmeldung erforderlich.
 
 ```bash
 git clone https://github.com/MoinPDF/moinpdf.git
@@ -34,6 +34,7 @@ docker compose up -d --build --wait --wait-timeout 1800
 | Web-App | Eigenständiger Produktionsbuild, lokale Schriften, PDF.js, qpdf-WASM und OCR-Dateien |
 | Browser-OCR | Deutsche und englische Erkennung einschließlich gemischter Dokumente |
 | Dokumentenserver | LibreOffice, Ghostscript, Tesseract OSD, pdf2docx, EML/MSG-Import, PowerPoint, Formularerkennung und Dokumentprüfungen |
+| Webseiten-Konverter | Chromium für öffentliche Website-Links mit Bildern, Schriften und CSS |
 | Rechnungen und Archivierung | KoSIT, XRechnung-Regeln, veraPDF, Mustang/ZUGFeRD und pyHanko |
 | Übersetzung | LibreTranslate mit Deutsch, Englisch, Französisch, Spanisch, Italienisch, Niederländisch und Polnisch |
 | Verbindung | Gemeinsame Web-Adresse, interner zufälliger API-Schlüssel, automatische Funktionsprüfung in der App |
@@ -55,6 +56,7 @@ cp .env.example .env
 | `MOINPDF_USERNAME` | `moinpdf` | Benutzername für den optionalen Login |
 | `MOINPDF_PASSWORD` | leer | Bei gesetztem Passwort schützt HTTP Basic Auth die gesamte App und ihre API |
 | `MOINPDF_DOCUMENT_MEMORY` | `2g` | Speichergrenze für Konverter und temporäre Dokumente |
+| `MOINPDF_WEBSITE_MEMORY` | `1g` | Speichergrenze für den Webseiten-Konverter |
 | `MOINPDF_TRANSLATION_MEMORY` | `4g` | Speichergrenze für LibreTranslate |
 
 Nach Änderungen `docker compose up -d` ausführen. Passwörter mit Sonderzeichen in `.env` in einfache Anführungszeichen setzen. `.env` wird nicht versioniert. Der Standardstart ist für den eigenen Rechner bzw. ein vertrauenswürdiges Netzwerk gedacht; bei öffentlicher Erreichbarkeit HTTPS und einen Zugangsschutz verwenden.
@@ -79,7 +81,7 @@ Die Anbieterangaben in `public/impressum.html` und `public/datenschutz.html` bez
 
 Vor dem öffentlichen Start die tatsächlichen Cloudflare-Schutzfunktionen, Sicherheits-Cookies, Protokolle und Löschregeln mit der Erklärung abgleichen. Die Standardkonfiguration aktiviert weder HTTP-Zugriffsprotokolle in Caddy noch im Dokumentenserver; Betriebs- und Fehlerprotokolle von Docker, dem Host und Cloudflare sind davon unabhängig. Deren Aufbewahrung begrenzen und dokumentieren. Erforderliche Vereinbarungen zur Auftragsverarbeitung mit den eingesetzten Dienstleistern prüfen; die Datenschutzerklärung ersetzt diese nicht. Falls ein zusätzlicher Rechenzentrums- oder Hostinganbieter eingesetzt wird, diesen ebenfalls berücksichtigen.
 
-Der Compose-Stack verwendet für alle fünf Dienste den Docker-Logtreiber `local` mit höchstens drei Protokolldateien zu jeweils 10 MB. Ältere Dateien werden bei der Rotation entfernt. Das begrenzt den Umfang, ist aber keine Löschung nach einer festen Anzahl von Tagen. Bereits gestartete Container übernehmen diese Änderung beim nächsten `docker compose up -d`; Protokolle anderer Dienste, des Tunnels und des Hosts werden dadurch nicht geändert.
+Der Compose-Stack verwendet für alle Dienste den Docker-Logtreiber `local` mit höchstens drei Protokolldateien zu jeweils 10 MB. Ältere Dateien werden bei der Rotation entfernt. Das begrenzt den Umfang, ist aber keine Löschung nach einer festen Anzahl von Tagen. Bereits gestartete Container übernehmen diese Änderung beim nächsten `docker compose up -d`; Protokolle anderer Dienste, des Tunnels und des Hosts werden dadurch nicht geändert.
 
 Für Cloudflare den Transport bis zum eigenen Server absichern: bei einem öffentlichen HTTPS-Ursprung mit gültigem Zertifikat den Modus „Full (strict)“ verwenden, bei Cloudflare Tunnel eine entsprechend abgesicherte Verbindung zum lokalen Dienst. Dokumenten- und Webseiten-API samt Ergebnissen (`/api/documents/*` und `/api/website/*`) nicht durch zusätzliche Cache-Regeln zwischenspeichern; der mitgelieferte Proxy setzt dort `Cache-Control: no-store`. Die App aktiviert keine externen Analyse-Tracker. Zusätzlich im Cloudflare-Konto eingeschaltete Analyse- oder Anmeldedienste müssen gesondert berücksichtigt werden.
 
