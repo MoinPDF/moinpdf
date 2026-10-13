@@ -29,6 +29,16 @@ def unobstructed(page, target):
     }'''), 'Light overlay must never capture a click'
 
 
+def tab_to(page, target):
+    # Use real keyboard traversal: programmatic focus after a mouse click does
+    # not enter :focus-visible modality in Chromium.
+    for _ in range(24):
+        page.keyboard.press('Tab')
+        if target.evaluate('el => el === document.activeElement'):
+            return
+    raise AssertionError('Tile is unreachable with Tab')
+
+
 with sync_playwright() as api:
     browser = api.chromium.launch()
     try:
@@ -69,7 +79,7 @@ with sync_playwright() as api:
             categories.get_by_role('button', name='Empfohlen', exact=True).click()
             tile = page.locator('.harbor-tool-card').nth(1)
             title = tile.locator('strong').inner_text()
-            tile.focus()
+            tab_to(page, tile)
             assert tile.evaluate('el => getComputedStyle(el).outlineStyle') == 'solid'
             page.keyboard.press('Enter')
             expect(page.locator('main h1')).to_have_text(title)
@@ -101,7 +111,7 @@ with sync_playwright() as api:
             categories.get_by_role('button', name='Empfohlen', exact=True).click()
             expect(pulse).to_have_count(0)
             tile = page.locator('.harbor-tool-card').first
-            tile.focus()
+            tab_to(page, tile)
             assert tile.evaluate('el => getComputedStyle(el).outlineStyle') == 'solid'
             page.emulate_media(forced_colors='none')
             checks.append(f'{theme}: catalogue activation, reduced motion and high-contrast keyboard focus')
