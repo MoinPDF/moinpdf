@@ -48,7 +48,7 @@ jobs:
             if (!Number.isSafeInteger(runId) || runId <= 0) throw new Error('Invalid image run');
             const {data: imageRun} = await github.rest.actions.getWorkflowRun({...context.repo, run_id: runId});
             if (imageRun.path !== '.github/workflows/publish-images.yml' || imageRun.conclusion !== 'success' || imageRun.head_branch !== 'main' || imageRun.repository.full_name !== context.repo.owner + '/' + context.repo.repo || !['workflow_run', 'workflow_dispatch'].includes(imageRun.event)) throw new Error('Images must come from the successful image workflow');
-            const names = ['web', 'documents', 'translation'];
+            const names = ['web', 'documents', 'translation', 'website'];
             const refs = names.map(name => JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'image-reference', name + '.json'), 'utf8')));
             const source = refs[0].source;
             if (!/^[0-9a-f]{40}$/.test(source) || refs.some(ref => ref.source !== source)) throw new Error('Mixed image sources');

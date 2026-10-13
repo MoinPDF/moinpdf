@@ -30,4 +30,4 @@ const size = (await stat(output)).size;
 if (size > 100 * 1024 * 1024) throw new Error('The Pages ZIP exceeds the default 100 MiB upload limit.');
 await writeFile(output + '.sha256', `${hash.digest('hex')}  ${path.basename(output)}\n`);
 console.log(`Pages package: ${output} (${(size / 1024 / 1024).toFixed(1)} MiB)`);
-console.log('Upload ZIP contents into the website root. /api/documents/* must route to the Docker stack on the same hostname.');
+console.log('Upload ZIP contents into the website root. /api/documents/* and /api/website/* must route to the Docker stack on the same hostname.');

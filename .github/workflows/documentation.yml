@@ -49,6 +49,7 @@ jobs:
         run: |
           python -m http.server 8765 --bind 127.0.0.1 --directory dist/selfhost > "$RUNNER_TEMP/docs-http.log" 2>&1 &
           python tests/language-smoke.py
+          MOINPDF_TEST_URL=http://127.0.0.1:8765 python tests/website-browser.py
           python tests/documentation-smoke.py
       - name: Retain screenshots and verification report
         if: always()

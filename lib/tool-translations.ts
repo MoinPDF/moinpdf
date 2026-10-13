@@ -194,7 +194,8 @@ export const englishTools: Record<
   },
   'html-pdf': {
     title: 'HTML & web pages to PDF',
-    description: 'Convert HTML content or a web page to PDF.',
+    description:
+      'Paste a website link and save it as PDF with images and page styling. Also convert saved HTML files.',
     action: 'Create PDF',
   },
   'auto-orient': {

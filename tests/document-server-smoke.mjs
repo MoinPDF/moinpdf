@@ -20,6 +20,11 @@ try {
   assert.equal(request.url, '/api/documents/v1/capabilities');
   assert.deepEqual(request.options.headers, {'X-MoinPDF-Client':'web'});
   assert.equal(request.options.credentials, 'same-origin');
+  await docker.serverCapabilities('/api/website', '', signal);
+  assert.equal(request.url, '/api/website/v1/capabilities');
+  assert.deepEqual(request.options.headers, {'X-MoinPDF-Client':'web'});
+  assert.equal(request.options.credentials, 'same-origin');
+  assert.throws(()=>hosted.documentServerUrl('/api/website'));
   await assert.rejects(hosted.serverCapabilities('/api/documents','',signal), /API-Schlüssel/);
   assert.throws(()=>hosted.documentServerUrl('/api/documents'));
   assert.throws(()=>docker.documentServerUrl('//untrusted.example'));

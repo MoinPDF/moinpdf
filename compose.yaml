@@ -95,12 +95,37 @@ services:
     networks: [documents]
     logging: *logging
 
+  website:
+    image: moinpdf-website:local
+    build: ./docker/website
+    restart: unless-stopped
+    init: true
+    depends_on:
+      initialize:
+        condition: service_completed_successfully
+    environment:
+      MOINPDF_API_KEY_FILE: /run/moinpdf/api-key
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m,mode=1777
+    volumes: [internal_key:/run/moinpdf:ro]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: ${MOINPDF_WEBSITE_MEMORY:-1g}
+    cpus: 2
+    pids_limit: 256
+    # Internet access belongs only to this dedicated converter, not documents.
+    networks: [web]
+    logging: *logging
+
   app:
     image: moinpdf-web:local
     build: .
     restart: unless-stopped
     depends_on:
       documents:
+        condition: service_healthy
+      website:
         condition: service_healthy
     environment:
       MOINPDF_SITE_ADDRESS: ":8080"

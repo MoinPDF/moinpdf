@@ -4,6 +4,7 @@ export const integratedDocumentServer =
   typeof __MOINPDF_SELF_HOSTED__ !== 'undefined' && __MOINPDF_SELF_HOSTED__
     ? '/api/documents'
     : null;
+export const integratedWebsiteServer = integratedDocumentServer ? '/api/website' : null;
 export type ServerCapabilities = {
   apiVersion: 1;
   service: string;
@@ -17,6 +18,7 @@ export type ServerCapabilities = {
 };
 export function documentServerUrl(input: string) {
   if (integratedDocumentServer && input === integratedDocumentServer) return input;
+  if (integratedWebsiteServer && input === integratedWebsiteServer) return input;
   let url: URL;
   try {
     url = new URL(input.trim());
@@ -41,7 +43,9 @@ async function call<T>(
   read: (response: Response) => Promise<T>,
   body?: FormData,
 ): Promise<T> {
-  const integrated = !!integratedDocumentServer && base === integratedDocumentServer;
+  const integrated =
+    (!!integratedDocumentServer && base === integratedDocumentServer) ||
+    (!!integratedWebsiteServer && base === integratedWebsiteServer);
   if (!integrated && !token.trim())
     throw new Error('Bitte den API-Schlüssel deines Dokumentenservers eingeben.');
   const headers: Record<string, string> = integrated

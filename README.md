@@ -38,7 +38,7 @@ Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installatio
 | **Wiederkehrendes erledigen** | Stapelverarbeitung, gespeicherte Abläufe, Belegfelder sammeln, Formularrückläufe auswerten und Dokumente chronologisch ordnen. |
 | **Mehr aus Dokumenten machen** | PDF-Maßband und Ebenenverwaltung; mit Dokumentenserver lokal übersetzen und als Hörbuch ausgeben. |
 
-**0.12.2** ergänzt kompakte Startseiten-Buttons mit mehr Abstand zum Footer und verbessert das Aufräumen nach lokalen Office-Konvertierungen sowie die verifizierte Docker-Veröffentlichung.
+**0.13.0** ergänzt Website-Links zu PDF: öffentliche Webseiten mit Bildern, Schriften und Seitengestaltung speichern, in A4 oder Letter und Hoch- oder Querformat. Der separate Web-Konverter gehört zur vollständigen Docker-Installation. Die bisherige Umwandlung gespeicherter HTML-Dateien bleibt erhalten.
 
 Neu in **0.12.0**: Komplexe Absatzschriften mit HarfBuzz und 14 zusätzlichen lokalen Noto-Schriften sowie einzelne Unterobjekte verschachtelter Gruppen. Gruppeninstanzen werden unabhängig bearbeitet; geformte Absätze bleiben gemeinsam auswählbar und kopierbar.
 
@@ -60,7 +60,7 @@ Die [Funktionsübersicht](docs/FUNKTIONEN.md) erklärt die Werkzeuge, Ausgabefor
 
 ## Schnellstart
 
-Für die vollständige Installation brauchst du **Docker mit Compose v2**, Zugriff auf dieses Repository und Internet für den ersten Aufbau. Plane als Ausgangspunkt **8 GB verfügbaren RAM und 20 GB freien Speicherplatz** ein.
+Für die vollständige Installation brauchst du **Docker mit Compose v2**, Zugriff auf dieses Repository und Internet für den ersten Aufbau und für Website-Link-Konvertierungen. Plane als Ausgangspunkt **8 GB verfügbaren RAM und 20 GB freien Speicherplatz** ein.
 
 ```bash
 git clone https://github.com/MoinPDF/moinpdf.git

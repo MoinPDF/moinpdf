@@ -60,6 +60,17 @@ assert session.get(api + '/v1/capabilities', headers={'Sec-Fetch-Site': 'cross-s
 assert session.get(api + '/v1/capabilities', headers={'Authorization': 'Bearer invalid'}, timeout=10).status_code == 200
 assert session.get(base + '/v1/capabilities', timeout=10).status_code == 404
 
+# The website converter uses the same public-origin and internal-key boundary.
+website_api = base + '/api/website'
+website = session.get(website_api + '/v1/capabilities', timeout=10)
+website.raise_for_status()
+assert website.json()['capabilities']['website'] is True
+assert website.headers['cache-control'] == 'no-store'
+assert session.get(website_api + '/v1/capabilities', headers={'X-MoinPDF-Client': ''}, timeout=10).status_code == 403
+assert session.get(website_api + '/v1/capabilities', headers={'Sec-Fetch-Site': 'cross-site'}, timeout=10).status_code == 403
+assert session.get(website_api + '/v1/capabilities', headers={'Authorization': 'Bearer invalid'}, timeout=10).status_code == 200
+assert session.post(website_api + '/v1/website', data={'url': 'http://127.0.0.1/'}, timeout=10).status_code == 422
+
 pdf = pymupdf.open()
 page = pdf.new_page()
 page.insert_text((50, 60), 'Guten Morgen. Das ist ein Test. Vielen Dank.', fontsize=14)

@@ -448,7 +448,7 @@ export const tools = [
     id: 'html-pdf',
     title: 'HTML & Webseiten zu PDF',
     description:
-      'Gespeicherte HTML-Webseiten mit Überschriften und Tabellen als lesbare PDF setzen. Ohne Skripte und externe Ressourcen.',
+      'Website-Link einfügen und mit Bildern und Seitengestaltung als PDF speichern. Auch gespeicherte HTML-Dateien umwandeln.',
     icon: FileInput,
     group: 1,
     action: 'PDF erstellen',

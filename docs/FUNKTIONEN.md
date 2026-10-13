@@ -48,6 +48,12 @@ Ergebnisse können als neue Arbeitsdokumente übernommen werden. OCR exportiert 
 
 Über „Projekte“ lassen sich Dateien und Arbeitsstände einschließlich Editorverlauf, Formularen und Lesezeichen lokal wiederherstellen (letzte fünf gespeicherte Stände). Speicherung erfolgt unverschlüsselt im Browserspeicher; beim Projektwechsel wird die aktuelle Sitzung davor gesichert. Zwischenergebnisse eigenständiger Spezialwerkzeuge erst übernehmen. Ein gewählter Stand lässt sich als unverschlüsselte `.moinpdf`-Projektdatei einschließlich Originalen und Verlauf übertragen. Dafür „Projektdatei herunterladen“ beziehungsweise „Projektdatei öffnen“ verwenden. Projektdateien sind keine bereinigten Ergebnis-PDFs. Obergrenzen: 80 MB Quelldateien und 200 Seiten. Umfangreiche OCR kann auf Mobilgeräten langsam sein.
 
+## Website-Link zu PDF
+
+Unter „HTML & Webseiten zu PDF“ lässt sich eine öffentliche Website-Adresse einfügen. Ein separater Web-Konverter in der vollständigen Docker-Installation rendert Bilder, Schriften, CSS und öffentlich ladbare JavaScript-Inhalte. Papierformat (A4/Letter), Hoch-/Querformat, Hintergrundfarben und Bildschirm-/Druckansicht sind wählbar. Das Ergebnis lässt sich herunterladen oder direkt weiterbearbeiten.
+
+Der Abruf übernimmt keine Anmeldung oder Cookies aus deinem Browser. Cookie-Banner, Bot-Schutz und geschützte oder stark dynamische Inhalte können abweichen. Private Netzwerkadressen und abweichende Ports sind gesperrt. Gespeicherte HTML-/HTM-Dateien bleiben als vereinfachte Textkonvertierung ohne Bilder, Skripte und CSS verfügbar.
+
 ## Stapel, Abläufe und weitere Dateiformate
 
 - Stapelverarbeitung und gespeicherte mehrstufige Arbeitsabläufe mit JSON-Import/-Export, Wenn-/Sonst-Schritten nach Dateiname, vorhandenen Texten oder Seitenzahl und Protokoll der Entscheidungen; Passwörter und Dokumente werden nicht in Abläufen gespeichert.

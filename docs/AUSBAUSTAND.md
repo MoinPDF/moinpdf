@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 12. Oktober 2026, Version 0.12.2.
+Stand: 13. Oktober 2026, Version 0.13.0.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
@@ -87,3 +87,7 @@ wäre für die zugehörige Druckbedingung nutzbar, ersetzt aber weder Farbmanage
 noch Konformitätsprüfung. Daher wurde kein ungesicherter PDF/X-Export ergänzt.
 
 Der Absatzeditor speichert logischen Text zusätzlich als PDF-ActualText. Leser ohne ActualText-Unterstützung können bei ungewöhnlich gemischten Schreibrichtungen eine abweichende Kopierreihenfolge bestimmen, etwa in einem von rechts nach links angeordneten Absatz mit überwiegend lateinischem Text. Darstellung und erneutes Bearbeiten nutzen den vollständigen gespeicherten Absatz.
+
+## Website-Link zu PDF
+
+Öffentliche HTTP-/HTTPS-Webseiten können im Werkzeug „HTML & Webseiten zu PDF“ direkt per Link geladen werden. Der separate Docker-Web-Konverter übernimmt Bilder, CSS, Schriften und öffentlich ladbare JavaScript-Inhalte. A4/Letter, Hoch-/Querformat, Hintergründe und Bildschirm-/Druckansicht sind wählbar. Private Netzwerkziele sind gesperrt; Login, Bot-Schutz und dynamische Inhalte können die Darstellung einschränken. Gespeicherte HTML-Dateien bleiben als vereinfachte Textkonvertierung verfügbar.
