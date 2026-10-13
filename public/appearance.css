@@ -375,11 +375,13 @@ body,
   }
 }
 
-.information-wordmark {
+.information-wordmark,
+:is(.docs-brand, .legal-brand):has(> img) {
   position: relative;
   padding-left: 50px;
 }
-.information-wordmark::before {
+.information-wordmark::before,
+:is(.docs-brand, .legal-brand):has(> img)::before {
   content: '';
   position: absolute;
   left: 0;
@@ -389,19 +391,25 @@ body,
   border-radius: 10px;
   background: url('/favicon.png') center / contain no-repeat;
 }
+.docs-brand > img,
+.legal-brand > img,
 .docs-brand .information-wordmark img,
 .legal-brand .information-wordmark img {
   width: 158px;
 }
 @media (max-width: 600px) {
-  .information-wordmark {
+  .information-wordmark,
+  :is(.docs-brand, .legal-brand):has(> img) {
     padding-left: 37px;
   }
-  .information-wordmark::before {
+  .information-wordmark::before,
+  :is(.docs-brand, .legal-brand):has(> img)::before {
     width: 31px;
     height: 31px;
     border-radius: 7px;
   }
+  .docs-brand > img,
+  .legal-brand > img,
   .docs-brand .information-wordmark img,
   .legal-brand .information-wordmark img {
     width: 123px;
