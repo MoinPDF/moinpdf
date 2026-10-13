@@ -101,6 +101,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { UploadEntry, type ImportState } from '@/components/studio/upload-entry';
 import { LegalFooter } from '@/components/studio/legal-footer';
+import { HarborBrand, HarborNavigation } from '@/components/studio/harbor-navigation';
 const DocumentWorkbench = lazy(() =>
   import('@/components/studio/document-workbench').then((module) => ({
     default: module.DocumentWorkbench,
@@ -204,11 +205,20 @@ function WorkspaceShell() {
   const { t } = useLanguage();
   return (
     <div className="moinpdf-shell">
+      <a className="harbor-skip" href="#moinpdf-content">
+        {t('Zum Inhalt', 'Skip to content')}
+      </a>
       <header className="app-toolbar">
-        <div id="moinpdf-project-bar" className="project-bar" />
-        <AppearanceControls />
+        <HarborBrand />
+        <div id="moinpdf-navigation" />
+        <div className="harbor-header-actions">
+          <div id="moinpdf-project-bar" className="project-bar" />
+          <AppearanceControls />
+        </div>
       </header>
       <SidebarProvider
+        id="moinpdf-content"
+        tabIndex={-1}
         className="studio-provider"
         style={{ '--sidebar-width': '252px' } as CSSProperties}
       >
@@ -276,6 +286,7 @@ function Studio() {
   const [passwordRequest, setPasswordRequest] = useState<PasswordRequest | null>(null);
   const [choosingTool, setChoosingTool] = useState(true),
     [browseEmpty, setBrowseEmpty] = useState(false);
+  const [homeRequested, setHomeRequested] = useState(false);
   const [repairInput, setRepairInput] = useState<File | null>(null);
   const [conversionInput, setConversionInput] = useState<{ tool: ServerTool; file: File } | null>(
     null,
@@ -446,6 +457,7 @@ function Studio() {
   const addFiles = useCallback(
     async (files: File[], showToolChoice = true) => {
       if (!files.length || refs.current.busy || uploadLock.current) return;
+      setHomeRequested(false);
       const conversionFile = files.find((file) => conversionToolForFile(file.name));
       if (conversionFile) {
         if (files.length !== 1) {
@@ -584,6 +596,7 @@ function Studio() {
   }, [addFiles]);
   function chooseTool(id: WorkspaceTool) {
     if (locked) return;
+    setHomeRequested(false);
     setSelectedMarkId('');
     setEditorAction(id === 'erase' ? 'erase' : id === 'insert-image' ? 'image' : 'pick');
     setChoosingTool(false);
@@ -1109,8 +1122,39 @@ function Studio() {
       </Select>
     </label>
   );
+  const homeVisible =
+    homeRequested ||
+    (!sources.length &&
+      !(choosingTool && browseEmpty) &&
+      (choosingTool || (!isAdvancedTool(toolId) && !isServerTool(toolId))));
+  function showTools() {
+    if (locked) return;
+    setHomeRequested(false);
+    setBrowseEmpty(true);
+    setChoosingTool(true);
+    setOpenMobile(false);
+    requestAnimationFrame(() => {
+      document.getElementById('moinpdf-content')?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
+  }
   const fileInput = (
     <>
+      <HarborNavigation
+        home={homeVisible}
+        locked={locked}
+        onHome={() => {
+          if (locked) return;
+          setHomeRequested(true);
+          setChoosingTool(true);
+          setOpenMobile(false);
+          requestAnimationFrame(() => {
+            document.getElementById('moinpdf-content')?.focus({ preventScroll: true });
+            window.scrollTo({ top: 0, behavior: 'instant' });
+          });
+        }}
+        onTools={showTools}
+      />
       <input
         ref={picker}
         type="file"
@@ -1135,6 +1179,7 @@ function Studio() {
         locked={locked}
         state={{ pages, edits, options, history, future, documentSessions, activeId, toolId }}
         onRestore={(loaded, state) => {
+          setHomeRequested(false);
           refs.current.sources.forEach((s) => void s.pdf.loadingTask.destroy());
           setSources(loaded);
           setPages(state.pages);
@@ -1155,6 +1200,25 @@ function Studio() {
       />
     </>
   );
+  if (homeVisible)
+    return (
+      <>
+        <Toaster position="bottom-right" richColors closeButton />
+        {fileInput}
+        <UploadEntry
+          dragOver={dragOver}
+          loading={locked}
+          state={importState}
+          onOpen={() => picker.current?.click()}
+          onCamera={() => chooseTool('camera-scan')}
+          onOffice={() => chooseTool('office-pdf')}
+          onEmail={() => chooseTool('email-pdf')}
+          onTools={showTools}
+          onChoose={chooseTool}
+          fileCount={sources.length}
+        />
+      </>
+    );
   if (!choosingTool && isAdvancedTool(toolId))
     return (
       <>
@@ -1191,26 +1255,6 @@ function Studio() {
           onAdd={() => picker.current?.click()}
           onBusy={setDocumentBusy}
           onUse={useDocumentResult}
-        />
-      </>
-    );
-  if (!sources.length && !(choosingTool && browseEmpty))
-    return (
-      <>
-        <Toaster position="bottom-right" richColors closeButton />
-        {fileInput}
-        <UploadEntry
-          dragOver={dragOver}
-          loading={loading}
-          state={importState}
-          onOpen={() => picker.current?.click()}
-          onCamera={() => chooseTool('camera-scan')}
-          onOffice={() => chooseTool('office-pdf')}
-          onEmail={() => chooseTool('email-pdf')}
-          onTools={() => {
-            setBrowseEmpty(true);
-            setChoosingTool(true);
-          }}
         />
       </>
     );

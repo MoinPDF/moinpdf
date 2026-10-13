@@ -60,8 +60,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.locator('html')).to_have_attribute('lang','en')
         expect(page.get_by_role('menuitemradio',name='English',exact=True)).not_to_be_visible()
         check(page,'home')
-        assert page.locator('.theme-toggle').bounding_box()['width'] <= 36
-        assert page.locator('.language-trigger').bounding_box()['height'] <= 36
+        assert 40 <= page.locator('.theme-toggle').bounding_box()['width'] <= 44
+        assert 40 <= page.locator('.language-trigger').bounding_box()['height'] <= 44
         page.reload()
         expect(page.locator('html')).to_have_attribute('lang','en')
         expect(page.get_by_role('menuitemradio',name='English',exact=True)).not_to_be_visible()
