@@ -167,24 +167,24 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
                 no_overflow(manual)
                 card = manual.locator('.legal-card')
                 expect(card).to_be_visible()
-                assert card.evaluate('(element) => getComputedStyle(element).color') == 'rgb(33, 62, 54)'
+                assert card.evaluate('(element) => getComputedStyle(element).color') == 'rgb(23, 63, 76)'
                 expect(manual.locator('a[href="mailto:post@moinpdf.de"]').first).to_be_visible()
                 if path == '/datenschutz.html':
                     address = manual.locator('address')
                     contact = manual.locator('address + p')
                     assert contact.bounding_box()['y'] - address.bounding_box()['y'] - address.bounding_box()['height'] >= 24
                 manual.screenshot(path=str(evidence / f'{Path(path).stem}-{width}.png'), full_page=True)
-        completed.append('Legal pages at 1440, 390 and 320 px: no overflow, green text, contacts and address spacing')
+        completed.append('Legal pages at 1440, 390 and 320 px: no overflow, shared navy text, contacts and address spacing')
         page.get_by_role('button', name='Dunklen Modus einschalten', exact=True).click()
         for path, target in (('/dokumentation.html', 'body'), ('/medienbereich.html', 'body'), ('/impressum.html', '.legal-card'), ('/datenschutz.html', '.legal-card')):
             manual.goto(origin + path)
             expect(manual.locator('html')).to_have_class(__import__('re').compile(r'\bdark\b'))
-            assert manual.locator(target).evaluate('(element) => getComputedStyle(element).color') == 'rgb(220, 232, 230)'
-            assert manual.evaluate('getComputedStyle(document.documentElement).getPropertyValue("--muted").trim()') == '#acbfba'
+            assert manual.locator(target).evaluate('(element) => getComputedStyle(element).color') == 'rgb(226, 237, 239)'
+            assert manual.evaluate('getComputedStyle(document.documentElement).getPropertyValue("--muted").trim()') == '#acbec5'
             no_overflow(manual)
             manual.screenshot(path=str(evidence / f'{Path(path).stem}-dark.png'))
             manual.emulate_media(media='print')
-            assert manual.locator(target).evaluate('(element) => getComputedStyle(element).color') == 'rgb(33, 62, 54)'
+            assert manual.locator(target).evaluate('(element) => getComputedStyle(element).color') == 'rgb(23, 63, 76)'
             assert manual.locator('body').evaluate('(element) => getComputedStyle(element).backgroundColor') == 'rgb(255, 255, 255)'
             manual.emulate_media(media='screen')
         page.get_by_role('button', name='Hellen Modus einschalten', exact=True).click()
