@@ -116,7 +116,9 @@ async def render(settings: dict, directory: Path):
                 )
                 if (directory / 'output.pdf').stat().st_size > 40 * 1024 * 1024:
                     raise WebsiteError('Die erzeugte PDF ist zu groß. Bitte eine kleinere Webseite wählen.')
-                (directory / 'result.json').write_text(json.dumps({'partial': bool(failures or proxy.failures)}))
+                # Chromium may open and abandon speculative proxy connections.
+                # Report failures of actual page resources, not those sockets.
+                (directory / 'result.json').write_text(json.dumps({'partial': bool(failures)}))
             except Error as error:
                 raise WebsiteError(fatal[0] if fatal else 'Die Webseite konnte nicht geladen werden. Bitte Adresse und Erreichbarkeit prüfen.') from error
         finally:
