@@ -13,7 +13,12 @@ on:
       - 'public/impressum.html'
       - 'public/datenschutz.html'
       - 'public/legal/**'
-      - 'components/studio/legal-footer*'
+      - 'components/studio/**'
+      - 'app/**'
+      - 'public/appearance.css'
+      - 'public/hafenstudio-theme.css'
+      - 'public/branding/**'
+      - 'tests/harbor-layout-browser.py'
       - 'scripts/build-documentation.mjs'
       - 'lib/tool-catalog.ts'
       - 'package.json'
@@ -48,6 +53,7 @@ jobs:
       - name: Verify documentation, mobile layout, printing and retained PDF
         run: |
           python -m http.server 8765 --bind 127.0.0.1 --directory dist/selfhost > "$RUNNER_TEMP/docs-http.log" 2>&1 &
+          MOINPDF_TEST_URL=http://127.0.0.1:8765 python tests/harbor-layout-browser.py
           python tests/language-smoke.py
           MOINPDF_TEST_URL=http://127.0.0.1:8765 python tests/website-browser.py
           python tests/documentation-smoke.py

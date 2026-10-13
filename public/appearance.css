@@ -1,10 +1,11 @@
+@import url('/hafenstudio-theme.css');
 /* Shared appearance tokens. PDF canvases and exported content keep their own colors. */
 :root {
   --ui-heading: #075466;
   --ui-copy: #587484;
-  --ui-control: rgba(255, 255, 255, .8);
+  --ui-control: rgba(255, 255, 255, 0.8);
   --ui-control-line: #bce0e1;
-  --ui-glass: rgba(247, 253, 251, .95);
+  --ui-glass: rgba(247, 253, 251, 0.95);
   --ui-shadow: 0 4px 16px #0b657a09;
 }
 :root.dark {
@@ -39,7 +40,7 @@
   --ui-copy: #afc1c4;
   --ui-control: #2a3136;
   --ui-control-line: #52686c;
-  --ui-glass: rgba(32, 36, 39, .96);
+  --ui-glass: rgba(32, 36, 39, 0.96);
   --ui-shadow: 0 5px 20px #0002;
   --ui-ink: #dce8e6;
   --ui-muted: #acbfba;
@@ -66,10 +67,22 @@
   --paper-bottom: #3c5038;
 }
 
-.dark body { background: #202427; color: #dce8e6; }
-.dark .docs-shell, .dark .legal-shell { background: transparent; }
-.dark .docs-header, .dark .docs-sidebar { background: #252c30; }
-.dark .docs-logo, .dark .legal-logo { filter: brightness(1.45); }
+.dark body {
+  background: #202427;
+  color: #dce8e6;
+}
+.dark .docs-shell,
+.dark .legal-shell {
+  background: transparent;
+}
+.dark .docs-header,
+.dark .docs-sidebar {
+  background: #252c30;
+}
+.dark .docs-logo,
+.dark .legal-logo {
+  filter: brightness(1.45);
+}
 
 /* Standalone pages use these names for text rather than component surfaces. */
 :root.dark {
@@ -81,7 +94,8 @@
   --mint: #2d4442;
   --lime: #35432f;
 }
-.dark .docs-brand img, .dark .legal-brand img {
+.dark .docs-brand img,
+.dark .legal-brand img {
   content: url('/branding/moinpdf-logo-dark.svg');
 }
 @media print {
@@ -103,18 +117,301 @@
     --ui-green-soft: #e6f3ed;
     --ui-teal-soft: #e6f3ed;
   }
-  .dark body { background: #ffffff; color: #213e36; }
-  .dark .docs-header, .dark .docs-sidebar { background: transparent; }
-  .dark .docs-brand img, .dark .legal-brand img { content: normal; filter: none; }
+  .dark body {
+    background: #ffffff;
+    color: #213e36;
+  }
+  .dark .docs-header,
+  .dark .docs-sidebar {
+    background: transparent;
+  }
+  .dark .docs-brand img,
+  .dark .legal-brand img {
+    content: normal;
+    filter: none;
+  }
 }
-.information-wordmark { display: flex; flex-direction: column; align-items: center; }
-.information-wordmark img { height: auto; }
-.information-wordmark > span { margin-top: 2px; color: var(--ui-muted, #597269); font-size: 8px; line-height: 1.3; }
-.information-wordmark .logo-dark { display: none; }
-.dark .information-wordmark .logo-light { display: none; }
-.dark .information-wordmark .logo-dark { display: block; }
-.dark .docs-brand .information-wordmark img, .dark .legal-brand .information-wordmark img { content: normal; }
+.information-wordmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.information-wordmark img {
+  height: auto;
+}
+.information-wordmark > span {
+  margin-top: 2px;
+  color: var(--ui-muted, #597269);
+  font-size: 8px;
+  line-height: 1.3;
+}
+.information-wordmark .logo-dark {
+  display: none;
+}
+.dark .information-wordmark .logo-light {
+  display: none;
+}
+.dark .information-wordmark .logo-dark {
+  display: block;
+}
+.dark .docs-brand .information-wordmark img,
+.dark .legal-brand .information-wordmark img {
+  content: normal;
+}
 @media print {
-  .dark .information-wordmark .logo-light { display: block; }
-  .dark .information-wordmark .logo-dark { display: none; }
+  .dark .information-wordmark .logo-light {
+    display: block;
+  }
+  .dark .information-wordmark .logo-dark {
+    display: none;
+  }
+}
+
+/* Harbor Studio appearance for documentation, media and legal information. */
+:root:root {
+  --ink: var(--ui-ink);
+  --muted: var(--ui-muted);
+  --teal: var(--ui-teal);
+  --line: var(--ui-line);
+  --paper: var(--ui-surface);
+  --mint: var(--ui-teal-soft);
+  --lime: var(--ui-green-soft);
+}
+body,
+.dark body {
+  background-color: var(--harbor-page);
+  background-image: radial-gradient(ellipse at 0 0, #7ccab210, transparent 48%);
+  color: var(--ui-ink);
+}
+.docs-header,
+.legal-header,
+.dark .docs-header {
+  background: transparent;
+  margin-block: 22px 28px;
+  min-height: 60px;
+}
+.docs-brand img,
+.legal-brand img {
+  width: 208px;
+}
+.information-wordmark {
+  align-items: flex-start;
+}
+.information-wordmark > span {
+  margin: -1px 0 0 11%;
+  font-size: 11px;
+  color: var(--ui-heading);
+}
+.docs-back,
+.legal-back {
+  min-height: 44px;
+  border-radius: 999px;
+  background: var(--harbor-panel);
+  color: var(--ui-heading);
+  border-color: var(--ui-line);
+}
+.docs-layout,
+.docs-header,
+.docs-footer {
+  max-width: 1180px;
+}
+.docs-hero,
+.legal-card,
+.media-brand-section {
+  border-color: var(--ui-line);
+  background: var(--harbor-panel);
+  box-shadow: var(--harbor-shadow);
+  border-radius: 23px;
+}
+.docs-hero h1,
+.media-hero h1,
+.legal-card h1 {
+  font-size: clamp(1.65rem, 3.2vw, 2.5rem);
+  letter-spacing: -0.8px;
+  color: var(--ui-heading);
+  line-height: 1.35;
+}
+.docs-hero .docs-eyebrow,
+.media-hero .docs-eyebrow {
+  letter-spacing: 1px;
+}
+.docs-tool,
+.docs-mini-card,
+.docs-recipes article,
+.media-banner,
+.media-video,
+.media-contact {
+  background: var(--harbor-panel);
+  border-color: var(--ui-line);
+  border-radius: 19px;
+  box-shadow: var(--harbor-shadow);
+}
+.docs-sidebar,
+.dark .docs-sidebar {
+  background: transparent;
+}
+.docs-tool-icon,
+.docs-section-number {
+  color: var(--ui-teal);
+  background: var(--ui-teal-soft);
+}
+.docs-primary,
+.docs-filters button[aria-pressed='true'] {
+  background: var(--harbor-accent);
+  color: var(--harbor-accent-ink);
+  border-color: var(--harbor-accent);
+}
+.docs-search-panel {
+  background: var(--harbor-panel);
+  border-radius: 20px;
+  border-color: var(--ui-line);
+}
+.docs-search-field {
+  background: var(--ui-surface);
+  border-radius: 16px;
+  border-color: var(--ui-control-line);
+}
+.docs-search-field input {
+  min-width: 0;
+}
+.docs-filters button {
+  min-height: 44px;
+}
+.media-section-nav a,
+.legal-nav a,
+.docs-footer a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.legal-card {
+  color: var(--ui-ink);
+}
+.legal-main,
+.media-main,
+.docs-layout,
+.docs-layout > main {
+  min-width: 0;
+}
+.docs-footer,
+.legal-footer {
+  border-color: var(--ui-line);
+}
+@media (max-width: 600px) {
+  .docs-header,
+  .legal-header {
+    gap: 12px;
+    margin-block: 16px 22px;
+  }
+  .docs-brand img,
+  .legal-brand img {
+    width: 160px;
+  }
+  .information-wordmark > span {
+    font-size: 9px;
+  }
+  .docs-back,
+  .legal-back {
+    font-size: 11px;
+    padding: 9px 12px;
+  }
+  .docs-hero,
+  .legal-card,
+  .media-brand-section {
+    border-radius: 21px;
+    padding: 23px 20px;
+  }
+  .media-hero {
+    padding-block: 16px 25px;
+  }
+  .docs-header,
+  .docs-layout,
+  .docs-footer,
+  .legal-header,
+  .legal-main,
+  .media-page .docs-header,
+  .media-main,
+  .media-page .docs-footer {
+    width: calc(100% - 28px);
+  }
+  .docs-toc {
+    padding: 14px;
+    border-radius: 18px;
+    background: var(--harbor-panel);
+  }
+  .docs-section {
+    margin-top: 36px;
+  }
+  .docs-search-field input {
+    font-size: 16px;
+  }
+}
+@media print {
+  :root:root,
+  :root:root.dark {
+    --harbor-page: #fff;
+    --harbor-panel: #fff;
+    --harbor-shadow: none;
+    --ui-heading: #173f4c;
+    --ui-ink: #173f4c;
+    --ui-muted: #536e7b;
+    --ui-copy: #536e7b;
+    --ui-surface: #fff;
+    --ui-soft: #eff6f3;
+    --ui-line: #dfe9e5;
+    --ui-teal: #087e8d;
+    --ui-teal-soft: #e0f3f1;
+    --ui-green-soft: #e7f5e8;
+  }
+  body,
+  .dark body {
+    background: #fff;
+  }
+  .docs-hero,
+  .legal-card,
+  .media-brand-section {
+    box-shadow: none;
+    background: transparent;
+  }
+}
+
+.information-wordmark,
+:is(.docs-brand, .legal-brand):has(> img) {
+  position: relative;
+  padding-left: 50px;
+}
+.information-wordmark::before,
+:is(.docs-brand, .legal-brand):has(> img)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: url('/favicon.png') center / contain no-repeat;
+}
+.docs-brand > img,
+.legal-brand > img,
+.docs-brand .information-wordmark img,
+.legal-brand .information-wordmark img {
+  width: 158px;
+}
+@media (max-width: 600px) {
+  .information-wordmark,
+  :is(.docs-brand, .legal-brand):has(> img) {
+    padding-left: 37px;
+  }
+  .information-wordmark::before,
+  :is(.docs-brand, .legal-brand):has(> img)::before {
+    width: 31px;
+    height: 31px;
+    border-radius: 7px;
+  }
+  .docs-brand > img,
+  .legal-brand > img,
+  .docs-brand .information-wordmark img,
+  .legal-brand .information-wordmark img {
+    width: 123px;
+  }
 }

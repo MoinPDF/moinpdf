@@ -148,7 +148,7 @@ export function ProjectManager({
             }}
           >
             <FolderOpen size={16} />
-            {t('Projekte')}
+            <span>{t('Projekte')}</span>
           </Button>,
           toolbar,
         )}

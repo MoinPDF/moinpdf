@@ -1,0 +1,1052 @@
+/* Harbor Studio: layout only. Document canvases keep their source appearance. */
+:root:root {
+  --background: var(--harbor-page);
+  --foreground: var(--ui-ink);
+  --card: var(--ui-surface);
+  --card-foreground: var(--ui-ink);
+  --popover: var(--ui-surface);
+  --popover-foreground: var(--ui-ink);
+  --primary: #087e8d;
+  --primary-foreground: #ffffff;
+  --secondary: var(--ui-soft);
+  --secondary-foreground: var(--ui-ink);
+  --muted: var(--ui-soft);
+  --muted-foreground: var(--ui-muted);
+  --accent: var(--ui-teal-soft);
+  --accent-foreground: var(--ui-ink);
+  --border: var(--ui-line);
+  --input: var(--ui-control-line);
+  --ring: var(--ui-teal);
+  --sidebar: var(--ui-surface);
+  --sidebar-foreground: var(--ui-ink);
+  --sidebar-primary: var(--primary);
+  --sidebar-accent: var(--ui-teal-soft);
+  --sidebar-accent-foreground: var(--ui-ink);
+  --sidebar-border: var(--ui-line);
+}
+:root:root.dark {
+  --primary: #79d6ce;
+  --primary-foreground: #102e2c;
+}
+.moinpdf-shell.moinpdf-shell {
+  --project-bar-height: 88px;
+  --legal-footer-height: 90px;
+  background-color: var(--harbor-page);
+  background-image:
+    radial-gradient(ellipse at 0 0, #7ccab210, transparent 48%),
+    radial-gradient(ellipse at 100% 85%, #90d5c20b, transparent 45%);
+}
+.dark .moinpdf-shell.moinpdf-shell {
+  background-color: var(--harbor-page);
+  background-image: radial-gradient(ellipse at 0 0, #68c2c20a, transparent 45%);
+}
+.moinpdf-shell .app-toolbar {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto minmax(210px, 1fr);
+  width: min(1240px, 100%);
+  min-height: var(--project-bar-height);
+  height: var(--project-bar-height);
+  margin-inline: auto;
+  padding: 12px 30px;
+  gap: 20px;
+  background: var(--harbor-glass);
+  border-bottom: 1px solid transparent;
+  border-radius: 0 0 20px 20px;
+}
+.harbor-brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  width: 228px;
+  max-width: 100%;
+  min-width: 0;
+}
+.harbor-brand .upload-entry-logo {
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+.harbor-brand .logo-dark,
+.dark .harbor-brand .logo-light {
+  display: none;
+}
+.dark .harbor-brand .logo-dark {
+  display: block;
+}
+.harbor-wordmark > span {
+  font-size: 11px;
+  line-height: 1.35;
+  margin: -2px 0 0 11%;
+  color: var(--ui-heading);
+}
+.harbor-header-actions,
+.harbor-desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.harbor-header-actions {
+  justify-content: flex-end;
+  min-width: 0;
+}
+.harbor-desktop-nav {
+  gap: 7px;
+}
+.harbor-nav-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 13px;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ui-copy);
+  font-size: 13px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+.harbor-nav-item[aria-current] {
+  color: var(--ui-green);
+  background: var(--ui-green-soft);
+}
+.harbor-nav-item[aria-current]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.harbor-nav-item:hover:not(:disabled) {
+  background: var(--ui-soft);
+}
+.harbor-nav-item:disabled {
+  opacity: 0.5;
+}
+.harbor-mobile-nav {
+  display: none;
+}
+.harbor-more-menu {
+  min-width: 230px;
+  padding: 6px;
+  border-radius: 16px;
+}
+.harbor-more-menu a {
+  gap: 12px;
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.moinpdf-shell .app-toolbar .project-bar {
+  flex: 0 0 auto;
+}
+.moinpdf-shell .app-toolbar .project-toggle {
+  min-height: 42px;
+  height: 42px;
+  border-radius: 999px;
+  padding: 0 12px;
+  font-size: 12px;
+  box-shadow: none;
+  background: transparent;
+}
+.moinpdf-shell .appearance-controls {
+  gap: 6px;
+}
+.moinpdf-shell .appearance-button {
+  height: 42px;
+  min-height: 42px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: var(--ui-heading);
+  font-size: 12px;
+  gap: 6px;
+}
+.moinpdf-shell .appearance-button::before {
+  content: none;
+}
+.moinpdf-shell .theme-toggle {
+  width: 42px;
+  padding: 6px;
+}
+.moinpdf-shell .lighthouse {
+  width: 23px;
+  height: 27px;
+}
+.moinpdf-shell .language-flag {
+  width: 18px;
+  height: 14px;
+  flex-basis: 18px;
+  border-radius: 50%;
+}
+.moinpdf-shell .studio-provider {
+  align-items: stretch;
+  outline: none;
+}
+.harbor-skip {
+  position: fixed;
+  z-index: 100;
+  left: 18px;
+  top: -100px;
+  padding: 12px 18px;
+  background: var(--ui-surface);
+  color: var(--ui-heading);
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+}
+.harbor-skip:focus {
+  top: 10px;
+}
+.moinpdf-shell .upload-entry.harbor-home {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 18px;
+  width: min(1180px, calc(100% - 60px));
+  min-height: 0;
+  margin: 10px auto 36px;
+  padding: 0;
+  color: var(--ui-heading);
+  background: transparent;
+}
+.harbor-welcome {
+  width: 100%;
+  padding: 20px 18px 8px;
+  background: var(--harbor-panel);
+  border: 1px solid var(--ui-line);
+  border-radius: 25px;
+  box-shadow: var(--harbor-shadow);
+}
+.harbor-welcome h1 {
+  margin: 0 10px 16px;
+  font-size: clamp(18px, 2vw, 25px);
+  font-weight: 550;
+  line-height: 1.4;
+  letter-spacing: -0.6px;
+  text-wrap: balance;
+}
+.harbor-photo {
+  overflow: hidden;
+  aspect-ratio: 3.2;
+  border-radius: 17px;
+  background: var(--ui-well);
+  isolation: isolate;
+}
+.harbor-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.harbor-upload {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 12px;
+  padding: 20px 22px 17px;
+  border: 1px solid var(--ui-line);
+  border-radius: 21px;
+  color: var(--ui-heading);
+  background: linear-gradient(135deg, var(--ui-surface), var(--ui-soft));
+  box-shadow: inset 0 1px 1px #ffffff16;
+}
+.harbor-upload::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px dashed var(--ui-line-strong);
+  border-radius: 15px;
+  pointer-events: none;
+}
+.harbor-upload-icon {
+  display: flex;
+  padding: 1px 0 2px;
+}
+.harbor-upload-title {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.harbor-upload-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  width: min(100%, 450px);
+  padding: 10px 20px;
+  border: 1px solid #12b64a35;
+  border-radius: 14px;
+  background: var(--harbor-action);
+  color: var(--harbor-action-ink);
+  box-shadow: 0 4px 12px -7px #0faf4e70;
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 750;
+}
+.harbor-upload-description {
+  max-width: 100%;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ui-copy);
+  overflow-wrap: anywhere;
+}
+.harbor-upload:hover:not(:disabled)::before,
+.harbor-upload.is-drag::before {
+  border-color: var(--ui-teal);
+  border-width: 2px;
+}
+.harbor-upload.is-drag {
+  background: var(--ui-teal-soft);
+}
+.harbor-upload.is-done .harbor-upload-icon {
+  color: var(--ui-green);
+}
+.harbor-upload:disabled {
+  cursor: progress;
+}
+.harbor-upload-progress {
+  width: min(100%, 450px);
+  height: 3px;
+  background: var(--ui-line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.harbor-upload-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--ui-teal);
+  transition: width 0.2s;
+}
+.moinpdf-shell .harbor-home .upload-alternatives {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 2px 20px;
+  margin: 4px 0 0;
+}
+.harbor-home .upload-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--ui-copy);
+  font-size: 11px;
+  border-radius: 8px;
+  padding: 6px 4px;
+  background: transparent;
+}
+.harbor-home .upload-shortcut:hover {
+  color: var(--ui-teal);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.harbor-discovery {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+.harbor-command {
+  height: auto;
+  overflow: visible;
+  background: transparent;
+  border-radius: 20px;
+  color: var(--ui-heading);
+}
+.harbor-search {
+  position: relative;
+}
+.harbor-search [data-slot='command-input-wrapper'] {
+  height: 54px;
+  padding: 0 20px;
+  gap: 13px;
+  background: var(--harbor-panel);
+  border: 1px solid var(--ui-line);
+  border-radius: 999px;
+  box-shadow: var(--harbor-shadow);
+}
+.harbor-search [data-slot='command-input-wrapper'] > svg {
+  width: 21px;
+  height: 21px;
+  opacity: 1;
+  color: var(--ui-copy);
+}
+.harbor-search input {
+  min-width: 0;
+  height: 52px;
+  padding-right: 36px;
+  font-size: 14px;
+  color: var(--ui-heading);
+}
+.harbor-search input::placeholder {
+  color: var(--ui-copy);
+  opacity: 1;
+}
+.harbor-search:focus-within [data-slot='command-input-wrapper'] {
+  border-color: var(--ui-teal);
+  outline: 2px solid var(--ui-teal-soft);
+  outline-offset: 2px;
+}
+.harbor-search-clear {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--ui-copy);
+}
+.harbor-search-results {
+  max-height: 360px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--ui-line);
+  border-radius: 19px;
+  background: var(--ui-surface);
+  box-shadow: var(--harbor-shadow);
+}
+.harbor-search-results > div > p {
+  padding: 5px 8px 10px;
+  color: var(--ui-copy);
+  font-size: 11px;
+}
+.harbor-search-result {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.harbor-search-result > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.harbor-search-result strong {
+  font-size: 13px;
+}
+.harbor-search-result small {
+  font-size: 11px;
+  color: var(--ui-copy);
+  white-space: normal;
+}
+.harbor-search-result > svg {
+  flex-shrink: 0;
+}
+.harbor-discovery-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 23px;
+  margin-top: 2px;
+}
+.harbor-discovery-heading h2 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ui-copy);
+  font-weight: 500;
+}
+.harbor-all-tools {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 650;
+  background: var(--harbor-accent);
+  color: var(--harbor-accent-ink);
+}
+.harbor-all-tools:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+.harbor-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 7px;
+}
+.harbor-categories button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  color: var(--ui-copy);
+  font-size: 11px;
+}
+.harbor-categories button[aria-pressed='true'] {
+  color: var(--ui-heading);
+  background: var(--ui-surface);
+  border-color: var(--ui-line);
+  font-weight: 700;
+}
+.harbor-categories button:hover {
+  background: var(--ui-soft);
+}
+.harbor-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.harbor-tool-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px 12px 18px;
+  border: 1px solid var(--ui-line);
+  border-radius: 20px;
+  background: var(--harbor-panel);
+  box-shadow: var(--harbor-shadow);
+}
+.harbor-tool-card strong {
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 650;
+  color: var(--ui-heading);
+  overflow-wrap: anywhere;
+}
+.harbor-tool-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 55px;
+  height: 55px;
+  border: 1px solid var(--ui-line);
+  border-radius: 16px;
+  background: linear-gradient(145deg, var(--ui-surface), var(--ui-teal-soft));
+  color: var(--ui-teal);
+  box-shadow:
+    0 4px 12px -5px #104b4f20,
+    inset 0 1px 1px #ffffff20;
+}
+.tone-0 > .harbor-tool-icon,
+.tone-3 > .harbor-tool-icon {
+  color: var(--ui-green);
+  background: linear-gradient(145deg, var(--ui-surface), var(--ui-green-soft));
+}
+.tone-2 > .harbor-tool-icon {
+  color: var(--ui-blue);
+  background: linear-gradient(145deg, var(--ui-surface), var(--ui-blue-soft));
+}
+.tone-4 > .harbor-tool-icon {
+  color: var(--ui-purple);
+  background: linear-gradient(145deg, var(--ui-surface), var(--ui-purple-soft));
+}
+.harbor-search-result .harbor-tool-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+.harbor-text-button {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: var(--ui-heading);
+  font-size: 12px;
+}
+.harbor-text-button:hover {
+  background: var(--ui-soft);
+}
+.harbor-resume {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 64px;
+  padding: 12px 18px;
+  border: 1px solid var(--ui-line);
+  border-radius: 17px;
+  background: var(--ui-teal-soft);
+  color: var(--ui-heading);
+  text-align: left;
+}
+.harbor-resume > span {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+  font-weight: 650;
+}
+.harbor-resume small {
+  font-size: 11px;
+  color: var(--ui-copy);
+  font-weight: 400;
+}
+.moinpdf-shell .moinpdf-legal-footer {
+  gap: 2px;
+  border-top: 1px solid var(--ui-line);
+  padding: 12px 20px 18px;
+  color: var(--ui-copy);
+}
+/* One visual system for the catalogue, workbenches and dialogs. */
+.moinpdf-shell .chooser-content {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 30px 36px;
+}
+.moinpdf-shell .chooser-header {
+  max-width: 1180px;
+  padding: 20px 30px 6px;
+}
+.moinpdf-shell .chooser-search-dock {
+  padding: 18px 0;
+  border-radius: 0 0 20px 20px;
+}
+.moinpdf-shell .chooser-categories {
+  max-width: 100%;
+  gap: 7px;
+}
+.moinpdf-shell .chooser-tool-grid {
+  gap: 14px;
+}
+.moinpdf-shell .chooser-tool {
+  min-width: 0;
+  padding: 20px 12px;
+  border-radius: 20px;
+  background: var(--harbor-panel);
+  border-color: var(--ui-line);
+  box-shadow: var(--harbor-shadow);
+}
+.moinpdf-shell .chooser-tool > span {
+  border-radius: 14px;
+}
+.moinpdf-shell .chooser-tool strong {
+  color: var(--ui-heading);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.moinpdf-shell .chooser-content h1 {
+  color: var(--ui-heading);
+  font-size: clamp(20px, 2.4vw, 27px);
+}
+.moinpdf-shell .document-workbench {
+  padding-inline: max(24px, calc((100vw - 1440px) / 2));
+}
+.moinpdf-shell .workbench-title h1,
+.moinpdf-shell .studio-titlebar h1 {
+  font-family: inherit;
+  color: var(--ui-heading);
+  font-size: clamp(22px, 2.5vw, 29px);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.7px;
+}
+.moinpdf-shell .workbench-header,
+.moinpdf-shell .studio-topbar {
+  flex-wrap: wrap;
+  height: auto;
+  min-height: 64px;
+  padding-block: 10px;
+}
+.moinpdf-shell .settings-panel {
+  background: var(--harbor-panel);
+}
+.moinpdf-shell .studio-sidebar {
+  background: var(--harbor-panel);
+}
+.moinpdf-shell .tool-row[data-active='true'] {
+  background: var(--ui-teal-soft) !important;
+  color: var(--ui-heading) !important;
+}
+.moinpdf-shell .tool-search input {
+  border-color: var(--ui-line);
+  border-radius: 12px;
+}
+.moinpdf-shell :is(.studio-main, .document-workbench, .tool-chooser) {
+  scroll-margin-top: calc(var(--project-bar-height) + 12px);
+}
+[data-slot='dialog-content'],
+[data-slot='alert-dialog-content'] {
+  border-radius: 22px;
+  border-color: var(--ui-line);
+}
+@media (hover: hover) {
+  .harbor-tool-card:hover:not(:disabled) {
+    border-color: var(--ui-line-strong);
+    transform: translateY(-3px);
+  }
+}
+@media (max-width: 1000px) {
+  .moinpdf-shell .app-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+  #moinpdf-navigation {
+    display: none;
+  }
+  .moinpdf-shell.moinpdf-shell {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+  .harbor-mobile-nav {
+    display: grid;
+    position: fixed;
+    z-index: 40;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 6px max(14px, env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom))
+      max(14px, env(safe-area-inset-left));
+    border-top: 1px solid var(--ui-line);
+    background: var(--harbor-glass);
+    backdrop-filter: blur(16px);
+  }
+  .harbor-mobile-nav .harbor-nav-item {
+    flex-direction: column;
+    gap: 3px;
+    min-height: 56px;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 12px;
+  }
+  .harbor-mobile-nav .harbor-nav-item[aria-current]::after {
+    display: none;
+  }
+  .harbor-mobile-nav .harbor-nav-item[aria-current] svg {
+    fill: currentColor;
+    fill-opacity: 0.12;
+  }
+  .moinpdf-shell .harbor-photo {
+    aspect-ratio: 2.2;
+  }
+  .harbor-photo img {
+    object-position: 70% top;
+  }
+  .harbor-tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .harbor-tool-card {
+    flex-direction: row;
+    justify-content: flex-start;
+    text-align: left;
+    padding: 18px;
+  }
+  .moinpdf-shell [data-slot='sidebar-container'] {
+    height: calc(100dvh - var(--project-bar-height) - 70px - env(safe-area-inset-bottom));
+  }
+  [data-sonner-toaster] {
+    --offset: calc(82px + env(safe-area-inset-bottom)) !important;
+  }
+}
+@media (max-width: 600px) {
+  .moinpdf-shell.moinpdf-shell {
+    --project-bar-height: 76px;
+  }
+  .moinpdf-shell .app-toolbar {
+    padding: 9px max(12px, env(safe-area-inset-right)) 9px max(12px, env(safe-area-inset-left));
+    gap: 8px;
+    border-radius: 0;
+  }
+  .harbor-brand {
+    width: 168px;
+  }
+  .harbor-wordmark > span {
+    font-size: 9px;
+    margin-top: 0;
+  }
+  .harbor-header-actions {
+    gap: 4px;
+  }
+  .moinpdf-shell .app-toolbar .project-toggle {
+    width: 40px;
+    min-height: 42px;
+    padding: 0;
+    border-color: transparent;
+  }
+  .moinpdf-shell .project-toggle > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .moinpdf-shell .appearance-controls {
+    gap: 4px;
+  }
+  .moinpdf-shell .appearance-button {
+    padding: 6px 8px;
+    gap: 4px;
+    font-size: 11px;
+  }
+  .moinpdf-shell .language-flag {
+    width: 16px;
+    height: 13px;
+    flex-basis: 16px;
+  }
+  .moinpdf-shell .theme-toggle {
+    width: 40px;
+    padding: 5px;
+  }
+  .moinpdf-shell .upload-entry.harbor-home {
+    width: calc(100% - 24px);
+    margin: 4px auto 24px;
+    gap: 16px;
+  }
+  .harbor-welcome {
+    padding: 14px 10px 5px;
+    border-radius: 22px;
+  }
+  .harbor-welcome h1 {
+    font-size: clamp(16px, 4.5vw, 21px);
+    letter-spacing: -0.5px;
+    margin: 2px 6px 13px;
+    text-wrap: initial;
+  }
+  .moinpdf-shell .harbor-photo {
+    aspect-ratio: 1.72;
+    border-radius: 15px;
+  }
+  .harbor-upload {
+    padding: 18px 17px 15px;
+    gap: 7px;
+    margin-top: 10px;
+    border-radius: 19px;
+  }
+  .harbor-upload::before {
+    inset: 6px;
+    border-radius: 13px;
+  }
+  .harbor-upload-title {
+    font-size: 15px;
+  }
+  .harbor-upload-cta {
+    min-height: 48px;
+    border-radius: 13px;
+    font-size: 14px;
+    gap: 9px;
+    padding-inline: 10px;
+  }
+  .harbor-upload-description {
+    font-size: 10px;
+  }
+  .moinpdf-shell .harbor-home .upload-alternatives {
+    gap: 0 10px;
+  }
+  .harbor-home .upload-shortcut {
+    font-size: 10px;
+    gap: 4px;
+    padding-inline: 0;
+    min-height: 40px;
+  }
+  .harbor-home .upload-shortcut svg {
+    width: 13px;
+    height: 13px;
+  }
+  .harbor-search [data-slot='command-input-wrapper'] {
+    height: 50px;
+    padding-inline: 16px;
+    gap: 10px;
+  }
+  .harbor-search input {
+    height: 48px;
+    font-size: 16px;
+  }
+  .harbor-search-clear {
+    top: 3px;
+    right: 4px;
+  }
+  .harbor-discovery-heading {
+    gap: 12px 19px;
+  }
+  .harbor-discovery-heading h2 {
+    font-size: 12px;
+  }
+  .harbor-all-tools {
+    padding: 9px 17px;
+    font-size: 12px;
+  }
+  .harbor-categories {
+    gap: 0 3px;
+  }
+  .harbor-categories button {
+    font-size: 10px;
+    padding: 6px 9px;
+    min-height: 44px;
+  }
+  .harbor-tool-grid {
+    gap: 10px;
+  }
+  .harbor-tool-card {
+    flex-direction: column;
+    justify-content: center;
+    padding: 17px 8px 15px;
+    border-radius: 19px;
+    gap: 11px;
+    text-align: center;
+  }
+  .harbor-tool-card strong {
+    font-size: 12px;
+  }
+  .harbor-tool-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 15px;
+  }
+  .harbor-text-button {
+    padding-inline: 8px;
+  }
+  .moinpdf-shell .chooser-header {
+    flex-wrap: wrap;
+    padding: 14px 14px 3px;
+    gap: 8px;
+  }
+  .moinpdf-shell .chooser-content {
+    padding: 0 14px 26px;
+  }
+  .moinpdf-shell .chooser-tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .moinpdf-shell .chooser-tool {
+    padding: 18px 8px;
+    border-radius: 18px;
+  }
+  .moinpdf-shell .chooser-tool strong {
+    font-size: 12px;
+  }
+  .moinpdf-shell .chooser-search-dock {
+    padding: 14px 0;
+  }
+  .moinpdf-shell .chooser-categories {
+    gap: 6px;
+  }
+  .moinpdf-shell .chooser-category {
+    min-height: 44px;
+  }
+  .moinpdf-shell .document-workbench {
+    padding-inline: 14px;
+    padding-bottom: 28px;
+  }
+  .moinpdf-shell .workbench-title {
+    gap: 13px;
+    flex-wrap: wrap;
+    padding-block: 20px;
+  }
+  .moinpdf-shell .studio-topbar {
+    padding-inline: 14px;
+    gap: 10px;
+  }
+  .moinpdf-shell .studio-titlebar {
+    padding: 22px 16px;
+  }
+  .moinpdf-shell .moinpdf-legal-footer {
+    padding: 10px 14px 16px;
+  }
+  .moinpdf-shell .moinpdf-legal-footer nav {
+    gap: 0 16px;
+    font-size: 11px;
+  }
+}
+@media (max-width: 359px) {
+  .harbor-brand {
+    width: 137px;
+  }
+  .harbor-wordmark > span {
+    font-size: 8px;
+  }
+  .moinpdf-shell .app-toolbar {
+    padding-inline: 10px;
+    gap: 4px;
+  }
+  .moinpdf-shell .app-toolbar .project-toggle {
+    width: 36px;
+  }
+  .moinpdf-shell .appearance-button {
+    padding-inline: 6px;
+  }
+  .moinpdf-shell .theme-toggle {
+    width: 38px;
+  }
+  .harbor-header-actions {
+    gap: 2px;
+  }
+  .harbor-tool-card strong {
+    font-size: 11px;
+  }
+  .harbor-categories button {
+    padding-inline: 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .harbor-home *,
+  .harbor-nav-item {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+@media (forced-colors: active) {
+  .harbor-upload-cta,
+  .harbor-all-tools,
+  .harbor-nav-item[aria-current] {
+    border: 1px solid ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+  .harbor-tool-icon {
+    color: ButtonText;
+  }
+}
+
+.harbor-brand-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border-radius: 11px;
+}
+.harbor-wordmark {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+@media (max-width: 600px) {
+  .harbor-brand-icon {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    border-radius: 9px;
+  }
+}
+@media (max-width: 359px) {
+  .harbor-brand-icon {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+  }
+}

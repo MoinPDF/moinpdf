@@ -1,0 +1,64 @@
+/* Shared Harbor Studio palette for the app and its information pages. */
+:root:root {
+  --harbor-page: #f5faf8;
+  --harbor-panel: rgba(255, 255, 255, 0.9);
+  --harbor-glass: rgba(248, 252, 250, 0.96);
+  --harbor-shadow: 0 8px 30px -14px #164b3d20, 0 1px 4px #123b3604;
+  --harbor-action: #20d660;
+  --harbor-action-ink: #073824;
+  --harbor-accent: #087e8d;
+  --harbor-accent-ink: #ffffff;
+  --ui-heading: #103d50;
+  --ui-ink: #173f4c;
+  --ui-copy: #536e7b;
+  --ui-muted: #536e7b;
+  --ui-faint: #6d818a;
+  --ui-surface: #ffffff;
+  --ui-soft: #eff6f3;
+  --ui-well: #edf3f1;
+  --ui-control: #ffffffde;
+  --ui-control-line: #d4e2df;
+  --ui-glass: var(--harbor-glass);
+  --ui-shadow: var(--harbor-shadow);
+  --ui-line: #dfe9e5;
+  --ui-line-strong: #a8c5bd;
+  --ui-teal: #087e8d;
+  --ui-green: #188856;
+  --ui-blue: #2c7fba;
+  --ui-purple: #7965a6;
+  --ui-teal-soft: #e0f3f1;
+  --ui-green-soft: #e7f5e8;
+  --ui-blue-soft: #e8f2fb;
+  --ui-purple-soft: #f0ecf8;
+}
+:root:root.dark {
+  color-scheme: dark;
+  --harbor-page: #1c2326;
+  --harbor-panel: #252e32;
+  --harbor-glass: rgba(28, 35, 38, 0.97);
+  --harbor-shadow: 0 8px 32px -14px #0007, 0 1px 4px #0001;
+  --harbor-action: #31e96b;
+  --harbor-action-ink: #092d1c;
+  --harbor-accent: #087f91;
+  --harbor-accent-ink: #ffffff;
+  --ui-heading: #e9f3f5;
+  --ui-ink: #e2edef;
+  --ui-copy: #b5c4cb;
+  --ui-muted: #acbec5;
+  --ui-faint: #99adb7;
+  --ui-surface: #252e32;
+  --ui-soft: #2c373b;
+  --ui-well: #1d262a;
+  --ui-control: #283237;
+  --ui-control-line: #42545b;
+  --ui-line: #3a484e;
+  --ui-line-strong: #5d747b;
+  --ui-teal: #77d9d6;
+  --ui-green: #92d5ac;
+  --ui-blue: #99c7f4;
+  --ui-purple: #c2b2ed;
+  --ui-teal-soft: #264445;
+  --ui-green-soft: #2c4336;
+  --ui-blue-soft: #2b3e50;
+  --ui-purple-soft: #3b354a;
+}

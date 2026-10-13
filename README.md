@@ -38,6 +38,8 @@ Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installatio
 | **Wiederkehrendes erledigen** | Stapelverarbeitung, gespeicherte Abläufe, Belegfelder sammeln, Formularrückläufe auswerten und Dokumente chronologisch ordnen. |
 | **Mehr aus Dokumenten machen** | PDF-Maßband und Ebenenverwaltung; mit Dokumentenserver lokal übersetzen und als Hörbuch ausgeben. |
 
+**0.13.1** vereinheitlicht das Layout im Hafenstudio-Stil – mit Seemannmotiv, optimierten mobilen Ansichten sowie abgestimmtem Light- und Darkmode. Die Dokumentfunktionen bleiben unverändert.
+
 **0.13.0** ergänzt Website-Links zu PDF: öffentliche Webseiten mit Bildern, Schriften und Seitengestaltung speichern, in A4 oder Letter und Hoch- oder Querformat. Der separate Web-Konverter gehört zur vollständigen Docker-Installation. Die bisherige Umwandlung gespeicherter HTML-Dateien bleibt erhalten.
 
 Neu in **0.12.0**: Komplexe Absatzschriften mit HarfBuzz und 14 zusätzlichen lokalen Noto-Schriften sowie einzelne Unterobjekte verschachtelter Gruppen. Gruppeninstanzen werden unabhängig bearbeitet; geformte Absätze bleiben gemeinsam auswählbar und kopierbar.

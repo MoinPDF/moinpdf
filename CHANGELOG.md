@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.13.1 – 13. Oktober 2026
+
+- Einheitliches Hafenstudio-Layout mit Seemannmotiv über dem Upload, Suche und Schnellzugriff; der Slogan erscheint nur am Logo.
+- Abgestimmte helle und dunkelgraue Oberfläche für Startseite, Werkzeugauswahl, Arbeitsbereiche, Dokumentation, Medien und Rechtstexte.
+- Optimierte Smartphone-, Tablet- und Desktopansichten mit erreichbarer Navigation, Touchflächen und sicheren Abständen am unteren Bildschirmrand.
+- Navigation zwischen Startseite und Arbeitsbereich erhält geöffnete Dokumente. PDF-Verarbeitung, Konverter und Serverfunktionen bleiben unverändert.
+
 ## 0.13.0 – 13. Oktober 2026
 
 - Website-Links direkt als PDF speichern: Bilder, Schriften, CSS und öffentlich ladbare JavaScript-Inhalte; A4/Letter, Hoch-/Querformat, Hintergrundfarben sowie Bildschirm- oder Druckansicht.
