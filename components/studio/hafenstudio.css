@@ -474,10 +474,11 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: 36px;
-  padding: 6px 12px;
+  min-height: 32px;
+  padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid transparent;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface);
   color: var(--ui-copy);
   font-size: 11px;
   transition:
@@ -504,7 +505,7 @@
   background: var(--harbor-accent);
   border-color: var(--harbor-accent);
   font-weight: 700;
-  box-shadow: 0 3px 12px -5px #087e8d80;
+  box-shadow: 0 2px 7px -4px #087e8d80;
 }
 .harbor-categories button:hover:not(:disabled):not([aria-pressed='true']) {
   background: var(--ui-soft);
@@ -909,14 +910,12 @@
     font-size: 11px;
   }
   .harbor-categories {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 4px;
+    gap: 5px;
   }
   .harbor-categories button {
-    font-size: 11px;
-    padding: 6px 9px;
-    min-height: 44px;
+    font-size: 10px;
+    padding: 4px 7px;
+    min-height: 32px;
   }
   .harbor-tool-grid {
     gap: 10px;

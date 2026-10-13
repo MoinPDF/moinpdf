@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.13.5 – 13. Oktober 2026
+
+- Kategorie-Buttons wieder kompakter und mit sichtbarer Umrandung; auf Smartphones passen sie sich der Textbreite an.
+- Farbige Auswahl und kurzer Lichtstreif bleiben erhalten.
+
 ## 0.13.4 – 13. Oktober 2026
 
 - „Empfohlen“ bezeichnet die ausgewählten Werkzeuge auf der Startseite; „Alle Werkzeuge anzeigen“ führt zur vollständigen Übersicht.
