@@ -55,7 +55,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 assert page.locator('.harbor-upload-cta').bounding_box()['height'] >= 44
                 assert page.get_by_text('Papierkram. Läuft.', exact=True).count() == 1
                 assert page.locator('.harbor-tool-card').count() == 4
-                assert page.locator('.harbor-tool-card').first.evaluate('(el) => getComputedStyle(el).borderRadius') == '0px'
+                assert page.locator('.harbor-tool-card').first.evaluate('(el) => getComputedStyle(el).borderRadius') == '6px'
                 nav = page.locator('.harbor-desktop-nav' if width > 1000 else '.harbor-mobile-nav')
                 expect(nav).to_be_visible()
                 if width in (390, 768, 1440):

@@ -23,7 +23,6 @@ export function HomeTools({
   const { tools, groups } = useTools();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<number | null>(null);
-  const [categoryClick, setCategoryClick] = useState(0);
   const categories = [
     { value: null, label: t('Empfohlen', 'Recommended') },
     ...groups.map((name, index) => ({
@@ -103,16 +102,11 @@ export function HomeTools({
             key={value ?? 'recommended'}
             type="button"
             aria-pressed={category === value}
+            data-harbor-light
             disabled={locked}
-            onClick={() => {
-              setCategory(value);
-              setCategoryClick((click) => click + 1);
-            }}
+            onClick={() => setCategory(value)}
           >
             <span className="harbor-category-label">{label}</span>
-            {category === value && categoryClick > 0 && (
-              <span key={categoryClick} className="harbor-category-beam" aria-hidden="true" />
-            )}
           </button>
         ))}
       </div>
@@ -123,6 +117,7 @@ export function HomeTools({
             type="button"
             key={tool.id}
             className={`harbor-tool-card tone-${tool.group}`}
+            data-harbor-light
             disabled={locked}
             onClick={() => onChoose(tool.id)}
             title={tool.description}

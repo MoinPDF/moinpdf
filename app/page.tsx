@@ -100,6 +100,7 @@ import { UploadEntry, type ImportState } from '@/components/studio/upload-entry'
 import { ToolFileEntry } from '@/components/studio/tool-file-entry';
 import { LegalFooter } from '@/components/studio/legal-footer';
 import { HarborBrand, HarborNavigation } from '@/components/studio/harbor-navigation';
+import { HarborLightFeedback } from '@/components/studio/harbor-light-feedback';
 const DocumentWorkbench = lazy(() =>
   import('@/components/studio/document-workbench').then((module) => ({
     default: module.DocumentWorkbench,
@@ -203,6 +204,7 @@ function WorkspaceShell() {
   const { t } = useLanguage();
   return (
     <div className="moinpdf-shell">
+      <HarborLightFeedback />
       <a className="harbor-skip" href="#moinpdf-content">
         {t('Zum Inhalt', 'Skip to content')}
       </a>

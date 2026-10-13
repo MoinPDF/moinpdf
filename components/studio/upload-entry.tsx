@@ -66,6 +66,7 @@ export function UploadEntry({
         <button
           type="button"
           className={`harbor-upload is-${phase}`}
+          data-harbor-light
           onClick={onOpen}
           disabled={loading}
           aria-label={t('PDF oder andere Datei auswählen')}
@@ -89,7 +90,7 @@ export function UploadEntry({
                   ? t('Hier loslassen.')
                   : t('Datei hier ablegen.')}
           </span>
-          <span className="harbor-upload-cta">
+          <span className="harbor-upload-cta" data-harbor-light-surface>
             <FolderOpen size={20} aria-hidden="true" />
             {t('Dateien auswählen', 'Choose files')}
           </span>

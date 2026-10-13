@@ -4,6 +4,7 @@
 @import '../components/studio/appearance.css';
 @import '../public/hafenstudio-theme.css';
 @import '../components/studio/hafenstudio.css';
+@import '../components/studio/hafenlicht.css';
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

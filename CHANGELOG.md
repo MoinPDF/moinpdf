@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.13.9 – 13. Oktober 2026
+
+- Hafenlicht-Gestaltung mit kompakten, fein umrandeten Kacheln, grünen Auswahlmarkierungen und dezenten Lichtkanten in Hell und Dunkel.
+- Kurzer Lichtimpuls beim Anklicken von Werkzeugen und Kategorien, auch per Touch und Tastatur. Werkzeugaufrufe bleiben unmittelbar; der Effekt blockiert keine Eingaben.
+- Abgestimmte Smartphone-, Tablet- und Desktopansichten mit mindestens 44 Pixel hohen Kategorieflächen auf Touchgeräten.
+- Reduzierte Bewegung und hoher Kontrast werden berücksichtigt; Scrollgesten räumen Lichteffekte auf.
+- Browserprüfung für Maus-, Tastatur- und Touchbedienung, beide Farbmodi, alle Werkzeugaufrufe und Dokumenterhalt erweitert.
+
 ## 0.13.8 – 13. Oktober 2026
 
 - Einheitlich umrandete Werkzeugkacheln und Symbole, auch in der Kategorie „Umwandeln“.

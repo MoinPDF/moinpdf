@@ -189,6 +189,7 @@ export function ToolChooser({
             <button
               type="button"
               className="chooser-category"
+              data-harbor-light
               aria-pressed={activeGroup === null}
               aria-controls="chooser-all-tools"
               disabled={locked}
@@ -200,6 +201,7 @@ export function ToolChooser({
               <button
                 type="button"
                 className={`chooser-category category-${group}`}
+                data-harbor-light
                 key={group}
                 title={ui(label)}
                 aria-pressed={activeGroup === group}
@@ -234,6 +236,7 @@ export function ToolChooser({
                           onClick={() => onChoose(tool.id)}
                           title={ui(tool.description)}
                           className={`chooser-tool tone-${tool.group}`}
+                          data-harbor-light
                         >
                           <span>
                             <tool.icon size={27} strokeWidth={1.45} />

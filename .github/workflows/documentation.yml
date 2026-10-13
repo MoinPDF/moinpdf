@@ -19,6 +19,12 @@ on:
       - 'package.json'
       - 'tests/documentation-smoke.py'
       - 'tests/harbor-layout-browser.py'
+      - 'tests/hafenlicht-browser.py'
+      - 'components/studio/harbor-light-feedback.tsx'
+      - 'components/studio/hafenlicht.css'
+      - 'components/studio/tool-chooser.tsx'
+      - 'components/studio/upload-entry.tsx'
+      - 'public/hafenstudio-theme.css'
       - 'components/studio/home-tools.tsx'
       - 'components/studio/tool-file-entry.tsx'
       - 'components/studio/server-workbench.tsx'
@@ -54,6 +60,7 @@ jobs:
       - name: Verify documentation, mobile layout, printing and retained PDF
         run: |
           python -m http.server 8765 --bind 127.0.0.1 --directory dist/selfhost > "$RUNNER_TEMP/docs-http.log" 2>&1 &
+          python tests/hafenlicht-browser.py
           python tests/harbor-layout-browser.py
           python tests/language-smoke.py
           python tests/documentation-smoke.py
