@@ -12,14 +12,14 @@ const source = 'a'.repeat(40);
 const image = name => ({ source, verificationRun: 456, image: `ghcr.io/moinpdf/moinpdf-${name}:0.9.2-${source.slice(0, 12)}`, digest: `sha256:${'b'.repeat(64)}`, platforms: ['linux/amd64', 'linux/arm64'] });
 async function run(patch = {}) {
   const imageRun = { path: '.github/workflows/publish-images.yml', conclusion: 'success', head_branch: 'main', repository: { full_name: 'MoinPDF/moinpdf' }, event: 'workflow_run', ...patch.run };
-  const images = ['web', 'documents', 'translation'].map(image);
+  const images = ['web', 'documents', 'translation', 'website'].map(image);
   patch.images?.(images);
   const outputs = {}, writes = {};
   const fs = {
     readFileSync(file) {
       if (file === 'package.json') return JSON.stringify({ version: '0.9.2' });
       if (file === 'CHANGELOG.md') return '## 0.9.2 – 2026-10-11\n\nVerified changes\n';
-      const index = ['web', 'documents', 'translation'].indexOf(path.basename(file, '.json'));
+      const index = ['web', 'documents', 'translation', 'website'].indexOf(path.basename(file, '.json'));
       assert.notEqual(index, -1);
       return JSON.stringify(images[index]);
     },

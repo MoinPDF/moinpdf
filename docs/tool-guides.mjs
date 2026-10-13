@@ -193,11 +193,11 @@ export const guides = {
     'Jede Seite wird als Bild proportional auf eine Folie im Format 16:9 eingepasst.',
     'Öffne die PPTX-Datei in PowerPoint oder einer kompatiblen Anwendung und ergänze bei Bedarf eigene Präsentationselemente.'
   ], 'PPTX mit einer Folie pro PDF-Seite.', 'Die Seiten sind Bilder. Einzelne Texte, Tabellen und Grafiken werden dadurch nicht zu separat bearbeitbaren PowerPoint-Objekten.'),
-  'html-pdf': guide('Eine lokal gespeicherte HTML- oder HTM-Datei.', [
-    'Speichere die gewünschte Webseite zunächst als HTML-Datei auf deinem Gerät.',
-    'Wähle diese Datei in MoinPDF und starte die PDF-Erstellung.',
-    'Prüfe die neu gesetzten Überschriften, Absätze und Tabellen im Ergebnis.'
-  ], 'Lesbare PDF aus dem Inhalt der gespeicherten HTML-Datei.', 'Keine Eingabe einer Live-Webadresse. JavaScript, Bilder, externe Schriften und CSS werden nicht übernommen; das Aussehen einer Website wird nicht originalgetreu nachgebaut.'),
+  'html-pdf': guide('Ein öffentlicher Website-Link oder eine lokal gespeicherte HTML- oder HTM-Datei.', [
+    'Wähle „Website-Link“ und füge die Adresse ein. Ohne Protokoll ergänzt MoinPDF HTTPS. Für eine gespeicherte Webseite wähle „HTML-Datei“.',
+    'Für Links kannst du Papierformat, Querformat, Hintergrundfarben und Bildschirm- oder Druckansicht wählen. Starte dann die PDF-Erstellung.',
+    'Prüfe die Vorschau. Lade die PDF herunter oder bearbeite sie direkt in MoinPDF weiter.'
+  ], 'Eine PDF der Webseite mit Bildern, Schriften und Seitengestaltung; bei HTML-Dateien eine neu gesetzte Text-PDF.', 'Der Web-Konverter ruft öffentliche HTTP-/HTTPS-Seiten ohne deine Anmeldung oder Browser-Cookies ab. Cookie-Banner, geschützte und dynamische Inhalte können abweichen. Private Adressen und ungewöhnliche Ports sind gesperrt. Gespeicherte HTML-Dateien werden weiterhin ohne JavaScript, Bilder und CSS verarbeitet.'),
   'auto-orient': guide('Eine PDF mit verdrehten Textseiten, höchstens 50 Seiten.', [
     'Wähle die Datei und belasse das Mindestvertrauen zunächst bei 15 oder passe es gezielt an.',
     'Starte die Erkennung. Sicher erkannte Seiten werden um 90, 180 oder 270 Grad korrigiert.',

@@ -74,6 +74,8 @@ jobs:
             context: ./server
           - name: translation
             context: ./docker/translation
+          - name: website
+            context: ./docker/website
     steps:
       - uses: actions/checkout@v7
         with:

@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.13.0 – 13. Oktober 2026
+
+- Website-Links direkt als PDF speichern: Bilder, Schriften, CSS und öffentlich ladbare JavaScript-Inhalte; A4/Letter, Hoch-/Querformat, Hintergrundfarben sowie Bildschirm- oder Druckansicht.
+- Vorschau, Download und Weiterbearbeitung im bestehenden HTML-Werkzeug; gespeicherte HTML-Dateien bleiben unterstützt. Vollständige deutsche und englische Bedienung und Dokumentation.
+- Separater Chromium-Web-Konverter in Docker für amd64 und arm64. Kontrollierte öffentliche Abrufe, Schutz vor privaten Netzwerkzielen und DNS-Rebinding, begrenzte Ressourcen und Beendigung abgebrochener Aufträge.
+- Beim Update den vollständigen Docker-Stack aktualisieren: Der neue Dienst `website` und `/api/website/*` gehören zur Installation.
+
 ## 0.12.2 — 2026-10-12
 
 - Kompakte Startseiten-Buttons mit Icons, hervorgehobenem „Alle Werkzeuge“ und zusätzlichem Abstand zum Footer in Light- und Darkmode.

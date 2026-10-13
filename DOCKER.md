@@ -14,7 +14,7 @@ docker compose up -d --build
 
 Anschließend **http://localhost:8080** oder **http://SERVER-IP:8080** öffnen. Eine `.env` ist für den Standardstart nicht erforderlich. Der ältere Aufruf `docker-compose` kann bei Installationen mit einem kompatiblen Compose-v2-Binary ebenfalls verwendet werden.
 
-Der erste Start dauert länger: Images, Konverter und Sprachmodelle werden heruntergeladen. Compose wartet auf die Modellinstallation und die Bereitschaft der Dienste. Die Dienste `initialize` und `translation-models` dürfen danach **Exited (0)** anzeigen; sie haben ihre einmalige Einrichtung erfolgreich abgeschlossen. Die drei laufenden Dienste `app`, `documents` und `translation` sollen **healthy** sein.
+Der erste Start dauert länger: Images, Konverter und Sprachmodelle werden heruntergeladen. Compose wartet auf die Modellinstallation und die Bereitschaft der Dienste. Die Dienste `initialize` und `translation-models` dürfen danach **Exited (0)** anzeigen; sie haben ihre einmalige Einrichtung erfolgreich abgeschlossen. Die vier laufenden Dienste `app`, `documents`, `translation` und `website` sollen **healthy** sein.
 
 ```bash
 docker compose ps -a
@@ -81,7 +81,7 @@ Vor dem öffentlichen Start die tatsächlichen Cloudflare-Schutzfunktionen, Sich
 
 Der Compose-Stack verwendet für alle fünf Dienste den Docker-Logtreiber `local` mit höchstens drei Protokolldateien zu jeweils 10 MB. Ältere Dateien werden bei der Rotation entfernt. Das begrenzt den Umfang, ist aber keine Löschung nach einer festen Anzahl von Tagen. Bereits gestartete Container übernehmen diese Änderung beim nächsten `docker compose up -d`; Protokolle anderer Dienste, des Tunnels und des Hosts werden dadurch nicht geändert.
 
-Für Cloudflare den Transport bis zum eigenen Server absichern: bei einem öffentlichen HTTPS-Ursprung mit gültigem Zertifikat den Modus „Full (strict)“ verwenden, bei Cloudflare Tunnel eine entsprechend abgesicherte Verbindung zum lokalen Dienst. Dokumenten-API und Ergebnisse (`/api/documents/*`) nicht durch zusätzliche Cache-Regeln zwischenspeichern; der mitgelieferte Proxy setzt dort `Cache-Control: no-store`. Die App aktiviert keine externen Analyse-Tracker. Zusätzlich im Cloudflare-Konto eingeschaltete Analyse- oder Anmeldedienste müssen gesondert berücksichtigt werden.
+Für Cloudflare den Transport bis zum eigenen Server absichern: bei einem öffentlichen HTTPS-Ursprung mit gültigem Zertifikat den Modus „Full (strict)“ verwenden, bei Cloudflare Tunnel eine entsprechend abgesicherte Verbindung zum lokalen Dienst. Dokumenten- und Webseiten-API samt Ergebnissen (`/api/documents/*` und `/api/website/*`) nicht durch zusätzliche Cache-Regeln zwischenspeichern; der mitgelieferte Proxy setzt dort `Cache-Control: no-store`. Die App aktiviert keine externen Analyse-Tracker. Zusätzlich im Cloudflare-Konto eingeschaltete Analyse- oder Anmeldedienste müssen gesondert berücksichtigt werden.
 
 Gestaltung: `public/legal/legal.css`; Links in der App: `components/studio/legal-footer.tsx`. Nach Änderungen die Web-App mit `docker compose up -d --build` neu bauen.
 
@@ -118,3 +118,13 @@ docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /rep
 Bei aktiviertem Login zusätzlich `--env MOINPDF_TEST_USERNAME=... --env MOINPDF_TEST_PASSWORD=...` übergeben. Diesen Test nur mit dem enthaltenen synthetischen Testmaterial verwenden.
 
 Die eigenständige Dokumenten-API bleibt unter [server/README.md](server/README.md) beschrieben. Die Benutzeroberfläche bietet ab 0.2.0 keine manuelle API-Verbindung mehr an; für sämtliche Konverter die vollständige Docker-Ausgabe verwenden. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.8.4](https://github.com/LibreTranslate/LibreTranslate/tree/v1.8.4); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).
+
+## Website-Link zu PDF
+
+„HTML & Webseiten zu PDF“ bietet die Eingabe eines öffentlichen Website-Links. Der zusätzliche Dienst `website` enthält Chromium und erstellt PDFs mit Bildern, Schriften und CSS, wahlweise in Bildschirm- oder Druckansicht, A4/Letter und Hoch-/Querformat. Er ist in `compose.yaml` enthalten und benötigt keine API eines Drittanbieters. Beim Update den gesamten Stack neu bauen und starten, damit dieser Dienst und die neue Proxyroute hinzukommen. Für statisch ausgelieferte Webdateien müssen sowohl `/api/documents/*` als auch `/api/website/*` zum Docker-Webcontainer führen.
+
+Nur `website` erhält für diese Aufgabe Internetzugriff. `documents` und `translation` bleiben im internen Netz. Der Browser nutzt einen lokalen HTTP-/HTTPS-Proxy, der bei jeder Verbindung ausschließlich öffentliche DNS-Antworten an den Socket übergibt. Direkte DNS-Auflösung, QUIC und WebRTC-Verbindungen außerhalb des Proxys sind deaktiviert. Auch Weiterleitungen, Skripte und eingebettete Inhalte unterliegen dieser Prüfung. Loopback, private/Link-Local-Netze, IPv6-Übergangsadressen, Zugangsdaten in URLs und abweichende Ports sind gesperrt. WebSockets, Service Worker und schreibende HTTP-Anfragen sind deaktiviert.
+
+Pro Auftrag gelten 160 Abrufe, insgesamt 40 MiB übertragene Webressourcen und 40 MiB PDF-Ausgabe. Nach spätestens 75 Sekunden oder bei einem erkannten Verbindungsabbruch wird die gesamte Prozessgruppe beendet. Höchstens zwei Aufträge laufen gleichzeitig. Temporäre Dateien und Browserprofile werden anschließend entfernt; URL-Abfragen werden nicht protokolliert. Fehlende Ressourcen werden bei der Ausgabe gekennzeichnet. Login-Seiten, Cookie-Banner, Bot-Schutz und manche dynamischen Inhalte können das Ergebnis einschränken.
+
+Der neue Dienst hat standardmäßig 1 GiB Arbeitsspeicher (`MOINPDF_WEBSITE_MEMORY`). Chromium stammt aus den Debian-Sicherheitsaktualisierungen für amd64 und arm64; das Image regelmäßig neu bauen, um Browser-Sicherheitskorrekturen zu übernehmen.

@@ -158,7 +158,16 @@ const aliases: Record<WorkspaceTool, string[]> = {
   'pdf-epub': ['PDF zu E-Book', 'PDF zu EPUB', 'PDF als eBook', 'EPUB exportieren'],
   'ebook-pdf': ['E-Book zu PDF', 'EPUB zu PDF', 'eBook in PDF umwandeln'],
   'pdf-powerpoint': ['PDF zu PowerPoint', 'PDF zu PPTX', 'PDF als Folien'],
-  'html-pdf': ['HTML zu PDF', 'Webseite zu PDF', 'Internetseite speichern'],
+  'html-pdf': [
+    'HTML zu PDF',
+    'Webseite zu PDF',
+    'Internetseite speichern',
+    'Website-Link',
+    'URL zu PDF',
+    'Link zu PDF',
+    'Website to PDF',
+    'URL to PDF',
+  ],
   'auto-orient': [
     'Seiten automatisch ausrichten',
     'auf dem Kopf',

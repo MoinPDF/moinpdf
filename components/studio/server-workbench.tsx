@@ -24,6 +24,7 @@ import {
   runServerJob,
   serverCapabilityKey,
   integratedDocumentServer,
+  integratedWebsiteServer,
   type ServerCapabilities,
 } from '@/lib/document-server';
 import {
@@ -38,6 +39,7 @@ import { AudioWorkbench } from './audio-workbench';
 import { AccessibleEditor, initialAccessibleDocument } from './accessible-editor';
 import { validateAccessibleDocument } from '@/lib/accessible-document';
 import { TagRepairEditor, tagRepairRequest, type TagRepair } from './tag-repair-editor';
+import { initialWebsiteSettings, websiteAddress } from '@/lib/website-pdf';
 
 type Props = {
   tool: ServerTool;
@@ -73,6 +75,11 @@ function StandardServerWorkbench({
   const [processing, setProcessing] = useState('local');
   const [mode, setMode] = useState(tool === 'certificate-sign' ? 'validate' : 'create');
   const [progress, setProgress] = useState('');
+  const [htmlInput, setHtmlInput] = useState(initialFile ? 'file' : 'url');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [websiteSettings, setWebsiteSettings] = useState(initialWebsiteSettings);
+  const websiteMode = tool === 'html-pdf' && htmlInput === 'url';
+  const serverBase = websiteMode ? integratedWebsiteServer : integratedDocumentServer;
   const localOffice = tool === 'office-pdf' && processing === 'local';
   const localCertificate = tool === 'certificate-sign' && mode === 'sign' && processing === 'local';
   const localWord = !integratedDocumentServer && tool === 'pdf-word';
@@ -118,7 +125,9 @@ function StandardServerWorkbench({
           : uaMode === 'repair'
             ? 'pdfuaRepair'
             : 'pdfuaValidate'
-        : serverCapabilityKey[tool]
+        : websiteMode
+          ? 'website'
+          : serverCapabilityKey[tool]
     ] === true;
   const fileInputTool = [
     'office-pdf',
@@ -130,11 +139,13 @@ function StandardServerWorkbench({
   const hasInput =
     tool === 'accessibility-check' && uaMode === 'create'
       ? true
-      : fileInputTool
-        ? !!file
-        : tool === 'xrechnung-validate'
-          ? !!(file || source?.invoiceOriginal)
-          : !!source;
+      : websiteMode
+        ? !!websiteUrl.trim()
+        : fileInputTool
+          ? !!file
+          : tool === 'xrechnung-validate'
+            ? !!(file || source?.invoiceOriginal)
+            : !!source;
   const completeInput =
     hasInput &&
     (tool !== 'accessibility-check' || uaMode !== 'repair' || !!tagRepair) &&
@@ -147,7 +158,7 @@ function StandardServerWorkbench({
       setStatus('ready');
       return;
     }
-    if (!integratedDocumentServer) {
+    if (!serverBase) {
       setStatus(localMode ? 'ready' : 'unavailable');
       return;
     }
@@ -156,7 +167,7 @@ function StandardServerWorkbench({
     connection.current = abort;
     setStatus('checking');
     try {
-      const value = await serverCapabilities(integratedDocumentServer, '', abort.signal);
+      const value = await serverCapabilities(serverBase, '', abort.signal);
       if (!abort.signal.aborted) {
         setCapabilities(value);
         setStatus('ready');
@@ -167,7 +178,7 @@ function StandardServerWorkbench({
         setStatus('unavailable');
       }
     }
-  }, [localMode]);
+  }, [localMode, serverBase]);
   useEffect(() => {
     void checkConnection();
     return () => {
@@ -186,7 +197,10 @@ function StandardServerWorkbench({
     previousSources.current = sources.map((value) => value.id);
   }, [sources]);
   useEffect(() => {
-    if (initialFile) setFile(initialFile);
+    if (initialFile) {
+      setFile(initialFile);
+      setHtmlInput('file');
+    }
   }, [initialFile]);
   useEffect(() => {
     onBusy(busy);
@@ -211,6 +225,9 @@ function StandardServerWorkbench({
     uaDocument,
     tagRepair,
     signLevel,
+    htmlInput,
+    websiteUrl,
+    websiteSettings,
   ]);
   useEffect(() => {
     if (!result) {
@@ -349,11 +366,15 @@ function StandardServerWorkbench({
       if (!signal.aborted) setResult(out);
       return;
     }
-    if (!integratedDocumentServer)
+    if (!serverBase)
       throw new Error('Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.');
     const body = new FormData();
     let path = '';
-    if (tool === 'accessibility-check' && uaMode === 'create') {
+    if (websiteMode) {
+      body.append('url', websiteAddress(websiteUrl));
+      body.append('options', JSON.stringify(websiteSettings));
+      path = '/v1/website';
+    } else if (tool === 'accessibility-check' && uaMode === 'create') {
       body.append(
         'request',
         new Blob([JSON.stringify(validateAccessibleDocument(uaDocument))], {
@@ -437,7 +458,7 @@ function StandardServerWorkbench({
           `Diese Datei ist zu groß. Erlaubt sind höchstens ${formatSize(limit)} pro Datei.`,
         );
     try {
-      const out = await runServerJob(integratedDocumentServer, '', path, body, signal);
+      const out = await runServerJob(serverBase, '', path, body, signal);
       if (signal.aborted) return;
       setResult(out);
       if (out.blob.type.includes('json'))
@@ -457,7 +478,9 @@ function StandardServerWorkbench({
       </header>
       <div className="workbench-title">
         <div>
-          <span className="studio-kicker">{ui('DATEI REIN. ERGEBNIS RAUS.')}</span>
+          <span className="studio-kicker">
+            {ui(websiteMode ? 'LINK REIN. PDF RAUS.' : 'DATEI REIN. ERGEBNIS RAUS.')}
+          </span>
           <h1>
             <info.icon />
             {ui(info.title)}
@@ -470,7 +493,9 @@ function StandardServerWorkbench({
           <span>{hasInput ? <Check size={14} /> : 1}</span>
           {tool === 'accessibility-check' && uaMode === 'create'
             ? ui('Struktur vorbereiten')
-            : ui('Datei auswählen')}
+            : websiteMode
+              ? ui('Website-Link einfügen')
+              : ui('Datei auswählen')}
         </li>
         <li className={busy ? 'is-current' : ''}>
           <span>2</span>
@@ -521,7 +546,73 @@ function StandardServerWorkbench({
           ) : tool === 'ebook-pdf' ? (
             pick('E-Book (.epub)', '.epub,application/epub+zip', file, setFile)
           ) : tool === 'html-pdf' ? (
-            pick('Gespeicherte Webseite (.html oder .htm)', '.html,.htm,text/html', file, setFile)
+            <>
+              <Choice
+                label={ui('Eingabe')}
+                value={htmlInput}
+                onChange={setHtmlInput}
+                items={[
+                  ['url', 'Website-Link'],
+                  ['file', 'HTML-Datei'],
+                ]}
+              />
+              {websiteMode ? (
+                <>
+                  <Text
+                    label={ui('Website-Adresse')}
+                    type="url"
+                    value={websiteUrl}
+                    onChange={setWebsiteUrl}
+                    placeholder="https://example.com"
+                  />
+                  <details className="conversion-options">
+                    <summary>{ui('Weitere Optionen')}</summary>
+                    <Choice
+                      label={ui('Papierformat')}
+                      value={websiteSettings.paper}
+                      onChange={(paper) => setWebsiteSettings((old) => ({ ...old, paper }))}
+                      items={[
+                        ['A4', 'A4'],
+                        ['Letter', 'Letter'],
+                      ]}
+                    />
+                    <Choice
+                      label={ui('Darstellung der Webseite')}
+                      value={websiteSettings.media}
+                      onChange={(media) => setWebsiteSettings((old) => ({ ...old, media }))}
+                      items={[
+                        ['screen', 'Wie am Bildschirm'],
+                        ['print', 'Druckansicht der Webseite'],
+                      ]}
+                    />
+                    <Tick
+                      label={ui('Querformat')}
+                      value={websiteSettings.landscape}
+                      onChange={(landscape) => setWebsiteSettings((old) => ({ ...old, landscape }))}
+                    />
+                    <Tick
+                      label={ui('Hintergrundfarben und Hintergrundbilder übernehmen')}
+                      value={websiteSettings.background}
+                      onChange={(background) =>
+                        setWebsiteSettings((old) => ({ ...old, background }))
+                      }
+                    />
+                  </details>
+                  <p className="fine-note">
+                    {ui(
+                      'Öffentliche Webseiten mit Bildern, Schriften und Seitengestaltung als PDF speichern. Die Seite wird ohne deine Anmeldung und Browser-Cookies geöffnet. Cookie-Banner können sichtbar bleiben; geschützte oder sehr dynamische Seiten können abweichen.',
+                    )}
+                  </p>
+                </>
+              ) : (
+                pick(
+                  'Gespeicherte Webseite (.html oder .htm)',
+                  '.html,.htm,text/html',
+                  file,
+                  setFile,
+                )
+              )}
+            </>
           ) : tool === 'word-mail-merge' ? (
             <>
               {pick('Word-Vorlage (.docx)', '.docx', file, setFile)}
@@ -622,9 +713,9 @@ function StandardServerWorkbench({
                 />
               )}
             </>
-          ) : (
+          ) : !websiteMode ? (
             <ServerExtraFields tool={tool} value={extra} onChange={setExtra} />
-          )}
+          ) : null}
           {localOptimize && (
             <p className="fine-note">
               {ui(
@@ -856,13 +947,17 @@ function StandardServerWorkbench({
           )}
           {available && !localMode && (
             <p className="conversion-privacy">
-              {tool === 'accessibility-check' && uaMode === 'create'
+              {websiteMode
                 ? ui(
-                    'Mit dem Start werden die Inhaltsblöcke und Bilder aus dem Struktureditor für diesen Auftrag übertragen.',
+                    'Mit dem Start wird die Website-Adresse an den Web-Konverter übermittelt. Dieser ruft die Seite und ihre Ressourcen im Internet ab.',
                   )
-                : ui(
-                    'Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen.',
-                  )}{' '}
+                : tool === 'accessibility-check' && uaMode === 'create'
+                  ? ui(
+                      'Mit dem Start werden die Inhaltsblöcke und Bilder aus dem Struktureditor für diesen Auftrag übertragen.',
+                    )
+                  : ui(
+                      'Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen.',
+                    )}{' '}
               {ui('Die Daten werden nicht dauerhaft gespeichert.')}{' '}
               <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">
                 {ui('Datenschutz')}
@@ -874,7 +969,15 @@ function StandardServerWorkbench({
       {busy && (
         <div className="advanced-progress" role="status">
           <LoaderCircle className="spin" size={18} />
-          <span>{ui(localOffice && progress ? progress : 'Deine Datei wird verarbeitet …')}</span>
+          <span>
+            {ui(
+              websiteMode
+                ? 'Die Webseite wird geladen und als PDF gespeichert …'
+                : localOffice && progress
+                  ? progress
+                  : 'Deine Datei wird verarbeitet …',
+            )}
+          </span>
           <Button variant="ghost" onClick={() => controller.current?.abort()}>
             {t('Abbrechen')}
           </Button>
