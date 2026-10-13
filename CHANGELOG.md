@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.13.4 – 13. Oktober 2026
+
+- „Empfohlen“ bezeichnet die ausgewählten Werkzeuge auf der Startseite; „Alle Werkzeuge anzeigen“ führt zur vollständigen Übersicht.
+- Kategorie-Buttons mit kurzem Lichtstreif beim Auswählen und sanfter Druckbewegung, abgestimmt auf den Leuchtturm. Die Einstellung für reduzierte Bewegung wird berücksichtigt.
+- Auf Smartphones stehen die Kategorien in zwei gleichmäßigen Reihen mit ausreichend großen Touchflächen.
+
 ## 0.13.3 – 13. Oktober 2026
 
 - Separaten Button „Alle Werkzeuge“ auf der Startseite entfernt; die Kategoriezeile folgt direkt auf die Suche.

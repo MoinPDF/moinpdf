@@ -471,24 +471,70 @@
   gap: 4px 7px;
 }
 .harbor-categories button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-height: 36px;
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid transparent;
   color: var(--ui-copy);
   font-size: 11px;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+.harbor-category-label {
+  position: relative;
+  z-index: 1;
+}
+.harbor-category-beam {
+  display: none;
+  position: absolute;
+  inset: -30% -50%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(105deg, transparent 35%, #ffffff24 50%, transparent 65%);
 }
 .harbor-categories button[aria-pressed='true'] {
   color: var(--harbor-accent-ink);
   background: var(--harbor-accent);
   border-color: var(--harbor-accent);
   font-weight: 700;
+  box-shadow: 0 3px 12px -5px #087e8d80;
 }
 .harbor-categories button:hover:not(:disabled):not([aria-pressed='true']) {
   background: var(--ui-soft);
 }
-.harbor-categories button[aria-pressed='true']:hover:not(:disabled) {
-  filter: brightness(1.07);
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .harbor-categories button:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .harbor-categories button:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+  .harbor-category-beam {
+    display: block;
+    animation: harbor-category-beam 520ms ease-out both;
+  }
+}
+@keyframes harbor-category-beam {
+  0% {
+    opacity: 0;
+    transform: translateX(-60%);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(60%);
+  }
 }
 .harbor-tool-grid {
   display: grid;
@@ -863,10 +909,12 @@
     font-size: 11px;
   }
   .harbor-categories {
-    gap: 0 3px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
   }
   .harbor-categories button {
-    font-size: 10px;
+    font-size: 11px;
     padding: 6px 9px;
     min-height: 44px;
   }
@@ -991,6 +1039,12 @@
   }
   .harbor-tool-icon {
     color: ButtonText;
+  }
+  .harbor-category-beam {
+    display: none;
+  }
+  .harbor-categories button[aria-pressed='true'] {
+    border-color: Highlight;
   }
 }
 

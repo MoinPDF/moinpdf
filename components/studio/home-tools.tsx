@@ -23,6 +23,14 @@ export function HomeTools({
   const { tools, groups } = useTools();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<number | null>(null);
+  const [categoryClick, setCategoryClick] = useState(0);
+  const categories = [
+    { value: null, label: t('Empfohlen', 'Recommended') },
+    ...groups.map((name, index) => ({
+      value: index,
+      label: t(categoryNames[index] ?? name),
+    })),
+  ];
   const suggestions = searchTools(query, tools)
     .filter((tool) => category === null || tool.group === category)
     .slice(0, 5);
@@ -82,7 +90,7 @@ export function HomeTools({
                 disabled={locked}
                 onClick={onTools}
               >
-                {t('Weitere Werkzeuge', 'More tools')}
+                {t('Alle Werkzeuge anzeigen', 'View all tools')}
                 <ChevronRight size={16} />
               </button>
             )}
@@ -90,23 +98,21 @@ export function HomeTools({
         )}
       </Command>
       <div className="harbor-categories" role="group" aria-label={t('Werkzeugkategorien')}>
-        <button
-          type="button"
-          aria-pressed={category === null}
-          disabled={locked}
-          onClick={() => setCategory(null)}
-        >
-          {t('Alle')}
-        </button>
-        {groups.map((name, index) => (
+        {categories.map(({ value, label }) => (
           <button
-            key={name}
+            key={value ?? 'recommended'}
             type="button"
-            aria-pressed={category === index}
+            aria-pressed={category === value}
             disabled={locked}
-            onClick={() => setCategory(index)}
+            onClick={() => {
+              setCategory(value);
+              setCategoryClick((click) => click + 1);
+            }}
           >
-            {t(categoryNames[index] ?? name)}
+            <span className="harbor-category-label">{label}</span>
+            {category === value && categoryClick > 0 && (
+              <span key={categoryClick} className="harbor-category-beam" aria-hidden="true" />
+            )}
           </button>
         ))}
       </div>
@@ -130,7 +136,7 @@ export function HomeTools({
       </div>
       <button className="harbor-text-button" type="button" disabled={locked} onClick={onTools}>
         <LayoutGrid size={17} aria-hidden="true" />
-        {t('Weitere Werkzeuge', 'More tools')}
+        {t('Alle Werkzeuge anzeigen', 'View all tools')}
         <ChevronRight size={17} aria-hidden="true" />
       </button>
     </section>
