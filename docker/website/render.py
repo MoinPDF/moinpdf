@@ -16,10 +16,19 @@ TIMEOUT = 65
 
 async def render(settings: dict, directory: Path):
     url = normalize_url(settings['url'])
+    # Debian Chromium also writes Crashpad/config state outside user-data-dir.
+    # Keep every browser-owned path in this job, including on read-only Docker.
+    browser_environment = {key: os.environ[key] for key in ('PATH', 'LANG') if key in os.environ}
+    browser_environment.update(HOME=str(directory), TMPDIR=str(directory),
+                               XDG_CONFIG_HOME=str(directory / 'config'),
+                               XDG_CACHE_HOME=str(directory / 'cache'))
+    (directory / 'config').mkdir(exist_ok=True)
+    (directory / 'cache').mkdir(exist_ok=True)
     async with async_playwright() as driver, EgressProxy() as proxy:
         browser = await driver.chromium.launch(
             executable_path=os.getenv('MOINPDF_CHROMIUM') or None,
             headless=True,
+            env=browser_environment,
             # The proxy validates and pins every outgoing socket, including
             # redirects or browser traffic not intercepted by request routing.
             proxy={'server': proxy.url, 'bypass': '<-loopback>'},
