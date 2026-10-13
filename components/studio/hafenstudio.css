@@ -447,11 +447,6 @@
 .harbor-search-result > svg {
   flex-shrink: 0;
 }
-.harbor-discovery-actions {
-  display: flex;
-  align-items: center;
-  margin-top: 2px;
-}
 .harbor-quick-heading {
   display: flex;
   align-items: center;
@@ -470,22 +465,6 @@
   flex: 1;
   background: var(--ui-line);
 }
-.harbor-all-tools {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 9px 20px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 650;
-  background: var(--harbor-accent);
-  color: var(--harbor-accent-ink);
-}
-.harbor-all-tools:hover:not(:disabled) {
-  filter: brightness(1.07);
-}
 .harbor-categories {
   display: flex;
   flex-wrap: wrap;
@@ -500,13 +479,16 @@
   font-size: 11px;
 }
 .harbor-categories button[aria-pressed='true'] {
-  color: var(--ui-heading);
-  background: var(--ui-surface);
-  border-color: var(--ui-line);
+  color: var(--harbor-accent-ink);
+  background: var(--harbor-accent);
+  border-color: var(--harbor-accent);
   font-weight: 700;
 }
-.harbor-categories button:hover {
+.harbor-categories button:hover:not(:disabled):not([aria-pressed='true']) {
   background: var(--ui-soft);
+}
+.harbor-categories button[aria-pressed='true']:hover:not(:disabled) {
+  filter: brightness(1.07);
 }
 .harbor-tool-grid {
   display: grid;
@@ -880,10 +862,6 @@
   .harbor-quick-heading {
     font-size: 11px;
   }
-  .harbor-all-tools {
-    padding: 9px 17px;
-    font-size: 12px;
-  }
   .harbor-categories {
     gap: 0 3px;
   }
@@ -1005,7 +983,7 @@
 }
 @media (forced-colors: active) {
   .harbor-upload-cta,
-  .harbor-all-tools,
+  .harbor-categories button[aria-pressed='true'],
   .harbor-nav-item[aria-current] {
     border: 1px solid ButtonText;
     background: ButtonFace;

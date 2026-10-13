@@ -45,7 +45,7 @@ with sync_playwright() as driver:
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(origin)
-    page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
+    page.get_by_role('button', name='Weitere Werkzeuge', exact=True).click()
     page.locator('.chooser-tool').filter(has=page.get_by_text('HTML & Webseiten zu PDF', exact=True)).click()
     expect(page.get_by_label('Eingabe', exact=True)).to_have_value('url')
     expect(page.get_by_role('button', name='PDF erstellen', exact=True)).to_be_disabled()

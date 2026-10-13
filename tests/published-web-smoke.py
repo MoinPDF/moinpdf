@@ -52,7 +52,7 @@ def all_views(page, messages, context, empty=False):
             expect(page.get_by_role('button', name='PDF oder andere Datei auswählen', exact=True)).to_be_visible()
             assert not messages, f'JavaScript exception in {context} / {title}: {messages}'
             no_overflow(page, context + ' / ' + title)
-            page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
+            page.get_by_role('button', name='Weitere Werkzeuge', exact=True).click()
             chooser(page)
             continue
         expect(page.locator('main h1')).to_have_text(title, timeout=30000)
@@ -108,7 +108,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             link = page.get_by_role('link', name=re.compile('^' + label))
             response = page.request.get(origin + link.get_attribute('href'))
             assert response.ok, f'{label} link is broken'
-        page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
+        page.get_by_role('button', name='Weitere Werkzeuge', exact=True).click()
         chooser(page)
         all_views(page, errors, 'Desktop without input', empty=True)
 

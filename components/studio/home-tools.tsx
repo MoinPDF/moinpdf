@@ -89,12 +89,6 @@ export function HomeTools({
           </CommandList>
         )}
       </Command>
-      <div className="harbor-discovery-actions">
-        <button className="harbor-all-tools" type="button" disabled={locked} onClick={onTools}>
-          <LayoutGrid size={18} aria-hidden="true" />
-          {t('Alle Werkzeuge')}
-        </button>
-      </div>
       <div className="harbor-categories" role="group" aria-label={t('Werkzeugkategorien')}>
         <button
           type="button"

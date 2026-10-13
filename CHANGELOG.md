@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.13.3 – 13. Oktober 2026
+
+- Separaten Button „Alle Werkzeuge“ auf der Startseite entfernt; die Kategoriezeile folgt direkt auf die Suche.
+- Ausgewählte Kategorien sind in Hell- und Dunkelansicht türkis hervorgehoben, standardmäßig „Alle“.
+
 ## 0.13.2 – 13. Oktober 2026
 
 - Startseite beginnt direkt mit dem Seemannmotiv; die zusätzliche Überschrift entfällt.
