@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.13.6 – 13. Oktober 2026
+
+- Werkzeug-Kacheln mit feiner Umrandung, dezentem Lichtverlauf und kompakten, leicht plastischen Icons.
+- Farbige Dokumentmotive für Zusammenfügen, Komprimieren und PDF zu Word sowie abgestimmte Symbole für Text, OCR und Webseiten.
+- Ruhigere Schatten und kleinere Kacheln in beiden Farbmodi; Kategorien und vorhandene Klick-Effekte bleiben erhalten.
+
 ## 0.13.5 – 13. Oktober 2026
 
 - Kategorie-Buttons wieder kompakter und mit sichtbarer Umrandung; auf Smartphones passen sie sich der Textbreite an.
