@@ -6,6 +6,7 @@
 - Leere PDF-Arbeitsbereiche verwenden den kompakten Aufbau der Konverter: Werkzeugbeschreibung, drei Arbeitsschritte und Dateiauswahl in einer Karte. Die frühere große Begrüßung entfällt vollständig.
 - Dateiauswahl, Drag-and-drop, Beispieldokument und Leerseite bleiben erreichbar; das gewählte Werkzeug bleibt erhalten.
 - Fehlerhafte Zeichenfolge im OCR-Verweis der Word-Konvertierung korrigiert.
+- Rechnungs-, Schutz- und Dokumentwerkzeuge ohne geladene Datei sicher auf die gemeinsame Dateiauswahl führen; alle 112 leeren Werkzeugansichten werden im Browser geprüft.
 
 ## 0.13.7 – 13. Oktober 2026
 

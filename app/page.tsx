@@ -1276,6 +1276,23 @@ function Studio() {
         />
       </>
     );
+  if (!pages.length)
+    return (
+      <>
+        <Toaster position="bottom-right" richColors closeButton />
+        {fileInput}
+        <ToolFileEntry
+          tool={tool}
+          locked={locked}
+          loading={loading}
+          dragOver={dragOver}
+          onBack={() => setChoosingTool(true)}
+          onAdd={() => picker.current?.click()}
+          onDemo={demo}
+          onBlank={blank}
+        />
+      </>
+    );
   if (isDocumentTool(toolId))
     return (
       <>
@@ -1325,23 +1342,6 @@ function Studio() {
           onTool={chooseTool}
           onBusy={setDocumentBusy}
           onAdd={() => picker.current?.click()}
-        />
-      </>
-    );
-  if (!pages.length)
-    return (
-      <>
-        <Toaster position="bottom-right" richColors closeButton />
-        {fileInput}
-        <ToolFileEntry
-          tool={tool}
-          locked={locked}
-          loading={loading}
-          dragOver={dragOver}
-          onBack={() => setChoosingTool(true)}
-          onAdd={() => picker.current?.click()}
-          onDemo={demo}
-          onBlank={blank}
         />
       </>
     );

@@ -105,12 +105,18 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             for title, icon in icons.items():
                 card = page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True))
                 assert card.locator('svg').inner_html() == icon, title
-            # The shared entry path must also work from the full catalogue.
-            title = next(iter(icons))
-            page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
-            expect(page.locator('main h1')).to_have_text(title)
-            page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
-            expect(page.locator('.chooser-tool')).to_have_count(112)
+            # Every catalogue tool must also open without an existing document.
+            # Invoice, security and document editors previously assumed sources[0].
+            titles = page.locator('.chooser-tool strong').all_text_contents()
+            for title in titles:
+                page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
+                expect(page.locator('main h1')).to_have_text(title)
+                assert not errors, (title, errors)
+                expect(page.locator('.empty-stage')).to_have_count(0)
+                within_viewport(page, f'catalogue empty tool {width} / {title}')
+                page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
+                expect(page.locator('.chooser-tool')).to_have_count(112)
+            checks.append(f'{width}px: all 112 catalogue tools open without a document or JavaScript errors')
             nav.get_by_role('button', name='Start', exact=True).click()
         checks.append('Home and catalogue use identical SVG symbols; empty-tool back navigation works')
         # Importing after choosing a core tool must keep that tool selected.
