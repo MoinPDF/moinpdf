@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.13.10 – 13. Oktober 2026
+
+- Kategorie-Buttons mit dezenterer Auswahlfarbe, ruhigerer Schrift und weichem Schlagschatten in Hell und Dunkel, einheitlich auf Startseite und Werkzeugübersicht.
+- Dicke Kategorie-Unterstreichung, zusätzliche Trennlinie unter den Kategorien und senkrechte Lichtkante im Upload-Button entfernt.
+
 ## 0.13.9 – 13. Oktober 2026
 
 - Hafenlicht-Gestaltung mit kompakten, fein umrandeten Kacheln, grünen Auswahlmarkierungen und dezenten Lichtkanten in Hell und Dunkel.

@@ -1,10 +1,12 @@
 /* Hafenlicht: compact frames and a brief light response, never a loading delay. */
 .moinpdf-shell.moinpdf-shell {
+  --harbor-category-shadow: 0 2px 6px #163c310a, 0 5px 12px -8px #163c311f;
   background-image:
     radial-gradient(ellipse at 8% 0, #56cfb212, transparent 48%),
     radial-gradient(ellipse at 92% 75%, #4bdd940b, transparent 42%);
 }
 .dark .moinpdf-shell.moinpdf-shell {
+  --harbor-category-shadow: 0 2px 6px #0003, 0 5px 12px -8px #0006;
   background-image: radial-gradient(ellipse at 50% 12%, #29d98008, transparent 52%);
 }
 .moinpdf-shell .app-toolbar {
@@ -68,16 +70,6 @@
     inset 0 1px 0 #ffffff3b,
     0 4px 14px -9px var(--harbor-light);
 }
-.harbor-upload-cta::after {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 88%;
-  width: 1px;
-  background: linear-gradient(transparent, #ffffffc9, transparent);
-  box-shadow: 0 0 7px 1px #baffcb7a;
-  opacity: 0.6;
-  pointer-events: none;
-}
 .harbor-discovery {
   padding: 18px;
   border: 1px solid var(--ui-line);
@@ -103,7 +95,6 @@
 .harbor-categories {
   gap: 6px;
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--ui-line);
 }
 .moinpdf-shell :is(.harbor-categories button, .chooser-category) {
   position: relative;
@@ -114,8 +105,8 @@
   color: var(--ui-copy);
   background: var(--ui-surface);
   font-size: 11px;
-  font-weight: 550;
-  box-shadow: inset 0 1px 0 var(--harbor-edge-highlight);
+  font-weight: 500;
+  box-shadow: var(--harbor-category-shadow);
   transition:
     border-color 160ms ease,
     background-color 160ms ease,
@@ -123,10 +114,9 @@
 }
 .moinpdf-shell :is(.harbor-categories button, .chooser-category)[aria-pressed='true'] {
   color: var(--harbor-light-ink);
-  background: var(--harbor-light-soft);
-  border-color: var(--harbor-light-line);
-  font-weight: 700;
-  box-shadow: inset 0 -2px 0 var(--harbor-light);
+  background: color-mix(in srgb, var(--harbor-light-soft) 55%, var(--ui-surface));
+  border-color: color-mix(in srgb, var(--harbor-light-line) 55%, var(--ui-line));
+  font-weight: 600;
 }
 .harbor-quick-heading {
   margin: 0;
@@ -255,8 +245,8 @@
       0 5px 18px -9px var(--harbor-light-aura);
   }
   .moinpdf-shell :is(.harbor-categories button, .chooser-category):hover:not(:disabled) {
-    border-color: var(--harbor-light-line);
-    background: var(--harbor-light-soft);
+    border-color: color-mix(in srgb, var(--harbor-light-line) 55%, var(--ui-line));
+    background: color-mix(in srgb, var(--harbor-light-soft) 55%, var(--ui-surface));
   }
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -334,8 +324,7 @@
 }
 @media (forced-colors: active) {
   .harbor-light-layer,
-  .harbor-photo::after,
-  .harbor-upload-cta::after {
+  .harbor-photo::after {
     display: none;
   }
   .moinpdf-shell
