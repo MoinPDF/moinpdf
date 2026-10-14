@@ -1,0 +1,143 @@
+/* File and job feedback; tool tiles and their symbols stay still. */
+.moinpdf-shell .file-arrival-check {
+  display: inline-block;
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  margin-inline-start: 5px;
+  vertical-align: -2px;
+  color: var(--harbor-light-ink);
+  opacity: 0;
+  pointer-events: none;
+}
+.moinpdf-shell .file-arrival-check[data-arrived] {
+  opacity: 1;
+}
+.moinpdf-shell .workspace-file-copy > strong,
+.moinpdf-shell .workspace-file-list li,
+.moinpdf-shell .conversion-file-picker strong {
+  display: flex;
+  align-items: center;
+}
+.moinpdf-shell .arrival-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.moinpdf-shell .workspace-file-list .arrival-file-name {
+  overflow-wrap: anywhere;
+}
+.moinpdf-shell .conversion-file-picker .arrival-file-name {
+  white-space: nowrap;
+}
+.moinpdf-shell .harbor-mobile-nav[data-content-underneath='true'] {
+  box-shadow: 0 -10px 24px -17px color-mix(in srgb, var(--ui-heading) 35%, transparent);
+}
+.moinpdf-shell .job-status-icon {
+  flex-shrink: 0;
+  overflow: visible;
+  vertical-align: middle;
+}
+.job-status-ring {
+  opacity: 0;
+  stroke-dasharray: 72 28;
+  transform-origin: center;
+}
+.job-status-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+.job-status-icon[data-state='working'] .job-status-ring {
+  opacity: 1;
+}
+.job-status-icon[data-state='working'] .job-status-check {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .moinpdf-shell .harbor-mobile-nav {
+    transition: box-shadow 180ms ease;
+  }
+  .job-status-icon[data-state='working'] .job-status-ring {
+    animation: feedback-working 900ms linear infinite;
+  }
+  .job-status-icon[data-state='done'][data-fresh] .job-status-ring {
+    animation: feedback-ring-finish 380ms ease-out both;
+  }
+  .job-status-icon[data-state='done'][data-fresh] .job-status-check {
+    animation: feedback-check-draw 360ms 180ms ease-out both;
+  }
+  .moinpdf-shell .result-download[data-fresh='true']:not(:focus-visible) {
+    animation: feedback-download 1000ms 600ms ease-out both;
+  }
+  .moinpdf-shell .file-arrival-check[data-arrived] {
+    animation: feedback-file-arrival 420ms ease-out both;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moinpdf-shell :is(.tool-mosaic-card, .chooser-tool),
+  .moinpdf-shell :is(.tool-mosaic-card, .chooser-tool):is(:hover, :active),
+  .moinpdf-shell .chooser-tool > span {
+    transform: none;
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .moinpdf-shell .file-arrival-check {
+    color: Highlight;
+  }
+  .moinpdf-shell .result-download[data-fresh='true'] {
+    animation: none;
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  .moinpdf-shell .harbor-mobile-nav[data-content-underneath='true'] {
+    border-top-color: ButtonText;
+    box-shadow: none;
+  }
+}
+@keyframes feedback-file-arrival {
+  from {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes feedback-working {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes feedback-ring-finish {
+  from {
+    opacity: 0.8;
+    transform: rotate(-90deg);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(0deg);
+  }
+}
+@keyframes feedback-check-draw {
+  from {
+    opacity: 0;
+    stroke-dashoffset: 1;
+  }
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes feedback-download {
+  0%,
+  100% {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+  35% {
+    outline: 2px solid var(--harbor-light-line);
+    outline-offset: 4px;
+  }
+}

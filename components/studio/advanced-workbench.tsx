@@ -1,4 +1,6 @@
 'use client';
+import { WorkspaceContext } from './workspace-context';
+import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
 import { ui } from '@/lib/ui-language';
 
 import { useLanguage, useTools } from '@/components/studio/appearance';
@@ -14,7 +16,7 @@ import {
   LayersPanel,
   MeasurePanel,
 } from './century-panels';
-import { ChevronLeft, Plus, ShieldCheck, Download, LoaderCircle, Check } from 'lucide-react';
+import { ChevronLeft, Plus, ShieldCheck, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { openSource, formatSize, type Source, type JobResult } from '@/lib/pdf-engine';
 import type { AdvancedTool, ExportFile, RunContext } from '@/lib/advanced-types';
@@ -76,6 +78,7 @@ export function AdvancedWorkbench({
     [url, setUrl] = useState(''),
     [preview, setPreview] = useState<Source | null>(null),
     [page, setPage] = useState(0);
+  const resultFresh = useFreshResult(result);
   const resultRef = useRef<HTMLElement>(null);
   const controller = useRef<AbortController | null>(null),
     info = tools.find((t) => t.id === tool)!,
@@ -99,8 +102,8 @@ export function AdvancedWorkbench({
       setPreview(null);
       return;
     }
-    requestAnimationFrame(() =>
-      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+    const frame = requestAnimationFrame(() =>
+      resultRef.current?.scrollIntoView({ behavior: resultScrollBehavior(), block: 'start' }),
     );
     const objectUrl = URL.createObjectURL(result.blob);
     setUrl(objectUrl);
@@ -117,6 +120,7 @@ export function AdvancedWorkbench({
         .catch(() => {});
     return () => {
       active = false;
+      cancelAnimationFrame(frame);
       URL.revokeObjectURL(objectUrl);
       if (owned) void owned.pdf.loadingTask.destroy();
     };
@@ -163,6 +167,7 @@ export function AdvancedWorkbench({
     ).includes(tool);
   return (
     <main className="document-workbench advanced-workbench">
+      <WorkspaceContext sources={sources} locked={busy} onAdd={onAdd} />
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
@@ -270,7 +275,7 @@ export function AdvancedWorkbench({
       </fieldset>
       {busy && (
         <div className="advanced-progress" role="status">
-          <LoaderCircle className="spin" size={18} />
+          <JobStatusIcon working size={18} />
           <span>{ui(progress.label)}</span>
           <progress max={100} value={progress.percent} />
           <Button variant="ghost" onClick={() => controller.current?.abort()}>
@@ -287,7 +292,7 @@ export function AdvancedWorkbench({
         <section ref={resultRef} className="advanced-result" role="status">
           <div>
             <h2>
-              <Check size={22} />
+              <JobStatusIcon fresh={resultFresh} />
               {t('Dein Ergebnis ist bereit.')}
             </h2>
             <p>
@@ -295,7 +300,7 @@ export function AdvancedWorkbench({
             </p>
             {result.note && <p>{ui(result.note)}</p>}
             <div className="advanced-actions">
-              <Button asChild>
+              <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
                 <a href={url} download={result.filename}>
                   <Download size={17} />
                   {t('Herunterladen')}

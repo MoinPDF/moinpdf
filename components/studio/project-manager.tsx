@@ -3,10 +3,18 @@ import { ui, uiLocale } from '@/lib/ui-language';
 
 import { useLanguage } from '@/components/studio/appearance';
 
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { createPortal } from 'react-dom';
 import { FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
+import {
+  captureProjectCheckpoint,
+  matchesProjectCheckpoint,
+  projectContentSignature,
+  type ProjectCheckpoint,
+} from '@/lib/project-checkpoint';
 import {
   Dialog,
   DialogContent,
@@ -27,8 +35,6 @@ import {
   type ProjectSource,
 } from '@/lib/local-projects';
 import { openSource, filenameStem, downloadBlob, type Source } from '@/lib/pdf-engine';
-import { decodeProjectFile, encodeProjectFile, validateOpenedProject } from '@/lib/project-archive';
-import { isProjectArchive, encodeProjectArchive, decodeProjectArchive } from '@/lib/project-bundle';
 import './project-manager.css';
 export function ProjectManager({
   sources,
@@ -37,13 +43,23 @@ export function ProjectManager({
   onRestore,
   identity,
   setIdentity,
+  checkpoint,
+  onCheckpoint,
+  onBusy,
 }: {
   sources: Source[];
   state: ProjectState;
   locked: boolean;
-  onRestore: (sources: Source[], state: ProjectState) => void;
+  onRestore: (
+    sources: Source[],
+    state: ProjectState,
+    identity: { id: string; name: string },
+  ) => void;
   identity: { id?: string; name: string };
   setIdentity: Dispatch<SetStateAction<{ id?: string; name: string }>>;
+  checkpoint: ProjectCheckpoint | null;
+  onCheckpoint: (checkpoint: ProjectCheckpoint | null) => void;
+  onBusy: (busy: boolean) => void;
 }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false),
@@ -58,9 +74,22 @@ export function ProjectManager({
     current = identity.id,
     setName = (name: string) => setIdentity((old) => ({ ...old, name })),
     setCurrent = (id: string | undefined) => setIdentity((old) => ({ ...old, id }));
+  const { pages, edits, options, documentSessions } = state;
+  const content = useMemo(
+    () => projectContentSignature(name, { pages, edits, options, documentSessions }),
+    [name, pages, edits, options, documentSessions],
+  );
+  const saved = matchesProjectCheckpoint(checkpoint, current, sources, content);
+  const saveStatus = !sources.length ? 'empty' : saved ? 'saved' : 'dirty';
+  const statusLabel = !sources.length
+    ? t('Keine Dateien geöffnet')
+    : saved
+      ? t('Gespeichert', 'Saved')
+      : t('Ungespeicherte Änderungen', 'Unsaved changes');
   const job = async (work: () => Promise<void>) => {
     if (working || locked) return;
     setWorking(true);
+    onBusy(true);
     setNotice('');
     try {
       await work();
@@ -68,10 +97,12 @@ export function ProjectManager({
       setNotice((e as Error).message || 'Der lokale Speicher ist nicht verfügbar.');
     } finally {
       setWorking(false);
+      onBusy(false);
     }
   };
   const refresh = async () => setProjects(await listProjects());
   const download = async (name: string, data: ProjectSource[], snapshot: ProjectState) => {
+    const { encodeProjectFile } = await import('@/lib/project-archive');
     const blob = await encodeProjectFile(name, data, snapshot);
     downloadBlob(blob, filenameStem(name + '.moinpdf') + '.moinpdf');
     setNotice(
@@ -79,6 +110,7 @@ export function ProjectManager({
     );
   };
   const openSnapshot = async (data: ProjectSource[], snapshot: ProjectState) => {
+    const { validateOpenedProject } = await import('@/lib/project-archive');
     const opened: Source[] = [];
     try {
       for (const s of data) {
@@ -126,8 +158,7 @@ export function ProjectManager({
         (archive
           ? await importProjectArchive(archive)
           : await saveProject(name, undefined, opened, snapshot));
-      onRestore(opened, snapshot);
-      setIdentity({ id: restoredId, name });
+      onRestore(opened, snapshot, { id: restoredId, name });
       setOpen(false);
     } catch (e) {
       for (const s of opened) await s.pdf.loadingTask.destroy();
@@ -138,18 +169,37 @@ export function ProjectManager({
     <>
       {toolbar &&
         createPortal(
-          <Button
-            className="project-toggle"
-            variant="outline"
-            disabled={locked || working}
-            onClick={() => {
-              setOpen(true);
-              void job(refresh);
-            }}
-          >
-            <FolderOpen size={16} />
-            <span>{t('Projekte')}</span>
-          </Button>,
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="project-toggle"
+                  variant="outline"
+                  aria-label={`${t('Projekte')} – ${statusLabel}`}
+                  aria-haspopup="dialog"
+                  aria-expanded={open}
+                  disabled={locked || working}
+                  onClick={() => {
+                    setOpen(true);
+                    void job(refresh);
+                  }}
+                >
+                  <FolderOpen size={20} aria-hidden="true" />
+                  <span>{t('Projekte')}</span>
+                  {sources.length > 0 && (
+                    <span
+                      className="project-save-indicator"
+                      data-state={saveStatus}
+                      aria-hidden="true"
+                    />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" sideOffset={8}>
+                {statusLabel}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>,
           toolbar,
         )}
       <Dialog
@@ -167,6 +217,10 @@ export function ProjectManager({
               )}
             </DialogDescription>
           </DialogHeader>
+          <p className="project-save-status" data-state={saveStatus} role="status">
+            <span aria-hidden="true" className="project-save-indicator" data-state={saveStatus} />
+            {statusLabel}
+          </p>
           <label className="advanced-field">
             <span>{t('Projektname')}</span>
             <input
@@ -181,10 +235,19 @@ export function ProjectManager({
               disabled={working || locked || !sources.length}
               onClick={() =>
                 job(async () => {
+                  const savedCheckpoint = captureProjectCheckpoint(
+                    current ?? '',
+                    name,
+                    sources,
+                    state,
+                  );
                   const projectId = await saveProject(name, current, sources, state);
                   setCurrent(projectId);
+                  onCheckpoint({ ...savedCheckpoint, projectId });
+                  const message = t('Alles an Bord – gespeichert.', 'All aboard – saved.');
+                  setNotice(message);
+                  toast.success(message);
                   await refresh();
-                  setNotice(t('Arbeitsstand gespeichert.'));
                 })
               }
             >
@@ -194,6 +257,7 @@ export function ProjectManager({
               variant="outline"
               disabled={working}
               onClick={() => {
+                onCheckpoint(null);
                 setCurrent(undefined);
                 setName('Neues PDF-Projekt');
               }}
@@ -228,6 +292,8 @@ export function ProjectManager({
                 e.target.value = '';
                 if (file)
                   void job(async () => {
+                    const { isProjectArchive, decodeProjectArchive } =
+                      await import('@/lib/project-bundle');
                     if (await isProjectArchive(file)) {
                       const archive = await decodeProjectArchive(file);
                       // Validate every retained PDF/history before committing any imported version.
@@ -238,6 +304,7 @@ export function ProjectManager({
                       const latest = archive.versions[0];
                       await restore(archive.name, latest.sources, latest.state, undefined, archive);
                     } else {
+                      const { decodeProjectFile } = await import('@/lib/project-archive');
                       const imported = await decodeProjectFile(file);
                       await restore(imported.name, imported.sources, imported.state);
                     }
@@ -267,6 +334,7 @@ export function ProjectManager({
                   onClick={() =>
                     job(async () => {
                       const archive = await loadProjectArchive(p.id);
+                      const { encodeProjectArchive } = await import('@/lib/project-bundle');
                       downloadBlob(
                         await encodeProjectArchive(archive),
                         filenameStem(p.name + '.moinpdf') + '-gesamt.moinpdf',
@@ -336,7 +404,10 @@ export function ProjectManager({
                       onClick={() =>
                         job(async () => {
                           await deleteProject(p.id);
-                          if (current === p.id) setCurrent(undefined);
+                          if (current === p.id) {
+                            onCheckpoint(null);
+                            setCurrent(undefined);
+                          }
                           setDeleteId('');
                           await refresh();
                         })

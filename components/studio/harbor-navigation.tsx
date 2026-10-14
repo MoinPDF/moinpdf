@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { contentUnderNavigation } from '@/lib/ui-feedback';
 import { createPortal } from 'react-dom';
 import {
   BookOpen,
@@ -20,12 +21,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export function HarborBrand() {
+function HarborBrand({ onHome, locked }: { onHome: () => void; locked: boolean }) {
   const { t } = useLanguage();
   return (
-    <div className="harbor-brand" aria-label="MoinPDF">
+    <button
+      type="button"
+      className="harbor-brand text-left"
+      aria-label={t('MoinPDF – zur Startseite', 'MoinPDF – go to home page')}
+      disabled={locked}
+      onClick={onHome}
+    >
       <img className="harbor-brand-icon" src="/favicon.png" width={48} height={48} alt="" />
-      <div className="harbor-wordmark">
+      <span className="harbor-wordmark">
         <img
           className="upload-entry-logo logo-light"
           src={`/branding/moinpdf-wordmark.svg?v=${APP_VERSION}`}
@@ -41,8 +48,8 @@ export function HarborBrand() {
           alt="MoinPDF"
         />
         <span>{t('Papierkram. Läuft.')}</span>
-      </div>
-    </div>
+      </span>
+    </button>
   );
 }
 
@@ -100,7 +107,48 @@ export function HarborNavigation({
 }) {
   const { t } = useLanguage();
   const [host, setHost] = useState<HTMLElement | null>(null);
-  useEffect(() => setHost(document.getElementById('moinpdf-navigation')), []);
+  const [brandHost, setBrandHost] = useState<HTMLElement | null>(null);
+  const [mobileHost, setMobileHost] = useState<HTMLElement | null>(null);
+  const mobileNav = useRef<HTMLElement>(null);
+  const [contentUnderneath, setContentUnderneath] = useState(false);
+  useEffect(() => {
+    setHost(document.getElementById('moinpdf-navigation'));
+    setBrandHost(document.getElementById('moinpdf-brand'));
+    setMobileHost(document.getElementById('moinpdf-mobile-navigation'));
+  }, []);
+  useEffect(() => {
+    const nav = mobileNav.current;
+    const content = document.getElementById('moinpdf-content');
+    if (!nav || !content) return;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const rect = nav.getBoundingClientRect();
+      setContentUnderneath(
+        contentUnderNavigation(
+          window.scrollY,
+          content.getBoundingClientRect().bottom,
+          rect.top,
+          rect.height,
+        ),
+      );
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    window.addEventListener('scroll', schedule, { passive: true, capture: true });
+    window.addEventListener('resize', schedule);
+    const observer = new ResizeObserver(schedule);
+    observer.observe(content);
+    observer.observe(nav);
+    measure();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('scroll', schedule, true);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [mobileHost]);
   const items = (
     <>
       <button
@@ -128,6 +176,7 @@ export function HarborNavigation({
   );
   return (
     <>
+      {brandHost && createPortal(<HarborBrand onHome={onHome} locked={locked} />, brandHost)}
       {host &&
         createPortal(
           <nav className="harbor-desktop-nav" aria-label={t('Hauptnavigation', 'Main navigation')}>
@@ -135,9 +184,18 @@ export function HarborNavigation({
           </nav>,
           host,
         )}
-      <nav className="harbor-mobile-nav" aria-label={t('Hauptnavigation', 'Main navigation')}>
-        {items}
-      </nav>
+      {mobileHost &&
+        createPortal(
+          <nav
+            ref={mobileNav}
+            className="harbor-mobile-nav"
+            data-content-underneath={contentUnderneath}
+            aria-label={t('Hauptnavigation', 'Main navigation')}
+          >
+            {items}
+          </nav>,
+          mobileHost,
+        )}
     </>
   );
 }

@@ -1,4 +1,6 @@
 'use client';
+import { WorkspaceContext } from './workspace-context';
+import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
 import { ui } from '@/lib/ui-language';
 
 import { useLanguage } from '@/components/studio/appearance';
@@ -6,7 +8,6 @@ import { useLanguage } from '@/components/studio/appearance';
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   Bookmark,
-  Check,
   CheckSquare,
   ChevronLeft,
   ChevronRight,
@@ -95,6 +96,7 @@ export function DocumentWorkbench({
     [outputSource, setOutputSource] = useState<Source | null>(null),
     [showResult, setShowResult] = useState(false),
     [outputPage, setOutputPage] = useState(0);
+  const resultFresh = useFreshResult(output);
   const source = sources.find((s) => s.id === sourceId) || sources[0],
     session = sessions[source.id],
     draft = session?.current,
@@ -312,13 +314,14 @@ export function DocumentWorkbench({
     controller.current = abort;
     try {
       const result = await saveDocumentDraft(source, draft, tool, flatten, abort.signal);
+      if (abort.signal.aborted) return;
       setOutput(result);
       setOutputPage(0);
       setShowResult(true);
       requestAnimationFrame(() =>
         document
           .getElementById('document-preview')
-          ?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+          ?.scrollIntoView({ behavior: resultScrollBehavior(), block: 'start' }),
       );
       toast.success(ui('Deine PDF ist bereit.'));
     } catch (e) {
@@ -429,6 +432,7 @@ export function DocumentWorkbench({
   }
   return (
     <main className="document-workbench">
+      <WorkspaceContext sources={sources} locked={locked} />
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={locked}>
           <ChevronLeft size={17} />
@@ -597,9 +601,13 @@ export function DocumentWorkbench({
             {showResult && output ? (
               <>
                 <div className="workbench-result-banner">
-                  <Check size={20} />
+                  <JobStatusIcon fresh={resultFresh} size={20} />
                   <span>{output.filename}</span>
-                  <Button asChild>
+                  <Button
+                    asChild
+                    className="result-download"
+                    data-fresh={resultFresh && !!outputUrl}
+                  >
                     <a href={outputUrl || undefined} download={output.filename}>
                       <Download size={16} />
                       {t('PDF herunterladen')}
@@ -1174,7 +1182,7 @@ export function DocumentWorkbench({
               onClick={save}
               disabled={locked || !draft || (!isBookmarks && draft.xfa)}
             >
-              {busy ? <LoaderCircle className="spin" size={17} /> : <Download size={17} />}
+              {busy ? <JobStatusIcon working size={17} /> : <Download size={17} />}
               <span>
                 {busy
                   ? ui('PDF wird erstellt …')

@@ -428,7 +428,14 @@ export async function runJob(
           }
         }
       } else if (tool === 'to-images' || tool === 'compress') {
-        const side = tool === 'compress' ? (options.quality === 'small' ? 1400 : 2000) : 2400;
+        const side =
+          tool === 'compress'
+            ? options.quality === 'small'
+              ? 1400
+              : options.quality === 'gentle'
+                ? 2400
+                : 2000
+            : 2400;
         const { canvas, width, height } = await renderPage(source, item, side, signal);
         try {
           const { rasterBlob } = await import('./image-codecs');
@@ -438,7 +445,13 @@ export async function runJob(
           const blob = await rasterBlob(
             canvas,
             format as import('./image-codecs').RasterFormat,
-            tool === 'compress' ? (options.quality === 'small' ? 0.5 : 0.76) : 0.92,
+            tool === 'compress'
+              ? options.quality === 'small'
+                ? 0.5
+                : options.quality === 'gentle'
+                  ? 0.9
+                  : 0.76
+              : 0.92,
           );
           const data = new Uint8Array(await blob.arrayBuffer());
           if (zip)

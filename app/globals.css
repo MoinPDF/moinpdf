@@ -5,6 +5,11 @@
 @import '../public/hafenstudio-theme.css';
 @import '../components/studio/hafenstudio.css';
 @import '../components/studio/hafenlicht.css';
+@import '../components/studio/workspace-layout.css';
+@import '../components/studio/tool-tones.css';
+@import '../components/studio/tool-mosaic.css';
+@import '../components/studio/ui-feedback.css';
+@import '../components/studio/interaction-refinements.css';
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -3534,9 +3539,7 @@ summary:focus-visible {
   border-radius: 16px;
   padding: 10px 5px;
   min-width: 0;
-  transition:
-    transform 0.2s,
-    background 0.2s;
+  transition: background 0.2s;
 }
 .chooser-tool > span {
   display: grid;
@@ -3548,7 +3551,6 @@ summary:focus-visible {
   background: var(--ui-surface, #f6faef);
   color: var(--ui-muted, #6b913e);
   transition:
-    transform 0.25s,
     box-shadow 0.25s,
     background 0.25s;
 }
@@ -3566,10 +3568,8 @@ summary:focus-visible {
 }
 .chooser-tool:hover {
   background: var(--ui-surface, #fbfdf8);
-  transform: translateY(-3px);
 }
 .chooser-tool:hover > span {
-  transform: rotate(-5deg);
   box-shadow: 0 7px 18px -7px #71845b36;
   background: var(--ui-green-soft, #edf7df);
 }

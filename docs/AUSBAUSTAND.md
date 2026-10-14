@@ -1,6 +1,17 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 13. Oktober 2026, Version 0.13.8.
+Stand: 14. Oktober 2026, Version 0.13.21.
+
+Die Oberfläche enthält 22 vollständig sichtbare Headerbilder, sechs Schnellzugriffe,
+eine Dokumentübersicht und eine mobile Aktionsleiste im gemeinsamen PDF-Arbeitsbereich.
+Am Desktop ist das Headerbild auf 640 Pixel begrenzt; mobil bleibt es unverändert.
+Werkzeugkacheln und Symbole bleiben ruhig. Der Projekt-Button ist dezent weiß-grün.
+Auch Projektstände ohne Seiten bieten Rückgängig und Wiederholen.
+Die Werkzeugseitenleiste ist zunächst eingeklappt. Header und Upload behalten ihre
+bisherige Gestaltung und die vorhandenen Farben; die Komprimierung bietet die
+Stufen Sanft, Ausgewogen und Möglichst klein. Die Bedienungsanleitung ist in Deutsch
+und Englisch verfügbar. Nachweise für einzelne technische Funktionen stehen bei
+den zugehörigen Prüfläufen; die Versionsangabe ersetzt keine Funktionsprüfung.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
@@ -33,7 +44,7 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
 ## Prüfung und Freigabe
 
-30 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
+33 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
 Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
 Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
 Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche

@@ -12,7 +12,9 @@ import {
 } from 'lucide-react';
 import { useLanguage } from './appearance';
 import { HomeTools } from './home-tools';
+import { HarborPhoto } from './harbor-photo';
 import type { WorkspaceTool } from '@/lib/tool-catalog';
+import { fileDropLabel } from '@/lib/interaction-feedback';
 
 export type ImportState = {
   phase: 'idle' | 'reading' | 'done';
@@ -23,6 +25,7 @@ export type ImportState = {
 
 export function UploadEntry({
   dragOver,
+  dragFileCount = null,
   loading,
   state,
   onOpen,
@@ -34,6 +37,7 @@ export function UploadEntry({
   fileCount = 0,
 }: {
   dragOver: boolean;
+  dragFileCount?: number | null;
   loading: boolean;
   state: ImportState;
   onOpen: () => void;
@@ -44,25 +48,13 @@ export function UploadEntry({
   onChoose: (id: WorkspaceTool) => void;
   fileCount?: number;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const phase = state.phase === 'idle' && dragOver ? 'drag' : state.phase;
   return (
     <main className="upload-entry harbor-home">
       <h1 className="sr-only">MoinPDF</h1>
       <section className="harbor-welcome" aria-label={t('Dateien öffnen')}>
-        <div className="harbor-photo">
-          <img
-            src="/branding/moinpdf-harbor.webp"
-            width={2164}
-            height={727}
-            alt={t(
-              'Ein Seemann birgt einen Drucker im Hafen.',
-              'A sailor lifts a printer out of the harbor.',
-            )}
-            fetchPriority="high"
-            decoding="async"
-          />
-        </div>
+        <HarborPhoto />
         <button
           type="button"
           className={`harbor-upload is-${phase}`}
@@ -87,7 +79,7 @@ export function UploadEntry({
               : state.phase === 'reading'
                 ? t('Wird geöffnet …')
                 : dragOver
-                  ? t('Hier loslassen.')
+                  ? fileDropLabel(dragFileCount, language)
                   : t('Datei hier ablegen.')}
           </span>
           <span className="harbor-upload-cta" data-harbor-light-surface>
@@ -147,7 +139,9 @@ export function UploadEntry({
       <span className="sr-only" role="status" aria-live="polite">
         {loading
           ? `${state.completed} ${t('von', 'of')} ${state.total} ${t('Dateien verarbeitet', 'files processed')}`
-          : ''}
+          : dragOver
+            ? fileDropLabel(dragFileCount, language)
+            : ''}
       </span>
     </main>
   );

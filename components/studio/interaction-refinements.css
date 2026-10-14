@@ -1,0 +1,170 @@
+/* Brief, local feedback in the existing white/green palette. */
+.moinpdf-shell .tool-search-match {
+  padding: 0;
+  border-radius: 3px;
+  color: inherit;
+  background: color-mix(in srgb, var(--harbor-light) 18%, var(--ui-surface));
+  font: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .moinpdf-shell :is(.tool-mosaic-card, .chooser-tool)[data-spotlight]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      150px circle at var(--spotlight-x) var(--spotlight-y),
+      #ffffff24,
+      color-mix(in srgb, var(--harbor-light) 7%, transparent) 38%,
+      transparent 75%
+    );
+  }
+}
+.moinpdf-shell .app-toolbar .project-toggle {
+  position: relative;
+}
+.project-save-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ui-copy);
+  background: transparent;
+}
+.moinpdf-shell .app-toolbar .project-toggle > .project-save-indicator {
+  display: block;
+  position: absolute;
+  bottom: 6px;
+  right: 7px;
+}
+.project-save-indicator[data-state='saved'] {
+  border-color: var(--harbor-light-ink);
+  background: var(--harbor-light);
+}
+.project-save-indicator[data-state='empty'] {
+  display: none;
+}
+.project-save-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--foreground);
+  font-size: 12px;
+}
+.moinpdf-shell .harbor-upload.is-drag,
+.moinpdf-shell .tool-file-card.is-drag {
+  border-color: var(--harbor-light-ink);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--harbor-light) 16%, transparent),
+    0 0 28px -12px var(--harbor-light-aura);
+}
+.moinpdf-shell .drop-overlay {
+  border-color: var(--harbor-light-ink);
+  color: var(--harbor-light-ink);
+  background: color-mix(in srgb, var(--ui-surface) 94%, transparent);
+  padding: 24px;
+  text-align: center;
+}
+.moinpdf-shell .drop-overlay strong {
+  max-width: 900px;
+  line-height: 1.2;
+  font-size: clamp(24px, 4vw, 48px);
+  letter-spacing: -0.04em;
+}
+.moinpdf-shell .page-reorder-grid {
+  position: relative;
+}
+.moinpdf-shell .page-reorder-grid[data-reordering] > .page-tile {
+  transform: translate(var(--page-shift-x, 0px), var(--page-shift-y, 0px));
+  will-change: transform;
+}
+.moinpdf-shell .page-reorder-grid .page-tile[data-drag-source] {
+  opacity: 0.22;
+  border-style: dashed;
+}
+.moinpdf-shell .page-insertion-marker {
+  position: absolute;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--harbor-light-ink);
+  box-shadow: 0 0 8px var(--harbor-light-aura);
+  z-index: 2;
+  pointer-events: none;
+}
+.moinpdf-shell .page-insertion-marker::before,
+.moinpdf-shell .page-insertion-marker::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: inherit;
+}
+.moinpdf-shell .page-insertion-marker::before {
+  top: 0;
+}
+.moinpdf-shell .page-insertion-marker::after {
+  bottom: 0;
+}
+.moinpdf-shell .page-drag-handle {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  color: var(--ui-copy);
+  cursor: grab;
+}
+.moinpdf-shell .page-drag-handle:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.moinpdf-shell .page-drag-handle:focus-visible {
+  outline: 2px solid var(--harbor-light-ink);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .moinpdf-shell .page-drag-handle {
+    width: 44px;
+    height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moinpdf-shell .page-reorder-grid .page-tile,
+  .moinpdf-shell .harbor-upload.is-drag {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  .moinpdf-shell :is(.tool-mosaic-card, .chooser-tool)[data-spotlight]::after {
+    content: none;
+  }
+  .moinpdf-shell .tool-search-match {
+    background: Mark;
+    color: MarkText;
+  }
+  .project-save-indicator {
+    border-color: ButtonText;
+  }
+  .project-save-indicator[data-state='saved'] {
+    background: Highlight;
+    border-color: Highlight;
+  }
+  .moinpdf-shell .page-insertion-marker {
+    background: Highlight;
+    box-shadow: none;
+  }
+  .moinpdf-shell .harbor-upload.is-drag,
+  .moinpdf-shell .tool-file-card.is-drag,
+  .moinpdf-shell .drop-overlay {
+    border-color: Highlight;
+    box-shadow: none;
+  }
+}

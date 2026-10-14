@@ -1,9 +1,10 @@
 'use client';
 import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
+import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, Plus, Download, LoaderCircle, Headphones } from 'lucide-react';
+import { ChevronLeft, Plus, Download, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Choice, Field, Tick, Text, NumberField } from './advanced-shared';
 import { ReadOptions, Coverage } from './evidence-panels';
@@ -51,6 +52,7 @@ export function AudioWorkbench({
     [error, setError] = useState(''),
     [result, setResult] = useState<ExportFile | null>(null),
     [url, setUrl] = useState('');
+  const resultFresh = useFreshResult(result);
   const controller = useRef<AbortController | null>(null),
     output = useRef<HTMLElement>(null),
     source = sources.find((s) => s.id === sourceId) || sources[0],
@@ -108,7 +110,7 @@ export function AudioWorkbench({
     }
     const next = URL.createObjectURL(result.blob);
     setUrl(next);
-    output.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    output.current?.scrollIntoView({ behavior: resultScrollBehavior(), block: 'start' });
     return () => URL.revokeObjectURL(next);
   }, [result]);
   async function run(action: (ctx: RunContext) => Promise<ExportFile | void>) {
@@ -403,7 +405,7 @@ export function AudioWorkbench({
       </fieldset>
       {busy && (
         <div className="advanced-progress" role="status">
-          <LoaderCircle className="spin" size={18} />
+          <JobStatusIcon working size={18} />
           <span>{ui(progress.label)}</span>
           <progress max={100} value={progress.percent} />
           <Button
@@ -427,13 +429,16 @@ export function AudioWorkbench({
       {result && (
         <section ref={output} className="advanced-result century-audio-output">
           <div>
-            <h2>{ui('Dein Ergebnis ist bereit.')}</h2>
+            <h2>
+              <JobStatusIcon fresh={resultFresh} />
+              {ui('Dein Ergebnis ist bereit.')}
+            </h2>
             <p>{result.filename}</p>
             {result.note && <p>{ui(result.note)}</p>}
             {result.blob.type.startsWith('audio/') && (
               <audio controls src={url} aria-label={ui('Erzeugte Sprachausgabe')} />
             )}
-            <Button asChild>
+            <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
               <a href={url} download={result.filename}>
                 <Download size={17} />
                 {ui('Herunterladen')}

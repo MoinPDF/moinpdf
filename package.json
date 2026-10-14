@@ -1,6 +1,6 @@
 {
   "name": "moinpdf",
-  "version": "0.13.10",
+  "version": "0.13.21",
   "private": true,
   "engines": {
     "node": ">=22.13.0"

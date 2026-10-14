@@ -1,4 +1,6 @@
 'use client';
+import { WorkspaceContext } from './workspace-context';
+import { JobStatusIcon, useFreshResult } from './ui-feedback';
 import { ui, uiLocale } from '@/lib/ui-language';
 
 import { useLanguage } from '@/components/studio/appearance';
@@ -56,6 +58,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
     [error, setError] = useState(''),
     [output, setOutput] = useState<{ blob: Blob; filename: string } | null>(null),
     [url, setUrl] = useState('');
+  const resultFresh = useFreshResult(output);
   const source = sources.find((s) => s.id === sourceId) || sources[0],
     entry = entries[index],
     i = entry?.invoice,
@@ -179,6 +182,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
     warnings = i?.checks.filter((c) => c.level === 'warning').length || 0;
   return (
     <main className="document-workbench invoice-workbench">
+      <WorkspaceContext sources={sources} locked={busy} onAdd={onAdd} />
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={locked}>
           <ChevronLeft size={17} />
@@ -496,7 +500,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
               <section className="invoice-exports">
                 <h3>{checking ? ui('Prüfung speichern') : ui('Rechnung exportieren')}</h3>
                 <Button disabled={locked} onClick={() => void savePdf()}>
-                  {busy ? <LoaderCircle size={17} className="spin" /> : <FileText size={17} />}{' '}
+                  {busy ? <JobStatusIcon working size={17} /> : <FileText size={17} />}{' '}
                   {checking ? ui('Prüfbericht als PDF') : ui('Lese-PDF erstellen')}
                 </Button>
                 {checking ? (
@@ -543,12 +547,17 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                 </Button>
                 {output && (
                   <div className="invoice-output" role="status">
-                    <Check size={18} />
+                    <JobStatusIcon fresh={resultFresh} size={18} />
                     <span>
                       {ui('PDF erstellt · ')}
                       {formatSize(output.blob.size)}
                     </span>
-                    <a href={url} download={output.filename}>
+                    <a
+                      className="result-download"
+                      data-fresh={resultFresh && !!url}
+                      href={url}
+                      download={output.filename}
+                    >
                       <Download size={16} />
                       {t('PDF herunterladen')}
                     </a>

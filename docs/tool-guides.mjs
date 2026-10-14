@@ -412,7 +412,7 @@ export const guides = {
     'Entpacke das ZIP und prüfe Auflösung, Dateinamen und Reihenfolge.'
   ], 'Ein Bild pro ausgewählter Seite im ZIP.', 'Die Bilddateien enthalten die sichtbare Seitendarstellung, keine interaktiven Felder, Links oder kopierbare Textebene. PNG eignet sich häufig für scharfe Schrift, JPG für kompakte Fotodarstellungen.'),
   'compress': guide('Vorwiegend bildbasierte PDFs, beispielsweise eingescannte Briefe.', [
-    'Wähle die Seiten und eine passende Qualitätsstufe.',
+    'Wähle die Seiten und die Komprimierung: „Sanft“ für hohe Bildqualität, „Ausgewogen“ als Mittelweg oder „Möglichst klein“ für stärkere Komprimierung.',
     'Starte die Komprimierung mit reduzierter Auflösung und JPEG-Bildern.',
     'Vergleiche Größe und Lesbarkeit mit dem Original. Probiere bei schlecht lesbarer Kleinschrift eine höhere Qualität.'
   ], 'PDF mit komprimierten Seitenbildern.', 'Die Datei wird nicht in jedem Fall kleiner. Text, Links und Formularfunktionen werden bei der Bildausgabe nicht erhalten. Für strukturwahrende Optimierung zuerst „PDF auf Wunschgröße komprimieren“ ausprobieren.'),

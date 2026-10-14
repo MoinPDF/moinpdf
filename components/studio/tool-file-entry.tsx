@@ -1,8 +1,9 @@
 'use client';
 
-import { ChevronLeft, FilePlus2, LoaderCircle, Plus } from 'lucide-react';
+import { ChevronLeft, FilePlus2, LoaderCircle, Plus, Redo2, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from './appearance';
+import { fileDropLabel } from '@/lib/interaction-feedback';
 import type { ToolDefinition } from '@/lib/tool-catalog';
 import './conversion-workbench.css';
 
@@ -11,21 +12,27 @@ export function ToolFileEntry({
   locked,
   loading,
   dragOver,
+  dragFileCount = null,
   onBack,
   onAdd,
   onDemo,
   onBlank,
+  onUndo,
+  onRedo,
 }: {
   tool: ToolDefinition;
   locked: boolean;
   loading: boolean;
   dragOver: boolean;
+  dragFileCount?: number | null;
   onBack: () => void;
   onAdd: () => void;
   onDemo: () => void;
   onBlank: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   return (
     <main className="document-workbench advanced-workbench conversion-workbench tool-file-entry">
       <header className="workbench-header">
@@ -33,6 +40,26 @@ export function ToolFileEntry({
           <ChevronLeft size={17} />
           {t('Alle Werkzeuge')}
         </Button>
+        {(onUndo || onRedo) && (
+          <div className="history-tools">
+            <Button
+              variant="ghost"
+              disabled={locked || !onUndo}
+              onClick={onUndo}
+              aria-label={t('Rückgängig')}
+            >
+              <Undo2 size={17} aria-hidden="true" />
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={locked || !onRedo}
+              onClick={onRedo}
+              aria-label={t('Wiederholen')}
+            >
+              <Redo2 size={17} aria-hidden="true" />
+            </Button>
+          </div>
+        )}
       </header>
       <div className="workbench-title">
         <div>
@@ -68,8 +95,8 @@ export function ToolFileEntry({
             {loading ? <LoaderCircle className="spin" size={17} /> : <Plus size={17} />}
             {loading ? t('Wird geöffnet …') : t('Dateien auswählen')}
           </Button>
-          <p className="fine-note">
-            {t('Dateien hierher ziehen.')}
+          <p className="fine-note" role="status">
+            {dragOver ? fileDropLabel(dragFileCount, language) : t('Dateien hierher ziehen.')}
             <br />
             {t('80 MB / 200 Seiten')}
           </p>

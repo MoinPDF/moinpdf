@@ -167,6 +167,7 @@ export const english: Record<string, string> = {
     'Image-only pages are detected automatically. Enable “Recognize all pages again” for pages that mix text and scans.',
   'Erstellt eine Bild-PDF. Kopierbare Texte, Links und Formularfunktionen gehen verloren. Eine kleinere Datei ist nicht garantiert.':
     'Creates an image PDF. Selectable text, links and form functions are lost. A smaller file is not guaranteed.',
+  Sanft: 'Gentle',
   'Beginnen bei': 'Start at',
   Wasserzeichen: 'Watermark',
   'Transparentes Türkis, mittig auf jeder ausgewählten Seite.':

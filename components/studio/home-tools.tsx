@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronRight, LayoutGrid, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Files, X } from 'lucide-react';
 import { useLanguage, useTools } from './appearance';
 import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { searchTools } from '@/lib/localized-search';
 import type { WorkspaceTool } from '@/lib/tool-catalog';
-
-const featured = ['merge', 'compress', 'pdf-word', 'edit-text'];
-const categoryNames = ['Prüfen', 'Umwandeln', 'Seiten', 'Bearbeiten', 'Stapel'];
-
+import { SearchHighlight } from './search-highlight';
+import {
+  MosaicHomeIcon,
+  mosaicCategoryIcons,
+  mosaicShortcuts,
+  ToolMosaicCard,
+} from './tool-mosaic';
 export function HomeTools({
   locked,
   onChoose,
@@ -22,30 +25,35 @@ export function HomeTools({
   const { t } = useLanguage();
   const { tools, groups } = useTools();
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<number | null>(null);
+  const [category, setCategory] = useState('quick');
+  const categoryNames = ['Prüfen', 'Umwandeln', 'Seiten', 'Bearbeiten', 'Stapel'];
   const categories = [
-    { value: null, label: t('Empfohlen', 'Recommended') },
+    { value: 'quick', label: t('Schnellzugriff', 'Quick access'), icon: MosaicHomeIcon },
     ...groups.map((name, index) => ({
-      value: index,
+      value: String(index),
       label: t(categoryNames[index] ?? name),
+      icon: mosaicCategoryIcons[index] ?? Files,
     })),
   ];
-  const suggestions = searchTools(query, tools)
-    .filter((tool) => category === null || tool.group === category)
-    .slice(0, 5);
+  const inCategory = (tool: (typeof tools)[number]) =>
+    category === 'quick' || tool.group === Number(category);
+  const suggestions = searchTools(query, tools).filter(inCategory).slice(0, 5);
   const cards =
-    category === null
-      ? featured.flatMap((id) => tools.filter((tool) => tool.id === id))
-      : tools.filter((tool) => tool.group === category).slice(0, 8);
+    category === 'quick'
+      ? mosaicShortcuts.flatMap(({ id }) => tools.filter((tool) => tool.id === id))
+      : tools.filter(inCategory);
   return (
-    <section className="harbor-discovery" aria-label={t('Werkzeuge entdecken', 'Discover tools')}>
+    <section
+      className="harbor-discovery mosaic-discovery"
+      aria-label={t('Werkzeuge entdecken', 'Discover tools')}
+    >
       <Command shouldFilter={false} loop className="harbor-command" label={t('Werkzeugvorschläge')}>
         <div className="harbor-search">
           <CommandInput
             value={query}
             onValueChange={setQuery}
-            placeholder={t('Was möchtest du tun?')}
-            aria-label={t('Was möchtest du tun?')}
+            placeholder={t('Werkzeug suchen', 'Search tools')}
+            aria-label={t('Werkzeug suchen', 'Search tools')}
             disabled={locked}
           />
           {query && (
@@ -72,12 +80,16 @@ export function HomeTools({
                 disabled={locked}
                 className="harbor-search-result"
               >
-                <span className={`harbor-tool-icon tone-${tool.group}`}>
+                <span className={`harbor-tool-icon tone-${tool.group}`} data-tool-tone={tool.group}>
                   <tool.icon size={22} aria-hidden="true" />
                 </span>
                 <span>
-                  <strong>{tool.title}</strong>
-                  <small>{tool.description}</small>
+                  <strong>
+                    <SearchHighlight text={tool.title} query={query} />
+                  </strong>
+                  <small>
+                    <SearchHighlight text={tool.description} query={query} />
+                  </small>
                 </span>
                 <ChevronRight size={17} aria-hidden="true" />
               </CommandItem>
@@ -96,43 +108,61 @@ export function HomeTools({
           </CommandList>
         )}
       </Command>
-      <div className="harbor-categories" role="group" aria-label={t('Werkzeugkategorien')}>
-        {categories.map(({ value, label }) => (
-          <button
-            key={value ?? 'recommended'}
-            type="button"
-            aria-pressed={category === value}
-            data-harbor-light
-            disabled={locked}
-            onClick={() => setCategory(value)}
-          >
-            <span className="harbor-category-label">{label}</span>
-          </button>
-        ))}
+      <div className="harbor-discovery-toolbar">
+        <div
+          className="harbor-categories mosaic-categories"
+          role="group"
+          aria-label={t('Werkzeugkategorien')}
+        >
+          {categories.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              type="button"
+              className="mosaic-category"
+              aria-pressed={category === value}
+              aria-controls="home-tool-grid"
+              data-harbor-light
+              data-tool-tone={value}
+              disabled={locked}
+              onClick={() => setCategory(value)}
+            >
+              <Icon size={25} strokeWidth={1.6} aria-hidden="true" />
+              <span className="harbor-category-label">{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
-      <h2 className="harbor-quick-heading">{t('Schnellzugriff', 'Quick access')}</h2>
-      <div className="harbor-tool-grid">
-        {cards.map((tool) => (
-          <button
-            type="button"
-            key={tool.id}
-            className={`harbor-tool-card tone-${tool.group}`}
-            data-harbor-light
-            disabled={locked}
-            onClick={() => onChoose(tool.id)}
-            title={tool.description}
-          >
-            <span className="harbor-tool-icon">
-              <tool.icon size={23} strokeWidth={1.5} aria-hidden="true" />
-            </span>
-            <strong>{tool.title}</strong>
-          </button>
-        ))}
+      <h2 className="sr-only">{categories.find((item) => item.value === category)?.label}</h2>
+      <div
+        className="tool-mosaic-grid"
+        data-mosaic-kind={category === 'quick' ? 'quick' : 'category'}
+        id="home-tool-grid"
+      >
+        {cards.map((tool, index) => {
+          const shortcut = mosaicShortcuts.find((item) => item.id === tool.id);
+          const title = shortcut ? t(...shortcut.title) : tool.title;
+          const description = shortcut ? t(...shortcut.description) : tool.description;
+          return (
+            <ToolMosaicCard
+              key={tool.id}
+              tool={tool}
+              title={title}
+              description={description}
+              locked={locked}
+              onChoose={onChoose}
+              layout={index === 0 ? 'feature' : index % 3 === 0 ? 'wide' : 'tile'}
+            />
+          );
+        })}
       </div>
-      <button className="harbor-text-button" type="button" disabled={locked} onClick={onTools}>
-        <LayoutGrid size={17} aria-hidden="true" />
-        {t('Alle Werkzeuge anzeigen', 'View all tools')}
-        <ChevronRight size={17} aria-hidden="true" />
+      <button
+        className="harbor-text-button mosaic-all-tools"
+        type="button"
+        disabled={locked}
+        onClick={onTools}
+      >
+        {t('Alle Werkzeuge', 'All tools')}
+        <ArrowRight size={17} aria-hidden="true" />
       </button>
     </section>
   );

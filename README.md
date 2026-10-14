@@ -32,15 +32,13 @@ Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installatio
 | **Seiten in Ordnung bringen** | Zusammenfügen, teilen, drehen, sortieren, zuschneiden, nummerieren und mit Lesezeichen versehen. |
 | **PDFs bearbeiten** | Text ersetzen, Inhalte entfernen, Bilder und Notizen einfügen, markieren, schwärzen und Formulare bearbeiten. |
 | **Scans lesbar machen** | 21 OCR-Sprachen, bis zu acht gemeinsam, durchsuchbare PDFs, Scanverbesserung, Komprimierung und Kameraimport. |
-| **Dateien umwandeln** | Bilder, Text und Tabellen exportieren; mit Dokumentenserver auch Office-Dateien, E-Mails und weitere Formate konvertieren. |
+| **Dateien umwandeln** | Bilder, Text und Tabellen exportieren; mit Dokumentenserver auch Office-Dateien, E-Mails und weitere Formate konvertieren; Webseiten über den isolierten Website-Konverter als PDF speichern. |
 | **Dokumente prüfen** | Text- und Bildvergleich, Zahlenvergleich, Rechenprüfung, Dokumentlücken und Fundstellen im Original kontrollieren. |
 | **E-Rechnungen bearbeiten** | UBL/CII lesen und Rechnungsbild mit XML abgleichen; mit Dokumentenserver XRechnung validieren und den ZUGFeRD-Assistenten nutzen. |
 | **Wiederkehrendes erledigen** | Stapelverarbeitung, gespeicherte Abläufe, Belegfelder sammeln, Formularrückläufe auswerten und Dokumente chronologisch ordnen. |
 | **Mehr aus Dokumenten machen** | PDF-Maßband und Ebenenverwaltung; mit Dokumentenserver lokal übersetzen und als Hörbuch ausgeben. |
 
-**0.13.1** vereinheitlicht das Layout im Hafenstudio-Stil – mit Seemannmotiv, optimierten mobilen Ansichten sowie abgestimmtem Light- und Darkmode. Die Dokumentfunktionen bleiben unverändert.
-
-**0.13.0** ergänzt Website-Links zu PDF: öffentliche Webseiten mit Bildern, Schriften und Seitengestaltung speichern, in A4 oder Letter und Hoch- oder Querformat. Der separate Web-Konverter gehört zur vollständigen Docker-Installation. Die bisherige Umwandlung gespeicherter HTML-Dateien bleibt erhalten.
+**0.13.21** vereinheitlicht Web- und Docker-Oberfläche: sechs Schnellzugriffe, ein dezenter weiß-grüner Projekt-Button, ruhige Werkzeugkacheln und ein kleineres Headerbild am Desktop. Rückgängig bleibt auch in Projekten ohne verbleibende Seiten erreichbar.
 
 Neu in **0.12.0**: Komplexe Absatzschriften mit HarfBuzz und 14 zusätzlichen lokalen Noto-Schriften sowie einzelne Unterobjekte verschachtelter Gruppen. Gruppeninstanzen werden unabhängig bearbeitet; geformte Absätze bleiben gemeinsam auswählbar und kopierbar.
 
@@ -58,11 +56,18 @@ Die [Funktionsübersicht](docs/FUNKTIONEN.md) erklärt die Werkzeuge, Ausgabefor
 2. **Vorhaben auswählen.** Die Frage „Was möchtest du tun?“ beantworten oder durch die Werkzeugkategorien stöbern.
 3. **Prüfen und anwenden.** Einstellungen und Vorschau kontrollieren, Ergebnis herunterladen oder direkt weiterbearbeiten.
 
+Der Schnellzugriff bietet sechs häufige Aufgaben mit kurzen Beschreibungen. Nach
+dem Öffnen zeigt die Dokumentübersicht Dateinamen, Seitenzahl und Größe. Die
+Werkzeugseitenleiste lässt sich bei Bedarf einblenden. Auf kleinen Bildschirmen
+bleiben Zurück, Verarbeitung und der anschließende Download im gemeinsamen
+PDF-Arbeitsbereich am unteren Rand erreichbar. Die deutsche und englische
+Dokumentation erläutert diese Schritte und die Grenzen der einzelnen Werkzeuge.
+
 Über **„Werkzeug wechseln“** bleiben deine Arbeitsdokumente erhalten. Die Oberfläche passt sich an Desktop und Smartphone an. Über **„Projekte“** kannst du Arbeitsstände einschließlich Seitenanordnung, Editoränderungen und Verlauf lokal speichern und später fortsetzen. Die letzten fünf gespeicherten Stände bleiben in diesem Browser verfügbar. Über **„Projektdatei herunterladen“** und **„Projektdatei öffnen“** lässt sich ein Stand samt Dateien und Bearbeitungsverlauf als `.moinpdf` auf einen anderen Browser oder Computer übertragen. Die Projektdatei ist unverschlüsselt und enthält Originale; zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden.
 
 ## Schnellstart
 
-Für die vollständige Installation brauchst du **Docker mit Compose v2**, Zugriff auf dieses Repository und Internet für den ersten Aufbau und für Website-Link-Konvertierungen. Plane als Ausgangspunkt **8 GB verfügbaren RAM und 20 GB freien Speicherplatz** ein.
+Für die vollständige Installation brauchst du **Docker mit Compose v2**, Zugriff auf dieses Repository und Internet für den ersten Aufbau. Plane als Ausgangspunkt **8 GB verfügbaren RAM und 20 GB freien Speicherplatz** ein.
 
 ```bash
 git clone https://github.com/MoinPDF/moinpdf.git
@@ -72,7 +77,7 @@ docker compose up -d --build
 
 Öffne anschließend **[localhost:8080](http://localhost:8080)** oder die Adresse deines Servers auf Port `8080`.
 
-Web-App, Dokumentenserver und Übersetzungsdienst werden gemeinsam eingerichtet. Für den Standardstart sind keine manuelle `.env` und keine einzutragenden API-Schlüssel nötig. Beim ersten Start werden auch Sprachmodelle geladen; das kann mehrere Minuten dauern.
+Web-App, Dokumentenserver, Übersetzungsdienst und isolierter Website-Konverter werden gemeinsam eingerichtet. Für den Standardstart sind keine manuelle `.env` und keine einzutragenden API-Schlüssel nötig. Beim ersten Start werden auch Sprachmodelle geladen; das kann mehrere Minuten dauern.
 
 **[Zur vollständigen Docker-Anleitung →](DOCKER.md)**  
 Dort findest du HTTPS, optionalen Login, Updates und Hilfe bei Startproblemen. Für eine öffentlich erreichbare Instanz sind auch die Hinweise zur Absicherung und zu den Betreiberangaben relevant.

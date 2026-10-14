@@ -9,6 +9,7 @@
 
 .chooser-category {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   min-height: 44px;
@@ -23,6 +24,10 @@
     Arial,
     sans-serif;
   text-align: center;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
 }
 
 .chooser-category:not(:disabled):not([aria-pressed='true']):hover {

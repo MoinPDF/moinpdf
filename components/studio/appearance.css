@@ -369,7 +369,6 @@ body {
 }
 .moinpdf-shell .chooser-tool:hover:not(:disabled) {
   border-color: var(--ui-control-line);
-  transform: translateY(-3px);
   box-shadow: var(--ui-shadow);
 }
 .moinpdf-shell .chooser-tool > span {

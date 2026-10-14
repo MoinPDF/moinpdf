@@ -1,0 +1,700 @@
+/* Workspace layout; existing color definitions remain in their original stylesheets. */
+.moinpdf-shell .harbor-discovery {
+  gap: 12px;
+}
+.moinpdf-shell .harbor-search [data-slot='command-input-wrapper'] {
+  height: 46px;
+  border-radius: 12px;
+}
+.moinpdf-shell .harbor-search input {
+  height: 44px;
+}
+.moinpdf-shell .harbor-search-clear {
+  top: 1px;
+}
+.moinpdf-shell .harbor-discovery-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.moinpdf-shell .harbor-categories {
+  padding: 0;
+  gap: 8px;
+  flex: 1;
+}
+.moinpdf-shell .harbor-categories button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.moinpdf-shell .harbor-categories button > svg {
+  flex-shrink: 0;
+}
+.moinpdf-shell .harbor-all-tools {
+  margin-left: auto;
+  padding: 8px 4px;
+  white-space: nowrap;
+}
+.moinpdf-shell .harbor-tool-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.moinpdf-shell .harbor-tool-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 80px;
+  padding: 14px 16px;
+  gap: 14px;
+  border-radius: 12px;
+  text-align: left;
+}
+.moinpdf-shell .harbor-tool-card > .harbor-tool-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 11px;
+}
+.moinpdf-shell .harbor-tool-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+.moinpdf-shell .harbor-tool-card strong {
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 650;
+  overflow-wrap: break-word;
+}
+.moinpdf-shell .harbor-tool-card small {
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.moinpdf-shell .harbor-tool-arrow {
+  color: var(--ui-copy);
+  flex-shrink: 0;
+}
+.moinpdf-shell .workspace-context {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+.moinpdf-shell .workspace-harbor {
+  border: 1px solid var(--ui-line);
+  border-radius: 13px;
+  overflow: hidden;
+  background: var(--harbor-panel);
+}
+.moinpdf-shell .workspace-harbor summary {
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-height: 80px;
+  gap: 10px;
+  padding: 8px 16px 8px 132px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-heading);
+  list-style: none;
+}
+.moinpdf-shell .workspace-harbor summary::-webkit-details-marker {
+  display: none;
+}
+.moinpdf-shell .workspace-harbor summary > img {
+  position: absolute;
+  inset: 50% auto auto 10px;
+  transform: translateY(-50%);
+  width: 112px;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  object-position: center;
+}
+.moinpdf-shell .workspace-harbor summary > svg {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.moinpdf-shell .workspace-harbor[open] summary > svg {
+  transform: rotate(180deg);
+}
+.moinpdf-shell .workspace-ready-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 24px;
+  height: 24px;
+  background: var(--harbor-light-soft);
+  color: var(--harbor-light-ink);
+  border-radius: 50%;
+}
+.moinpdf-shell .workspace-harbor-expanded {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+  background: var(--ui-well);
+}
+.moinpdf-shell .workspace-file-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 78px;
+  padding: 14px 16px;
+  border: 1px solid var(--ui-line);
+  border-radius: 14px;
+  background: var(--harbor-panel);
+}
+.moinpdf-shell .workspace-file-icon {
+  width: 44px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: var(--ui-soft);
+  color: var(--ui-teal);
+}
+.moinpdf-shell .workspace-file-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.moinpdf-shell .workspace-file-copy > strong {
+  font-size: 14px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.moinpdf-shell .workspace-file-copy > span {
+  color: var(--ui-copy);
+  font-size: 12px;
+}
+.moinpdf-shell .workspace-file-list summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+.moinpdf-shell .workspace-file-list ul {
+  padding: 10px 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.moinpdf-shell .workspace-add-file {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 1px solid var(--ui-line);
+  border-radius: 10px;
+  background: var(--ui-control);
+  color: var(--ui-heading);
+}
+.moinpdf-shell .workspace-add-file:disabled {
+  opacity: 0.45;
+}
+.moinpdf-shell .studio-main {
+  max-width: 1380px;
+  height: auto;
+  min-height: 0;
+  margin-inline: auto;
+  padding: 16px 24px 28px;
+}
+.moinpdf-shell .studio-topbar {
+  padding: 8px 0;
+  min-height: 48px;
+}
+.moinpdf-shell .studio-titlebar {
+  padding: 12px 0 20px;
+  align-items: flex-start;
+}
+.moinpdf-shell .studio-titlebar > div:first-child {
+  min-width: 0;
+}
+.moinpdf-shell .studio-titlebar h1 {
+  font-weight: 650;
+  font-size: clamp(22px, 2vw, 28px);
+  overflow-wrap: anywhere;
+}
+.moinpdf-shell .studio-titlebar h1 > svg {
+  flex-shrink: 0;
+}
+.moinpdf-shell .workspace-tool-description {
+  color: var(--ui-copy);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 8px 0 0;
+  max-width: 750px;
+}
+.moinpdf-shell .studio-kicker {
+  display: none;
+}
+.moinpdf-shell .studio-layout {
+  gap: 20px;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+}
+.moinpdf-shell .workstage {
+  border-radius: 15px;
+  min-width: 0;
+}
+.moinpdf-shell .stage-toolbar {
+  border-radius: 14px 14px 0 0;
+  padding-inline: 18px;
+  height: 48px;
+  min-width: 0;
+}
+.moinpdf-shell .stage-toolbar [data-slot='tabs-list'] {
+  gap: 18px;
+  height: 48px;
+}
+.moinpdf-shell .stage-toolbar [data-slot='tabs-trigger'] {
+  height: 48px;
+  font-size: 12px;
+}
+.moinpdf-shell .workspace-result-unavailable {
+  display: none;
+}
+.moinpdf-shell .file-strip {
+  padding: 10px 14px;
+}
+.moinpdf-shell .document-view {
+  overflow: visible;
+}
+.moinpdf-shell .document-scroll {
+  max-height: none;
+  padding: 24px;
+}
+.moinpdf-shell .inspector {
+  border-radius: 15px;
+  position: sticky;
+  top: 18px;
+}
+.moinpdf-shell .inspector-heading {
+  height: 44px;
+  padding-inline: 20px;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.moinpdf-shell .inspector-number,
+.moinpdf-shell .inspector-tool-icon,
+.moinpdf-shell .inspector-body > h2,
+.moinpdf-shell .inspector-body > .tool-description {
+  display: none;
+}
+.moinpdf-shell .inspector-body {
+  padding: 20px;
+  overflow: visible;
+}
+.moinpdf-shell .workspace-action-notices:empty {
+  display: none;
+}
+.moinpdf-shell .workspace-action-notices {
+  padding: 0 20px;
+}
+.moinpdf-shell .inspector-apply {
+  position: static;
+  padding: 16px 20px;
+  border-radius: 0 0 15px 15px;
+}
+.moinpdf-shell .workspace-action-back {
+  display: none;
+}
+.moinpdf-shell .apply-button,
+.moinpdf-shell .conversion-submit,
+.moinpdf-shell .security-save {
+  min-height: 46px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.moinpdf-shell .apply-detail {
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.5;
+}
+.moinpdf-shell .compression-workspace .inspector-heading,
+.moinpdf-shell .compression-workspace .compression-check-tab,
+.moinpdf-shell .compression-workspace .stage-format {
+  display: none;
+}
+.moinpdf-shell .compression-workspace .document-view[data-state='active'] {
+  display: flex;
+  flex-direction: column;
+}
+.moinpdf-shell .compression-workspace .document-scroll {
+  order: 0;
+}
+.moinpdf-shell .compression-workspace .document-toolbar {
+  order: 1;
+  justify-content: center;
+  padding: 0 14px 18px;
+}
+.moinpdf-shell .compression-workspace .zoom-controls {
+  display: none;
+}
+.moinpdf-shell .compression-workspace .zoom-frame {
+  width: min(100%, 310px) !important;
+  min-width: 0;
+}
+.moinpdf-shell .compression-workspace .page-pager {
+  border-radius: 999px;
+  padding: 3px 6px;
+}
+.moinpdf-shell .compression-workspace .page-pager button {
+  min-height: 38px;
+}
+.moinpdf-shell .result-banner {
+  padding: 20px;
+  gap: 14px;
+}
+.moinpdf-shell .result-filename {
+  overflow-wrap: anywhere;
+}
+.moinpdf-shell .document-workbench {
+  padding-top: 16px;
+}
+.moinpdf-shell .document-workbench .workbench-title {
+  padding-top: 12px;
+}
+.moinpdf-shell .tool-chooser > .workspace-context {
+  width: min(1120px, calc(100% - 60px));
+  margin: 16px auto 0;
+}
+.moinpdf-shell
+  :is(.settings-panel, .advanced-card, .conversion-card, .security-result, .advanced-result) {
+  border-radius: 15px;
+}
+.moinpdf-shell .chooser-tool {
+  border-radius: 12px;
+}
+@media (max-width: 1100px) {
+  .moinpdf-shell .harbor-tool-card {
+    padding: 12px;
+    gap: 10px;
+  }
+  .moinpdf-shell .harbor-tool-card > .harbor-tool-icon {
+    width: 42px;
+    height: 44px;
+  }
+  .moinpdf-shell .studio-layout {
+    grid-template-columns: minmax(0, 1fr) 290px;
+    gap: 14px;
+  }
+  .moinpdf-shell .inspector-body {
+    padding: 16px;
+  }
+}
+@media (max-width: 1000px) {
+  .moinpdf-shell:has(.inspector-apply) .harbor-mobile-nav {
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 5px max(16px, env(safe-area-inset-right)) 7px max(16px, env(safe-area-inset-left));
+    border-radius: 0 0 16px 16px;
+  }
+  .moinpdf-shell:has(.inspector-apply) .harbor-mobile-nav .harbor-nav-item {
+    flex-direction: row;
+    min-height: 40px;
+    font-size: 12px;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .moinpdf-shell:has(.inspector-apply) .harbor-mobile-nav .harbor-nav-item:last-child {
+    margin-left: auto;
+  }
+  .moinpdf-shell .harbor-tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .moinpdf-shell [data-slot='sidebar-container'] {
+    height: calc(100dvh - var(--project-bar-height));
+  }
+  .moinpdf-shell .studio-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .moinpdf-shell .inspector {
+    position: static;
+  }
+  .moinpdf-shell .studio-main {
+    padding-bottom: calc(var(--workspace-action-height) + env(safe-area-inset-bottom) + 24px);
+  }
+  .moinpdf-shell .inspector-apply {
+    position: fixed;
+    z-index: 35;
+    inset: auto 0 0;
+    display: grid;
+    grid-template-columns: minmax(76px, 0.6fr) minmax(0, 1.4fr);
+    align-items: center;
+    gap: 4px 10px;
+    padding: 10px max(16px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+    border-radius: 0;
+    max-height: 45svh;
+    overflow-y: auto;
+  }
+  .moinpdf-shell .workspace-action-back {
+    display: inline-flex;
+    min-height: 46px;
+    height: auto;
+    border-radius: 10px;
+  }
+  .moinpdf-shell .inspector-apply .apply-button {
+    max-width: none;
+  }
+  .moinpdf-shell .inspector-apply .apply-detail {
+    grid-column: 1 / -1;
+    margin-top: 0;
+  }
+  .moinpdf-shell .inspector-apply .job-progress {
+    grid-column: 1 / -1;
+  }
+  .moinpdf-shell .inspector-apply:has(.job-progress) .workspace-action-back {
+    display: none;
+  }
+  .moinpdf-shell .inspector-apply .job-progress > div:first-child {
+    margin-bottom: 5px;
+  }
+  .moinpdf-shell .inspector-apply .job-progress p {
+    margin: 5px 0;
+  }
+  .moinpdf-shell .studio-main:has(.job-progress) {
+    padding-bottom: calc(200px + env(safe-area-inset-bottom));
+  }
+  .moinpdf-shell:has(.inspector-apply) .moinpdf-legal-footer {
+    padding-bottom: calc(var(--workspace-action-height) + env(safe-area-inset-bottom));
+  }
+  body:has(.moinpdf-shell .inspector-apply) [data-sonner-toaster] {
+    --offset: calc(104px + env(safe-area-inset-bottom)) !important;
+  }
+}
+@media (max-width: 767px) {
+  .moinpdf-shell .studio-main {
+    padding-inline: 16px;
+  }
+  .moinpdf-shell .studio-main .studio-topbar {
+    display: flex;
+    min-height: 40px;
+  }
+  .moinpdf-shell .studio-topbar .topbar-actions,
+  .moinpdf-shell .studio-topbar .workspace-brand > strong,
+  .moinpdf-shell .studio-topbar .header-slash {
+    display: none;
+  }
+  .moinpdf-shell .studio-titlebar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 18px 0;
+  }
+  .moinpdf-shell .studio-titlebar h1 {
+    font-size: 23px;
+    letter-spacing: -0.6px;
+  }
+  .moinpdf-shell .studio-titlebar .history-tools {
+    margin-left: auto;
+  }
+  .moinpdf-shell .workspace-tool-description {
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .moinpdf-shell .stage-toolbar {
+    padding-inline: 12px;
+  }
+  .moinpdf-shell .stage-toolbar [data-slot='tabs-list'] {
+    gap: 14px;
+  }
+  .moinpdf-shell .stage-format {
+    display: none;
+  }
+  .moinpdf-shell .file-strip {
+    overflow-x: auto;
+  }
+  .moinpdf-shell .compression-workspace .file-strip {
+    display: none;
+  }
+  .moinpdf-shell .compression-workspace .document-scroll {
+    padding: 18px 28px;
+  }
+  .moinpdf-shell .compression-workspace .zoom-frame {
+    max-width: 210px;
+  }
+  .moinpdf-shell .compression-workspace .workstage-status {
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+  .moinpdf-shell .workspace-context {
+    gap: 10px;
+  }
+  .moinpdf-shell .workspace-harbor summary {
+    padding-left: 116px;
+    padding-right: 12px;
+    font-size: 12px;
+    gap: 6px;
+    min-height: 72px;
+  }
+  .moinpdf-shell .workspace-harbor summary > img {
+    width: 96px;
+  }
+  .moinpdf-shell .workspace-ready-icon {
+    display: none;
+  }
+  .moinpdf-shell .workspace-file-card {
+    padding: 12px;
+    gap: 10px;
+    min-height: 74px;
+  }
+  .moinpdf-shell .workspace-file-copy > strong {
+    font-size: 13px;
+  }
+  .moinpdf-shell .workspace-file-copy > span {
+    font-size: 11px;
+  }
+  .moinpdf-shell .workspace-file-icon {
+    width: 38px;
+    height: 44px;
+  }
+  .moinpdf-shell .result-banner {
+    flex-wrap: wrap;
+  }
+  .moinpdf-shell .download-primary {
+    width: 100%;
+    margin: 0;
+  }
+}
+@media (max-width: 600px) {
+  .moinpdf-shell .harbor-search input {
+    font-size: 16px;
+  }
+  .moinpdf-shell .harbor-categories {
+    flex-basis: 100%;
+    gap: 6px;
+  }
+  .moinpdf-shell .harbor-categories button {
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: 11px;
+    gap: 5px;
+  }
+  .moinpdf-shell .harbor-all-tools {
+    min-height: 40px;
+    padding-block: 4px;
+  }
+  .moinpdf-shell .harbor-tool-grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+  .moinpdf-shell .harbor-tool-card {
+    min-height: 74px;
+    padding: 12px;
+    gap: 12px;
+  }
+  .moinpdf-shell .harbor-tool-card strong {
+    font-size: 13px;
+  }
+  .moinpdf-shell .harbor-tool-card small {
+    font-size: 12px;
+  }
+  .moinpdf-shell .harbor-tool-card > .harbor-tool-icon {
+    width: 44px;
+    height: 46px;
+  }
+  .moinpdf-shell .tool-chooser > .workspace-context {
+    width: calc(100% - 28px);
+    margin-top: 12px;
+  }
+  .moinpdf-shell .document-workbench {
+    padding-top: 12px;
+  }
+  .moinpdf-shell :is(.inspector, .advanced-card, .settings-panel) {
+    border-radius: 13px;
+  }
+}
+@media (max-width: 359px) {
+  .moinpdf-shell .studio-main {
+    padding-inline: 12px;
+  }
+  .moinpdf-shell .stage-toolbar [data-slot='tabs-list'] {
+    gap: 9px;
+  }
+  .moinpdf-shell .stage-toolbar [data-slot='tabs-trigger'] {
+    font-size: 11px;
+  }
+  .moinpdf-shell .studio-titlebar h1 {
+    font-size: 21px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moinpdf-shell .harbor-tool-card {
+    transform: none !important;
+  }
+}
+@media (max-width: 1000px) and (max-height: 480px) {
+  .moinpdf-shell .inspector-apply {
+    position: sticky;
+    bottom: 0;
+    max-height: none;
+  }
+}
+
+/* Layout additions use the established theme; the upload area is unchanged. */
+.moinpdf-shell.moinpdf-shell {
+  --workspace-action-height: 110px;
+}
+.moinpdf-shell .harbor-photo {
+  aspect-ratio: 16 / 9;
+  height: auto;
+}
+.moinpdf-shell .harbor-photo img {
+  object-fit: contain;
+}
+/* Keep the complete header photo compact on desktop; retain mobile sizing. */
+@media (min-width: 1001px) {
+  .moinpdf-shell .harbor-home .harbor-photo {
+    max-width: 640px;
+    margin-inline: auto;
+  }
+}
+.moinpdf-shell .workspace-add-file:focus-visible,
+.moinpdf-shell .workspace-harbor summary:focus-visible,
+.moinpdf-shell .workspace-file-list summary:focus-visible {
+  outline: 2px solid var(--ui-teal);
+  outline-offset: 3px;
+}
+@media (max-width: 1000px) {
+  .moinpdf-shell:has(.inspector-apply) {
+    padding-bottom: 0;
+  }
+  .moinpdf-shell:has(.inspector-apply) [data-slot='sidebar-container'] {
+    height: calc(100dvh - var(--project-bar-height) - 48px);
+  }
+  .moinpdf-shell .inspector-apply .apply-button {
+    min-height: 46px;
+  }
+}
+@media print {
+  .moinpdf-shell .inspector-apply {
+    position: static;
+  }
+}

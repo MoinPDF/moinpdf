@@ -98,8 +98,8 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="light"
-      enableSystem={false}
+      defaultTheme="system"
+      enableSystem
       storageKey="moinpdf-theme"
       disableTransitionOnChange
     >

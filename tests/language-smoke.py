@@ -49,7 +49,7 @@ def back(page):
     expect(page.locator('.chooser-tool')).to_have_count(112)
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
-    browser = api.chromium.launch(channel='chrome')
+    browser = api.chromium.launch()
     context = browser.new_context(viewport={'width':1440,'height':1000}, reduced_motion='reduce')
     page = context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))

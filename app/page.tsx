@@ -6,6 +6,13 @@ import { AppearanceProvider, AppearanceControls, useTools } from '@/components/s
 
 import { ProjectManager } from '@/components/studio/project-manager';
 import { retainPageEdits } from '@/lib/local-projects';
+import { captureProjectCheckpoint, type ProjectCheckpoint } from '@/lib/project-checkpoint';
+import {
+  createUndoFeedbackGate,
+  fileDragInfo,
+  fileDropLabel,
+  reorderPageItems,
+} from '@/lib/interaction-feedback';
 import { ocrLayouts } from '@/lib/ocr-languages';
 import { OcrLanguagePicker } from '@/components/studio/ocr-language-picker';
 import {
@@ -99,8 +106,14 @@ import { toast } from 'sonner';
 import { UploadEntry, type ImportState } from '@/components/studio/upload-entry';
 import { ToolFileEntry } from '@/components/studio/tool-file-entry';
 import { LegalFooter } from '@/components/studio/legal-footer';
-import { HarborBrand, HarborNavigation } from '@/components/studio/harbor-navigation';
+import { HarborNavigation } from '@/components/studio/harbor-navigation';
 import { HarborLightFeedback } from '@/components/studio/harbor-light-feedback';
+import { ToolSpotlight } from '@/components/studio/tool-spotlight';
+import { SearchHighlight } from '@/components/studio/search-highlight';
+import { PageReorderGrid } from '@/components/studio/page-reorder-grid';
+import { FileArrivalCheck, JobStatusIcon, useFreshResult } from '@/components/studio/ui-feedback';
+import { fileArrivals } from '@/lib/ui-feedback';
+import { WorkspaceContext } from '@/components/studio/workspace-context';
 const DocumentWorkbench = lazy(() =>
   import('@/components/studio/document-workbench').then((module) => ({
     default: module.DocumentWorkbench,
@@ -139,7 +152,11 @@ import { ReportView } from '@/components/studio/report-view';
 import { extraDefaults, isExtraTool, sourceOnlyTools } from '@/lib/extra-options';
 import { type WorkspaceTool } from '@/lib/tool-catalog';
 import { searchTools } from '@/lib/localized-search';
-import { DocumentCheck } from '@/components/studio/document-check';
+const DocumentCheck = lazy(() =>
+  import('@/components/studio/document-check').then((module) => ({
+    default: module.DocumentCheck,
+  })),
+);
 import { useDocumentIndex } from '@/components/studio/use-document-index';
 import {
   PagePreview,
@@ -205,18 +222,21 @@ function WorkspaceShell() {
   return (
     <div className="moinpdf-shell">
       <HarborLightFeedback />
+      <ToolSpotlight />
       <a className="harbor-skip" href="#moinpdf-content">
         {t('Zum Inhalt', 'Skip to content')}
       </a>
       <header className="app-toolbar">
-        <HarborBrand />
+        <div id="moinpdf-brand" className="min-w-0" />
         <div id="moinpdf-navigation" />
         <div className="harbor-header-actions">
           <div id="moinpdf-project-bar" className="project-bar" />
           <AppearanceControls />
         </div>
       </header>
+      <div id="moinpdf-mobile-navigation" />
       <SidebarProvider
+        defaultOpen={false}
         id="moinpdf-content"
         tabIndex={-1}
         className="studio-provider"
@@ -238,12 +258,15 @@ function WorkspaceShell() {
   );
 }
 function Studio() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { tools, groups } = useTools();
   const { setOpenMobile } = useSidebar();
   const [projectIdentity, setProjectIdentity] = useState<{ id?: string; name: string }>({
     name: 'Mein PDF-Projekt',
   });
+  const [projectCheckpoint, setProjectCheckpoint] = useState<ProjectCheckpoint | null>(null);
+  const [projectBusy, setProjectBusy] = useState(false);
+  const [dragFileCount, setDragFileCount] = useState<number | null>(null);
   const [sources, setSources] = useState<Source[]>([]),
     [pages, setPages] = useState<PageItem[]>([]),
     [edits, setEdits] = useState<Edits>(emptyEdits),
@@ -264,6 +287,7 @@ function Studio() {
     [resultPage, setResultPage] = useState(0),
     [resultText, setResultText] = useState(''),
     [resultLoading, setResultLoading] = useState(false);
+  const resultFresh = useFreshResult(result);
   const [range, setRange] = useState(''),
     [noteText, setNoteText] = useState('Hier steht meine Notiz.'),
     [fontSize, setFontSize] = useState(16),
@@ -303,17 +327,18 @@ function Studio() {
     sources,
     pages,
     edits,
-    busy: busy || loading || imageBusy || documentBusy || documentIndex.ocrBusy,
+    busy: busy || loading || imageBusy || documentBusy || projectBusy || documentIndex.ocrBusy,
   };
   const picker = useRef<HTMLInputElement>(null),
     job = useRef<AbortController | null>(null),
-    uploadLock = useRef(false),
-    pageDrag = useRef<string | null>(null);
+    uploadLock = useRef(false);
+  const undoGate = useRef(createUndoFeedbackGate());
+  const undoNotice = useRef<Snapshot | null>(null);
   const selected = pages.filter((p) => p.selected),
     activePage = pages.find((p) => p.id === activeId) || pages[0],
     activeSource = activePage ? sources.find((s) => s.id === activePage.sourceId) : undefined;
   const tool = tools.find((t) => t.id === toolId)!,
-    locked = busy || loading || imageBusy || documentBusy || documentIndex.ocrBusy,
+    locked = busy || loading || imageBusy || documentBusy || projectBusy || documentIndex.ocrBusy,
     editCount = countEdits(edits, selected),
     pageMarks = activePage ? edits.marks[activePage.id] || [] : [];
   const editMode: EditMode =
@@ -408,18 +433,57 @@ function Studio() {
     setResult(null);
     setError('');
     if (view === 'result')
-      setView(toolId === 'inspect' ? 'check' : visualTools.includes(toolId) ? 'document' : 'pages');
+      setView(
+        toolId === 'inspect'
+          ? 'check'
+          : toolId === 'compress' || visualTools.includes(toolId)
+            ? 'document'
+            : 'pages',
+      );
   };
-  const commit = (next: Snapshot) => {
+  const dismissUndoNotice = () => {
+    undoGate.current.invalidate();
+    undoNotice.current = null;
+    toast.dismiss('page-edit-undo');
+  };
+  useEffect(() => {
+    const notice = undoNotice.current;
+    if (notice && (locked || notice.pages !== pages || notice.edits !== edits)) dismissUndoNotice();
+  }, [pages, edits, locked]);
+  useEffect(
+    () => () => {
+      toast.dismiss('page-edit-undo');
+    },
+    [],
+  );
+  const commit = (next: Snapshot, feedback?: string) => {
     if (locked) return;
+    dismissUndoNotice();
     setHistory((old) => [...old, { pages, edits }].slice(-30));
     setFuture([]);
     setPages(next.pages);
     setEdits(next.edits);
     invalidate();
+    if (feedback) {
+      const token = undoGate.current.invalidate();
+      undoNotice.current = next;
+      toast(feedback, {
+        id: 'page-edit-undo',
+        duration: 6500,
+        action: {
+          label: t('Rückgängig'),
+          onClick: () => {
+            const now = refs.current;
+            if (now.pages !== next.pages || now.edits !== next.edits) return;
+            if (undoGate.current.consume(token, now.busy)) callbacks.current.undo();
+          },
+        },
+      });
+    }
   };
   function undo() {
     if (locked || !history.length) return;
+    dismissUndoNotice();
     const prev = history[history.length - 1];
     setFuture((old) => [{ pages, edits }, ...old]);
     setHistory((old) => old.slice(0, -1));
@@ -429,6 +493,7 @@ function Studio() {
   }
   function redo() {
     if (locked || !future.length) return;
+    dismissUndoNotice();
     const next = future[0];
     setHistory((old) => [...old, { pages, edits }]);
     setFuture((old) => old.slice(1));
@@ -474,6 +539,7 @@ function Studio() {
         }
         const nextTool = conversionToolForFile(conversionFile.name)!;
         setConversionInput({ tool: nextTool, file: conversionFile });
+        fileArrivals.mark([conversionFile]);
         setToolId(nextTool);
         setChoosingTool(false);
         setBrowseEmpty(true);
@@ -545,6 +611,7 @@ function Studio() {
           }
           const nextPages = added.flatMap(sourcePages);
           setSources((old) => [...old, ...added]);
+          fileArrivals.mark(added);
           setPages((old) => [...old, ...nextPages]);
           setActiveId(nextPages[0].id);
           setResult(null);
@@ -558,7 +625,11 @@ function Studio() {
             setSearch('');
           } else {
             setView(
-              toolId === 'inspect' ? 'check' : visualTools.includes(toolId) ? 'document' : 'pages',
+              toolId === 'inspect'
+                ? 'check'
+                : toolId === 'compress' || visualTools.includes(toolId)
+                  ? 'document'
+                  : 'pages',
             );
           }
           toast.success(
@@ -574,28 +645,42 @@ function Studio() {
     [t, toolId],
   );
   useEffect(() => {
+    const reset = () => {
+      setDragOver(false);
+      setDragFileCount(null);
+    };
     const over = (e: DragEvent) => {
-      if (Array.from(e.dataTransfer?.types || []).includes('Files')) {
+      const info = fileDragInfo(e.dataTransfer);
+      if (info.isFiles) {
         e.preventDefault();
-        if (!refs.current.busy) setDragOver(true);
+        if (e.dataTransfer) e.dataTransfer.dropEffect = refs.current.busy ? 'none' : 'copy';
+        if (!refs.current.busy) {
+          setDragOver(true);
+          setDragFileCount(info.count);
+        } else reset();
       }
     };
     const leave = (e: DragEvent) => {
-      if (!e.relatedTarget) setDragOver(false);
+      if (!e.relatedTarget) reset();
     };
     const drop = (e: DragEvent) => {
-      if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+      if (!fileDragInfo(e.dataTransfer).isFiles) return;
       e.preventDefault();
-      setDragOver(false);
+      reset();
+      if (refs.current.busy) return;
       void addFiles(Array.from(e.dataTransfer?.files || []), choosingTool);
     };
     window.addEventListener('dragover', over);
     window.addEventListener('dragleave', leave);
     window.addEventListener('drop', drop);
+    window.addEventListener('dragend', reset);
+    window.addEventListener('blur', reset);
     return () => {
       window.removeEventListener('dragover', over);
       window.removeEventListener('dragleave', leave);
       window.removeEventListener('drop', drop);
+      window.removeEventListener('dragend', reset);
+      window.removeEventListener('blur', reset);
     };
   }, [addFiles, choosingTool]);
   function chooseTool(id: WorkspaceTool) {
@@ -606,7 +691,13 @@ function Studio() {
     setEditorAction(id === 'erase' ? 'erase' : id === 'insert-image' ? 'image' : 'pick');
     setChoosingTool(false);
     setToolId(id);
-    setView(id === 'inspect' ? 'check' : visualTools.includes(id) ? 'document' : 'pages');
+    setView(
+      id === 'inspect'
+        ? 'check'
+        : id === 'compress' || visualTools.includes(id)
+          ? 'document'
+          : 'pages',
+    );
     setError('');
     setOpenMobile(false);
     requestAnimationFrame(() => {
@@ -615,15 +706,16 @@ function Studio() {
     });
   }
   function movePage(id: string, to: number) {
-    const next = [...pages],
-      from = next.findIndex((p) => p.id === id);
-    if (from < 0 || to < 0 || to >= next.length) return;
-    const [page] = next.splice(from, 1);
-    next.splice(to, 0, page);
-    commit({ pages: next, edits });
+    const next = reorderPageItems(pages, id, to);
+    if (next === pages) return;
+    commit(
+      { pages: next, edits },
+      t(`Seite an Position ${to + 1} verschoben`, `Page moved to position ${to + 1}`),
+    );
   }
   function rotate(id?: string) {
     const chosen = pages.filter((p) => (id ? p.id === id : p.selected));
+    if (!chosen.length) return;
     if (countEdits(edits, chosen)) {
       toast.info(
         ui(
@@ -632,12 +724,17 @@ function Studio() {
       );
       return;
     }
-    commit({
-      pages: pages.map((p) =>
-        chosen.some((c) => c.id === p.id) ? { ...p, rotation: (p.rotation + 90) % 360 } : p,
-      ),
-      edits,
-    });
+    commit(
+      {
+        pages: pages.map((p) =>
+          chosen.some((c) => c.id === p.id) ? { ...p, rotation: (p.rotation + 90) % 360 } : p,
+        ),
+        edits,
+      },
+      chosen.length === 1
+        ? t('Seite gedreht', 'Page rotated')
+        : t(`${chosen.length} Seiten gedreht`, `${chosen.length} pages rotated`),
+    );
   }
   function duplicate(id: string) {
     if (pages.length >= MAX_PAGES) {
@@ -652,11 +749,12 @@ function Studio() {
     if (edits.marks[id])
       nextEdits.marks[copy.id] = edits.marks[id].map((m) => ({ ...m, id: uid() }));
     if (edits.crops[id]) nextEdits.crops[copy.id] = { ...edits.crops[id] };
-    commit({ pages: next, edits: nextEdits });
+    commit({ pages: next, edits: nextEdits }, t('Seite dupliziert', 'Page duplicated'));
     setActiveId(copy.id);
   }
   function deletePage(id: string) {
-    commit({ pages: pages.filter((p) => p.id !== id), edits });
+    if (!pages.some((page) => page.id === id)) return;
+    commit({ pages: pages.filter((p) => p.id !== id), edits }, t('Seite entfernt', 'Page removed'));
   }
   function applyRange() {
     try {
@@ -818,6 +916,7 @@ function Studio() {
     setTimeout(() => void source?.pdf.loadingTask.destroy(), 100);
   }
   function clear() {
+    setProjectCheckpoint(null);
     setRepairInput(null);
     setConversionInput(null);
     setDocumentSessions({});
@@ -874,6 +973,7 @@ function Studio() {
         setProgress,
         ctrl.signal,
       );
+      if (ctrl.signal.aborted) return;
       setResult(output);
       setResultText(output.text || '');
       setView('result');
@@ -923,6 +1023,7 @@ function Studio() {
         setProgress,
         ctrl.signal,
       );
+      if (ctrl.signal.aborted) return;
       setResult({ ...output, filename: 'Fundstellen.pdf' });
       setResultText('');
       setView('result');
@@ -1177,16 +1278,24 @@ function Studio() {
       <ProjectManager
         identity={projectIdentity}
         setIdentity={setProjectIdentity}
+        checkpoint={projectCheckpoint}
+        onCheckpoint={setProjectCheckpoint}
+        onBusy={setProjectBusy}
         sources={sources}
         locked={locked}
         state={{ pages, edits, options, history, future, documentSessions, activeId, toolId }}
-        onRestore={(loaded, state) => {
+        onRestore={(loaded, state, identity) => {
+          const restoredState = { ...state, options: { ...defaults, ...state.options } };
+          setProjectIdentity(identity);
+          setProjectCheckpoint(
+            captureProjectCheckpoint(identity.id, identity.name, loaded, restoredState),
+          );
           setHomeRequested(false);
           refs.current.sources.forEach((s) => void s.pdf.loadingTask.destroy());
           setSources(loaded);
           setPages(state.pages);
           setEdits(state.edits);
-          setOptions({ ...defaults, ...state.options });
+          setOptions(restoredState.options);
           setHistory(state.history);
           setFuture(state.future);
           setDocumentSessions(state.documentSessions);
@@ -1209,6 +1318,7 @@ function Studio() {
         {fileInput}
         <UploadEntry
           dragOver={dragOver}
+          dragFileCount={dragFileCount}
           loading={locked}
           state={importState}
           onOpen={() => picker.current?.click()}
@@ -1271,6 +1381,7 @@ function Studio() {
           locked={locked}
           loading={loading}
           dragOver={dragOver}
+          dragFileCount={dragFileCount}
           onChoose={chooseTool}
           onAdd={() => picker.current?.click()}
           onRemove={removeFile}
@@ -1288,10 +1399,13 @@ function Studio() {
           locked={locked}
           loading={loading}
           dragOver={dragOver}
+          dragFileCount={dragFileCount}
           onBack={() => setChoosingTool(true)}
           onAdd={() => picker.current?.click()}
           onDemo={demo}
           onBlank={blank}
+          onUndo={history.length ? undo : undefined}
+          onRedo={future.length ? redo : undefined}
         />
       </>
     );
@@ -1403,7 +1517,9 @@ function Studio() {
                         title={t.title}
                       >
                         <t.icon size={18} />
-                        <span>{t.title}</span>
+                        <span>
+                          <SearchHighlight text={t.title} query={search} />
+                        </span>
                         {'fresh' in t && <span className="new-tick" aria-label={ui('Neu')} />}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -1430,7 +1546,13 @@ function Studio() {
           </button>
         </SidebarFooter>
       </Sidebar>
-      <main className="studio-main">
+      <main className={`studio-main ${toolId === 'compress' ? 'compression-workspace' : ''}`}>
+        <WorkspaceContext
+          sources={sources}
+          pageCount={pages.length}
+          locked={locked}
+          onAdd={() => picker.current?.click()}
+        />
         <header className="studio-topbar">
           <div className="workspace-brand">
             <SidebarTrigger aria-label={ui('Werkzeugleiste einblenden')} />
@@ -1473,6 +1595,11 @@ function Studio() {
               <tool.icon size={29} strokeWidth={1.5} />
               {ui(tool.title)}
             </h1>
+            <p className="workspace-tool-description">
+              {toolId === 'compress'
+                ? t('Kleiner machen. Gut lesbar bleiben.', 'Smaller files. Clear documents.')
+                : ui(tool.description)}
+            </p>
           </div>
           <div className="history-tools">
             <Button
@@ -1529,7 +1656,10 @@ function Studio() {
             <Tabs value={view} onValueChange={setView} className="view-tabs">
               <div className="stage-toolbar">
                 <TabsList variant="line">
-                  <TabsTrigger value="check">
+                  <TabsTrigger
+                    value="check"
+                    className={toolId === 'compress' ? 'compression-check-tab' : undefined}
+                  >
                     <FileSearch size={15} />
                     <span>{ui('Check')}</span>
                   </TabsTrigger>
@@ -1540,9 +1670,13 @@ function Studio() {
                   </TabsTrigger>
                   <TabsTrigger value="document" disabled={!pages.length}>
                     <FileText size={15} />
-                    <span>{t('Dokument')}</span>
+                    <span>{t('Vorschau', 'Preview')}</span>
                   </TabsTrigger>
-                  <TabsTrigger value="result" disabled={!result}>
+                  <TabsTrigger
+                    value="result"
+                    disabled={!result}
+                    className={!result ? 'workspace-result-unavailable' : undefined}
+                  >
                     <CheckCheck size={15} />
                     <span>{t('Ergebnis')}</span>
                   </TabsTrigger>
@@ -1557,6 +1691,7 @@ function Studio() {
                     <div className="file-tab" key={s.id}>
                       <FileText size={14} />
                       <span title={s.name}>{s.name}</span>
+                      <FileArrivalCheck file={s} />
                       <button
                         disabled={locked}
                         onClick={() => removeFile(s.id)}
@@ -1579,22 +1714,31 @@ function Studio() {
               {pages.length > 0 && (
                 <>
                   <TabsContent value="check" className="check-view">
-                    <DocumentCheck
-                      index={documentIndex}
-                      pages={pages}
-                      locked={locked}
-                      editedPageIds={pages
-                        .filter((p) => countEdits(edits, [p]) > 0)
-                        .map((p) => p.id)}
-                      language={options.language}
-                      onOpen={(id) => {
-                        setActiveId(id);
-                        setView('document');
-                      }}
-                      onSelect={selectFound}
-                      onCollect={collectFound}
-                      onTool={chooseTool}
-                    />
+                    <Suspense
+                      fallback={
+                        <div className="tool-loading" role="status">
+                          <LoaderCircle className="spin" size={24} />
+                          <p>{t('Werkzeug wird geladen …')}</p>
+                        </div>
+                      }
+                    >
+                      <DocumentCheck
+                        index={documentIndex}
+                        pages={pages}
+                        locked={locked}
+                        editedPageIds={pages
+                          .filter((p) => countEdits(edits, [p]) > 0)
+                          .map((p) => p.id)}
+                        language={options.language}
+                        onOpen={(id) => {
+                          setActiveId(id);
+                          setView('document');
+                        }}
+                        onSelect={selectFound}
+                        onCollect={collectFound}
+                        onTool={chooseTool}
+                      />
+                    </Suspense>
                   </TabsContent>
                   <TabsContent value="pages" className="page-overview">
                     <div className="selection-toolbar">
@@ -1654,7 +1798,12 @@ function Studio() {
                           variant="ghost"
                           size="sm"
                           disabled={locked || pages.length < 2}
-                          onClick={() => commit({ pages: [...pages].reverse(), edits })}
+                          onClick={() =>
+                            commit(
+                              { pages: [...pages].reverse(), edits },
+                              t('Seitenreihenfolge umgekehrt', 'Page order reversed'),
+                            )
+                          }
                         >
                           <MoveVertical size={15} />
                           <span>{t('Umkehren')}</span>
@@ -1671,34 +1820,13 @@ function Studio() {
                         </Button>
                       </div>
                     </div>
-                    <div className="page-grid">
+                    <PageReorderGrid pages={pages} locked={locked} onMove={movePage}>
                       {pages.map((page, index) => (
                         <article
                           key={page.id}
+                          data-page-id={page.id}
                           className={`page-tile ${page.selected ? 'selected' : ''} ${activePage?.id === page.id ? 'active' : ''}`}
-                          draggable={!locked}
-                          onDragStart={(e) => {
-                            pageDrag.current = page.id;
-                            e.dataTransfer.setData('text/plain', page.id);
-                            e.dataTransfer.effectAllowed = 'move';
-                          }}
-                          onDragEnd={() => {
-                            pageDrag.current = null;
-                          }}
-                          onDragOver={(e) => {
-                            if (pageDrag.current) {
-                              e.preventDefault();
-                              e.dataTransfer.dropEffect = 'move';
-                            }
-                          }}
-                          onDrop={(e) => {
-                            if (pageDrag.current) {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              movePage(pageDrag.current, index);
-                              pageDrag.current = null;
-                            }
-                          }}
+                          draggable={!locked && pages.length > 1}
                         >
                           <div className="tile-top">
                             <Checkbox
@@ -1715,7 +1843,19 @@ function Studio() {
                               }
                             />
                             <span>{String(index + 1).padStart(2, '0')}</span>
-                            <GripVertical size={16} />
+                            <button
+                              type="button"
+                              className="page-drag-handle"
+                              disabled={locked || pages.length < 2}
+                              aria-label={t(
+                                `Seite ${index + 1} verschieben`,
+                                `Move page ${index + 1}`,
+                              )}
+                              aria-describedby="page-reorder-hint"
+                              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
+                            >
+                              <GripVertical size={16} aria-hidden="true" />
+                            </button>
                           </div>
                           <button
                             className="thumbnail-button"
@@ -1746,6 +1886,7 @@ function Studio() {
                           <div className="tile-actions">
                             <button
                               aria-label={ui(`Seite ${index + 1} nach vorne`)}
+                              data-page-move
                               disabled={locked || index === 0}
                               onClick={() => movePage(page.id, index - 1)}
                             >
@@ -1774,6 +1915,7 @@ function Studio() {
                             </button>
                             <button
                               aria-label={ui(`Seite ${index + 1} nach hinten`)}
+                              data-page-move
                               disabled={locked || index === pages.length - 1}
                               onClick={() => movePage(page.id, index + 1)}
                             >
@@ -1790,11 +1932,12 @@ function Studio() {
                         <Plus size={29} strokeWidth={1.1} />
                         <span>{t('Dateien hinzufügen')}</span>
                       </button>
-                    </div>
-                    <div className="stage-hint">
+                    </PageReorderGrid>
+                    <div className="stage-hint" id="page-reorder-hint">
                       <GripVertical size={14} />
                       {t(
-                        'Seiten ziehen, umsortieren, fertig. Die Pfeile funktionieren auch auf dem Handy.',
+                        'Seiten ziehen oder mit den Pfeilen verschieben. Am Griff funktionieren auch die Pfeiltasten sowie Pos1 und Ende.',
+                        'Drag pages or use the arrow buttons. On the handle, use the arrow keys, Home or End.',
                       )}
                     </div>
                   </TabsContent>
@@ -1857,34 +2000,38 @@ function Studio() {
                             </button>
                           </div>
                         </div>
-                        <div className={`mode-instruction ${toolId === 'redact' ? 'redact' : ''}`}>
-                          <tool.icon size={16} />
-                          <span>
-                            {isEditor
-                              ? toolId === 'edit-text'
-                                ? ui('Textstelle auswählen oder einen Bereich ersetzen.')
-                                : toolId === 'erase'
-                                  ? ui('Rahmen um den zu entfernenden Inhalt ziehen.')
-                                  : ui('Bild auswählen oder hier auf die Seite ziehen.')
-                              : editMode === 'redact'
-                                ? ui('Bereiche zum Schwärzen aufziehen.')
-                                : editMode === 'crop'
-                                  ? ui('Ausschnitt auf der Seite aufziehen.')
-                                  : editMode === 'text'
-                                    ? ui('Auf die Seite klicken, um deine Notiz zu platzieren.')
-                                    : editMode === 'highlight'
-                                      ? ui('Textbereiche mit der Maus oder dem Finger markieren.')
-                                      : editMode === 'signature'
-                                        ? signature
-                                          ? ui(
-                                              'Auf die Seite klicken, um die Unterschrift zu platzieren.',
-                                            )
-                                          : ui('Erstelle rechts zuerst deine Unterschrift.')
-                                        : ui(
-                                            'Dokumentvorschau. Wähle links ein Bearbeitungswerkzeug.',
-                                          )}
-                          </span>
-                        </div>
+                        {toolId !== 'compress' && (
+                          <div
+                            className={`mode-instruction ${toolId === 'redact' ? 'redact' : ''}`}
+                          >
+                            <tool.icon size={16} />
+                            <span>
+                              {isEditor
+                                ? toolId === 'edit-text'
+                                  ? ui('Textstelle auswählen oder einen Bereich ersetzen.')
+                                  : toolId === 'erase'
+                                    ? ui('Rahmen um den zu entfernenden Inhalt ziehen.')
+                                    : ui('Bild auswählen oder hier auf die Seite ziehen.')
+                                : editMode === 'redact'
+                                  ? ui('Bereiche zum Schwärzen aufziehen.')
+                                  : editMode === 'crop'
+                                    ? ui('Ausschnitt auf der Seite aufziehen.')
+                                    : editMode === 'text'
+                                      ? ui('Auf die Seite klicken, um deine Notiz zu platzieren.')
+                                      : editMode === 'highlight'
+                                        ? ui('Textbereiche mit der Maus oder dem Finger markieren.')
+                                        : editMode === 'signature'
+                                          ? signature
+                                            ? ui(
+                                                'Auf die Seite klicken, um die Unterschrift zu platzieren.',
+                                              )
+                                            : ui('Erstelle rechts zuerst deine Unterschrift.')
+                                          : ui(
+                                              'Dokumentvorschau. Wähle links ein Bearbeitungswerkzeug.',
+                                            )}
+                            </span>
+                          </div>
+                        )}
                         {!activePage.selected && (
                           <div className="page-unselected">
                             {t('Diese Seite ist nicht für den Export ausgewählt.')}
@@ -1979,14 +2126,16 @@ function Studio() {
                       <>
                         <div className="result-banner">
                           <div className="result-check">
-                            <Check size={22} />
+                            <JobStatusIcon fresh={resultFresh} />
                           </div>
                           <div>
                             <h2>{t('Erledigt.')}</h2>
                             <p>
                               {result.pages}
                               {t('Seiten ·')}
-                              {formatSize(result.blob.size)}
+                              {toolId === 'compress'
+                                ? `${formatSize(result.inputSize)} → ${formatSize(result.blob.size)}`
+                                : formatSize(result.blob.size)}
                               {toolId === 'compress'
                                 ? result.blob.size < result.inputSize
                                   ? ui(
@@ -1996,7 +2145,11 @@ function Studio() {
                                 : ''}
                             </p>
                           </div>
-                          <Button asChild className="download-primary">
+                          <Button
+                            asChild
+                            className="download-primary result-download"
+                            data-fresh={resultFresh && !!resultUrl}
+                          >
                             <a href={resultUrl || undefined} download={result.filename}>
                               <Download size={16} />
                               {result.kind === 'zip'
@@ -2314,6 +2467,7 @@ function Studio() {
               {toolId === 'compress' && (
                 <>
                   {renderChoice('quality', 'Komprimierung', [
+                    ['gentle', 'Sanft'],
                     ['balanced', 'Ausgewogen'],
                     ['small', 'Möglichst klein'],
                   ])}
@@ -2601,7 +2755,7 @@ function Studio() {
                 </>
               )}
             </div>
-            <div className="inspector-apply">
+            <div className="workspace-action-notices">
               {editCount > 0 && (
                 <p className="pending-note">
                   {sourceOnlyTools.includes(toolId)
@@ -2614,10 +2768,21 @@ function Studio() {
                   {ui(error)}
                 </p>
               )}
+            </div>
+            <div className="inspector-apply" aria-label={t('Dokumentaktionen', 'Document actions')}>
+              <Button
+                variant="outline"
+                className="workspace-action-back"
+                onClick={showTools}
+                disabled={locked}
+              >
+                <ChevronLeft size={18} aria-hidden="true" />
+                {t('Zurück', 'Back')}
+              </Button>
               {busy ? (
                 <div className="job-progress" aria-live="polite">
                   <div>
-                    <LoaderCircle className="spin" size={17} />
+                    <JobStatusIcon working size={17} />
                     <strong>{Math.round(progress.percent)} %</strong>
                   </div>
                   <Progress value={progress.percent} aria-label={ui('Verarbeitungsfortschritt')} />
@@ -2626,6 +2791,19 @@ function Studio() {
                     {t('Abbrechen')}
                   </Button>
                 </div>
+              ) : view === 'result' && result && resultUrl ? (
+                <Button
+                  asChild
+                  className="apply-button workspace-download result-download"
+                  data-fresh={resultFresh}
+                >
+                  <a href={resultUrl} download={result.filename}>
+                    <Download size={18} aria-hidden="true" />
+                    {result.kind === 'pdf'
+                      ? t('PDF herunterladen', 'Download PDF')
+                      : t('Herunterladen', 'Download')}
+                  </a>
+                </Button>
               ) : (
                 <Button
                   className="apply-button"
@@ -2772,9 +2950,9 @@ function Studio() {
         </DialogContent>
       </Dialog>
       {dragOver && (
-        <div className="drop-overlay">
+        <div className="drop-overlay" role="status" aria-live="polite">
           <Plus size={64} strokeWidth={1} />
-          <strong>{t('Einfach loslassen.')}</strong>
+          <strong>{fileDropLabel(dragFileCount, language)}</strong>
           <span>{t('Dein Dokument. Dein nächster Schritt.')}</span>
         </div>
       )}

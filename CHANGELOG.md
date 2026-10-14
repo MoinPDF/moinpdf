@@ -1,5 +1,107 @@
 # Änderungen
 
+## 0.13.21 – 14. Oktober 2026
+
+- Nach dem Entfernen der letzten Seite bleiben Rückgängig und Wiederholen auch
+  im Dateieinstieg erreichbar, einschließlich wiederhergestellter Projektstände.
+- GitHub und Docker übernehmen den aktuellen Webstand mit weiß-grünem
+  Projekt-Button, ruhigen Werkzeugkacheln und kleinerem Desktop-Headerbild.
+- Browserprüfungen berücksichtigen die sechs Schnellzugriffe, die aktuelle
+  Navigation und die unveränderte mobile Bilddarstellung. Die Docker-spezifische
+  Website-Konvertierung bleibt vollständig enthalten.
+
+## 0.13.20 – 14. Oktober 2026
+
+- Das Seemannbild auf der Startseite wird am Desktop auf maximal 640 Pixel Breite
+  begrenzt und zentriert. Das vollständige 16:9-Motiv bleibt sichtbar;
+  die Darstellung auf mobilen Geräten bleibt unverändert.
+
+## 0.13.19 – 14. Oktober 2026
+
+- Werkzeugkacheln bleiben beim Darüberfahren, Anklicken und Tastaturfokus ruhig.
+  Anheben, Verkleinern beim Drücken und kurze Symbolanimationen wurden entfernt.
+
+## 0.13.18 – 14. Oktober 2026
+
+- Dezenter Lichtreflex folgt dem Mauszeiger innerhalb von Werkzeugkacheln.
+- Der weiß-grüne Projekt-Button zeigt gespeicherte und ungespeicherte Änderungen
+  an. Erfolgreiches Speichern bestätigt „Alles an Bord – gespeichert.“
+- Beim Dateiziehen zeigen Ablageflächen die Dateianzahl, sofern der Browser sie
+  freigibt, und erhalten einen sanften grünen Rahmen.
+- PDF-Seiten zeigen beim Umsortieren eine animierte Vorschau und eine klare
+  Einfügemarkierung. Pfeiltasten am Griff und die mobilen Pfeilbuttons bleiben bedienbar.
+- Seitenaktionen bieten direkt eine Rückgängig-Meldung; alte Hinweise können
+  keine nachfolgenden Änderungen zurücknehmen.
+- Suchbegriffe werden in Werkzeugnamen und Beschreibungen dezent markiert,
+  einschließlich deutscher Umlaute. Alle Ergänzungen unterstützen Deutsch und Englisch.
+- Reduzierte Bewegung und hoher Kontrast werden berücksichtigt.
+- Projektarchive und Dokumentprüfung werden bei Bedarf nachgeladen; auch der
+  Selbsthosting-Build hält die bestehende Größenbegrenzung je JavaScript-Datei ein.
+
+## 0.13.17 – 14. Oktober 2026
+
+- Die aktive Kategorie in den Schnellansichten hebt sich durch eine kräftigere
+  Füllung und doppelte Kontur in ihrer jeweiligen Kategoriefarbe deutlicher ab.
+  Die Abstimmung berücksichtigt Hell- und Dunkelmodus sowie hohen Kontrast.
+- Der Projekt-Button erhält eine dezente türkise Fläche, eine sichtbare Umrandung
+  und ein größeres Ordnersymbol, auch auf Smartphones. Tastaturfokus und geöffneter
+  Projektdialog werden klar angezeigt.
+
+## 0.13.16 – 14. Oktober 2026
+
+- Werkzeugkacheln heben sich am Desktop beim Darüberfahren dezent an. Symbole
+  reagieren kurz auf Interaktion; Zusammenfügen und OCR erhalten passende Details.
+- Die mobile Navigation bekommt beim Scrollen über darunterliegenden Inhalt
+  eine dezente Schattenkante.
+- Erfolgreich geöffnete beziehungsweise angenommene Dateien erhalten kurz ein
+  Häkchen am Dateinamen. Verarbeitungsabschlüsse zeigen einen Übergang zum Häkchen
+  und heben den verfügbaren Download einmal hervor.
+- Reduzierte Bewegung, Tastaturfokus und hoher Kontrast werden berücksichtigt.
+  Kategorien wechseln weiterhin sofort; Anordnung und bestehende Farben bleiben erhalten.
+
+## 0.13.15 – 14. Oktober 2026
+
+- Kategorie-Buttons halten ihre Beschriftungen vollständig zusammen. Auf schmalen
+  Displays stehen weniger Buttons nebeneinander; bei größerer Schrift wechselt
+  der gesamte Button in die nächste Zeile.
+- Das Kachelmosaik bleibt auf die Schnellansichten der Startseite begrenzt.
+  „Alle Werkzeuge“ verwendet wieder die vollständige Werkzeugübersicht aus 0.13.13.
+- Nicht mehr benötigte Mosaik-Stile für den vollständigen Katalog entfernt.
+  Grüner Uploadbereich, Auswahlfarben und Sicherung von 0.13.13 bleiben erhalten.
+
+## 0.13.14 – 14. Oktober 2026
+
+- Werkzeugauswahl und Startseite als responsives Kachelmosaik mit großen Hauptkacheln,
+  Werkzeugpaaren, illustrierten Symbolen und dezenten Kategorie-Farben gestaltet.
+- Kategorie-Buttons auf Smartphones in zwei Reihen und in der Desktop-Werkzeugauswahl
+  als Seitenleiste angeordnet. Deutsche und englische Beschriftungen bleiben verfügbar.
+- Leuchtend grüner Upload-Button sowie bestehende Farben und Lichteffekte für
+  Auswahl, Hover und Fokus erhalten. Das Hafenbild bleibt vollständig sichtbar.
+- Wiederherstellungspunkt für 0.13.13 vor der Gestaltung gesichert:
+  Git-Tag `backup-0.13.13-before-mosaic-20261014`, gespeicherte Site-Version 119.
+
+## 0.13.13 – 14. Oktober 2026
+
+- Vollständige Seemannbilder im 16:9-Format, ohne Beschnitt; Größe und Gestaltung des Uploadbereichs bleiben erhalten.
+- Sechs Schnellzugriffe mit Kurzbeschreibungen, Kategorien mit Symbolen und vollständige Werkzeuglisten je Kategorie.
+- Dokumentübersicht mit Dateinamen, Seitenzahl und Größe; kompakterer Arbeitsbereich mit zunächst geschlossener Werkzeugseitenleiste.
+- Mobile Aktionsleiste mit Zurück, Verarbeitung, Abbruch und Download. Navigation und Inhalt erhalten den erforderlichen Abstand.
+- Bestehende Farben, Farbverläufe und Kategoriezuordnungen unverändert übernommen.
+- Deutsche und englische Bedienungsdokumentation an die aktuelle Oberfläche angepasst.
+
+## 0.13.12 – 14. Oktober 2026
+
+- Zehn weitere Seemannmotive in den vorhandenen Header aufgenommen; insgesamt 22 Bilder mit unverändertem Bildausschnitt und Wechselverhalten.
+- Qualitätsstufe „Sanft“ in der vorhandenen Komprimierungsauswahl ergänzt, einschließlich höherer Bildauflösung und JPEG-Qualität. „Ausgewogen“ bleibt die Voreinstellung.
+- Deutsche und englische Komprimierungsanleitung sowie zusätzliche englische Übersetzungen ergänzt.
+- Aufbau, Kategorien, Werkzeugkacheln, Farben und mobile Bedienung entsprechen weiterhin dem wiederhergestellten Morgenstand 0.13.11.
+
+## 0.13.11 – 13. Oktober 2026
+
+- Zwölf Seemannmotive im Header, einschließlich des bisherigen Bildes ohne doppelten Eintrag.
+- Zufälliges Motiv beim Öffnen und ein anderes Zufallsmotiv per Klick, Touch oder Tastatur. Der Wechsel erfolgt ohne Animation; das nächste Bild wird vorab geladen.
+- Optimierte WebP-Dateien, passende Bildausschnitte und deutsche sowie englische Bildbeschreibungen.
+
 ## 0.13.10 – 13. Oktober 2026
 
 - Kategorie-Buttons mit dezenterer Auswahlfarbe, ruhigerer Schrift und weichem Schlagschatten in Hell und Dunkel, einheitlich auf Startseite und Werkzeugübersicht.

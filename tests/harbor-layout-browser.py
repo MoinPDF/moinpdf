@@ -35,6 +35,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.evaluate('document.fonts.ready')
         expect(page.locator('.harbor-photo img')).to_have_js_property('complete', True)
         assert page.locator('.harbor-photo img').evaluate('(img) => img.naturalWidth > 1000')
+        page.locator('.mosaic-all-tools').click()
+        tool_titles = page.locator('.chooser-tool').evaluate_all('(cards) => Object.fromEntries(cards.map(card => [card.dataset.toolId, card.querySelector("strong").textContent]))')
+        page.locator('.harbor-desktop-nav').get_by_role('button', name='Start', exact=True).click()
         pdf = Path(temporary)/'harbor-retention.pdf'
         with pymupdf.open() as document:
             for text in ('Unchanged document one', 'Unchanged document two'):
@@ -54,8 +57,16 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 assert upload['y'] + upload['height'] < search['y'], (theme, width, 'upload order')
                 assert page.locator('.harbor-upload-cta').bounding_box()['height'] >= 44
                 assert page.get_by_text('Papierkram. Läuft.', exact=True).count() == 1
-                assert page.locator('.harbor-tool-card').count() == 4
-                assert page.locator('.harbor-tool-card').first.evaluate('(el) => getComputedStyle(el).borderRadius') == '6px'
+                assert page.locator('.tool-mosaic-card').count() == 6
+                assert page.locator('.tool-mosaic-card').first.evaluate('(el) => parseFloat(getComputedStyle(el).borderRadius)') >= 16
+                assert abs(image['width'] / image['height'] - 16 / 9) < 0.02
+                if width > 1000:
+                    assert image['width'] <= 640.5
+                    assert abs(image['x'] + image['width']/2 - page.evaluate('document.documentElement.clientWidth')/2) <= 1
+                else:
+                    available = page.locator('.harbor-welcome').evaluate('(el) => { const style = getComputedStyle(el); return el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight); }')
+                    assert abs(image['width'] - available) <= 1
+                assert page.locator('.harbor-photo img').evaluate('(img) => getComputedStyle(img).objectFit') == 'contain'
                 nav = page.locator('.harbor-desktop-nav' if width > 1000 else '.harbor-mobile-nav')
                 expect(nav).to_be_visible()
                 if width in (390, 768, 1440):
@@ -63,11 +74,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 checks.append(f'{width}px {theme}: image, upload, search, cards, navigation, no overflow')
                 if width in (390, 1440):
                     page.locator('.harbor-categories').get_by_role('button', name='Umwandeln', exact=True).click()
-                    framed(page.locator('.harbor-tool-card'))
-                    framed(page.locator('.harbor-tool-card > .harbor-tool-icon'))
+                    framed(page.locator('.tool-mosaic-card'))
+                    expect(page.locator('.tool-mosaic-art').first).to_be_visible()
                     page.locator('.harbor-discovery').screenshot(path=str(out/f'harbor-convert-{width}-{theme}.png'))
-                    page.locator('.harbor-categories').get_by_role('button', name='Empfohlen', exact=True).click()
-                    page.locator('.harbor-tool-card').nth(1).click()
+                    page.locator('.harbor-categories').get_by_role('button', name='Schnellzugriff', exact=True).click()
+                    page.locator('.tool-mosaic-card[data-tool-id=organize]').click()
                     expect(page.locator('.tool-file-entry')).to_be_visible()
                     expect(page.locator('.conversion-steps li')).to_have_count(3)
                     framed(page.locator('.tool-file-card'))
@@ -79,32 +90,35 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     checks.append(f'{width}px {theme}: framed conversion tiles/icons and compact tool entry')
         # Every home tile must actually leave the start page before a PDF exists.
         # This covers the formerly blocked core tools as well as specialized tools.
-        icons = {}
+        home_tools = set()
         for width in (390, 1440):
             page.set_viewport_size({'width':width, 'height':900})
             nav = page.locator('.harbor-mobile-nav' if width == 390 else '.harbor-desktop-nav')
             categories = page.locator('.harbor-categories button').all_text_contents()
             for category in categories:
                 page.locator('.harbor-categories').get_by_role('button', name=category, exact=True).click()
-                titles = page.locator('.harbor-tool-card strong').all_text_contents()
-                for title in titles:
+                tool_ids = page.locator('.tool-mosaic-card').evaluate_all('(cards) => cards.map(card => card.dataset.toolId)')
+                for tool_id in tool_ids:
+                    title = tool_titles[tool_id]
                     page.locator('.harbor-categories').get_by_role('button', name=category, exact=True).click()
-                    card = page.locator('.harbor-tool-card').filter(has=page.get_by_text(title, exact=True))
-                    icons[title] = card.locator('svg').inner_html()
+                    card = page.locator(f'.tool-mosaic-card[data-tool-id="{tool_id}"]')
+                    expect(card.locator('.tool-mosaic-art svg')).to_be_visible()
+                    home_tools.add(tool_id)
                     card.click()
                     expect(page.locator('.harbor-home')).to_have_count(0)
                     expect(page.locator('main h1')).to_have_text(title)
                     expect(page.locator('.empty-stage')).to_have_count(0)
                     nav.get_by_role('button', name='Start', exact=True).click()
                     expect(page.locator('.harbor-home')).to_be_visible()
-                checks.append(f'{width}px: all {len(titles)} {category} tiles open their named tool without a PDF')
-            page.locator('.harbor-text-button').click()
+                checks.append(f'{width}px: all {len(tool_ids)} {category} tiles open their named tool without a PDF')
+            page.locator('.mosaic-all-tools').click()
             expect(page.locator('.chooser-tool')).to_have_count(112)
             framed(page.locator('.chooser-tool.tone-1'))
             framed(page.locator('.chooser-tool.tone-1 > span'))
-            for title, icon in icons.items():
-                card = page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True))
-                assert card.locator('svg').inner_html() == icon, title
+            for tool_id in home_tools:
+                card = page.locator(f'.chooser-tool[data-tool-id="{tool_id}"]')
+                expect(card.locator('strong')).to_have_text(tool_titles[tool_id])
+                expect(card.locator('svg')).to_be_visible()
             # Every catalogue tool must also open without an existing document.
             # Invoice, security and document editors previously assumed sources[0].
             titles = page.locator('.chooser-tool strong').all_text_contents()
@@ -118,15 +132,15 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 expect(page.locator('.chooser-tool')).to_have_count(112)
             checks.append(f'{width}px: all 112 catalogue tools open without a document or JavaScript errors')
             nav.get_by_role('button', name='Start', exact=True).click()
-        checks.append('Home and catalogue use identical SVG symbols; empty-tool back navigation works')
+        checks.append('Home and catalogue resolve the same tool identities with visible icons; empty-tool back navigation works')
         # Importing after choosing a core tool must keep that tool selected.
-        for index, method in ((0, 'drop'), (1, 'picker'), (3, 'picker'), (0, 'demo'), (3, 'blank')):
+        for tool_id, method in (('merge', 'drop'), ('organize', 'picker'), ('sign', 'picker'), ('merge', 'demo'), ('sign', 'blank')):
             imported = browser.new_context(viewport={'width':390, 'height':844}, reduced_motion='reduce')
             test = imported.new_page()
             test.on('pageerror', lambda error: errors.append(str(error)))
             test.goto(origin)
-            card = test.locator('.harbor-tool-card').nth(index)
-            title = card.locator('strong').inner_text()
+            card = test.locator(f'.tool-mosaic-card[data-tool-id="{tool_id}"]')
+            title = tool_titles[tool_id]
             card.click()
             expect(test.locator('main h1')).to_have_text(title)
             if method == 'drop':
@@ -147,9 +161,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             if method in ('drop', 'picker'):
                 expect(test.locator('.file-tab').first).to_contain_text(pdf.name)
             expect(test.locator('main h1')).to_have_text(title)
-            if index == 3:
-                expect(test.get_by_role('tab', name='Dokument', exact=True)).to_have_attribute('aria-selected', 'true')
-            test.screenshot(path=str(out/f'harbor-selected-import-{index}-{method}.png'), full_page=True)
+            if tool_id == 'sign':
+                expect(test.get_by_role('tab', name='Vorschau', exact=True)).to_have_attribute('aria-selected', 'true')
+            test.screenshot(path=str(out/f'harbor-selected-import-{tool_id}-{method}.png'), full_page=True)
             imported.close()
             checks.append(f'{title}: {method} import keeps the chosen tool and document')
         page.set_viewport_size({'width':390, 'height':844})

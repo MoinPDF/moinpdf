@@ -1,13 +1,61 @@
 /* Hafenlicht: compact frames and a brief light response, never a loading delay. */
 .moinpdf-shell.moinpdf-shell {
   --harbor-category-shadow: 0 2px 6px #163c310a, 0 5px 12px -8px #163c311f;
+}
+/* Give the banner soft green margins while keeping the central workspace light. */
+:root:not(.dark) .moinpdf-shell.moinpdf-shell {
+  --harbor-side-strength: 18%;
+  --harbor-side-wash: 5%;
   background-image:
-    radial-gradient(ellipse at 8% 0, #56cfb212, transparent 48%),
-    radial-gradient(ellipse at 92% 75%, #4bdd940b, transparent 42%);
+    radial-gradient(
+      ellipse clamp(280px, 44vw, 900px) 680px at 0 360px,
+      color-mix(in srgb, var(--harbor-light) var(--harbor-side-strength), transparent),
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse clamp(280px, 44vw, 900px) 720px at 100% 420px,
+      color-mix(in srgb, var(--harbor-action-end) var(--harbor-side-strength), transparent),
+      transparent 100%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--harbor-light) var(--harbor-side-wash), transparent),
+      transparent 35% 65%,
+      color-mix(in srgb, var(--harbor-action-end) var(--harbor-side-wash), transparent)
+    );
 }
 .dark .moinpdf-shell.moinpdf-shell {
   --harbor-category-shadow: 0 2px 6px #0003, 0 5px 12px -8px #0006;
   background-image: radial-gradient(ellipse at 50% 12%, #29d98008, transparent 52%);
+}
+/* Desktop-only mint and petrol light pools, with a calm center behind the banner. */
+@media (min-width: 1001px) {
+  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
+    background-color: #f8fdfb;
+    background-image:
+      radial-gradient(
+        ellipse 44vw 60vh at 0% 10%,
+        color-mix(in srgb, var(--brand-teal) 45%, transparent),
+        transparent 100%
+      ),
+      radial-gradient(
+        ellipse 44vw 62vh at 100% 70%,
+        color-mix(in srgb, var(--harbor-action-end) 38%, transparent),
+        transparent 100%
+      ),
+      radial-gradient(
+        ellipse 38vw 42vh at 0% 104%,
+        color-mix(in srgb, var(--brand-green) 30%, transparent),
+        transparent 100%
+      );
+  }
+  :root.dark .moinpdf-shell.moinpdf-shell {
+    background-color: #191f22;
+    background-image:
+      radial-gradient(ellipse 44vw 60vh at 0% 10%, #148b8c60, transparent 100%),
+      radial-gradient(ellipse 44vw 62vh at 100% 70%, #148b8c50, transparent 100%),
+      radial-gradient(ellipse 38vw 42vh at 0% 104%, #148b8c60, transparent 100%);
+  }
 }
 .moinpdf-shell .app-toolbar {
   border-bottom-color: var(--ui-line);
@@ -147,8 +195,7 @@
     0 2px 6px #163c3103;
   transition:
     border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    box-shadow 160ms ease;
   -webkit-tap-highlight-color: transparent;
 }
 .moinpdf-shell .harbor-tool-card > .harbor-tool-icon,
@@ -249,11 +296,6 @@
     background: color-mix(in srgb, var(--harbor-light-soft) 55%, var(--ui-surface));
   }
 }
-@media (prefers-reduced-motion: no-preference) {
-  .moinpdf-shell :is(.harbor-tool-card, .chooser-tool):active:not(:disabled) {
-    transform: scale(0.985);
-  }
-}
 @media (hover: none) {
   .moinpdf-shell :is(.harbor-tool-card, .chooser-tool):hover:not(:disabled) {
     transform: none;
@@ -265,6 +307,10 @@
   }
 }
 @media (max-width: 1000px) {
+  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
+    --harbor-side-strength: 10%;
+    --harbor-side-wash: 3%;
+  }
   .harbor-tool-card {
     flex-direction: column;
     justify-content: center;

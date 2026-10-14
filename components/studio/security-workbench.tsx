@@ -1,4 +1,6 @@
 'use client';
+import { WorkspaceContext } from './workspace-context';
+import { JobStatusIcon, useFreshResult } from './ui-feedback';
 import { ui } from '@/lib/ui-language';
 
 import { useLanguage } from '@/components/studio/appearance';
@@ -10,7 +12,6 @@ import {
   LockKeyhole,
   LockKeyholeOpen,
   Download,
-  LoaderCircle,
   Check,
   Eye,
   EyeOff,
@@ -61,6 +62,7 @@ export function SecurityWorkbench({
     [error, setError] = useState(''),
     [result, setResult] = useState<JobResult | null>(null),
     [url, setUrl] = useState('');
+  const resultFresh = useFreshResult(result);
   const controller = useRef<AbortController | null>(null),
     source = sources.find((s) => s.id === sourceId) || sources[0],
     protect = tool === 'protect';
@@ -111,6 +113,7 @@ export function SecurityWorkbench({
             abort.signal,
           )
         : source.bytes.slice();
+      if (abort.signal.aborted) return;
       setResult({
         blob: pdfBlob(bytes),
         filename: `${filenameStem(source.name)}-${protect ? 'geschützt' : 'entsperrt'}.pdf`,
@@ -179,6 +182,7 @@ export function SecurityWorkbench({
   );
   return (
     <main className="document-workbench security-workbench">
+      <WorkspaceContext sources={sources} locked={busy} />
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
@@ -357,7 +361,7 @@ export function SecurityWorkbench({
           {result ? (
             <div className="security-result" role="status">
               <span>
-                <Check size={20} />
+                <JobStatusIcon fresh={resultFresh} size={20} />
                 {protect
                   ? ui('Deine geschützte PDF ist bereit.')
                   : ui('Deine entsperrte PDF ist bereit.')}
@@ -365,7 +369,7 @@ export function SecurityWorkbench({
               <p>
                 {result.filename} · {formatSize(result.blob.size)}
               </p>
-              <Button asChild>
+              <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
                 <a href={url} download={result.filename}>
                   <Download size={17} />
                   {t('PDF herunterladen')}
@@ -394,7 +398,7 @@ export function SecurityWorkbench({
             <Button className="security-save" disabled={busy} onClick={() => void save()}>
               {busy ? (
                 <>
-                  <LoaderCircle className="spin" size={17} />
+                  <JobStatusIcon working size={17} />
                   {ui('Wird verarbeitet …')}
                 </>
               ) : protect ? (

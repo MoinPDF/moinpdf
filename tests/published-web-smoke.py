@@ -52,7 +52,7 @@ def all_views(page, messages, context, empty=False):
             expect(page.get_by_role('button', name='PDF oder andere Datei auswählen', exact=True)).to_be_visible()
             assert not messages, f'JavaScript exception in {context} / {title}: {messages}'
             no_overflow(page, context + ' / ' + title)
-            page.get_by_role('button', name='Alle Werkzeuge anzeigen', exact=True).click()
+            page.locator('.mosaic-all-tools').click()
             chooser(page)
             continue
         expect(page.locator('main h1')).to_have_text(title, timeout=30000)
@@ -108,7 +108,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             link = page.get_by_role('link', name=re.compile('^' + label))
             response = page.request.get(origin + link.get_attribute('href'))
             assert response.ok, f'{label} link is broken'
-        page.get_by_role('button', name='Alle Werkzeuge anzeigen', exact=True).click()
+        page.locator('.mosaic-all-tools').click()
         chooser(page)
         all_views(page, errors, 'Desktop without input', empty=True)
 
@@ -157,7 +157,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
 
         page.get_by_role('button', name='Seiten organisieren', exact=True).click()
-        page.get_by_role('tab', name='Dokument', exact=True).click()
+        page.get_by_role('tab', name='Vorschau', exact=True).click()
         preview = page.get_by_role('img', name='moinpdf-ui-test.pdf, Seite 1', exact=True)
         expect(preview).to_be_visible()
         expect(preview).to_have_js_property('complete', True)
@@ -259,7 +259,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Projekte', exact=True).click()
         page.get_by_label('Projektname', exact=True).fill('Browser-Testprojekt')
         page.get_by_role('button', name='Projekt speichern', exact=True).click()
-        expect(page.get_by_text('Arbeitsstand gespeichert.', exact=True)).to_be_visible()
+        expect(page.get_by_text('Alles an Bord – gespeichert.', exact=True)).to_be_visible()
         with page.expect_download() as download:
             page.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
         project_file = Path(temporary) / 'projekt.moinpdf'
@@ -325,7 +325,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         lifecycle.get_by_role('button', name='Projekte', exact=True).click()
         lifecycle.get_by_label('Projektname', exact=True).fill('Verbleibendes Projekt')
         lifecycle.get_by_role('button', name='Projekt speichern', exact=True).click()
-        expect(lifecycle.get_by_text('Arbeitsstand gespeichert.', exact=True)).to_be_visible()
+        expect(lifecycle.get_by_text('Alles an Bord – gespeichert.', exact=True)).to_be_visible()
         with lifecycle.expect_download() as download:
             lifecycle.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
         cleaned_file = Path(temporary) / 'bereinigt.moinpdf'
@@ -349,6 +349,10 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         chooser(lifecycle)
         expect(lifecycle.locator('.chooser-document-count')).to_have_text('1 Datei·0 Seiten')
         lifecycle.get_by_role('button', name='Seiten organisieren', exact=True).click()
+        lifecycle.get_by_role('button', name='Rückgängig', exact=True).click()
+        expect(lifecycle.get_by_role('button', name='Seite 1 entfernen', exact=True)).to_be_visible()
+        lifecycle.get_by_role('button', name='Wiederholen', exact=True).click()
+        expect(lifecycle.locator('.tool-file-entry')).to_be_visible()
         lifecycle.get_by_role('button', name='Rückgängig', exact=True).click()
         expect(lifecycle.get_by_role('button', name='Seite 1 entfernen', exact=True)).to_be_visible()
         project_toolbar(lifecycle)

@@ -1,4 +1,12 @@
 'use client';
+import { WorkspaceContext } from './workspace-context';
+import {
+  FileArrivalCheck,
+  JobStatusIcon,
+  resultScrollBehavior,
+  useFreshResult,
+} from './ui-feedback';
+import { fileArrivals } from '@/lib/ui-feedback';
 import { convertOfficeLocally, browserOfficeUnavailable } from '@/lib/browser-office';
 import { signLocally } from '@/lib/local-signature';
 import { ui } from '@/lib/ui-language';
@@ -110,6 +118,7 @@ function StandardServerWorkbench({
     [url, setUrl] = useState(''),
     [preview, setPreview] = useState<Source | null>(null),
     [page, setPage] = useState(0);
+  const resultFresh = useFreshResult(result);
   const resultRef = useRef<HTMLElement>(null),
     controller = useRef<AbortController | null>(null),
     connection = useRef<AbortController | null>(null);
@@ -236,7 +245,7 @@ function StandardServerWorkbench({
       return;
     }
     const frame = requestAnimationFrame(() =>
-      resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      resultRef.current?.scrollIntoView({ behavior: resultScrollBehavior(), block: 'start' }),
     );
     const objectUrl = URL.createObjectURL(result.blob);
     setUrl(objectUrl);
@@ -287,7 +296,10 @@ function StandardServerWorkbench({
         <span>
           {current ? (
             <>
-              <strong>{current.name}</strong>
+              <strong>
+                <span className="arrival-file-name">{current.name}</span>
+                <FileArrivalCheck file={current} />
+              </strong>
               <small>
                 {formatSize(current.size)} {ui(' · Datei ändern')}
               </small>
@@ -310,6 +322,7 @@ function StandardServerWorkbench({
             }
             setResult(null);
             onChange(next);
+            fileArrivals.mark([next]);
             e.target.value = '';
           }}
         />
@@ -470,6 +483,7 @@ function StandardServerWorkbench({
 
   return (
     <main className="document-workbench advanced-workbench conversion-workbench">
+      <WorkspaceContext sources={sources} locked={busy} onAdd={onAdd} />
       <header className="workbench-header">
         <Button variant="ghost" disabled={busy} onClick={onBack}>
           <ChevronLeft size={17} />
@@ -968,7 +982,7 @@ function StandardServerWorkbench({
       </section>
       {busy && (
         <div className="advanced-progress" role="status">
-          <LoaderCircle className="spin" size={18} />
+          <JobStatusIcon working size={18} />
           <span>
             {ui(
               websiteMode
@@ -992,14 +1006,14 @@ function StandardServerWorkbench({
         <section ref={resultRef} className="advanced-result">
           <div>
             <h2>
-              <Check size={22} />
+              <JobStatusIcon fresh={resultFresh} />
               {t('Fertig.')}
             </h2>
             <p>
               {result.filename} · {formatSize(result.blob.size)}
             </p>
             {result.note && <p>{ui(result.note)}</p>}
-            <Button asChild>
+            <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
               <a href={url || undefined} download={result.filename}>
                 <Download size={17} />
                 {result.filename.toLowerCase().endsWith('.docx')

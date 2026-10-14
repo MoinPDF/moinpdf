@@ -67,18 +67,22 @@ with sync_playwright() as api:
             expect(categories.locator('[aria-pressed=true]')).to_have_count(1)
             expect(pulse).to_have_count(0, timeout=1800)
             # Consecutive selections and a keyboard click must remain responsive.
-            for name in ('Seiten', 'Bearbeiten', 'Prüfen', 'Empfohlen'):
+            for name in ('Seiten', 'Bearbeiten', 'Prüfen', 'Schnellzugriff'):
                 categories.get_by_role('button', name=name, exact=True).click()
-            expect(categories.get_by_role('button', name='Empfohlen')).to_have_attribute('aria-pressed', 'true')
+            expect(categories.get_by_role('button', name='Schnellzugriff')).to_have_attribute('aria-pressed', 'true')
             expect(pulse).to_have_count(0, timeout=1800)
             convert.focus()
             page.keyboard.press('Space')
             expect(convert).to_have_attribute('aria-pressed', 'true')
             expect(pulse).to_have_count(1)
             expect(pulse).to_have_count(0, timeout=1800)
-            categories.get_by_role('button', name='Empfohlen', exact=True).click()
-            tile = page.locator('.harbor-tool-card').nth(1)
-            title = tile.locator('strong').inner_text()
+            categories.get_by_role('button', name='Schnellzugriff', exact=True).click()
+            tile = page.locator('.tool-mosaic-card[data-tool-id=merge]')
+            title = 'Zusammenfügen'
+            tile.hover()
+            assert tile.evaluate('el => getComputedStyle(el).transform') == 'none'
+            assert tile.locator('.tool-mosaic-art').evaluate('el => getComputedStyle(el).transform') == 'none'
+            assert tile.locator('.tool-mosaic-art').evaluate('el => !el.getAnimations({subtree:true}).some(a => a.playState === "running")')
             tab_to(page, tile)
             assert tile.evaluate('el => getComputedStyle(el).outlineStyle') == 'solid'
             page.keyboard.press('Enter')
@@ -106,11 +110,11 @@ with sync_playwright() as api:
             categories.get_by_role('button', name='Seiten', exact=True).click()
             expect(pulse).to_have_count(0)
             expect(categories.get_by_role('button', name='Seiten')).to_have_attribute('aria-pressed', 'true')
-            assert page.locator('.harbor-tool-card').first.evaluate('el => getComputedStyle(el).transform') == 'none'
+            assert page.locator('.tool-mosaic-card').first.evaluate('el => getComputedStyle(el).transform') == 'none'
             page.emulate_media(reduced_motion='no-preference', forced_colors='active')
-            categories.get_by_role('button', name='Empfohlen', exact=True).click()
+            categories.get_by_role('button', name='Schnellzugriff', exact=True).click()
             expect(pulse).to_have_count(0)
-            tile = page.locator('.harbor-tool-card').first
+            tile = page.locator('.tool-mosaic-card').first
             tab_to(page, tile)
             assert tile.evaluate('el => getComputedStyle(el).outlineStyle') == 'solid'
             page.emulate_media(forced_colors='none')
@@ -133,8 +137,8 @@ with sync_playwright() as api:
                 expect(mobile.locator('.harbor-light-echo')).to_have_count(1)
                 no_overflow(mobile)
                 expect(mobile.locator('.harbor-light-echo')).to_have_count(0, timeout=1800)
-                tile = mobile.locator('.harbor-tool-card').first
-                title = tile.locator('strong').inner_text()
+                tile = mobile.locator('.tool-mosaic-card[data-tool-id=pdf-word]')
+                title = 'PDF zu Word'
                 tile.tap()
                 expect(mobile.locator('main h1')).to_have_text(title)
                 no_overflow(mobile)

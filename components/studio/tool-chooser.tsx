@@ -1,4 +1,8 @@
 'use client';
+import { WorkspaceContext } from './workspace-context';
+import { FileArrivalCheck } from './ui-feedback';
+import { SearchHighlight } from './search-highlight';
+import { fileDropLabel } from '@/lib/interaction-feedback';
 import { ui } from '@/lib/ui-language';
 
 import { useLanguage, useTools } from '@/components/studio/appearance';
@@ -29,6 +33,7 @@ type Props = {
   locked: boolean;
   loading: boolean;
   dragOver: boolean;
+  dragFileCount?: number | null;
   onChoose: (id: WorkspaceTool) => void;
   onAdd: () => void;
   onRemove: (id: string) => void;
@@ -41,12 +46,13 @@ export function ToolChooser({
   locked,
   loading,
   dragOver,
+  dragFileCount = null,
   onChoose,
   onAdd,
   onRemove,
   onClear,
 }: Props) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { tools, groups } = useTools();
   const [query, setQuery] = useState('');
   const [activeGroup, setActiveGroup] = useState<number | null>(null);
@@ -63,6 +69,7 @@ export function ToolChooser({
   );
   return (
     <main className="tool-chooser">
+      <WorkspaceContext sources={sources} pageCount={pageCount} locked={locked} onAdd={onAdd} />
       <header className="chooser-header">
         <span className="chooser-document-count">
           <FileText size={17} />
@@ -109,6 +116,7 @@ export function ToolChooser({
             <span className="chooser-file" key={s.id}>
               <FileText size={13} />
               <span title={s.name}>{s.name}</span>
+              <FileArrivalCheck file={s} />
               <button
                 onClick={() => onRemove(s.id)}
                 disabled={locked}
@@ -160,12 +168,19 @@ export function ToolChooser({
                         disabled={locked}
                         className="intent-result"
                       >
-                        <span className={`intent-result-icon tone-${tool.group}`}>
+                        <span
+                          className={`intent-result-icon tone-${tool.group}`}
+                          data-tool-tone={tool.group}
+                        >
                           <tool.icon size={22} strokeWidth={1.6} />
                         </span>
                         <span>
-                          <strong>{ui(tool.title)}</strong>
-                          <small>{ui(tool.description)}</small>
+                          <strong>
+                            <SearchHighlight text={ui(tool.title)} query={query} />
+                          </strong>
+                          <small>
+                            <SearchHighlight text={ui(tool.description)} query={query} />
+                          </small>
                         </span>
                         {i === 0 && <kbd>↵</kbd>}
                       </CommandItem>
@@ -201,6 +216,7 @@ export function ToolChooser({
               <button
                 type="button"
                 className={`chooser-category category-${group}`}
+                data-tool-tone={group}
                 data-harbor-light
                 key={group}
                 title={ui(label)}
@@ -236,12 +252,16 @@ export function ToolChooser({
                           onClick={() => onChoose(tool.id)}
                           title={ui(tool.description)}
                           className={`chooser-tool tone-${tool.group}`}
+                          data-tool-tone={tool.group}
+                          data-tool-id={tool.id}
                           data-harbor-light
                         >
                           <span>
                             <tool.icon size={27} strokeWidth={1.45} />
                           </span>
-                          <strong>{ui(tool.title)}</strong>
+                          <strong>
+                            <SearchHighlight text={ui(tool.title)} query={query} />
+                          </strong>
                         </button>
                       ))}
                   </nav>
@@ -251,9 +271,9 @@ export function ToolChooser({
         </div>
       </section>
       {dragOver && (
-        <div className="drop-overlay">
+        <div className="drop-overlay" role="status" aria-live="polite">
           <Plus size={60} strokeWidth={1} />
-          <strong>{t('Dateien hinzufügen.')}</strong>
+          <strong>{fileDropLabel(dragFileCount, language)}</strong>
           <span>{t('Einfach hier loslassen.')}</span>
         </div>
       )}
