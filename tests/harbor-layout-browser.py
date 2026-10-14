@@ -1,6 +1,7 @@
 """Verify the Harbor layout and document retention in the production build."""
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 import pymupdf
@@ -193,7 +194,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
         expect(page.locator('.chooser-file')).to_contain_text('harbor-retention.pdf')
         within_viewport(page, 'retained workspace')
-        page.get_by_role('button', name='Projekte', exact=True).click()
+        page.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         expect(page.get_by_role('dialog')).to_be_visible()
         page.keyboard.press('Escape')
         checks.append('Home/workspace navigation, mobile projects and DE/EN keep the original two-page PDF')

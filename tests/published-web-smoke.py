@@ -37,7 +37,7 @@ def no_overflow(page, context):
     assert dimensions['content'] <= dimensions['width'] + 2, f'Horizontal overflow in {context}: {dimensions}'
 
 def project_toolbar(page):
-    button = page.get_by_role('button', name='Projekte', exact=True)
+    button = page.get_by_role('button', name=re.compile(r'^Projekte – '))
     expect(button).to_be_visible()
     assert button.evaluate('(el) => !["fixed", "absolute"].includes(getComputedStyle(el).position)')
     assert page.locator('.project-bar').evaluate('(el) => el.getBoundingClientRect().bottom <= document.querySelector(".studio-provider").getBoundingClientRect().top + 1')
@@ -121,6 +121,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.locator('input[type="file"]').first.set_input_files(str(pdf_path))
         chooser(page)
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
+        expect(page.locator('.project-toggle')).to_have_attribute('aria-label', 'Projekte – Ungespeicherte Änderungen')
         categories = page.get_by_role('group', name='Werkzeugkategorien')
         total = 0
         for label in ('Prüfen', 'Umwandeln', 'Seiten', 'Bearbeiten', 'Stapel'):
@@ -256,17 +257,18 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         completed.append('Mixed paragraph sizes and additional flowing pages exported through the real UI; later original page preserved')
         back(page)
 
-        page.get_by_role('button', name='Projekte', exact=True).click()
+        page.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         page.get_by_label('Projektname', exact=True).fill('Browser-Testprojekt')
         page.get_by_role('button', name='Projekt speichern', exact=True).click()
         expect(page.get_by_text('Alles an Bord – gespeichert.', exact=True)).to_be_visible()
+        expect(page.locator('.project-toggle')).to_have_attribute('aria-label', 'Projekte – Gespeichert')
         with page.expect_download() as download:
             page.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
         project_file = Path(temporary) / 'projekt.moinpdf'
         download.value.save_as(project_file)
         assert project_file.read_bytes().startswith(b'MOINPDF-PROJECT\n')
         page.reload(wait_until='networkidle')
-        page.get_by_role('button', name='Projekte', exact=True).click()
+        page.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         page.get_by_role('button', name='Öffnen', exact=True).first.click()
         chooser(page)
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
@@ -276,7 +278,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         transfer.set_default_timeout(30000)
         transfer.on('pageerror', lambda error: errors.append('Project transfer: ' + str(error)))
         transfer.goto(origin)
-        transfer.get_by_role('button', name='Projekte', exact=True).click()
+        transfer.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         expect(transfer.get_by_text('Noch keine gespeicherten Projekte.', exact=True)).to_be_visible()
         transfer.get_by_label('MoinPDF-Projektdatei', exact=True).set_input_files(str(project_file))
         chooser(transfer)
@@ -297,7 +299,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         corrupt = bytearray(project_file.read_bytes())
         corrupt[-1] ^= 1
         corrupt_file.write_bytes(corrupt)
-        transfer.get_by_role('button', name='Projekte', exact=True).click()
+        transfer.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         transfer.get_by_label('MoinPDF-Projektdatei', exact=True).set_input_files(str(corrupt_file))
         expect(transfer.get_by_text('Die Projektdatei ist beschädigt oder unvollständig.', exact=True)).to_be_visible()
         transfer.keyboard.press('Escape')
@@ -322,7 +324,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(lifecycle.locator('.chooser-document-count')).to_have_text('2 Dateien·3 Seiten')
         lifecycle.get_by_role('button', name=pdf_path.name + ' schließen', exact=True).click()
         expect(lifecycle.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
-        lifecycle.get_by_role('button', name='Projekte', exact=True).click()
+        lifecycle.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         lifecycle.get_by_label('Projektname', exact=True).fill('Verbleibendes Projekt')
         lifecycle.get_by_role('button', name='Projekt speichern', exact=True).click()
         expect(lifecycle.get_by_text('Alles an Bord – gespeichert.', exact=True)).to_be_visible()
@@ -338,11 +340,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         lifecycle.keyboard.press('Escape')
         lifecycle.get_by_role('button', name='Seiten organisieren', exact=True).click()
         lifecycle.get_by_role('button', name='Seite 1 entfernen', exact=True).click()
-        lifecycle.get_by_role('button', name='Projekte', exact=True).click()
+        lifecycle.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         lifecycle.get_by_role('button', name='Öffnen', exact=True).first.click()
         chooser(lifecycle)
         expect(lifecycle.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
-        lifecycle.get_by_role('button', name='Projekte', exact=True).click()
+        lifecycle.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         zero_version = lifecycle.locator('.project-version').filter(has_text='0 Seiten')
         expect(zero_version).to_have_count(1)
         zero_version.get_by_role('button', name='Öffnen', exact=True).click()
@@ -517,7 +519,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.screenshot(path=str(evidence / 'mobile-tools.png'), full_page=True)
         all_views(page, errors, 'Mobile with PDF')
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
-        page.get_by_role('button', name='Projekte', exact=True).click()
+        page.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         expect(page.get_by_role('button', name='Projektdatei herunterladen', exact=True)).to_be_visible()
         no_overflow(page, 'mobile project transfer')
         page.screenshot(path=str(evidence / 'mobile-projects.png'), full_page=True)
