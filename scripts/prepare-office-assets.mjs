@@ -13,7 +13,8 @@ execFileSync('tar',['-xzf',cache+'/runtime.tgz','-C',cache,...paths.map(p=>'pack
 await rm(out,{recursive:true,force:true});await mkdir(out+'/chunks',{recursive:true});
 const files=[];
 for(const path of paths){let raw=await readFile(cache+'/package/'+path);const name=path.split('/').at(-1),binary=/\.(wasm|data)$/.test(name);
- if(name==='browser.worker.global.js'){let code=raw.toString('utf8');for(const {before,after} of patches.replacements){if(code.split(before).length!==2)throw new Error('Pinned Office worker patch did not match exactly once: '+before);code=code.replace(before,after);}raw=Buffer.from(code);}
+ const replacements=patches.replacements.filter(p=>(p.file||'browser.worker.global.js')===name);
+ if(replacements.length){let code=raw.toString('utf8');for(const {before,after} of replacements){if(code.split(before).length!==2)throw new Error('Pinned Office worker patch did not match exactly once: '+before);code=code.replace(before,after);}raw=Buffer.from(code);}
  const item={path:name,rawBytes:raw.length,rawSha256:sha(raw)};
  if(binary){const compressed=gzipSync(raw,{level:9});item.encoding='gzip';item.bytes=compressed.length;item.sha256=sha(compressed);item.parts=[];for(let offset=0;offset<compressed.length;offset+=8*1024*1024){const chunk=compressed.subarray(offset,offset+8*1024*1024),chunkPath='chunks/'+name+'.gz.part-'+String(item.parts.length).padStart(2,'0');await writeFile(out+'/'+chunkPath,chunk);item.parts.push({path:chunkPath,bytes:chunk.length,sha256:sha(chunk)});}}
  else{await writeFile(out+'/'+name,raw);item.bytes=raw.length;item.sha256=item.rawSha256;}

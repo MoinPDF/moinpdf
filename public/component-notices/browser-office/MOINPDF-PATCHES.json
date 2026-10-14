@@ -1,5 +1,5 @@
 {
-  "id": "moinpdf-conversion-worker-8",
+  "id": "moinpdf-conversion-worker-9",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
   "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
@@ -35,14 +35,20 @@
       "after": "try{(E?.PThread||self.Module?.PThread||self.PThread)?.terminateAllThreads();}catch{}"
     },
     {
-      "description": "Retain the upstream non-blocking Unipoll path after the pthread readiness barrier. The native headless Yield fallback can wait indefinitely while the XLSX import worker needs the runtime thread; conversion has no desktop event loop to service that wait. See the pinned vcl/headless/svpinst.cxx ImplYield and the upstream WASM dummyPollCallback.",
+      "description": "Pure load/save conversion does not post editor input events. Leave the regular LibreOfficeKit yield path enabled.",
       "before": "c.enableSyncEvents(),console.log(\"[LOK Worker] Enabled synchronous event dispatch (Unipoll mode)\"),",
-      "after": "c.enableSyncEvents(),"
+      "after": ""
     },
     {
       "description": "Do not enter synchronous LibreOfficeKit calls until all initial pthread workers have acknowledged their compiled module. Record the readiness barrier for the real-browser regression test.",
       "before": "B(\"lok-init\",\"Initializing LibreOfficeKit...\");",
       "after": "{let p=self.PThread,w=[...p.unusedWorkers,...p.runningWorkers],t=Date.now();while(w.some(a=>!a.loaded)){if(Date.now()-t>10000)throw new Error(\"Office pthread initialization timeout\");await new Promise(a=>setTimeout(a,10));}y({type:\"progress\",id:ge,progress:{phase:\"thread-pool\",percent:68,workers:w.length,readyWorkers:w.filter(a=>a.loaded).length}});}B(\"lok-init\",\"Initializing LibreOfficeKit...\");"
+    },
+    {
+      "file": "soffice.js",
+      "description": "The conversion owner is a Web Worker that also services synchronous pthread proxy requests. Native Atomics.wait can deadlock that owner while a pthread needs its filesystem or another proxied operation. Select Emscripten 3.1.74 main-thread cooperative futex waiting for this sole runtime owner (main-browser flag=1, supports-Atomics.wait=0); its _emscripten_yield loop services the proxy queue. Real pthread initialization is unchanged. The page UI still runs in its separate main thread. Source: system/lib/pthread/emscripten_futex_wait.c.",
+      "before": "__emscripten_thread_init(tb,!ENVIRONMENT_IS_WORKER,1,!ENVIRONMENT_IS_WEB,2097152,false)",
+      "after": "__emscripten_thread_init(tb,1,1,0,2097152,false)"
     }
   ]
 }

@@ -2,9 +2,10 @@
 
 ## 0.13.23 – 14. Oktober 2026
 
-- Die lokale Office-Laufzeit verwendet wieder den nicht blockierenden
-  Ereignispfad ihres WebAssembly-Builds. Die Bereitschaftsprüfung der Threads
-  und das vollständige Aufräumen nach Abbruch bleiben erhalten.
+- Die lokale Office-Laufzeit bearbeitet Anfragen ihrer Hintergrundthreads
+  auch während nativer Wartezeiten. Dadurch kann der Konvertierungs-Worker
+  Dateisystemanfragen beantworten, ohne sich gegenseitig mit dem Excel-Import
+  zu blockieren. Die Oberfläche bleibt in ihrem eigenen Thread bedienbar.
 - Der Browsertest prüft jetzt 15 Abbruch-/Neustartzyklen mit echten Excel- und
   Word-Dateien, vollständig aus dem lokalen Cache und ohne Dokumentenupload.
 
