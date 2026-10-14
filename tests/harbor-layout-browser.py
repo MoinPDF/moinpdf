@@ -50,6 +50,16 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 expect(page.locator('html')).to_have_class('dark')
             for width in (320, 390, 600, 768, 1000, 1024, 1440, 1920):
                 page.set_viewport_size({'width':width, 'height':1000 if width > 1000 else 844})
+                # Wait for the responsive layout to settle before comparing
+                # geometry captured by separate browser protocol requests.
+                page.wait_for_function('''() => {
+                    const photo = document.querySelector('.harbor-photo');
+                    const welcome = document.querySelector('.harbor-welcome');
+                    const style = getComputedStyle(welcome);
+                    const available = welcome.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+                    const expected = innerWidth > 1000 ? Math.min(640, available) : available;
+                    return Math.abs(photo.getBoundingClientRect().width - expected) <= 1;
+                }''')
                 within_viewport(page, f'home {theme} {width}')
                 image = page.locator('.harbor-photo').bounding_box()
                 upload = page.locator('.harbor-upload').bounding_box()
@@ -66,7 +76,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     assert abs(image['x'] + image['width']/2 - page.evaluate('document.documentElement.clientWidth')/2) <= 1
                 else:
                     available = page.locator('.harbor-welcome').evaluate('(el) => { const style = getComputedStyle(el); return el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight); }')
-                    assert abs(image['width'] - available) <= 1
+                    assert abs(image['width'] - available) <= 1, (theme, width, image, available)
                 assert page.locator('.harbor-photo img').evaluate('(img) => getComputedStyle(img).objectFit') == 'contain'
                 nav = page.locator('.harbor-desktop-nav' if width > 1000 else '.harbor-mobile-nav')
                 expect(nav).to_be_visible()
