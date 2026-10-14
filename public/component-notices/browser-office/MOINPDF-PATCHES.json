@@ -1,5 +1,5 @@
 {
-  "id": "moinpdf-conversion-worker-9",
+  "id": "moinpdf-conversion-worker-10",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
   "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
@@ -12,7 +12,7 @@
     {
       "description": "Start only LibreOfficeKit. Configure the synchronous conversion path before Emscripten constructs and caches the native environment: avoid nested background image import/scaling and formula-calculation tasks that can block the WASM runtime thread.",
       "before": "mainScriptUrlOrBlob:e,locateFile:",
-      "after": "noInitialRun:true,preRun:[a=>{Object.assign(a.ENV,{SAL_LOG:\"-INFO\",MAX_CONCURRENCY:\"1\",VCL_NO_THREAD_IMPORT:\"1\",VCL_NO_THREAD_SCALE:\"1\",SC_NO_THREADED_CALCULATION:\"1\"});}],mainScriptUrlOrBlob:e,locateFile:"
+      "after": "noInitialRun:true,preRun:[a=>{Object.assign(a.ENV,{SAL_LOG:\"-INFO\",MAX_CONCURRENCY:\"1\",VCL_NO_THREAD_IMPORT:\"1\",VCL_NO_THREAD_SCALE:\"1\",SC_NO_THREADED_CALCULATION:\"1\"});}],onMoinPDFThreadStart:p=>{y({type:\"progress\",id:ge,progress:{phase:\"thread-start\",...p}});},mainScriptUrlOrBlob:e,locateFile:"
     },
     {
       "description": "Honor the supplied verbose flag for LibreOffice stdout and stderr; no synthetic document contents are written to the browser console in normal use.",
@@ -46,9 +46,15 @@
     },
     {
       "file": "soffice.js",
-      "description": "The conversion owner is a Web Worker that also services synchronous pthread proxy requests. Native Atomics.wait can deadlock that owner while a pthread needs its filesystem or another proxied operation. Select Emscripten 3.1.74 main-thread cooperative futex waiting for this sole runtime owner (main-browser flag=1, supports-Atomics.wait=0); its _emscripten_yield loop services the proxy queue. Real pthread initialization is unchanged. The page UI still runs in its separate main thread. Source: system/lib/pthread/emscripten_futex_wait.c.",
-      "before": "__emscripten_thread_init(tb,!ENVIRONMENT_IS_WORKER,1,!ENVIRONMENT_IS_WEB,2097152,false)",
-      "after": "__emscripten_thread_init(tb,1,1,0,2097152,false)"
+      "description": "Preallocate eight pthread workers before native calls; synchronous pthread startup cannot create new browser workers while its owner is blocked. Keep this pool bounded. Emscripten pthreads documentation: Special considerations.",
+      "before": "var pthreadPoolSize=4;",
+      "after": "var pthreadPoolSize=8;"
+    },
+    {
+      "file": "soffice.js",
+      "description": "Require an already loaded worker for synchronous native thread creation. Fail explicitly instead of dynamically creating an asynchronous worker and deadlocking. Record pool capacity for actual browser regression evidence.",
+      "before": "getNewWorker(){if(PThread.unusedWorkers.length==0){PThread.allocateUnusedWorker();PThread.loadWasmModuleToWorker(PThread.unusedWorkers[0])}return PThread.unusedWorkers.pop()}",
+      "after": "getNewWorker(){var worker=PThread.unusedWorkers.pop();Module[\"onMoinPDFThreadStart\"]?.({ready:worker?.loaded===true,unusedWorkers:PThread.unusedWorkers.length,runningWorkers:PThread.runningWorkers.length});if(!worker?.loaded)throw new Error(\"Office thread pool has no ready worker\");return worker}"
     }
   ]
 }

@@ -2,10 +2,10 @@
 
 ## 0.13.23 – 14. Oktober 2026
 
-- Die lokale Office-Laufzeit bearbeitet Anfragen ihrer Hintergrundthreads
-  auch während nativer Wartezeiten. Dadurch kann der Konvertierungs-Worker
-  Dateisystemanfragen beantworten, ohne sich gegenseitig mit dem Excel-Import
-  zu blockieren. Die Oberfläche bleibt in ihrem eigenen Thread bedienbar.
+- Die lokale Office-Laufzeit bereitet acht Hintergrundthreads vor und prüft
+  deren Bereitschaft bei jedem nativen Thread-Start. Ein erschöpfter Pool
+  führt zu einer ausdrücklichen Fehlermeldung statt zum Nachladen eines
+  Workers während eines synchronen nativen Aufrufs.
 - Der Browsertest prüft jetzt 15 Abbruch-/Neustartzyklen mit echten Excel- und
   Word-Dateien, vollständig aus dem lokalen Cache und ohne Dokumentenupload.
 

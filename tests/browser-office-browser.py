@@ -57,9 +57,11 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         else: r.continue_()
     page.route('**/*', route)
     def snapshot_office_threads():
-        snapshots, sessions = [], []
+        snapshots, sessions, states = [], [], []
         def received(event):
             message = json.loads(event['message'])
+            if message.get('id') == 4:
+                states.append({'session': event['sessionId'], 'state': message.get('result'), 'error': message.get('error')})
             if message.get('method') == 'Debugger.paused':
                 snapshots.append({'session': event['sessionId'], 'frames': [{'function': f['functionName'], 'url': f['url'], 'location': f['location']} for f in message['params']['callFrames'][:24]]})
         browser_session.on('Target.receivedMessageFromTarget', received)
@@ -71,7 +73,11 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                 sessions.append(session)
                 for ident, method in enumerate(['Debugger.enable', 'Debugger.pause'], 1):
                     browser_session.send('Target.sendMessageToTarget', {'sessionId': session, 'message': json.dumps({'id': ident, 'method': method})})
-            page.wait_for_timeout(3000)
+            page.wait_for_timeout(1000)
+            for session in sessions:
+                browser_session.send('Target.sendMessageToTarget', {'sessionId': session, 'message': json.dumps({'id': 4, 'method': 'Runtime.evaluate', 'params': {'expression': "JSON.stringify({pthread: self.ENVIRONMENT_IS_PTHREAD, initializedJS: self.initializedJS, aborted: self.ABORT, onmessage: String(self.onmessage), unused: self.PThread?.unusedWorkers?.map(w => ({id: w.workerID, loaded: w.loaded, ptr: w.pthread_ptr})), running: self.PThread?.runningWorkers?.map(w => ({id: w.workerID, loaded: w.loaded, ptr: w.pthread_ptr}))})", 'returnByValue': True}})})
+            page.wait_for_timeout(2000)
+            print('Office thread states: ' + json.dumps(states), flush=True)
             print('Office thread stacks: ' + json.dumps(snapshots), flush=True)
         finally:
             for session in sessions:
@@ -103,7 +109,9 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             raise
         assert link.is_visible(), page.get_by_role('alert').inner_text()
         pool = [e['progress'] for e in page.evaluate('window.__officeProgress') if (e.get('progress') or {}).get('phase') == 'thread-pool']
-        assert pool and all(p['workers'] >= 4 and p['readyWorkers'] == p['workers'] for p in pool), pool
+        assert pool and all(p['workers'] == 8 and p['readyWorkers'] == p['workers'] for p in pool), pool
+        starts = [e['progress'] for e in page.evaluate('window.__officeProgress') if (e.get('progress') or {}).get('phase') == 'thread-start']
+        assert starts and all(p['ready'] and p['runningWorkers'] + p['unusedWorkers'] == 7 for p in starts), starts
         with page.expect_download() as dl: link.click()
         target = folder / (path.name + suffix + '.pdf')
         dl.value.save_as(target)
