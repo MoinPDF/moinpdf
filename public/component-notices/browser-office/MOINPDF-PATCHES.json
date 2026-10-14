@@ -1,5 +1,5 @@
 {
-  "id": "moinpdf-conversion-worker-7",
+  "id": "moinpdf-conversion-worker-8",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
   "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
@@ -35,9 +35,9 @@
       "after": "try{(E?.PThread||self.Module?.PThread||self.PThread)?.terminateAllThreads();}catch{}"
     },
     {
-      "description": "Pure load/save conversion does not post editor input events. Keep the normal LibreOfficeKit yield loop instead of registering the editor dummy poll callbacks, which can starve threaded XLSX import.",
+      "description": "Retain the upstream non-blocking Unipoll path after the pthread readiness barrier. The native headless Yield fallback can wait indefinitely while the XLSX import worker needs the runtime thread; conversion has no desktop event loop to service that wait. See the pinned vcl/headless/svpinst.cxx ImplYield and the upstream WASM dummyPollCallback.",
       "before": "c.enableSyncEvents(),console.log(\"[LOK Worker] Enabled synchronous event dispatch (Unipoll mode)\"),",
-      "after": ""
+      "after": "c.enableSyncEvents(),"
     },
     {
       "description": "Do not enter synchronous LibreOfficeKit calls until all initial pthread workers have acknowledged their compiled module. Record the readiness barrier for the real-browser regression test.",

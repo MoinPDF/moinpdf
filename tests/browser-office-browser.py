@@ -128,7 +128,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             convert(folder/'fixtures'/name)
         for name in ['sample.docx','sample.xlsx','sample.pptx','sample.odt','sample.ods','sample.odp']:
             convert(root/'tests/fixtures/office'/name)
-        for cycle in range(5):
+        for cycle in range(15):
             choose(folder/'fixtures/rich.docx', reload=(cycle == 0))
             page.get_by_role('button', name='PDF erstellen', exact=True).click()
             # Cancel the actual running WASM worker, after asset preparation.

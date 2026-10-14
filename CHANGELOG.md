@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.13.23 – 14. Oktober 2026
+
+- Die lokale Office-Laufzeit verwendet wieder den nicht blockierenden
+  Ereignispfad ihres WebAssembly-Builds. Die Bereitschaftsprüfung der Threads
+  und das vollständige Aufräumen nach Abbruch bleiben erhalten.
+- Der Browsertest prüft jetzt 15 Abbruch-/Neustartzyklen mit echten Excel- und
+  Word-Dateien, vollständig aus dem lokalen Cache und ohne Dokumentenupload.
+
 ## 0.13.22 – 14. Oktober 2026
 
 - Lange Dateinamen verbreitern die Dokumentübersicht auf schmalen Smartphones

@@ -38,7 +38,7 @@ Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installatio
 | **Wiederkehrendes erledigen** | Stapelverarbeitung, gespeicherte Abläufe, Belegfelder sammeln, Formularrückläufe auswerten und Dokumente chronologisch ordnen. |
 | **Mehr aus Dokumenten machen** | PDF-Maßband und Ebenenverwaltung; mit Dokumentenserver lokal übersetzen und als Hörbuch ausgeben. |
 
-**0.13.22** vereinheitlicht Web- und Docker-Oberfläche: sechs Schnellzugriffe, ein dezenter weiß-grüner Projekt-Button, ruhige Werkzeugkacheln und ein kleineres Headerbild am Desktop. Rückgängig bleibt auch in Projekten ohne verbleibende Seiten erreichbar. Lange Dateinamen bleiben auf schmalen Smartphones innerhalb der Dokumentübersicht.
+**0.13.23** vereinheitlicht Web- und Docker-Oberfläche: sechs Schnellzugriffe, ein dezenter weiß-grüner Projekt-Button, ruhige Werkzeugkacheln und ein kleineres Headerbild am Desktop. Rückgängig bleibt auch in Projekten ohne verbleibende Seiten erreichbar. Lange Dateinamen bleiben auf schmalen Smartphones innerhalb der Dokumentübersicht.
 
 Neu in **0.12.0**: Komplexe Absatzschriften mit HarfBuzz und 14 zusätzlichen lokalen Noto-Schriften sowie einzelne Unterobjekte verschachtelter Gruppen. Gruppeninstanzen werden unabhängig bearbeitet; geformte Absätze bleiben gemeinsam auswählbar und kopierbar.
 

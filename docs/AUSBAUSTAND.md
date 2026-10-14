@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 14. Oktober 2026, Version 0.13.22.
+Stand: 14. Oktober 2026, Version 0.13.23.
 
 Die Oberfläche enthält 22 vollständig sichtbare Headerbilder, sechs Schnellzugriffe,
 eine Dokumentübersicht und eine mobile Aktionsleiste im gemeinsamen PDF-Arbeitsbereich.
