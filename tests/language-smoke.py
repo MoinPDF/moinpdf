@@ -42,7 +42,14 @@ def check(page, name):
     for value in visible:
         if value in german:
             misses.append({'screen':name, 'text':value, 'expected':german[value]})
-    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), name
+    dimensions = page.evaluate('''() => ({
+        viewport: innerWidth, width: document.documentElement.scrollWidth,
+        overflowing: [...document.querySelectorAll('main *')].filter(el => {
+            const rect = el.getBoundingClientRect();
+            return rect.width && (rect.right > innerWidth + 2 || rect.left < -2);
+        }).slice(0, 12).map(el => ({tag: el.tagName, className: el.className, width: el.getBoundingClientRect().width}))
+    })''')
+    assert dimensions['width'] <= dimensions['viewport'] + 2, (name, dimensions)
 
 def back(page):
     page.get_by_role('button', name=re.compile(r'^(All tools|Change tool)$')).click()

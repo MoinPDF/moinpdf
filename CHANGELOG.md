@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.13.22 – 14. Oktober 2026
+
+- Lange Dateinamen verbreitern die Dokumentübersicht auf schmalen Smartphones
+  nicht mehr. Die Dateikarte bleibt innerhalb des Bildschirms; der vollständige
+  Name bleibt über die Beschriftung erreichbar.
+- Responsive Browserprüfungen warten auf die tatsächlich angepasste Bildbreite
+  und prüfen die aktuellen Projektbeschriftungen samt Speicherstatus.
+
 ## 0.13.21 – 14. Oktober 2026
 
 - Nach dem Entfernen der letzten Seite bleiben Rückgängig und Wiederholen auch
