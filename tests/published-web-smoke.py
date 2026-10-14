@@ -40,6 +40,17 @@ def project_toolbar(page):
     button = page.get_by_role('button', name=re.compile(r'^Projekte – '))
     expect(button).to_be_visible()
     assert button.evaluate('(el) => !["fixed", "absolute"].includes(getComputedStyle(el).position)')
+    # The shared toolbar stays at the viewport top while the document scrolls.
+    # Check that its real hit target remains clear at the current scroll position.
+    assert button.evaluate('''el => {
+      const r = el.getBoundingClientRect();
+      return el.closest('.app-toolbar') && r.top >= 0 && r.bottom <= innerHeight
+        && el.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+    }'''), 'Project button is outside the toolbar, off screen or covered'
+    # Compare the original flow positions at the document origin, not a sticky
+    # viewport coordinate against the already scrolled document container.
+    page.evaluate("window.scrollTo({top: 0, behavior: 'instant'})")
+    page.wait_for_function('window.scrollY === 0')
     assert page.locator('.project-bar').evaluate('(el) => el.getBoundingClientRect().bottom <= document.querySelector(".studio-provider").getBoundingClientRect().top + 1')
 
 def all_views(page, messages, context, empty=False):
