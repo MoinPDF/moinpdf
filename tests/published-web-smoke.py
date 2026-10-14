@@ -260,7 +260,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         page.get_by_label('Projektname', exact=True).fill('Browser-Testprojekt')
         page.get_by_role('button', name='Projekt speichern', exact=True).click()
-        expect(page.get_by_text('Alles an Bord – gespeichert.', exact=True)).to_be_visible()
+        expect(page.get_by_role('dialog', name='Lokale PDF-Projekte').get_by_role('status').filter(has_text='Alles an Bord – gespeichert.')).to_be_visible()
         expect(page.locator('.project-toggle')).to_have_attribute('aria-label', 'Projekte – Gespeichert')
         with page.expect_download() as download:
             page.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
@@ -301,7 +301,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         corrupt_file.write_bytes(corrupt)
         transfer.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         transfer.get_by_label('MoinPDF-Projektdatei', exact=True).set_input_files(str(corrupt_file))
-        expect(transfer.get_by_text('Die Projektdatei ist beschädigt oder unvollständig.', exact=True)).to_be_visible()
+        expect(transfer.get_by_role('dialog', name='Lokale PDF-Projekte').get_by_role('status').filter(has_text='Die Projektdatei ist beschädigt oder unvollständig.')).to_be_visible()
         transfer.keyboard.press('Escape')
         expect(transfer.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
         completed.append('Portable project downloads, imports into a fresh browser context, independently exports identical PDF content; damaged import keeps current session')
@@ -327,7 +327,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         lifecycle.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
         lifecycle.get_by_label('Projektname', exact=True).fill('Verbleibendes Projekt')
         lifecycle.get_by_role('button', name='Projekt speichern', exact=True).click()
-        expect(lifecycle.get_by_text('Alles an Bord – gespeichert.', exact=True)).to_be_visible()
+        expect(lifecycle.get_by_role('dialog', name='Lokale PDF-Projekte').get_by_role('status').filter(has_text='Alles an Bord – gespeichert.')).to_be_visible()
         with lifecycle.expect_download() as download:
             lifecycle.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
         cleaned_file = Path(temporary) / 'bereinigt.moinpdf'
