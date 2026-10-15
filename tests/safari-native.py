@@ -55,7 +55,10 @@ def label(name):
           const l=[...document.querySelectorAll('label')].find(e=>e.textContent.trim()===name);
           if(!l)return null;
           return (l.htmlFor&&document.getElementById(l.htmlFor))||l.querySelector('input,textarea,select');''', name)
-    return WebDriverWait(driver, 40).until(locate)
+    def ready(_):
+        found=locate(_)
+        return found if found and found.is_displayed() and found.is_enabled() else False
+    return WebDriverWait(driver, 40).until(ready)
 
 
 def fill(element, value):
@@ -161,7 +164,12 @@ def no_errors():
 
 
 def output_bytes(selector, name, actual_download=False, timeout=120):
-    link = visible(selector, timeout)
+    def ready(_):
+        errors=driver.execute_script('return (window.__qaToasts||[]).filter(t=>t.type==="error")')
+        if errors: raise AssertionError('Processing errors: '+json.dumps(errors,ensure_ascii=False))
+        links=driver.find_elements(By.CSS_SELECTOR,selector)
+        return next((e for e in links if e.is_displayed()),False)
+    link = WebDriverWait(driver, timeout).until(ready)
     payload = driver.execute_async_script('''const done=arguments[arguments.length-1];
       fetch(arguments[0]).then(r=>r.blob()).then(blob=>{
         const reader=new FileReader(); reader.onload=()=>done({data:reader.result});
@@ -189,6 +197,9 @@ def output_bytes(selector, name, actual_download=False, timeout=120):
 
 
 def check(name, fn):
+    selected=os.environ.get('MOINPDF_SAFARI_CASES','')
+    if selected and not any(part.lower() in name.lower() for part in selected.split(',')):
+        return
     start = time.monotonic()
     item = {'name': name}
     try:
@@ -318,6 +329,16 @@ try:
                 scan_pdf.new_page(width=900, height=200).insert_image(pymupdf.Rect(0, 0, 900, 200), stream=image)
                 scan_pdf.save(scan_path)
             fresh(scan_path)
+            report['pdfjsTextProbe']=driver.execute_async_script("""const done=arguments[arguments.length-1];
+              (async()=>{const out={streamAsyncIterator:typeof ReadableStream.prototype[Symbol.asyncIterator]};
+                try{const stream=new ReadableStream({start(c){c.enqueue('ok');c.close()}});let text='';for await(const value of stream)text+=value;out.streamResult=text}catch(e){out.streamError={message:e.message,stack:e.stack}};
+                const urls=performance.getEntriesByType('resource').map(r=>r.name).filter(u=>/\/assets\/pdf-[^/]+\.js$/.test(u));out.modules=[];
+                for(const url of urls){const mod=await import(url);out.modules.push({url,keys:Object.keys(mod)});
+                  const pdfjs=typeof mod.getDocument==='function'?mod:Object.values(mod).find(v=>v&&typeof v.getDocument==='function');
+                  if(!pdfjs)continue;
+                  try{const bytes=Uint8Array.from(atob(arguments[0]),c=>c.charCodeAt(0));const doc=await pdfjs.getDocument({data:bytes}).promise;const page=await doc.getPage(1);const content=await page.getTextContent();out.textItems=content.items.length;await doc.destroy()}catch(e){out.pdfTextError={message:e.message,stack:e.stack}};
+                }return out})().then(done).catch(e=>done({error:e.message,stack:e.stack}));""",base64.b64encode(scan_path.read_bytes()).decode())
+            print('PDFJS TEXT PROBE: '+json.dumps(report['pdfjsTextProbe']),flush=True)
             tool('OCR & Text')
             click(button('Text erkennen'))
             data = output_bytes('a[download]', 'safari-ocr.pdf', timeout=240)

@@ -15,6 +15,7 @@ jobs:
     timeout-minutes: 25
     env:
       MOINPDF_TEST_URL: http://127.0.0.1:8765
+      MOINPDF_SAFARI_CASES: IndexedDB,OCR
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
