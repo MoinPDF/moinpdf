@@ -25,6 +25,27 @@ def framed(locator):
         }''')
         assert style[0] == '1px' and style[1] == 'solid' and style[2] not in ('transparent', 'rgba(0, 0, 0, 0)'), style
 
+def home_geometry(page, width):
+    # CDP box queries and DOM style reads can describe different frames after
+    # a viewport resize. Measure all related geometry in one browser task and
+    # retain that exact sample for the assertions below.
+    sample = page.wait_for_function('''width => {
+        if (innerWidth !== width) return false;
+        const welcome = document.querySelector('.harbor-welcome');
+        const style = getComputedStyle(welcome);
+        const rect = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
+        const image = rect('.harbor-photo');
+        const available = welcome.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const expected = width > 1000 ? Math.min(640, available) : available;
+        if (Math.abs(image.width - expected) > 1) return false;
+        return {image, available, upload: rect('.harbor-upload'), search: rect('.harbor-search'),
+            documentWidth: document.documentElement.clientWidth};
+    }''', arg=width)
+    try:
+        return sample.json_value()
+    finally:
+        sample.dispose()
+
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
     context = browser.new_context(viewport={'width':1440, 'height':1000}, reduced_motion='reduce')
@@ -50,20 +71,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 expect(page.locator('html')).to_have_class('dark')
             for width in (320, 390, 600, 768, 1000, 1024, 1440, 1920):
                 page.set_viewport_size({'width':width, 'height':1000 if width > 1000 else 844})
-                # Wait for the responsive layout to settle before comparing
-                # geometry captured by separate browser protocol requests.
-                page.wait_for_function('''() => {
-                    const photo = document.querySelector('.harbor-photo');
-                    const welcome = document.querySelector('.harbor-welcome');
-                    const style = getComputedStyle(welcome);
-                    const available = welcome.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-                    const expected = innerWidth > 1000 ? Math.min(640, available) : available;
-                    return Math.abs(photo.getBoundingClientRect().width - expected) <= 1;
-                }''')
+                geometry = home_geometry(page, width)
                 within_viewport(page, f'home {theme} {width}')
-                image = page.locator('.harbor-photo').bounding_box()
-                upload = page.locator('.harbor-upload').bounding_box()
-                search = page.locator('.harbor-search').bounding_box()
+                image, upload, search = (geometry[key] for key in ('image', 'upload', 'search'))
                 assert image['y'] + image['height'] <= upload['y'], (theme, width, 'photo order')
                 assert upload['y'] + upload['height'] < search['y'], (theme, width, 'upload order')
                 assert page.locator('.harbor-upload-cta').bounding_box()['height'] >= 44
@@ -73,9 +83,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 assert abs(image['width'] / image['height'] - 16 / 9) < 0.02
                 if width > 1000:
                     assert image['width'] <= 640.5
-                    assert abs(image['x'] + image['width']/2 - page.evaluate('document.documentElement.clientWidth')/2) <= 1
+                    assert abs(image['x'] + image['width']/2 - geometry['documentWidth']/2) <= 1
                 else:
-                    available = page.locator('.harbor-welcome').evaluate('(el) => { const style = getComputedStyle(el); return el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight); }')
+                    available = geometry['available']
                     assert abs(image['width'] - available) <= 1, (theme, width, image, available)
                 assert page.locator('.harbor-photo img').evaluate('(img) => getComputedStyle(img).objectFit') == 'contain'
                 nav = page.locator('.harbor-desktop-nav' if width > 1000 else '.harbor-mobile-nav')
