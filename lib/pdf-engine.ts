@@ -3,6 +3,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Worker } from 'tesseract.js';
 import type { PdfReport } from './pdf-report';
 import { parseOcrLanguages } from './ocr-languages';
+import type { Language } from './ui-language';
 
 export type Source = {
   id: string;
@@ -584,45 +585,85 @@ export async function downloadWord(text: string, filename: string) {
   });
   downloadBlob(await Packer.toBlob(doc), filename);
 }
-export async function makeDemoFile() {
+export async function makeDemoFile(language: Language = 'de') {
   const doc = await PDFDocument.create();
-  for (const [title, subtitle, lines] of [
-    [
-      'Musterrechnung',
-      'Nordlicht Studio · Beispieldokument',
-      [
-        'Rechnung Nr. 2026-014',
-        'Datum: 04.10.2026',
-        '',
-        'Leistung                          Betrag',
-        'Gestaltung einer Broschüre         250,00 EUR',
-        'Überarbeitung der Druckdaten        85,00 EUR',
-        '',
-        'Gesamtbetrag                      335,00 EUR',
-        '',
-        'Vielen Dank für die gute Zusammenarbeit.',
-        'Dieses Dokument enthält ausschließlich Beispieldaten.',
-      ],
-    ],
-    [
-      'Projektübersicht',
-      'Nordlicht Studio · Beispieldokument',
-      [
-        'Projekt: Neue Broschüre',
-        '',
-        '1. Inhalte prüfen und Texte überarbeiten',
-        '2. Bilder auswählen und Layout abstimmen',
-        '3. Druckdaten vorbereiten',
-        '',
-        'Notizen',
-        'Die Freigabe erfolgt nach der gemeinsamen Prüfung.',
-        'Änderungen können bis zum Abschluss ergänzt werden.',
-        '',
-        'Dieses PDF besteht aus gescannten Bildern.',
-        'Probiere die Texterkennung oder die Seitenwerkzeuge aus.',
-      ],
-    ],
-  ] as [string, string, string[]][]) {
+  const demoPages: [string, string, string[]][] =
+    language === 'en'
+      ? [
+          [
+            'Sample invoice',
+            'Nordlicht Studio · Sample document',
+            [
+              'Invoice No. 2026-014',
+              'Date: 4 October 2026',
+              '',
+              'Service                           Amount',
+              'Brochure design                   250.00 EUR',
+              'Print file revisions               85.00 EUR',
+              '',
+              'Total                             335.00 EUR',
+              '',
+              'Thank you for working with us.',
+              'This document contains sample data only.',
+            ],
+          ],
+          [
+            'Project overview',
+            'Nordlicht Studio · Sample document',
+            [
+              'Project: New brochure',
+              '',
+              '1. Review the content and revise the text',
+              '2. Select images and agree on the layout',
+              '3. Prepare the print files',
+              '',
+              'Notes',
+              'Final approval follows a joint review.',
+              'Changes can be added until the project is complete.',
+              '',
+              'This PDF consists of scanned images.',
+              'Try text recognition or the page tools.',
+            ],
+          ],
+        ]
+      : [
+          [
+            'Musterrechnung',
+            'Nordlicht Studio · Beispieldokument',
+            [
+              'Rechnung Nr. 2026-014',
+              'Datum: 04.10.2026',
+              '',
+              'Leistung                          Betrag',
+              'Gestaltung einer Broschüre         250,00 EUR',
+              'Überarbeitung der Druckdaten        85,00 EUR',
+              '',
+              'Gesamtbetrag                      335,00 EUR',
+              '',
+              'Vielen Dank für die gute Zusammenarbeit.',
+              'Dieses Dokument enthält ausschließlich Beispieldaten.',
+            ],
+          ],
+          [
+            'Projektübersicht',
+            'Nordlicht Studio · Beispieldokument',
+            [
+              'Projekt: Neue Broschüre',
+              '',
+              '1. Inhalte prüfen und Texte überarbeiten',
+              '2. Bilder auswählen und Layout abstimmen',
+              '3. Druckdaten vorbereiten',
+              '',
+              'Notizen',
+              'Die Freigabe erfolgt nach der gemeinsamen Prüfung.',
+              'Änderungen können bis zum Abschluss ergänzt werden.',
+              '',
+              'Dieses PDF besteht aus gescannten Bildern.',
+              'Probiere die Texterkennung oder die Seitenwerkzeuge aus.',
+            ],
+          ],
+        ];
+  for (const [title, subtitle, lines] of demoPages) {
     const canvas = document.createElement('canvas');
     canvas.width = 1240;
     canvas.height = 1754;
@@ -644,7 +685,11 @@ export async function makeDemoFile() {
     doc.addPage([595.28, 841.89]).drawImage(image, { x: 0, y: 0, width: 595.28, height: 841.89 });
     canvas.width = canvas.height = 0;
   }
-  return new File([new Uint8Array(await doc.save())], 'Beispiel-Scan.pdf', {
-    type: 'application/pdf',
-  });
+  return new File(
+    [new Uint8Array(await doc.save())],
+    language === 'en' ? 'Sample-Scan.pdf' : 'Beispiel-Scan.pdf',
+    {
+      type: 'application/pdf',
+    },
+  );
 }

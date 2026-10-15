@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 14. Oktober 2026, Version 0.13.23.
+Stand: 15. Oktober 2026, Version 0.13.24.
 
 Die Oberfläche enthält 22 vollständig sichtbare Headerbilder, sechs Schnellzugriffe,
 eine Dokumentübersicht und eine mobile Aktionsleiste im gemeinsamen PDF-Arbeitsbereich.
@@ -10,7 +10,8 @@ Auch Projektstände ohne Seiten bieten Rückgängig und Wiederholen.
 Die Werkzeugseitenleiste ist zunächst eingeklappt. Header und Upload behalten ihre
 bisherige Gestaltung und die vorhandenen Farben; die Komprimierung bietet die
 Stufen Sanft, Ausgewogen und Möglichst klein. Die Bedienungsanleitung ist in Deutsch
-und Englisch verfügbar. Nachweise für einzelne technische Funktionen stehen bei
+und Englisch verfügbar. Die Beispiel-PDF wird passend zur App-Sprache auf Deutsch
+oder Englisch erzeugt. Nachweise für einzelne technische Funktionen stehen bei
 den zugehörigen Prüfläufen; die Versionsangabe ersetzt keine Funktionsprüfung.
 
 Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan mit

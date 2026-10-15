@@ -155,13 +155,24 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             nav.get_by_role('button', name='Start', exact=True).click()
         checks.append('Home and catalogue resolve the same tool identities with visible icons; empty-tool back navigation works')
         # Importing after choosing a core tool must keep that tool selected.
-        for tool_id, method in (('merge', 'drop'), ('organize', 'picker'), ('sign', 'picker'), ('merge', 'demo'), ('sign', 'blank')):
+        for tool_id, method, language in (('merge', 'drop', 'de'), ('organize', 'picker', 'de'), ('sign', 'picker', 'de'), ('merge', 'demo', 'de'), ('merge', 'demo', 'en'), ('sign', 'blank', 'de')):
             imported = browser.new_context(viewport={'width':390, 'height':844}, reduced_motion='reduce')
+            if method == 'demo':
+                imported.add_init_script('''
+                    window.sampleText = [];
+                    const original = CanvasRenderingContext2D.prototype.fillText;
+                    CanvasRenderingContext2D.prototype.fillText = function(text, x, y, ...rest) {
+                        window.sampleText.push({text, fits: x + this.measureText(text).width < this.canvas.width - 50 && y < this.canvas.height - 50});
+                        return original.call(this, text, x, y, ...rest);
+                    };
+                ''')
             test = imported.new_page()
             test.on('pageerror', lambda error: errors.append(str(error)))
-            test.goto(origin)
+            test.goto(origin + ('?lang=en' if language == 'en' else ''))
+            if language == 'en':
+                expect(test.get_by_text('Paperwork. Sorted.', exact=True)).to_be_visible()
             card = test.locator(f'.tool-mosaic-card[data-tool-id="{tool_id}"]')
-            title = tool_titles[tool_id]
+            title = 'Merge PDFs' if language == 'en' else tool_titles[tool_id]
             card.click()
             expect(test.locator('main h1')).to_have_text(title)
             if method == 'drop':
@@ -175,18 +186,43 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     test.get_by_role('button', name='Dateien auswählen', exact=True).click()
                 chooser.value.set_files(str(pdf))
             elif method == 'demo':
-                test.get_by_role('button', name='Mit Beispieldokument ausprobieren', exact=True).click()
+                test.get_by_role('button', name='Try a sample document' if language == 'en' else 'Mit Beispieldokument ausprobieren', exact=True).click()
             else:
                 test.get_by_role('button', name='Leerseite', exact=True).click()
             expect(test.locator('.file-tab')).to_have_count(1)
             if method in ('drop', 'picker'):
                 expect(test.locator('.file-tab').first).to_contain_text(pdf.name)
+            if method == 'demo':
+                filename = 'Sample-Scan.pdf' if language == 'en' else 'Beispiel-Scan.pdf'
+                expect(test.locator('.file-tab').first).to_contain_text(filename)
+                drawn = test.evaluate('window.sampleText')
+                texts = [entry['text'] for entry in drawn]
+                for text in (('Sample invoice', 'Project overview') if language == 'en' else ('Musterrechnung', 'Projektübersicht')):
+                    assert text in texts, (language, texts)
+                assert all(entry['fits'] for entry in drawn), (language, drawn)
+                if language == 'en':
+                    assert not any(re.search(r'Musterrechnung|Projektübersicht|Beispieldokument', text) for text in texts), texts
             expect(test.locator('main h1')).to_have_text(title)
             if tool_id == 'sign':
                 expect(test.get_by_role('tab', name='Vorschau', exact=True)).to_have_attribute('aria-selected', 'true')
-            test.screenshot(path=str(out/f'harbor-selected-import-{tool_id}-{method}.png'), full_page=True)
+            test.screenshot(path=str(out/f'harbor-selected-import-{tool_id}-{method}-{language}.png'), full_page=True)
+            if method == 'demo' and language == 'en':
+                test.locator('.language-trigger').click()
+                test.get_by_role('menuitemradio', name='Deutsch', exact=True).click()
+                expect(test.locator('main h1')).to_have_text(tool_titles[tool_id])
+                expect(test.locator('.file-tab').first).to_contain_text('Sample-Scan.pdf')
+                assert test.evaluate('window.sampleText') == drawn, 'Changing UI language must keep the open sample unchanged'
+                test.locator('.file-tab button').click()
+                expect(test.locator('.file-tab')).to_have_count(0)
+                test.evaluate('window.sampleText = []')
+                test.get_by_role('button', name='Mit Beispieldokument ausprobieren', exact=True).click()
+                expect(test.locator('.file-tab').first).to_contain_text('Beispiel-Scan.pdf')
+                texts = test.evaluate('window.sampleText.map(entry => entry.text)')
+                assert 'Musterrechnung' in texts and 'Projektübersicht' in texts, texts
+                assert 'Sample invoice' not in texts, texts
+                checks.append('Changing language retains the open sample; the next sample uses the new language')
             imported.close()
-            checks.append(f'{title}: {method} import keeps the chosen tool and document')
+            checks.append(f'{title}: {method} import in {language} keeps the chosen tool and document')
         page.set_viewport_size({'width':390, 'height':844})
         page.locator('.language-trigger').click()
         page.get_by_role('menuitemradio', name='English', exact=True).click()

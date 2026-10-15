@@ -933,7 +933,7 @@ function Studio() {
   async function demo() {
     if (locked) return;
     try {
-      await addFiles([await makeDemoFile()], false);
+      await addFiles([await makeDemoFile(language)], false);
     } catch {
       toast.error(ui('Das Beispieldokument konnte nicht geöffnet werden.'));
     }

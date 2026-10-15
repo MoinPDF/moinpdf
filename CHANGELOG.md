@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.13.24 – 15. Oktober 2026
+
+- Die Beispiel-PDF folgt beim Öffnen der gewählten App-Sprache. Rechnung und
+  Projektübersicht sind vollständig auf Deutsch oder Englisch verfügbar,
+  einschließlich Datum, Beträgen und Dateiname.
+- Sprachwechsel gelten für neu erzeugte Beispiele; bereits geöffnete Dokumente
+  bleiben erhalten. Beide Sprachfassungen bleiben bildbasierte Scans zum
+  Ausprobieren der Texterkennung und Seitenwerkzeuge.
+
 ## 0.13.23 – 14. Oktober 2026
 
 - Die lokale Office-Laufzeit bereitet acht Hintergrundthreads vor und prüft
