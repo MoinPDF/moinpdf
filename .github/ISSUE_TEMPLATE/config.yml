@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Allgemeine Fragen
+  - name: Allgemeine Fragen / General questions
     url: mailto:ahoi@moinpdf.de
-    about: Hilfe zur Anwendung und sonstige Rückfragen
-  - name: Sicherheitslücke vertraulich melden
+    about: Hilfe zur Anwendung / Help with the app and general enquiries
+  - name: Sicherheitsmeldung / Confidential security report
     url: mailto:post@moinpdf.de
-    about: Bitte keine Sicherheitsdetails öffentlich posten
+    about: Bitte keine Sicherheitsdetails öffentlich posten / Do not post security details publicly

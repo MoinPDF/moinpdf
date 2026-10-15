@@ -1,5 +1,7 @@
 # Lokales Office zu PDF
 
+**Deutsch** · [English](BROWSER-OFFICE.en.md) · [← README](../README.md)
+
 MoinPDF 0.11.0 verwendet `@matbee/libreoffice-converter` 2.7.2 mit LibreOffice/WASM. Word, Excel, PowerPoint, OpenDocument und RTF werden standardmäßig im Browser verarbeitet. Pages, Visio und Publisher bleiben Funktionen des eigenen Dokumentenservers. Ein fehlgeschlagener lokaler Auftrag wird nicht automatisch hochgeladen.
 
 Die Eingabegrenze beträgt 40 MB. Die Laufzeit benötigt HTTPS oder localhost, COOP/COEP, SharedArrayBuffer und DecompressionStream. Sie reserviert 1 GiB gemeinsamen WASM-Speicher; insgesamt ist mehr als 1 GB freier Arbeitsspeicher erforderlich. Auf speicherarmen Mobilgeräten ist dieser Modus nicht verlässlich nutzbar.

@@ -1,6 +1,6 @@
 # Funktionen und Grenzen
 
-[← Zurück zur README](../README.md)
+**Deutsch** · [English](FEATURES.en.md) · [← README](../README.md)
 
 Diese Übersicht erklärt Werkzeuge, Ausgabeformate und technische Grenzen. Das durchsuchbare Handbuch mit Arbeitsschritten erreichst du in der App über **Dokumentation**. Für die vollständige Installation siehe [Docker](../DOCKER.md).
 
@@ -69,7 +69,7 @@ Der Abruf übernimmt keine Anmeldung oder Cookies aus deinem Browser. Cookie-Ban
 - Interne und externe PDF-Links hinzufügen, ändern und entfernen; Vorschau und Koordinaten unterstützen gedrehte Seiten.
 - Anhänge hinzufügen, ersetzen, umbenennen und entfernen; QPDF bereinigt nicht mehr referenzierte eingebettete Dateistreams.
 - Kamera-/Fotoscanner mit Vierpunkt-Perspektivkorrektur, Scanbereinigung und bis zu 50 gesammelten Seiten.
-- Weitere Werkzeuge der **vollständigen Installation**: Office zu PDF, PDF/A erzeugen/prüfen, vollständige KoSIT-XRechnung-Validierung und Zertifikatssignaturen. [Servereinrichtung und Grenzen](../server/README.md).
+- Weitere Werkzeuge der **vollständigen Installation**: serverseitiges Office zu PDF, PDF/A erzeugen/prüfen, vollständige KoSIT-XRechnung-Validierung und serverseitige Zertifikatssignaturen. [Servereinrichtung und Grenzen](../server/README.md). Standard-Office-Formate und einfache Zertifikatssignaturen bieten auch lokale Browsermodi; siehe [Ausbaustand](AUSBAUSTAND.md).
 
 ## Prüfen mit Fundstellen
 
@@ -115,30 +115,30 @@ Vorlesetext geht an den integrierten Dokumentenserver. Maximal 20.000 Zeichen un
 100 Abschnitte pro Auftrag; maximal drei Minuten Laufzeit. Ein abgebrochener
 Browserabruf beendet einen bereits gestarteten Serverauftrag nicht sofort.
 Die Browser-Ausgabe kann Vorlesetext auch ohne Server als TXT speichern.
-Lizenzen und Modellversionen: [Audio-Hinweise](../server/AUDIO-NOTICES.md).
+Lizenzen und Modellversionen: [Audio-Hinweise](../server/AUDIO-NOTICES.de.md).
 
 ## Konvertieren und erweiterte Prüfungen
 
-Alle Werkzeuge stehen direkt unter dem Suchfeld, nach ihrer Aufgabe gegliedert. Es gibt keine vorgeschaltete Schnellwahl oder Kategoriekacheln. Auf schmalen Ansichten brechen lange Werkzeugnamen innerhalb ihrer Kacheln um. Über „Alle Werkzeuge“ ist die Übersicht auch ohne geöffnetes PDF erreichbar.
+Schnellzugriffe, Suche und „Alle Werkzeuge“ führen zu den nach Aufgabe gegliederten Werkzeugen. Auf schmalen Ansichten brechen lange Werkzeugnamen innerhalb ihrer Kacheln um. Die Übersicht ist auch ohne geöffnetes PDF erreichbar.
 
 | Werkzeug | Ausführung | Umfang |
 |---|---|---|
 | Nach Dateigröße teilen | Browser | Tatsächlich gemessene Bytes je PDF, vollständige Seitenreihenfolge, ZIP; zu große Einzelseiten werden gemeldet |
 | PDF zu Word | Server | Bearbeitbare DOCX aus Text, Tabellen und Bildern mit pdf2docx; Scans benötigen OCR |
-| PDF zu PowerPoint | Server | Eine gerenderte PDF-Seite je Folie; Seitenbilder statt editierbarer Einzelobjekte |
+| PDF zu PowerPoint | Server | Standardmäßig eine gerenderte PDF-Seite je Folie; optional bearbeitbarer Text mit Stil und Position. Komplexe Layouts können abweichen. |
 | E-Mails zu PDF | Server | EML/MSG, Unicode-Kopfzeilen und Nachricht; unveränderte Anlagen mit eindeutigen Namen im ZIP |
-| HTML & Webseiten zu PDF | Server | Gespeicherte HTML-Dateien mit Überschriften und Tabellen; keine Skripte oder externen Ressourcen |
+| HTML & Webseiten zu PDF | Server | Gespeicherte HTML-Dateien mit Überschriften und Tabellen ohne Skripte/externe Ressourcen; öffentliche Website-Links über den oben beschriebenen separaten Chromium-Dienst |
 | Seiten automatisch ausrichten | Server | Tesseract OSD, 90/180/270 Grad, Mindestvertrauen und seitenweiser Bericht |
 | Buchscans entzerren | Server | Einstellbare quadratische Spaltenkorrektur links/rechts, neue Seitenbilder |
 | Formularfelder erkennen | Server | Leere Rechtecke, Linien und Scan-Konturen; erzeugte Felder anschließend bearbeiten |
 | Schwärzungen prüfen | Server | Textsuche, Metadaten, verdächtige dunkle Vektor-Überdeckungen; keine Sicherheitsfreigabe |
 | Druckqualität prüfen | Server | Bildauflösung, Font-Einbettung, Seitenboxen; keine PDF/X-Zertifizierung |
 | Barrierefreiheit prüfen | Server | Basisprüfung, veraPDF für PDF/UA-1/-2; Struktureditor für neue PDF/UA-1-Dokumente mit geprüfter Ausgabe; manuelle Inhaltsprüfung zusätzlich nötig |
-| PDF übersetzen | Server + eigener LibreTranslate-Dienst | Auslesbarer Text und Übersetzung nebeneinander; bis 60.000 Zeichen |
+| PDF übersetzen | Server + eigener LibreTranslate-Dienst | Auslesbarer Text und Übersetzung nebeneinander oder an Originalpositionen mit Überlaufprüfung; bis 60.000 Zeichen |
 | ZUGFeRD-Assistent | Server | PDF/A-3 und passende CII-XML verbinden; Mustang und veraPDF-Berichte, negative Befunde klar benannt |
 | Word-Serienbriefe | Server | DOCX mit {{Spaltenname}} und XLSX; bis 50 Datensätze, einzelne PDFs im ZIP |
 
-Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. HTML-Import ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
+Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. Der Import gespeicherter HTML-Dateien ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
 
 ## Verhalten und Grenzen
 
@@ -157,12 +157,9 @@ Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die 
 - Ressourcen und OCR-Sprachdaten kommen vom gleichen Ursprung. Hosting-Zugriffe und die Hosting-Anmeldung sind unabhängig von der lokalen Dokumentverarbeitung.
 - Optionale WebMCP-Werkzeuge registrieren sich nur, wenn `document.modelContext` verfügbar ist. Im HTTP-Vorschau-Browser fehlt diese Schnittstelle; die UI funktioniert unabhängig davon.
 
----
+## Historische Ergänzungen in 0.7.0
 
-[Zur README](../README.md) · [Installation](../DOCKER.md) · [Entwicklung](ENTWICKLUNG.md)
-
-
-## Ergänzungen in 0.7.0
+Diese Einträge beschreiben den damaligen Versionsstand. Aktuell unterstützt OCR bis zu acht Sprachen und eine optionale Sprachprobe, wie oben beschrieben.
 
 - **OCR und Scan-Suche:** Bis zu vier der 21 lokal ausgelieferten Sprachen kombinieren.
   Keine automatische Spracherkennung; mehr Sprachen benötigen mehr Arbeitsspeicher.
@@ -175,15 +172,14 @@ Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die 
   Rechnungs-XML, bis zu 80 MB Dokumentdaten und 20 MB Bearbeitungsdaten. Vorhandene
   PDFs werden beim Import tatsächlich geöffnet und Seitenverweise geprüft.
 
-
-## Ergänzungen in 0.8.0
+## Historische Ergänzungen in 0.8.0
 
 - Absatzeditor im Werkzeug „PDF-Objekte bearbeiten“: mehrere Textobjekte ersetzen,
   automatische Zeilenumbrüche, Noto Sans oder eigene statische TTF, Größe, Farbe,
   Ausrichtung, Innen- und Zeilenabstand; echte Ergebnisvorschau. Fehlende Glyphen,
   Textüberlauf und überstehende Schriftkonturen verhindern den Export.
 - Absätze unterstützen gemischte Formatierungen, Folgeseiten und komplexe Schriftformung mit HarfBuzz;
-  Texte innerhalb von Objektgruppen bleiben ausgenommen. Übrige Objekte bleiben
+  Texte innerhalb von Objektgruppen bleiben vom Absatzmodus ausgenommen. Übrige Objekte bleiben
   erhalten. Vorhandene Signaturen und Struktur-Tags nach Textänderungen prüfen.
 - „Barrierefreiheit prüfen“ bietet zusätzlich echte veraPDF-Profile für PDF/UA-1
   und PDF/UA-2. Neue Dokumente können aus Überschriften, Absätzen und Bildern mit
@@ -196,3 +192,7 @@ Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die 
 - PDF-Textimport ist ein Entwurf und übernimmt weder Originalseitenlayout noch
   Tabellen, Bilder, Formulare oder Signaturen. Diese Funktion ist keine
   nachträgliche automatische Reparatur beliebiger existierender PDF-Tags.
+
+---
+
+[Zur README](../README.md) · [Installation](../DOCKER.md) · [Entwicklung](ENTWICKLUNG.md)

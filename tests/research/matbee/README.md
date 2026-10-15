@@ -1,7 +1,11 @@
 # Isolierte LibreOffice-WASM-Probe
 
-Kein Bestandteil des Produktionsbuilds. Paketierung, Browser, Mobilgeräte und
-zuverlässiger harter Abbruch sind noch nicht freigegeben.
+**Deutsch** · [English](README.en.md) · [← Entwicklung](../../../docs/ENTWICKLUNG.md)
+
+Diese isolierte Forschungsprobe ist kein Bestandteil des Produktionsbuilds und
+belegt keine Freigabe für Paketierung, Browser, Mobilgeräte oder zuverlässigen harten
+Abbruch. Die inzwischen integrierte Produktionslaufzeit ist unter
+[Browser-Office](../../../docs/BROWSER-OFFICE.md) beschrieben.
 
 In einem neuen, leeren Probeordner ausführen; REPO durch den absoluten Pfad des
 MoinPDF-Checkouts ersetzen. Python benötigt python-docx, openpyxl, python-pptx,

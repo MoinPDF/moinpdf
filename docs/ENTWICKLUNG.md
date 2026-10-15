@@ -1,6 +1,6 @@
 # Entwicklung und Prüfung
 
-[← Zurück zur README](../README.md)
+**Deutsch** · [English](DEVELOPMENT.en.md) · [← README](../README.md)
 
 ## Lokale Einrichtung
 
@@ -47,7 +47,7 @@ Die folgenden Prüfungen decken Dokumentverarbeitung und Ausgaben ab. Serverprü
 - `python -m pip_audit --disable-pip --no-deps -r server/requirements.lock.txt`: vollständiger Python-Lockfile einschließlich transitiver Pakete (pip-audit 2.10.1)
 - `pnpm run lint`: ESLint ohne zugelassene Warnungen
 - `node tests/release-workflow-smoke.mjs`: Freigabesicherheit bei falschen Images, Quellständen oder Prüfläufen
-- `pnpm test`: alle 30 Browser-Engine-Testsuiten
+- `pnpm test`: alle 33 Browser-Engine-Testsuiten
 - `node tests/complex-scripts-smoke.mjs`: 19 mit nativem HarfBuzz erzeugte Referenzen, Glyphenpositionen, unabhängige PDF-Bilder, Unicode und atomare Absatzänderung
 - `node tests/nested-native-smoke.mjs`: geteilte und verschachtelte Form-/Bildressourcen, Transformationen, Beschnitt, Transparenz und mehrfache Bearbeitung
 - `python tests/native-editor-browser.py`: Produktionsbrowser, lokales HarfBuzz/WASM, Font-Fallback und Gruppenbedienung
@@ -86,6 +86,11 @@ node --experimental-strip-types scripts/build-documentation.mjs
 
 Das Ergebnis ist `public/dokumentation.html`. Beide Produktionsbuilds erzeugen das Handbuch automatisch. Suchfunktion, Kategorien, direkt verlinkbare Anleitungen und Druckansicht gehören zum Handbuch; Inhalte bleiben auch ohne JavaScript lesbar.
 
+Die Repository-Anleitungen gemeinsam auf Deutsch und Englisch pflegen. Der
+[Dokumentationsindex](../README.md#dokumentation) nennt die zugehörigen Fassungen.
+Ausführbare Befehle, Dateipfade, API-Namen, Prüfsummen und historische Versionsangaben
+bei Übersetzungen erhalten.
+
 ## Medienbereich pflegen
 
 [media/banner-catalog.json](../media/banner-catalog.json) enthält Motive, Beschreibungen, Pixelmaße und SHA-256-Prüfsummen. Die Originaldateien liegen unter `public/media/banners/`.
@@ -100,27 +105,21 @@ Der Build prüft die Originaldateien und erzeugt Medienseite, Textdateien und ei
 
 Der projektweite [Lizenzstatus](../LICENSE) erteilt keine pauschale Open-Source-Freigabe. Ausdrücklich lizenzierte Dateien und Drittanbieterkomponenten behalten ihre bestehenden Rechte und Hinweise.
 
-
 PDF.js, Tesseract.js und deutsche/englische Sprachdaten (Apache-2.0), pdf-lib, JSZip und docx (MIT), Manrope und Space Grotesk (SIL Open Font License). Lizenztexte werden aus den Paketen unter `public/vendor/licenses` mitgeliefert. qpdf/WASM für Verschlüsselung, fontkit und Noto Sans für die E-Rechnungs-Leseansicht werden ebenfalls lokal ausgeliefert; zugehörige Lizenztexte liegen unter `public/vendor`. Für Codes kommen bwip-js und ZXing hinzu; ihre Lizenztexte werden ebenfalls mitgeliefert. Die Browserfunktionen verwenden lokal ausgelieferte Ressourcen.
 
 Zusätzliche lokale Decoder, Modelllaufzeit, genaue Quellstände und Austausch der LGPL-Bibliothek: [Komponentenhinweise](../public/component-notices/README.txt).
 
-Schriftlizenzen der Wortmarke: [public/branding/LICENSES.txt](../public/branding/LICENSES.txt). Modellversionen und Lizenzen der Sprachausgabe: [server/AUDIO-NOTICES.md](../server/AUDIO-NOTICES.md). Weitere Serverkomponenten sind in der [Serverdokumentation](../server/README.md) beschrieben.
+Schriftlizenzen der Wortmarke: [public/branding/LICENSES.txt](../public/branding/LICENSES.txt). Modellversionen und Lizenzen der Sprachausgabe: [server/AUDIO-NOTICES.de.md](../server/AUDIO-NOTICES.de.md). Weitere Serverkomponenten sind in der [Serverdokumentation](../server/README.md) beschrieben.
 
 ## Formatierung und Wartung
 
-`pnpm run format` formatiert die gepflegten Anwendungsdateien. `pnpm run format:check` prüft dieselben Dateien ohne Änderungen. ESLint prüft TypeScript und Hook-Regeln; Warnungen zu schrittweisen Verbesserungen bleiben im Prüfprotokoll sichtbar. Dokumentverarbeitung wird durch echte Ausgabetests abgesichert.
+`pnpm run format` formatiert die gepflegten Anwendungsdateien. `pnpm run format:check` prüft dieselben Dateien ohne Änderungen. ESLint prüft TypeScript und Hook-Regeln. Gemeldete Warnungen bleiben im Prüfprotokoll sichtbar; die Freigabe erlaubt keine Warnungen. Dokumentverarbeitung wird durch echte Ausgabetests abgesichert.
 
 Dependabot schlägt Aktualisierungen für JavaScript, Python, Container und GitHub Actions vor. Aktualisierungen werden nicht automatisch gemergt. Rückmeldungen und Beiträge sind in [CONTRIBUTING.md](../CONTRIBUTING.md) beschrieben.
 
 ## Versionierung
 
 Die zentrale Versionsnummer steht in [package.json](../package.json) und wird im Footer angezeigt. Versionsänderungen sind in [CHANGELOG.md](../CHANGELOG.md) dokumentiert. Docker-Images enthalten Version und Quellcode-Commit im Tag. Veröffentlichte Releases enthalten zusätzlich die unveränderlichen Image-Referenzen mit Digest.
-
----
-
-[Zur README](../README.md) · [Funktionen und Grenzen](FUNKTIONEN.md) · [Docker-Anleitung](../DOCKER.md)
-
 
 ## Eine Version veröffentlichen
 
@@ -130,8 +129,9 @@ Die zentrale Versionsnummer steht in [package.json](../package.json) und wird im
 3. Den erfolgreichen Abschluss aller vier Images für amd64 und arm64 abwarten.
    Die Artefakte `docker-image-web`, `docker-image-documents` und
    `docker-image-translation` sowie `docker-image-website` enthalten Tags, Digests, Quellstand und Plattformen.
-4. Unter Actions **Publish verified release** auf `main` starten und als
-   `image_run_id` die ID des erfolgreichen Image-Laufs angeben. Der Workflow
+4. **Publish verified release** startet nach der erfolgreichen Image-Veröffentlichung.
+   Alternativ unter Actions auf `main` manuell starten und als `image_run_id` die ID
+   des erfolgreichen Image-Laufs angeben. Der Workflow
    verlangt identische Quellstände, bestandene Docker-Prüfungen, vollständige
    Image-Referenzen und einen Changelog für die aktuelle Version. Anschließend
    erstellt er Tag und Release samt Image-Nachweisen. Bestehende Releases werden
@@ -143,3 +143,7 @@ Installationspakete für externe Plattformen werden außerhalb dieses Repository
 gepflegt und verwenden die freigegebenen, per Digest festgelegten Images.
 
 Zusätzliche Schriftformung: [HarfBuzz-Hinweise](../public/component-notices/harfbuzz/README.txt), [Noto-Prüfsummen](../public/vendor/editor-fonts/NOTO-MANIFEST.json) und [OFL-Lizenz](../public/vendor/editor-fonts/NOTO-LICENSE.txt). Die Formreferenzen werden unabhängig mit `tests/research/generate-native-shaping.py` und dem nativen System-HarfBuzz erzeugt; die Tests erzeugen ihre Sollwerte nicht aus der verwendeten JavaScript-Bibliothek.
+
+---
+
+[Zur README](../README.md) · [Funktionen und Grenzen](FUNKTIONEN.md) · [Docker-Anleitung](../DOCKER.md)

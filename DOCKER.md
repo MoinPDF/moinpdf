@@ -1,5 +1,7 @@
 # Vollständige Installation mit Docker Compose
 
+**Deutsch** · [English](DOCKER.en.md) · [← README](README.md)
+
 Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den Dokumentenserver, den Webseiten-Konverter und LibreTranslate. Alle Werkzeugansichten sind enthalten. Der Browser verbindet sich automatisch mit dem eigenen Dokumentenserver; Serveradressen und API-Schlüssel müssen nicht eingetragen werden. Die dokumentbezogenen Grenzen der einzelnen Werkzeuge gelten auch in Docker.
 
 ## Start
@@ -41,7 +43,7 @@ docker compose up -d --build --wait --wait-timeout 1800
 
 Die Installation lädt die erforderlichen Sprachpaare einschließlich Englisch als Zwischensprache und führt erste Übersetzungen aus, damit auch benötigte Satztrennungsmodelle zwischengespeichert sind. Unterbrochene Downloads werden beim nächsten Versuch ergänzt. Die Modelle und Zwischenspeicher liegen in Docker-Volumes. Die Modellinitialisierung hat Internetzugriff; **Dokumentenserver und laufender Übersetzungsdienst sind im internen Docker-Netz isoliert**. Bei späteren Starts werden vollständige, bereits vorbereitete Modelle wiederverwendet.
 
-PDF-Übersetzung benötigt auslesbaren Text; Scans zuerst mit OCR bearbeiten. Sie erzeugt Originaltext und Übersetzung nebeneinander. Die App-Oberfläche lässt sich unabhängig davon zwischen Deutsch und Englisch umschalten. Ein eigenes Signaturzertifikat und gegebenenfalls vertrauenswürdige CA-Zertifikate werden weiterhin vom Betreiber bereitgestellt.
+PDF-Übersetzung benötigt auslesbaren Text; Scans zuerst mit OCR bearbeiten. Sie kann Originaltext und Übersetzung nebeneinander ausgeben. Die App-Oberfläche lässt sich unabhängig davon zwischen Deutsch und Englisch umschalten. Ein eigenes Signaturzertifikat und gegebenenfalls vertrauenswürdige CA-Zertifikate werden weiterhin vom Betreiber bereitgestellt.
 
 ## Einstellungen und optionaler Login
 
@@ -102,7 +104,7 @@ Dokumente und Ergebnisse werden nicht dauerhaft in Docker-Volumes gespeichert. S
 ## Probleme eingrenzen
 
 - **Erster Start wartet:** `docker compose logs -f translation-models`. Downloads können mehrere Minuten dauern; fehlgeschlagene Versuche werden wiederholt. Ohne Internet kann eine leere Installation nicht eingerichtet werden.
-- **Container beendet / Exit 137:** Speicherstatus und Docker-Desktop-RAM prüfen; verfügbare Ressourcen bzw. die beiden Speichergrenzen erhöhen.
+- **Container beendet / Exit 137:** Speicherstatus und Docker-Desktop-RAM prüfen; verfügbare Ressourcen bzw. die betroffenen Container-Speichergrenzen erhöhen.
 - **Port belegt:** `MOINPDF_PORT` in `.env` ändern, dann `docker compose up -d`.
 - **Serverfunktionen fehlen:** `docker compose logs documents` und `docker compose ps -a` prüfen; anschließend Images neu bauen und in der App „Erneut versuchen“ wählen.
 - **API-Aufruf liefert 403:** Die App setzt `X-MoinPDF-Client: web` automatisch. Direkte Aufrufe ohne diesen Header sowie browserseitige fremde Ursprünge werden am Web-Proxy abgewiesen. Ein öffentlicher Bearer-Schlüssel ist für diese Installation nicht vorgesehen.

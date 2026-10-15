@@ -1,5 +1,22 @@
 # Änderungen
 
+**Deutsch** · [English](CHANGELOG.en.md) · [← README](README.md)
+
+MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentrale
+Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
+Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen festen Digest.
+
+Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
+Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
+
+## Unveröffentlicht
+
+- Repository-Dokumentation auf Deutsch und Englisch mit direktem Sprachwechsel,
+  neu gestalteter README und zweisprachigen Issue-Vorlagen.
+
+- Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
+- Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
+
 ## 0.13.25 – 15. Oktober 2026
 
 - Alle 4.513 vorhandenen Spracheinträge fachlich und sprachlich geprüft; rund
@@ -243,15 +260,6 @@
 - Begrenzter XFA-Dateneditor mit Erhalt der Vorlagen und Rückleseprüfung; aktive und hybride Formulare werden abgewiesen.
 - Ablaufvorlagen und zusätzliche Schritte zum Drehen, Umkehren, Festschreiben und verlustfreien Optimieren; lokale Komprimierung als Standard.
 - Zusätzliche Engine-, Browser- und Datenschutzprüfungen sowie DE/EN-Dokumentation. Vollständiges XFA, unabhängiges PDF/X, lokale PDF/A-Prüfung und lokaler SVG-Vektorexport bleiben offen.
-
-MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentrale
-Versionsnummer steht in `package.json`; die Oberfläche liest sie daraus. Docker-
-Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen festen Digest.
-
-## Unveröffentlicht
-
-- Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
-- Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
 ## 0.10.2 – 2026-10-12
 

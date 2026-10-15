@@ -1,75 +1,54 @@
 <p align="center">
-  <img src="public/media/banners/moinpdf-druckerbergung.jpg" alt="MoinPDF – Papierkram. Läuft. Ein Seemann im gelben Friesennerz zieht einen Drucker aus dem Hafen." width="100%">
-</p>
-
-<h1 align="center">MoinPDF</h1>
-
-<p align="center">
-  <strong>Dein PDF-Arbeitsplatz.</strong><br>
-  Bearbeiten, erkennen, konvertieren und prüfen.
+  <strong>Deutsch</strong> · <a href="README.en.md">English</a>
 </p>
 
 <p align="center">
-  <a href="#funktionen">Funktionen</a> ·
-  <a href="#schnellstart">Schnellstart</a> ·
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/branding/moinpdf-wordmark-dark.svg">
+    <img src="public/branding/moinpdf-wordmark.svg" alt="MoinPDF" width="340">
+  </picture>
+</p>
+
+<p align="center"><strong>Papierkram. Läuft.</strong><br>Dein PDF-Arbeitsplatz zum Bearbeiten, Erkennen, Konvertieren und Prüfen.</p>
+
+<p align="center">
+  <a href="https://github.com/MoinPDF/moinpdf/releases/latest"><img src="https://img.shields.io/github/v/release/MoinPDF/moinpdf?style=flat&amp;color=168378&amp;label=Version" alt="Aktuelle Version"></a>
+  <a href="https://github.com/MoinPDF/moinpdf/actions/workflows/docker.yml"><img src="https://github.com/MoinPDF/moinpdf/actions/workflows/docker.yml/badge.svg?branch=main" alt="Vollständige Docker-Prüfung"></a>
+</p>
+
+<p align="center">
+  <a href="#schnellstart">Installieren</a> ·
+  <a href="#was-du-mit-moinpdf-erledigen-kannst">Funktionen</a> ·
   <a href="#dokumentation">Dokumentation</a> ·
-  <a href="#medienbereich">Medienbereich</a> ·
-  <a href="#entwicklung">Entwicklung</a>
+  <a href="#medien-und-kontakt">Medien &amp; Kontakt</a>
 </p>
 
----
+<p align="center">
+  <img src="public/branding/moinpdf-harbor.webp" alt="Ein Seemann birgt einen Drucker im Hafen – das MoinPDF-Hafenmotiv." width="1000">
+</p>
 
-## Moin. Was möchtest du tun?
+MoinPDF bringt **112 Werkzeuge** in einen gemeinsamen Arbeitsplatz. Dateien öffnen, eine Aufgabe auswählen oder in eigenen Worten suchen, Ergebnis prüfen und herunterladen. Viele Werkzeuge verarbeiten Dokumente direkt auf deinem Gerät. Die vollständige Docker-Installation ergänzt die eigenen Dienste für erweiterte Konvertierungen, Prüfungen, Übersetzung und Audio.
 
-PDFs zusammenfügen, einen Scan durchsuchbar machen oder Rechnungsangaben vergleichen: MoinPDF bringt die passenden Werkzeuge an einen gemeinsamen Arbeitsplatz. Ziehe deine Dateien ins Fenster und beschreibe, was du vorhast. Die Suche versteht auch Formulierungen wie „Seiten drehen“ oder „PDF kleiner machen“.
+**Deutsch und Englisch** stehen in der App und dieser Repository-Dokumentation zur Verfügung. Auf jeder Anleitung führt der Sprachwechsel zur passenden Übersetzung.
 
-Viele Aufgaben erledigt MoinPDF direkt im Browser. Die vollständige Installation ergänzt einen eigenen Dokumentenserver für aufwendige Konvertierungen, Prüfungen, Übersetzungen und Audioexporte.
+## Was du mit MoinPDF erledigen kannst
 
-## Funktionen
-
-| Vorhaben | Das bietet MoinPDF |
+| Dein Vorhaben | Passende Werkzeuge |
 | --- | --- |
-| **Seiten in Ordnung bringen** | Zusammenfügen, teilen, drehen, sortieren, zuschneiden, nummerieren und mit Lesezeichen versehen. |
-| **PDFs bearbeiten** | Text ersetzen, Inhalte entfernen, Bilder und Notizen einfügen, markieren, schwärzen und Formulare bearbeiten. |
-| **Scans lesbar machen** | 21 OCR-Sprachen, bis zu acht gemeinsam, durchsuchbare PDFs, Scanverbesserung, Komprimierung und Kameraimport. |
-| **Dateien umwandeln** | Bilder, Text und Tabellen exportieren; mit Dokumentenserver auch Office-Dateien, E-Mails und weitere Formate konvertieren; Webseiten über den isolierten Website-Konverter als PDF speichern. |
-| **Dokumente prüfen** | Text- und Bildvergleich, Zahlenvergleich, Rechenprüfung, Dokumentlücken und Fundstellen im Original kontrollieren. |
-| **E-Rechnungen bearbeiten** | UBL/CII lesen und Rechnungsbild mit XML abgleichen; mit Dokumentenserver XRechnung validieren und den ZUGFeRD-Assistenten nutzen. |
-| **Wiederkehrendes erledigen** | Stapelverarbeitung, gespeicherte Abläufe, Belegfelder sammeln, Formularrückläufe auswerten und Dokumente chronologisch ordnen. |
-| **Mehr aus Dokumenten machen** | PDF-Maßband und Ebenenverwaltung; mit Dokumentenserver lokal übersetzen und als Hörbuch ausgeben. |
+| **Seiten in Ordnung bringen** | Zusammenfügen, teilen, drehen, sortieren, zuschneiden, nummerieren, Lesezeichen und Posterdruck |
+| **PDFs bearbeiten** | Texte und Originalobjekte, Absätze mit Vorschau, Bilder, Notizen, Markierungen, Schwärzungen und Formulare |
+| **Scans lesbar machen** | OCR mit 21 Sprachen, bis zu acht kombiniert, durchsuchbare PDFs, Scanverbesserung und Kamerascanner |
+| **Dateien umwandeln** | Bilder, Text, Tabellen und lokales Office; mit Server zusätzlich erweiterte Office-Formate, E-Mails und Website-Links |
+| **Inhalte überprüfen** | Text- und Bildvergleich, Zahlen, Rechenprüfung, Dokumentlücken und Berichte mit Fundstellen |
+| **Rechnungen verarbeiten** | UBL/CII lesen, PDF und XML abgleichen; mit Server KoSIT-XRechnung-Prüfung und ZUGFeRD-Assistent |
+| **Wiederholungen abkürzen** | Stapel, gespeicherte Abläufe, Belegfelder, Formularrückläufe und Dokumentchronologie |
+| **Mehr aus Dokumenten machen** | Ebenen, Maßband und lokale Projekte; mit Server PDF-Übersetzung und Hörbücher |
 
-**0.13.25** enthält den vollständig geprüften deutschen und englischen Sprachkatalog, korrigierte Fachbegriffe und lokalisierte Berichts- und Dokumentausgaben. Automatische Prüfungen schützen Dateinamen, Zitate, Formularwerte und Originaldokumente vor unbeabsichtigter Übersetzung.
-
-**0.13.23** vereinheitlicht Web- und Docker-Oberfläche: sechs Schnellzugriffe, ein dezenter weiß-grüner Projekt-Button, ruhige Werkzeugkacheln und ein kleineres Headerbild am Desktop. Rückgängig bleibt auch in Projekten ohne verbleibende Seiten erreichbar. Lange Dateinamen bleiben auf schmalen Smartphones innerhalb der Dokumentübersicht.
-
-Neu in **0.12.0**: Komplexe Absatzschriften mit HarfBuzz und 14 zusätzlichen lokalen Noto-Schriften sowie einzelne Unterobjekte verschachtelter Gruppen. Gruppeninstanzen werden unabhängig bearbeitet; geformte Absätze bleiben gemeinsam auswählbar und kopierbar.
-
-Neu in **0.8.0**: Der Absatzmodus bearbeitet mehrere Originaltexte mit Schriftwahl,
-automatischem Umbruch und Ergebnisvorschau. „Barrierefreiheit prüfen“ bietet mit
-Dokumentenserver PDF/UA-Prüfungen und einen Struktureditor für neue PDF/UA-1-Dokumente.
-Die PDF-Ausgabe erfolgt erst nach bestandener technischer Prüfung; Inhalte und
-Lesereihenfolge sind zusätzlich manuell zu kontrollieren.
-
-Die [Funktionsübersicht](docs/FUNKTIONEN.md) erklärt die Werkzeuge, Ausgabeformate und ihre Grenzen. Schrittfolgen für jedes Werkzeug findest du in der **Dokumentation** innerhalb der App.
-
-## Vom Dokument zum Ergebnis
-
-1. **Dateien ablegen.** PDFs, Bilder oder Rechnungs-XML importieren; Kamera- und Office-Import haben eigene Einstiege.
-2. **Vorhaben auswählen.** Die Frage „Was möchtest du tun?“ beantworten oder durch die Werkzeugkategorien stöbern.
-3. **Prüfen und anwenden.** Einstellungen und Vorschau kontrollieren, Ergebnis herunterladen oder direkt weiterbearbeiten.
-
-Der Schnellzugriff bietet sechs häufige Aufgaben mit kurzen Beschreibungen. Nach
-dem Öffnen zeigt die Dokumentübersicht Dateinamen, Seitenzahl und Größe. Die
-Werkzeugseitenleiste lässt sich bei Bedarf einblenden. Auf kleinen Bildschirmen
-bleiben Zurück, Verarbeitung und der anschließende Download im gemeinsamen
-PDF-Arbeitsbereich am unteren Rand erreichbar. Die deutsche und englische
-Dokumentation erläutert diese Schritte und die Grenzen der einzelnen Werkzeuge.
-
-Über **„Werkzeug wechseln“** bleiben deine Arbeitsdokumente erhalten. Die Oberfläche passt sich an Desktop und Smartphone an. Über **„Projekte“** kannst du Arbeitsstände einschließlich Seitenanordnung, Editoränderungen und Verlauf lokal speichern und später fortsetzen. Die letzten fünf gespeicherten Stände bleiben in diesem Browser verfügbar. Über **„Projektdatei herunterladen“** und **„Projektdatei öffnen“** lässt sich ein Stand samt Dateien und Bearbeitungsverlauf als `.moinpdf` auf einen anderen Browser oder Computer übertragen. Die Projektdatei ist unverschlüsselt und enthält Originale; zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden.
+Den genauen Umfang und die jeweiligen Grenzen findest du unter [Funktionen](docs/FUNKTIONEN.md) und [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Schnellstart
 
-Für die vollständige Installation brauchst du **Docker mit Compose v2**, Zugriff auf dieses Repository und Internet für den ersten Aufbau. Plane als Ausgangspunkt **8 GB verfügbaren RAM und 20 GB freien Speicherplatz** ein.
+Du brauchst **Docker Engine mit Compose v2 oder Docker Desktop**, zunächst Internet sowie als Ausgangspunkt **8 GB verfügbaren RAM und 20 GB freien Plattenplatz**.
 
 ```bash
 git clone https://github.com/MoinPDF/moinpdf.git
@@ -77,49 +56,69 @@ cd moinpdf
 docker compose up -d --build
 ```
 
-Öffne anschließend **[localhost:8080](http://localhost:8080)** oder die Adresse deines Servers auf Port `8080`.
+Öffne anschließend **[localhost:8080](http://localhost:8080)**. Die Web-App, der Dokumentenserver, der Website-Konverter und die Übersetzung werden gemeinsam eingerichtet. Für den Standardstart sind weder eine `.env` noch manuell eingetragene API-Schlüssel nötig. Beim ersten Start werden Programme und Sprachmodelle geladen; das kann einige Minuten dauern.
 
-Web-App, Dokumentenserver, Übersetzungsdienst und isolierter Website-Konverter werden gemeinsam eingerichtet. Für den Standardstart sind keine manuelle `.env` und keine einzutragenden API-Schlüssel nötig. Beim ersten Start werden auch Sprachmodelle geladen; das kann mehrere Minuten dauern.
+**[Vollständige Docker-Anleitung →](DOCKER.md)** · [HTTPS und Kamera](DOCKER.md#https-und-kamera) · [Updates und Daten](DOCKER.md#updates-neustart-und-daten)
 
-**[Zur vollständigen Docker-Anleitung →](DOCKER.md)**  
-Dort findest du HTTPS, optionalen Login, Updates und Hilfe bei Startproblemen. Für eine öffentlich erreichbare Instanz sind auch die Hinweise zur Absicherung und zu den Betreiberangaben relevant.
+## Ein Arbeitsplatz für den ganzen Ablauf
 
-## Wo werden Dokumente verarbeitet?
+1. **Öffnen:** PDFs, Bilder oder Rechnungs-XML hinzufügen, alternativ mit einem Beispieldokument starten.
+2. **Bearbeiten:** Schnellzugriff oder Suche nutzen. Dateiname, Seitenzahl und Größe bleiben in der Dokumentübersicht sichtbar; die Werkzeugseitenleiste lässt sich bei Bedarf öffnen.
+3. **Prüfen und mitnehmen:** Ergebnis herunterladen oder direkt als neues Arbeitsdokument übernehmen. Auf Smartphones stehen die wichtigsten Aktionen in einer kompakten Leiste bereit.
 
-**Browserwerkzeuge** verarbeiten Dokumentinhalte auf deinem Gerät. Die benötigten PDF-Bibliotheken, Schriften und OCR-Sprachdaten werden zusammen mit der App ausgeliefert.
+Mit **Projekten** sicherst du bis zu fünf Arbeitsstände lokal, einschließlich Originaldateien und Bearbeitungsverlauf. Eine `.moinpdf`-Projektdatei überträgt den Stand auf ein anderes Gerät. Browser-Projekte und Projektarchive sind unverschlüsselt und enthalten auch Originale sowie frühere Bearbeitungen; zum Weitergeben fertiger Dokumente die Ergebnisdatei verwenden.
 
-**Serverwerkzeuge** übertragen die für den Auftrag benötigten Daten an den Dokumentenserver der verwendeten Instanz. In der vollständigen Installation laufen auch Übersetzung und Sprachausgabe auf dem eigenen Server. Vorgeschaltete Hosting- oder Proxy-Dienste können Teil des Übertragungswegs sein.
+## Wo deine Dokumente verarbeitet werden
 
-Erkennung und Prüfberichte helfen bei der Kontrolle. Prüfe wichtige Ergebnisse am Original; Basisprüfungen ersetzen keinen vollständigen Konformitätsnachweis. Änderungen an einer PDF können bestehende digitale Signaturen ungültig machen. [Verhalten und Grenzen →](docs/FUNKTIONEN.md#verhalten-und-grenzen)
+| Betriebsart | Verarbeitung |
+| --- | --- |
+| **Browserwerkzeuge** | Auf deinem Gerät. Programmdateien und OCR-Sprachdaten werden vom gleichen Ursprung geladen. |
+| **Serverwerkzeuge** | Nach dem Start eines Auftrags auf deiner MoinPDF-Installation. Vorgeschaltete Proxys können auf dem Übertragungsweg liegen. |
+| **Website zu PDF** | Der separate Website-Konverter ruft die öffentliche Adresse ab. Die Anmeldung und Cookies deines Browsers werden nicht übernommen. |
+
+Ein statischer Web-Build stellt selbst keinen laufenden Dokumentenserver bereit. Für den vollständigen Funktionsumfang verwende die Docker-Installation. Wichtige Ergebnisse am Original kontrollieren; Änderungen an PDFs können vorhandene digitale Signaturen ungültig machen.
 
 ## Dokumentation
 
-In der App öffnet **„Dokumentation“** im Footer das durchsuchbare Handbuch. Es enthält den Einstieg, typische Abläufe und Anleitungen zu den einzelnen Werkzeugen. Es lässt sich nach Kategorien filtern und als vollständiges Handbuch drucken.
+In der App öffnet **Dokumentation** das durchsuchbare Handbuch mit Anleitungen zu allen 112 Werkzeugen, Direktlinks und Druckansicht. Hier im Repository findest du die technischen Anleitungen in beiden Sprachen:
 
-| Du suchst … | Hier geht es weiter |
-| --- | --- |
-| Werkzeuge, Ausgabeformate und Grenzen | [Funktionsübersicht](docs/FUNKTIONEN.md) |
-| Installation, HTTPS, Login und Updates | [Docker-Anleitung](DOCKER.md) |
-| Eigenständige Dokumenten-API | [Dokumentenserver](server/README.md) |
-| Quellcode, Builds und Prüfungen | [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) |
-| Bisherige Versionsänderungen | [Changelog](CHANGELOG.md) |
-| Freigegebene Versionen und Image-Nachweise | [Releases](https://github.com/MoinPDF/moinpdf/releases) |
+| Thema | Deutsch | English |
+| --- | --- | --- |
+| Installation, HTTPS und Betrieb | [Docker](DOCKER.md) | [Docker](DOCKER.en.md) |
+| Werkzeuge und Grenzen | [Funktionen](docs/FUNKTIONEN.md) | [Features](docs/FEATURES.en.md) |
+| Umgesetzte und offene Funktionen | [Ausbaustand](docs/AUSBAUSTAND.md) | [Implementation status](docs/STATUS.en.md) |
+| Office lokal im Browser | [Browser-Office](docs/BROWSER-OFFICE.md) | [Browser Office](docs/BROWSER-OFFICE.en.md) |
+| Separater Dokumentenserver und API | [Server](server/README.md) | [Server](server/README.en.md) |
+| Einrichtung, Tests und Releases | [Entwicklung](docs/ENTWICKLUNG.md) | [Development](docs/DEVELOPMENT.en.md) |
+| Prüfungen und ihre Aussagekraft | [Validierung](VALIDATION.md) | [Validation](VALIDATION.en.md) |
+| Versionsgeschichte | [Änderungen](CHANGELOG.md) | [Changelog](CHANGELOG.en.md) |
+| Rückmeldungen und Beiträge | [Mitwirken](CONTRIBUTING.md) | [Contributing](CONTRIBUTING.en.md) |
+| Sicherheitslücken melden | [Sicherheit](SECURITY.md) | [Security](SECURITY.en.md) |
+| Projektweiter Lizenzstatus | [Lizenzhinweis](LICENSE) | [License notice](LICENSE.en.md) |
 
-Die aktuelle Versionsnummer steht in [package.json](package.json).
+**[Neueste Veröffentlichung](https://github.com/MoinPDF/moinpdf/releases/latest)** · [Alle Releases](https://github.com/MoinPDF/moinpdf/releases) · [Aktuelle Prüfläufe](https://github.com/MoinPDF/moinpdf/actions)
 
-## Entwicklung
+## Entwickeln und mitwirken
 
-MoinPDF verwendet unter anderem React, TypeScript, PDF.js, pdf-lib und Tesseract.js. Der Dokumentenserver ergänzt Werkzeuge wie LibreOffice, Ghostscript, KoSIT, veraPDF und LibreTranslate.
+Der Browser-Arbeitsplatz verwendet React und TypeScript, PDF.js, pdf-lib und Tesseract. Die Docker-Dienste ergänzen unter anderem LibreOffice, Ghostscript, KoSIT, veraPDF und LibreTranslate. Installation, Komponentenhinweise und Prüfabläufe stehen im [Entwicklungsleitfaden](docs/ENTWICKLUNG.md).
 
-Der [Entwicklungsleitfaden](docs/ENTWICKLUNG.md) beschreibt Einrichtung, Projektstruktur und Tests. Allgemeine Fragen und Pressekontakt: [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de). Datenschutzanfragen: [post@moinpdf.de](mailto:post@moinpdf.de).
+Fehler und Ideen kannst du über die **[deutschen oder englischen Issue-Vorlagen](https://github.com/MoinPDF/moinpdf/issues/new/choose)** melden. Bitte künstliche Beispieldateien verwenden. Für Sicherheitsmeldungen gilt der vertrauliche Kontakt in [SECURITY.md](SECURITY.md).
 
-Hinweise auf Fehler und Ideen bitte an [ahoi@moinpdf.de](mailto:ahoi@moinpdf.de) senden. Du kannst auch die [GitHub Issues](https://github.com/MoinPDF/moinpdf/issues) nutzen. Beschreibe bei Fehlern das Werkzeug, die Schritte und das erwartete Ergebnis; verwende für Beispieldateien bitte synthetische Daten.
+## Medien und Kontakt
 
-Der [Lizenzstatus](LICENSE), [Sicherheitshinweise](SECURITY.md) und [Hinweise für Beiträge](CONTRIBUTING.md) ergänzen die Projektdokumentation. Lizenzhinweise zu mitgelieferten Bibliotheken, Schriften und Sprachmodellen sind im [Entwicklungsleitfaden](docs/ENTWICKLUNG.md#bibliotheken-und-lizenzhinweise) verlinkt.
+Banner, Wortmarken, der Clip „Drucker über Bord?“ und Downloadpakete sind im **Medienbereich der App** verfügbar. Die Dateien liegen unter [public/media](public/media), der Katalog unter [media/banner-catalog.json](media/banner-catalog.json). Die [Nutzungshinweise](public/media/moinpdf-nutzung.txt) beschreiben die erlaubte Verwendung der Pressematerialien.
+
+- Fragen und Rückmeldungen: **[ahoi@moinpdf.de](mailto:ahoi@moinpdf.de)**
+- Datenschutz und vertrauliche Sicherheitsmeldungen: **[post@moinpdf.de](mailto:post@moinpdf.de)**
+
+## Lizenzstatus
+
+Der Quellcode ist öffentlich einsehbar. Das Gesamtprojekt hat **keine pauschale Open-Source-Lizenz**; maßgeblich ist [LICENSE](LICENSE). Ausdrücklich lizenzierte Dateien und Drittanbieterkomponenten behalten ihre jeweiligen Rechte und Lizenzhinweise.
 
 ---
 
 <p align="center">
-  <img src="public/branding/moinpdf-sailor.webp" alt="Der MoinPDF-Seemann im gelben Friesennerz." width="64"><br>
-  <strong>Papierkram. Läuft.</strong>
+  <img src="public/branding/moinpdf-sailor.webp" alt="Der MoinPDF-Seemann" width="56"><br>
+  <strong>MoinPDF · Papierkram. Läuft.</strong><br>
+  <a href="README.en.md">Read this page in English</a>
 </p>

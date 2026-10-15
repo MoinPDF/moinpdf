@@ -1,6 +1,8 @@
 # MoinPDF-Dokumentenserver
 
-> **Für die vollständige App inklusive Übersetzungen:** `docker compose up -d --build` im Repository-Hauptverzeichnis ausführen. Siehe [Docker-Anleitung](../DOCKER.md). Die nachfolgende Anleitung betrifft ausschließlich einen separaten Dokumentenserver für eine bereits anderweitig gehostete Web-App.
+**Deutsch** · [English](README.en.md) · [← README](../README.md)
+
+> **Für die vollständige App inklusive Übersetzungen:** `docker compose up -d --build` im Repository-Hauptverzeichnis ausführen. Siehe [Docker-Anleitung](../DOCKER.md). Die nachfolgende Anleitung betrifft eine separate Dokumenten-API für eine anderweitig gehostete Web-App oder einen API-Client. Seit 0.2.0 bietet die Standardoberfläche keine manuelle Eingabe von Serveradresse und API-Schlüssel mehr; separate Installationen benötigen eine passend eingerichtete Integration bzw. einen Proxy.
 
 Viele Werkzeuge verarbeiten Dateien lokal im Browser. Dieser Server ergänzt die unten beschriebenen Konvertierungen und Prüfungen:
 
@@ -11,7 +13,7 @@ Viele Werkzeuge verarbeiten Dateien lokal im Browser. Dieser Server ergänzt die
 | XRechnung vollständig validieren | KoSIT 1.6.3, XRechnung-Konfiguration 3.0.2 vom 31.08.2026 | Vollständiger XSD-/Schematron-Bericht im ZIP |
 | Zertifikatssignaturen | pyHanko, PKCS#12 und Prüfung bestehender Signaturen | Signierte PDF bzw. JSON-Bericht |
 
-Die vollständige Docker-Installation verbindet Web-App und Dokumentenserver automatisch. Bei einer separat gehosteten Web-App ohne konfigurierten Serverproxy werden Serveradresse und API-Schlüssel eingetragen. Eine Verbindung wird ohne Dokumentübertragung geprüft. Dateien werden erst mit dem jeweiligen Verarbeitungsauftrag gesendet.
+Die vollständige Docker-Installation verbindet Web-App und Dokumentenserver automatisch. Separat gehostete Integrationen müssen Serverzugriff und Authentifizierung selbst einrichten. Die Funktionsprüfung überträgt keine Dokumente. Dateien werden erst mit dem jeweiligen Verarbeitungsauftrag gesendet.
 
 ## Separaten Dokumentenserver mit Docker Compose starten
 
@@ -30,7 +32,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-In der App ein Serverwerkzeug öffnen, `https://deine-serverdomain` und den Schlüssel eingeben und **Verbindung und Funktionen prüfen** anklicken. Jede Serverkomponente wird einzeln als bereit oder fehlend angezeigt. Der Server startet ohne ausreichenden Schlüssel keine Dokumentenaufträge.
+Die API über die eigene Integration bzw. den Proxy mit dem konfigurierten Schlüssel anbinden. Der Capability-Endpunkt meldet jede Serverkomponente als bereit oder fehlend. Der Server startet ohne ausreichend starken Schlüssel keine Dokumentenaufträge. Für die Standard-App die automatische Anbindung der Docker-Installation im Hauptverzeichnis verwenden.
 
 ## Prüfungen und Betriebsverhalten
 
@@ -73,7 +75,6 @@ MOINPDF_TOOLS="$PWD/server/tools" python -m unittest server.test_service server.
 - [pyHanko: Signaturbibliothek](https://docs.pyhanko.eu/en/stable/lib-guide/signing.html)
 
 Die heruntergeladenen Programme unterliegen ihren jeweiligen Upstream-Lizenzen. Insbesondere die Ghostscript-Lizenz (AGPL) ist bei einer Weitergabe des Container-Images zu beachten. Lizenzdateien sind in den installierten Distributionen enthalten.
-
 
 ## Erweiterte Werkzeuge
 

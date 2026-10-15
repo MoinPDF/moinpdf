@@ -1,5 +1,7 @@
 # Local speech dependencies
 
+[Deutsch](AUDIO-NOTICES.de.md) · **English (original)** · [← README](../README.en.md)
+
 MoinPDF uses Piper 1.8.0 in a separate, bounded document worker. The engine is
 GPL-3.0-or-later, not MIT. `audio_documents.py` is provided under
 GPL-3.0-or-later; its complete source is shipped in `/service` in the image.

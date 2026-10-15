@@ -1,5 +1,7 @@
 # Prüfungen und belegter Versionsstand
 
+**Deutsch** · [English](VALIDATION.en.md) · [← README](README.md)
+
 Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.

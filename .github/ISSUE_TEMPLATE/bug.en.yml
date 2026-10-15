@@ -1,0 +1,34 @@
+name: Report a bug · English
+description: Describe a reproducible problem
+title: "Bug: "
+body:
+  - type: markdown
+    attributes:
+      value: "Please use synthetic sample data only. Report security vulnerabilities confidentially to post@moinpdf.de."
+  - type: input
+    id: version
+    attributes:
+      label: MoinPDF version
+      description: Shown in the app footer.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and installation
+      placeholder: For example Firefox, Chromium or Docker Compose
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the tool, file format, approximate size and steps.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true

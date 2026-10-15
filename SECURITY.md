@@ -1,5 +1,7 @@
 # Sicherheit melden
 
+**Deutsch** · [English](SECURITY.en.md) · [← README](README.md)
+
 Bitte melde vermutete Sicherheitslücken vertraulich an **post@moinpdf.de**.
 Veröffentliche keine Zugangsdaten, personenbezogenen Originaldokumente oder
 ausnutzbaren Details in einem öffentlichen Issue.

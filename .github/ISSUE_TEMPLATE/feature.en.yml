@@ -1,0 +1,17 @@
+name: Suggest an improvement · English
+description: Describe a specific use case or improvement
+title: "Idea: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the use case and what is currently missing.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Your suggestion
+    validations:
+      required: true

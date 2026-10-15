@@ -1,5 +1,7 @@
 # Ausbau nach dem Funktionsvergleich
 
+**Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
+
 Stand: 15. Oktober 2026, Version 0.13.25.
 
 Der gesamte Sprachkatalog mit ursprünglich 4.513 Einträgen wurde geprüft. Rund
@@ -23,7 +25,7 @@ Diese Übersicht beschreibt den tatsächlichen Umfang. Der ursprüngliche Plan m
 22 Bereichen ist noch nicht vollständig abgeschlossen. Nicht unterstützte
 Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
-| Bereich | Umgesetzt | Verbleibende Arbeit |
+| Bereich | Umgesetzt | Besonderheiten und verbleibende Grenzen |
 | --- | --- | --- |
 | 1. Nativer Texteditor | Originalobjekte und Absätze; lokale Schriftbibliothek, Browser-Rechtschreibprüfung, Listen, Hoch-/Tiefstellen und Absatz-Suchen/Ersetzen; bis zu 32 Formatbereiche mit Schrift, Größe und Farbe; Ligaturen und kombinierende Zeichen; automatische zusätzliche Folgeseiten; echte Vorschau und Überlaufprüfung | HarfBuzz mit 14 zusätzlichen Noto-Schriften; Arabisch/Hebräisch und Mischtext; gruppeninterne Originaltexte. Fehlende Schriftdateien und beliebige exotische Schriften bleiben dokumentabhängig |
 | 2. Bilder und Grafiken | Mehrfachauswahl, Ausrichten, Verteilen, Spiegeln, Duplizieren, Vektorgruppen; Objekte bewegen, drehen, skalieren, ersetzen, löschen und in ihrer Zeichenreihenfolge ändern; direkte Griffpunkte mit Tastaturbedienung | Verschachtelte Gruppen bis 16 Ebenen einzeln öffnen; nicht unterstützte Grafiktypen und widersprüchliche geerbte Grafikzustände werden abgewiesen |
