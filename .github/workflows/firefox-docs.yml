@@ -1,0 +1,46 @@
+name: Firefox documentation follow-up
+on:
+  push:
+    branches: ['qa/firefox-docs-0.13.25']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  firefox:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      MOINPDF_BROWSER: firefox
+      MOINPDF_TEST_URL: http://127.0.0.1:8765
+      MOINPDF_DOCUMENTATION_URL: http://127.0.0.1:8765
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build unchanged production application
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+          pnpm run build:selfhost
+      - name: Install Firefox
+        run: |
+          python -m pip install playwright pymupdf==1.28.2
+          python -m playwright install --with-deps firefox
+      - name: Start local production build
+        run: |
+          python tests/cross-browser-server.py > "$RUNNER_TEMP/cross-browser-http.log" 2>&1 &
+          curl --fail --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:8765/ -o /dev/null
+      - name: Bounded media and documentation diagnostics
+        run: timeout --signal=TERM --kill-after=10s 300s python tests/documentation-smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: firefox-documentation-evidence
+          path: |
+            cross-browser-evidence/
+            documentation-evidence/
+          retention-days: 30

@@ -1,5 +1,13 @@
 """Exercise the published static manual and its connection to the actual app."""
 import json
+import sys
+import faulthandler
+faulthandler.dump_traceback_later(240, exit=True)
+def trace_progress(frame, event, arg):
+    if event == "line" and frame.f_code.co_filename == __file__ and frame.f_code.co_name == "<module>":
+        print("DOC STEP: " + str(frame.f_lineno), flush=True)
+    return trace_progress
+sys.settrace(trace_progress)
 import os
 import io
 import zipfile
@@ -31,6 +39,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
     # The GitHub Ubuntu runner includes Chrome with H.264/AAC support for the MP4.
     browser = launch_browser(api)
     context = browser.new_context(viewport={'width': 1440, 'height': 1000}, reduced_motion='reduce')
+    context.set_default_timeout(15000)
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
     manual = None
@@ -93,7 +102,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
                 hero = media.locator('.media-hero').bounding_box()
                 content = media.locator('.media-hero > div').bounding_box()
                 assert content['width'] >= min(800, hero['width']) - 1
-            media.screenshot(path=str(evidence / f'media-{width}.png'), full_page=True)
+            media.screenshot(path=str(evidence / f'media-{width}.png'), full_page=True, timeout=10000)
             page.set_viewport_size({'width': width, 'height': 900})
             no_overflow(page)
         page.set_viewport_size({'width': 1440, 'height': 1000})
@@ -104,7 +113,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         expect(manual.locator('.docs-toc > a')).to_have_count(7)
         manual.evaluate('document.fonts.ready')
         no_overflow(manual)
-        manual.screenshot(path=str(evidence / 'desktop-introduction.png'))
+        manual.screenshot(path=str(evidence / 'desktop-introduction.png'), timeout=10000)
         search = manual.get_by_role('searchbox')
         search.fill('Rechenprufung')
         expect(manual.locator('.docs-tool:visible')).to_have_count(1)
@@ -130,15 +139,15 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         expect(audio).to_have_attribute('open', '')
         expect(audio.locator('.docs-tool-body')).to_be_visible()
         no_overflow(manual)
-        manual.screenshot(path=str(evidence / 'desktop-tool.png'))
+        manual.screenshot(path=str(evidence / 'desktop-tool.png'), timeout=10000)
         for width in (390, 320):
             manual.set_viewport_size({'width': width, 'height': 844})
             no_overflow(manual)
-            manual.screenshot(path=str(evidence / f'mobile-tool-{width}.png'))
+            manual.screenshot(path=str(evidence / f'mobile-tool-{width}.png'), timeout=10000)
             manual.goto(origin + '/dokumentation.html')
             no_overflow(manual)
             if width == 390:
-                manual.screenshot(path=str(evidence / 'mobile-introduction.png'))
+                manual.screenshot(path=str(evidence / 'mobile-introduction.png'), timeout=10000)
             # Opening every guide catches long names and content-specific overflow.
             manual.evaluate('document.querySelectorAll(".docs-tool").forEach(d => d.open = true)')
             no_overflow(manual)
@@ -156,7 +165,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         else:
             manual.emulate_media(media='print')
             expect(manual.locator('.docs-tool[open]:visible')).to_have_count(112)
-            manual.screenshot(path=str(evidence / 'handbuch-print-styles.png'))
+            manual.screenshot(path=str(evidence / 'handbuch-print-styles.png'), timeout=10000)
             manual.emulate_media(media='screen')
         manual.evaluate('window.dispatchEvent(new Event("afterprint"))')
         expect(search).to_have_value('Rechenprüfung')
@@ -184,7 +193,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
                     address = manual.locator('address')
                     contact = manual.locator('address + p')
                     assert contact.bounding_box()['y'] - address.bounding_box()['y'] - address.bounding_box()['height'] >= 24
-                manual.screenshot(path=str(evidence / f'{Path(path).stem}-{width}.png'), full_page=True)
+                manual.screenshot(path=str(evidence / f'{Path(path).stem}-{width}.png'), full_page=True, timeout=10000)
         completed.append('Legal pages at 1440, 390 and 320 px: no overflow, shared navy text, contacts and address spacing')
         page.get_by_role('button', name='Dunklen Modus einschalten', exact=True).click()
         for path, target in (('/dokumentation.html', 'body'), ('/medienbereich.html', 'body'), ('/impressum.html', '.legal-card'), ('/datenschutz.html', '.legal-card')):
@@ -193,7 +202,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
             assert manual.locator(target).evaluate('(element) => getComputedStyle(element).color') == 'rgb(226, 237, 239)'
             assert manual.evaluate('getComputedStyle(document.documentElement).getPropertyValue("--muted").trim()') == '#acbec5'
             no_overflow(manual)
-            manual.screenshot(path=str(evidence / f'{Path(path).stem}-dark.png'))
+            manual.screenshot(path=str(evidence / f'{Path(path).stem}-dark.png'), timeout=10000)
             manual.emulate_media(media='print')
             assert manual.locator(target).evaluate('(element) => getComputedStyle(element).color') == 'rgb(23, 63, 76)'
             assert manual.locator('body').evaluate('(element) => getComputedStyle(element).backgroundColor') == 'rgb(255, 255, 255)'
@@ -218,6 +227,6 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         print('PASS: ' + '; '.join(completed), flush=True)
     finally:
         if manual:
-            manual.screenshot(path=str(evidence / 'last-state.png'))
+            manual.screenshot(path=str(evidence / 'last-state.png'), timeout=10000)
         (evidence / 'result.json').write_text(json.dumps({'completed':completed, 'errors':errors}, ensure_ascii=False, indent=2))
         browser.close()
