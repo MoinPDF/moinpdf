@@ -8,6 +8,7 @@ def trace_progress(frame, event, arg):
         print("DOC STEP: " + str(frame.f_lineno), flush=True)
     return trace_progress
 sys.settrace(trace_progress)
+sys._getframe().f_trace=trace_progress
 import os
 import io
 import zipfile
@@ -96,6 +97,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
                 href = card.locator('a[download]').get_attribute('href')
                 assert archive.read('MoinPDF-Medienpaket/Banner/' + href.split('/')[-1]) == media.request.get(origin + href).body()
         for width in (1920, 1440, 768, 390, 320):
+            media.bring_to_front()
             media.set_viewport_size({'width': width, 'height': 900})
             no_overflow(media)
             if width >= 768:
@@ -103,12 +105,14 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
                 content = media.locator('.media-hero > div').bounding_box()
                 assert content['width'] >= min(800, hero['width']) - 1
             media.screenshot(path=str(evidence / f'media-{width}.png'), full_page=True, timeout=10000)
+            page.bring_to_front()
             page.set_viewport_size({'width': width, 'height': 900})
             no_overflow(page)
         page.set_viewport_size({'width': 1440, 'height': 1000})
         media.close()
         completed.append('Media tab preserves PDF; six original JPEG downloads, matching ZIP and responsive footer')
 
+        manual.bring_to_front()
         expect(manual.locator('.docs-tool')).to_have_count(112)
         expect(manual.locator('.docs-toc > a')).to_have_count(7)
         manual.evaluate('document.fonts.ready')
