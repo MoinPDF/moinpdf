@@ -1,6 +1,8 @@
 """Acceptance in Apple's installed Safari, using the native safaridriver."""
 import base64
 import json
+import mimetypes
+import shutil
 import os
 from pathlib import Path
 import re
@@ -61,6 +63,48 @@ def fill(element, value):
     element.send_keys(value)
 
 
+def set_files(element, path):
+    path=Path(path)
+    if report.get('fileInputMode') == 'in-memory File, native driver I/O unavailable':
+        driver.execute_script('''const bytes=Uint8Array.from(atob(arguments[1]),c=>c.charCodeAt(0));
+          const transfer=new DataTransfer();
+          transfer.items.add(new File([bytes],arguments[2],{type:arguments[3]}));
+          arguments[0].files=transfer.files;
+          arguments[0].dispatchEvent(new Event('change',{bubbles:true}));''',
+          element,base64.b64encode(path.read_bytes()).decode(),path.name,
+          mimetypes.guess_type(path.name)[0] or 'application/octet-stream')
+    else:
+        target=Path(report['nativeInputDirectory'])/path.name
+        target.parent.mkdir(parents=True,exist_ok=True)
+        if path.resolve()!=target.resolve(): shutil.copyfile(path,target)
+        element.send_keys(str(target.resolve()))
+
+
+def probe_file_access():
+    payload=b'MOINPDF SAFARI NATIVE FILE PROBE 12345'
+    Path('dist/selfhost/qa-native-file-input.html').write_text('<!doctype html><title>Native file probe</title><input type="file">')
+    probes=[]
+    for folder in [Path.cwd()/'cross-browser-evidence'/'native-input',Path.home()/'Downloads'/'moinpdf-native-input',Path('/tmp')/'moinpdf-native-input']:
+        folder.mkdir(parents=True,exist_ok=True)
+        path=folder/'native-probe.txt';path.write_bytes(payload)
+        driver.get(origin+'/qa-native-file-input.html')
+        driver.find_element(By.CSS_SELECTOR,'input').send_keys(str(path.resolve()))
+        result=driver.execute_async_script('''const done=arguments[arguments.length-1];
+          const file=document.querySelector('input').files[0];
+          file.arrayBuffer().then(b=>done({text:new TextDecoder().decode(b),bytes:b.byteLength}))
+            .catch(e=>done({error:e.message,name:e.name}));''')
+        result['directory']=str(folder);probes.append(result)
+        print('NATIVE FILE PROBE: '+json.dumps(result),flush=True)
+        if result.get('text')==payload.decode():
+            report['nativeInputDirectory']=str(folder)
+            report['fileInputMode']='native WebDriver file input'
+            break
+    else:
+        report['fileInputMode']='in-memory File, native driver I/O unavailable'
+        report['limitations'].append('SafariDriver cannot read native files even in an independent plain HTML input. App processing uses identical synthetic bytes via a standard in-memory File and change event; native OS file selection is unverified.')
+    report['nativeFileProbe']=probes
+
+
 def fresh(path=None):
     driver.get(origin)
     visible('.upload-entry')
@@ -81,7 +125,7 @@ def fresh(path=None):
       window.addEventListener('error',e=>window.__qaErrors.push(e.message));
       window.addEventListener('unhandledrejection',e=>window.__qaErrors.push(String(e.reason)));''')
     if path:
-        driver.find_element(By.CSS_SELECTOR, 'input[type=file]').send_keys(str(Path(path).resolve()))
+        set_files(driver.find_element(By.CSS_SELECTOR, 'input[type=file]'), path)
         chooser()
 
 
@@ -177,6 +221,7 @@ try:
     driver.set_script_timeout(120)
     driver.set_page_load_timeout(120)
     report['capabilities'] = driver.capabilities
+    probe_file_access()
     with tempfile.TemporaryDirectory() as temporary:
         folder = Path(temporary)
         source = folder / 'safari-original.pdf'
@@ -283,7 +328,7 @@ try:
         def office():
             fresh()
             assert driver.execute_script('return crossOriginIsolated'), 'Missing cross-origin isolation'
-            driver.find_element(By.CSS_SELECTOR, 'input[type=file]').send_keys(str(Path('tests/fixtures/office/sample.docx').resolve()))
+            set_files(driver.find_element(By.CSS_SELECTOR, 'input[type=file]'), Path('tests/fixtures/office/sample.docx'))
             WebDriverWait(driver, 60).until(lambda _: visible('main h1').text == 'Office zu PDF')
             click(button('PDF erstellen'))
             data = output_bytes('a[download]', 'safari-office.pdf', timeout=240)
