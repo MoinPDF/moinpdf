@@ -64,7 +64,20 @@ def fill(element, value):
 def fresh(path=None):
     driver.get(origin)
     visible('.upload-entry')
-    driver.execute_script('''window.__qaErrors=[];
+    if driver.find_element(By.TAG_NAME, 'html').get_attribute('lang') == 'en':
+        click(visible('.language-trigger'))
+        click(WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, '//*[@role="menuitemradio" and normalize-space(.)="Deutsch"]'))))
+        WebDriverWait(driver, 30).until(lambda _: driver.find_element(By.TAG_NAME, 'html').get_attribute('lang') == 'de')
+    driver.execute_script('''window.__qaErrors=[]; window.__qaToasts=[]; window.__qaUploads=[];
+      new MutationObserver(()=>document.querySelectorAll('[data-sonner-toast]').forEach(e=>{
+        const value={type:e.getAttribute('data-type'),text:e.textContent};
+        if(value.text&&!window.__qaToasts.some(v=>v.type===value.type&&v.text===value.text))window.__qaToasts.push(value);
+      })).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true});
+      document.addEventListener('change',e=>{if(e.target.type==='file')
+        window.__qaUploads.push(...[...e.target.files].map(f=>({name:f.name,type:f.type,size:f.size})))},true);
+      const originalConsoleError=console.error;
+      console.error=(...args)=>{window.__qaErrors.push(args.map(String).join(' '));originalConsoleError(...args)};
+
       window.addEventListener('error',e=>window.__qaErrors.push(e.message));
       window.addEventListener('unhandledrejection',e=>window.__qaErrors.push(String(e.reason)));''')
     if path:
@@ -73,7 +86,11 @@ def fresh(path=None):
 
 
 def chooser():
-    WebDriverWait(driver, 60).until(lambda _: len(driver.find_elements(By.CSS_SELECTOR, '.chooser-tool')) == 112)
+    def ready(_):
+        toasts=driver.execute_script('return (window.__qaToasts||[]).filter(t=>t.type==="error")')
+        if toasts: raise AssertionError('Upload errors: '+json.dumps(toasts,ensure_ascii=False))
+        return len(driver.find_elements(By.CSS_SELECTOR, '.chooser-tool')) == 112
+    WebDriverWait(driver, 45).until(ready)
 
 
 def back():
@@ -136,6 +153,10 @@ def check(name, fn):
         item['status'] = 'passed'
     except Exception as error:
         item.update(status='failed', error=str(error), traceback=traceback.format_exc())
+        try:
+            item['diagnostics']=driver.execute_script('return {errors:window.__qaErrors,toasts:window.__qaToasts,uploads:window.__qaUploads,language:document.documentElement.lang,resources:performance.getEntriesByType("resource").map(r=>({name:r.name,duration:r.duration,transferSize:r.transferSize}))}')
+        except Exception:
+            pass
         print(item['traceback'], flush=True)
     finally:
         item['seconds'] = round(time.monotonic() - start, 1)
@@ -176,7 +197,7 @@ try:
             click(WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, '//*[@role="menuitemradio" and normalize-space(.)="English"]'))))
             WebDriverWait(driver, 30).until(lambda _: driver.find_element(By.TAG_NAME, 'html').get_attribute('lang') == 'en')
             driver.refresh()
-            assert driver.find_element(By.TAG_NAME, 'html').get_attribute('lang') == 'en'
+            WebDriverWait(driver, 30).until(lambda _: driver.find_element(By.TAG_NAME, 'html').get_attribute('lang') == 'en')
             visible('.upload-entry')
             overflow()
             click(button('Switch to light mode'))
