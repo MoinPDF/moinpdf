@@ -18,9 +18,18 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     folder = Path(temp)
     subprocess.run([sys.executable, str(root/'tests/research/docx-fixture.py'), str(folder/'fixtures')], check=True)
     subprocess.run([sys.executable, str(root/'tests/research/matbee/generate-rich-fixtures.py')], cwd=folder, check=True)
-    browser = launch_browser(api)
-    browser_session = browser.new_browser_cdp_session() if browser.browser_type.name == 'chromium' else None
-    page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
+    persistent = os.environ.get('MOINPDF_OFFICE_PERSISTENT') == '1'
+    blocked_assets = os.environ.get('MOINPDF_OFFICE_BLOCK_ASSETS', '1') == '1'
+    cycles = int(os.environ.get('MOINPDF_OFFICE_ABORT_CYCLES', '15'))
+    if persistent:
+        browser = getattr(api, os.environ['MOINPDF_BROWSER']).launch_persistent_context(
+            str(folder/'browser-profile'), viewport={'width':1440,'height':1000}, accept_downloads=True)
+        browser_session = None
+        page = browser.new_page()
+    else:
+        browser = launch_browser(api)
+        browser_session = browser.new_browser_cdp_session() if browser.browser_type.name == 'chromium' else None
+        page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
     page.set_default_timeout(180000)
     errors, uploads, external, results, console = [], [], [], [], []
     page.on('pageerror', lambda error: errors.append(str(error)))
@@ -146,11 +155,14 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             results.append({'file':path.name+suffix,'pages':len(pdf),'images':images,'text':text,'seconds':round(time.monotonic()-started,2),'progress':page.evaluate('window.__officeProgress'),'remainingOfficeWorkers':workers})
         print('PASS: Office '+path.name+suffix+' in '+str(results[-1]['seconds'])+'s', flush=True)
     try:
+        page.goto(origin)
+        cache_probe=page.evaluate('''async()=>{try {const c=await caches.open('moinpdf-office-2.7.2'); await c.put('/__qa_cache_probe',new Response('ok')); const r=await c.match('/__qa_cache_probe'); const value=await r.text(); await c.delete('/__qa_cache_probe'); return {works:value==='ok',keys:(await c.keys()).length}}catch(e){return {works:false,error:e.name+': '+e.message}}}''')
+        print('CACHE PROBE: '+json.dumps({'persistent':persistent,'blockAssetsAfterAbort':blocked_assets,'abortCycles':cycles,'cache':cache_probe}),flush=True)
         for name in ['rich.xlsx','rich.pptx','rich.docx']:
             convert(folder/'fixtures'/name)
         for name in ['sample.docx','sample.xlsx','sample.pptx','sample.odt','sample.ods','sample.odp']:
             convert(root/'tests/fixtures/office'/name)
-        for cycle in range(15):
+        for cycle in range(cycles):
             choose(folder/'fixtures/rich.docx', reload=(cycle == 0))
             page.get_by_role('button', name='PDF erstellen', exact=True).click()
             # Cancel the actual running WASM worker, after asset preparation.
@@ -159,14 +171,14 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             expect(page.get_by_role('button', name='PDF erstellen', exact=True)).to_be_enabled()
             expect(page.get_by_role('link', name='PDF herunterladen', exact=True)).not_to_be_visible()
             wait_office_closed()
-            cached_only = True
-            convert(folder/'fixtures/rich.xlsx', '-cached-after-abort-' + str(cycle), reload=False)
-            convert(folder/'fixtures/rich.docx', '-cached-after-success-' + str(cycle), reload=False)
+            cached_only = blocked_assets
+            convert(folder/'fixtures/rich.xlsx', ('-cached-after-abort-' if blocked_assets else '-online-after-abort-') + str(cycle), reload=False)
+            convert(folder/'fixtures/rich.docx', ('-cached-after-success-' if blocked_assets else '-online-after-success-') + str(cycle), reload=False)
         assert not uploads, uploads
         assert not external, external
         assert not errors, errors
-        (evidence/'browser-office.json').write_text(json.dumps({'results':results,'uploads':uploads,'external':external,'errors':errors}, ensure_ascii=False, indent=2))
-        print('PASS: real browser Office conversion, cached binary assets, repeated abort/restart, no surviving Office workers and no document uploads.', flush=True)
+        (evidence/'browser-office.json').write_text(json.dumps({'persistent':persistent,'blockAssetsAfterAbort':blocked_assets,'abortCycles':cycles,'cache':cache_probe,'results':results,'uploads':uploads,'external':external,'errors':errors}, ensure_ascii=False, indent=2))
+        print('PASS: real browser Office conversion, repeated abort/restart, no surviving Office workers and no document uploads. Asset blocking: '+str(blocked_assets), flush=True)
     except BaseException:
         print(page.locator('body').inner_text()[:8000], flush=True)
         print('Browser errors: '+repr(errors), flush=True)
