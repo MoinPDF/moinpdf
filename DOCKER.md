@@ -32,7 +32,7 @@ docker compose up -d --build --wait --wait-timeout 1800
 | Bereich | Automatisch vorhanden |
 | --- | --- |
 | Web-App | Eigenständiger Produktionsbuild, lokale Schriften, PDF.js, qpdf-WASM und OCR-Dateien |
-| Browser-OCR | Deutsche und englische Erkennung einschließlich gemischter Dokumente |
+| Browser-OCR | 21 lokale OCR-Sprachen, bis zu acht kombiniert, mit optionaler automatischer Sprachprobe |
 | Dokumentenserver | LibreOffice, Ghostscript, Tesseract OSD, pdf2docx, EML/MSG-Import, PowerPoint, Formularerkennung und Dokumentprüfungen |
 | Webseiten-Konverter | Chromium für öffentliche Website-Links mit Bildern, Schriften und CSS |
 | Rechnungen und Archivierung | KoSIT, XRechnung-Regeln, veraPDF, Mustang/ZUGFeRD und pyHanko |
@@ -41,7 +41,7 @@ docker compose up -d --build --wait --wait-timeout 1800
 
 Die Installation lädt die erforderlichen Sprachpaare einschließlich Englisch als Zwischensprache und führt erste Übersetzungen aus, damit auch benötigte Satztrennungsmodelle zwischengespeichert sind. Unterbrochene Downloads werden beim nächsten Versuch ergänzt. Die Modelle und Zwischenspeicher liegen in Docker-Volumes. Die Modellinitialisierung hat Internetzugriff; **Dokumentenserver und laufender Übersetzungsdienst sind im internen Docker-Netz isoliert**. Bei späteren Starts werden vollständige, bereits vorbereitete Modelle wiederverwendet.
 
-PDF-Übersetzung benötigt auslesbaren Text; Scans zuerst mit OCR bearbeiten. Sie erzeugt Originaltext und Übersetzung nebeneinander. Die Sprache der App-Oberfläche bleibt Deutsch. Ein eigenes Signaturzertifikat und gegebenenfalls vertrauenswürdige CA-Zertifikate werden weiterhin vom Betreiber bereitgestellt.
+PDF-Übersetzung benötigt auslesbaren Text; Scans zuerst mit OCR bearbeiten. Sie erzeugt Originaltext und Übersetzung nebeneinander. Die App-Oberfläche lässt sich unabhängig davon zwischen Deutsch und Englisch umschalten. Ein eigenes Signaturzertifikat und gegebenenfalls vertrauenswürdige CA-Zertifikate werden weiterhin vom Betreiber bereitgestellt.
 
 ## Einstellungen und optionaler Login
 
@@ -119,7 +119,7 @@ docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /rep
 
 Bei aktiviertem Login zusätzlich `--env MOINPDF_TEST_USERNAME=... --env MOINPDF_TEST_PASSWORD=...` übergeben. Diesen Test nur mit dem enthaltenen synthetischen Testmaterial verwenden.
 
-Die eigenständige Dokumenten-API bleibt unter [server/README.md](server/README.md) beschrieben. Die Benutzeroberfläche bietet ab 0.2.0 keine manuelle API-Verbindung mehr an; für sämtliche Konverter die vollständige Docker-Ausgabe verwenden. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.8.4](https://github.com/LibreTranslate/LibreTranslate/tree/v1.8.4); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).
+Die eigenständige Dokumenten-API bleibt unter [server/README.md](server/README.md) beschrieben. Die Benutzeroberfläche bietet ab 0.2.0 keine manuelle API-Verbindung mehr an; für sämtliche Konverter die vollständige Docker-Ausgabe verwenden. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.9.6](https://github.com/LibreTranslate/LibreTranslate/tree/v1.9.6); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).
 
 ## Website-Link zu PDF
 
