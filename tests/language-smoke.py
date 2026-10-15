@@ -7,6 +7,7 @@ from pathlib import Path
 import tempfile
 import zipfile
 import pymupdf
+from browser_runtime import launch_browser
 from playwright.sync_api import sync_playwright, expect
 
 origin = os.environ.get('MOINPDF_DOCUMENTATION_URL', 'http://127.0.0.1:8765').rstrip('/')
@@ -56,7 +57,7 @@ def back(page):
     expect(page.locator('.chooser-tool')).to_have_count(112)
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
-    browser = api.chromium.launch()
+    browser = launch_browser(api)
     context = browser.new_context(viewport={'width':1440,'height':1000}, reduced_motion='reduce')
     page = context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))

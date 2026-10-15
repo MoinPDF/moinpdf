@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import xml.etree.ElementTree as ET
 import pymupdf
+from browser_runtime import launch_browser
 from playwright.sync_api import expect, sync_playwright
 
 origin = os.environ['MOINPDF_TEST_URL']
@@ -31,7 +32,7 @@ def no_overflow(page, context):
     assert dimensions['content'] <= dimensions['width'] + 2, f'Horizontal overflow in {context}: {dimensions}'
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
-    browser = api.chromium.launch()
+    browser = launch_browser(api)
     try:
         # A raw XFA packet must remain blocked before any AcroForm API can strip it.
         xfa_path = Path(temporary) / 'xfa-preservation.pdf'

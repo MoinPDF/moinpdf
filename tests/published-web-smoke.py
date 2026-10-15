@@ -10,6 +10,7 @@ import wave
 import zipfile
 
 import pymupdf
+from browser_runtime import launch_browser
 from playwright.sync_api import expect, sync_playwright
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://localhost:8785')
@@ -73,7 +74,7 @@ def all_views(page, messages, context, empty=False):
     completed.append(f'{context}: all 112 tool entries checked without losing files')
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
-    browser = api.chromium.launch()
+    browser = launch_browser(api)
     page = browser.new_page(viewport={'width': 1440, 'height': 1000}, accept_downloads=True)
     page.set_default_timeout(30000)
     console, errors = [], []

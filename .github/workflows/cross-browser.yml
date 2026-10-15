@@ -1,0 +1,94 @@
+name: Firefox and Safari acceptance
+on:
+  push:
+    branches: ['qa/firefox-safari-0.13.25']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cross-browser-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  playwright:
+    name: ${{ matrix.browser }} acceptance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+    env:
+      MOINPDF_BROWSER: ${{ matrix.browser }}
+      MOINPDF_TEST_URL: http://127.0.0.1:8765
+      MOINPDF_DOCUMENTATION_URL: http://127.0.0.1:8765
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build the released application without source changes
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+          pnpm run typecheck:selfhost
+          pnpm run build:selfhost
+      - name: Install and record current browser test runtime
+        run: |
+          python -m pip install playwright pymupdf==1.28.2 python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 Pillow==11.3.0
+          python -m playwright install --with-deps $MOINPDF_BROWSER
+          mkdir -p cross-browser-evidence
+          python -m pip freeze > cross-browser-evidence/runtime.txt
+      - name: Start isolated local production build
+        run: |
+          python tests/cross-browser-server.py > "$RUNNER_TEMP/cross-browser-http.log" 2>&1 &
+          curl --fail --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:8765/ -o /dev/null
+      - name: UI, PDF engines, projects, OCR, Office and documentation
+        run: python tests/cross-browser-suite.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cross-browser-${{ matrix.browser }}
+          path: cross-browser-evidence/
+          retention-days: 30
+  safari:
+    name: Native Safari on macOS
+    runs-on: macos-15
+    timeout-minutes: 25
+    env:
+      MOINPDF_TEST_URL: http://127.0.0.1:8765
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Build the released application without source changes
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+          pnpm run build:selfhost
+      - name: Prepare Apple Safari WebDriver
+        run: |
+          python -m pip install selenium pymupdf==1.28.2
+          sudo safaridriver --enable
+          defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
+          mkdir -p cross-browser-evidence
+          python -m pip freeze > cross-browser-evidence/runtime.txt
+          safaridriver --version > cross-browser-evidence/safaridriver.txt
+      - name: Start isolated local production build
+        run: |
+          python tests/cross-browser-server.py > "$RUNNER_TEMP/cross-browser-http.log" 2>&1 &
+          curl --fail --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:8765/ -o /dev/null
+      - name: Real Safari UI and document roundtrips
+        run: python tests/safari-native.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cross-browser-native-safari
+          path: cross-browser-evidence/
+          retention-days: 30

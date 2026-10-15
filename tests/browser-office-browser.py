@@ -1,4 +1,4 @@
-"""Production Chromium acceptance: actual LibreOffice/WASM and independently read PDFs."""
+"""Production browser acceptance: actual LibreOffice/WASM and independently read PDFs."""
 import json
 import os
 from pathlib import Path
@@ -8,6 +8,7 @@ import tempfile
 import time
 import urllib.parse
 import pymupdf
+from browser_runtime import launch_browser
 from playwright.sync_api import expect, sync_playwright
 root = Path(__file__).resolve().parents[1]
 origin = os.environ['MOINPDF_TEST_URL']
@@ -17,8 +18,8 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     folder = Path(temp)
     subprocess.run([sys.executable, str(root/'tests/research/docx-fixture.py'), str(folder/'fixtures')], check=True)
     subprocess.run([sys.executable, str(root/'tests/research/matbee/generate-rich-fixtures.py')], cwd=folder, check=True)
-    browser = api.chromium.launch()
-    browser_session = browser.new_browser_cdp_session()
+    browser = launch_browser(api)
+    browser_session = browser.new_browser_cdp_session() if browser.browser_type.name == 'chromium' else None
     page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
     page.set_default_timeout(180000)
     errors, uploads, external, results, console = [], [], [], [], []
@@ -31,14 +32,21 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     page.add_init_script('''(() => {
       const NativeWorker = window.Worker;
       window.__officeProgress = [];
+      window.__officeLiveWorkers = 0;
       window.Worker = class extends NativeWorker {
         constructor(url, options) {
           super(url, options);
+          this.__isOfficeWorker = String(url).includes('/vendor/office/');
+          if (this.__isOfficeWorker) window.__officeLiveWorkers++;
           if (String(url).includes('/vendor/office/browser.worker.global.js')) {
             this.addEventListener('message', ({data}) => {
               window.__officeProgress.push({time: performance.now(), type: data.type, progress: data.progress});
             });
           }
+        }
+        terminate() {
+          if (this.__isOfficeWorker) { window.__officeLiveWorkers--; this.__isOfficeWorker = false; }
+          return super.terminate();
         }
         postMessage(data, ...args) {
           if (data?.type === 'init' && data.sofficeJs) data = {...data, verbose: window.__officeVerbose};
@@ -57,6 +65,9 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         else: r.continue_()
     page.route('**/*', route)
     def snapshot_office_threads():
+        if browser_session is None:
+            print("Office diagnostics: " + json.dumps(page.evaluate("({liveWorkers: window.__officeLiveWorkers, progress: window.__officeProgress})")), flush=True)
+            return
         snapshots, sessions, states = [], [], []
         def received(event):
             message = json.loads(event['message'])
@@ -85,6 +96,9 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                 browser_session.send('Target.detachFromTarget', {'sessionId': session})
             browser_session.remove_listener('Target.receivedMessageFromTarget', received)
     def wait_office_closed():
+        if browser_session is None:
+            page.wait_for_function("window.__officeLiveWorkers === 0", timeout=10000)
+            return []
         deadline = time.monotonic() + 10
         while True:
             workers = [t['url'] for t in browser_session.send('Target.getTargets')['targetInfos'] if t['type']=='worker' and '/vendor/office/' in t['url']]

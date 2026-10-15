@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import urllib.parse
 import pymupdf
+from browser_runtime import launch_browser
 from playwright.sync_api import expect, sync_playwright
 
 origin = os.environ['MOINPDF_TEST_URL']
@@ -32,7 +33,7 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
         page.show_pdf_page(pymupdf.Rect(10, 10, 230, 130), middle, 0)
         page.show_pdf_page(pymupdf.Rect(310, 10, 530, 130), middle, 0)
         document.save(nested_path)
-    browser = api.chromium.launch()
+    browser = launch_browser(api)
     page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
     page.set_default_timeout(120000)
     errors, external, uploads, requested, console_errors = [], [], [], [], []

@@ -8,6 +8,7 @@ import tempfile
 import time
 import urllib.request
 import pymupdf
+from browser_runtime import launch_browser
 from playwright.sync_api import sync_playwright, expect
 
 origin = os.environ.get('MOINPDF_DOCUMENTATION_URL', 'http://127.0.0.1:8765').rstrip('/')
@@ -28,7 +29,7 @@ def no_overflow(page):
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
     # The GitHub Ubuntu runner includes Chrome with H.264/AAC support for the MP4.
-    browser = api.chromium.launch(channel='chrome')
+    browser = launch_browser(api)
     context = browser.new_context(viewport={'width': 1440, 'height': 1000}, reduced_motion='reduce')
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
@@ -149,14 +150,24 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         search.fill('Rechenprüfung')
         manual.evaluate('window.dispatchEvent(new Event("beforeprint"))')
         expect(manual.locator('.docs-tool[open]:visible')).to_have_count(112)
-        manual.pdf(path=str(evidence / 'handbuch-druckprobe.pdf'), print_background=True)
+        native_print = browser.browser_type.name == 'chromium'
+        if native_print:
+            manual.pdf(path=str(evidence / 'handbuch-druckprobe.pdf'), print_background=True)
+        else:
+            manual.emulate_media(media='print')
+            expect(manual.locator('.docs-tool[open]:visible')).to_have_count(112)
+            manual.screenshot(path=str(evidence / 'handbuch-print-styles.png'))
+            manual.emulate_media(media='screen')
         manual.evaluate('window.dispatchEvent(new Event("afterprint"))')
         expect(search).to_have_value('Rechenprüfung')
         expect(manual.locator('.docs-tool:visible')).to_have_count(1)
-        with pymupdf.open(evidence / 'handbuch-druckprobe.pdf') as document:
-            text = ''.join(page.get_text() for page in document)
-            assert 'PDF als Hörbuch' in text and 'PDFs überlagern' in text
-        completed.append('Complete printable manual and restored search state')
+        if native_print:
+            with pymupdf.open(evidence / 'handbuch-druckprobe.pdf') as document:
+                text = ''.join(page.get_text() for page in document)
+                assert 'PDF als Hörbuch' in text and 'PDFs überlagern' in text
+            completed.append('Complete printable manual and restored search state')
+        else:
+            completed.append('Print CSS, all 112 expanded guides and restored search state; native print dialog/PDF export not automated')
 
         for path in ('/impressum.html', '/datenschutz.html'):
             manual.goto(origin + path)
