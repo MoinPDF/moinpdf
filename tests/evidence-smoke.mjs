@@ -1,3 +1,5 @@
+import { englishTranslator } from './translation-test-utils.mjs';
+const en = await englishTranslator();
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
@@ -51,6 +53,8 @@ try {
   assert.equal(model.numberTokens('Datum 12.10.2026 und Rabatt 5 %').length,2);
 
   const rules=model.parseFieldRules(model.defaultFieldRules),data=[page(['Rechnungsnummer: R-107','Datum: 07.10.2026','Netto: 100,00 EUR','Gesamtbetrag: 119,00 EUR','IBAN: DE89370400440532013000'])];
+  const englishRules=model.parseFieldRules(model.defaultFieldRules.split('\n').map(line=>{const at=line.indexOf('=');return en(line.slice(0,at).trim())+' = '+line.slice(at+1).trim()}).join('\n'));
+  assert.deepEqual(englishRules.map(r=>r.kind),rules.map(r=>r.kind),'English default labels preserve field typing');assert.deepEqual(englishRules.map(r=>r.aliases),rules.map(r=>r.aliases),'Recognition aliases remain unchanged');assert.equal(model.parseFieldRules('Internet = Domain')[0].kind,'text');
   assert.equal(model.extractField(data,rules[0])[0].value,'R-107');assert.equal(model.extractField(data,rules[3])[0].value,'119,00 EUR');assert.equal(model.extractField(data,{id:'custom',label:'Kundennummer',aliases:['Kundennummer'],kind:'text'}).length,0);
   assert.throws(()=>model.parseFieldRules('Datum=Datum\nDatum=Date'),/eindeutigen/);
   const xml={number:'R-107',date:'2026-10-07',seller:{name:'Firma Alpha'},buyer:{name:'Firma Beta'},totals:{net:'100.00',gross:'999.00',due:'999.00'},payment:[{iban:'DE89370400440532013000'}]};
@@ -93,8 +97,13 @@ try {
   p.node.set(PDFName.of('Annots'),annotated.context.obj([annotated.context.register(annotated.context.obj({Type:'Annot',Subtype:'Text',Rect:[45,665,210,690],Contents:PDFHexString.fromText('Bitte Betrag kontrollieren'),T:PDFHexString.fromText('Reviewer'),Name:'Comment'}))]));
   const commented=await source(await annotated.save(),'Kommentare.pdf'),comments=await engine.readComments([commented],ctx);assert.equal(comments.length,1);assert.equal(comments[0].comment,'Bitte Betrag kontrollieren');assert.equal(comments[0].author,'Reviewer');assert.equal(comments[0].ref.page,0);
   const malicious={...comments[0],comment:'=HYPERLINK("bad") <script>alert(1)</script>'};
+  const translatedComments=engine.commentRows([{...malicious,comment:'Rechnung',author:'Rechnung',subject:'Rechnung'}],en);
+  assert.equal(translatedComments[0][0],'Completed');assert.equal(translatedComments[1][3],'Rechnung');assert.equal(translatedComments[1][5],'Rechnung');assert.equal(translatedComments[1][6],'Rechnung');
+  const findings=engine.findingRows([{id:'raw',title:'Rechnung',titleIsData:true,status:'review',detail:'Zahlenwert kontrollieren',oldValue:'Abbrechen',newValue:'Rechnung'}],en);
+  assert.equal(findings[1][1],'Rechnung');assert.equal(findings[1][2],'Abbrechen');assert.equal(findings[1][3],'Rechnung');assert.notEqual(findings[1][4],'Zahlenwert kontrollieren');
+  assert(!engine.ocrReason({text:'1O0,10',confidence:40},80,en).includes('OCR-Sicherheit'));
   const csv=await engine.exportRows(engine.commentRows([malicious]),'comments','csv');assert.match(await csv.blob.text(),/'=HYPERLINK/);
-  const workbook=await engine.exportRows(engine.commentRows([malicious]),'comments'),workbookZip=await JSZip.loadAsync(await workbook.blob.arrayBuffer()),sheet=await workbookZip.file('xl/worksheets/sheet1.xml').async('string');assert(!sheet.includes('<f>'));assert(sheet.includes('&lt;script&gt;'));assert(!sheet.includes('<script>'));
+  const workbook=await engine.exportRows(engine.commentRows([malicious],en),'comments','xlsx',en('Tabelle')),workbookZip=await JSZip.loadAsync(await workbook.blob.arrayBuffer()),sheet=await workbookZip.file('xl/worksheets/sheet1.xml').async('string');assert.match(await workbookZip.file('xl/workbook.xml').async('string'),/name="Sheet"/);assert(!sheet.includes('<f>'));assert(sheet.includes('&lt;script&gt;'));assert(!sheet.includes('<script>'));
   assert((await engine.commentMarkdown(comments).blob.text()).includes('- [ ]'));
 
   const candidates=await engine.inspectScans([original,attachment],ctx);assert.equal(candidates.length,2);assert(candidates.every(c=>Number.isFinite(c.score)));

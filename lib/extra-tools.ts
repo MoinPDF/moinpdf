@@ -289,7 +289,7 @@ export async function runSourceTool(
           status: different ? 'Text geändert' : 'Text gleich',
           lines: different
             ? lines
-            : [{ kind: 'same', text: 'Der auslesbare Text stimmt überein.' }],
+            : [{ kind: 'same', authored: true, text: 'Der auslesbare Text stimmt überein.' }],
         });
       }
       await tick();
@@ -402,7 +402,7 @@ export async function runSourceTool(
         value: String(info[key] ?? '—'),
       })),
     ];
-    report.sections.push({ title: src.name, details });
+    report.sections.push({ title: src.name, titleIsData: true, details });
     const dimensions: string[] = [];
     for (let j = 1; j <= src.pdf.numPages; j++) {
       check(signal);
@@ -414,7 +414,7 @@ export async function runSourceTool(
     }
     report.sections.push({
       title: `Seitenformate · ${src.name}`,
-      lines: dimensions.map((text) => ({ kind: 'same', text })),
+      lines: dimensions.map((text) => ({ kind: 'same', authored: true, text })),
     });
     await tick();
   }

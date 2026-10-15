@@ -56,7 +56,7 @@ export function ReportView({ report }: { report: PdfReport }) {
             open={section.status ? !section.status.startsWith('Text gleich') : index === 0}
           >
             <summary>
-              <span>{ui(section.title)}</span>
+              <span>{section.titleIsData ? section.title : ui(section.title)}</span>
               {section.status && (
                 <b
                   className={
@@ -76,7 +76,7 @@ export function ReportView({ report }: { report: PdfReport }) {
                 {section.details.map((detail, i) => (
                   <div key={i}>
                     <dt>{ui(detail.label)}</dt>
-                    <dd>{detail.value}</dd>
+                    <dd>{detail.translateValue ? ui(detail.value) : detail.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -102,11 +102,7 @@ export function ReportView({ report }: { report: PdfReport }) {
                             ? '!'
                             : ''}
                     </span>
-                    <p>
-                      {line.kind === 'note' || report.title === 'PDF-Dokumentbericht'
-                        ? ui(line.text)
-                        : line.text}
-                    </p>
+                    <p>{line.kind === 'note' || line.authored ? ui(line.text) : line.text}</p>
                   </div>
                 ))}
               </div>

@@ -532,7 +532,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
             run(async (ctx) => {
               const out = await build(ctx.signal);
               const opened = await openSource(
-                new File([new Uint8Array(out.bytes)], 'Absatz-Vorschau.pdf', {
+                new File([new Uint8Array(out.bytes)], ui('Absatz-Vorschau.pdf'), {
                   type: 'application/pdf',
                 }),
               );
@@ -555,7 +555,7 @@ export function NativeParagraphPanel({ source, busy, run }: PanelProps) {
               return packagePdfs(
                 [
                   {
-                    name: source.name.replace(/\.pdf$/i, '') + '-Absatz.pdf',
+                    name: source.name.replace(/\.pdf$/i, '') + ui('-Absatz.pdf'),
                     bytes: out.bytes,
                     pages: source.pdf.numPages + out.addedPages,
                   },

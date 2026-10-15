@@ -401,7 +401,7 @@ export function WorkflowPanel({
             {saved.map((v, i) => (
               <div className="advanced-list-row" key={i}>
                 <strong>{v.name}</strong>
-                <small>{v.steps.map((s) => stepLabels[s.kind]).join(' → ')}</small>
+                <small>{v.steps.map((s) => ui(stepLabels[s.kind])).join(' → ')}</small>
                 <div className="advanced-actions">
                   <Button
                     size="sm"

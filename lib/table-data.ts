@@ -79,7 +79,7 @@ const col = (index: number) => {
     out = String.fromCharCode(65 + ((index - 1) % 26)) + out;
   return out;
 };
-export async function makeXlsx(rows: string[][]) {
+export async function makeXlsx(rows: string[][], sheetName = 'Tabelle') {
   const zip = new JSZip(),
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
   zip.file(
@@ -92,7 +92,7 @@ export async function makeXlsx(rows: string[][]) {
   );
   zip.file(
     'xl/workbook.xml',
-    `<workbook xmlns="${ns}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Tabelle" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+    `<workbook xmlns="${ns}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${xml(sheetName)}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
   );
   zip.file(
     'xl/_rels/workbook.xml.rels',

@@ -164,6 +164,7 @@ export function TagRepairEditor({
               n.id,
               `${'· '.repeat(Math.min(n.depth, 8))}${n.role} · ${n.id}${n.alt ? ' · ' + n.alt.slice(0, 50) : ''}`,
             ])}
+            translateItems={false}
           />
           {node.role !== 'StructTreeRoot' && (
             <Choice
@@ -171,6 +172,7 @@ export function TagRepairEditor({
               value={current.role}
               onChange={(role) => change({ role })}
               items={[...new Set([...roles, current.role])].map((role) => [role, role])}
+              translateItems={false}
             />
           )}
           <Text

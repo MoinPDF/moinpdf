@@ -75,6 +75,7 @@ export async function exportReading(
   language: string,
   ctx: RunContext,
 ): Promise<ExportFile> {
+  const t = ctx.translate ?? ((text: string) => text);
   if (!['markdown', 'html', 'epub'].includes(format)) throw new Error('Unbekanntes Ausgabeformat.');
   title = clean(title.trim()).slice(0, 200) || baseName(source.name);
   if (!['de', 'en', 'fr', 'es', 'it', 'nl', 'pl'].includes(language)) language = 'de';
@@ -91,15 +92,16 @@ export async function exportReading(
       : l.text.length < 180 && l.size > normal * 1.22
         ? 'h3'
         : 'p';
-  const blank =
-    'Auf dieser Seite wurde kein Text gefunden. Bilder und Scans werden nicht übernommen.';
+  const blank = t(
+    'Auf dieser Seite wurde kein Text gefunden. Bilder und Scans werden nicht übernommen.',
+  );
   const missing = pages.filter((p) => !p.length).length;
   const note = `Textausgabe mit erkannten Überschriften und Seitenabschnitten. Bilder, Tabellenlayout und Fußnotenstruktur werden nicht übernommen.${missing ? ` ${missing} Seite(n) ohne auslesbaren Text sind gekennzeichnet; bei Bedarf zuerst OCR ausführen.` : ''}`;
   let blob: Blob;
   if (format === 'markdown') {
     const chunks = pages.map(
       (lines, i) =>
-        `## Seite ${i + 1}\n\n${lines.length ? lines.map((line) => (tag(line) === 'h2' ? '### ' : tag(line) === 'h3' ? '#### ' : '') + escapeMarkdown(line.text)).join('\n\n') : blank}`,
+        `## ${escapeMarkdown(t(`Seite ${i + 1}`))}\n\n${lines.length ? lines.map((line) => (tag(line) === 'h2' ? '### ' : tag(line) === 'h3' ? '#### ' : '') + escapeMarkdown(line.text)).join('\n\n') : blank}`,
     );
     blob = new Blob([`# ${escapeMarkdown(title)}\n\n${chunks.join('\n\n---\n\n')}\n`], {
       type: 'text/markdown;charset=utf-8',
@@ -108,11 +110,11 @@ export async function exportReading(
     const body = (lines: TextLine[]) =>
       lines.length
         ? lines.map((line) => `<${tag(line)}>${escapeMarkup(line.text)}</${tag(line)}>`).join('\n')
-        : `<p>${blank}</p>`;
+        : `<p>${escapeMarkup(blank)}</p>`;
     const style =
       'body{font-family:system-ui,sans-serif;line-height:1.65;max-width:52rem;margin:2rem auto;padding:0 1rem;color:#222;background:#fff}p{white-space:pre-wrap;overflow-wrap:anywhere}section{margin:3rem 0}h1,h2,h3{line-height:1.3}nav a{margin-right:1rem}';
     if (format === 'html') {
-      const html = `<!doctype html>\n<html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${escapeMarkup(title)}</title><style>${style}</style></head><body><h1>${escapeMarkup(title)}</h1><nav aria-label="Seiten">${pages.map((_, i) => `<a href="#seite-${i + 1}">Seite ${i + 1}</a>`).join(' ')}</nav>${pages.map((lines, i) => `<section id="seite-${i + 1}"><h2>Seite ${i + 1}</h2>${body(lines)}</section>`).join('\n')}</body></html>`;
+      const html = `<!doctype html>\n<html lang="${language}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${escapeMarkup(title)}</title><style>${style}</style></head><body><h1>${escapeMarkup(title)}</h1><nav aria-label="${escapeMarkup(t('Seiten'))}">${pages.map((_, i) => `<a href="#seite-${i + 1}">${escapeMarkup(t(`Seite ${i + 1}`))}</a>`).join(' ')}</nav>${pages.map((lines, i) => `<section id="seite-${i + 1}"><h2>${escapeMarkup(t(`Seite ${i + 1}`))}</h2>${body(lines)}</section>`).join('\n')}</body></html>`;
       blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     } else {
       const zip = new JSZip(),
@@ -131,14 +133,17 @@ export async function exportReading(
       pages.forEach((lines, i) =>
         zip.file(
           `EPUB/page-${i + 1}.xhtml`,
-          xhtml(`${title} · Seite ${i + 1}`, `<h1>Seite ${i + 1}</h1>${body(lines)}`),
+          xhtml(
+            `${title} · ${t(`Seite ${i + 1}`)}`,
+            `<h1>${escapeMarkup(t(`Seite ${i + 1}`))}</h1>${body(lines)}`,
+          ),
         ),
       );
       zip.file(
         'EPUB/nav.xhtml',
         xhtml(
           title,
-          `<nav epub:type="toc" id="toc"><h1>${escapeMarkup(title)}</h1><ol>${pages.map((_, i) => `<li><a href="page-${i + 1}.xhtml">Seite ${i + 1}</a></li>`).join('')}</ol></nav>`,
+          `<nav epub:type="toc" id="toc"><h1>${escapeMarkup(title)}</h1><ol>${pages.map((_, i) => `<li><a href="page-${i + 1}.xhtml">${escapeMarkup(t(`Seite ${i + 1}`))}</a></li>`).join('')}</ol></nav>`,
         ),
       );
       zip.file(

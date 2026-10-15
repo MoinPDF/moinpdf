@@ -1,4 +1,5 @@
 'use client';
+import { uiLocale } from '@/lib/ui-language';
 
 import { useEffect, useState } from 'react';
 import { Check, ChevronDown, FilePlus2, FileText } from 'lucide-react';
@@ -84,7 +85,8 @@ export function WorkspaceContext({
             </details>
           )}
           <span>
-            {count} {count === 1 ? t('Seite', 'page') : t('Seiten', 'pages')} · {formatSize(size)}
+            {count} {count === 1 ? t('Seite', 'page') : t('Seiten', 'pages')} ·{' '}
+            {formatSize(size, uiLocale())}
           </span>
         </div>
         {onAdd && (

@@ -139,7 +139,9 @@ export function AudioWorkbench({
         ? [{ title: 'Stimmprobe', text: (current?.text || '').slice(0, 350) }]
         : chosen.map((s) => ({ title: s.title, text: s.text }));
       if (!selected.length || selected.some((s) => !s.text.trim()))
-        throw new Error('Bitte nicht leere Abschnitte auswählen.');
+        throw new Error(
+          'Bitte mindestens einen Abschnitt auswählen. Ausgewählte Abschnitte dürfen nicht leer sein.',
+        );
       ctx.report({
         percent: 30,
         label: sample
@@ -195,6 +197,7 @@ export function AudioWorkbench({
                 value={source.id}
                 onChange={setSourceId}
                 items={sources.map((s) => [s.id, s.name])}
+                translateItems={false}
               />
               <ReadOptions
                 ocr={ocr}
@@ -235,7 +238,7 @@ export function AudioWorkbench({
                     setPages(data);
                     const draft =
                       mode === 'chapters' ? await readDocumentDraft(source, ctx.signal) : undefined;
-                    const entries = audioSections(data, mode, draft?.bookmarks);
+                    const entries = audioSections(data, mode, draft?.bookmarks, ui);
                     setSections(entries);
                     setSelected(entries[0]?.id || '');
                   })
@@ -274,8 +277,9 @@ export function AudioWorkbench({
                     onChange={setSelected}
                     items={sections.map((s, i) => [
                       s.id,
-                      `${i + 1}. ${s.title}${s.enabled ? '' : ' · ausgelassen'}`,
+                      `${i + 1}. ${s.title}${s.enabled ? '' : ui(' · ausgelassen')}`,
                     ])}
+                    translateItems={false}
                   />
                   <Tick
                     label={ui('Diesen Abschnitt ausgeben')}
@@ -332,6 +336,7 @@ export function AudioWorkbench({
                       { id: 'kerstin', label: 'Kerstin · Deutsch' },
                     ]
                 ).map((v) => [v.id, v.label])}
+                translateItems={false}
               />
               <NumberField
                 label={ui('Sprechtempo')}

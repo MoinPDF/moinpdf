@@ -1,5 +1,5 @@
 'use client';
-import { ui } from '@/lib/ui-language';
+import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { downloadBlob, type Source } from '@/lib/pdf-engine';
 
 export const initialAccessibleDocument = (): AccessibleDocument => ({
   title: ui('Mein Dokument'),
-  language: ui('Deutsch') === 'German' ? 'en-US' : 'de-DE',
+  language: uiLocale().startsWith('en') ? 'en-US' : 'de-DE',
   blocks: [{ kind: 'h1', text: ui('Mein Dokument') }],
 });
 export function AccessibleEditor({

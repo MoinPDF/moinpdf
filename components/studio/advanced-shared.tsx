@@ -87,11 +87,13 @@ export const Choice = ({
   value,
   onChange,
   items,
+  translateItems = true,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   items: [string, string][];
+  translateItems?: boolean;
 }) => {
   useLanguage();
   return (
@@ -99,7 +101,7 @@ export const Choice = ({
       <select aria-label={ui(label)} value={value} onChange={(e) => onChange(e.target.value)}>
         {items.map(([v, text]) => (
           <option key={v} value={v}>
-            {ui(text)}
+            {translateItems ? ui(text) : text}
           </option>
         ))}
       </select>

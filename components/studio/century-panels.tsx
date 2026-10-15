@@ -1,5 +1,5 @@
 'use client';
-import { ui } from '@/lib/ui-language';
+import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useEffect, useRef, useState } from 'react';
@@ -119,10 +119,11 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
               setFocus(undefined);
             }}
             items={responses.map((r) => [r.sourceId, r.name])}
+            translateItems={false}
           />
           {current.warnings.map((w) => (
-            <p className="workbench-notice" key={w}>
-              {w}
+            <p className="workbench-notice" key={ui(w)}>
+              {ui(w)}
             </p>
           ))}
           <p>
@@ -141,7 +142,7 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
               </h3>
               <p className="fine-note">
                 {f.kind} {ui(' · Original: ')}
-                {f.original || ui('Leer')}
+                {f.original ? (f.kind === 'checkbox' ? ui(f.original) : f.original) : ui('Leer')}
               </p>
               {f.kind === 'checkbox' ? (
                 <Choice
@@ -181,7 +182,14 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
             <Button
               disabled={busy}
               onClick={() =>
-                run(() => exportRows(formResponseRows(responses, layout), 'Formularruecklaeufe'))
+                run(() =>
+                  exportRows(
+                    formResponseRows(responses, layout, ui),
+                    ui('Formularruecklaeufe'),
+                    'xlsx',
+                    ui('Tabelle'),
+                  ),
+                )
               }
             >
               {ui('Excel erstellen')}
@@ -191,7 +199,12 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
               variant="outline"
               onClick={() =>
                 run(() =>
-                  exportRows(formResponseRows(responses, layout), 'Formularruecklaeufe', 'csv'),
+                  exportRows(
+                    formResponseRows(responses, layout, ui),
+                    ui('Formularruecklaeufe'),
+                    'csv',
+                    ui('Tabelle'),
+                  ),
                 )
               }
             >
@@ -327,15 +340,16 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
                         }
                       }}
                       items={[
-                        ['', 'Fundstelle wählen'],
+                        ['', ui('Fundstelle wählen')],
                         ...item.candidates.map(
                           (c, i) =>
                             [
                               String(i + 1),
-                              `${c.date} · Seite ${c.ref.page + 1} · ${c.ref.text.slice(0, 90)}`,
+                              `${c.date} · ${ui(`Seite ${c.ref.page + 1}`)} · ${c.ref.text.slice(0, 90)}`,
                             ] as [string, string],
                         ),
                       ]}
+                      translateItems={false}
                     />
                   )}
                   <Tick
@@ -376,7 +390,12 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
           >
             {ui('Chronologische PDF erstellen')}
           </Button>
-          <ReportButtons rows={chronologyRows(items)} name="Chronologie" run={run} busy={busy} />
+          <ReportButtons
+            rows={chronologyRows(items, ui)}
+            name="Chronologie"
+            run={run}
+            busy={busy}
+          />
         </section>
       )}
     </EvidenceLayout>
@@ -591,7 +610,14 @@ export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
             variant="outline"
             disabled={busy || !reviewed || !calculation}
             onClick={() =>
-              run(() => exportRows(arithmeticRows(rows, total, locale), 'Rechenpruefung', 'csv'))
+              run(() =>
+                exportRows(
+                  arithmeticRows(rows, total, locale, ui),
+                  ui('Rechenpruefung'),
+                  'csv',
+                  ui('Tabelle'),
+                ),
+              )
             }
           >
             {ui('CSV-Protokoll')}
@@ -862,7 +888,7 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
           page,
           kind: mode,
           points,
-          label: `${mode === 'area' ? 'Fläche' : 'Strecke'} ${items.length + 1}`,
+          label: `${ui(mode === 'area' ? 'Fläche' : 'Strecke')} ${items.length + 1}`,
         };
         measurementValue(item, calibrations[page], size.width, size.height);
         setItems([...items, item]);
@@ -878,9 +904,10 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
         return measurementText(
           measurementValue(item, calibrations[page], size.width, size.height),
           item.kind,
+          uiLocale(),
         );
       } catch {
-        return 'Kalibrierung fehlt';
+        return ui('Kalibrierung fehlt');
       }
     };
   return (
@@ -1120,7 +1147,12 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
             disabled={busy || !items.length}
             onClick={() =>
               run(async () =>
-                exportRows(await measurementRows(source, items, calibrations), 'Messungen', 'csv'),
+                exportRows(
+                  await measurementRows(source, items, calibrations, ui),
+                  ui('Messungen'),
+                  'csv',
+                  ui('Tabelle'),
+                ),
               )
             }
           >

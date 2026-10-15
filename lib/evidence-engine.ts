@@ -120,12 +120,15 @@ export async function readEvidence(
   }
 }
 
-export function coverage(pages: EvidencePage[]) {
+export function coverage(pages: EvidencePage[], t: (text: string) => string = (text) => text) {
   const empty = pages.filter((p) => !p.words.length);
-  return `${pages.length} Seiten ausgewertet; ${pages.filter((p) => p.mode === 'ocr').length} per OCR.${empty.length ? ` Auf ${empty.length} Seiten wurde kein Text erkannt. Diese Seiten sind nicht inhaltlich geprüft.` : ''}`;
+  return t(
+    `${pages.length} Seiten ausgewertet; ${pages.filter((p) => p.mode === 'ocr').length} per OCR.${empty.length ? t(` Auf ${empty.length} Seiten wurde kein Text erkannt. Diese Seiten sind nicht inhaltlich geprüft.`) : ''}`,
+  );
 }
-export const refLabel = (ref?: EvidenceRef) => (ref ? `${ref.name} · Seite ${ref.page + 1}` : '');
-export const findingRows = (findings: Finding[]) => [
+export const refLabel = (ref?: EvidenceRef, t: (text: string) => string = (text) => text) =>
+  ref ? t(`${ref.name} · Seite ${ref.page + 1}`) : '';
+export const findingRows = (findings: Finding[], t: (text: string) => string = (text) => text) => [
   [
     'Status',
     'Prüfpunkt',
@@ -136,21 +139,23 @@ export const findingRows = (findings: Finding[]) => [
     'Erste Fundstelle',
     'Zweite Datei / Seite',
     'Zweite Fundstelle',
-  ],
+  ].map(t),
   ...findings.map((f) => [
-    {
-      changed: 'Abweichung',
-      missing: 'Nicht gefunden',
-      review: 'Prüfen',
-      match: 'Übereinstimmung',
-    }[f.status],
-    f.title,
+    t(
+      {
+        changed: 'Abweichung',
+        missing: 'Nicht gefunden',
+        review: 'Prüfen',
+        match: 'Übereinstimmung',
+      }[f.status],
+    ),
+    f.titleIsData ? f.title : t(f.title),
     f.oldValue || '',
     f.newValue || '',
-    f.detail,
-    refLabel(f.before),
+    t(f.detail),
+    refLabel(f.before, t),
     f.before?.text || '',
-    refLabel(f.after),
+    refLabel(f.after, t),
     f.after?.text || '',
   ]),
 ];
@@ -158,13 +163,14 @@ export async function exportRows(
   rows: string[][],
   name: string,
   format: 'xlsx' | 'csv' = 'xlsx',
+  sheetName = 'Tabelle',
 ): Promise<ExportFile> {
   if (rows.length > 20000)
     throw new Error('Der Export ist auf 20.000 Zeilen begrenzt. Bitte kleinere Stapel verwenden.');
   return {
     blob:
       format === 'xlsx'
-        ? await makeXlsx(rows)
+        ? await makeXlsx(rows, sheetName)
         : new Blob([csvText(rows)], { type: 'text/csv;charset=utf-8' }),
     filename: name + '.' + format,
     kind: 'data',
@@ -280,7 +286,11 @@ export function compareInvoiceEvidence(invoice: Invoice, pages: EvidencePage[]):
   });
 }
 
-export const ocrReason = (word: EvidenceWord, threshold: number) =>
+export const ocrReason = (
+  word: EvidenceWord,
+  threshold: number,
+  t: (text: string) => string = (text) => text,
+) =>
   [
     (word.confidence ?? 100) < threshold
       ? `OCR-Sicherheit ${Math.round(word.confidence || 0)} %`
@@ -289,12 +299,17 @@ export const ocrReason = (word: EvidenceWord, threshold: number) =>
     /\d[,.]\d/.test(word.text) ? 'Zahlenwert kontrollieren' : '',
   ]
     .filter(Boolean)
+    .map(t)
     .join(' · ');
-export function ocrText(pages: EvidencePage[], corrections: Record<string, string>) {
+export function ocrText(
+  pages: EvidencePage[],
+  corrections: Record<string, string>,
+  t: (text: string) => string = (text) => text,
+) {
   return pages
     .map(
       (p) =>
-        `--- ${p.name}, Seite ${p.page + 1} ---\n` +
+        `--- ${p.name}, ${t(`Seite ${p.page + 1}`)} ---\n` +
         p.lines
           .map((l) =>
             l.words.map((w) => corrections[`${p.sourceId}:${p.page}:${w.id}`] ?? w.text).join(' '),
@@ -441,7 +456,11 @@ export async function pseudonymizedZip(
         label: `Platzhalter einsetzen · Datei ${index + 1}, Seite ${item.index + 1}`,
       });
     }
-    zip.file(`Dokument-${String(index + 1).padStart(3, '0')}.pdf`, await pdf.save());
+    zip.file(
+      ctx.translate?.(`Dokument-${String(index + 1).padStart(3, '0')}.pdf`) ??
+        `Dokument-${String(index + 1).padStart(3, '0')}.pdf`,
+      await pdf.save(),
+    );
   }
   return {
     blob: await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' }),
@@ -635,7 +654,7 @@ export async function readComments(sources: Source[], ctx: RunContext): Promise<
     }
   return result;
 }
-export const commentRows = (rows: CommentRow[]) => [
+export const commentRows = (rows: CommentRow[], t: (text: string) => string = (text) => text) => [
   [
     'Erledigt',
     'Datei',
@@ -647,9 +666,9 @@ export const commentRows = (rows: CommentRow[]) => [
     'Markierter Text',
     'PDF-Datum',
     'Antwort auf',
-  ],
+  ].map(t),
   ...rows.map((r) => [
-    r.done ? 'ja' : 'nein',
+    t(r.done ? 'ja' : 'nein'),
     r.ref.name,
     String(r.ref.page + 1),
     r.author,
@@ -661,22 +680,27 @@ export const commentRows = (rows: CommentRow[]) => [
     r.replyTo,
   ]),
 ];
-export function commentMarkdown(rows: CommentRow[]): ExportFile {
+export function commentMarkdown(
+  rows: CommentRow[],
+  t: (text: string) => string = (text) => text,
+): ExportFile {
   const plain = (s: string) => s.replace(/[\\`*_{}[\]<>#|!]/g, '\\$&').replace(/\r?\n/g, ' ');
   return {
     blob: new Blob(
       [
-        '# Aufgaben aus PDF-Kommentaren\n\n' +
+        '# ' +
+          plain(t('Aufgaben aus PDF-Kommentaren')) +
+          '\n\n' +
           rows
             .map(
               (r) =>
-                `- [${r.done ? 'x' : ' '}] ${plain(r.comment || r.quote || r.type)} — ${plain(r.ref.name)}, Seite ${r.ref.page + 1}${r.author ? ' (' + plain(r.author) + ')' : ''}${r.quote ? '\n  > ' + plain(r.quote) : ''}`,
+                `- [${r.done ? 'x' : ' '}] ${plain(r.comment || r.quote || r.type)} — ${plain(r.ref.name)}, ${plain(t(`Seite ${r.ref.page + 1}`))}${r.author ? ' (' + plain(r.author) + ')' : ''}${r.quote ? '\n  > ' + plain(r.quote) : ''}`,
             )
             .join('\n\n'),
       ],
       { type: 'text/markdown;charset=utf-8' },
     ),
-    filename: 'PDF-Kommentare.md',
+    filename: t('PDF-Kommentare.md'),
     kind: 'data',
     pages: 0,
   };

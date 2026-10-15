@@ -349,9 +349,11 @@ export function EditorPanel({
               <label className="field" key={key}>
                 <span>{ui({ x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key])}</span>
                 <Input
-                  aria-label={
-                    { x: 'Objekt links', y: 'Objekt oben', w: 'Objektbreite', h: 'Objekthöhe' }[key]
-                  }
+                  aria-label={ui(
+                    { x: 'Objekt links', y: 'Objekt oben', w: 'Objektbreite', h: 'Objekthöhe' }[
+                      key
+                    ],
+                  )}
                   type="number"
                   min={key === 'x' || key === 'y' ? 0 : 1}
                   max={100}

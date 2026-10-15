@@ -181,15 +181,16 @@ function SingleObjectPanel({ source, busy, run }: PanelProps) {
             value={String(selected)}
             onChange={(v) => select(Number(v))}
             items={[
-              ['-1', 'Bitte auswählen'],
+              ['-1', ui('Bitte auswählen')],
               ...objects.map(
                 (o) =>
                   [
                     String(o.index),
-                    `${o.index + 1} · ${labels[o.type]}${o.text ? ' · ' + o.text.slice(0, 85) : ''}`,
+                    `${o.index + 1} · ${ui(labels[o.type])}${o.text ? ' · ' + o.text.slice(0, 85) : ''}`,
                   ] as [string, string],
               ),
             ]}
+            translateItems={false}
           />
         )}
         {object && (

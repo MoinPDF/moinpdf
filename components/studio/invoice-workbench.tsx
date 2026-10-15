@@ -32,6 +32,7 @@ import {
   invoiceEntries,
   invoicePdf,
   invoiceCsv,
+  checkInvoice,
   invoiceCheckText,
   INVOICE_CHECK_SCOPE,
   type InvoiceEntry,
@@ -109,10 +110,10 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
     setBusy(true);
     setError('');
     try {
-      const bytes = await invoicePdf(entry, checking);
+      const bytes = await invoicePdf(entry, checking, undefined, ui);
       setOutput({
         blob: pdfBlob(bytes),
-        filename: `${filenameStem(entry.name)}-${checking ? 'Basischeck' : 'Leseansicht'}.pdf`,
+        filename: `${filenameStem(entry.name)}-${ui(checking ? 'Basischeck' : 'Leseansicht')}.pdf`,
       });
     } catch (e) {
       setError((e as Error).message);
@@ -238,7 +239,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
         {entry && (
           <span className="invoice-format">
             <FileCode2 size={15} />
-            {entry.invoice.format} · {formatSize(entry.bytes.length)}
+            {entry.invoice.format} · {formatSize(entry.bytes.length, uiLocale())}
           </span>
         )}
       </div>
@@ -310,7 +311,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     {ui(INVOICE_CHECK_SCOPE)}{' '}
                     {ui(' Ein fehlerfreier Basischeck bestätigt keine Normkonformität.')}
                   </p>
-                  {i.checks.map((c, n) => (
+                  {checkInvoice(i, ui).map((c, n) => (
                     <article key={n} className={`invoice-check ${c.level}`}>
                       {c.level === 'pass' ? (
                         <Check size={18} />
@@ -509,7 +510,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     disabled={locked}
                     onClick={() =>
                       downloadBlob(
-                        new Blob([invoiceCheckText(i)], { type: 'text/plain;charset=utf-8' }),
+                        new Blob([invoiceCheckText(i, ui)], { type: 'text/plain;charset=utf-8' }),
                         `${filenameStem(entry.name)}-Basischeck.txt`,
                       )
                     }
@@ -523,8 +524,8 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     disabled={locked}
                     onClick={() =>
                       downloadBlob(
-                        new Blob([invoiceCsv(i)], { type: 'text/csv;charset=utf-8' }),
-                        `${filenameStem(entry.name)}-Positionen.csv`,
+                        new Blob([invoiceCsv(i, ui)], { type: 'text/csv;charset=utf-8' }),
+                        `${filenameStem(entry.name)}${ui('-Positionen.csv')}`,
                       )
                     }
                   >
@@ -550,7 +551,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                     <JobStatusIcon fresh={resultFresh} size={18} />
                     <span>
                       {ui('PDF erstellt · ')}
-                      {formatSize(output.blob.size)}
+                      {formatSize(output.blob.size, uiLocale())}
                     </span>
                     <a
                       className="result-download"

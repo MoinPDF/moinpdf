@@ -22,6 +22,7 @@ export type EvidencePage = {
 export type Finding = {
   id: string;
   title: string;
+  titleIsData?: boolean;
   status: 'changed' | 'missing' | 'review' | 'match';
   detail: string;
   before?: EvidenceRef;
@@ -210,6 +211,7 @@ export function compareNumbers(before: EvidencePage[], after: EvidencePage[]): F
       out.push({
         id: `n-${out.length}`,
         title: old.context || 'Zahlenangabe',
+        titleIsData: !!old.context,
         status: 'changed',
         detail:
           best.score === 1
@@ -272,7 +274,9 @@ export function parseFieldRules(input: string): FieldRule[] {
         ? 'iban'
         : /datum|date|fällig/i.test(label)
           ? 'date'
-          : /netto|brutto|betrag|summe|steuer|preis|menge|amount|total/i.test(label)
+          : /netto|brutto|betrag|summe|steuer|preis|menge|amount|total|\b(?:net|gross|tax|price|quantity|sum)\b/i.test(
+                label,
+              )
             ? 'number'
             : 'text',
     };
@@ -572,6 +576,7 @@ export function reconcilePositions(
       out.push({
         id: `position-${out.length}`,
         title: old.label,
+        titleIsData: true,
         status: 'review',
         detail: `Keine eindeutige Position in ${bName} zugeordnet.`,
         before: old.ref,
@@ -582,6 +587,7 @@ export function reconcilePositions(
       out.push({
         id: `position-${out.length}`,
         title: old.label,
+        titleIsData: true,
         status: 'review',
         detail: 'Mehrere ähnlich benannte Positionen. Beschreibungen in den Tabellen präzisieren.',
         before: old.ref,
@@ -596,6 +602,7 @@ export function reconcilePositions(
     out.push({
       id: `position-${out.length}`,
       title: old.label,
+      titleIsData: true,
       status: changed.length ? 'changed' : 'match',
       detail: `${aName} → ${bName}: ${changed.length ? changed.map((k) => ({ quantity: 'Menge', price: 'Einzelpreis', total: 'Positionsbetrag' })[k]).join(', ') + ' abweichend.' : 'Menge, Einzelpreis und Positionsbetrag stimmen überein.'}`,
       before: old.ref,
@@ -609,6 +616,7 @@ export function reconcilePositions(
       out.push({
         id: `position-${out.length}`,
         title: row.label,
+        titleIsData: true,
         status: 'review',
         detail: `Nur in ${bName} eindeutig erfasst.`,
         after: row.ref,

@@ -84,6 +84,8 @@ export type ExportFile = {
   note?: string;
 };
 export type RunContext = {
+  /** Translate application-authored output copy; document data stays unchanged. */
+  translate?: (text: string) => string;
   signal: AbortSignal;
   report: (value: { percent: number; label: string }) => void;
 };

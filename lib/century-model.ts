@@ -238,8 +238,8 @@ export function measurementValue(
     throw new Error('Die Fläche ist zu klein oder ihre Punkte liegen auf einer Linie.');
   return area;
 }
-export function measurementText(value: number, kind: Measurement['kind']) {
-  return `${new Intl.NumberFormat('de-DE', { maximumSignificantDigits: 6 }).format(value)} ${kind === 'area' ? 'm²' : 'm'}`;
+export function measurementText(value: number, kind: Measurement['kind'], locale = 'de-DE') {
+  return `${new Intl.NumberFormat(locale, { maximumSignificantDigits: 6 }).format(value)} ${kind === 'area' ? 'm²' : 'm'}`;
 }
 
 export type AudioSection = { id: string; title: string; text: string; enabled: boolean };
@@ -247,6 +247,7 @@ export function audioSections(
   pages: EvidencePage[],
   mode: 'document' | 'pages' | 'chapters',
   bookmarks: { title: string; page: number | null; depth: number }[] = [],
+  t: (text: string) => string = (text) => text,
 ) {
   const sorted = [...pages].sort((a, b) => a.page - b.page),
     text = (p: EvidencePage[]) => p.map((p) => p.lines.map((l) => l.text).join('\n')).join('\n\n');
@@ -254,7 +255,7 @@ export function audioSections(
     return [
       {
         id: 'document',
-        title: pages[0]?.name.replace(/\.pdf$/i, '') || 'Dokument',
+        title: pages[0]?.name.replace(/\.pdf$/i, '') || t('Dokument'),
         text: text(sorted),
         enabled: true,
       },
@@ -262,7 +263,7 @@ export function audioSections(
   if (mode === 'pages')
     return sorted.map((p) => ({
       id: String(p.page),
-      title: `Seite ${p.page + 1}`,
+      title: t(`Seite ${p.page + 1}`),
       text: text([p]),
       enabled: !!p.words.length,
     }));
@@ -277,7 +278,7 @@ export function audioSections(
     throw new Error(
       'Keine Lesezeichen mit Seitenzielen vorhanden. Bitte nach Seiten oder als Gesamtdokument ausgeben.',
     );
-  if (starts[0].page > 0) starts.unshift({ title: 'Einleitung', page: 0, depth: 0 });
+  if (starts[0].page > 0) starts.unshift({ title: t('Einleitung'), page: 0, depth: 0 });
   return starts.map((b, i) => {
     const content = text(
       sorted.filter((p) => p.page >= b.page && p.page < (starts[i + 1]?.page ?? Infinity)),

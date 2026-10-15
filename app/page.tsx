@@ -1,5 +1,6 @@
 'use client';
-import { ui } from '@/lib/ui-language';
+import { reportText } from '@/lib/pdf-report';
+import { ui, uiLocale } from '@/lib/ui-language';
 
 import { useLanguage } from '@/components/studio/appearance';
 import { AppearanceProvider, AppearanceControls, useTools } from '@/components/studio/appearance';
@@ -583,7 +584,7 @@ function Studio() {
                 ...(/\.pdf$/i.test(file.name)
                   ? {
                       action: {
-                        label: 'PDF reparieren',
+                        label: ui('PDF reparieren'),
                         onClick: () => {
                           setRepairInput(file);
                           setToolId('pdf-repair');
@@ -940,7 +941,7 @@ function Studio() {
   }
   async function blank() {
     if (locked) return;
-    await addFiles([await makeBlankFile()], false);
+    await addFiles([await makeBlankFile(false, language)], false);
   }
   async function process() {
     if (locked || !selected.length || !hasNeededEdit) return;
@@ -974,6 +975,11 @@ function Studio() {
         ctrl.signal,
       );
       if (ctrl.signal.aborted) return;
+      if (output.report) {
+        output.text = reportText(output.report, ui);
+        output.filename = ui(output.filename);
+        output.blob = new Blob([output.text], { type: 'text/plain;charset=utf-8' });
+      }
       setResult(output);
       setResultText(output.text || '');
       setView('result');
@@ -1024,7 +1030,7 @@ function Studio() {
         ctrl.signal,
       );
       if (ctrl.signal.aborted) return;
-      setResult({ ...output, filename: 'Fundstellen.pdf' });
+      setResult({ ...output, filename: ui('Fundstellen.pdf') });
       setResultText('');
       setView('result');
       toast.success(ui(`${items.length} Fundstellen in einer PDF gesammelt`));
@@ -2134,8 +2140,8 @@ function Studio() {
                               {result.pages}
                               {t('Seiten ·')}
                               {toolId === 'compress'
-                                ? `${formatSize(result.inputSize)} → ${formatSize(result.blob.size)}`
-                                : formatSize(result.blob.size)}
+                                ? `${formatSize(result.inputSize, uiLocale())} → ${formatSize(result.blob.size, uiLocale())}`
+                                : formatSize(result.blob.size, uiLocale())}
                               {toolId === 'compress'
                                 ? result.blob.size < result.inputSize
                                   ? ui(
@@ -2309,8 +2315,10 @@ function Studio() {
                             <Layers size={55} strokeWidth={1} />
                             <strong>{t('Alle Dateien. Ein Download.')}</strong>
                             <p>
-                              {result.note ||
-                                ui('Entpacke die ZIP-Datei, um die einzelnen Dateien zu öffnen.')}
+                              {ui(
+                                result.note ||
+                                  'Entpacke die ZIP-Datei, um die einzelnen Dateien zu öffnen.',
+                              )}
                             </p>
                           </div>
                         )}
@@ -2336,7 +2344,7 @@ function Studio() {
               </span>
               <span>
                 {sources.length
-                  ? ui(`${formatSize(sourceBytes)} · ${pages.length} Seiten`)
+                  ? ui(`${formatSize(sourceBytes, uiLocale())} · ${pages.length} Seiten`)
                   : t('Keine Dateien geöffnet')}
               </span>
               <span>
@@ -2937,7 +2945,7 @@ function Studio() {
               </p>
               <p>
                 {ui(
-                  '„Text bearbeiten“ erkennt gerade Textstellen. „Bereich ersetzen“ funktioniert auch für Scans; den Ersatztext gibst du selbst ein. Eigene Texte und Bilder lassen sich auswählen, ziehen, skalieren und per Koordinaten setzen. Ersatzschriften können vom Original abweichen. Entfernen und Ersetzen bauen betroffene Seiten neu auf: Die alte Textebene, Links und Formularfelder entfallen. Neuer Text bleibt kopierbar, solange die Seite nicht zusätzlich geschwärzt, zugeschnitten oder als Bild exportiert wird.',
+                  '„Text bearbeiten“ erkennt horizontal ausgerichtete Textstellen. „Bereich ersetzen“ funktioniert auch für Scans; den Ersatztext gibst du selbst ein. Eigene Texte und Bilder lassen sich auswählen, ziehen, skalieren und per Koordinaten setzen. Ersatzschriften können vom Original abweichen. Entfernen und Ersetzen bauen betroffene Seiten neu auf: Die alte Textebene, Links und Formularfelder entfallen. Neuer Text bleibt kopierbar, solange die Seite nicht zusätzlich geschwärzt, zugeschnitten oder als Bild exportiert wird.',
                 )}
               </p>
               <p>

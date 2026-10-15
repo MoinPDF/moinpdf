@@ -126,6 +126,7 @@ function EvidencePreview({ sources, focus }: { sources: Source[]; focus?: Eviden
           setActive(undefined);
         }}
         items={sources.map((s) => [s.id, s.name])}
+        translateItems={false}
       />
       <PageSelect
         source={source}
@@ -169,7 +170,7 @@ export function RefButton({
       onClick={() => onFocus({ ...value })}
     >
       {label ? ui(label) + ' · ' : ''}
-      {ui(refLabel(value))}
+      {ui(refLabel(value, ui))}
     </Button>
   ) : null;
 }
@@ -207,7 +208,7 @@ export function Coverage({ pages }: { pages: EvidencePage[] }) {
   useLanguage();
   return pages.length ? (
     <p className="workbench-notice" role="status">
-      {ui(coverage(pages))}
+      {ui(coverage(pages, ui))}
     </p>
   ) : null;
 }
@@ -225,13 +226,16 @@ export function ReportButtons({
   useLanguage();
   return (
     <div className="advanced-actions">
-      <Button disabled={busy} onClick={() => run(() => exportRows(rows, name))}>
+      <Button
+        disabled={busy}
+        onClick={() => run(() => exportRows(rows, ui(name), 'xlsx', ui('Tabelle')))}
+      >
         {ui('Excel erstellen')}
       </Button>
       <Button
         variant="outline"
         disabled={busy}
-        onClick={() => run(() => exportRows(rows, name, 'csv'))}
+        onClick={() => run(() => exportRows(rows, ui(name), 'csv', ui('Tabelle')))}
       >
         {ui('CSV erstellen')}
       </Button>
@@ -272,7 +276,7 @@ function Findings({
       {rows.slice(0, limit).map((row, i) => (
         <article className={`evidence-finding evidence-${row.status}`} key={row.id + '-' + i}>
           <span className="evidence-status">{ui(labels[row.status])}</span>
-          <h3>{ui(row.title)}</h3>
+          <h3>{row.titleIsData ? row.title : ui(row.title)}</h3>
           {(row.oldValue || row.newValue) && (
             <dl className="evidence-values">
               <div>
@@ -298,7 +302,7 @@ function Findings({
         </Button>
       )}
       <ReportButtons
-        rows={findingRows(rows)}
+        rows={findingRows(rows, ui)}
         name="MoinPDF-Pruefergebnisse"
         run={run}
         busy={busy}
@@ -330,11 +334,12 @@ export function NumberComparePanel({ source, sources, busy, run }: PanelProps) {
             clear();
           }}
           items={[
-            ['', 'Bitte wählen'],
+            ['', ui('Bitte wählen')],
             ...sources
               .filter((s) => s.id !== source.id)
               .map((s) => [s.id, s.name] as [string, string]),
           ]}
+          translateItems={false}
         />
         <ReadOptions
           ocr={ocr}
@@ -385,7 +390,15 @@ type CollectedCell = {
 };
 export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
   useLanguage();
-  const [input, setInput] = useState(defaultFieldRules),
+  const [input, setInput] = useState(() =>
+      defaultFieldRules
+        .split('\n')
+        .map((line) => {
+          const at = line.indexOf('=');
+          return at < 0 ? line : ui(line.slice(0, at).trim()) + ' = ' + line.slice(at + 1).trim();
+        })
+        .join('\n'),
+    ),
     [ocr, setOcr] = useState(false),
     [pages, setPages] = useState<EvidencePage[]>([]),
     [rules, setRules] = useState<FieldRule[]>([]),
@@ -399,7 +412,10 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
   const change = (index: number, update: Partial<CollectedCell>) =>
     setCells(cells.map((c, i) => (i === index ? { ...c, ...update } : c)));
   const rows = [
-    ['Datei', ...rules.flatMap((r) => [r.label, r.label + ' – Fundstelle', r.label + ' – Status'])],
+    [
+      ui('Datei'),
+      ...rules.flatMap((r) => [r.label, r.label + ui(' – Fundstelle'), r.label + ui(' – Status')]),
+    ],
     ...sources.map((s) => [
       s.name,
       ...rules.flatMap((r) => {
@@ -407,8 +423,8 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
           ref = c?.candidates[c.selected]?.ref;
         return [
           c?.value || '',
-          refLabel(ref),
-          c?.reviewed ? 'Geprüft' : c?.value ? 'Ungeprüft' : 'Nicht gefunden',
+          refLabel(ref, ui),
+          ui(c?.reviewed ? 'Geprüft' : c?.value ? 'Ungeprüft' : 'Nicht gefunden'),
         ];
       }),
     ]),
@@ -483,7 +499,7 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
             return (
               <article className="evidence-finding" key={`${cell.sourceId}-${cell.ruleId}`}>
                 <h3>
-                  {src.name} · {ui(rule.label)}
+                  {src.name} · {rule.label}
                 </h3>
                 {cell.candidates.length > 1 && (
                   <Choice
@@ -497,9 +513,10 @@ export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
                         reviewed: false,
                       });
                     }}
+                    translateItems={false}
                     items={cell.candidates.map((c, i) => [
                       String(i),
-                      `${c.value} · Seite ${c.ref.page + 1}`,
+                      `${c.value} · ${ui(`Seite ${c.ref.page + 1}`)}`,
                     ])}
                   />
                 )}
@@ -594,6 +611,7 @@ export function InvoiceEvidencePanel({ source, sources, busy, run }: PanelProps)
               setRows(compareInvoiceEvidence(entries[Number(v)].invoice, pages));
             }}
             items={entries.map((e, i) => [String(i), e.name])}
+            translateItems={false}
           />
         )}
       </section>
@@ -731,7 +749,13 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
             <article className="evidence-finding" key={key}>
               <p className="fine-note">
                 {ui('Seite ')}
-                {page.page + 1} · {reason || ui('Manuelle Kontrolle')}
+                {page.page + 1} ·{' '}
+                {(reason
+                  ? reason
+                      .split(' · ')
+                      .map((part) => ui(part))
+                      .join(' · ')
+                  : '') || ui('Manuelle Kontrolle')}
               </p>
               <Field label={ui(`Erkannt: ${word.text}`)}>
                 <input
@@ -768,7 +792,7 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
               disabled={busy}
               onClick={() =>
                 run(async () => ({
-                  blob: new Blob([ocrText(pages, corrections)], {
+                  blob: new Blob([ocrText(pages, corrections, ui)], {
                     type: 'text/plain;charset=utf-8',
                   }),
                   filename: 'OCR-korrigiert.txt',
@@ -889,11 +913,12 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
               run(() =>
                 exportRows(
                   [
-                    ['Original (vertraulich)', 'Platzhalter'],
+                    ['Original (vertraulich)', 'Platzhalter'].map((label) => ui(label)),
                     ...rules.map((r) => [r.term, r.replacement]),
                   ],
-                  'Vertrauliche-Zuordnung',
+                  ui('Vertrauliche-Zuordnung'),
                   'csv',
+                  ui('Tabelle'),
                 ),
               )
             }
@@ -965,7 +990,7 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
                         (t) => t.ref.sourceId === p.sourceId && t.ref.page === p.page,
                       ),
                   )
-                  .map((p, i) => ({ id: `manual-${i}`, label: 'Zielseite', ref: pageRef(p) })),
+                  .map((p, i) => ({ id: `manual-${i}`, label: ui('Zielseite'), ref: pageRef(p) })),
               ]);
             })
           }
@@ -1000,11 +1025,12 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
                   setConfirmed(false);
                 }}
                 items={[
-                  ['', 'Offen lassen'],
+                  ['', ui('Offen lassen')],
                   ...targets.map(
-                    (t) => [t.id, `${t.label} · ${refLabel(t.ref)}`] as [string, string],
+                    (t) => [t.id, `${t.label} · ${refLabel(t.ref, ui)}`] as [string, string],
                   ),
                 ]}
+                translateItems={false}
               />
               <RefButton
                 value={targets.find((t) => t.id === r.target)?.ref}
@@ -1038,13 +1064,13 @@ export function AttachmentLinksPanel({ sources, busy, run }: PanelProps) {
           </Button>
           <ReportButtons
             rows={[
-              ['Verweis', 'Datei / Seite', 'Text', 'Ziel', 'Status'],
+              ['Verweis', 'Datei / Seite', 'Text', 'Ziel', 'Status'].map((label) => ui(label)),
               ...refs.map((r) => [
                 r.label,
-                refLabel(r.ref),
+                refLabel(r.ref, ui),
                 r.ref.text,
-                refLabel(targets.find((t) => t.id === r.target)?.ref),
-                r.target ? 'Zugeordnet' : 'Offen',
+                refLabel(targets.find((t) => t.id === r.target)?.ref, ui),
+                ui(r.target ? 'Zugeordnet' : 'Offen'),
               ]),
             ]}
             name="Anlagen-Zuordnung"
@@ -1123,8 +1149,9 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
                   onChange={(selected) => update(index, { selected, confirmed: false })}
                   items={candidates.map((c) => [
                     c.key,
-                    `${c.name} · Seite ${c.page + 1} · Wert ${Math.round(c.score)}/100`,
+                    `${c.name} · ${ui(`Seite ${c.page + 1}`)} · ${ui(`Wert ${Math.round(c.score)}/100`)}`,
                   ])}
+                  translateItems={false}
                 />
                 <p className="fine-note">
                   {choice.confidence
@@ -1223,7 +1250,9 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
           </p>
           <ReportButtons
             rows={[
-              ['Ausgabeseite', 'Quelldatei', 'Quellseite', 'Qualitätswert', 'Geprüft'],
+              ['Ausgabeseite', 'Quelldatei', 'Quellseite', 'Qualitätswert', 'Geprüft'].map(
+                (label) => ui(label),
+              ),
               ...choices.map((c, i) => {
                 const found = candidates.find((v) => v.key === c.selected)!;
                 return [
@@ -1231,7 +1260,7 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
                   found.name,
                   String(found.page + 1),
                   String(Math.round(found.score)),
-                  c.confirmed ? 'ja' : 'nein',
+                  ui(c.confirmed ? 'ja' : 'nein'),
                 ];
               }),
             ]}
@@ -1297,11 +1326,12 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
             clear();
           }}
           items={[
-            ['', 'Ohne Auftrag'],
+            ['', ui('Ohne Auftrag')],
             ...sources
               .filter((s) => s.id !== source.id)
               .map((s) => [s.id, s.name] as [string, string]),
           ]}
+          translateItems={false}
         />
         <Choice
           label={ui('Rechnung')}
@@ -1311,11 +1341,12 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
             clear();
           }}
           items={[
-            ['', 'Bitte wählen'],
+            ['', ui('Bitte wählen')],
             ...sources
               .filter((s) => s.id !== source.id)
               .map((s) => [s.id, s.name] as [string, string]),
           ]}
+          translateItems={false}
         />
         <ReadOptions
           ocr={ocr}
@@ -1568,11 +1599,11 @@ export function CommentExportPanel({ sources, busy, run }: PanelProps) {
               {ui('Weitere Kommentare anzeigen')}
             </Button>
           )}
-          <ReportButtons rows={commentRows(rows)} name="PDF-Kommentare" run={run} busy={busy} />
+          <ReportButtons rows={commentRows(rows, ui)} name="PDF-Kommentare" run={run} busy={busy} />
           <Button
             variant="outline"
             disabled={busy}
-            onClick={() => run(async () => commentMarkdown(rows))}
+            onClick={() => run(async () => commentMarkdown(rows, ui))}
           >
             {ui('Markdown-Aufgabenliste erstellen')}
           </Button>

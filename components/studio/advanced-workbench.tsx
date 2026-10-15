@@ -1,7 +1,7 @@
 'use client';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
-import { ui } from '@/lib/ui-language';
+import { ui, uiLocale } from '@/lib/ui-language';
 
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
@@ -134,7 +134,7 @@ export function AdvancedWorkbench({
     setResult(null);
     setProgress({ percent: 0, label: 'Verarbeitung wird vorbereitet …' });
     try {
-      const out = await job({ signal: abort.signal, report: setProgress });
+      const out = await job({ signal: abort.signal, report: setProgress, translate: ui });
       if (!abort.signal.aborted && out) setResult(out);
     } catch (e) {
       if (!abort.signal.aborted)
@@ -208,6 +208,7 @@ export function AdvancedWorkbench({
             value={source.id}
             onChange={setSourceId}
             items={sources.map((s) => [s.id, s.name])}
+            translateItems={false}
           />
         </fieldset>
       )}
@@ -296,7 +297,7 @@ export function AdvancedWorkbench({
               {t('Dein Ergebnis ist bereit.')}
             </h2>
             <p>
-              {result.filename} · {formatSize(result.blob.size)}
+              {result.filename} · {formatSize(result.blob.size, uiLocale())}
             </p>
             {result.note && <p>{ui(result.note)}</p>}
             <div className="advanced-actions">

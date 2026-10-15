@@ -167,6 +167,7 @@ export function ComparePanel({ source, sources, busy, run }: PanelProps) {
           value={second || others[0]?.id || ''}
           onChange={setSecond}
           items={others.map((s) => [s.id, s.name])}
+          translateItems={false}
         />
         <NumberField
           label={ui('Farbtoleranz (0–255)')}

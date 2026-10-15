@@ -454,7 +454,7 @@ export async function compareContent(
               },
             ]
           : []),
-      ],
+      ].map((detail) => ({ ...detail, translateValue: true })),
       lines: m.exact ? [{ kind: 'same', text: b.text }] : compareWords(b.text, a.text),
     });
   }

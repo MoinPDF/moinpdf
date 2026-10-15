@@ -1,3 +1,5 @@
+import { englishTranslator } from './translation-test-utils.mjs';
+const en = await englishTranslator();
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
@@ -59,6 +61,11 @@ try{
  const attachments=await execute('attachments',[ap[0]]),azip=await JSZip.loadAsync(await attachments.blob.arrayBuffer()),afiles=Object.values(azip.files).filter(f=>!f.dir);assert.equal(afiles.length,1);assert(!afiles[0].name.includes('../'));assert.equal(await afiles[0].async('string'),'<invoice>TEST</invoice>');assert(!safeAttachmentName('../../secret.xml').includes('/'));
  await assert.rejects(()=>execute('attachments',bp,{},[b]),/keine eingebetteten/);
  const info=await execute('pdf-info',[ap[0]]);assert.equal(info.kind,'report');assert(info.report.sections.some(s=>s.details?.some(d=>d.label==='Titel'&&d.value==='Testtitel A')));assert.match(await info.blob.text(),/Seite 8/);
+ const {reportText}=await import('../.cache/pdf-report-extra-test.mjs');
+ const preservedReport=structuredClone(info.report);preservedReport.sections[0].title='Rechnung';preservedReport.sections[0].details.find(d=>d.label==='Titel').value='Abbrechen';
+ const textReport=reportText(preservedReport,en);assert.match(textReport,/Page 8/);assert(textReport.includes('Rechnung'));assert(textReport.includes('Abbrechen'));assert.equal(preservedReport.title,'PDF-Dokumentbericht');
+ const authored={title:'PDF-Dokumentbericht',description:'',stats:[],sections:[{title:'Rechnung',titleIsData:true,details:[{label:'Prüfhinweis',value:'Zahlenwert kontrollieren',translateValue:true}],lines:[{kind:'removed',text:'Abbrechen'},{kind:'same',text:'Rechnung'}]}]};
+ const safeText=reportText(authored,en);assert(safeText.includes('− Abbrechen'));assert(safeText.includes('  Rechnung'));assert(!safeText.includes('Zahlenwert kontrollieren'));
  const compare=await execute('compare',[ap[0],bp[0]]);assert.equal(compare.kind,'report');assert.equal(compare.report.stats[0].value,'1');assert(compare.report.sections[0].lines.some(l=>l.kind==='removed'&&l.text==='A-1'));assert(compare.report.sections[0].lines.some(l=>l.kind==='added'&&l.text==='B-1'));
  const clone=await source(a.bytes,'Kopie.pdf'),same=await execute('compare',[ap[0],items(clone)[0]],{},[a,clone]);assert.equal(same.report.stats[1].value,'1');
  const beforeDoc=await PDFDocument.create(),afterDoc=await PDFDocument.create();

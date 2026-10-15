@@ -1,7 +1,7 @@
 'use client';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
-import { ui } from '@/lib/ui-language';
+import { ui, uiLocale } from '@/lib/ui-language';
 
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -507,7 +507,7 @@ export function DocumentWorkbench({
               )}
             </div>
             <span>
-              {source.pdf.numPages} {t('Seiten ·')} {formatSize(source.size)}
+              {source.pdf.numPages} {t('Seiten ·')} {formatSize(source.size, uiLocale())}
             </span>
           </div>
           <div className="workbench-pagebar">
@@ -1098,7 +1098,12 @@ export function DocumentWorkbench({
                                   )}
                                   <Input
                                     aria-label={ui(
-                                      `Feld ${ui({ x: 'Links', y: 'Oben', w: 'Breite', h: 'Höhe' }[key])} in Prozent`,
+                                      {
+                                        x: 'Feld links in Prozent',
+                                        y: 'Feld oben in Prozent',
+                                        w: 'Feldbreite in Prozent',
+                                        h: 'Feldhöhe in Prozent',
+                                      }[key],
                                     )}
                                     type="number"
                                     min={key === 'x' || key === 'y' ? 0 : 1}

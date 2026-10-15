@@ -1,5 +1,5 @@
 'use client';
-import { ui } from '@/lib/ui-language';
+import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useRef, useState } from 'react';
@@ -58,9 +58,7 @@ export function LinksPanel({ source, busy, run }: PanelProps) {
         </Button>
         {loaded && (
           <>
-            <p>
-              {links.filter((l) => !l.deleted).length} {ui(' Links')}
-            </p>
+            <p>{ui(`${links.filter((l) => !l.deleted).length} Links`)}</p>
             <div className="advanced-hit-list">
               {links
                 .filter((l) => !l.deleted)
@@ -238,7 +236,7 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
                     setItems(items.map((a) => (a.id === item.id ? { ...a, name } : a)))
                   }
                 />
-                <small>{formatSize(item.size)}</small>
+                <small>{formatSize(item.size, uiLocale())}</small>
                 <div className="advanced-actions">
                   <Button
                     variant="outline"
@@ -298,7 +296,7 @@ export function CoverPanel({ source, busy, run }: PanelProps) {
   const [title, setTitle] = useState(source.name.replace(/\.pdf$/i, '')),
     [subtitle, setSubtitle] = useState(''),
     [cover, setCover] = useState(true),
-    [entries, setEntries] = useState('Dokument | 1');
+    [entries, setEntries] = useState(() => ui('Dokument | 1'));
   return (
     <div className="advanced-grid">
       <section className="advanced-card">

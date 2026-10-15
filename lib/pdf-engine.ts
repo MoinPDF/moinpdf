@@ -79,10 +79,10 @@ export function uuid() {
 }
 export const MAX_BYTES = 80 * 1024 * 1024;
 export const MAX_PAGES = 200;
-export function formatSize(bytes: number) {
+export function formatSize(bytes: number, locale = 'de-DE') {
   return bytes < 1024 * 1024
     ? `${Math.max(1, Math.round(bytes / 1024))} KB`
-    : `${(bytes / 1024 / 1024).toLocaleString('de-DE', { maximumFractionDigits: 1 })} MB`;
+    : `${(bytes / 1024 / 1024).toLocaleString(locale, { maximumFractionDigits: 1 })} MB`;
 }
 export function pdfBlob(bytes: Uint8Array) {
   return new Blob([new Uint8Array(bytes)], { type: 'application/pdf' });

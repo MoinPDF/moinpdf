@@ -8,18 +8,19 @@ export const englishTools: Record<
   'local-assistant': {
     title: 'Local PDF assistant',
     description:
-      'Ask a local language model questions and check its original quotes on the PDF pages.',
+      'Answer questions with a local language model and check quotations directly on the original PDF pages.',
     action: 'Answer locally',
   },
   'native-objects': {
     title: 'Edit PDF objects',
-    description: 'Edit original text, reflow paragraphs, and adjust images and graphics.',
+    description:
+      'Edit original text, reflow paragraphs with your chosen font, and edit images and graphics.',
     action: 'Edit objects',
   },
   bates: {
     title: 'Bates numbering',
     description:
-      'Number multiple PDFs continuously with case references, filenames, headers and footers.',
+      'Apply continuous numbering across multiple PDFs with case numbers, filenames and headers or footers.',
     action: 'Apply numbering',
   },
   'page-labels': {
@@ -29,167 +30,194 @@ export const englishTools: Record<
   },
   'rotate-free': {
     title: 'Rotate freely',
-    description: 'Rotate PDF pages by a custom angle.',
+    description: 'Rotate pages by any angle and automatically adjust the page size.',
     action: 'Rotate pages',
   },
   'continuous-page': {
     title: 'Continuous PDF page',
-    description: 'Combine pages into one long page.',
+    description:
+      'Combine multiple pages into one continuous page for scrolling. Preserve text and vector graphics.',
     action: 'Create continuous page',
   },
   'poster-print': {
     title: 'Poster printing',
-    description: 'Split a large page into printable tiles.',
+    description: 'Split large pages across multiple print tiles with adjustable overlap.',
     action: 'Split poster',
   },
   linearize: {
     title: 'Fast web view',
-    description: 'Optimize the PDF structure for progressive loading.',
-    action: 'Optimize web view',
+    description: 'Prepare PDFs so the first page can load before the whole file.',
+    action: 'Optimise web view',
   },
   'svg-export': {
     title: 'PDF to vector SVG',
-    description: 'Export PDF pages as vector SVG files.',
+    description:
+      'Export each PDF page as a standalone SVG file. Vector graphics and glyph outlines remain sharp.',
     action: 'Export SVG files',
   },
   'font-outlines': {
     title: 'Fonts to outlines',
-    description: 'Convert text glyphs into vector outlines.',
+    description: 'Export characters as fixed vector outlines, independent of installed fonts.',
     action: 'Create outlines',
   },
   'flatten-layers': {
     title: 'Flatten layers',
-    description: 'Permanently reduce the PDF layers.',
+    description: 'Save the initially visible layers as a fixed PDF view and remove hidden layers.',
     action: 'Flatten layers',
   },
   'structured-export': {
     title: 'PDF to structured JSON',
-    description: 'Export document text and its locations as structured data.',
+    description:
+      'Export text, pages and source locations as structured data for further processing.',
     action: 'Export JSON',
   },
   'form-responses': {
     title: 'Collect form responses',
-    description: 'Read values from completed forms and review required fields.',
+    description:
+      'Read completed PDF forms together, check required values and export corrected responses to Excel or CSV.',
     action: 'Read form values',
   },
   chronology: {
     title: 'Document chronology',
-    description: 'Find dates and arrange documents in chronological order.',
+    description:
+      'Find dates in document content, check the order and create a document bundle with a clickable table of contents.',
     action: 'Find dates',
   },
   'arithmetic-check': {
     title: 'Check calculations',
-    description: 'Collect and check numbers in a PDF.',
+    description:
+      'Select number ranges, correct the values to add and compare their sum with a stated total.',
     action: 'Collect numbers',
   },
   'pdf-sanitize': {
     title: 'Sanitize PDF',
-    description: 'Review and remove active content from a PDF.',
+    description:
+      'Remove scripts and risky actions. Optionally remove attachments, comments and document metadata too.',
     action: 'Review content',
   },
   'pdf-layers': {
     title: 'Manage PDF layers',
-    description: 'Inspect layers and control which ones are visible.',
+    description:
+      'Rename PDF layers, save their order and visibility, or flatten the view into page images.',
     action: 'Load layers',
   },
   'pdf-measure': {
     title: 'PDF measuring tool',
-    description: 'Calibrate a scale and measure distances or areas.',
+    description:
+      'Calibrate pages using a known distance. Measure distances and areas and save them as an annotated PDF or CSV.',
     action: 'Set measurement points',
   },
   'pdf-audio': {
     title: 'PDF to audio',
-    description: 'Prepare document text for speech output.',
-    action: 'Prepare reading text',
+    description:
+      'Review text and OCR results. Export audio with two local German voices as WAV or as an audio ZIP organised by pages and chapters.',
+    action: 'Prepare narration text',
   },
   'number-compare': {
     title: 'Compare numbers',
-    description: 'Find changes to amounts, dates and other numbers between versions.',
+    description:
+      'Show changes to amounts, percentages, dates and IBANs between two versions, with source locations.',
     action: 'Compare numbers',
   },
   'field-collector': {
     title: 'Collect document fields',
-    description: 'Collect selected fields from multiple documents.',
-    action: 'Collect fields',
+    description:
+      'Extract custom fields from multiple PDFs, check values against the original and export them together to Excel or CSV.',
+    action: 'Collect document fields',
   },
   'invoice-visual-check': {
     title: 'Compare invoice and XML',
-    description: 'Compare visible invoice content with its structured XML.',
+    description:
+      'Use OCR to compare visible invoice details with embedded UBL or CII XML. Check uncertain values at their source locations.',
     action: 'Compare invoice',
   },
   'page-gaps': {
     title: 'Find missing pages',
-    description: 'Check page numbering for possible gaps.',
+    description:
+      'Check printed page numbering, such as “Page 3 of 7”, for gaps, repeats and jumps.',
     action: 'Find gaps',
   },
   'ocr-review': {
     title: 'Review OCR',
-    description: 'Review uncertain words and correct recognized text.',
+    description:
+      'Review uncertain words and numbers in enlarged crops of the original. Save corrected searchable text as PDF or TXT.',
     action: 'Review OCR',
   },
   pseudonymize: {
     title: 'Pseudonymize files',
-    description: 'Replace matching names with consistent placeholders across files.',
+    description:
+      'Replace specified names and other terms with consistent placeholders. Review matches and export new page images.',
     action: 'Apply placeholders',
   },
   'attachment-links': {
     title: 'Link attachments',
-    description: 'Connect attachment references to the corresponding documents.',
+    description:
+      'Detect attachment references, assign target pages and create a PDF bundle with clickable references.',
     action: 'Link attachments',
   },
   'best-scans': {
     title: 'Combine best scans',
-    description: 'Choose the best pages from several scans.',
+    description:
+      'Compare similar pages from several scans. Review quality suggestions and reassemble the original pages.',
     action: 'Select scan pages',
   },
   'document-reconcile': {
     title: 'Reconcile business documents',
-    description: 'Compare line items in quotes, orders and invoices.',
+    description:
+      'Review suggested line items and compare quantities, unit prices and amounts between related documents.',
     action: 'Compare line items',
   },
   'comment-export': {
     title: 'Export comments as tasks',
-    description: 'Collect document comments in a working list.',
+    description:
+      'Collect PDF comments and highlights with author, text excerpt and page. Edit tasks and save them as Excel, CSV or Markdown.',
     action: 'Collect comments',
   },
   'pdf-repair': {
     title: 'Repair PDF',
-    description: 'Attempt to recover a damaged PDF.',
+    description:
+      'Restore the structure of damaged PDFs. Upload directly even when a preview is unavailable.',
     action: 'Repair PDF',
   },
   'optimize-pdf': {
     title: 'Compress to target size',
-    description: 'Optimize the PDF towards a chosen file size.',
-    action: 'Optimize PDF',
+    description:
+      'Optimise losslessly or reduce image sizes. Preserve text and forms and check the output against the target size.',
+    action: 'Optimise PDF',
   },
   'scan-split': {
     title: 'Split combined scans',
-    description: 'Extract individual receipts or photos from a scan.',
+    description:
+      'Detect multiple photos or receipts on a page. Review crops and save them as individual PDFs or images.',
     action: 'Create crops',
   },
   'pdf-markdown': {
     title: 'PDF to Markdown',
-    description: 'Export readable document text as Markdown.',
+    description:
+      'Export extractable text with headings and page sections as an editable Markdown file.',
     action: 'Create Markdown',
   },
   'pdf-html': {
     title: 'PDF to HTML',
-    description: 'Export PDF text as an HTML document.',
+    description: 'Save extractable text as a standalone, readable HTML file with page navigation.',
     action: 'Create HTML',
   },
   'pdf-epub': {
     title: 'PDF to e-book',
-    description: 'Export readable text as an EPUB e-book.',
+    description:
+      'Export extractable text as an EPUB with an adjustable font and a table of contents.',
     action: 'Create EPUB',
   },
   'ebook-pdf': {
     title: 'E-book to PDF',
-    description: 'Convert an e-book to PDF.',
+    description:
+      'Convert unprotected EPUB files to PDF with a choice of font size and page format.',
     action: 'Create PDF',
   },
   'pdf-powerpoint': {
     title: 'PDF to PowerPoint',
-    description: 'Create PowerPoint slides from a PDF.',
+    description:
+      'Transfer PDF pages to PowerPoint slides as slide images or individually editable text objects.',
     action: 'Create PowerPoint file',
   },
   'html-pdf': {
@@ -200,368 +228,403 @@ export const englishTools: Record<
   },
   'auto-orient': {
     title: 'Auto-orient pages',
-    description: 'Detect page orientation and rotate scans.',
+    description:
+      'Detect rotated text pages and correct them by 90, 180 or 270 degrees. Flag uncertain pages in the report.',
     action: 'Orient pages',
   },
   'book-dewarp': {
     title: 'Dewarp book scans',
-    description: 'Correct distortion in scanned book pages.',
+    description:
+      'Straighten curved text lines near the book gutter with adjustable curve correction. Create new page images.',
     action: 'Dewarp scan',
   },
   'form-detect': {
     title: 'Detect form fields',
-    description: 'Identify potential form fields in a document.',
-    action: 'Detect fields',
+    description:
+      'Detect empty boxes and input lines and create fillable fields. Review the suggestions afterwards.',
+    action: 'Detect form fields',
   },
   'redaction-check': {
     title: 'Check redactions',
-    description: 'Inspect redactions for potentially remaining hidden text.',
+    description:
+      'Look for terms that can still be extracted and possible dark overlays. Includes a findings report.',
     action: 'Check redactions',
   },
   'print-check': {
     title: 'Check print quality',
-    description: 'Review document properties relevant to printing.',
+    description:
+      'Check image resolution, embedded fonts and page boxes. Collect notes for print preparation.',
     action: 'Check print quality',
   },
   'accessibility-check': {
     title: 'Check accessibility',
-    description: 'Inspect the document for accessibility issues.',
+    description:
+      'Check PDF/UA and create new structured PDFs with headings, reading order and image descriptions.',
     action: 'Check accessibility',
   },
   'translate-pdf': {
     title: 'Translate PDF',
-    description: 'Translate readable text and export the original alongside its translation.',
+    description:
+      'Translate extractable text into another language. Export the original and translation side by side.',
     action: 'Translate PDF',
   },
   'zugferd-create': {
     title: 'ZUGFeRD assistant',
-    description: 'Prepare an invoice with structured invoice data.',
+    description:
+      'Combine an invoice PDF with matching CII XML into a hybrid invoice. Validate with Mustang and veraPDF.',
     action: 'Process invoice',
   },
   'word-mail-merge': {
     title: 'Word mail merge',
-    description: 'Create personalized Word documents from a template and data.',
+    description:
+      'Fill DOCX templates with Excel records. Create a separate PDF for each row and collect them in a ZIP.',
     action: 'Create merged documents',
   },
   'split-size': {
     title: 'Split by file size',
-    description: 'Split a PDF into files within a selected size limit.',
+    description:
+      'Split a PDF into consecutive parts within an MB limit. Check the size of every output file.',
     action: 'Calculate split files',
   },
   'pdf-word': {
     title: 'PDF to Word',
-    description: 'Convert PDF content into a Word document.',
+    description: 'Create an editable Word file from your PDF.',
     action: 'Create Word file',
   },
   'email-pdf': {
     title: 'Email to PDF',
-    description: 'Convert email files to PDF.',
+    description:
+      'Save EML and Outlook MSG files as PDFs with the sender, subject and message. Optionally include attachments in a ZIP.',
     action: 'Create PDF',
   },
   batch: {
     title: 'Batch processing',
-    description: 'Apply the same operation to multiple files.',
+    description:
+      'Stamp, number, protect or clean multiple PDFs individually. Get all results in one ZIP.',
     action: 'Process batch',
   },
   workflows: {
     title: 'Workflows',
-    description: 'Combine repeatable processing steps in one workflow.',
+    description:
+      'Combine steps such as OCR, blank page removal and numbering. Save and reuse workflows.',
     action: 'Run workflow',
   },
   'auto-rename': {
     title: 'Rename automatically',
-    description: 'Suggest filenames based on document content.',
+    description:
+      'Suggest filenames from dates, invoice numbers and titles. Review and edit the suggestions.',
     action: 'Suggest names',
   },
   'smart-split': {
     title: 'Smart split',
-    description: 'Find suitable boundaries for splitting a document.',
+    description: 'Split PDFs based on text, bookmarks, blank pages or QR/barcode separator sheets.',
     action: 'Find split points',
   },
   'table-export': {
     title: 'Table to Excel',
-    description: 'Extract a document table for use in a spreadsheet.',
+    description:
+      'Extract table areas using text or OCR. Correct columns and values and save them as Excel or CSV.',
     action: 'Detect table',
   },
   'search-redact': {
     title: 'Search & redact',
-    description: 'Find text matches and prepare redactions.',
+    description:
+      'Find search terms, names, email addresses and possible IBANs. Review areas and permanently remove them from the output.',
     action: 'Find matches',
   },
   'visual-compare': {
     title: 'Visual PDF comparison',
-    description: 'Compare the visual appearance of PDF pages.',
+    description:
+      'Use colour to highlight differences in scans, images, stamps and text on the pages.',
     action: 'Compare visually',
   },
   'scan-enhance': {
     title: 'Enhance scans',
-    description: 'Improve the appearance and readability of scans.',
+    description: 'Correct skew, increase contrast and clean up light backgrounds, with a preview.',
     action: 'Enhance scans',
   },
   'cover-toc': {
     title: 'Cover & table of contents',
-    description: 'Add a cover page and a table of contents.',
-    action: 'Create contents',
+    description:
+      'Add a cover page and a clickable table of contents with automatically adjusted page numbers.',
+    action: 'Create table of contents',
   },
   'mail-merge': {
     title: 'Form mail merge',
-    description: 'Fill a form with multiple sets of data.',
+    description:
+      'Fill PDF form fields with CSV or TSV records. Create an individual PDF for each row.',
     action: 'Create forms',
   },
   'qr-barcode': {
     title: 'QR & barcodes',
-    description: 'Work with QR codes and barcodes.',
+    description:
+      'Read codes from PDF pages. Create QR, Code 128 or EAN-13 codes and place them in PDFs.',
     action: 'Edit codes',
   },
   'link-editor': {
     title: 'Edit links',
-    description: 'Manage clickable links in the document.',
+    description: 'Add, edit and remove links to websites, email addresses and PDF pages.',
     action: 'Save links',
   },
   'attachment-manager': {
     title: 'Manage attachments',
-    description: 'Add or remove embedded files.',
+    description: 'Add, rename, replace and remove embedded files from the output.',
     action: 'Save attachments',
   },
   'camera-scan': {
     title: 'Camera scanner',
-    description: 'Capture a document with the camera and adjust its crop.',
+    description: 'Take photos, correct document perspective and combine multiple pages into a PDF.',
     action: 'Create scan',
   },
   'office-pdf': {
     title: 'Office to PDF',
-    description: 'Convert an Office document to PDF.',
+    description: 'Save Word, Excel, PowerPoint and OpenDocument files as PDF.',
     action: 'Create PDF',
   },
   pdfa: {
     title: 'Create & check PDF/A',
-    description: 'Convert or validate documents for PDF/A archiving.',
+    description: 'Create an archival copy of your PDF or check an existing PDF/A.',
     action: 'Process PDF/A',
   },
   'xrechnung-validate': {
     title: 'Validate XRechnung',
-    description: 'Validate a structured XRechnung invoice.',
+    description: 'Check an XRechnung against KoSIT rules and download the validation report.',
     action: 'Validate XRechnung',
   },
   'certificate-sign': {
     title: 'Certificate signatures',
-    description: 'Work with certificate-based digital signatures.',
+    description: 'Sign PDFs with a PKCS#12 certificate and verify signatures.',
     action: 'Process signature',
   },
   protect: {
     title: 'Protect PDF',
-    description: 'Protect a PDF with a password.',
+    description: 'Encrypt PDFs with AES-256. Set an opening password and permissions.',
     action: 'Protect PDF',
   },
   unlock: {
     title: 'Unlock PDF',
-    description: 'Remove password protection when you have permission and the required password.',
+    description: 'Save PDFs opened with a known password as unprotected copies.',
     action: 'Unlock PDF',
   },
   'invoice-read': {
     title: 'Read e-invoice',
-    description: 'View the content of a structured electronic invoice.',
+    description:
+      'Display UBL and CII invoices from XML or PDF attachments. Save them as a readable PDF, XML or CSV.',
     action: 'Read e-invoice',
   },
   'invoice-check': {
     title: 'Check e-invoice',
-    description: 'Check electronic invoice fields and totals.',
+    description:
+      'Check basic details, date formats and totals. A basic check with an exportable report.',
     action: 'Check e-invoice',
   },
   'fill-form': {
     title: 'Fill form',
-    description: 'Complete existing interactive form fields.',
+    description: 'Fill in interactive PDF fields. Save as a fillable or flattened PDF.',
     action: 'Save form',
   },
   'create-form': {
     title: 'Create form',
-    description: 'Add interactive form fields to a PDF.',
+    description: 'Place text fields, checkboxes and dropdown lists directly on your PDF.',
     action: 'Create form',
   },
   bookmarks: {
     title: 'Edit bookmarks',
-    description: 'Create and organize document bookmarks.',
+    description: 'Structure chapters, indent them and link them to the appropriate pages.',
     action: 'Save bookmarks',
   },
   'extract-images': {
     title: 'Extract images',
-    description: 'Save images embedded in a PDF.',
+    description: 'Save embedded images from selected pages as individual PNG files in a ZIP.',
     action: 'Extract images',
   },
   inspect: {
     title: 'Check & page finder',
-    description: 'Inspect a document, find text and collect selected pages.',
+    description:
+      'Check your entire document bundle, search across all files and collect matching pages in a single PDF.',
     action: 'Save selection as PDF',
   },
   ocr: {
     title: 'OCR & text',
-    description: 'Recognize text in scanned pages.',
-    action: 'Recognize text',
+    description:
+      'Extract text from scans. Correct the text and export it as Word, TXT or a searchable PDF.',
+    action: 'Recognise text',
   },
   images: {
     title: 'Images to PDF',
-    description: 'Combine image files into a PDF.',
+    description: 'Fit JPG and PNG images proportionally onto A4 pages in a single PDF document.',
     action: 'Create PDF',
   },
   'to-images': {
     title: 'PDF to images',
-    description: 'Export PDF pages as image files.',
+    description: 'Export each selected page as JPG or PNG, together in a ZIP.',
     action: 'Export images',
   },
   compress: {
     title: 'Compress scans',
-    description: 'Reduce the size of scanned documents.',
+    description: 'Save image-based documents with reduced resolution and JPEG compression.',
     action: 'Compress',
   },
   merge: {
     title: 'Merge PDFs',
-    description: 'Combine multiple PDFs into one document.',
-    action: 'Merge',
+    description: 'Merge multiple files into one document. PDFs and images can be mixed.',
+    action: 'Merge PDFs',
   },
   split: {
     title: 'Split PDF',
-    description: 'Export individual pages as separate PDF files.',
+    description: 'Export each selected page as a separate PDF. All files in one ZIP.',
     action: 'Create individual pages',
   },
   organize: {
     title: 'Organize pages',
-    description: 'Reorder, rotate or remove pages.',
+    description: 'Reorder, rotate, duplicate and remove pages. You can also insert blank pages.',
     action: 'Save pages',
   },
   numbers: {
     title: 'Page numbers',
-    description: 'Add visible page numbers to a PDF.',
+    description: 'Number selected pages in their current order at the bottom centre.',
     action: 'Add numbers',
   },
   resize: {
     title: 'Page format',
-    description: 'Change the paper size or page orientation.',
+    description: 'Fit pages proportionally to a uniform format. Preserve all content.',
     action: 'Adjust format',
   },
   nup: {
     title: 'Multiple pages per sheet',
-    description: 'Arrange several PDF pages on each sheet.',
+    description: 'Arrange two or four document pages on one sheet.',
     action: 'Arrange pages',
   },
   'edit-text': {
     title: 'Edit text',
-    description: 'Add or replace text on document pages.',
+    description: 'Select, remove and replace text. Format, move and resize your own text boxes.',
     action: 'Create edited PDF',
   },
   erase: {
     title: 'Remove content',
-    description: 'Remove selected areas from a document.',
+    description:
+      'Remove text or image areas from the output, with a choice of fill colour and precise area selection.',
     action: 'Create cleaned PDF',
   },
   'insert-image': {
     title: 'Insert image',
-    description: 'Place an image or logo on a PDF page.',
+    description:
+      'Insert images and logos into existing pages, move them and resize them proportionally.',
     action: 'Create PDF with images',
   },
   redact: {
     title: 'Redact',
-    description: 'Redact selected confidential content.',
+    description: 'Mark confidential areas and remove them from the exported page images.',
     action: 'Create redacted PDF',
   },
-  crop: { title: 'Crop', description: 'Crop the visible area of PDF pages.', action: 'Crop' },
+  crop: {
+    title: 'Crop',
+    description: 'Drag directly on the page to mark the desired crop.',
+    action: 'Crop',
+  },
   annotate: {
     title: 'Text & annotations',
-    description: 'Add text, highlights and annotations.',
+    description: 'Add text notes and highlight important passages.',
     action: 'Apply changes',
   },
   sign: {
     title: 'Signature',
-    description: 'Draw or add a visual signature.',
+    description: 'Draw your signature with a mouse or finger and place it in the document.',
     action: 'Insert signature',
   },
   watermark: {
     title: 'Watermark',
-    description: 'Add a watermark to document pages.',
+    description: 'Add a transparent text note centred on the pages.',
     action: 'Add watermark',
   },
   grayscale: {
     title: 'Grayscale',
-    description: 'Convert page appearance to grayscale.',
-    action: 'Convert to grayscale',
+    description: 'Convert colour pages into a new PDF with greyscale page images.',
+    action: 'Convert to greyscale',
   },
   flatten: {
     title: 'Flatten PDF',
-    description: 'Fix page appearance in a flattened PDF.',
+    description: 'Save pages as fixed images. Visible content is preserved.',
     action: 'Flatten PDF',
   },
   metadata: {
     title: 'Remove document info',
-    description: 'Remove metadata from a document.',
+    description:
+      'Remove title, author, subject, keywords, creator, date fields and XMP document information.',
     action: 'Remove document info',
   },
   compare: {
     title: 'Compare PDFs',
-    description: 'Compare the text of two PDF documents.',
+    description:
+      'Compare text page by page or across pages. Detect moved text blocks and changed words.',
     action: 'Compare text',
   },
   'pdf-info': {
     title: 'PDF information',
-    description: 'Create a report about document properties.',
+    description: 'View a report of metadata, PDF version, file size and the formats of all pages.',
     action: 'Create report',
   },
   attachments: {
     title: 'Extract attachments',
-    description: 'Download files embedded in a PDF.',
+    description: 'Save embedded file attachments from PDFs as a ZIP, such as invoice XML.',
     action: 'Extract attachments',
   },
   'split-ranges': {
     title: 'Split into sections',
-    description: 'Export selected page ranges as separate documents.',
+    description: 'Create multiple documents using a fixed page count or custom page ranges.',
     action: 'Create sections',
   },
   interleave: {
     title: 'Interleave PDFs',
-    description: 'Combine pages from documents in alternating order.',
-    action: 'Interleave',
+    description:
+      'Combine pages from two files in alternating order. Useful for front and back pages.',
+    action: 'Interleave PDFs',
   },
   booklet: {
     title: 'Create booklet',
-    description: 'Arrange pages for booklet printing.',
+    description: 'Arrange pages as print sheets for a folded booklet. Blank pages are added.',
     action: 'Create booklet',
   },
   'split-grid': {
     title: 'Divide pages',
-    description: 'Split pages into several cropped sections.',
+    description: 'Split each page into two, four or nine equally sized crops.',
     action: 'Create crops',
   },
   'auto-crop': {
     title: 'Remove white margins',
-    description: 'Trim unused white page margins.',
+    description: 'Automatically detect white outer margins and trim them with adjustable spacing.',
     action: 'Remove margins',
   },
   bilevel: {
     title: 'Black & white scan',
-    description: 'Convert scans to pure black and white.',
-    action: 'Create black & white',
+    description: 'Convert scans to pure black and white with an adjustable threshold.',
+    action: 'Convert to black and white',
   },
   invert: {
     title: 'Invert colors',
-    description: 'Invert the colors of PDF pages.',
+    description: 'Invert all page colours, for example to show light text on a dark background.',
     action: 'Invert colors',
   },
   stamp: {
     title: 'Add stamp',
-    description: 'Place a stamp on document pages.',
+    description:
+      'Add a clearly legible stamp with custom text, an optional date and a chosen position.',
     action: 'Add stamp',
   },
   'edit-metadata': {
     title: 'Edit metadata',
-    description: 'Update title, author and other document information.',
+    description: 'Set the title, author, subject and keywords for the output.',
     action: 'Save metadata',
   },
   'remove-annotations': {
     title: 'Remove annotations',
-    description: 'Remove document comments and annotations.',
+    description: 'Remove PDF comments, highlights and optionally links from selected pages.',
     action: 'Remove annotations',
   },
   overlay: {
     title: 'Overlay PDFs',
-    description: 'Combine document pages with a PDF overlay.',
+    description:
+      'Place a template page with adjustable opacity in front of or behind the pages of a second PDF.',
     action: 'Create overlay',
   },
 };

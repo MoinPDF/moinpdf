@@ -123,7 +123,7 @@ export function ReadingPanel({
       />
       <p className="fine-note">
         {ui(
-          'Lesbare Textausgabe mit erkannten Überschriften und einem Abschnitt pro PDF-Seite. Bilder und das ursprüngliche Tabellen- und Seitenlayout werden nicht übernommen. Reine Scans zuerst mit „OCR &amp; Text“ auslesen und das Ergebnis übernehmen. EPUB ist ein anpassbares E-Book mit Inhaltsverzeichnis.',
+          'Lesbare Textausgabe mit erkannten Überschriften und einem Abschnitt pro PDF-Seite. Bilder und das ursprüngliche Tabellen- und Seitenlayout werden nicht übernommen. Reine Scans zuerst mit „OCR & Text“ auslesen und das Ergebnis übernehmen. EPUB ist ein anpassbares E-Book mit Inhaltsverzeichnis.',
         )}
       </p>
       <Button

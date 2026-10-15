@@ -324,7 +324,15 @@ export function StructuredReport({ raw }: { raw: string }) {
   } catch {
     return <pre className="server-report">{raw}</pre>;
   }
-  if (!Array.isArray(data.items)) return <pre className="server-report">{raw}</pre>;
+  if (!Array.isArray(data.items)) {
+    const rendered = JSON.stringify(
+      data,
+      (key, value) =>
+        ['note', 'reason'].includes(key) && typeof value === 'string' ? ui(value) : value,
+      2,
+    );
+    return <pre className="server-report">{rendered}</pre>;
+  }
   const labels: Record<string, string> = {
     page: 'Seite',
     scope: 'Bereich',
@@ -355,6 +363,8 @@ export function StructuredReport({ raw }: { raw: string }) {
         : value === ''
           ? 'Fehlt'
           : String(value);
+  const formatTranslated = (value: unknown): string =>
+    Array.isArray(value) ? value.map(formatTranslated).join(' · ') : ui(format(value));
   return (
     <div className="document-report">
       <h3>{ui(data.title)}</h3>
@@ -377,7 +387,7 @@ export function StructuredReport({ raw }: { raw: string }) {
                     <dd>
                       {(['text', 'title', 'files'].includes(key)
                         ? format(value)
-                        : ui(format(value))) || ui('Keine')}
+                        : formatTranslated(value)) || ui('Keine')}
                     </dd>
                   </div>
                 ))}

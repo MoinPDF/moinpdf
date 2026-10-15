@@ -14,8 +14,8 @@ export const english: Record<string, string> = {
   'Eine oder mehrere Dateien': 'One or more files',
   'oder antippen · PDF, Office, Bilder & E-Mails':
     'or tap to choose · PDF, Office, images & emails',
-  'Datei geöffnet': 'file opened',
-  'Dateien geöffnet': 'files opened',
+  'Datei geöffnet': 'File opened',
+  'Dateien geöffnet': 'Files opened',
   'Dateien öffnen': 'Open files',
   'Kamera-Scanner': 'Camera scanner',
   'Office zu PDF': 'Office to PDF',
@@ -29,7 +29,7 @@ export const english: Record<string, string> = {
   ' (neuer Tab)': ' (new tab)',
   Datei: 'file',
   Dateien: 'files',
-  Seite: 'page',
+  Seite: 'Page',
   Seiten: 'Pages',
   'Dateien hinzufügen': 'Add files',
   'Arbeitsbereich leeren': 'Clear workspace',
@@ -58,7 +58,7 @@ export const english: Record<string, string> = {
   Bearbeiten: 'Edit',
   Stapel: 'Batch',
   'Prüfen & finden': 'Check & find',
-  'Erkennen & konvertieren': 'Recognize & convert',
+  'Erkennen & konvertieren': 'Recognise & convert',
   'Seiten & Struktur': 'Pages & structure',
   'Bearbeiten & bereinigen': 'Edit & clean up',
   'Stapel & Abläufe': 'Batch & workflows',
@@ -140,7 +140,7 @@ export const english: Record<string, string> = {
   Auswählen: 'Select',
   'Erledigt.': 'Done.',
   'Seiten ·': 'pages ·',
-  'Erkannter Text': 'Recognized text',
+  'Erkannter Text': 'Recognised text',
   BEARBEITBAR: 'EDITABLE',
   'Korrekturen gelten für Text und Word. Die PDF enthält das ursprüngliche OCR-Ergebnis. Word übernimmt den Text ohne das Original-Layout.':
     'Corrections apply to text and Word exports. The PDF keeps the original OCR result. Word contains the text without the original layout.',
@@ -152,7 +152,8 @@ export const english: Record<string, string> = {
   'PDF herunterladen': 'Download PDF',
   'Begriff eingeben und über alle geöffneten Dateien suchen.':
     'Enter a term to search across all open files.',
-  'Scan-Seiten bei Bedarf lokal erkennen lassen.': 'Recognize scanned pages locally when needed.',
+  'Scan-Seiten bei Bedarf lokal erkennen lassen.':
+    'Run text recognition locally on scanned pages when needed.',
   'Treffer prüfen und als neue PDF sammeln.': 'Review matches and collect them in a new PDF.',
   'Vermutete Leerseiten und doppelte Vorschauen werden angezeigt. Die Auswahl bleibt bei dir.':
     'Possible blank pages and duplicate previews are flagged. You choose what to keep.',
@@ -160,18 +161,18 @@ export const english: Record<string, string> = {
   'Pro Scan-Seite; benötigt zusätzlich etwa 600 MB Arbeitsspeicher':
     'Per scanned page; requires about 600 MB of additional memory',
   'Eine mehrsprachige OCR-Probe und ein lokaler statistischer Sprachvergleich wählen bis zu acht Modelle. Kurze, verrauschte oder mehrdeutige Texte werden zur manuellen Auswahl zurückgewiesen.':
-    'A multilingual OCR probe and a local statistical language comparison select up to eight models. Short, noisy or ambiguous text requires manual language selection.',
-  'Alle Seiten neu erkennen': 'Recognize all pages again',
+    'A multilingual OCR sample and a local statistical language comparison select up to eight models. Short, noisy or ambiguous text requires manual language selection.',
+  'Alle Seiten neu erkennen': 'Recognise all pages again',
   'Auch vorhandenen Text': 'Including existing text',
   'Bildseiten werden automatisch erkannt. Bei gemischten Text- und Scanbereichen „Alle Seiten neu erkennen“ aktivieren.':
-    'Image-only pages are detected automatically. Enable “Recognize all pages again” for pages that mix text and scans.',
+    'Image-only pages are detected automatically. Enable “Recognise all pages again” for pages that mix text and scans.',
   'Erstellt eine Bild-PDF. Kopierbare Texte, Links und Formularfunktionen gehen verloren. Eine kleinere Datei ist nicht garantiert.':
-    'Creates an image PDF. Selectable text, links and form functions are lost. A smaller file is not guaranteed.',
+    'Creates an image-only PDF. Selectable text, links and form functionality are lost. A smaller file is not guaranteed.',
   Sanft: 'Gentle',
   'Beginnen bei': 'Start at',
   Wasserzeichen: 'Watermark',
   'Transparentes Türkis, mittig auf jeder ausgewählten Seite.':
-    'Transparent teal, centered on each selected page.',
+    'Transparent teal, centred on each selected page.',
   'Inhalte werden proportional verkleinert oder vergrößert. Text bleibt kopierbar, soweit er im Original vorhanden ist.':
     'Content is resized proportionally. Existing selectable text remains selectable.',
   'Schwärzungen werden in die Seitenbilder eingerechnet. Die betroffenen Seiten enthalten danach keine ursprüngliche Textebene. Prüfe die Ergebnisvorschau vor dem Download.':
@@ -189,7 +190,7 @@ export const english: Record<string, string> = {
     'The output contains new page images. Text layers, links and interactive form fields are not retained.',
   'DOKUMENTINFOS DER AKTUELLEN DATEI': 'CURRENT FILE INFORMATION',
   'Inhalte im Dokument, Kommentare, Bilder und eingebettete Objektdaten werden damit nicht anonymisiert.':
-    'This does not anonymize document content, comments, images or embedded object data.',
+    'This does not anonymise document content, comments, images or embedded object data.',
   'Seiten auswählen & sortieren': 'Select & arrange pages',
   'Bereich per Eingabe setzen': 'Set area by coordinates',
   'Bereich hinzufügen': 'Add area',

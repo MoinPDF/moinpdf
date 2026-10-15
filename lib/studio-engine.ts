@@ -511,8 +511,12 @@ export async function runStudioJob(
     inputSize: sources.reduce((n, s) => n + s.size, 0),
   };
 }
-export async function makeBlankFile(landscape = false) {
+export async function makeBlankFile(landscape = false, language: 'de' | 'en' = 'de') {
   const doc = await PDFDocument.create();
   doc.addPage(landscape ? [841.89, 595.28] : [595.28, 841.89]);
-  return new File([new Uint8Array(await doc.save())], 'Leerseite.pdf', { type: 'application/pdf' });
+  return new File(
+    [new Uint8Array(await doc.save())],
+    language === 'en' ? 'Blank-page.pdf' : 'Leerseite.pdf',
+    { type: 'application/pdf' },
+  );
 }

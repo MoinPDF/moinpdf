@@ -113,6 +113,12 @@ class ExtendedTests(unittest.TestCase):
             self.assertEqual(response.status_code,200,response.text[:200]);self.assertEqual(calls[0]['target'],'de')
             with fitz.open(stream=response.content,filetype='pdf') as pdf:text=''.join(p.get_text() for p in pdf)
             self.assertIn('Uebersetzter Testtext',text);self.assertIn('Dokumentenpruefung',text)
+            self.assertIn('Original und Übersetzung',text)
+            with patch.dict(os.environ,{'MOINPDF_TRANSLATE_URL':f'http://127.0.0.1:{server.server_port}'}):english=self.post('translate',options={'target':'de','language':'en','uiLanguage':'en'})
+            self.assertEqual(english.status_code,200,english.text[:200])
+            with fitz.open(stream=english.content,filetype='pdf') as pdf:english_text=''.join(p.get_text() for p in pdf)
+            self.assertIn('Original and translation',english_text);self.assertIn('Page 1',english_text)
+            self.assertIn('Uebersetzter Testtext',english_text);self.assertIn('Dokumentenpruefung',english_text)
         finally:server.shutdown();server.server_close();thread.join()
 
     @unittest.skipUnless(service.MUSTANG.is_file(),'Mustang nicht installiert')

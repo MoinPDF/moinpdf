@@ -22,7 +22,7 @@ const text = (raw) => {
     if (/\p{L}/u.test(source) && !/^MoinPDF(?:\s+v[\d.]+)?$/.test(source) && !/^[\d,.× ·]+(?:MB|KB|px|s)$/.test(source)) unresolved.add(source);
     return raw;
   }
-  return (raw.match(/^\s*/)?.[0] ?? '') + escape(translated) + (raw.match(/\s*$/)?.[0] ?? '');
+  return (/^[.,;:!?]/.test(translated) ? '' : (raw.match(/^\s*/)?.[0] ?? '')) + escape(translated) + (raw.match(/\s*$/)?.[0] ?? '');
 };
 await mkdir(new URL('en/', root), { recursive: true });
 for (const [source, destination] of Object.entries(routes)) {

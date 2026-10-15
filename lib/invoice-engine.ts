@@ -404,7 +404,10 @@ const validDate = (s: string) =>
   new Date(s).toISOString().slice(0, 10) === s;
 const amount = (n: bigint) =>
   `${n < 0 ? '-' : ''}${(n < 0 ? -n : n) / 100n}.${String((n < 0 ? -n : n) % 100n).padStart(2, '0')}`;
-export function checkInvoice(i: Invoice): InvoiceCheck[] {
+export function checkInvoice(
+  i: Invoice,
+  t: (text: string) => string = (text) => text,
+): InvoiceCheck[] {
   const checks: InvoiceCheck[] = [];
   const add = (ok: boolean, title: string, good: string, bad: string) =>
     checks.push({ level: ok ? 'pass' : 'error', title, detail: ok ? good : bad });
@@ -417,7 +420,7 @@ export function checkInvoice(i: Invoice): InvoiceCheck[] {
     ['Dokumenttyp', i.type],
   ]
     .filter(([, v]) => !v)
-    .map(([k]) => k);
+    .map(([k]) => t(k));
   add(
     !missing.length,
     'Grundlegende Angaben',
@@ -428,13 +431,13 @@ export function checkInvoice(i: Invoice): InvoiceCheck[] {
     validDate(i.date) && (!i.dueDate || validDate(i.dueDate)),
     'Datumsangaben',
     'Vorhandene Datumsangaben sind gültig.',
-    'Rechnungs- oder Fälligkeitsdatum fehlt oder ist ungültig.',
+    'Das Rechnungsdatum fehlt oder ein angegebenes Datum ist ungültig.',
   );
   add(
     /^[A-Z]{3}$/.test(i.currency),
     'Währungsformat',
-    'Die Währung ist als dreistelliger Code angegeben.',
-    'Ein dreistelliger Währungscode fehlt. Die Gültigkeit der Codeliste wird nicht geprüft.',
+    'Die Währung besteht aus drei Großbuchstaben.',
+    'Der Währungscode muss aus drei Großbuchstaben bestehen. Ob er in einer gültigen Codeliste vorkommt, wird nicht geprüft.',
   );
   if (!i.profile)
     checks.push({
@@ -460,8 +463,8 @@ export function checkInvoice(i: Invoice): InvoiceCheck[] {
       baseQuantity: l.baseQuantity,
       net: l.net,
     }))
-      if (!decimal(s)) badNumbers.push(`Position ${l.id}: ${key}`);
-    if (l.taxRate && !decimal(l.taxRate)) badNumbers.push(`Position ${l.id}: Steuersatz`);
+      if (!decimal(s)) badNumbers.push(t(`Position ${l.id}: ${key}`));
+    if (l.taxRate && !decimal(l.taxRate)) badNumbers.push(t(`Position ${l.id}: Steuersatz`));
   }
   for (const tax of i.taxes)
     for (const [key, s] of Object.entries({
@@ -469,7 +472,7 @@ export function checkInvoice(i: Invoice): InvoiceCheck[] {
       amount: tax.amount,
       ...(tax.rate ? { rate: tax.rate } : {}),
     }))
-      if (!decimal(s)) badNumbers.push(`Steuer: ${key}`);
+      if (!decimal(s)) badNumbers.push(t(`Steuer: ${key}`));
   add(
     !badNumbers.length,
     'Zahlen und Beträge',
@@ -538,7 +541,7 @@ export function checkInvoice(i: Invoice): InvoiceCheck[] {
       checks.push({
         level: 'error',
         title: 'Menge × Preis',
-        detail: `Abweichung in Position ${badLines.slice(0, 20).join(', ')}.${skipped.length ? ` Zusätzlich sind ${skipped.length} Position(en) nicht berechenbar.` : ''}`,
+        detail: `Abweichung in Position ${badLines.slice(0, 20).join(', ')}.${skipped.length ? t(` Zusätzlich sind ${skipped.length} Position(en) nicht berechenbar.`) : ''}`,
       });
     else if (skipped.length)
       checks.push({
@@ -603,7 +606,7 @@ export function invoiceFromBytes(bytes: Uint8Array, name: string): InvoiceEntry 
   const xml = decodeXml(bytes);
   return { bytes, name, xml, invoice: parseInvoice(xml) };
 }
-export function invoiceCsv(i: Invoice) {
+export function invoiceCsv(i: Invoice, t: (text: string) => string = (text) => text) {
   const safe = (v: string) =>
     '"' + (/^[\s]*[=+@\-\t\r]/.test(v) ? "'" + v : v).replaceAll('"', '""') + '"';
   const rows = [
@@ -622,7 +625,7 @@ export function invoiceCsv(i: Invoice) {
       'Netto',
       'Steuersatz',
       'Steuerkategorie',
-    ],
+    ].map(t),
     ...i.lines.map((l) => [
       i.number,
       i.date,
@@ -642,16 +645,16 @@ export function invoiceCsv(i: Invoice) {
   ];
   return '\ufeff' + rows.map((r) => r.map(safe).join(';')).join('\r\n');
 }
-export function invoiceCheckText(i: Invoice) {
+export function invoiceCheckText(i: Invoice, t: (text: string) => string = (text) => text) {
   return [
-    `E-Rechnung – Basischeck`,
-    `${i.number || 'Ohne Nummer'} · ${i.date || 'Ohne Datum'}`,
-    INVOICE_CHECK_SCOPE,
-    `Deklariertes Profil: ${i.profile || 'Keines'}`,
+    t('E-Rechnung – Basischeck'),
+    `${i.number || t('Ohne Nummer')} · ${i.date || t('Ohne Datum')}`,
+    t(INVOICE_CHECK_SCOPE),
+    t(`Deklariertes Profil: ${i.profile || t('Keines')}`),
     '',
-    ...i.checks.map(
+    ...checkInvoice(i, t).map(
       (c) =>
-        `${c.level === 'pass' ? 'OK' : c.level === 'error' ? 'FEHLER' : 'HINWEIS'} | ${c.title}\n${c.detail}`,
+        `${t(c.level === 'pass' ? 'OK' : c.level === 'error' ? 'FEHLER' : 'HINWEIS')} | ${t(c.title)}\n${t(c.detail)}`,
     ),
   ].join('\n');
 }
@@ -673,6 +676,7 @@ export async function invoicePdf(
   entry: InvoiceEntry,
   report = false,
   fontBytes?: Uint8Array,
+  t: (text: string) => string = (text) => text,
 ): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const fontkit = (await import('@pdf-lib/fontkit')).default;
@@ -697,7 +701,7 @@ export async function invoicePdf(
     page = pdf.addPage([595.28, 841.89]);
     pageNo++;
     y = 790;
-    page.drawText('E-RECHNUNG · LESEANSICHT', {
+    page.drawText(t('E-RECHNUNG · LESEANSICHT'), {
       x: margin,
       y: 811,
       size: 8,
@@ -741,24 +745,24 @@ export async function invoicePdf(
   const heading = (s: string) => {
     if (y < 100) next();
     gap();
-    line(s, 13, rgb(0.03, 0.45, 0.45));
+    line(t(s), 13, rgb(0.03, 0.45, 0.45));
     y -= 4;
   };
   const i = entry.invoice;
-  pdf.setTitle(`Leseansicht ${i.number || entry.name}`);
-  pdf.setProducer('Lokale E-Rechnungs-Leseansicht');
-  line(i.type === '381' ? 'Gutschrift' : 'Rechnung', 24);
-  line(i.number || 'Ohne Rechnungsnummer', 16);
-  line(`${i.date || 'Datum fehlt'} · ${i.currency || 'Währung fehlt'} · ${i.format}`);
+  pdf.setTitle(t(`Leseansicht ${i.number || entry.name}`));
+  pdf.setProducer(t('Lokale E-Rechnungs-Leseansicht'));
+  line(i.type === '381' ? t('Gutschrift') : t('Rechnung'), 24);
+  line(i.number || t('Ohne Rechnungsnummer'), 16);
+  line(`${i.date || t('Datum fehlt')} · ${i.currency || t('Währung fehlt')} · ${i.format}`);
   gap();
   if (report) {
     heading('Basischeck');
-    line(INVOICE_CHECK_SCOPE);
-    for (const c of i.checks) {
+    line(t(INVOICE_CHECK_SCOPE));
+    for (const c of checkInvoice(i, t)) {
       heading(
-        `${c.level === 'pass' ? 'OK' : c.level === 'error' ? 'FEHLER' : 'HINWEIS'} · ${c.title}`,
+        `${t(c.level === 'pass' ? 'OK' : c.level === 'error' ? 'FEHLER' : 'HINWEIS')} · ${t(c.title)}`,
       );
-      line(c.detail);
+      line(t(c.detail));
     }
   } else {
     for (const [label, p] of [
@@ -768,17 +772,17 @@ export async function invoicePdf(
       heading(label);
       line(p.name, 12);
       line([p.address, p.country].filter(Boolean).join(', '));
-      if (p.vatId) line('USt-ID: ' + p.vatId);
+      if (p.vatId) line(t('USt-ID: ') + p.vatId);
       if (p.email) line(p.email);
     }
-    if (i.buyerReference) line('Käuferreferenz: ' + i.buyerReference);
-    if (i.orderReference) line('Bestellung: ' + i.orderReference);
+    if (i.buyerReference) line(t('Käuferreferenz: ') + i.buyerReference);
+    if (i.orderReference) line(t('Bestellung: ') + i.orderReference);
     heading('Positionen');
     for (const l of i.lines) {
       line(`${l.id}. ${l.name}`, 11);
       if (l.description) line(l.description);
       line(
-        `${l.quantity} ${l.unit} × ${l.price} / ${l.baseQuantity} = ${l.net} ${i.currency} netto${l.taxRate ? ' · ' + l.taxRate + ' %' : ''}`,
+        `${l.quantity} ${l.unit} × ${l.price} / ${l.baseQuantity} = ${l.net} ${i.currency} ${t('netto')}${l.taxRate ? ' · ' + l.taxRate + ' %' : ''}`,
       );
       y -= 7;
     }
@@ -794,22 +798,23 @@ export async function invoicePdf(
       ['Rundung', 'rounding'],
       ['Zahlbetrag', 'due'],
     ] as const)
-      if (i.totals[key]) line(`${label}: ${i.totals[key]} ${i.currency}`, key === 'due' ? 14 : 11);
+      if (i.totals[key])
+        line(`${t(label)}: ${i.totals[key]} ${i.currency}`, key === 'due' ? 14 : 11);
     if (i.taxes.length) {
       heading('Steueraufschlüsselung');
-      for (const t of i.taxes)
+      for (const tax of i.taxes)
         line(
-          `${t.category} · ${t.rate || '—'} % · Basis ${t.base} · Steuer ${t.amount} ${i.currency}${t.reason ? ' · ' + t.reason : ''}`,
+          `${tax.category} · ${tax.rate || '—'} % · ${t('Basis')} ${tax.base} · ${t('Steuer')} ${tax.amount} ${i.currency}${tax.reason ? ' · ' + tax.reason : ''}`,
         );
     }
     if (i.payment.length || i.dueDate) {
       heading('Zahlung');
-      if (i.dueDate) line('Fällig: ' + i.dueDate);
+      if (i.dueDate) line(t('Fällig: ') + i.dueDate);
       for (const p of i.payment) {
-        if (p.iban) line('Konto: ' + p.iban);
-        if (p.name) line('Kontoinhaber: ' + p.name);
+        if (p.iban) line(t('Konto: ') + p.iban);
+        if (p.name) line(t('Kontoinhaber: ') + p.name);
         if (p.bic) line('BIC: ' + p.bic);
-        if (p.reference) line('Referenz: ' + p.reference);
+        if (p.reference) line(t('Referenz: ') + p.reference);
         if (p.terms) line(p.terms);
       }
     }
@@ -820,19 +825,23 @@ export async function invoicePdf(
   }
   heading('Zur Leseansicht');
   line(
-    'Diese PDF stellt ausgewählte Rechnungsangaben dar. Maßgeblich bleibt die unveränderte XML im Anhang. Diese Ausgabe ist keine zertifizierte ZUGFeRD- oder PDF/A-Datei.',
+    t(
+      'Diese PDF stellt ausgewählte Rechnungsangaben dar. Maßgeblich bleibt die unveränderte XML im Anhang. Diese Ausgabe ist keine zertifizierte ZUGFeRD- oder PDF/A-Datei.',
+    ),
     9,
   );
-  line(`Deklariertes Profil: ${i.profile || 'Nicht angegeben'}`, 9);
+  line(t(`Deklariertes Profil: ${i.profile || t('Nicht angegeben')}`), 9);
   if (missingGlyphs)
     line(
-      'Einzelne Zeichen werden von der PDF-Schrift nicht unterstützt und erscheinen als ?. Die XML und die Browseransicht enthalten die Originalzeichen.',
+      t(
+        'Einzelne Zeichen werden von der PDF-Schrift nicht unterstützt und erscheinen als ?. Die XML und die Browseransicht enthalten die Originalzeichen.',
+      ),
       9,
     );
   await pdf.attach(
     entry.bytes,
     entry.name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 120) || 'Rechnung.xml',
-    { mimeType: 'application/xml', description: 'Unveränderte Rechnungs-XML' },
+    { mimeType: 'application/xml', description: t('Unveränderte Rechnungs-XML') },
   );
   return new Uint8Array(await pdf.save());
 }

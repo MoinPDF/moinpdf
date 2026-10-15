@@ -102,27 +102,28 @@ export async function readFormResponses(sources: Source[], ctx: RunContext) {
 export function formResponseRows(
   responses: FormResponse[],
   layout: 'matrix' | 'details' = 'matrix',
+  t: (text: string) => string = (text) => text,
 ) {
   const status = (r: FormResponse) =>
     [
-      ...r.warnings,
+      ...r.warnings.map(t),
       ...r.fields
         .filter((f) => f.required && fieldEmpty(f))
-        .map((f) => `Pflichtfeld fehlt: ${f.name}`),
-    ].join(' · ') || 'Keine fehlenden Pflichtwerte erkannt';
+        .map((f) => t(`Pflichtfeld fehlt: ${f.name}`)),
+    ].join(' · ') || t('Keine fehlenden Pflichtwerte erkannt');
   if (layout === 'details')
     return [
-      ['Datei', 'Feld', 'Typ', 'Pflichtfeld', 'Original', 'Exportwert', 'Status', 'Seite'],
+      ['Datei', 'Feld', 'Typ', 'Pflichtfeld', 'Original', 'Exportwert', 'Status', 'Seite'].map(t),
       ...responses.flatMap((r) =>
         r.fields.length
           ? r.fields.map((f) => [
               r.name,
               f.name,
               f.kind,
-              f.required ? 'Ja' : 'Nein',
-              f.original,
-              f.value,
-              f.required && fieldEmpty(f) ? 'Pflichtwert fehlt' : r.warnings.join(' · '),
+              t(f.required ? 'Ja' : 'Nein'),
+              f.kind === 'checkbox' ? t(f.original) : f.original,
+              f.kind === 'checkbox' ? t(f.value) : f.value,
+              f.required && fieldEmpty(f) ? t('Pflichtwert fehlt') : r.warnings.map(t).join(' · '),
               f.ref ? String(f.ref.page + 1) : '',
             ])
           : [[r.name, '', '', '', '', '', status(r), '']],
@@ -135,8 +136,8 @@ export function formResponseRows(
     throw new Error('Mehr als 500 unterschiedliche Felder. Bitte die Detailansicht exportieren.');
   return [
     [
-      'Datei',
-      'Prüfhinweise',
+      t('Datei'),
+      t('Prüfhinweise'),
       ...keys.map((k) => {
         const [name, kind] = JSON.parse(k);
         return `${name} (${kind})`;
@@ -145,7 +146,10 @@ export function formResponseRows(
     ...responses.map((r) => [
       r.name,
       status(r),
-      ...keys.map((k) => r.fields.find((f) => JSON.stringify([f.name, f.kind]) === k)?.value ?? ''),
+      ...keys.map((k) => {
+        const f = r.fields.find((f) => JSON.stringify([f.name, f.kind]) === k);
+        return f ? (f.kind === 'checkbox' ? t(f.value) : f.value) : '';
+      }),
     ]),
   ];
 }
@@ -160,6 +164,7 @@ export async function chronologyPdf(
   ctx: RunContext,
   fontBytes?: Uint8Array,
 ): Promise<ExportFile> {
+  const t = ctx.translate ?? ((text: string) => text);
   const active = items.filter((i) => i.included);
   if (
     !active.length ||
@@ -202,18 +207,18 @@ export async function chronologyPdf(
     const start = doc.getPageCount();
     for (const page of await doc.copyPages(input, input.getPageIndices())) doc.addPage(page);
     if (doc.getPageCount() > 500) throw new Error('Das Paket darf höchstens 500 Seiten haben.');
-    const title = `${item.date || 'Ohne Datum'} · ${item.title}`,
+    const title = `${item.date || t('Ohne Datum')} · ${item.title}`,
       page = doc.getPage(Math.floor(i / 24)),
       y = 718 - (i % 24) * 26;
     if (i % 24 === 0) {
-      page.drawText('Chronologische Dokumentenmappe', {
+      page.drawText(t('Chronologische Dokumentenmappe'), {
         x: 45,
         y: 785,
         size: 21,
         font,
         color: rgb(0.02, 0.45, 0.44),
       });
-      page.drawText('Geprüfte Reihenfolge · Datum aus Dokumentinhalt oder eigener Eingabe', {
+      page.drawText(t('Geprüfte Reihenfolge · Datum aus Dokumentinhalt oder eigener Eingabe'), {
         x: 45,
         y: 758,
         size: 9,
@@ -249,38 +254,46 @@ export async function chronologyPdf(
   writeBookmarks(doc, bookmarks);
   return {
     blob: pdfBlob(await doc.save()),
-    filename: 'Chronologische-Dokumentenmappe.pdf',
+    filename: t('Chronologische-Dokumentenmappe.pdf'),
     kind: 'pdf',
     pages: doc.getPageCount(),
     note: 'Die bestätigte Reihenfolge ist übernommen. Formularwerte sind festgeschrieben; ursprüngliche Signaturen, Lesezeichen und Dokumentanhänge werden nicht übernommen.',
   };
 }
-export const chronologyRows = (items: ChronologyItem[]) => [
-  ['Reihenfolge', 'Datei-ID', 'Titel', 'Datum', 'Geprüft'],
+export const chronologyRows = (
+  items: ChronologyItem[],
+  t: (text: string) => string = (text) => text,
+) => [
+  ['Reihenfolge', 'Datei-ID', 'Titel', 'Datum', 'Geprüft'].map(t),
   ...items
     .filter((i) => i.included)
     .map((i, n) => [
       String(n + 1),
       i.sourceId,
       i.title,
-      i.date || 'Ohne Datum',
-      i.confirmed ? 'Ja' : 'Nein',
+      i.date || t('Ohne Datum'),
+      t(i.confirmed ? 'Ja' : 'Nein'),
     ]),
 ];
-export function arithmeticRows(rows: ArithmeticRow[], total: string, locale: NumberLocale) {
+export function arithmeticRows(
+  rows: ArithmeticRow[],
+  total: string,
+  locale: NumberLocale,
+  t: (text: string) => string = (text) => text,
+) {
   const result = arithmeticResult(rows, total, locale);
   return [
-    ['Zeile', 'Original', 'Verwendeter Wert', 'In Summe', 'Seite'],
+    ['Zeile', 'Original', 'Verwendeter Wert', 'In Summe', 'Seite'].map(t),
     ...rows.map((r, i) => [
       String(i + 1),
       r.original,
       r.value,
-      r.included ? 'Ja' : 'Nein',
+      t(r.included ? 'Ja' : 'Nein'),
       String(r.ref.page + 1),
     ]),
-    ['Summe', '', decimalText(result.sum, locale), '', ''],
-    ['Angegebene Summe', '', total, '', ''],
-    ['Abweichung', '', decimalText(result.difference, locale), '', ''],
+    [t('Summe'), '', decimalText(result.sum, locale), '', ''],
+    [t('Angegebene Summe'), '', total, '', ''],
+    [t('Abweichung'), '', decimalText(result.difference, locale), '', ''],
   ];
 }
 export async function arithmeticPdf(
@@ -292,6 +305,7 @@ export async function arithmeticPdf(
   ctx: RunContext,
   fontBytes?: Uint8Array,
 ): Promise<ExportFile> {
+  const t = ctx.translate ?? ((text: string) => text);
   const result = arithmeticResult(rows, total, locale),
     doc = await PDFDocument.load(source.bytes, { updateMetadata: false }),
     font = await embedFont(doc, fontBytes);
@@ -320,16 +334,19 @@ export async function arithmeticPdf(
       );
   }
   const report = [
-    ['PDF-Rechenprüfung'],
-    ['Summe der ausgewählten Werte', decimalText(result.sum, locale)],
-    ['Angegebene Summe', decimalText(result.expected, locale)],
-    ['Abweichung', decimalText(result.difference, locale)],
-    ['Ergebnis', result.difference === 0n ? 'Summen stimmen überein' : 'Summen weichen ab'],
+    [t('PDF-Rechenprüfung')],
+    [t('Summe der ausgewählten Werte'), decimalText(result.sum, locale)],
+    [t('Angegebene Summe'), decimalText(result.expected, locale)],
+    [t('Abweichung'), decimalText(result.difference, locale)],
+    [
+      t('Ergebnis'),
+      result.difference === 0n ? t('Summen stimmen überein') : t('Summen weichen ab'),
+    ],
     [''],
-    ['Verwendete Werte (Korrekturen ersetzen keine Originalinhalte)'],
+    [t('Verwendete Werte (Korrekturen ersetzen keine Originalinhalte)')],
     ...rows
       .filter((r) => r.included)
-      .map((r, i) => [`${i + 1}. Seite ${r.ref.page + 1}: ${r.original}`, r.value]),
+      .map((r, i) => [`${i + 1}. ${t(`Seite ${r.ref.page + 1}`)}: ${r.original}`, r.value]),
   ];
   for (let i = 0; i < report.length; i += 35) {
     const p = doc.addPage([595, 842]);
@@ -344,7 +361,7 @@ export async function arithmeticPdf(
   }
   return {
     blob: pdfBlob(await doc.save({ updateFieldAppearances: false })),
-    filename: filenameStem(source.name) + '-Rechenpruefung.pdf',
+    filename: filenameStem(source.name) + t('-Rechenpruefung.pdf'),
     kind: 'pdf',
     pages: doc.getPageCount(),
     note: 'Geprüft wird die Summe der ausgewählten, gegebenenfalls korrigierten Werte. Originalseiten sind markiert, das Rechenprotokoll ist angehängt. Vorhandene digitale Signaturen verlieren durch die Änderung ihre Gültigkeit.',
@@ -484,9 +501,12 @@ export async function measurementRows(
   source: Source,
   items: Measurement[],
   calibrations: Record<number, Calibration>,
+  t: (text: string) => string = (text) => text,
 ) {
   const rows = [
-    ['Bezeichnung', 'Seite', 'Art', 'Messwert', 'Einheit', 'Referenzlänge', 'Referenzeinheit'],
+    ['Bezeichnung', 'Seite', 'Art', 'Messwert', 'Einheit', 'Referenzlänge', 'Referenzeinheit'].map(
+      t,
+    ),
   ];
   for (const item of items) {
     const c = calibrations[item.page];
@@ -496,7 +516,7 @@ export async function measurementRows(
     rows.push([
       item.label,
       String(item.page + 1),
-      item.kind === 'area' ? 'Fläche' : 'Strecke',
+      t(item.kind === 'area' ? 'Fläche' : 'Strecke'),
       String(value).replace('.', ','),
       item.kind === 'area' ? 'm²' : 'm',
       String(c.length),
@@ -512,6 +532,7 @@ export async function measurementsPdf(
   ctx: RunContext,
   fontBytes?: Uint8Array,
 ): Promise<ExportFile> {
+  const t = ctx.translate ?? ((text: string) => text);
   if (!items.length || items.length > 500) throw new Error('Bitte 1 bis 500 Messungen anlegen.');
   const doc = await PDFDocument.load(source.bytes, { updateMetadata: false }),
     font = await embedFont(doc, fontBytes);
@@ -548,11 +569,11 @@ export async function measurementsPdf(
       page.drawText(label, { x: pos.x, y: pos.y, font, size: 10, color, rotate: pos.rotate });
     });
   }
-  const report = await measurementRows(source, items, calibrations);
+  const report = await measurementRows(source, items, calibrations, t);
   for (let i = 1; i < report.length; i += 30) {
     const p = doc.addPage([595, 842]);
-    p.drawText('Messprotokoll', { x: 45, y: 785, size: 22, font });
-    p.drawText('Maßstab je Seite kalibriert. Verzerrte Scans können abweichende Maße ergeben.', {
+    p.drawText(t('Messprotokoll'), { x: 45, y: 785, size: 22, font });
+    p.drawText(t('Maßstab je Seite kalibriert. Verzerrte Scans können abweichende Maße ergeben.'), {
       x: 45,
       y: 758,
       size: 9,
@@ -562,14 +583,19 @@ export async function measurementsPdf(
       .slice(i, i + 30)
       .forEach((r, j) =>
         p.drawText(
-          fit(font, `${r[0]} · S. ${r[1]} · ${r[3]} ${r[4]} · Referenz ${r[5]} ${r[6]}`, 10, 505),
+          fit(
+            font,
+            `${r[0]} · ${t(`Seite ${r[1]}`)} · ${r[3]} ${r[4]} · ${t('Referenz')} ${r[5]} ${r[6]}`,
+            10,
+            505,
+          ),
           { x: 45, y: 724 - j * 21, size: 10, font },
         ),
       );
   }
   return {
     blob: pdfBlob(await doc.save({ updateFieldAppearances: false })),
-    filename: filenameStem(source.name) + '-Messungen.pdf',
+    filename: filenameStem(source.name) + t('-Messungen.pdf'),
     kind: 'pdf',
     pages: doc.getPageCount(),
     note: 'Messungen und Kalibrierungen sind im Protokoll dokumentiert. Die Genauigkeit hängt von Referenzlänge und unverzerrter Darstellung ab. Digitale Signaturen verlieren durch Änderungen ihre Gültigkeit.',

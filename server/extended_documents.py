@@ -233,6 +233,11 @@ def dewarp(source,directory):
 def translate(source,directory):
     import requests
     options=settings(directory);target=options.get('target','en');language=options.get('language','auto')
+    english=options.get('uiLanguage')=='en'
+    page_label='Page' if english else 'Seite'
+    heading='Original and translation' if english else 'Original und Übersetzung'
+    warning='Machine translation – please check.' if english else 'Maschinelle Übersetzung – bitte prüfen.'
+    translated_label='Translation' if english else 'Übersetzung'
     if not re.fullmatch(r'[a-z]{2,3}',target) or not re.fullmatch(r'auto|[a-z]{2,3}',language):raise ValueError('Ungültige Sprache.')
     endpoint=os.environ.get('MOINPDF_TRANSLATE_URL','').rstrip('/')
     if not endpoint:raise ValueError('Auf dem Server ist noch kein eigener LibreTranslate-Dienst eingerichtet.')
@@ -261,8 +266,8 @@ def translate(source,directory):
                 for start in range(0,len(text),1500):
                     chunk=text[start:start+1500]
                     translated=request_translation(chunk)
-                    rows.append(f'<tr><td><b>Seite {number}</b><p>{html.escape(chunk)}</p></td><td>{html.escape(translated)}</td></tr>')
-        story_pdf('<h1>Original und Übersetzung</h1><p>Maschinelle Übersetzung – bitte prüfen.</p><table><tr><th>Original</th><th>Übersetzung</th></tr>'+''.join(rows)+'</table>',directory/'output.pdf')
+                    rows.append(f'<tr><td><b>{page_label} {number}</b><p>{html.escape(chunk)}</p></td><td>{html.escape(translated)}</td></tr>')
+        story_pdf(f'<h1>{heading}</h1><p>{warning}</p><table><tr><th>Original</th><th>{translated_label}</th></tr>'+''.join(rows)+'</table>',directory/'output.pdf')
     finally:session.close()
 
 

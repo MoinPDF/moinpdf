@@ -369,7 +369,7 @@ export function DocumentCheck({
                     {duplicates
                       .find((g) => g.some((p) => p.pageId === row.pageId))
                       ?.filter((p) => p.pageId !== row.pageId)
-                      .map((p) => `Seite ${p.position + 1}`)
+                      .map((p) => ui(`Seite ${p.position + 1}`))
                       .join(', ')}
                   </small>
                 )}

@@ -1,3 +1,5 @@
+import { englishTranslator } from './translation-test-utils.mjs';
+const en = await englishTranslator();
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
@@ -28,6 +30,10 @@ try {
  assert.equal(responses[0].fields.find(f=>f.name==='Name').value,'Anna');assert.equal(responses[0].fields.find(f=>f.name==='Gruppe').value,'B');assert(e.fieldEmpty(responses[0].fields.find(f=>f.name==='Einwilligung')));assert(responses[1].warnings.length);assert.equal(responses[0].fields[0].ref.page,0);
  responses[0].fields[0].value='Geprüfter Wert';const matrix=e.formResponseRows(responses);assert(matrix[1].includes('Geprüfter Wert'));assert(matrix[1][1].includes('Einwilligung'));assert.deepEqual(original.bytes,before);
  const collision={...responses[0],fields:[{...responses[0].fields[0],kind:'checkbox',value:'Ja'}]};assert.equal(e.formResponseRows([responses[0],collision])[0].filter(t=>t.startsWith('Name')).length,2);
+ const preserved = structuredClone(responses[0]); preserved.name = 'Rechnung';
+ preserved.fields = [{...preserved.fields[0],name:'Rechnung',kind:'text',value:'Ja',original:'Rechnung'}, {...preserved.fields[0],name:'Einwilligung',kind:'checkbox',value:'Ja',original:'Nein'}];
+ const englishRows=e.formResponseRows([preserved],'details',en);
+ assert.equal(englishRows[0][0],'file'); assert.equal(englishRows[1][0],'Rechnung'); assert.equal(englishRows[1][1],'Rechnung');assert.equal(englishRows[1][4],'Rechnung');assert.equal(englishRows[1][5],'Ja');assert.equal(englishRows[2][4],'No');assert.equal(englishRows[2][5],'Yes');assert.equal(e.fieldEmpty(preserved.fields[1]),false);assert.equal(preserved.fields[1].value,'Ja');
  const xfa=await PDFDocument.load(original.bytes),xfaStream=xfa.context.register(xfa.context.flateStream('<xdp/>'));
  xfa.catalog.lookup(PDFName.of('AcroForm'),PDFDict).set(PDFName.of('XFA'),xfaStream);
  const xfaSource=await source(await xfa.save({updateFieldAppearances:false}),'XFA.pdf');
@@ -39,12 +45,16 @@ try {
  const early=await textPdf(['Frühes Dokument 01.09.2026'],'Frueh.pdf'),late=await textPdf(['Spätes Dokument 07.10.2026'],'Spaet.pdf');const items=[{sourceId:late.id,title:'Später',date:'2026-10-07',included:true,confirmed:false,candidates:[]},{sourceId:early.id,title:'Früher',date:'2026-09-01',included:true,confirmed:true,candidates:[]}];
  await assert.rejects(()=>e.chronologyPdf([early,late],items,ctx,fontBytes),/bestätigen/);items[0].confirmed=true;
  const chronological=await source(await(await e.chronologyPdf([early,late],m.sortChronology(items),ctx,fontBytes)).blob.arrayBuffer());assert.equal(chronological.pdf.numPages,3);assert((await allText(chronological))[1].includes('Frühes'));const toc=await(await chronological.pdf.getPage(1)).getAnnotations();assert.equal(toc.length,2);assert.equal(await chronological.pdf.getPageIndex(toc[0].dest[0]),1);assert.equal((await chronological.pdf.getOutline())[1].title,'2026-10-07 · Später');
+ const englishChronology=await source(await(await e.chronologyPdf([early,late],items,{...ctx,translate:en},fontBytes)).blob.arrayBuffer());
+ const englishToc=(await allText(englishChronology))[0];assert.match(englishToc,/Chronological/);assert(!englishToc.includes('Dokumentenmappe'));assert(englishToc.includes('Später'));assert((await allText(englishChronology))[1].includes('Spätes'));
  // Exact decimals, explicit locale, corrected/excluded totals and report output.
  assert.equal(m.decimal('1.234,567890'),1234567890n);assert.equal(m.decimal('(1,234.50)','en'),-1234500000n);assert.equal(m.decimalText(m.decimal('0,10')+m.decimal('0,20')),'0,30');
  for(const bad of ['1 2','1,234.50','12.34,56','NaN','1,2345678','-','1%'])assert.throws(()=>m.decimal(bad));
  const ambiguous=m.arithmeticCandidates(page(['1O0','5%']),{x:0,y:0,w:1,h:1});assert.equal(ambiguous[0].value,'1O0');assert.throws(()=>m.decimal(ambiguous[0].value));assert.equal(ambiguous[1].value,'5%');
  const numeric=await textPdf(['10,10','20,20','30,40']),data=await evidence.readEvidence([numeric],'auto',ctx),rows=m.arithmeticCandidates(data[0],{x:0,y:0,w:1,h:1});assert.equal(rows.length,3);rows[2].included=false;assert.equal(m.arithmeticResult(rows,rows[2].value,'de').difference,-100000n);rows[0].value='10,20';assert.equal(m.arithmeticResult(rows,'30,40','de').difference,0n);
  const report=await source(await(await e.arithmeticPdf(numeric,rows,'30,40','de',rows[2].ref,ctx,fontBytes)).blob.arrayBuffer());assert.equal(report.pdf.numPages,2);assert((await allText(report))[1].includes('30,40'));assert((await allText(report))[0].includes('10,10'));
+ const englishCalculation=await source(await(await e.arithmeticPdf(numeric,rows,'30,40','de',rows[2].ref,{...ctx,translate:en},fontBytes)).blob.arrayBuffer());
+ assert.match((await allText(englishCalculation))[1],/calculation/i);assert((await allText(englishCalculation))[1].includes('30,40'));assert((await allText(englishCalculation))[0].includes('10,10'));
  // Nested scripts/actions, attachment bytes, harmless links, comments and metadata switches.
  const unsafe=await PDFDocument.load(numeric.bytes);unsafe.setTitle('PRIVATE-METADATA');await unsafe.attach(new TextEncoder().encode('HIDDEN-ATTACHMENT-SENTINEL'),'private.txt');const js=unsafe.context.register(unsafe.context.flateStream('SCRIPT-PAYLOAD-SENTINEL'));
  const script=unsafe.context.register(unsafe.context.obj({S:'JavaScript',JS:js}));unsafe.catalog.set(PDFName.of('OpenAction'),script);unsafe.catalog.set(PDFName.of('AA'),unsafe.context.obj({WC:script}));

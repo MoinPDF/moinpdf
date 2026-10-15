@@ -58,7 +58,7 @@ export function WorkflowGraphPanel({
       (n) =>
         [
           n.id,
-          `${n.id} · ${n.type === 'action' ? stepLabels[n.action.kind] : n.type === 'condition' ? 'Bedingung' : 'Ende'}`,
+          `${n.id} · ${ui(n.type === 'action' ? ui(stepLabels[n.action.kind]) : n.type === 'condition' ? 'Bedingung' : 'Ende')}`,
         ] as [string, string],
     );
   const validate = () => validateWorkflowGraph(value);
@@ -184,7 +184,7 @@ export function WorkflowGraphPanel({
                 transform={`translate(${n.x},${n.y + 10})`}
                 role="button"
                 tabIndex={0}
-                aria-label={`${n.id}: ${n.type === 'action' ? stepLabels[n.action.kind] : n.type === 'condition' ? ui('Bedingung') : ui('Ende')}`}
+                aria-label={`${n.id}: ${n.type === 'action' ? ui(stepLabels[n.action.kind]) : n.type === 'condition' ? ui('Bedingung') : ui('Ende')}`}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
@@ -220,7 +220,7 @@ export function WorkflowGraphPanel({
                 </text>
                 <text x="12" y="44" fill="#0f172a" fontSize="14">
                   {n.type === 'action'
-                    ? stepLabels[n.action.kind]
+                    ? ui(stepLabels[n.action.kind])
                     : n.type === 'condition'
                       ? `${n.condition.field} ${n.condition.operator}`
                       : ui('Ende')}
@@ -276,12 +276,14 @@ export function WorkflowGraphPanel({
           value={node.id}
           onChange={setSelected}
           items={value.nodes.map((n) => [n.id, n.id])}
+          translateItems={false}
         />
         <Choice
           label={ui('Startknoten')}
           value={value.entry}
           onChange={(entry) => onChange({ ...value, entry })}
           items={value.nodes.map((n) => [n.id, n.id])}
+          translateItems={false}
         />
         <Choice
           label={ui('Knotentyp')}
@@ -359,6 +361,7 @@ export function WorkflowGraphPanel({
               value={node.next}
               onChange={(next) => setNode({ ...node, next })}
               items={available}
+              translateItems={false}
             />
           </>
         )}
@@ -419,12 +422,14 @@ export function WorkflowGraphPanel({
               value={node.yes}
               onChange={(yes) => setNode({ ...node, yes })}
               items={available}
+              translateItems={false}
             />
             <Choice
               label={ui('Bei Nein')}
               value={node.no}
               onChange={(no) => setNode({ ...node, no })}
               items={available}
+              translateItems={false}
             />
           </>
         )}
@@ -517,7 +522,11 @@ export function WorkflowGraphPanel({
                 setSelected(graph.entry);
               }
             }}
-            items={[['', 'Auswählen'], ...saved.map((g) => [g.name, g.name] as [string, string])]}
+            items={[
+              ['', ui('Auswählen')],
+              ...saved.map((g) => [g.name, g.name] as [string, string]),
+            ]}
+            translateItems={false}
           />
         )}
         {notice && <p role="status">{ui(notice)}</p>}

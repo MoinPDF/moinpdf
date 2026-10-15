@@ -1,7 +1,7 @@
 'use client';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, useFreshResult } from './ui-feedback';
-import { ui } from '@/lib/ui-language';
+import { ui, uiLocale } from '@/lib/ui-language';
 
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -254,7 +254,7 @@ export function SecurityWorkbench({
             <span>
               {source.pdf.numPages} {source.pdf.numPages === 1 ? t('Seite') : t('Seiten')}
             </span>
-            <span>{formatSize(source.size)}</span>
+            <span>{formatSize(source.size, uiLocale())}</span>
             <span>{source.wasEncrypted ? ui('Lokal entsperrt') : ui('Geöffnete PDF')}</span>
           </div>
           <p>{ui('Alle Seiten, Formularfelder, Lesezeichen und Anhänge bleiben erhalten.')}</p>
@@ -367,7 +367,7 @@ export function SecurityWorkbench({
                   : ui('Deine entsperrte PDF ist bereit.')}
               </span>
               <p>
-                {result.filename} · {formatSize(result.blob.size)}
+                {result.filename} · {formatSize(result.blob.size, uiLocale())}
               </p>
               <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
                 <a href={url} download={result.filename}>

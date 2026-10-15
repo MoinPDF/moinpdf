@@ -1,27 +1,34 @@
-export type DiffLine = { kind: 'same' | 'added' | 'removed' | 'note'; text: string };
+export type DiffLine = {
+  kind: 'same' | 'added' | 'removed' | 'note';
+  text: string;
+  authored?: boolean;
+};
 export type PdfReport = {
   title: string;
   description: string;
   stats: { label: string; value: string }[];
   sections: {
     title: string;
+    titleIsData?: boolean;
     status?: string;
-    details?: { label: string; value: string }[];
+    details?: { label: string; value: string; translateValue?: boolean }[];
     lines?: DiffLine[];
   }[];
 };
-export function reportText(report: PdfReport) {
+export function reportText(report: PdfReport, t: (text: string) => string = (text) => text) {
   const sign = { same: '  ', added: '+ ', removed: '− ', note: '! ' };
   return [
-    report.title,
-    report.description,
+    t(report.title),
+    t(report.description),
     '',
-    ...report.stats.map((s) => `${s.label}: ${s.value}`),
+    ...report.stats.map((s) => `${t(s.label)}: ${t(s.value)}`),
     '',
     ...report.sections.flatMap((s) => [
-      s.title + (s.status ? ` · ${s.status}` : ''),
-      ...(s.details || []).map((d) => `${d.label}: ${d.value}`),
-      ...(s.lines || []).map((l) => sign[l.kind] + l.text),
+      (s.titleIsData ? s.title : t(s.title)) + (s.status ? ` · ${t(s.status)}` : ''),
+      ...(s.details || []).map((d) => `${t(d.label)}: ${d.translateValue ? t(d.value) : d.value}`),
+      ...(s.lines || []).map(
+        (l) => sign[l.kind] + (l.kind === 'note' || l.authored ? t(l.text) : l.text),
+      ),
       '',
     ]),
   ].join('\n');

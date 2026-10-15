@@ -160,6 +160,7 @@ export function partsFromStarts(
   count: number,
   starts: number[],
   excluded: number[] = [],
+  t: (text: string) => string = (text) => text,
 ): SplitPart[] {
   const boundaries = [...new Set([0, ...starts.filter((n) => n >= 0 && n < count), count])].sort(
     (a, b) => a - b,
@@ -167,7 +168,7 @@ export function partsFromStarts(
   return boundaries
     .slice(0, -1)
     .map((start, i) => ({
-      name: `Abschnitt-${i + 1}.pdf`,
+      name: t(`Abschnitt-${i + 1}.pdf`),
       pages: Array.from({ length: boundaries[i + 1] - start }, (_, j) => start + j).filter(
         (p) => !excluded.includes(p),
       ),
@@ -190,6 +191,8 @@ export async function planSplit(
     const parts = partsFromStarts(
       source.pdf.numPages,
       bookmarks.map((b) => b.page!),
+      [],
+      ctx.translate,
     );
     return parts.map((p) => ({
       ...p,
@@ -222,7 +225,7 @@ export async function planSplit(
       label: `Trennstellen · Seite ${i + 1}`,
     });
   }
-  return partsFromStarts(source.pdf.numPages, starts, excluded);
+  return partsFromStarts(source.pdf.numPages, starts, excluded, ctx.translate);
 }
 export async function saveSplit(
   source: Source,

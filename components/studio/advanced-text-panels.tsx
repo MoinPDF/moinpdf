@@ -302,7 +302,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               disabled={busy}
               onClick={() =>
                 run(async () => ({
-                  blob: await makeXlsx(rows),
+                  blob: await makeXlsx(rows, ui('Tabelle')),
                   filename: 'PDF-Tabelle.xlsx',
                   kind: 'data',
                   pages: 1,

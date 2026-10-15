@@ -1,6 +1,11 @@
 # Ausbau nach dem Funktionsvergleich
 
-Stand: 15. Oktober 2026, Version 0.13.24.
+Stand: 15. Oktober 2026, Version 0.13.25.
+
+Der gesamte Sprachkatalog mit ursprünglich 4.513 Einträgen wurde geprüft. Rund
+2.000 Übersetzungen wurden verbessert; fehlende UI-Meldungen und app-eigene
+Texte in Berichts- und Dokumentausgaben sind ergänzt. Regressionstests prüfen
+Originaldaten, Formularwerte, Rechnungseinbettungen und Sprachabdeckung.
 
 Die Oberfläche enthält 22 vollständig sichtbare Headerbilder, sechs Schnellzugriffe,
 eine Dokumentübersicht und eine mobile Aktionsleiste im gemeinsamen PDF-Arbeitsbereich.

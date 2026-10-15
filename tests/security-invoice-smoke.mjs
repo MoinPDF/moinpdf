@@ -1,3 +1,5 @@
+import { englishTranslator } from './translation-test-utils.mjs';
+const en = await englishTranslator();
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
@@ -34,6 +36,11 @@ try{
  const csvTest=structuredClone(a);csvTest.lines[0].name='=HYPERLINK("https://example.org")';assert.match(invoiceCsv(csvTest),/'=HYPERLINK/);assert.match(invoiceCheckText(a),/Keine vollständige/);
  const font=await readFile('public/vendor/invoice-font/NotoSans-Regular.ttf'),entry=invoiceFromBytes(new TextEncoder().encode(ubl),'Rechnung.xml');
  const rendered=await invoicePdf(entry,false,font),renderPdf=await open(rendered);assert(renderPdf.numPages>=1);const attached=await renderPdf.getAttachments();assert.equal(attached.get('Rechnung.xml').filename,'Rechnung.xml');assert.deepEqual(new Uint8Array(await renderPdf.getAttachmentContent('Rechnung.xml')),entry.bytes);
+ const englishPdf=await open(await invoicePdf(entry,false,font,en));
+ const englishText=(await Promise.all(Array.from({length:englishPdf.numPages},async(_,n)=>(await(await englishPdf.getPage(n+1)).getTextContent()).items.map(x=>x.str||'').join(' ')))).join(' ');
+ assert.match(englishText,/Invoice/);assert(!englishText.includes('LESEANSICHT'));assert(englishText.includes('Geschäftsbedingungen'));assert.deepEqual(new Uint8Array(await englishPdf.getAttachmentContent('Rechnung.xml')),entry.bytes);
+ const englishCsv=invoiceCsv({...a,seller:{...a.seller,name:'Rechnung'}},en);assert.match(englishCsv,/Invoice number/);assert(englishCsv.includes('"Rechnung"'));
+ assert(!invoiceCheckText({...a,number:''},en).includes('Fehlt: Rechnungsnummer'));
  const roundtrip=await invoiceEntries({pdf:renderPdf});assert.equal(roundtrip[0].invoice.number,a.number);
  const text=(await Promise.all(Array.from({length:renderPdf.numPages},async(_,n)=>(await(await renderPdf.getPage(n+1)).getTextContent()).items.filter(x=>'str'in x).map(x=>x.str).join(' ')))).join(' ');assert.match(text,/336.9/);assert.match(text,/Geschäftsbedingungen/);
  const report=await invoicePdf(entry,true,font);assert((await open(report)).numPages>0);

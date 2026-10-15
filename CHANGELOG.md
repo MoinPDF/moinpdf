@@ -1,5 +1,19 @@
 # Änderungen
 
+## 0.13.25 – 15. Oktober 2026
+
+- Alle 4.513 vorhandenen Spracheinträge fachlich und sprachlich geprüft; rund
+  2.000 Übersetzungen verbessert und aktuelle Meldungen ergänzt. Werkzeugtexte,
+  Hilfe, Dokumentation und Informationsseiten verwenden denselben Katalog.
+- Fehlende Übersetzungen in Dialogen, Bildschirmleser-Beschriftungen, OCR-Hinweisen,
+  Arbeitsabläufen und Berichten ergänzt. Zahlenformate folgen der App-Sprache.
+- App-eigene Überschriften und Hinweise in PDF-, CSV-, Excel-, Markdown-, HTML-
+  und EPUB-Ausgaben lokalisiert, einschließlich Rechnungsleseansicht und
+  Begleittexten der serverseitigen PDF-Übersetzung.
+- Eigene Dateinamen, Formularwerte, Zitate, Rechnungs-XML und bearbeitete
+  Dokumenttexte bleiben unverändert. Sprachtests prüfen diese Trennung anhand
+  echter Ausgaben; ein Katalogtest erkennt neue fehlende UI-Meldungen.
+
 ## 0.13.24 – 15. Oktober 2026
 
 - Die Beispiel-PDF folgt beim Öffnen der gewählten App-Sprache. Rechnung und

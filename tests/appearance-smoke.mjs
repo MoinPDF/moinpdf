@@ -100,6 +100,28 @@ for(const [source,target] of Object.entries(extended)) {
  assert.deepEqual(source.match(/\{\d+\}/g)?.sort()??[],target.match(/\{\d+\}/g)?.sort()??[],source);
  assert.ok(!/ZXQ|QXZ|\}Z/.test(target),source);
 }
+assert.equal(ui('Schwärzen'),'Redact');
+assert.deepEqual(['Ja','Nein'].map(ui),['Yes','No'],'translation callbacks ignore Array.map indices');
+assert.equal(ui('Links'),'Left');
+assert.equal(ui('3 Links'),'3 links');
+assert.equal(ui('Preisbasis'),'Price base quantity');
+assert.equal(ui('Seite 2'),'Page 2');
+assert.equal(ui('Sichtbare Angabe weicht ab; OCR und Zuordnung kontrollieren.'),'The visible value differs; check the OCR text and the match.');
+assert.equal(ui('Formatierungen dürfen keine geformte Zeichenfolge teilen.'),'Formatting ranges must not split a shaped character cluster.');
+assert.equal(ui('OCR & Text'),'OCR & text');
+// Guard explicit UI messages and generated-output copy against catalogue drift.
+const {readdir}=await import('node:fs/promises');
+const copyFiles=['app/page.tsx',...await Promise.all(['lib','components/studio'].map(async dir=>(await readdir(dir)).filter(name=>/\.tsx?$/.test(name)).map(name=>dir+'/'+name))).then(groups=>groups.flat())];
+for(const file of copyFiles){
+ const source=await readFile(file,'utf8'),ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true,file.endsWith('tsx')?ts.ScriptKind.TSX:ts.ScriptKind.TS);
+ const check=node=>{
+  if(!node)return;
+  if(ts.isConditionalExpression(node)){check(node.whenTrue);check(node.whenFalse);return;}
+  const key=(ts.isStringLiteralLike(node)?node.text:ts.isTemplateExpression(node)?node.head.text+node.templateSpans.map((span,index)=>'{'+index+'}'+span.literal.text).join(''):undefined)?.replace(/\s+/g,' ').trim();
+  if(key&&/\p{L}/u.test(key))assert.ok(Object.hasOwn(extended,key),file+': missing '+key);
+ };
+ const walk=node=>{if(ts.isCallExpression(node)&&/^(ui|t)$/.test(node.expression.getText())&&node.arguments.length===1)check(node.arguments[0]);ts.forEachChild(node,walk);};walk(ast);
+}
 setUiLanguage('de');
 assert.equal(ui('PDF-Passwort'),'PDF-Passwort');
 assert.equal(uiLocale(),'de-DE');

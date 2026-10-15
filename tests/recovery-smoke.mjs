@@ -1,3 +1,5 @@
+import { englishTranslator } from './translation-test-utils.mjs';
+const en = await englishTranslator();
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
@@ -41,6 +43,12 @@ try{
    for(const [name,entry] of Object.entries(zip.files))if(/\.(xhtml|opf|xml)$/.test(name)){const xml=await entry.async('string');assert(!xml.includes('<script>'));new DOMParser({onError:()=>{throw Error(name+' is invalid XML');}}).parseFromString(xml,'application/xml');}
    assert.equal((await zip.file('EPUB/package.opf').async('string')).match(/<itemref /g).length,2);
   }
+ }
+ for(const format of ['markdown','html','epub']){
+  const result=await exportReading(input,format,'Rechnung','de',{...ctx,translate:en});
+  const text=format==='epub'?await(await JSZip.loadAsync(await result.blob.arrayBuffer())).file('EPUB/page-2.xhtml').async('string'):await result.blob.text();
+  assert.match(text,/Page 2/);assert(!text.includes('kein Text gefunden'));assert(!text.includes('Seite 2'));
+  if(format==='html'){assert(text.includes('<h1>Rechnung</h1>'));assert(text.includes('lang="de"'));assert(text.includes('Moin &amp; Grüße'));assert(text.includes('href="#seite-2"'));}
  }
  await writeFile('.cache/reading-roundtrip.epub',epub);
  await assert.rejects(()=>exportReading({...input,pdf:{numPages:1,getPage:async()=>({getTextContent:async()=>({items:[]})})}},'epub','','de',ctx),/OCR/);

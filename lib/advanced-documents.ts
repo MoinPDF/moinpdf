@@ -358,6 +358,7 @@ export async function coverToc(
   ctx: RunContext,
   fontBytes?: Uint8Array,
 ): Promise<ExportFile> {
+  const t = ctx.translate ?? ((text: string) => text);
   if (!title.trim()) throw new Error('Bitte einen Titel eingeben.');
   if (!entries.length) throw new Error('Bitte mindestens einen Inhaltsverzeichniseintrag anlegen.');
   if (entries.length > 200) throw new Error('Maximal 200 Verzeichniseinträge.');
@@ -405,7 +406,7 @@ export async function coverToc(
   for (let n = 0; n < tocCount; n++) {
     checkAbort(ctx.signal);
     const page = doc.getPage((includeCover ? 1 : 0) + n);
-    page.drawText('Inhaltsverzeichnis', {
+    page.drawText(t('Inhaltsverzeichnis'), {
       x: 50,
       y: 770,
       size: 25,
@@ -471,7 +472,9 @@ export async function mergeFormData(
         .map(
           (r, i) =>
             safeName(
-              nameColumn >= 0 ? r[nameColumn] || `Datensatz-${i + 1}` : `Datensatz-${i + 1}`,
+              nameColumn >= 0
+                ? r[nameColumn] || (ctx.translate?.(`Datensatz-${i + 1}`) ?? `Datensatz-${i + 1}`)
+                : (ctx.translate?.(`Datensatz-${i + 1}`) ?? `Datensatz-${i + 1}`),
             ) + '.pdf',
         ),
     );

@@ -9,7 +9,7 @@ import {
 import { fileArrivals } from '@/lib/ui-feedback';
 import { convertOfficeLocally, browserOfficeUnavailable } from '@/lib/browser-office';
 import { signLocally } from '@/lib/local-signature';
-import { ui } from '@/lib/ui-language';
+import { ui, uiLocale } from '@/lib/ui-language';
 
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
@@ -301,7 +301,7 @@ function StandardServerWorkbench({
                 <FileArrivalCheck file={current} />
               </strong>
               <small>
-                {formatSize(current.size)} {ui(' · Datei ändern')}
+                {formatSize(current.size, uiLocale())} {ui(' · Datei ändern')}
               </small>
             </>
           ) : (
@@ -407,7 +407,10 @@ function StandardServerWorkbench({
       if (tool === 'html-pdf') path = '/v1/documents/html';
       if (tool === 'ebook-pdf') {
         path = '/v1/documents/ebook';
-        body.append('options', JSON.stringify(extra));
+        body.append(
+          'options',
+          JSON.stringify({ ...extra, uiLanguage: uiLocale().startsWith('en') ? 'en' : 'de' }),
+        );
       }
       if (tool === 'word-mail-merge') {
         if (!spreadsheet) throw new Error('Bitte eine Excel-Tabelle auswählen.');
@@ -443,7 +446,10 @@ function StandardServerWorkbench({
         body.append('profile', uaProfile);
       } else if (extraActions[tool]) {
         path = '/v1/documents/' + extraActions[tool];
-        body.append('options', JSON.stringify(extra));
+        body.append(
+          'options',
+          JSON.stringify({ ...extra, uiLanguage: uiLocale().startsWith('en') ? 'en' : 'de' }),
+        );
       } else if (tool === 'pdfa') {
         body.append('profile', profile);
         path = `/v1/pdfa/${mode}`;
@@ -468,7 +474,7 @@ function StandardServerWorkbench({
     for (const value of body.values())
       if (value instanceof Blob && value.size > limit)
         throw new Error(
-          `Diese Datei ist zu groß. Erlaubt sind höchstens ${formatSize(limit)} pro Datei.`,
+          `Diese Datei ist zu groß. Erlaubt sind höchstens ${formatSize(limit, uiLocale())} pro Datei.`,
         );
     try {
       const out = await runServerJob(serverBase, '', path, body, signal);
@@ -650,6 +656,7 @@ function StandardServerWorkbench({
               value={source?.id || ''}
               onChange={setSourceId}
               items={sources.map((s) => [s.id, s.name])}
+              translateItems={false}
             />
           ) : source ? (
             <div className="conversion-selected-file">
@@ -657,7 +664,7 @@ function StandardServerWorkbench({
               <div>
                 <strong>{source.name}</strong>
                 <span>
-                  {formatSize(source.size)} · {source.pdf.numPages}{' '}
+                  {formatSize(source.size, uiLocale())} · {source.pdf.numPages}{' '}
                   {source.pdf.numPages === 1 ? t('Seite') : t('Seiten')}
                 </span>
               </div>
@@ -1010,7 +1017,7 @@ function StandardServerWorkbench({
               {t('Fertig.')}
             </h2>
             <p>
-              {result.filename} · {formatSize(result.blob.size)}
+              {result.filename} · {formatSize(result.blob.size, uiLocale())}
             </p>
             {result.note && <p>{ui(result.note)}</p>}
             <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
