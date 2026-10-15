@@ -336,7 +336,6 @@ export function AudioWorkbench({
                       { id: 'kerstin', label: 'Kerstin · Deutsch' },
                     ]
                 ).map((v) => [v.id, v.label])}
-                translateItems={false}
               />
               <NumberField
                 label={ui('Sprechtempo')}
