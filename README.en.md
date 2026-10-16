@@ -78,7 +78,7 @@ A static web build does not provide a running document server by itself. Use the
 
 ## Documentation
 
-In the app, **Documentation** opens the searchable handbook for all 112 tools, with direct links and a print view. Technical guides are available here in both languages:
+In the app, **Documentation** opens the searchable handbook for all tools, with direct links and a print view. Technical guides are available here in both languages:
 
 | Topic | Deutsch | English |
 | --- | --- | --- |
