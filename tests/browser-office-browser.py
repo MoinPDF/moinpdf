@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     browser_session = browser.new_browser_cdp_session()
     page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
     page.set_default_timeout(180000)
-    errors, uploads, external, results, console = [], [], [], [], []
+    errors, uploads, external, results, console, cleanup_checks = [], [], [], [], [], []
     page.on('pageerror', lambda error: errors.append(str(error)))
     lifecycle, target_events = [], []
     page.on('worker', lambda worker: (
@@ -195,8 +195,20 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         while True:
             workers = office_targets()
             native = dedicated_threads()
-            if not workers and not native:
-                return []
+            if not workers:
+                # The result preview intentionally owns a live PDF.js worker.
+                # Account only for those exact, responsive workers; any extra
+                # native thread still fails the same cleanup deadline.
+                previews = [worker for worker in page.workers
+                            if worker.url == origin.rstrip('/') + '/vendor/pdf/pdf.worker.min.mjs']
+                if len(native) == len(previews):
+                    for preview in previews:
+                        assert preview._sync(asyncio.wait_for(preview._impl_obj.evaluate('location.href'), timeout=2)) == preview.url
+                    cleanup_checks.append({'seconds': round(time.monotonic() - started, 3),
+                                           'nativeThreads': native,
+                                           'previewWorkers': [worker.url for worker in previews],
+                                           'remainingOfficeWorkers': workers})
+                    return []
             if time.monotonic() >= deadline:
                 diagnose_survivors(workers)
                 raise AssertionError('Office workers survived cleanup: ' + repr({'targets': workers, 'nativeThreads': native}))
@@ -261,7 +273,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         assert not uploads, uploads
         assert not external, external
         assert not errors, errors
-        (evidence/'browser-office.json').write_text(json.dumps({'results':results,'uploads':uploads,'external':external,'errors':errors,'browserVersion':browser.version,'pageLifecycle':page.evaluate('window.__officeLifecycle'),'playwrightLifecycle':lifecycle,'targetEvents':target_events}, ensure_ascii=False, indent=2))
+        (evidence/'browser-office.json').write_text(json.dumps({'results':results,'uploads':uploads,'external':external,'errors':errors,'browserVersion':browser.version,'cleanupChecks':cleanup_checks,'pageLifecycle':page.evaluate('window.__officeLifecycle'),'playwrightLifecycle':lifecycle,'targetEvents':target_events}, ensure_ascii=False, indent=2))
         print('PASS: real browser Office conversion, cached binary assets, repeated abort/restart, no surviving Office workers and no document uploads.', flush=True)
     except BaseException:
         print(page.locator('body').inner_text()[:8000], flush=True)

@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/office-shutdown-fix.yml'
       - 'public/component-notices/browser-office/MOINPDF-PATCHES.json'
+      - 'tests/browser-office-browser.py'
   workflow_dispatch:
 
 permissions:
