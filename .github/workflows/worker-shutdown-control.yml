@@ -11,17 +11,21 @@ jobs:
   control:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        playwright: ['1.55.0', '1.64.0']
     steps:
       - uses: actions/checkout@v7
       - name: Install the original test browser
         run: |
-          python -m pip install playwright==1.55.0
+          python -m pip install playwright==${{ matrix.playwright }}
           python -m playwright install --with-deps chromium
       - name: Test the shutdown sequence independently of MoinPDF
         run: python tests/research/worker-shutdown-repro.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: nested-worker-control
+          name: nested-worker-control-${{ matrix.playwright }}
           path: web-evidence/
           retention-days: 14

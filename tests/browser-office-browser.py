@@ -130,6 +130,14 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                    'browserVersion': browser.version, 'channel': launch_options}
         try:
             details['processesBefore'] = browser_session.send('SystemInfo.getProcessInfo')
+            details['nativeThreads'] = []
+            for process in details['processesBefore']['processInfo']:
+                pid = int(process['id'])
+                for name in Path(f'/proc/{pid}/task').glob('*/comm'):
+                    try:
+                        details['nativeThreads'].append({'pid': pid, 'type': process['type'], 'tid': int(name.parent.name), 'name': name.read_text().strip()})
+                    except (OSError, ValueError):
+                        pass
             for target in targets:
                 try:
                     session = browser_session.send('Target.attachToTarget', {'targetId': target['targetId'], 'flatten': False})['sessionId']
