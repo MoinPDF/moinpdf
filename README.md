@@ -78,7 +78,7 @@ Ein statischer Web-Build stellt selbst keinen laufenden Dokumentenserver bereit.
 
 ## Dokumentation
 
-In der App öffnet **Dokumentation** das durchsuchbare Handbuch mit Anleitungen zu allen 112 Werkzeugen, Direktlinks und Druckansicht. Hier im Repository findest du die technischen Anleitungen in beiden Sprachen:
+In der App öffnet **Dokumentation** das durchsuchbare Handbuch mit Anleitungen zu allen Werkzeugen, Direktlinks und Druckansicht. Hier im Repository findest du die technischen Anleitungen in beiden Sprachen:
 
 | Thema | Deutsch | English |
 | --- | --- | --- |
