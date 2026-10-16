@@ -6,6 +6,22 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Bedienungsverbesserungen in 0.14.2
+
+- Alle 36 automatisierten Suiten bestanden, einschließlich echter PDF-Ausgaben,
+  Dokumenteditor und Projektübertragung mit erhaltenen Upload-Prüfsummen.
+- Neue React-DOM-Prüfungen decken Kategorie, Suchbegriff, Scrollposition und Fokus
+  beim Zurückgehen, Umbenennen mit Enter/Escape, Duplikatentscheidungen und
+  Dateifreigabe mit Erfolg, Abbruch, Fehler sowie fehlender Browserunterstützung ab.
+- 40 zusätzliche Suchfälle prüfen deutsche und englische Alltagsformulierungen
+  in beiden Sprachkatalogen. Größenvergleiche unterscheiden vollständige PDFs
+  von einer Auswahl mit fehlenden oder doppelten Seiten.
+- TypeScript-Prüfung und Produktionsbuild für Selbsthosting bestanden;
+  die erzeugten englischen Informationsseiten haben keine fehlenden Übersetzungen.
+- Die DOM-Prüfungen ersetzen keine visuelle Browser- oder Geräteprüfung.
+  Eine solche Prüfung und der native Teilen-Dialog auf echten Geräten konnten
+  in dieser Arbeitsumgebung nicht ausgeführt werden.
+
 ## Automatisierte Prüfungen
 
 | Bereich | Umfang |
@@ -46,3 +62,18 @@ nicht automatisch für spätere Änderungen an `main`.
   API-Schlüssel werden nicht manuell im Browser eingetragen.
 - Ein statischer Web-Build allein stellt keinen laufenden Dokumentenserver
   bereit; `/api/documents/*` benötigt die zugehörige Serverinstallation.
+
+## Release-Prüfung 0.14.3
+
+- GitHub-Basis 0.13.26 vollständig erhalten, einschließlich Webseiten-Konverter,
+  Netzwerkisolation, vier Container-Images und zweisprachiger Repository-Dokumentation.
+- 36 Engine-/DOM-Suites, TypeScript, ESLint ohne Warnungen, Formatprüfung,
+  Release-Gates und Produktionsbuild lokal erfolgreich.
+- Dokumenteditor und Entwurfsimport verwenden HTTP-taugliche Zufallskennungen.
+  Regressionstest entfernt ausdrücklich `crypto.randomUUID`.
+- `tests/release-usability-browser.py` ergänzt die Docker-CI um lokale HTTP-Nutzung,
+  echte PDF-Downloads, Entwurfsimport und Wiederherstellung, Umbenennen, Duplikate
+  und Navigation. Dateifreigabe wird mit einer gekennzeichneten API-Testattrappe
+  geprüft; ein nativer Teilen-Dialog benötigt weiterhin ein echtes Endgerät.
+- Maßgeblich für Container und Browser sind die erfolgreichen Actions-Läufe des
+  jeweiligen Release-Commits. Lokale Vorprüfungen ersetzen diese Freigabe nicht.

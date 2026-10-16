@@ -1,11 +1,23 @@
 'use client';
 import { reportText } from '@/lib/pdf-report';
 import { ui, uiLocale } from '@/lib/ui-language';
+import { ResultActions, ResultSummary, useResultName } from '@/components/studio/result-actions';
+import { ToolBrowserMemory, useToolNavigation } from '@/components/studio/tool-browser-memory';
+import { DuplicatePrompt, type DuplicateRequest } from '@/components/studio/duplicate-prompt';
+import { duplicateSource, uploadFingerprint } from '@/lib/upload-duplicates';
+import { completePdfSelection } from '@/lib/result-details';
 
 import { useLanguage } from '@/components/studio/appearance';
 import { AppearanceProvider, AppearanceControls, useTools } from '@/components/studio/appearance';
 
 import { ProjectManager } from '@/components/studio/project-manager';
+import { createPortal } from 'react-dom';
+import { emptyWriterDocument, type WriterDocument } from '@/lib/writer-model';
+const DocumentWriter = lazy(() =>
+  import('@/components/studio/document-writer').then((module) => ({
+    default: module.DocumentWriter,
+  })),
+);
 import { retainPageEdits } from '@/lib/local-projects';
 import { captureProjectCheckpoint, type ProjectCheckpoint } from '@/lib/project-checkpoint';
 import {
@@ -214,7 +226,9 @@ export default function Home() {
   useLanguage();
   return (
     <AppearanceProvider>
-      <WorkspaceShell />
+      <ToolBrowserMemory>
+        <WorkspaceShell />
+      </ToolBrowserMemory>
     </AppearanceProvider>
   );
 }
@@ -231,6 +245,7 @@ function WorkspaceShell() {
         <div id="moinpdf-brand" className="min-w-0" />
         <div id="moinpdf-navigation" />
         <div className="harbor-header-actions">
+          <div id="moinpdf-document-bar" />
           <div id="moinpdf-project-bar" className="project-bar" />
           <AppearanceControls />
         </div>
@@ -259,6 +274,7 @@ function WorkspaceShell() {
   );
 }
 function Studio() {
+  const toolNavigation = useToolNavigation();
   const { t, language } = useLanguage();
   const { tools, groups } = useTools();
   const { setOpenMobile } = useSidebar();
@@ -267,6 +283,15 @@ function Studio() {
   });
   const [projectCheckpoint, setProjectCheckpoint] = useState<ProjectCheckpoint | null>(null);
   const [projectBusy, setProjectBusy] = useState(false);
+  const [writerOpen, setWriterOpen] = useState(false);
+  const [writerDocument, setWriterDocument] = useState<WriterDocument | null>(null);
+  const [writerSavedRevision, setWriterSavedRevision] = useState('');
+  const writerUnsaved = useRef(false);
+  writerUnsaved.current = Boolean(
+    writerDocument && `${writerDocument.id}:${writerDocument.updated}` !== writerSavedRevision,
+  );
+  const [writerHost, setWriterHost] = useState<HTMLElement | null>(null);
+  useEffect(() => setWriterHost(document.getElementById('moinpdf-document-bar')), []);
   const [dragFileCount, setDragFileCount] = useState<number | null>(null);
   const [sources, setSources] = useState<Source[]>([]),
     [pages, setPages] = useState<PageItem[]>([]),
@@ -289,6 +314,7 @@ function Studio() {
     [resultText, setResultText] = useState(''),
     [resultLoading, setResultLoading] = useState(false);
   const resultFresh = useFreshResult(result);
+  const [resultName, renameResult] = useResultName(result);
   const [range, setRange] = useState(''),
     [noteText, setNoteText] = useState('Hier steht meine Notiz.'),
     [fontSize, setFontSize] = useState(16),
@@ -309,6 +335,9 @@ function Studio() {
   const [documentSessions, setDocumentSessions] = useState<DocumentSessions>({}),
     [documentBusy, setDocumentBusy] = useState(false);
   const [passwordRequest, setPasswordRequest] = useState<PasswordRequest | null>(null);
+  const [duplicateRequest, setDuplicateRequest] = useState<DuplicateRequest | null>(null);
+  const duplicateResolver = useRef<DuplicateRequest['resolve'] | null>(null);
+  useEffect(() => () => duplicateResolver.current?.({ add: false, remember: true }), []);
   const [choosingTool, setChoosingTool] = useState(true),
     [browseEmpty, setBrowseEmpty] = useState(false);
   const [homeRequested, setHomeRequested] = useState(false);
@@ -379,7 +408,7 @@ function Studio() {
   );
   useEffect(() => {
     const before = (event: BeforeUnloadEvent) => {
-      if (refs.current.sources.length) event.preventDefault();
+      if (refs.current.sources.length || writerUnsaved.current) event.preventDefault();
     };
     window.addEventListener('beforeunload', before);
     return () => window.removeEventListener('beforeunload', before);
@@ -506,6 +535,7 @@ function Studio() {
   callbacks.current = { undo, redo };
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
+      if (writerOpen) return;
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
@@ -519,11 +549,10 @@ function Studio() {
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  }, []);
+  }, [writerOpen]);
   const addFiles = useCallback(
     async (files: File[], showToolChoice = true) => {
       if (!files.length || refs.current.busy || uploadLock.current) return;
-      setHomeRequested(false);
       const conversionFile = files.find((file) => conversionToolForFile(file.name));
       if (conversionFile) {
         if (files.length !== 1) {
@@ -539,6 +568,7 @@ function Studio() {
           return;
         }
         const nextTool = conversionToolForFile(conversionFile.name)!;
+        setHomeRequested(false);
         setConversionInput({ tool: nextTool, file: conversionFile });
         fileArrivals.mark([conversionFile]);
         setToolId(nextTool);
@@ -556,6 +586,8 @@ function Studio() {
         started = performance.now();
       setImportState({ phase: 'reading', name: files[0].name, completed: 0, total: files.length });
       const added: Source[] = [];
+      let duplicateChoice: boolean | undefined;
+      let skipped = 0;
       let size = refs.current.sources.reduce((n, s) => n + s.size, 0),
         count = refs.current.pages.length;
       try {
@@ -563,12 +595,41 @@ function Studio() {
           const file = files[i];
           setImportState({ phase: 'reading', name: file.name, completed: i, total: files.length });
           try {
+            if (file.size > MAX_BYTES)
+              throw new Error('Bitte eine Datei mit höchstens 80 MB auswählen.');
+            const fingerprint = await uploadFingerprint(file);
+            const existing = await duplicateSource(file, fingerprint, [
+              ...refs.current.sources,
+              ...added,
+            ]);
+            if (existing) {
+              let add = duplicateChoice;
+              if (add === undefined) {
+                const choice = await new Promise<{ add: boolean; remember: boolean }>((resolve) => {
+                  duplicateResolver.current = resolve;
+                  setDuplicateRequest({
+                    name: file.name,
+                    existingName: existing.name,
+                    remaining: files.length - i - 1,
+                    resolve,
+                  });
+                });
+                duplicateResolver.current = null;
+                add = choice.add;
+                if (choice.remember) duplicateChoice = add;
+              }
+              if (!add) {
+                skipped++;
+                continue;
+              }
+            }
             if (size + file.size > MAX_BYTES)
               throw new Error('Maximal 80 MB insgesamt. Entferne zuerst andere Dateien.');
             const source = await openSource(file, {
               requestPassword: (name, failed) =>
                 new Promise((resolve) => setPasswordRequest({ name, failed, resolve })),
             });
+            source.originalDigest = fingerprint;
             if (count + source.pdf.numPages > MAX_PAGES) {
               await source.pdf.loadingTask.destroy();
               throw new Error('Maximal 200 Seiten insgesamt.');
@@ -598,6 +659,7 @@ function Studio() {
           }
         }
         if (added.length) {
+          setHomeRequested(false);
           if (initial) {
             await new Promise((r) =>
               setTimeout(r, Math.max(0, 700 - (performance.now() - started))),
@@ -637,6 +699,13 @@ function Studio() {
             `${added.length} ${t(added.length === 1 ? 'Datei geöffnet' : 'Dateien geöffnet')}`,
           );
         }
+        if (skipped)
+          toast.info(
+            t(
+              `${skipped} doppelte ${skipped === 1 ? 'Datei übersprungen' : 'Dateien übersprungen'}`,
+              `${skipped} duplicate ${skipped === 1 ? 'file skipped' : 'files skipped'}`,
+            ),
+          );
       } finally {
         uploadLock.current = false;
         setLoading(false);
@@ -646,6 +715,7 @@ function Studio() {
     [t, toolId],
   );
   useEffect(() => {
+    if (writerOpen) return;
     const reset = () => {
       setDragOver(false);
       setDragFileCount(null);
@@ -683,9 +753,11 @@ function Studio() {
       window.removeEventListener('dragend', reset);
       window.removeEventListener('blur', reset);
     };
-  }, [addFiles, choosingTool]);
+  }, [addFiles, choosingTool, writerOpen]);
   function chooseTool(id: WorkspaceTool) {
     if (locked) return;
+    if (choosingTool) toolNavigation.capture(homeVisible ? 'home' : 'all', id);
+    setWriterOpen(false);
     setHomeRequested(false);
     setBrowseEmpty(true);
     setSelectedMarkId('');
@@ -1071,7 +1143,7 @@ function Studio() {
     setLoading(true);
     try {
       const next = await openSource(
-        new File([result.blob], result.filename, { type: 'application/pdf' }),
+        new File([result.blob], resultName, { type: 'application/pdf' }),
       );
       const nextPages = sourcePages(next);
       sources.forEach((s) => setTimeout(() => void s.pdf.loadingTask.destroy(), 100));
@@ -1096,7 +1168,7 @@ function Studio() {
   async function word() {
     setWordBusy(true);
     try {
-      await downloadWord(resultText, `${filenameStem(result!.filename)}.docx`);
+      await downloadWord(resultText, `${filenameStem(resultName)}.docx`);
     } catch {
       toast.error(ui('Word-Export fehlgeschlagen.'));
     } finally {
@@ -1238,25 +1310,59 @@ function Studio() {
       </Select>
     </label>
   );
-  const homeVisible = homeRequested || (!sources.length && choosingTool && !browseEmpty);
+  const homeVisible =
+    !writerOpen && (homeRequested || (!sources.length && choosingTool && !browseEmpty));
   function showTools() {
     if (locked) return;
+    setWriterOpen(false);
     setHomeRequested(false);
     setBrowseEmpty(true);
     setChoosingTool(true);
     setOpenMobile(false);
+    toolNavigation.restore('all');
     requestAnimationFrame(() => {
       document.getElementById('moinpdf-content')?.focus({ preventScroll: true });
-      window.scrollTo({ top: 0, behavior: 'instant' });
     });
+  }
+  function returnToTools() {
+    if (locked) return;
+    const surface = toolNavigation.restore();
+    setHomeRequested(surface === 'home');
+    setBrowseEmpty(true);
+    setChoosingTool(true);
+    setOpenMobile(false);
   }
   const fileInput = (
     <>
+      {writerHost &&
+        createPortal(
+          <button
+            type="button"
+            className="document-create-toggle"
+            disabled={locked}
+            aria-pressed={writerOpen}
+            title={t('Neues Dokument')}
+            onClick={() => {
+              if (!writerDocument)
+                setWriterDocument(emptyWriterDocument(t('Mein Dokument', 'My document')));
+              setWriterOpen(true);
+              setOpenMobile(false);
+              requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+            }}
+          >
+            <FilePlus2 size={19} aria-hidden="true" />
+            <span>{t('Neues Dokument')}</span>
+          </button>,
+          writerHost,
+        )}
       <HarborNavigation
         home={homeVisible}
+        creating={writerOpen}
         locked={locked}
         onHome={() => {
           if (locked) return;
+          toolNavigation.resetRestore();
+          setWriterOpen(false);
           setHomeRequested(true);
           setChoosingTool(true);
           setOpenMobile(false);
@@ -1281,6 +1387,7 @@ function Studio() {
         }}
       />
       <PasswordPrompt request={passwordRequest} onClose={() => setPasswordRequest(null)} />
+      <DuplicatePrompt request={duplicateRequest} onClose={() => setDuplicateRequest(null)} />
       <ProjectManager
         identity={projectIdentity}
         setIdentity={setProjectIdentity}
@@ -1291,6 +1398,7 @@ function Studio() {
         locked={locked}
         state={{ pages, edits, options, history, future, documentSessions, activeId, toolId }}
         onRestore={(loaded, state, identity) => {
+          setWriterOpen(false);
           const restoredState = { ...state, options: { ...defaults, ...state.options } };
           setProjectIdentity(identity);
           setProjectCheckpoint(
@@ -1317,6 +1425,29 @@ function Studio() {
       />
     </>
   );
+  if (writerOpen && writerDocument)
+    return (
+      <>
+        <Toaster position="bottom-right" richColors closeButton />
+        {fileInput}
+        <Suspense
+          fallback={
+            <div className="tool-loading" role="status">
+              <LoaderCircle className="spin" size={24} />
+              <p>{t('Editor wird geladen …', 'Loading editor …')}</p>
+            </div>
+          }
+        >
+          <DocumentWriter
+            initial={writerDocument}
+            onChange={setWriterDocument}
+            onBusy={setDocumentBusy}
+            onSaved={setWriterSavedRevision}
+            onBack={() => setWriterOpen(false)}
+          />
+        </Suspense>
+      </>
+    );
   if (homeVisible)
     return (
       <>
@@ -1347,7 +1478,7 @@ function Studio() {
           initialFile={toolId === 'pdf-repair' ? repairInput : null}
           tool={toolId}
           sources={sources}
-          onBack={() => setChoosingTool(true)}
+          onBack={returnToTools}
           onAdd={() => picker.current?.click()}
           onBusy={setDocumentBusy}
           onUse={useDocumentResult}
@@ -1369,7 +1500,7 @@ function Studio() {
           sources={sources}
           initialFile={conversionInput?.tool === toolId ? conversionInput.file : null}
           onChoose={chooseTool}
-          onBack={() => setChoosingTool(true)}
+          onBack={returnToTools}
           onAdd={() => picker.current?.click()}
           onBusy={setDocumentBusy}
           onUse={useDocumentResult}
@@ -1406,7 +1537,7 @@ function Studio() {
           loading={loading}
           dragOver={dragOver}
           dragFileCount={dragFileCount}
-          onBack={() => setChoosingTool(true)}
+          onBack={returnToTools}
           onAdd={() => picker.current?.click()}
           onDemo={demo}
           onBlank={blank}
@@ -1425,7 +1556,7 @@ function Studio() {
           sources={sources}
           sessions={documentSessions}
           onSessions={setDocumentSessions}
-          onBack={() => setChoosingTool(true)}
+          onBack={returnToTools}
           onTool={chooseTool}
           onUse={useDocumentResult}
           onBusy={setDocumentBusy}
@@ -1441,7 +1572,7 @@ function Studio() {
         <SecurityWorkbench
           tool={toolId}
           sources={sources}
-          onBack={() => setChoosingTool(true)}
+          onBack={returnToTools}
           onTool={chooseTool}
           onBusy={setDocumentBusy}
           onUse={useDocumentResult}
@@ -1460,7 +1591,7 @@ function Studio() {
         <InvoiceWorkbench
           tool={toolId}
           sources={sources}
-          onBack={() => setChoosingTool(true)}
+          onBack={returnToTools}
           onTool={chooseTool}
           onBusy={setDocumentBusy}
           onAdd={() => picker.current?.click()}
@@ -1562,14 +1693,7 @@ function Studio() {
         <header className="studio-topbar">
           <div className="workspace-brand">
             <SidebarTrigger aria-label={ui('Werkzeugleiste einblenden')} />
-            <button
-              className="back-to-tools"
-              onClick={() => {
-                setChoosingTool(true);
-                setOpenMobile(false);
-              }}
-              disabled={locked}
-            >
+            <button className="back-to-tools" onClick={returnToTools} disabled={locked}>
               {t('Werkzeug wechseln')}
             </button>
             <span className="header-slash">/</span>
@@ -2136,37 +2260,28 @@ function Studio() {
                           </div>
                           <div>
                             <h2>{t('Erledigt.')}</h2>
-                            <p>
-                              {result.pages}
-                              {t('Seiten ·')}
-                              {toolId === 'compress'
-                                ? `${formatSize(result.inputSize, uiLocale())} → ${formatSize(result.blob.size, uiLocale())}`
-                                : formatSize(result.blob.size, uiLocale())}
-                              {toolId === 'compress'
-                                ? result.blob.size < result.inputSize
-                                  ? ui(
-                                      ` · ${Math.round((1 - result.blob.size / result.inputSize) * 100)} % kleiner`,
-                                    )
-                                  : ui(' · diesmal keine Verkleinerung')
-                                : ''}
-                            </p>
+                            <ResultSummary
+                              result={result}
+                              compareSize={
+                                toolId === 'compress' && completePdfSelection(sources, selected)
+                              }
+                            />
                           </div>
-                          <Button
-                            asChild
-                            className="download-primary result-download"
-                            data-fresh={resultFresh && !!resultUrl}
-                          >
-                            <a href={resultUrl || undefined} download={result.filename}>
-                              <Download size={16} />
-                              {result.kind === 'zip'
+                          <ResultActions
+                            result={result}
+                            url={resultUrl}
+                            filename={resultName}
+                            onRename={renameResult}
+                            fresh={resultFresh}
+                            label={
+                              result.kind === 'zip'
                                 ? t('ZIP herunterladen')
                                 : result.kind === 'report'
                                   ? t('Bericht herunterladen')
-                                  : t('PDF herunterladen')}
-                            </a>
-                          </Button>
+                                  : t('PDF herunterladen')
+                            }
+                          />
                         </div>
-                        <div className="result-filename">{result.filename}</div>
                         {result.kind === 'report' && result.report ? (
                           <ReportView report={result.report} />
                         ) : result.text !== undefined ? (
@@ -2781,7 +2896,7 @@ function Studio() {
               <Button
                 variant="outline"
                 className="workspace-action-back"
-                onClick={showTools}
+                onClick={returnToTools}
                 disabled={locked}
               >
                 <ChevronLeft size={18} aria-hidden="true" />
@@ -2805,7 +2920,7 @@ function Studio() {
                   className="apply-button workspace-download result-download"
                   data-fresh={resultFresh}
                 >
-                  <a href={resultUrl} download={result.filename}>
+                  <a href={resultUrl} download={resultName}>
                     <Download size={18} aria-hidden="true" />
                     {result.kind === 'pdf'
                       ? t('PDF herunterladen', 'Download PDF')

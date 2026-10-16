@@ -1,4 +1,5 @@
 'use client';
+import { ResultActions, ResultSummary, useResultName } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
 import { ui, uiLocale } from '@/lib/ui-language';
@@ -97,6 +98,7 @@ export function DocumentWorkbench({
     [showResult, setShowResult] = useState(false),
     [outputPage, setOutputPage] = useState(0);
   const resultFresh = useFreshResult(output);
+  const [resultName, renameResult] = useResultName(output);
   const source = sources.find((s) => s.id === sourceId) || sources[0],
     session = sessions[source.id],
     draft = session?.current,
@@ -602,17 +604,15 @@ export function DocumentWorkbench({
               <>
                 <div className="workbench-result-banner">
                   <JobStatusIcon fresh={resultFresh} size={20} />
-                  <span>{output.filename}</span>
-                  <Button
-                    asChild
-                    className="result-download"
-                    data-fresh={resultFresh && !!outputUrl}
-                  >
-                    <a href={outputUrl || undefined} download={output.filename}>
-                      <Download size={16} />
-                      {t('PDF herunterladen')}
-                    </a>
-                  </Button>
+                  <ResultSummary result={output} />
+                  <ResultActions
+                    result={output}
+                    url={outputUrl}
+                    filename={resultName}
+                    onRename={renameResult}
+                    fresh={resultFresh}
+                    label={t('PDF herunterladen')}
+                  />
                 </div>
                 {outputSource ? (
                   <>
@@ -1215,7 +1215,7 @@ export function DocumentWorkbench({
                 onClick={async () => {
                   setBusy(true);
                   try {
-                    await onUse(output);
+                    await onUse({ ...output, filename: resultName });
                   } catch (e) {
                     setError((e as Error).message);
                   } finally {

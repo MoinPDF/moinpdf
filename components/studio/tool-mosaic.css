@@ -52,7 +52,7 @@
   overflow-wrap: normal;
   word-break: normal;
   hyphens: none;
-  box-shadow: inset 0 1px 0 var(--harbor-edge-highlight);
+  box-shadow: none;
 }
 .moinpdf-shell.moinpdf-shell .mosaic-category > svg {
   flex: 0 0 auto;
@@ -77,13 +77,13 @@
 .dark .moinpdf-shell .mosaic-category {
   --mosaic-selection-mix: 24%;
 }
-/* Keep the selected category distinct without changing its size or label. */
+/* Keep selection flat and distinct through color, without an inset edge. */
 .moinpdf-shell.moinpdf-shell button.mosaic-category[data-tool-tone][aria-pressed='true'] {
   --mosaic-selection-line: color-mix(in srgb, var(--tool-ink) 80%, var(--ui-line));
   color: var(--ui-heading);
   background: color-mix(in srgb, var(--tool-ink) var(--mosaic-selection-mix), var(--tool-soft));
   border-color: var(--mosaic-selection-line);
-  box-shadow: inset 0 0 0 1px var(--mosaic-selection-line);
+  box-shadow: none;
 }
 .moinpdf-shell .tool-mosaic-grid {
   display: grid;

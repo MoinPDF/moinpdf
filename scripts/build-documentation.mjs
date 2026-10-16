@@ -41,7 +41,7 @@ const html = `<!doctype html>
 <html lang="de">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Das MoinPDF-Handbuch: Einstieg, Arbeitsabläufe und ausführliche Anleitungen zu allen ${tools.length} PDF-Werkzeugen. Mit Suche, Ergebnissen und wichtigen Grenzen.">
+  <meta name="description" content="Das MoinPDF-Handbuch: Einstieg, Arbeitsabläufe und ausführliche Anleitungen zu allen PDF-Werkzeugen. Mit Suche, Ergebnissen und wichtigen Grenzen.">
   <meta name="theme-color" content="#176c64"><title>Dokumentation · MoinPDF</title>
   <link rel="icon" href="/favicon.png?v=43c33290ac2f" type="image/png" sizes="256x256">
   <link rel="shortcut icon" href="/favicon.ico?v=43c33290ac2f">
@@ -54,9 +54,9 @@ const html = `<!doctype html>
   <a class="docs-skip" href="#inhalt">Zum Inhalt</a>
   <header class="docs-header"><a class="docs-brand" href="/" aria-label="MoinPDF Startseite"><img src="/branding/moinpdf-logo.svg?v=${escape(version)}" alt="MoinPDF. Papierkram. Läuft." width="680" height="225"></a><a class="docs-back" href="/"><span aria-hidden="true">←</span> Zur App</a></header>
   <div class="docs-layout">
-    <aside class="docs-sidebar"><nav class="docs-toc" aria-label="Inhaltsverzeichnis"><p class="docs-eyebrow">Das MoinPDF-Handbuch</p>${chapters.map(([id,n,title])=>`<a href="#${id}"><span>${n}</span>${title}</a>`).join('')}<div class="docs-toc-bottom"><span>Stand: 15. Oktober 2026</span><span>MoinPDF v${escape(version)}</span><button class="docs-print docs-enhanced" type="button">Drucken / PDF</button></div></nav></aside>
+    <aside class="docs-sidebar"><nav class="docs-toc" aria-label="Inhaltsverzeichnis"><p class="docs-eyebrow">Das MoinPDF-Handbuch</p>${chapters.map(([id,n,title])=>`<a href="#${id}"><span>${n}</span>${title}</a>`).join('')}<div class="docs-toc-bottom"><span>Stand: 16. Oktober 2026</span><span>MoinPDF v${escape(version)}</span><button class="docs-print docs-enhanced" type="button">Drucken / PDF</button></div></nav></aside>
     <main id="inhalt">
-      <section class="docs-hero" aria-labelledby="docs-title"><p class="docs-eyebrow">Nachschlagen. Ausprobieren. Weiterkommen.</p><h1 id="docs-title">Dokumentation</h1><p class="docs-lead">Vom ersten Dokument bis zum fertigen Ergebnis. Hier findest du verständliche Anleitungen für MoinPDF und alle Werkzeuge mit Arbeitsschritten, Ergebnissen und den Hinweisen, die im Alltag zählen.</p><div class="docs-hero-links"><a class="docs-primary" href="#schnellstart">Mit MoinPDF starten <span aria-hidden="true">↗</span></a><a href="#werkzeuge">Ein Werkzeug nachschlagen <span aria-hidden="true">↓</span></a></div><div class="docs-hero-meta"><span>${tools.length} Werkzeuganleitungen</span><span>Schritt für Schritt</span><span>Direkt zur passenden Hilfe</span></div></section>
+      <section class="docs-hero" aria-labelledby="docs-title"><p class="docs-eyebrow">Nachschlagen. Ausprobieren. Weiterkommen.</p><h1 id="docs-title">Dokumentation</h1><p class="docs-lead">Vom ersten Dokument bis zum fertigen Ergebnis. Hier findest du verständliche Anleitungen für MoinPDF und alle Werkzeuge mit Arbeitsschritten, Ergebnissen und den Hinweisen, die im Alltag zählen.</p><div class="docs-hero-links"><a class="docs-primary" href="#schnellstart">Mit MoinPDF starten <span aria-hidden="true">↗</span></a><a href="#werkzeuge">Ein Werkzeug nachschlagen <span aria-hidden="true">↓</span></a></div><div class="docs-hero-meta"><span>Werkzeuganleitungen</span><span>Schritt für Schritt</span><span>Direkt zur passenden Hilfe</span></div></section>
       ${introduction}
       <section class="docs-section docs-catalogue" id="werkzeuge" aria-labelledby="title-werkzeuge">
         <div class="docs-section-heading"><span class="docs-section-number">03</span><div><p class="docs-eyebrow">Zum Nachschlagen</p><h2 id="title-werkzeuge">Alle Werkzeuge erklärt</h2></div></div>

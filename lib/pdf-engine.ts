@@ -15,6 +15,8 @@ export type Source = {
   kind: 'pdf' | 'image' | 'invoice';
   wasEncrypted?: boolean;
   invoiceOriginal?: { bytes: Uint8Array; name: string };
+  /** Digest of the uploaded bytes, before image conversion or PDF decryption. */
+  originalDigest?: string;
 };
 export type PageItem = {
   id: string;

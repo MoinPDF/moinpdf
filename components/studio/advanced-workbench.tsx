@@ -1,7 +1,8 @@
 'use client';
+import { ResultActions, ResultSummary, useResultName } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
-import { ui, uiLocale } from '@/lib/ui-language';
+import { ui } from '@/lib/ui-language';
 
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
@@ -16,9 +17,9 @@ import {
   LayersPanel,
   MeasurePanel,
 } from './century-panels';
-import { ChevronLeft, Plus, ShieldCheck, Download } from 'lucide-react';
+import { ChevronLeft, Plus, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { openSource, formatSize, type Source, type JobResult } from '@/lib/pdf-engine';
+import { openSource, type Source, type JobResult } from '@/lib/pdf-engine';
 import type { AdvancedTool, ExportFile, RunContext } from '@/lib/advanced-types';
 import { Choice, PageStage, PageSelect } from './advanced-shared';
 import { SplitSizePanel } from './expansion-panels';
@@ -79,6 +80,7 @@ export function AdvancedWorkbench({
     [preview, setPreview] = useState<Source | null>(null),
     [page, setPage] = useState(0);
   const resultFresh = useFreshResult(result);
+  const [resultName, renameResult] = useResultName(result);
   const resultRef = useRef<HTMLElement>(null);
   const controller = useRef<AbortController | null>(null),
     info = tools.find((t) => t.id === tool)!,
@@ -296,17 +298,17 @@ export function AdvancedWorkbench({
               <JobStatusIcon fresh={resultFresh} />
               {t('Dein Ergebnis ist bereit.')}
             </h2>
-            <p>
-              {result.filename} · {formatSize(result.blob.size, uiLocale())}
-            </p>
+            <ResultSummary result={result} />
             {result.note && <p>{ui(result.note)}</p>}
             <div className="advanced-actions">
-              <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
-                <a href={url} download={result.filename}>
-                  <Download size={17} />
-                  {t('Herunterladen')}
-                </a>
-              </Button>
+              <ResultActions
+                result={result}
+                url={url}
+                filename={resultName}
+                onRename={renameResult}
+                fresh={resultFresh}
+                label={t('Herunterladen')}
+              />
               {result.kind === 'pdf' && (
                 <Button
                   variant="outline"
@@ -315,6 +317,7 @@ export function AdvancedWorkbench({
                     run(async () => {
                       await onUse({
                         ...result,
+                        filename: resultName,
                         kind: 'pdf',
                         inputSize: sources.reduce((n, s) => n + s.size, 0),
                       });

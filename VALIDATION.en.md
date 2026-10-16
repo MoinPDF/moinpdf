@@ -9,7 +9,7 @@ The version number is in [package.json](package.json). A successful run provides
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| Browser engines | 33 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| Browser engines | 36 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
 | Document server | 60 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and mobile, PDF/EPUB/audio downloads |
@@ -31,3 +31,17 @@ Version **0.9.1**, commit `b488a9ce0358ce54fb3030e1b66bc8d20b3b04e4`, passed the
 - Large or unusual documents may reach converter limits. Check results against the original.
 - The complete Docker installation includes the document server. Server addresses and API keys are not entered manually in the browser.
 - A static web build alone does not provide a running document server; `/api/documents/*` requires the corresponding server installation.
+
+## Release verification 0.14.3
+
+- Preserves the complete 0.13.26 GitHub baseline, including the website converter,
+  network isolation, all four images and bilingual repository documentation.
+- Local preflight passes 36 engine/DOM suites, TypeScript, warning-free ESLint,
+  formatting, release gates and the production build.
+- Creation and draft import use random identifiers available on HTTP origins;
+  the regression test explicitly removes `crypto.randomUUID`.
+- `tests/release-usability-browser.py` adds actual HTTP/browser downloads, draft
+  persistence/import, filename editing, duplicates and navigation to Docker CI.
+  File sharing uses an explicit API test double; native share sheets require devices.
+- Successful Actions runs for the exact release commit remain the authoritative
+  container/browser verification. Local preflight does not replace that gate.

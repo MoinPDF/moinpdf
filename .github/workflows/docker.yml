@@ -142,6 +142,7 @@ jobs:
         run: |
           python tests/xfa-browser.py
           python tests/published-web-smoke.py
+          python tests/release-usability-browser.py
           python tests/hafenlicht-browser.py
           python tests/harbor-layout-browser.py
           python tests/website-browser.py

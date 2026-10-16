@@ -10,6 +10,8 @@
 @import '../components/studio/tool-mosaic.css';
 @import '../components/studio/ui-feedback.css';
 @import '../components/studio/interaction-refinements.css';
+@import '../components/studio/document-writer.css';
+@import '../components/studio/result-actions.css';
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

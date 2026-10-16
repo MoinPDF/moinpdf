@@ -9,6 +9,13 @@ on:
       - 'pnpm-lock.yaml'
       - '.github/workflows/browser-text.yml'
   workflow_dispatch:
+  pull_request:
+    paths:
+      - 'lib/**'
+      - 'tests/*text*'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/browser-text.yml'
 permissions:
   contents: read
 concurrency:

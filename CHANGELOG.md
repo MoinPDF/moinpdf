@@ -17,6 +17,57 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.14.3 – 16. Oktober 2026
+
+- Dokumenteditor und Entwurfsimport funktionieren auch über lokale HTTP-Adressen,
+  wie sie bei Umbrel verwendet werden. Zufällige Kennungen benötigen kein HTTPS.
+- Entwurfsspeicherung und Ergebnisfreigabe mit vollständigen React-Abhängigkeiten.
+- Docker-Release mit allen vier bestehenden Diensten und neuen Produktionstests
+  für Dokumenteditor, Entwürfe, Dateinamen, Duplikate und Werkzeugnavigation.
+
+## 0.14.2 – 16. Oktober 2026
+
+- Zurück zum Schnellzugriff oder zur Werkzeugübersicht behält Kategorie, Suche,
+  Scrollposition und Tastaturfokus innerhalb der Sitzung bei.
+- Dateinamen lassen sich direkt am Ergebnis bearbeiten; die echte Dateiendung bleibt
+  erhalten. Vorschau und Seitenposition werden beim Umbenennen nicht neu geladen.
+- Einheitliche Ergebnisangaben zu Format, Seitenzahl und Größe sowie Größenvergleich
+  bei Komprimierung und Optimierung.
+- Identische Uploads werden anhand ihres Inhalts erkannt, auch innerhalb einer
+  Dateiauswahl. Überspringen oder trotzdem hinzufügen, optional für den restlichen Upload.
+- Alltagssuche in Deutsch und Englisch um weitere Formulierungen ergänzt.
+- Fertige Ergebnisse können auf unterstützten Geräten über den nativen Teilen-Dialog
+  weitergegeben werden. Die Datei trägt dabei den bearbeiteten Namen.
+- Neue DOM- und Funktionstests für Bedienung, Abbruchfälle und Projektübertragung.
+
+## 0.14.1 – 16. Oktober 2026
+
+- Mobil bleiben „Neues Dokument“ und „Projekte“ als kleine, runde Symbolbuttons
+  nebeneinander in der vorhandenen Kopfzeile. Die zusätzliche zweite Zeile entfällt.
+- Die Reihenfolge bleibt „Neues Dokument“ links von „Projekte“; beide Buttons
+  behalten ihre zugänglichen Beschriftungen in Deutsch und Englisch.
+
+## 0.14.0 – 16. Oktober 2026
+
+- „Neues Dokument“ links neben „Projekte“ öffnet einen eigenen Dokumenteditor,
+  ohne Eintrag in der Werkzeugauswahl und ohne vorherigen Upload.
+- Textformatierung, drei Schriftfamilien, Überschriften, Listen, Bilder, Tabellen,
+  Seitenumbrüche, Papierformate, Seitenränder sowie Kopf-/Fußzeilen und Seitenzahlen.
+- Lokale automatische Entwurfsspeicherung, Entwurfsverwaltung und bearbeitbare
+  .moindoc-Dateien zum Sichern, Öffnen und Übertragen auf andere Geräte.
+- Lokaler PDF-Download mit auswählbarem Text und eigener Seitenvorschau für
+  automatische Umbrüche. Mobile Schreibansicht, Hell-/Dunkelmodus und Deutsch/Englisch.
+- Regressionstests prüfen Editorbefehle, sichere Zwischenablage, Entwürfe und
+  tatsächliche PDF-Ausgaben einschließlich mehrseitiger Inhalte.
+
+## 0.13.27 – 16. Oktober 2026
+
+- Der zusätzliche Seemann-Bildbanner entfällt nach dem Öffnen von Dokumenten.
+  Der Bereitschaftshinweis steht mit einem dezenten grünen Häkchen direkt in
+  der Dateiübersicht: am Desktop neben den Dateiinformationen, mobil darunter.
+- Einzahl, Mehrzahl und englische Übersetzung bleiben erhalten. Das Headerbild
+  auf der Startseite bleibt unverändert.
+
 ## 0.13.26 – 16. Oktober 2026
 
 - Safari-Kompatibilität der PDF-Textextraktion korrigiert. OCR, Textbearbeitung,

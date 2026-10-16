@@ -127,6 +127,7 @@ export function ProjectManager({
           size: s.size,
           wasEncrypted: s.wasEncrypted,
           invoiceOriginal: s.invoiceOriginal,
+          originalDigest: s.originalDigest,
         });
       }
       validateOpenedProject(snapshot, opened);
