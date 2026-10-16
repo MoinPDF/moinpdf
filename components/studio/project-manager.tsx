@@ -230,7 +230,7 @@ export function ProjectManager({
         }}
       >
         <DialogContent
-          className="project-dialog"
+          className="project-dialog z-[51]"
           onPointerDownOutside={(event) => {
             // The exit animation can outlive the overlay. Radix defers outside
             // dismissal until click, after an external trigger has reopened us.
