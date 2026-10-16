@@ -5,6 +5,7 @@ import { contentUnderNavigation } from '@/lib/ui-feedback';
 import { createPortal } from 'react-dom';
 import {
   BookOpen,
+  FolderOpen,
   House,
   Images,
   Info,
@@ -14,6 +15,8 @@ import {
 } from 'lucide-react';
 import { useLanguage } from './appearance';
 import { APP_VERSION } from '@/lib/version';
+import type { WorkspaceTool } from '@/lib/tool-catalog';
+import { MobileToolSearch } from './mobile-tool-search';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,12 +103,18 @@ export function HarborNavigation({
   locked,
   onHome,
   onTools,
+  onChoose,
+  onProjects,
+  projectsOpen,
 }: {
   home: boolean;
   creating?: boolean;
   locked: boolean;
   onHome: () => void;
   onTools: () => void;
+  onChoose: (id: WorkspaceTool) => void;
+  onProjects: () => void;
+  projectsOpen: boolean;
 }) {
   const { t } = useLanguage();
   const [host, setHost] = useState<HTMLElement | null>(null);
@@ -173,7 +182,6 @@ export function HarborNavigation({
         <LayoutGrid size={20} aria-hidden="true" />
         <span>{t('Werkzeuge')}</span>
       </button>
-      <MoreMenu />
     </>
   );
   return (
@@ -183,6 +191,7 @@ export function HarborNavigation({
         createPortal(
           <nav className="harbor-desktop-nav" aria-label={t('Hauptnavigation', 'Main navigation')}>
             {items}
+            <MoreMenu />
           </nav>,
           host,
         )}
@@ -195,6 +204,19 @@ export function HarborNavigation({
             aria-label={t('Hauptnavigation', 'Main navigation')}
           >
             {items}
+            <MobileToolSearch locked={locked} onChoose={onChoose} onTools={onTools} />
+            <button
+              type="button"
+              className="harbor-nav-item harbor-project-toggle"
+              aria-haspopup="dialog"
+              aria-expanded={projectsOpen}
+              disabled={locked}
+              onClick={onProjects}
+            >
+              <FolderOpen size={21} aria-hidden="true" />
+              <span>{t('Projekte', 'Projects')}</span>
+            </button>
+            <MoreMenu />
           </nav>,
           mobileHost,
         )}

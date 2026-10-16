@@ -17,6 +17,23 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.14.4 – 16. Oktober 2026
+
+- Mobile Glasleiste mit Start, Werkzeugen, Suche, Projekten und Mehr. Die Lupe
+  öffnet die lokale Werkzeugsuche mit direkten Treffern, Tastaturbedienung und
+  einer an den sichtbaren Bildschirm angepassten Höhe.
+- Suchdialog bleibt vollständig im Bildschirm: eigene Positionierung am unteren
+  Rand ohne die Verschiebung eines zentrierten Dialogs. Projekte sind mobil unten,
+  am Desktop weiterhin oben; „Alle Werkzeuge“ steht dort auch neben der Suche.
+- Browser- und Server-Typprüfung getrennt; Lizenz-Quellkopien und Build-Ausgaben
+  werden nicht als Anwendungscode geprüft. Der Web-Build prüft beide Laufzeiten,
+  der Docker-Build zusätzlich die vollständige Anwendung und Build-Konfiguration.
+- Ein schneller erneuter Klick auf „Projekte“ während der Schließanimation
+  lässt die Projektliste geöffnet; automatische Sicherungen und Wiederherstellung
+  bleiben erreichbar, auch nach dem Entfernen der letzten Seite.
+- Produktionstests prüfen mobile Suchfeldposition, Touch-Ziele, Treffer, Leeren,
+  Tastaturfokus, Projektzugriff und Dokumenterhalt sowie den Desktop-Wechsel.
+
 ## 0.14.3 – 16. Oktober 2026
 
 - Docker-Update von 0.13.26 mit lokalem Dokumenteditor: formatierter Text, Bilder,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useToolBrowserState } from './tool-browser-memory';
-import { ArrowRight, ChevronRight, Files, X } from 'lucide-react';
+import { ArrowRight, ChevronRight, Files, LayoutGrid, X } from 'lucide-react';
 import { useLanguage, useTools } from './appearance';
 import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { searchTools } from '@/lib/localized-search';
@@ -47,68 +47,82 @@ export function HomeTools({
       className="harbor-discovery mosaic-discovery"
       aria-label={t('Werkzeuge entdecken', 'Discover tools')}
     >
-      <Command shouldFilter={false} loop className="harbor-command" label={t('Werkzeugvorschläge')}>
-        <div className="harbor-search">
-          <CommandInput
-            value={query}
-            onValueChange={setQuery}
-            placeholder={t('Werkzeug suchen', 'Search tools')}
-            aria-label={t('Werkzeug suchen', 'Search tools')}
-            disabled={locked}
-          />
-          {query && (
-            <button
-              className="harbor-search-clear"
-              type="button"
-              onClick={() => setQuery('')}
-              aria-label={t('Suche leeren')}
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
-        {query.trim() && (
-          <CommandList className="harbor-search-results">
-            <p role="status">
-              {suggestions.length ? t('Passende Werkzeuge') : t('Kein passender Vorschlag')}
-            </p>
-            {suggestions.map((tool) => (
-              <CommandItem
-                data-tool-id={tool.id}
-                key={tool.id}
-                value={tool.id}
-                onSelect={() => onChoose(tool.id)}
-                disabled={locked}
-                className="harbor-search-result"
-              >
-                <span className={`harbor-tool-icon tone-${tool.group}`} data-tool-tone={tool.group}>
-                  <tool.icon size={22} aria-hidden="true" />
-                </span>
-                <span>
-                  <strong>
-                    <SearchHighlight text={tool.title} query={query} />
-                  </strong>
-                  <small>
-                    <SearchHighlight text={tool.description} query={query} />
-                  </small>
-                </span>
-                <ChevronRight size={17} aria-hidden="true" />
-              </CommandItem>
-            ))}
-            {!suggestions.length && (
+      <div className="home-tool-search-row">
+        <Command
+          shouldFilter={false}
+          loop
+          className="harbor-command"
+          label={t('Werkzeugvorschläge')}
+        >
+          <div className="harbor-search">
+            <CommandInput
+              value={query}
+              onValueChange={setQuery}
+              placeholder={t('Werkzeug suchen', 'Search tools')}
+              aria-label={t('Werkzeug suchen', 'Search tools')}
+              disabled={locked}
+            />
+            {query && (
               <button
-                className="harbor-text-button"
+                className="harbor-search-clear"
                 type="button"
-                disabled={locked}
-                onClick={onTools}
+                onClick={() => setQuery('')}
+                aria-label={t('Suche leeren')}
               >
-                {t('Alle Werkzeuge anzeigen', 'View all tools')}
-                <ChevronRight size={16} />
+                <X size={18} />
               </button>
             )}
-          </CommandList>
-        )}
-      </Command>
+          </div>
+          {query.trim() && (
+            <CommandList className="harbor-search-results">
+              <p role="status">
+                {suggestions.length ? t('Passende Werkzeuge') : t('Kein passender Vorschlag')}
+              </p>
+              {suggestions.map((tool) => (
+                <CommandItem
+                  data-tool-id={tool.id}
+                  key={tool.id}
+                  value={tool.id}
+                  onSelect={() => onChoose(tool.id)}
+                  disabled={locked}
+                  className="harbor-search-result"
+                >
+                  <span
+                    className={`harbor-tool-icon tone-${tool.group}`}
+                    data-tool-tone={tool.group}
+                  >
+                    <tool.icon size={22} aria-hidden="true" />
+                  </span>
+                  <span>
+                    <strong>
+                      <SearchHighlight text={tool.title} query={query} />
+                    </strong>
+                    <small>
+                      <SearchHighlight text={tool.description} query={query} />
+                    </small>
+                  </span>
+                  <ChevronRight size={17} aria-hidden="true" />
+                </CommandItem>
+              ))}
+              {!suggestions.length && (
+                <button
+                  className="harbor-text-button"
+                  type="button"
+                  disabled={locked}
+                  onClick={onTools}
+                >
+                  {t('Alle Werkzeuge anzeigen', 'View all tools')}
+                  <ChevronRight size={16} />
+                </button>
+              )}
+            </CommandList>
+          )}
+        </Command>
+        <button type="button" className="home-all-tools" disabled={locked} onClick={onTools}>
+          <LayoutGrid size={20} aria-hidden="true" />
+          <span>{t('Alle Werkzeuge', 'All tools')}</span>
+        </button>
+      </div>
       <div className="harbor-discovery-toolbar">
         <div
           data-browser-categories

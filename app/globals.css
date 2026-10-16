@@ -12,6 +12,7 @@
 @import '../components/studio/interaction-refinements.css';
 @import '../components/studio/document-writer.css';
 @import '../components/studio/result-actions.css';
+@import '../components/studio/mobile-navigation.css';
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
