@@ -32,7 +32,7 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und Mobilgerät, PDF-/EPUB-/Audio-Downloads |
 | Dokumentation und Medien | Suche, Kategorien, Druck, Downloads, Video, keine horizontalen Überläufe und erhaltene Arbeitsdateien |
-| Rechtsseiten | 1440, 390 und 320 Pixel, grüne Schrift, Kontaktlinks und Abstand zwischen Anschrift und E-Mail |
+| Rechtsseiten | 1440, 390 und 320 Pixel, gemeinsame Farbpalette, Kontaktlinks und Abstand zwischen Anschrift und E-Mail |
 | Container | Plattform-Indizes für amd64 und arm64 sowie feste Digests |
 
 [Aktuelle Prüfläufe](https://github.com/MoinPDF/moinpdf/actions) und ihre
@@ -52,8 +52,9 @@ nicht automatisch für spätere Änderungen an `main`.
 
 - ARM-Images werden gebaut und ihre Plattform-Indizes geprüft. Ein nativer
   ARM-Lauf ist damit nicht nachgewiesen.
-- Browserprüfungen laufen unter Chromium. Andere Browser und konkrete
-  Smartphones können abweichendes Verhalten zeigen.
+- Die vollständigen Oberflächenprüfungen laufen unter Chromium. Ergänzende
+  PDF-Text- und OCR-Prüfungen laufen unter Firefox und nativem Safari.
+  Konkrete Smartphones und native Teilen-Dialoge benötigen eigene Gerätetests.
 - Die eigene Serverinstallation und ihre öffentliche Domain müssen
   separat mit künstlichen Testdokumenten geprüft werden.
 - Große oder ungewöhnliche Dokumente können Konvertergrenzen erreichen.
@@ -71,6 +72,8 @@ nicht automatisch für spätere Änderungen an `main`.
   Release-Gates und Produktionsbuild lokal erfolgreich.
 - Dokumenteditor und Entwurfsimport verwenden HTTP-taugliche Zufallskennungen.
   Regressionstest entfernt ausdrücklich `crypto.randomUUID`.
+- Export und Vorschau sperren den Editor ohne eine künstliche Inhaltsänderung;
+  erzeugte PDFs und ihre Dateinamen bleiben bis zur nächsten echten Änderung erhalten.
 - `tests/release-usability-browser.py` ergänzt die Docker-CI um lokale HTTP-Nutzung,
   echte PDF-Downloads, Entwurfsimport und Wiederherstellung, Umbenennen, Duplikate
   und Navigation. Dateifreigabe wird mit einer gekennzeichneten API-Testattrappe

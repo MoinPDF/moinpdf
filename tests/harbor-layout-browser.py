@@ -229,6 +229,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.locator('.language-trigger').click()
         page.get_by_role('menuitemradio', name='English', exact=True).click()
         expect(page.get_by_text('Paperwork. Sorted.', exact=True)).to_be_visible()
+        # Home now preserves the category selected by the earlier tool checks.
+        page.locator('.harbor-categories').get_by_role('button', name='Quick access', exact=True).click()
         expect(page.get_by_role('heading', name='Quick access', exact=True)).to_be_visible()
         page.locator('.harbor-search input').fill('merge')
         expect(page.locator('.harbor-search-result').first).to_contain_text('Merge')

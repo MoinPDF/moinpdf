@@ -73,6 +73,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             result = page.locator('.writer-export')
             expect(result).to_be_visible()
             link = result.locator('a[download]')
+            expect(link).to_have_attribute('href', re.compile(r'^blob:'))
             before = link.get_attribute('href')
             result.locator('.export-name-button').click()
             filename = result.get_by_role('textbox')
@@ -83,7 +84,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             filename.fill('Umbrel:Prüfung')
             filename.press('Enter')
             expect(link).to_have_attribute('download', 'Umbrel-Prüfung.pdf')
-            assert link.get_attribute('href') == before, 'Rename replaced the generated PDF'
+            expect(link).to_have_attribute('href', before)
             if en:
                 page.set_viewport_size({'width': 320, 'height': 950})
                 no_overflow(page)
@@ -118,10 +119,14 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             with pymupdf.open(target) as pdf:
                 assert 'Updated output after an edit.' in pdf[0].get_text()
                 assert 'created over local HTTP' not in pdf[0].get_text()
+            expect(link).to_have_attribute('href', re.compile(r'^blob:'))
+            previous_url = link.get_attribute('href')
             page.get_by_role('button', name='Page preview' if en else 'Seitenvorschau', exact=True).click()
             expect(page.locator('.writer-pdf-page')).to_be_visible()
             expect(page.locator('.writer-workspace')).to_have_attribute('aria-busy', 'false')
             expect(result).to_be_visible()
+            expect(link).not_to_have_attribute('href', previous_url)
+            expect(link).to_have_attribute('href', re.compile(r'^blob:'))
             preview_url = link.get_attribute('href')
             page.get_by_role('button', name='Edit' if en else 'Bearbeiten', exact=True).click()
             expect(editor).to_be_visible()
