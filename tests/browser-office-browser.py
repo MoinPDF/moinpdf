@@ -1,4 +1,5 @@
 """Production Chromium acceptance: actual LibreOffice/WASM and independently read PDFs."""
+import asyncio
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,11 @@ root = Path(__file__).resolve().parents[1]
 origin = os.environ['MOINPDF_TEST_URL']
 evidence = root / 'web-evidence'
 evidence.mkdir(exist_ok=True)
+def bounded_cdp(session, method, params=None):
+    # The public synchronous CDP wrapper has no per-command timeout. A dead
+    # target can leave attachToTarget pending indefinitely; bound its async call.
+    return session._sync(asyncio.wait_for(session._impl_obj.send(method, params), timeout=2))
+
 with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     folder = Path(temp)
     subprocess.run([sys.executable, str(root/'tests/research/docx-fixture.py'), str(folder/'fixtures')], check=True)
@@ -129,7 +135,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                    'playwrightLifecycle': lifecycle, 'targetEvents': list(target_events),
                    'browserVersion': browser.version, 'channel': launch_options}
         try:
-            details['processesBefore'] = browser_session.send('SystemInfo.getProcessInfo')
+            details['processesBefore'] = bounded_cdp(browser_session, 'SystemInfo.getProcessInfo')
             details['nativeThreads'] = []
             for process in details['processesBefore']['processInfo']:
                 pid = int(process['id'])
@@ -138,25 +144,27 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                         details['nativeThreads'].append({'pid': pid, 'type': process['type'], 'tid': int(name.parent.name), 'name': name.read_text().strip()})
                     except (OSError, ValueError):
                         pass
+            (evidence / 'office-worker-before-probe.json').write_text(json.dumps(details, indent=2))
+            print('Native worker threads at failure: ' + json.dumps([t for t in details['nativeThreads'] if 'worker' in t['name'].lower()]), flush=True)
             for target in targets:
                 try:
-                    session = browser_session.send('Target.attachToTarget', {'targetId': target['targetId'], 'flatten': False})['sessionId']
+                    session = bounded_cdp(browser_session, 'Target.attachToTarget', {'targetId': target['targetId'], 'flatten': False})['sessionId']
                     sessions.append(session)
                     for ident, method, params in (
                         (901, 'Runtime.getHeapUsage', {}),
                         (902, 'Runtime.evaluate', {'expression': "JSON.stringify({url:location.href, pool:typeof PThread==='undefined'?null:{running:PThread.runningWorkers.length,unused:PThread.unusedWorkers.length}, now:performance.now()})", 'returnByValue': True, 'timeout': 1000}),
                     ):
-                        browser_session.send('Target.sendMessageToTarget', {'sessionId': session, 'message': json.dumps({'id': ident, 'method': method, 'params': params})})
+                        bounded_cdp(browser_session, 'Target.sendMessageToTarget', {'sessionId': session, 'message': json.dumps({'id': ident, 'method': method, 'params': params})})
                 except Exception as error:
                     responses.append({'target': target['targetId'], 'error': str(error)})
             page.wait_for_timeout(2000)
             details['responses'] = responses
-            details['processesAfter'] = browser_session.send('SystemInfo.getProcessInfo')
+            details['processesAfter'] = bounded_cdp(browser_session, 'SystemInfo.getProcessInfo')
             details['afterProbe'] = office_targets()
         finally:
             for session in sessions:
                 try:
-                    browser_session.send('Target.detachFromTarget', {'sessionId': session})
+                    bounded_cdp(browser_session, 'Target.detachFromTarget', {'sessionId': session})
                 except Exception:
                     pass
             browser_session.remove_listener('Target.receivedMessageFromTarget', received)

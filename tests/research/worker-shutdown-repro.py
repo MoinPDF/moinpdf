@@ -3,6 +3,7 @@
 No MoinPDF code or LibreOffice runtime is used. A failure here establishes a
 browser/test-infrastructure problem independently of document conversion.
 """
+import asyncio
 import json
 import os
 import threading
@@ -59,6 +60,11 @@ window.runCycle = mode => new Promise((resolve, reject) => {
   worker.postMessage({type: 'init', mode});
 });
 </script>"""
+def bounded_cdp(session, method, params=None):
+    # The public synchronous CDP wrapper has no per-command timeout. A dead
+    # target can leave attachToTarget pending indefinitely; bound its async call.
+    return session._sync(asyncio.wait_for(session._impl_obj.send(method, params), timeout=2))
+
 def native_threads(session):
     threads = []
     for process in session.send('SystemInfo.getProcessInfo')['processInfo']:
@@ -79,20 +85,21 @@ def probe(session, page, targets):
             responses.append({'session': event['sessionId'], 'message': message})
     session.on('Target.receivedMessageFromTarget', received)
     before = native_threads(session)
+    print('Native worker threads at failure: ' + json.dumps([t for t in before if 'worker' in t['name'].lower()]), flush=True)
     try:
         for target in targets:
             try:
-                sid = session.send('Target.attachToTarget', {'targetId': target['targetId'], 'flatten': False})['sessionId']
+                sid = bounded_cdp(session, 'Target.attachToTarget', {'targetId': target['targetId'], 'flatten': False})['sessionId']
                 sessions.append(sid)
                 for ident, method, params in ((901, 'Runtime.getHeapUsage', {}), (902, 'Runtime.evaluate', {'expression': '1+1', 'returnByValue': True, 'timeout': 1000})):
-                    session.send('Target.sendMessageToTarget', {'sessionId': sid, 'message': json.dumps({'id': ident, 'method': method, 'params': params})})
+                    bounded_cdp(session, 'Target.sendMessageToTarget', {'sessionId': sid, 'message': json.dumps({'id': ident, 'method': method, 'params': params})})
             except Exception as error:
                 responses.append({'target': target['targetId'], 'error': str(error)})
         page.wait_for_timeout(2000)
     finally:
         for sid in sessions:
             try:
-                session.send('Target.detachFromTarget', {'sessionId': sid})
+                bounded_cdp(session, 'Target.detachFromTarget', {'sessionId': sid})
             except Exception:
                 pass
         session.remove_listener('Target.receivedMessageFromTarget', received)
