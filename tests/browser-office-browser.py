@@ -30,7 +30,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     lifecycle, target_events = [], []
     page.on('worker', lambda worker: (
         lifecycle.append({'event': 'created', 'time': time.monotonic(), 'url': worker.url}),
-        worker.on('close', lambda url=worker.url: lifecycle.append({'event': 'closed', 'time': time.monotonic(), 'url': url}))
+        worker.on('close', lambda *_args, url=worker.url: lifecycle.append({'event': 'closed', 'time': time.monotonic(), 'url': url}))
     ))
     browser_session.on('Target.targetCreated', lambda event: target_events.append({'event': 'created', 'time': time.monotonic(), **event}))
     browser_session.on('Target.targetDestroyed', lambda event: target_events.append({'event': 'destroyed', 'time': time.monotonic(), **event}))
