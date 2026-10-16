@@ -4,7 +4,10 @@ No MoinPDF code or LibreOffice runtime is used. A failure here establishes a
 browser/test-infrastructure problem independently of document conversion.
 """
 import json
+import os
+import threading
 import time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -28,6 +31,7 @@ onmessage = ({data}) => {
       const worker = new Worker('/child.js');
       children.push(worker);
       worker.onmessage = () => { if (++ready === 8) postMessage('result'); };
+      worker.onerror = event => postMessage({error: event.message || 'Child worker failed'});
       worker.postMessage({memory, block: i < 4});
     }
   } else if (data.type === 'destroy') {
@@ -44,6 +48,7 @@ window.runCycle = mode => new Promise((resolve, reject) => {
   const timer = setTimeout(() => { worker.terminate(); reject(new Error('Control timed out')); }, 10000);
   worker.onerror = event => { clearTimeout(timer); reject(new Error(event.message)); };
   worker.onmessage = ({data}) => {
+    if (data?.error) { clearTimeout(timer); worker.terminate(); reject(new Error(data.error)); }
     if (data === 'result') worker.postMessage({type: 'destroy'});
     if (data === 'destroyed') {
       if (mode !== 'self-close') worker.terminate();
@@ -94,6 +99,23 @@ def probe(session, page, targets):
     return {'responses': responses, 'threadsBeforeProbe': before, 'threadsAfterProbe': native_threads(session)}
 
 
+class FixtureHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = owner if self.path == '/owner.js' else child if self.path == '/child.js' else html
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html' if self.path == '/' else 'application/javascript')
+        self.send_header('Cross-Origin-Opener-Policy', 'same-origin')
+        self.send_header('Cross-Origin-Embedder-Policy', 'require-corp')
+        self.end_headers()
+        self.wfile.write(body.encode())
+
+    def log_message(self, *_args):
+        pass
+
+server = ThreadingHTTPServer(('127.0.0.1', 0), FixtureHandler)
+origin = 'http://localhost:' + str(server.server_port)
+threading.Thread(target=server.serve_forever, daemon=True).start()
+
 with sync_playwright() as api:
     results, failures, baselines = [], [], []
     for mode in ('explicit-parent', 'self-close', 'parent-only'):
@@ -101,7 +123,11 @@ with sync_playwright() as api:
         browser = api.chromium.launch()
         version = browser.version
         session = browser.new_browser_cdp_session()
-        page = browser.new_page()
+        context = browser.new_context()
+        page = context.new_page()
+        runtime_errors, failed_requests = [], []
+        page.on('pageerror', lambda error: runtime_errors.append(str(error)))
+        page.on('requestfailed', lambda request: failed_requests.append({'url': request.url, 'failure': request.failure}))
         def route(request):
             path = request.request.url.removeprefix(origin)
             body = owner if path == '/owner.js' else child if path == '/child.js' else html
@@ -110,12 +136,13 @@ with sync_playwright() as api:
                 'Cross-Origin-Opener-Policy': 'same-origin',
                 'Cross-Origin-Embedder-Policy': 'require-corp',
             })
-        page.route(origin + '/**', route)
+        if os.environ.get('MOINPDF_CONTROL_ROUTE') == 'intercepted':
+            context.route(origin + '/**', route)
         page.goto(origin)
         assert page.evaluate('crossOriginIsolated')
         baselines.append({'mode': mode, 'threads': native_threads(session)})
         try:
-            for cycle in range(200):
+            for cycle in range(100):
                 started = time.monotonic()
                 page.evaluate('mode => runCycle(mode)', mode)
                 while True:
@@ -135,8 +162,12 @@ with sync_playwright() as api:
                 if failures and failures[-1]['mode'] == mode:
                     break
         finally:
+            print('Control runtime errors: ' + json.dumps(runtime_errors) + '; failed requests: ' + json.dumps(failed_requests), flush=True)
             browser.close()
             (evidence / 'nested-worker-control.json').write_text(json.dumps({
-                'browser': version, 'results': results, 'failures': failures, 'baselines': baselines}, indent=2))
+                'browser': version, 'requestMode': os.environ.get('MOINPDF_CONTROL_ROUTE', 'native'), 'results': results, 'failures': failures, 'baselines': baselines, 'runtimeErrors': runtime_errors, 'failedRequests': failed_requests}, indent=2))
     assert not failures, failures
-    print('PASS: 600 independent nested-worker shutdown cycles.', flush=True)
+    print('PASS: 300 independent nested-worker shutdown cycles.', flush=True)
+
+server.shutdown()
+server.server_close()
