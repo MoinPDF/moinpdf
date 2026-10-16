@@ -29,7 +29,7 @@ def no_overflow(page):
 
 
 def back(page):
-    page.get_by_role('button', name=re.compile(r'^(Alle Werkzeuge|Werkzeug wechseln)$')).click()
+    page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
 
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:

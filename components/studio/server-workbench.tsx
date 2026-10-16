@@ -487,7 +487,7 @@ function StandardServerWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" disabled={busy} onClick={onBack}>
           <ChevronLeft size={17} />
-          {t('Alle Werkzeuge')}
+          {t('Zurück zur Auswahl')}
         </Button>
       </header>
       <div className="workbench-title">

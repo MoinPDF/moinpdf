@@ -170,7 +170,7 @@ export function AudioWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
-          {ui('Alle Werkzeuge')}
+          {ui('Zurück zur Auswahl')}
         </Button>
         <Button variant="outline" onClick={onAdd} disabled={busy}>
           <Plus size={16} />

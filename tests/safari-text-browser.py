@@ -144,7 +144,7 @@ def chooser():
 
 def back():
     click(WebDriverWait(driver, 40).until(EC.element_to_be_clickable((By.XPATH,
-        '//button[normalize-space(.)="Alle Werkzeuge" or normalize-space(.)="Werkzeug wechseln" or normalize-space(.)="All tools" or normalize-space(.)="Change tool"]'))))
+        '//button[normalize-space(.)="Zurück zur Auswahl" or normalize-space(.)="Werkzeug wechseln" or normalize-space(.)="Back to selection" or normalize-space(.)="Change tool"]'))))
     chooser()
 
 

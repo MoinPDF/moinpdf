@@ -52,7 +52,7 @@ def check(page, name):
     assert dimensions['width'] <= dimensions['viewport'] + 2, (name, dimensions)
 
 def back(page):
-    page.get_by_role('button', name=re.compile(r'^(All tools|Change tool)$')).click()
+    page.get_by_role('button', name=re.compile(r'^(Back to selection|Change tool)$')).click()
     expect(page.locator('.chooser-tool')).to_have_count(112)
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:

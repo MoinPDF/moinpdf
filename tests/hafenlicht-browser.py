@@ -92,7 +92,7 @@ with sync_playwright() as api:
             checks.append(f'{theme}: pointer light, pass-through hit target, repeated categories, Space/Enter and immediate named tool')
 
             # Catalogue uses the same visible response and still opens the tool.
-            page.get_by_role('button', name='Alle Werkzeuge', exact=True).click()
+            page.locator('.harbor-desktop-nav').get_by_role('button', name='Werkzeuge', exact=True).click()
             catalogue = page.locator('.chooser-tool').first
             title = catalogue.locator('strong').inner_text()
             catalogue.scroll_into_view_if_needed()

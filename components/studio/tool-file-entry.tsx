@@ -38,7 +38,7 @@ export function ToolFileEntry({
       <header className="workbench-header">
         <Button variant="ghost" disabled={locked} onClick={onBack}>
           <ChevronLeft size={17} />
-          {t('Alle Werkzeuge')}
+          {t('Zurück zur Auswahl')}
         </Button>
         {(onUndo || onRedo) && (
           <div className="history-tools">

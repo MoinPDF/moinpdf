@@ -173,7 +173,7 @@ export function AdvancedWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
-          {t('Alle Werkzeuge')}
+          {t('Zurück zur Auswahl')}
         </Button>
         <div className="advanced-actions">
           <Button variant="outline" onClick={onAdd} disabled={busy}>

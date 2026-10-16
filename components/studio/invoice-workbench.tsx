@@ -189,7 +189,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={locked}>
           <ChevronLeft size={17} />
-          {t('Alle Werkzeuge')}
+          {t('Zurück zur Auswahl')}
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
