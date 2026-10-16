@@ -76,7 +76,7 @@ export type ConnectorContext =
 export function createConnectors(binding: ConnectorBinding | undefined) {
   return {
     async getContext(): Promise<ConnectorContext> {
-      if (typeof window !== "undefined") {
+      if (typeof Reflect.get(globalThis, "window") !== "undefined") {
         throw new Error(
           "Connected apps are only available in Site server routes.",
         );
@@ -145,7 +145,7 @@ export function createConnectors(binding: ConnectorBinding | undefined) {
       actionName: string,
       args: { [key: string]: Json },
     ): Promise<ConnectorResult> {
-      if (typeof window !== "undefined") {
+      if (typeof Reflect.get(globalThis, "window") !== "undefined") {
         throw new Error(
           "Connected apps are only available in Site server routes.",
         );

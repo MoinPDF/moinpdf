@@ -25,7 +25,8 @@
     "types": [
       "node",
       "vite/client"
-    ]
+    ],
+    "tsBuildInfoFile": ".cache/browser.tsbuildinfo"
   },
   "include": [
     "app/page.tsx",
@@ -35,7 +36,8 @@
     "lib/**/*.ts",
     "workers/**/*.ts",
     "selfhost/**/*.tsx",
-    "vite*.config.ts"
+    "vite*.config.ts",
+    "tests/**/*.ts"
   ],
   "exclude": [
     "node_modules",

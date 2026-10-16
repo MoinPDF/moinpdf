@@ -75,7 +75,12 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 within_viewport(page, f'home {theme} {width}')
                 image, upload, search = (geometry[key] for key in ('image', 'upload', 'search'))
                 assert image['y'] + image['height'] <= upload['y'], (theme, width, 'photo order')
-                assert upload['y'] + upload['height'] < search['y'], (theme, width, 'upload order')
+                if width > 1100:
+                    assert upload['y'] + upload['height'] < search['y'], (theme, width, 'upload order')
+                    expect(page.locator('.home-all-tools')).to_be_visible()
+                else:
+                    expect(page.locator('.harbor-search')).to_be_hidden()
+                    expect(page.locator('.harbor-mobile-nav button')).to_have_count(5)
                 assert page.locator('.harbor-upload-cta').bounding_box()['height'] >= 44
                 assert page.get_by_text('Papierkram. Läuft.', exact=True).count() == 1
                 assert page.locator('.tool-mosaic-card').count() == 6
@@ -232,10 +237,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         # Home now preserves the category selected by the earlier tool checks.
         page.locator('.harbor-categories').get_by_role('button', name='Quick access', exact=True).click()
         expect(page.get_by_role('heading', name='Quick access', exact=True)).to_be_visible()
-        page.locator('.harbor-search input').fill('merge')
-        expect(page.locator('.harbor-search-result').first).to_contain_text('Merge')
-        title = page.locator('.harbor-search-result strong').first.inner_text()
-        page.locator('.harbor-search-result').first.press('Enter')
+        page.locator('.harbor-mobile-nav').get_by_role('button', name='Search', exact=True).click()
+        page.locator('.mobile-tool-search input').fill('merge')
+        expect(page.locator('.mobile-search-result').first).to_contain_text('Merge')
+        title = page.locator('.mobile-search-result strong').first.inner_text()
+        page.locator('.mobile-search-result').first.press('Enter')
         expect(page.locator('main h1')).to_have_text(title)
         page.locator('.harbor-mobile-nav').get_by_role('button', name='Home', exact=True).click()
         expect(page.locator('.harbor-home')).to_be_visible()
@@ -254,7 +260,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
         expect(page.locator('.chooser-file')).to_contain_text('harbor-retention.pdf')
         within_viewport(page, 'retained workspace')
-        page.get_by_role('button', name=re.compile(r'^Projekte – ')).click()
+        page.locator('.harbor-mobile-nav').get_by_role('button', name='Projekte', exact=True).click()
         expect(page.get_by_role('dialog')).to_be_visible()
         page.keyboard.press('Escape')
         checks.append('Home/workspace navigation, mobile projects and DE/EN keep the original two-page PDF')

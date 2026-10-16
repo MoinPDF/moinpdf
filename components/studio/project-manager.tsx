@@ -37,6 +37,8 @@ import {
 import { openSource, filenameStem, downloadBlob, type Source } from '@/lib/pdf-engine';
 import './project-manager.css';
 export function ProjectManager({
+  open,
+  onOpenChange: setOpen,
   sources,
   state,
   locked,
@@ -47,6 +49,8 @@ export function ProjectManager({
   onCheckpoint,
   onBusy,
 }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   sources: Source[];
   state: ProjectState;
   locked: boolean;
@@ -62,14 +66,31 @@ export function ProjectManager({
   onBusy: (busy: boolean) => void;
 }) {
   const { t } = useLanguage();
-  const [open, setOpen] = useState(false),
-    [working, setWorking] = useState(false),
+  const [working, setWorking] = useState(false),
     [projects, setProjects] = useState<ProjectMeta[]>([]),
     [notice, setNotice] = useState(''),
     [deleteId, setDeleteId] = useState('');
   const importInput = useRef<HTMLInputElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
   const [toolbar, setToolbar] = useState<HTMLElement | null>(null);
   useEffect(() => setToolbar(document.getElementById('moinpdf-project-bar')), []);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setNotice('');
+    setDeleteId('');
+    void listProjects().then(
+      (items) => {
+        if (!cancelled) setProjects(items);
+      },
+      (error) => {
+        if (!cancelled) setNotice(error?.message || 'Der lokale Speicher ist nicht verfügbar.');
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
   const name = identity.name,
     current = identity.id,
     setName = (name: string) => setIdentity((old) => ({ ...old, name })),
@@ -182,7 +203,6 @@ export function ProjectManager({
                   disabled={locked || working}
                   onClick={() => {
                     setOpen(true);
-                    void job(refresh);
                   }}
                 >
                   <FolderOpen size={20} aria-hidden="true" />
@@ -209,7 +229,21 @@ export function ProjectManager({
           if (!working) setOpen(v);
         }}
       >
-        <DialogContent className="project-dialog">
+        <DialogContent
+          className="project-dialog"
+          onOpenAutoFocus={() => {
+            opener.current =
+              document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const target = opener.current;
+            const fallback = document.getElementById('moinpdf-content');
+            (target?.isConnected && target.getClientRects().length ? target : fallback)?.focus({
+              preventScroll: true,
+            });
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t('Lokale PDF-Projekte')}</DialogTitle>
             <DialogDescription>

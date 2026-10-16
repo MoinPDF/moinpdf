@@ -10,6 +10,20 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Project documentation and release workflows focus on standalone Docker operation.
 - Platform-specific installation packages and integration tests have moved to the responsible external package repository.
 
+## 0.14.4 – 16 October 2026
+
+- Mobile glass navigation with Home, Tools, Search, Projects and More. The search
+  button opens local tool search with direct results, keyboard navigation and
+  a height adjusted to the visible viewport.
+- The search dialog stays on screen using bottom placement without centered-dialog
+  offsets. Projects move to the mobile bar and remain in the desktop header;
+  desktop also retains an All tools button beside search.
+- Separate browser and server type checks; license source copies and build output
+  are not treated as application source. The hosted build checks both runtimes,
+  and Docker additionally checks the complete application and build configuration.
+- Production tests cover search geometry, touch targets, results, clearing,
+  keyboard focus, project access, document retention and desktop resizing.
+
 ## 0.14.3 – 16 October 2026
 
 - Docker update from 0.13.26 with a local document editor: formatted text, images,

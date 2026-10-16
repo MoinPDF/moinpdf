@@ -283,6 +283,7 @@ function Studio() {
   });
   const [projectCheckpoint, setProjectCheckpoint] = useState<ProjectCheckpoint | null>(null);
   const [projectBusy, setProjectBusy] = useState(false);
+  const [projectsOpen, setProjectsOpen] = useState(false);
   const [writerOpen, setWriterOpen] = useState(false);
   const [writerDocument, setWriterDocument] = useState<WriterDocument | null>(null);
   const [writerSavedRevision, setWriterSavedRevision] = useState('');
@@ -1372,6 +1373,11 @@ function Studio() {
           });
         }}
         onTools={showTools}
+        onChoose={chooseTool}
+        projectsOpen={projectsOpen}
+        onProjects={() => {
+          if (!locked) setProjectsOpen(true);
+        }}
       />
       <input
         ref={picker}
@@ -1389,6 +1395,8 @@ function Studio() {
       <PasswordPrompt request={passwordRequest} onClose={() => setPasswordRequest(null)} />
       <DuplicatePrompt request={duplicateRequest} onClose={() => setDuplicateRequest(null)} />
       <ProjectManager
+        open={projectsOpen}
+        onOpenChange={setProjectsOpen}
         identity={projectIdentity}
         setIdentity={setProjectIdentity}
         checkpoint={projectCheckpoint}

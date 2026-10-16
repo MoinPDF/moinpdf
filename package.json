@@ -1,6 +1,6 @@
 {
   "name": "moinpdf",
-  "version": "0.14.3",
+  "version": "0.14.4",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -29,7 +29,8 @@
     "format": "prettier --write app/page.tsx app/globals.css \"components/studio/**/*.{ts,tsx,css}\" \"lib/**/*.{ts,tsx}\" \"hooks/**/*.{ts,tsx}\" \"selfhost/**/*.{ts,tsx,html}\"",
     "format:check": "prettier --check app/page.tsx app/globals.css \"components/studio/**/*.{ts,tsx,css}\" \"lib/**/*.{ts,tsx}\" \"hooks/**/*.{ts,tsx}\" \"selfhost/**/*.{ts,tsx,html}\"",
     "test:writer": "node tests/writer-smoke.mjs",
-    "test:usability": "node tests/usability-smoke.mjs"
+    "test:usability": "node tests/usability-smoke.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
