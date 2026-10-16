@@ -154,8 +154,10 @@ export async function convertOfficeLocally(
         settled = true;
         clearTimeout(timer);
         signal.removeEventListener('abort', abort);
-        // Let LibreOffice destroy the document and its pthreads before terminating
-        // their owner. In particular, a result is posted before worker-side finally.
+        // Wait for document cleanup: a result is posted before worker-side finally.
+        // The browser must terminate the whole worker tree through this owner.
+        // Explicitly terminating its pthread children first can hang Chromium's
+        // nested-worker shutdown; the runtime patch deliberately leaves them alive.
         const activeWorker = worker!;
         let cleaned = false;
         const complete = () => {
