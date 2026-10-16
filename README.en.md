@@ -9,7 +9,7 @@
   </picture>
 </p>
 
-<p align="center"><strong>Paperwork. Sorted.</strong><br>Your PDF workspace for editing, text recognition, conversion and document checks.</p>
+<p align="center"><strong>Paperwork. Sorted.</strong></p>
 
 <p align="center">
   <a href="https://github.com/MoinPDF/moinpdf/releases/latest"><img src="https://img.shields.io/github/v/release/MoinPDF/moinpdf?style=flat&amp;color=168378&amp;label=version" alt="Latest version"></a>
@@ -27,7 +27,7 @@
   <img src="public/branding/moinpdf-harbor.webp" alt="A sailor salvaging a printer in the harbour – the MoinPDF harbour artwork." width="1000">
 </p>
 
-MoinPDF brings **112 tools** into one workspace. Open your files, choose a task or search in your own words, review the result and download it. Many tools process documents directly on your device. The complete Docker installation adds your own services for advanced conversion, validation, translation and audio.
+MoinPDF brings **tools** into one workspace. Open your files, choose a task or search in your own words, review the result and download it. Many tools process documents directly on your device. The complete Docker installation adds your own services for advanced conversion, validation, translation and audio.
 
 **German and English** are available in both the app and this repository's documentation. Each guide links directly to its other language version.
 

@@ -9,7 +9,7 @@
   </picture>
 </p>
 
-<p align="center"><strong>Papierkram. Läuft.</strong><br>Dein PDF-Arbeitsplatz zum Bearbeiten, Erkennen, Konvertieren und Prüfen.</p>
+<p align="center"><strong>Papierkram. Läuft.</strong></p>
 
 <p align="center">
   <a href="https://github.com/MoinPDF/moinpdf/releases/latest"><img src="https://img.shields.io/github/v/release/MoinPDF/moinpdf?style=flat&amp;color=168378&amp;label=Version" alt="Aktuelle Version"></a>
@@ -27,7 +27,7 @@
   <img src="public/branding/moinpdf-harbor.webp" alt="Ein Seemann birgt einen Drucker im Hafen – das MoinPDF-Hafenmotiv." width="1000">
 </p>
 
-MoinPDF bringt **112 Werkzeuge** in einen gemeinsamen Arbeitsplatz. Dateien öffnen, eine Aufgabe auswählen oder in eigenen Worten suchen, Ergebnis prüfen und herunterladen. Viele Werkzeuge verarbeiten Dokumente direkt auf deinem Gerät. Die vollständige Docker-Installation ergänzt die eigenen Dienste für erweiterte Konvertierungen, Prüfungen, Übersetzung und Audio.
+MoinPDF bringt **Werkzeuge** in einen gemeinsamen Arbeitsplatz. Dateien öffnen, eine Aufgabe auswählen oder in eigenen Worten suchen, Ergebnis prüfen und herunterladen. Viele Werkzeuge verarbeiten Dokumente direkt auf deinem Gerät. Die vollständige Docker-Installation ergänzt die eigenen Dienste für erweiterte Konvertierungen, Prüfungen, Übersetzung und Audio.
 
 **Deutsch und Englisch** stehen in der App und dieser Repository-Dokumentation zur Verfügung. Auf jeder Anleitung führt der Sprachwechsel zur passenden Übersetzung.
 
