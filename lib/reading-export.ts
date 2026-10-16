@@ -1,3 +1,4 @@
+import { readPdfText } from './pdf-text';
 import JSZip from 'jszip';
 import { uuid, type Source } from './pdf-engine';
 import type { ExportFile, RunContext } from './advanced-types';
@@ -29,7 +30,7 @@ async function textPages(source: Source, ctx: RunContext) {
   for (let n = 1; n <= source.pdf.numPages; n++) {
     ctx.signal.throwIfAborted();
     const page = await source.pdf.getPage(n),
-      content = await page.getTextContent();
+      content = await readPdfText(page);
     const lines: TextLine[] = [];
     let text = '',
       size = 0,

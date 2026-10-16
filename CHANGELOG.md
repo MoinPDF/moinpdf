@@ -17,6 +17,14 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.13.26 – 16. Oktober 2026
+
+- Safari-Kompatibilität der PDF-Textextraktion korrigiert. OCR, Textbearbeitung,
+  Inhaltsvergleich, Word-, Markdown-, HTML-, EPUB- und JSON-Export sowie der
+  Textimport für strukturierte PDFs lesen Textströme ohne asynchrone Stream-Iteration.
+- Schriftinformationen, Textpositionen, Sprache und XFA-Formulartexte bleiben
+  erhalten. Regressionstests prüfen mehrteilige Textströme, leere Scans und Fehler.
+
 ## 0.13.25 – 15. Oktober 2026
 
 - Alle 4.513 vorhandenen Spracheinträge fachlich und sprachlich geprüft; rund

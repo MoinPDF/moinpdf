@@ -1,3 +1,4 @@
+import { readPdfText } from './pdf-text';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import type { Source } from './pdf-engine';
 import type { ExportFile } from './advanced-types';
@@ -9,7 +10,7 @@ export async function createTextWordFile(source: Source, signal: AbortSignal): P
   for (let index = 1; index <= source.pdf.numPages; index++) {
     signal.throwIfAborted();
     const page = await source.pdf.getPage(index);
-    const content = await page.getTextContent();
+    const content = await readPdfText(page);
     const lines: string[] = [];
     let line = '';
     for (const item of content.items) {

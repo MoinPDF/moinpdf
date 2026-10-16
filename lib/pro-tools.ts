@@ -1,3 +1,4 @@
+import { readPdfText } from './pdf-text';
 import {
   PDFDocument,
   PDFName,
@@ -502,7 +503,7 @@ export async function structuredExport(sources: Source[], ctx: RunContext) {
     for (let i = 1; i <= source.pdf.numPages; i++) {
       checkAbort(ctx.signal);
       const page = await source.pdf.getPage(i),
-        content = await page.getTextContent(),
+        content = await readPdfText(page),
         view = page.getViewport({ scale: 1 });
       pages.push({
         page: i,

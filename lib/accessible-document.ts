@@ -1,3 +1,4 @@
+import { readPdfText } from './pdf-text';
 import { z } from 'zod';
 import type { Source } from './pdf-engine';
 const content = (max: number) =>
@@ -74,7 +75,7 @@ export async function accessibleTextDraft(
   for (let i = 1; i <= source.pdf.numPages; i++) {
     signal.throwIfAborted();
     const page = await source.pdf.getPage(i),
-      content = await page.getTextContent();
+      content = await readPdfText(page);
     let text = '';
     for (const item of content.items) {
       if ('str' in item) text += item.str + (item.hasEOL ? '\n' : ' ');

@@ -1,3 +1,4 @@
+import { readPdfText } from './pdf-text';
 import { PDFDocument, PDFName, PDFDict, StandardFonts, rgb, type PDFPage } from 'pdf-lib';
 import {
   extractPageText,
@@ -190,7 +191,7 @@ export async function runSourceTool(
               scale: 1,
               rotation: (pdfPage.rotate + page.rotation) % 360,
             }),
-            content = await pdfPage.getTextContent(),
+            content = await readPdfText(pdfPage),
             v = view.transform;
           const layout = comparisonPage(
             page.index + 1,
