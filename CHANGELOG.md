@@ -28,6 +28,9 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Browser- und Server-Typprüfung getrennt; Lizenz-Quellkopien und Build-Ausgaben
   werden nicht als Anwendungscode geprüft. Der Web-Build prüft beide Laufzeiten,
   der Docker-Build zusätzlich die vollständige Anwendung und Build-Konfiguration.
+- Ein schneller erneuter Klick auf „Projekte“ während der Schließanimation
+  lässt die Projektliste geöffnet; automatische Sicherungen und Wiederherstellung
+  bleiben erreichbar, auch nach dem Entfernen der letzten Seite.
 - Produktionstests prüfen mobile Suchfeldposition, Touch-Ziele, Treffer, Leeren,
   Tastaturfokus, Projektzugriff und Dokumenterhalt sowie den Desktop-Wechsel.
 

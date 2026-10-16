@@ -231,6 +231,17 @@ export function ProjectManager({
       >
         <DialogContent
           className="project-dialog"
+          onPointerDownOutside={(event) => {
+            // The exit animation can outlive the overlay. Radix defers outside
+            // dismissal until click, after an external trigger has reopened us.
+            const target = event.detail.originalEvent.target;
+            if (
+              target instanceof Element &&
+              target.closest('.project-toggle, .harbor-project-toggle')
+            ) {
+              event.preventDefault();
+            }
+          }}
           onOpenAutoFocus={() => {
             opener.current =
               document.activeElement instanceof HTMLElement ? document.activeElement : null;

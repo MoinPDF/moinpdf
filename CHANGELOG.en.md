@@ -21,6 +21,9 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Separate browser and server type checks; license source copies and build output
   are not treated as application source. The hosted build checks both runtimes,
   and Docker additionally checks the complete application and build configuration.
+- Quickly reopening Projects during its closing animation keeps the project list
+  open; automatic backups and restoration remain accessible after deleting the
+  last page.
 - Production tests cover search geometry, touch targets, results, clearing,
   keyboard focus, project access, document retention and desktop resizing.
 

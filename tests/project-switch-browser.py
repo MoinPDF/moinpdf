@@ -18,6 +18,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     page.on('console', lambda message: transitions.append(message.text) if message.text.startswith('PROJECT_STATE ') else None)
     try:
         page.goto(origin)
+        # Deliberately widen the production overlay/content exit timing gap.
+        # This makes the previously intermittent reopen race deterministic.
+        page.add_style_tag(content='[data-slot=dialog-overlay][data-state=closed]{animation-duration:1ms!important} .project-dialog[data-state=closed]{animation-duration:800ms!important}')
         page.evaluate('''() => {
             let previous = '';
             new MutationObserver(() => {

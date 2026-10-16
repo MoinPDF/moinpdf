@@ -359,6 +359,17 @@ try {
     );
   }
   assert.equal(storage.reads, 1, 'Mobile project trigger loads projects');
+  // Radix defers outside-pointer dismissal until click. The closing content can
+  // outlive its overlay, allowing a trigger click to reopen it in that window.
+  // A deferred event from the same trigger must not dismiss the reopened dialog.
+  for (const trigger of [nav().querySelector('.harbor-project-toggle'), document.querySelector('.project-toggle')]) {
+    await act(async () => {
+      trigger.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      trigger.click();
+    });
+    await flush();
+    assert(dialog(), 'A deferred outside event from either project trigger must keep the dialog open');
+  }
   await key(document.activeElement, 'Escape');
   assert.equal(Boolean(dialog()), false);
   assert.equal(document.activeElement === nav().querySelector('.harbor-project-toggle'), true);
