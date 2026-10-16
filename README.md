@@ -27,9 +27,7 @@
   <img src="public/branding/moinpdf-harbor.webp" alt="Ein Seemann birgt einen Drucker im Hafen – das MoinPDF-Hafenmotiv." width="1000">
 </p>
 
-MoinPDF bringt **Werkzeuge** in einen gemeinsamen Arbeitsplatz. Dateien öffnen, eine Aufgabe auswählen oder in eigenen Worten suchen, Ergebnis prüfen und herunterladen. Viele Werkzeuge verarbeiten Dokumente direkt auf deinem Gerät. Die vollständige Docker-Installation ergänzt die eigenen Dienste für erweiterte Konvertierungen, Prüfungen, Übersetzung und Audio.
-
-**Deutsch und Englisch** stehen in der App und dieser Repository-Dokumentation zur Verfügung. Auf jeder Anleitung führt der Sprachwechsel zur passenden Übersetzung.
+MoinPDF ist eine Webanwendung zum Erstellen, Bearbeiten und Umwandeln von PDFs und anderen Dokumenten. Dateien lassen sich zusammenführen und aufteilen, Seiten neu ordnen, Texte und Bilder bearbeiten sowie Formulare ausfüllen. Weitere Funktionen umfassen Texterkennung für Scans, Dokumentvergleiche, Rechnungsprüfungen und die Verarbeitung mehrerer Dateien im Stapel. Viele Werkzeuge arbeiten lokal im Browser. Eine Installation mit Docker ergänzt erweiterte Dateiumwandlungen, Dokumentübersetzungen und die Erstellung von Hörbüchern aus PDFs.
 
 ## Was du mit MoinPDF erledigen kannst
 
