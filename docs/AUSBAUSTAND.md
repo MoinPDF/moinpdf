@@ -2,7 +2,19 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 15. Oktober 2026, Version 0.13.25.
+Stand: 16. Oktober 2026, Version 0.14.3.
+
+Über „Neues Dokument“ direkt links neben „Projekte“ lassen sich leere Dokumente
+mit Rich-Text-Formatierung, Bildern und Tabellen verfassen. Entwürfe werden lokal
+gespeichert und als bearbeitbare .moindoc-Dateien gesichert. Papierformat,
+Seitenränder, Kopf-/Fußzeilen und Seitenzahlen sind einstellbar. Die responsive
+Schreibansicht und die tatsächliche PDF-Seitenvorschau sind getrennte Ansichten;
+der PDF-Export enthält auswählbaren Text. Der Einstieg gehört nicht zum Werkzeugkatalog.
+
+Werkzeugauswahl und Suche behalten ihren Zustand beim Zurückgehen. Identische
+Uploads werden erkannt. Ergebnisdateien lassen sich umbenennen und auf unterstützten
+Geräten teilen; Format, Seitenzahl und Größe stehen direkt am Ergebnis.
+
 
 Der gesamte Sprachkatalog mit ursprünglich 4.513 Einträgen wurde geprüft. Rund
 2.000 Übersetzungen wurden verbessert; fehlende UI-Meldungen und app-eigene
@@ -52,7 +64,7 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
 ## Prüfung und Freigabe
 
-33 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
+36 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
 Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
 Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
 Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche

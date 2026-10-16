@@ -1,4 +1,5 @@
 'use client';
+import { ResultActions, ResultSummary, useResultName } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import {
   FileArrivalCheck,
@@ -14,15 +15,7 @@ import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ChevronLeft,
-  Check,
-  Download,
-  FileText,
-  LoaderCircle,
-  Plus,
-  RefreshCw,
-} from 'lucide-react';
+import { ChevronLeft, Check, FileText, LoaderCircle, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { type WorkspaceTool } from '@/lib/tool-catalog';
 import { openSource, formatSize, MAX_BYTES, type Source, type JobResult } from '@/lib/pdf-engine';
@@ -119,6 +112,7 @@ function StandardServerWorkbench({
     [preview, setPreview] = useState<Source | null>(null),
     [page, setPage] = useState(0);
   const resultFresh = useFreshResult(result);
+  const [resultName, renameResult] = useResultName(result);
   const resultRef = useRef<HTMLElement>(null),
     controller = useRef<AbortController | null>(null),
     connection = useRef<AbortController | null>(null);
@@ -493,7 +487,7 @@ function StandardServerWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" disabled={busy} onClick={onBack}>
           <ChevronLeft size={17} />
-          {t('Alle Werkzeuge')}
+          {t('Zurück zur Auswahl')}
         </Button>
       </header>
       <div className="workbench-title">
@@ -1016,28 +1010,38 @@ function StandardServerWorkbench({
               <JobStatusIcon fresh={resultFresh} />
               {t('Fertig.')}
             </h2>
-            <p>
-              {result.filename} · {formatSize(result.blob.size, uiLocale())}
-            </p>
+            <ResultSummary
+              result={{ ...result, inputSize: source?.size || file?.size || 0 }}
+              compareSize={tool === 'optimize-pdf' && source?.kind === 'pdf'}
+            />
             {result.note && <p>{ui(result.note)}</p>}
-            <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
-              <a href={url || undefined} download={result.filename}>
-                <Download size={17} />
-                {result.filename.toLowerCase().endsWith('.docx')
+            <ResultActions
+              result={result}
+              url={url}
+              filename={resultName}
+              onRename={renameResult}
+              fresh={resultFresh}
+              label={
+                result.filename.toLowerCase().endsWith('.docx')
                   ? ui('Word herunterladen')
                   : result.kind === 'pdf'
                     ? t('PDF herunterladen')
                     : result.kind === 'zip'
                       ? t('ZIP herunterladen')
-                      : t('Ergebnis herunterladen')}
-              </a>
-            </Button>
+                      : t('Ergebnis herunterladen')
+              }
+            />
             {result.kind === 'pdf' && (
               <Button
                 variant="outline"
                 onClick={() =>
                   run(async () =>
-                    onUse({ ...result, kind: 'pdf', inputSize: source?.size || file?.size || 0 }),
+                    onUse({
+                      ...result,
+                      filename: resultName,
+                      kind: 'pdf',
+                      inputSize: source?.size || file?.size || 0,
+                    }),
                   )
                 }
               >

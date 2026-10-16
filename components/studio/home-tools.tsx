@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useToolBrowserState } from './tool-browser-memory';
 import { ArrowRight, ChevronRight, Files, X } from 'lucide-react';
 import { useLanguage, useTools } from './appearance';
 import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -24,8 +24,7 @@ export function HomeTools({
 }) {
   const { t } = useLanguage();
   const { tools, groups } = useTools();
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('quick');
+  const { query, setQuery, category, setCategory } = useToolBrowserState('home');
   const categoryNames = ['Prüfen', 'Umwandeln', 'Seiten', 'Bearbeiten', 'Stapel'];
   const categories = [
     { value: 'quick', label: t('Schnellzugriff', 'Quick access'), icon: MosaicHomeIcon },
@@ -44,6 +43,7 @@ export function HomeTools({
       : tools.filter(inCategory);
   return (
     <section
+      data-tool-browser="home"
       className="harbor-discovery mosaic-discovery"
       aria-label={t('Werkzeuge entdecken', 'Discover tools')}
     >
@@ -74,6 +74,7 @@ export function HomeTools({
             </p>
             {suggestions.map((tool) => (
               <CommandItem
+                data-tool-id={tool.id}
                 key={tool.id}
                 value={tool.id}
                 onSelect={() => onChoose(tool.id)}
@@ -110,6 +111,7 @@ export function HomeTools({
       </Command>
       <div className="harbor-discovery-toolbar">
         <div
+          data-browser-categories
           className="harbor-categories mosaic-categories"
           role="group"
           aria-label={t('Werkzeugkategorien')}

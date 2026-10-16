@@ -199,6 +199,10 @@ const manifestSchema = z
             size: z.number().int().nonnegative().max(maxDocuments),
             kind: z.enum(['pdf', 'image', 'invoice']),
             wasEncrypted: z.boolean().optional(),
+            originalDigest: z
+              .string()
+              .regex(/^[a-f0-9]{64}$/)
+              .optional(),
             pdf: part,
             invoice: part.extend({ name: z.string().min(1).max(1000) }).optional(),
           })
@@ -283,6 +287,7 @@ export async function encodeProjectFile(
       size: s.size,
       kind: s.kind,
       wasEncrypted: s.wasEncrypted,
+      originalDigest: s.originalDigest,
       pdf: { length: s.bytes.length },
       invoice: s.invoiceOriginal
         ? { length: s.invoiceOriginal.bytes.length, name: s.invoiceOriginal.name }

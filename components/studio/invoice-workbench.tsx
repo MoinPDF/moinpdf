@@ -1,4 +1,5 @@
 'use client';
+import { ResultActions, ResultSummary, useResultName } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, useFreshResult } from './ui-feedback';
 import { ui, uiLocale } from '@/lib/ui-language';
@@ -60,6 +61,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
     [output, setOutput] = useState<{ blob: Blob; filename: string } | null>(null),
     [url, setUrl] = useState('');
   const resultFresh = useFreshResult(output);
+  const [resultName, renameResult] = useResultName(output);
   const source = sources.find((s) => s.id === sourceId) || sources[0],
     entry = entries[index],
     i = entry?.invoice,
@@ -187,7 +189,7 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={locked}>
           <ChevronLeft size={17} />
-          {t('Alle Werkzeuge')}
+          {t('Zurück zur Auswahl')}
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
@@ -549,19 +551,15 @@ export function InvoiceWorkbench({ tool, sources, onBack, onTool, onBusy, onAdd 
                 {output && (
                   <div className="invoice-output" role="status">
                     <JobStatusIcon fresh={resultFresh} size={18} />
-                    <span>
-                      {ui('PDF erstellt · ')}
-                      {formatSize(output.blob.size, uiLocale())}
-                    </span>
-                    <a
-                      className="result-download"
-                      data-fresh={resultFresh && !!url}
-                      href={url}
-                      download={output.filename}
-                    >
-                      <Download size={16} />
-                      {t('PDF herunterladen')}
-                    </a>
+                    <ResultSummary result={output} />
+                    <ResultActions
+                      result={output}
+                      url={url}
+                      filename={resultName}
+                      onRename={renameResult}
+                      fresh={resultFresh}
+                      label={t('PDF herunterladen')}
+                    />
                   </div>
                 )}
                 <p>

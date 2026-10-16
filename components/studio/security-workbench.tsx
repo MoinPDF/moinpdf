@@ -1,4 +1,5 @@
 'use client';
+import { ResultActions, ResultSummary, useResultName } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, useFreshResult } from './ui-feedback';
 import { ui, uiLocale } from '@/lib/ui-language';
@@ -11,7 +12,6 @@ import {
   ShieldCheck,
   LockKeyhole,
   LockKeyholeOpen,
-  Download,
   Check,
   Eye,
   EyeOff,
@@ -63,6 +63,7 @@ export function SecurityWorkbench({
     [result, setResult] = useState<JobResult | null>(null),
     [url, setUrl] = useState('');
   const resultFresh = useFreshResult(result);
+  const [resultName, renameResult] = useResultName(result);
   const controller = useRef<AbortController | null>(null),
     source = sources.find((s) => s.id === sourceId) || sources[0],
     protect = tool === 'protect';
@@ -186,7 +187,7 @@ export function SecurityWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
-          {t('Alle Werkzeuge')}
+          {t('Zurück zur Auswahl')}
         </Button>
         <span className="device-tag">
           <ShieldCheck size={14} />
@@ -366,15 +367,15 @@ export function SecurityWorkbench({
                   ? ui('Deine geschützte PDF ist bereit.')
                   : ui('Deine entsperrte PDF ist bereit.')}
               </span>
-              <p>
-                {result.filename} · {formatSize(result.blob.size, uiLocale())}
-              </p>
-              <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
-                <a href={url} download={result.filename}>
-                  <Download size={17} />
-                  {t('PDF herunterladen')}
-                </a>
-              </Button>
+              <ResultSummary result={result} />
+              <ResultActions
+                result={result}
+                url={url}
+                filename={resultName}
+                onRename={renameResult}
+                fresh={resultFresh}
+                label={t('PDF herunterladen')}
+              />
               {!protect && (
                 <Button
                   variant="outline"
@@ -382,7 +383,7 @@ export function SecurityWorkbench({
                   onClick={async () => {
                     setBusy(true);
                     try {
-                      await onUse(result);
+                      await onUse({ ...result, filename: resultName });
                     } catch (e) {
                       setError((e as Error).message);
                     } finally {

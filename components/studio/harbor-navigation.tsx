@@ -96,11 +96,13 @@ function MoreMenu() {
 
 export function HarborNavigation({
   home,
+  creating = false,
   locked,
   onHome,
   onTools,
 }: {
   home: boolean;
+  creating?: boolean;
   locked: boolean;
   onHome: () => void;
   onTools: () => void;
@@ -164,7 +166,7 @@ export function HarborNavigation({
       <button
         type="button"
         className="harbor-nav-item"
-        aria-current={!home ? 'page' : undefined}
+        aria-current={!home && !creating ? 'page' : undefined}
         disabled={locked}
         onClick={onTools}
       >

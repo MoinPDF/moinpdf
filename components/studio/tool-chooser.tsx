@@ -8,7 +8,8 @@ import { ui } from '@/lib/ui-language';
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
 import './tool-chooser.css';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useToolBrowserState } from './tool-browser-memory';
 import { FileText, Plus, X, Trash2, LoaderCircle } from 'lucide-react';
 import { Command, CommandInput, CommandList, CommandItem } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
@@ -54,8 +55,10 @@ export function ToolChooser({
 }: Props) {
   const { t, language } = useLanguage();
   const { tools, groups } = useTools();
-  const [query, setQuery] = useState('');
-  const [activeGroup, setActiveGroup] = useState<number | null>(null);
+  const { query, setQuery, category, setCategory } = useToolBrowserState('all');
+  const activeGroup = category === 'all' ? null : Number(category);
+  const setActiveGroup = (value: number | null) =>
+    setCategory(value === null ? 'all' : String(value));
   const suggestions = useMemo(
     () =>
       searchTools(query, tools)
@@ -68,7 +71,7 @@ export function ToolChooser({
     [activeGroup, tools],
   );
   return (
-    <main className="tool-chooser">
+    <main className="tool-chooser" data-tool-browser="all">
       <WorkspaceContext sources={sources} pageCount={pageCount} locked={locked} onAdd={onAdd} />
       <header className="chooser-header">
         <span className="chooser-document-count">
@@ -162,6 +165,7 @@ export function ToolChooser({
                   {suggestions.length ? (
                     suggestions.map((tool, i) => (
                       <CommandItem
+                        data-tool-id={tool.id}
                         key={tool.id}
                         value={tool.id}
                         onSelect={() => onChoose(tool.id)}
@@ -200,7 +204,12 @@ export function ToolChooser({
               )}
             </CommandList>
           </Command>
-          <div className="chooser-categories" role="group" aria-label={t('Werkzeugkategorien')}>
+          <div
+            className="chooser-categories"
+            data-browser-categories
+            role="group"
+            aria-label={t('Werkzeugkategorien')}
+          >
             <button
               type="button"
               className="chooser-category"

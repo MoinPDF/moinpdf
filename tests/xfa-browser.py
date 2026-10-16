@@ -23,7 +23,7 @@ def chooser(page):
     expect(page.get_by_role('heading', name='Was möchtest du tun?', exact=True)).to_be_visible()
 
 def back(page):
-    page.get_by_role('button', name=re.compile(r'^(Alle Werkzeuge|Werkzeug wechseln)$')).click()
+    page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
     chooser(page)
 
 def no_overflow(page, context):

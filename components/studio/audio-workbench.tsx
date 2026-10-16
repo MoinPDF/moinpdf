@@ -1,10 +1,11 @@
 'use client';
+import { ResultActions, ResultSummary, useResultName } from './result-actions';
 import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, Plus, Download, Headphones } from 'lucide-react';
+import { ChevronLeft, Plus, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Choice, Field, Tick, Text, NumberField } from './advanced-shared';
 import { ReadOptions, Coverage } from './evidence-panels';
@@ -53,6 +54,7 @@ export function AudioWorkbench({
     [result, setResult] = useState<ExportFile | null>(null),
     [url, setUrl] = useState('');
   const resultFresh = useFreshResult(result);
+  const [resultName, renameResult] = useResultName(result);
   const controller = useRef<AbortController | null>(null),
     output = useRef<HTMLElement>(null),
     source = sources.find((s) => s.id === sourceId) || sources[0],
@@ -168,7 +170,7 @@ export function AudioWorkbench({
       <header className="workbench-header">
         <Button variant="ghost" onClick={onBack} disabled={busy}>
           <ChevronLeft size={17} />
-          {ui('Alle Werkzeuge')}
+          {ui('Zurück zur Auswahl')}
         </Button>
         <Button variant="outline" onClick={onAdd} disabled={busy}>
           <Plus size={16} />
@@ -437,17 +439,19 @@ export function AudioWorkbench({
               <JobStatusIcon fresh={resultFresh} />
               {ui('Dein Ergebnis ist bereit.')}
             </h2>
-            <p>{result.filename}</p>
+            <ResultSummary result={result} />
             {result.note && <p>{ui(result.note)}</p>}
             {result.blob.type.startsWith('audio/') && (
               <audio controls src={url} aria-label={ui('Erzeugte Sprachausgabe')} />
             )}
-            <Button asChild className="result-download" data-fresh={resultFresh && !!url}>
-              <a href={url} download={result.filename}>
-                <Download size={17} />
-                {ui('Herunterladen')}
-              </a>
-            </Button>
+            <ResultActions
+              result={result}
+              url={url}
+              filename={resultName}
+              onRename={renameResult}
+              fresh={resultFresh}
+              label={ui('Herunterladen')}
+            />
           </div>
         </section>
       )}

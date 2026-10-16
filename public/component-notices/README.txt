@@ -51,3 +51,5 @@ Die Sprachprobe verarbeitet Text ausschließlich auf dem lokalen Gerät.
 Browser-Office 2.7.2: browser-office/README.txt mit vollständigen Komponentenhinweisen, Fontlizenzen und Quellverweisen. Lokale Signatur: PKI.js/ASN1.js; Absatzrichtung: bidi-js; Lizenzkopien unter /vendor/licenses/. DejaVu-Editor-Schriften: /vendor/editor-fonts/LICENSE.txt.
 
 Komplexe Absatzschriften: harfbuzz/README.txt; HarfBuzzJS 1.6.2 mit HarfBuzz 14.5.0. Gepinnte Noto-Schriften und Prüfsummen unter /vendor/editor-fonts/NOTO-MANIFEST.json, OFL-Lizenz daneben.
+
+Dokumenteditor: Tiptap 3.31.4 (MIT) und pdfmake 0.3.11 (MIT). Lizenzkopien unter /vendor/licenses/. Schriftfamilien DejaVu Sans, Serif und Sans Mono: /vendor/editor-fonts/LICENSE.

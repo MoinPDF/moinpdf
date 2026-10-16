@@ -2,7 +2,17 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 15 October 2026, version 0.13.25.
+As of 16 October 2026, version 0.14.3.
+
+“New document”, beside “Projects”, opens a local document editor with rich text,
+images, tables, page settings, headers, footers and page numbers. Drafts are saved
+in this browser and can be transferred as editable .moindoc files. The responsive
+writing view and actual PDF page preview are separate; PDF exports contain selectable
+text. Creation and draft import also work on local HTTP installations.
+
+Tool navigation restores the previous category, search, scroll and focus. Duplicate
+uploads are detected by their contents. Results show format, size and known page
+counts, allow filename editing and support native file sharing when available.
 
 The entire language catalogue, originally 4,513 entries, has been reviewed. Around 2,000 translations were improved; missing UI messages and app-owned text in reports and document outputs were added. Regression tests check original data, form values, embedded invoices and language coverage.
 
@@ -37,7 +47,7 @@ This overview describes the actual scope. The original 22-area plan is not yet f
 
 ## Verification and release
 
-33 engine and interface test suites check processing, navigation and display settings. PDF outputs are read back independently, covering text, glyphs, image pixels, links, forms, font sizes, page order, project archives, real HEIC/PSD decoding and actual OCR with the shipped language models. Dense two-column pages are ordered without quadratic full comparisons and checked for complete text preservation.
+36 engine and interface test suites check processing, navigation and display settings. PDF outputs are read back independently, covering text, glyphs, image pixels, links, forms, font sizes, page order, project archives, real HEIC/PSD decoding and actual OCR with the shipped language models. Dense two-column pages are ordered without quadratic full comparisons and checked for complete text preservation.
 
 Server checks cover real LibreOffice inputs, SVG/vectors, editable slides, translation overflow, veraPDF and synthetic CA/TSA/CRL evidence for long-term signatures. Passing a synthetic test does not replace production configuration of the timestamp service.
 

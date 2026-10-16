@@ -29,7 +29,7 @@ def chooser(page):
     expect(page.locator('.chooser-tool')).to_have_count(112)
 
 def back(page):
-    page.get_by_role('button', name=re.compile(r'^(Alle Werkzeuge|Werkzeug wechseln)$')).click()
+    page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
     chooser(page)
 
 def no_overflow(page, context):

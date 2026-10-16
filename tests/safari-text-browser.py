@@ -96,6 +96,7 @@ def probe_file_access():
         driver.find_element(By.CSS_SELECTOR,'input').send_keys(str(path.resolve()))
         result=driver.execute_async_script('''const done=arguments[arguments.length-1];
           const file=document.querySelector('input').files[0];
+          if(!file){done({error:'SafariDriver returned without selecting a file',name:'NoNativeFile'});return;}
           file.arrayBuffer().then(b=>done({text:new TextDecoder().decode(b),bytes:b.byteLength}))
             .catch(e=>done({error:e.message,name:e.name}));''')
         result['directory']=str(folder);probes.append(result)
@@ -144,7 +145,7 @@ def chooser():
 
 def back():
     click(WebDriverWait(driver, 40).until(EC.element_to_be_clickable((By.XPATH,
-        '//button[normalize-space(.)="Alle Werkzeuge" or normalize-space(.)="Werkzeug wechseln" or normalize-space(.)="All tools" or normalize-space(.)="Change tool"]'))))
+        '//button[normalize-space(.)="Zurück zur Auswahl" or normalize-space(.)="Werkzeug wechseln" or normalize-space(.)="Back to selection" or normalize-space(.)="Change tool"]'))))
     chooser()
 
 

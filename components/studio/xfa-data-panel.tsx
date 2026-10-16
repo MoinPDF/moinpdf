@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { ResultActions, ResultSummary, useResultName } from './result-actions';
+import { useEffect, useMemo, useState } from 'react';
 import { ui } from '@/lib/ui-language';
 import { Button } from '@/components/ui/button';
 import { readXfaData, writeXfaData, type XfaDataField } from '@/lib/xfa-data';
@@ -21,6 +22,19 @@ export function XfaDataPanel({
     [busy, setBusy] = useState(false),
     [result, setResult] = useState<Uint8Array | null>(null),
     [url, setUrl] = useState('');
+  const output = useMemo(
+    () =>
+      result
+        ? {
+            blob: new Blob([new Uint8Array(result)], { type: 'application/pdf' }),
+            filename: source.name.replace(/\.pdf$/i, '') + '-XFA.pdf',
+            kind: 'pdf',
+            pages: source.pdf.numPages,
+          }
+        : null,
+    [result, source],
+  );
+  const [resultName, renameResult] = useResultName(output);
   useEffect(() => {
     if (!result) {
       setUrl('');
@@ -43,7 +57,6 @@ export function XfaDataPanel({
       onBusy(false);
     }
   };
-  const filename = source.name.replace(/\.pdf$/i, '') + '-XFA.pdf';
   return (
     <section className="advanced-card">
       <h2>{ui('XFA-Daten bearbeiten')}</h2>
@@ -94,20 +107,24 @@ export function XfaDataPanel({
           {ui(error)}
         </p>
       )}
-      {result && (
+      {result && output && (
         <>
-          <Button asChild>
-            <a href={url} download={filename}>
-              {ui('PDF herunterladen')}
-            </a>
-          </Button>
+          <ResultSummary result={output} />
+          <ResultActions
+            result={output}
+            url={url}
+            filename={resultName}
+            onRename={renameResult}
+            label={ui('PDF herunterladen')}
+            disabled={disabled || busy}
+          />
           <Button
             disabled={disabled || busy}
             onClick={() =>
               void run(() =>
                 onUse({
                   blob: new Blob([new Uint8Array(result)], { type: 'application/pdf' }),
-                  filename,
+                  filename: resultName,
                   kind: 'pdf',
                   pages: source.pdf.numPages,
                   inputSize: source.size,

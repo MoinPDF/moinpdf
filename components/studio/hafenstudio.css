@@ -523,8 +523,7 @@
     background-color 180ms ease,
     border-color 180ms ease,
     color 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
+    box-shadow 180ms ease;
 }
 .harbor-category-label {
   position: relative;
@@ -548,15 +547,7 @@
 .harbor-categories button:hover:not(:disabled):not([aria-pressed='true']) {
   background: var(--ui-soft);
 }
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .harbor-categories button:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-}
 @media (prefers-reduced-motion: no-preference) {
-  .harbor-categories button:active:not(:disabled) {
-    transform: scale(0.96);
-  }
   .harbor-category-beam {
     display: block;
     animation: harbor-category-beam 520ms ease-out both;

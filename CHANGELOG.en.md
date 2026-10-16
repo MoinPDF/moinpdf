@@ -10,6 +10,68 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Project documentation and release workflows focus on standalone Docker operation.
 - Platform-specific installation packages and integration tests have moved to the responsible external package repository.
 
+## 0.14.3 – 16 October 2026
+
+- Docker update from 0.13.26 with a local document editor: formatted text, images,
+  tables, page preview, PDF export and transferable .moindoc drafts.
+- Includes the 0.14.2 usability improvements: restored tool selection, editable
+  result filenames, size summaries, duplicate detection, intent search and file sharing.
+- Document creation and draft import also work over local HTTP addresses used by
+  Umbrel. Random document identifiers no longer require a secure context.
+- Complete React dependencies for draft persistence and result sharing.
+- PDF results remain available after export and when leaving page preview;
+  only actual document changes invalidate the previous output.
+- Draft actions retain accessible names on small screens.
+- Switching between blank and saved drafts no longer reads a destroyed editor;
+  document contents and separate undo histories are preserved.
+- Returning to tool selection restores keyboard focus to the original control
+  even when the same tool is also listed as a search suggestion.
+- Docker release retains all four services and adds production checks for the
+  document editor, drafts, filenames, duplicate uploads and tool navigation.
+
+## 0.14.2 — 2026-10-16
+
+- Returning to quick access or the tool catalogue restores the category, search,
+  scroll position and keyboard focus within the current session.
+- Edit output filenames beside the download button while retaining the actual
+  extension. Renaming does not reload the preview or reset its current page.
+- Consistent format, page-count and size summaries, with size comparisons for
+  compression and optimization.
+- Content-based duplicate upload detection, including repeated files in one
+  selection. Skip or add anyway, optionally remembering that choice for the batch.
+- Expanded everyday search phrases in German and English.
+- Share generated files with their edited names through the native share sheet on
+  supported devices. Downloads remain available when sharing is unsupported.
+- Added DOM and functional coverage for interactions, cancellation and project transfer.
+
+## 0.14.1 — 2026-10-16
+
+- On mobile, New document and Projects are small, circular icon buttons next
+  to each other in the existing header. Removed the additional second row.
+- New document remains immediately to the left of Projects, with accessible
+  button labels in German and English.
+
+## 0.14.0 — 2026-10-16
+
+- New document button immediately to the left of Projects, opening a dedicated
+  editor without an upload or a tool catalogue entry.
+- Rich text, three font families, headings, lists, images, tables, page breaks,
+  paper formats, margins, headers, footers and page numbers.
+- Local draft autosave and management, plus editable .moindoc files for backup
+  and transfer between devices.
+- Local PDF download with selectable text and a separate, accurate page preview.
+  Responsive editing, light/dark appearance and German/English interface.
+- Regression tests exercise editor commands, safe paste, draft persistence and
+  actual PDF output, including complete multi-page documents.
+
+## 0.13.27 — 2026-10-16
+
+- Removed the extra sailor photo banner after opening documents. The ready
+  message now appears with a subtle green check directly in the file overview:
+  next to the file information on desktop and below it on mobile.
+- Singular and plural messages and German/English translations are preserved.
+  The homepage header photo is unchanged.
+
 ## 0.13.26 — 2026-10-16
 
 - Fixed PDF text extraction in Safari. OCR, text editing, content comparison,
