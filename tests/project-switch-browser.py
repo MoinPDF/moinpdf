@@ -43,7 +43,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_label('Projektname', exact=True).fill('Project lifecycle')
         page.get_by_role('button', name='Projekt speichern', exact=True).click()
         expect(page.get_by_role('dialog').get_by_role('status').filter(has_text='Alles an Bord – gespeichert.')).to_be_visible()
+        # The save notice precedes the asynchronous list refresh. Escape is
+        # intentionally ignored while that operation still locks the dialog.
+        expect(page.get_by_role('button', name='Neuen Arbeitsstand speichern', exact=True)).to_be_enabled()
         page.keyboard.press('Escape')
+        expect(page.get_by_role('dialog')).to_have_count(0)
         page.get_by_role('button', name='Seiten organisieren', exact=True).click()
         page.get_by_role('button', name='Seite 1 entfernen', exact=True).click()
         projects.click()
