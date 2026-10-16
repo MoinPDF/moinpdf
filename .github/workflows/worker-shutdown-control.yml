@@ -1,0 +1,27 @@
+name: Nested worker shutdown control
+on:
+  push:
+    branches: [investigate/office-worker-shutdown]
+    paths:
+      - '.github/workflows/worker-shutdown-control.yml'
+      - 'tests/research/worker-shutdown-repro.py'
+permissions:
+  contents: read
+jobs:
+  control:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the original test browser
+        run: |
+          python -m pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Test the shutdown sequence independently of MoinPDF
+        run: python tests/research/worker-shutdown-repro.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nested-worker-control
+          path: web-evidence/
+          retention-days: 14
