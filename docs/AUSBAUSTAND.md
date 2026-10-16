@@ -64,7 +64,7 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
 ## Prüfung und Freigabe
 
-33 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
+36 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
 Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
 Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
 Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche

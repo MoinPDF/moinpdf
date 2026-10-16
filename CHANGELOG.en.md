@@ -12,9 +12,16 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## 0.14.3 – 16 October 2026
 
+- Docker update from 0.13.26 with a local document editor: formatted text, images,
+  tables, page preview, PDF export and transferable .moindoc drafts.
+- Includes the 0.14.2 usability improvements: restored tool selection, editable
+  result filenames, size summaries, duplicate detection, intent search and file sharing.
 - Document creation and draft import also work over local HTTP addresses used by
   Umbrel. Random document identifiers no longer require a secure context.
 - Complete React dependencies for draft persistence and result sharing.
+- PDF results remain available after export and when leaving page preview;
+  only actual document changes invalidate the previous output.
+- Draft actions retain accessible names on small screens.
 - Docker release retains all four services and adds production checks for the
   document editor, drafts, filenames, duplicate uploads and tool navigation.
 

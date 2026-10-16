@@ -409,7 +409,8 @@ export function DocumentWriter({
     return () => window.removeEventListener('keydown', key);
   }, []);
   useEffect(() => {
-    editor?.setEditable(!busy && mode === 'edit');
+    // Locking the editor for export/preview must not count as a content edit.
+    editor?.setEditable(!busy && mode === 'edit', false);
     if (editor) editor.view.dom.setAttribute('aria-label', t('Dokumentinhalt', 'Document content'));
   }, [editor, busy, mode, t]);
 
@@ -562,6 +563,8 @@ export function DocumentWriter({
           <button
             type="button"
             className="writer-secondary"
+            aria-label={t('Entwürfe', 'Drafts')}
+            title={t('Entwürfe', 'Drafts')}
             disabled={busy}
             onClick={() => void showDrafts()}
           >
@@ -571,6 +574,8 @@ export function DocumentWriter({
           <button
             type="button"
             className="writer-secondary writer-save-button"
+            aria-label={t('Entwurf speichern', 'Save draft')}
+            title={t('Entwurf speichern', 'Save draft')}
             disabled={busy}
             onClick={() => void save()}
           >

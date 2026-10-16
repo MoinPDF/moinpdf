@@ -84,6 +84,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             filename.press('Enter')
             expect(link).to_have_attribute('download', 'Umbrel-Prüfung.pdf')
             assert link.get_attribute('href') == before, 'Rename replaced the generated PDF'
+            if en:
+                page.set_viewport_size({'width': 320, 'height': 950})
+                no_overflow(page)
+                page.screenshot(path=str(out / 'writer-result-en-320.png'), full_page=True)
+                page.set_viewport_size({'width': 390, 'height': 950})
             with page.expect_download() as renamed:
                 page.get_by_role('button', name='Download as PDF' if en else 'Als PDF herunterladen', exact=True).click()
             assert renamed.value.suggested_filename == 'Umbrel-Prüfung.pdf'
@@ -113,6 +118,14 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             with pymupdf.open(target) as pdf:
                 assert 'Updated output after an edit.' in pdf[0].get_text()
                 assert 'created over local HTTP' not in pdf[0].get_text()
+            page.get_by_role('button', name='Page preview' if en else 'Seitenvorschau', exact=True).click()
+            expect(page.locator('.writer-pdf-page')).to_be_visible()
+            expect(page.locator('.writer-workspace')).to_have_attribute('aria-busy', 'false')
+            expect(result).to_be_visible()
+            preview_url = link.get_attribute('href')
+            page.get_by_role('button', name='Edit' if en else 'Bearbeiten', exact=True).click()
+            expect(editor).to_be_visible()
+            expect(link).to_have_attribute('href', preview_url)
             assert not errors, errors
             checks.append(f'{language}/{width}px: HTTP create/import, PDF readback, rename/cancel, export invalidation, draft file and reload')
             context.close()

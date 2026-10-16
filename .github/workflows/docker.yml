@@ -140,14 +140,14 @@ jobs:
           MOINPDF_REQUIRE_SERVER: "1"
           MOINPDF_TEST_NONLOCAL_HTTP: "1"
         run: |
-          python tests/xfa-browser.py
-          python tests/published-web-smoke.py
-          python tests/release-usability-browser.py
-          python tests/hafenlicht-browser.py
-          python tests/harbor-layout-browser.py
-          python tests/website-browser.py
-          MOINPDF_DOCUMENTATION_URL=http://localhost:8080 python tests/language-smoke.py
-          MOINPDF_DOCUMENTATION_URL=http://localhost:8080 python tests/documentation-smoke.py
+          status=0
+          for test in xfa-browser published-web-smoke release-usability-browser hafenlicht-browser harbor-layout-browser website-browser; do
+            python "tests/$test.py" || status=1
+          done
+          for test in language-smoke documentation-smoke; do
+            MOINPDF_DOCUMENTATION_URL=http://localhost:8080 python "tests/$test.py" || status=1
+          done
+          exit "$status"
       - name: Retain browser evidence
         if: always()
         uses: actions/upload-artifact@v4

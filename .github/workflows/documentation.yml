@@ -64,10 +64,11 @@ jobs:
       - name: Verify documentation, mobile layout, printing and retained PDF
         run: |
           python -m http.server 8765 --bind 127.0.0.1 --directory dist/selfhost > "$RUNNER_TEMP/docs-http.log" 2>&1 &
-          python tests/hafenlicht-browser.py
-          python tests/harbor-layout-browser.py
-          python tests/language-smoke.py
-          python tests/documentation-smoke.py
+          status=0
+          for test in hafenlicht-browser harbor-layout-browser language-smoke documentation-smoke; do
+            python "tests/$test.py" || status=1
+          done
+          exit "$status"
       - name: Retain screenshots and verification report
         if: always()
         uses: actions/upload-artifact@v4

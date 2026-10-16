@@ -69,7 +69,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             if theme == 'dark':
                 page.locator('.theme-toggle').click()
                 expect(page.locator('html')).to_have_class('dark')
-            for width in (320, 390, 600, 768, 1000, 1024, 1440, 1920):
+            for width in (320, 390, 600, 768, 1000, 1024, 1100, 1101, 1440, 1920):
                 page.set_viewport_size({'width':width, 'height':1000 if width > 1000 else 844})
                 geometry = home_geometry(page, width)
                 within_viewport(page, f'home {theme} {width}')
@@ -88,8 +88,10 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     available = geometry['available']
                     assert abs(image['width'] - available) <= 1, (theme, width, image, available)
                 assert page.locator('.harbor-photo img').evaluate('(img) => getComputedStyle(img).objectFit') == 'contain'
-                nav = page.locator('.harbor-desktop-nav' if width > 1000 else '.harbor-mobile-nav')
-                expect(nav).to_be_visible()
+                nav = page.locator('.harbor-desktop-nav:visible, .harbor-mobile-nav:visible')
+                expect(nav).to_have_count(1)
+                expect(nav.get_by_role('button', name='Start', exact=True)).to_be_visible()
+                expect(nav.get_by_role('button', name='Werkzeuge', exact=True)).to_be_visible()
                 if width in (390, 768, 1440):
                     page.screenshot(path=str(out/f'harbor-home-{width}-{theme}.png'), full_page=True)
                 checks.append(f'{width}px {theme}: image, upload, search, cards, navigation, no overflow')

@@ -19,9 +19,16 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## 0.14.3 – 16. Oktober 2026
 
+- Docker-Update von 0.13.26 mit lokalem Dokumenteditor: formatierter Text, Bilder,
+  Tabellen, Seitenvorschau, PDF-Export und übertragbare .moindoc-Entwürfe.
+- Enthält die Bedienverbesserungen aus 0.14.2: erhaltene Werkzeugauswahl, umbenennbare
+  Ergebnisdateien, Größenangaben, Duplikaterkennung, Alltagssuche und Dateifreigabe.
 - Dokumenteditor und Entwurfsimport funktionieren auch über lokale HTTP-Adressen,
   wie sie bei Umbrel verwendet werden. Zufällige Kennungen benötigen kein HTTPS.
 - Entwurfsspeicherung und Ergebnisfreigabe mit vollständigen React-Abhängigkeiten.
+- PDF-Ergebnisse bleiben nach dem Export und beim Wechsel aus der Seitenvorschau
+  erhalten; nur echte Dokumentänderungen verwerfen die bisherige Ausgabe.
+- Entwurfsaktionen bleiben auf kleinen Bildschirmen für Screenreader benannt.
 - Docker-Release mit allen vier bestehenden Diensten und neuen Produktionstests
   für Dokumenteditor, Entwürfe, Dateinamen, Duplikate und Werkzeugnavigation.
 

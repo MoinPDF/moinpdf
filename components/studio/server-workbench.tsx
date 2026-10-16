@@ -1021,7 +1021,15 @@ function StandardServerWorkbench({
               filename={resultName}
               onRename={renameResult}
               fresh={resultFresh}
-              label={t('Herunterladen')}
+              label={
+                result.filename.toLowerCase().endsWith('.docx')
+                  ? ui('Word herunterladen')
+                  : result.kind === 'pdf'
+                    ? t('PDF herunterladen')
+                    : result.kind === 'zip'
+                      ? t('ZIP herunterladen')
+                      : t('Ergebnis herunterladen')
+              }
             />
             {result.kind === 'pdf' && (
               <Button
