@@ -122,4 +122,5 @@ for (const paper of ['A4', 'A5', 'LETTER']) for (const landscape of [false, true
 }
 globalThis.fetch = originalFetch;
 dom.window.close();
+await import('./writer-ui-smoke.mjs');
 console.log('PASS: real editor formatting/undo/table schema; safe paste; local draft save/reopen/delete; draft file roundtrip; selectable multilingual PDF text, fonts, lists, tables, image, explicit and automatic page breaks, repeated headers/footers, complete multi-page content; empty documents in all 6 page formats/orientations.');

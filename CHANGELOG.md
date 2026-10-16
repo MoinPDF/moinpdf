@@ -29,6 +29,8 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - PDF-Ergebnisse bleiben nach dem Export und beim Wechsel aus der Seitenvorschau
   erhalten; nur echte Dokumentänderungen verwerfen die bisherige Ausgabe.
 - Entwurfsaktionen bleiben auf kleinen Bildschirmen für Screenreader benannt.
+- Ein Wechsel zwischen leeren und gespeicherten Entwürfen greift nicht mehr auf
+  einen bereits geschlossenen Editor zu; Inhalt und getrennte Undo-Verläufe bleiben erhalten.
 - Docker-Release mit allen vier bestehenden Diensten und neuen Produktionstests
   für Dokumenteditor, Entwürfe, Dateinamen, Duplikate und Werkzeugnavigation.
 

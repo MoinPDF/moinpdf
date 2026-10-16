@@ -96,6 +96,7 @@ def probe_file_access():
         driver.find_element(By.CSS_SELECTOR,'input').send_keys(str(path.resolve()))
         result=driver.execute_async_script('''const done=arguments[arguments.length-1];
           const file=document.querySelector('input').files[0];
+          if(!file){done({error:'SafariDriver returned without selecting a file',name:'NoNativeFile'});return;}
           file.arrayBuffer().then(b=>done({text:new TextDecoder().decode(b),bytes:b.byteLength}))
             .catch(e=>done({error:e.message,name:e.name}));''')
         result['directory']=str(folder);probes.append(result)

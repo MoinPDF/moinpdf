@@ -22,6 +22,8 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - PDF results remain available after export and when leaving page preview;
   only actual document changes invalidate the previous output.
 - Draft actions retain accessible names on small screens.
+- Switching between blank and saved drafts no longer reads a destroyed editor;
+  document contents and separate undo histories are preserved.
 - Docker release retains all four services and adds production checks for the
   document editor, drafts, filenames, duplicate uploads and tool navigation.
 

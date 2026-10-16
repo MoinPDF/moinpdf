@@ -349,8 +349,9 @@ export function DocumentWriter({
   );
   const selected = useEditorState({
     editor,
+    // A document switch can briefly retain the previous editor's state snapshot.
     selector: ({ editor: e }) =>
-      e
+      e && !e.isDestroyed
         ? {
             bold: e.isActive('bold'),
             italic: e.isActive('italic'),
