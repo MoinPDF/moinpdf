@@ -79,8 +79,7 @@ with sync_playwright() as api,tempfile.TemporaryDirectory() as temporary:
 
     def accessible(page):
         fresh(page);tool(page,'Barrierefreiheit prüfen')
-        page.get_by_role('combobox',name='Barrierefreiheit: Aktion',exact=True).click()
-        page.get_by_role('option',name='Strukturiertes PDF neu erstellen',exact=True).click()
+        page.get_by_label('Barrierefreiheit: Aktion',exact=True).select_option('create')
         page.get_by_role('button',name='Text der ausgewählten PDF anhängen',exact=True).click()
         expect(page.get_by_label('Text für Block 2',exact=True)).to_have_value(re.compile('FIREFOX ORIGINAL 123'))
         expect(page.get_by_label('Text für Block 3',exact=True)).to_have_value(re.compile('ZWEITE SEITE BLEIBT ERHALTEN'))

@@ -301,7 +301,7 @@ try:
 
         def accessible():
             fresh(source);tool('Barrierefreiheit prüfen')
-            choice('Barrierefreiheit: Aktion','Strukturiertes PDF neu erstellen')
+            Select(label('Barrierefreiheit: Aktion')).select_by_value('create')
             click(button('Text der ausgewählten PDF anhängen'))
             WebDriverWait(driver,40).until(lambda _:len(driver.find_elements(By.CSS_SELECTOR,'.accessible-block'))==3)
             assert 'SAFARI ORIGINAL 123' in label('Text für Block 2').get_attribute('value')
