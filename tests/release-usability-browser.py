@@ -197,7 +197,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(categories.get_by_role('button', name='Seiten', exact=True)).to_have_attribute('aria-pressed', 'true')
         expect(search).to_have_value('Seite rausnehmen')
         page.wait_for_function('(top) => Math.abs(scrollY - top) <= 2', arg=scroll)
-        assert page.evaluate('document.activeElement.dataset.toolId') == 'organize'
+        expect(card).to_be_focused()
         checks.append('Catalogue category/query/scroll/focus restoration; shared PDF bytes, renamed filename, click activation and cancellation')
 
         page.locator('.harbor-desktop-nav').get_by_role('button', name='Start', exact=True).click()

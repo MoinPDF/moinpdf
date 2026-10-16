@@ -354,6 +354,7 @@ function Browser({ surface, onChoose }) {
       },
       'category',
     ),
+    h('div', { 'data-tool-id': 'sign', role: 'option' }, 'Non-focusable search suggestion'),
     h('button', { 'data-tool-id': 'sign', onClick: onChoose }, 'choose'),
   );
 }
@@ -392,7 +393,7 @@ await inputText(document.querySelector('[aria-label="Query"]'), 'unterschreiben'
 await click(document.querySelector('[data-browser-categories]'));
 scroll = { top: 640, left: 0 };
 document.querySelector('[data-browser-categories]').scrollLeft = 84;
-await click(document.querySelector('[data-tool-id="sign"]'));
+await click(document.querySelector('button[data-tool-id="sign"]'));
 assert.equal(scroll.top, 0);
 await click(document.querySelector('#back'));
 await flush();
@@ -405,7 +406,7 @@ assert.equal(document.activeElement.dataset.toolId, 'sign');
 await act(async () => changeSurface('all'));
 await inputText(document.querySelector('[aria-label="Query"]'), 'smaller');
 scroll = { top: 1050, left: 0 };
-await click(document.querySelector('[data-tool-id="sign"]'));
+await click(document.querySelector('button[data-tool-id="sign"]'));
 await click(document.querySelector('#back'));
 await flush();
 assert.equal(scroll.top, 1050);

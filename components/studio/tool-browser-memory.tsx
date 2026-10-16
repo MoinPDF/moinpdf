@@ -18,6 +18,7 @@ type Entry = {
   left: number;
   categoryLeft: number;
   tool: string;
+  focusIndex: number;
 };
 type Memory = { home: Entry; all: Entry; origin: Surface; restore: Surface | null };
 const entry = (category: string): Entry => ({
@@ -27,6 +28,7 @@ const entry = (category: string): Entry => ({
   left: 0,
   categoryLeft: 0,
   tool: '',
+  focusIndex: 0,
 });
 const Context = createContext<RefObject<Memory> | null>(null);
 
@@ -48,13 +50,14 @@ export function useToolNavigation() {
   const memory = useMemory();
   return {
     capture(surface: Surface, tool: string) {
+      const root = document.querySelector(`[data-tool-browser="${surface}"]`);
+      const targets = Array.from(root?.querySelectorAll(`[data-tool-id="${tool}"]`) || []);
       Object.assign(memory.current[surface], {
         top: window.scrollY,
         left: window.scrollX,
         tool,
-        categoryLeft:
-          document.querySelector(`[data-tool-browser="${surface}"] [data-browser-categories]`)
-            ?.scrollLeft || 0,
+        focusIndex: Math.max(0, targets.indexOf(document.activeElement as Element)),
+        categoryLeft: root?.querySelector('[data-browser-categories]')?.scrollLeft || 0,
       });
       memory.current.origin = surface;
     },
@@ -77,8 +80,16 @@ export function useToolBrowserState(surface: Surface) {
     const frame = requestAnimationFrame(() => {
       memory.current.restore = null;
       const root = document.querySelector(`[data-tool-browser="${surface}"]`);
-      const target = root?.querySelector<HTMLElement>(`[data-tool-id="${saved.tool}"]`);
-      target?.focus({ preventScroll: true });
+      const targets = Array.from(
+        root?.querySelectorAll<HTMLElement>(`[data-tool-id="${saved.tool}"]`) || [],
+      );
+      const preferred = targets.splice(saved.focusIndex, 1)[0];
+      // Search suggestions and tiles can represent the same tool. Restore the
+      // original control, falling back past suggestions that cannot take focus.
+      for (const target of [preferred, ...targets]) {
+        target?.focus({ preventScroll: true });
+        if (target && document.activeElement === target) break;
+      }
       const categories = root?.querySelector('[data-browser-categories]');
       if (categories) categories.scrollLeft = saved.categoryLeft;
       window.scrollTo({ top: saved.top, left: saved.left, behavior: 'instant' });
