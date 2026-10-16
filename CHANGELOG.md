@@ -17,6 +17,18 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Projektdokumentation und Veröffentlichungsabläufe auf den eigenständigen Docker-Betrieb ausgerichtet.
 - Plattformspezifische Installationspakete und Integrationstests in das zuständige externe Paket-Repository ausgelagert.
 
+## 0.14.5 – 16. Oktober 2026
+
+- Nach lokaler Office-Konvertierung oder Abbruch beendet der Browser den gesamten
+  Worker-Verbund über den Hauptworker. Das vorherige einzelne Beenden der
+  untergeordneten Threads konnte in Chromium native Threads hängen lassen.
+- Die Dokumentbereinigung, die begrenzte Wartezeit bei Abbruch und die lokale
+  PDF-Prüfung bleiben erhalten. Wiederholte Konvertierungen werden zusätzlich
+  auf tatsächlich verbliebene Betriebssystem-Threads geprüft.
+- Eine eigenständige Reproduktion trennt das Browserproblem von LibreOffice;
+  Office-Tests prüfen weiterhin echte PDF-Inhalte, Bilder, Tabellen, Offline-Cache
+  und wiederholtes Abbrechen mit anschließendem Neustart.
+
 ## 0.14.4 – 16. Oktober 2026
 
 - Mobile Glasleiste mit Start, Werkzeugen, Suche, Projekten und Mehr. Die Lupe

@@ -10,6 +10,17 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Project documentation and release workflows focus on standalone Docker operation.
 - Platform-specific installation packages and integration tests have moved to the responsible external package repository.
 
+## 0.14.5 – 16 October 2026
+
+- After local Office conversion or cancellation, the browser now terminates the
+  complete worker tree through its owner. Explicitly terminating the child
+  threads first could strand native worker threads in Chromium.
+- Document cleanup, bounded cancellation and local PDF validation remain intact.
+  Repeated conversions now also check for surviving operating-system threads.
+- A standalone reproduction separates the browser behavior from LibreOffice;
+  Office tests still validate actual PDF text, images, tables, offline caching
+  and repeated cancellation followed by a fresh conversion.
+
 ## 0.14.4 – 16 October 2026
 
 - Mobile glass navigation with Home, Tools, Search, Projects and More. The search
