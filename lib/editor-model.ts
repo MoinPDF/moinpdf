@@ -1,3 +1,4 @@
+import { readPdfText } from './pdf-text';
 import { StandardFonts } from 'pdf-lib';
 import type { Source, PageItem } from './pdf-engine';
 import type { Mark, Rect } from './studio-engine';
@@ -77,7 +78,7 @@ export async function readTextTargets(
 ): Promise<{ targets: TextTarget[]; width: number; height: number }> {
   const page = await source.pdf.getPage(item.index + 1),
     viewport = page.getViewport({ scale: 1, rotation: (page.rotate + item.rotation) % 360 }),
-    content = await page.getTextContent(),
+    content = await readPdfText(page),
     v = viewport.transform;
   const targets: TextTarget[] = [];
   for (const [i, part] of content.items.entries()) {

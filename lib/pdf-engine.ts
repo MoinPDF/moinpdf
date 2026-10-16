@@ -1,3 +1,4 @@
+import { readPdfText } from './pdf-text';
 import { PDFDocument, PDFDict, PDFName, StandardFonts, degrees, rgb, type PDFPage } from 'pdf-lib';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Worker } from 'tesseract.js';
@@ -244,7 +245,7 @@ export async function renderPage(
 }
 export async function extractPageText(source: Source, item: PageItem) {
   const page = await source.pdf.getPage(item.index + 1);
-  const content = await page.getTextContent();
+  const content = await readPdfText(page);
   let lastY: number | undefined;
   let text = '';
   for (const item of content.items) {

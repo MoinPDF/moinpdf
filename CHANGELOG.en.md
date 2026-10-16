@@ -10,6 +10,14 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Project documentation and release workflows focus on standalone Docker operation.
 - Platform-specific installation packages and integration tests have moved to the responsible external package repository.
 
+## 0.13.26 — 2026-10-16
+
+- Fixed PDF text extraction in Safari. OCR, text editing, content comparison,
+  Word, Markdown, HTML, EPUB and JSON exports, and text import for structured
+  PDFs read text streams without requiring asynchronous stream iteration.
+- Font information, text positions, language and XFA form text are preserved.
+  Regression tests cover multi-chunk text streams, empty scans and failures.
+
 ## 0.13.25 — 2026-10-15
 
 - Reviewed all 4,513 existing language entries for technical and linguistic accuracy; improved around 2,000 translations and added current messages. Tool text, help, documentation and information pages use the same catalogue.

@@ -22,7 +22,7 @@ Object.assign(globalThis, {
 const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
 const assets = dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache/compression-presets', { recursive: true });
-for (const name of ['ocr-languages', 'pdf-engine', 'image-codecs']) {
+for (const name of ['pdf-text','ocr-languages', 'pdf-engine', 'image-codecs']) {
   const code = ts
     .transpileModule(await readFile(`lib/${name}.ts`, 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 },

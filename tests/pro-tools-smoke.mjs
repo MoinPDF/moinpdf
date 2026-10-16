@@ -15,7 +15,7 @@ class BrowserWorker{constructor(){this.worker=new NodeWorker(new URL('./security
 globalThis.Worker=BrowserWorker;
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['ocr-languages','pdf-engine','pro-tools','pdf-security','advanced-types','local-projects','image-codecs'])await writeFile(`.cache/${name}-pro-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-pro-test.mjs${q}`));
+for(const name of ['pdf-text','ocr-languages','pdf-engine','pro-tools','pdf-security','advanced-types','local-projects','image-codecs'])await writeFile(`.cache/${name}-pro-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-pro-test.mjs${q}`));
 const p=await import('../.cache/pro-tools-pro-test.mjs'),projects=await import('../.cache/local-projects-pro-test.mjs'),images=await import('../.cache/image-codecs-pro-test.mjs'),proxies=[];
 const ctx={signal:new AbortController().signal,report:()=>{}};
 async function source(bytes,name='Test.pdf'){bytes=new Uint8Array(bytes);const pdf=await pdfjs.getDocument({data:bytes.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;proxies.push(pdf);return{id:crypto.randomUUID(),name,bytes,pdf,kind:'pdf',size:bytes.length};}

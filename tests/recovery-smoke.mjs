@@ -17,7 +17,7 @@ Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(nam
 globalThis.Worker=class{constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['ocr-languages','reading-export','pdf-recovery','pdf-security','image-codecs','pdf-engine','scan-split']){
+for(const name of ['pdf-text','ocr-languages','reading-export','pdf-recovery','pdf-security','image-codecs','pdf-engine','scan-split']){
  let code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-recovery-test.mjs${q}`);
  if(name==='pdf-engine')code=code.replace("'/vendor/pdf/pdf.worker.min.mjs'",JSON.stringify(assets+'/legacy/build/pdf.worker.mjs')).replace("'/vendor/pdf/standard_fonts/'",JSON.stringify(assets+'/standard_fonts/'));
  await writeFile(`.cache/${name}-recovery-test.mjs`,code);
@@ -51,7 +51,7 @@ try{
   if(format==='html'){assert(text.includes('<h1>Rechnung</h1>'));assert(text.includes('lang="de"'));assert(text.includes('Moin &amp; Grüße'));assert(text.includes('href="#seite-2"'));}
  }
  await writeFile('.cache/reading-roundtrip.epub',epub);
- await assert.rejects(()=>exportReading({...input,pdf:{numPages:1,getPage:async()=>({getTextContent:async()=>({items:[]})})}},'epub','','de',ctx),/OCR/);
+ await assert.rejects(()=>exportReading({...input,pdf:{numPages:1,getPage:async()=>({streamTextContent:()=>new ReadableStream({start(c){c.enqueue({items:[],styles:{},lang:null});c.close();}})})}},'epub','','de',ctx),/OCR/);
  const uuidDescriptor=Object.getOwnPropertyDescriptor(crypto,'randomUUID');
  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:undefined});
  try {

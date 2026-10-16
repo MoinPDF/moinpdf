@@ -5,9 +5,9 @@ import ts from 'typescript';
 import { PDFDocument, PDFName, StandardFonts, degrees } from 'pdf-lib';
 import JSZip from 'jszip';
 await mkdir('.cache', {recursive:true});
-for (const name of ['ocr-languages', 'pdf-engine']) {
+for (const name of ['pdf-text','ocr-languages', 'pdf-engine']) {
   const source = await readFile(`lib/${name}.ts`, 'utf8');
-  await writeFile(`.cache/${name}-test.mjs`, ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText.replace(/(['"])\.\/ocr-languages\1/g, '$1./ocr-languages-test.mjs$1'));
+  await writeFile(`.cache/${name}-test.mjs`, ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText.replace(/(['"])\.\/([a-z-]+)\1/g, (_,q,n)=>`${q}./${n}-test.mjs${q}`));
 }
 const { runJob, selectRange, makeDemoFile } = await import('../.cache/pdf-engine-test.mjs');
 const a = await PDFDocument.create(), b = await PDFDocument.create();

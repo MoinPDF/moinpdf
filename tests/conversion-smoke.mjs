@@ -4,9 +4,9 @@ import ts from 'typescript';
 import JSZip from 'jszip';
 
 await mkdir('.cache',{recursive:true});
-for(const name of ['import-routing','word-export']){
+for(const name of ['pdf-text','import-routing','word-export']){
  const source=await readFile(`lib/${name}.ts`,'utf8');
- await writeFile(`.cache/${name}-test.mjs`,ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+ await writeFile(`.cache/${name}-test.mjs`,ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/pdf-text\1/g, '$1./pdf-text-test.mjs$1'));
 }
 const {conversionToolForFile}=await import('../.cache/import-routing-test.mjs');
 for(const ext of ['doc','docx','xls','xlsx','ppt','pptx','odt','ods','odp','pages','vsd','vsdx','pub'])assert.equal(conversionToolForFile(`Büro.${ext.toUpperCase()}`),'office-pdf');
@@ -21,7 +21,7 @@ const {createTextWordFile}=await import('../.cache/word-export-test.mjs');
 const pages=[[
  {str:'Moin & Grüße',hasEOL:true},{str:'Rechnung',hasEOL:false},{str:'335,00 EUR',hasEOL:true}
 ],[{str:'Zweite Seite',hasEOL:true}]];
-const document={name:'Muster.pdf',pdf:{numPages:2,getPage:async n=>({getTextContent:async()=>({items:pages[n-1]})})}};
+const document={name:'Muster.pdf',pdf:{numPages:2,getPage:async n=>({streamTextContent:()=>new ReadableStream({start(c){c.enqueue({items:pages[n-1],styles:{},lang:null});c.close();}})})}};
 const output=await createTextWordFile(document,new AbortController().signal);
 assert.equal(output.filename,'Muster.docx');
 const zip=await JSZip.loadAsync(await output.blob.arrayBuffer());
@@ -32,5 +32,5 @@ assert.match(xml,/Rechnung 335,00 EUR/);
 assert.match(xml,/Zweite Seite/);
 assert.equal((xml.match(/<w:sectPr>/g)||[]).length,2,'Each source page retains its section');
 await assert.rejects(()=>createTextWordFile(document,AbortSignal.abort()),{name:'AbortError'});
-await assert.rejects(()=>createTextWordFile({name:'Scan.pdf',pdf:{numPages:1,getPage:async()=>({getTextContent:async()=>({items:[]})})}},new AbortController().signal),/OCR/);
+await assert.rejects(()=>createTextWordFile({name:'Scan.pdf',pdf:{numPages:1,getPage:async()=>({streamTextContent:()=>new ReadableStream({start(c){c.enqueue({items:[],styles:{},lang:null});c.close();}})})}},new AbortController().signal),/OCR/);
 console.log('PASS: direct Office/email/HTML import, format direction, valid DOCX, Unicode, page boundaries, cancellation and scanned-PDF guidance.');
