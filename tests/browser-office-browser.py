@@ -17,12 +17,24 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     folder = Path(temp)
     subprocess.run([sys.executable, str(root/'tests/research/docx-fixture.py'), str(folder/'fixtures')], check=True)
     subprocess.run([sys.executable, str(root/'tests/research/matbee/generate-rich-fixtures.py')], cwd=folder, check=True)
-    browser = api.chromium.launch()
+    launch_options = {}
+    if os.environ.get('MOINPDF_BROWSER_CHANNEL'):
+        launch_options['channel'] = os.environ['MOINPDF_BROWSER_CHANNEL']
+    browser = api.chromium.launch(**launch_options)
+    print('Browser: ' + browser.version + '; channel=' + str(launch_options), flush=True)
     browser_session = browser.new_browser_cdp_session()
     page = browser.new_page(viewport={'width':1440,'height':1000}, accept_downloads=True)
     page.set_default_timeout(180000)
     errors, uploads, external, results, console = [], [], [], [], []
     page.on('pageerror', lambda error: errors.append(str(error)))
+    lifecycle, target_events = [], []
+    page.on('worker', lambda worker: (
+        lifecycle.append({'event': 'created', 'time': time.monotonic(), 'url': worker.url}),
+        worker.on('close', lambda url=worker.url: lifecycle.append({'event': 'closed', 'time': time.monotonic(), 'url': url}))
+    ))
+    browser_session.on('Target.targetCreated', lambda event: target_events.append({'event': 'created', 'time': time.monotonic(), **event}))
+    browser_session.on('Target.targetDestroyed', lambda event: target_events.append({'event': 'destroyed', 'time': time.monotonic(), **event}))
+    browser_session.send('Target.setDiscoverTargets', {'discover': True})
     def log(message):
         console.append(message.type+': '+message.text[:1500])
         del console[:-100]
@@ -31,16 +43,33 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     page.add_init_script('''(() => {
       const NativeWorker = window.Worker;
       window.__officeProgress = [];
+      window.__officeLifecycle = [];
+      let sequence = 0;
+      const identities = new WeakMap();
       window.Worker = class extends NativeWorker {
         constructor(url, options) {
           super(url, options);
           if (String(url).includes('/vendor/office/browser.worker.global.js')) {
+            const workerId = ++sequence;
+            identities.set(this, workerId);
+            window.__officeLifecycle.push({event: 'constructed', workerId, time: performance.now()});
             this.addEventListener('message', ({data}) => {
-              window.__officeProgress.push({time: performance.now(), type: data.type, progress: data.progress});
+              window.__officeProgress.push({time: performance.now(), workerId, type: data.type, id: data.id, progress: data.progress});
+              if (['loaded', 'ready', 'result', 'error'].includes(data.type))
+                window.__officeLifecycle.push({event: 'received', workerId, time: performance.now(), type: data.type, id: data.id});
             });
           }
         }
+        terminate() {
+          const workerId = identities.get(this);
+          if (workerId) window.__officeLifecycle.push({event: 'terminate-called', workerId, time: performance.now()});
+          const result = super.terminate();
+          if (workerId) window.__officeLifecycle.push({event: 'terminate-returned', workerId, time: performance.now()});
+          return result;
+        }
         postMessage(data, ...args) {
+          const workerId = identities.get(this);
+          if (workerId) window.__officeLifecycle.push({event: 'sent', workerId, time: performance.now(), type: data?.type, id: data?.id});
           if (data?.type === 'init' && data.sofficeJs) data = {...data, verbose: window.__officeVerbose};
           return super.postMessage(data, ...args);
         }
@@ -84,12 +113,60 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                 browser_session.send('Target.sendMessageToTarget', {'sessionId': session, 'message': json.dumps({'id': 3, 'method': 'Debugger.resume'})})
                 browser_session.send('Target.detachFromTarget', {'sessionId': session})
             browser_session.remove_listener('Target.receivedMessageFromTarget', received)
+    def office_targets():
+        return [t for t in browser_session.send('Target.getTargets')['targetInfos']
+                if t['type'] == 'worker' and '/vendor/office/' in t['url']]
+
+    def diagnose_survivors(targets):
+        """Inspect the failed state without changing the ten-second release assertion."""
+        responses, sessions = [], []
+        def received(event):
+            message = json.loads(event['message'])
+            if message.get('id') in (901, 902):
+                responses.append({'time': time.monotonic(), 'session': event['sessionId'], 'message': message})
+        browser_session.on('Target.receivedMessageFromTarget', received)
+        details = {'initialTargets': targets, 'pageLifecycle': page.evaluate('window.__officeLifecycle'),
+                   'playwrightLifecycle': lifecycle, 'targetEvents': list(target_events),
+                   'browserVersion': browser.version, 'channel': launch_options}
+        try:
+            details['processesBefore'] = browser_session.send('SystemInfo.getProcessInfo')
+            for target in targets:
+                try:
+                    session = browser_session.send('Target.attachToTarget', {'targetId': target['targetId'], 'flatten': False})['sessionId']
+                    sessions.append(session)
+                    for ident, method, params in (
+                        (901, 'Runtime.getHeapUsage', {}),
+                        (902, 'Runtime.evaluate', {'expression': "JSON.stringify({url:location.href, pool:typeof PThread==='undefined'?null:{running:PThread.runningWorkers.length,unused:PThread.unusedWorkers.length}, now:performance.now()})", 'returnByValue': True, 'timeout': 1000}),
+                    ):
+                        browser_session.send('Target.sendMessageToTarget', {'sessionId': session, 'message': json.dumps({'id': ident, 'method': method, 'params': params})})
+                except Exception as error:
+                    responses.append({'target': target['targetId'], 'error': str(error)})
+            page.wait_for_timeout(2000)
+            details['responses'] = responses
+            details['processesAfter'] = browser_session.send('SystemInfo.getProcessInfo')
+            details['afterProbe'] = office_targets()
+        finally:
+            for session in sessions:
+                try:
+                    browser_session.send('Target.detachFromTarget', {'sessionId': session})
+                except Exception:
+                    pass
+            browser_session.remove_listener('Target.receivedMessageFromTarget', received)
+        page.wait_for_timeout(1000)
+        details['afterProbeDetach'] = office_targets()
+        (evidence / 'office-worker-survivors.json').write_text(json.dumps(details, indent=2))
+        print('Office shutdown diagnosis: ' + json.dumps(details), flush=True)
+
     def wait_office_closed():
-        deadline = time.monotonic() + 10
+        started = time.monotonic()
+        deadline = started + 10
         while True:
-            workers = [t['url'] for t in browser_session.send('Target.getTargets')['targetInfos'] if t['type']=='worker' and '/vendor/office/' in t['url']]
-            if not workers: return workers
-            assert time.monotonic() < deadline, 'Office workers survived cleanup: ' + repr(workers)
+            workers = office_targets()
+            if not workers:
+                return []
+            if time.monotonic() >= deadline:
+                diagnose_survivors(workers)
+                raise AssertionError('Office workers survived cleanup: ' + repr(workers))
             page.wait_for_timeout(100)
     def choose(path, reload=True):
         if reload: page.goto(origin)
@@ -136,7 +213,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
             convert(folder/'fixtures'/name)
         for name in ['sample.docx','sample.xlsx','sample.pptx','sample.odt','sample.ods','sample.odp']:
             convert(root/'tests/fixtures/office'/name)
-        for cycle in range(15):
+        for cycle in range(int(os.environ.get('MOINPDF_OFFICE_CYCLES', '15'))):
             choose(folder/'fixtures/rich.docx', reload=(cycle == 0))
             page.get_by_role('button', name='PDF erstellen', exact=True).click()
             # Cancel the actual running WASM worker, after asset preparation.
@@ -151,7 +228,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         assert not uploads, uploads
         assert not external, external
         assert not errors, errors
-        (evidence/'browser-office.json').write_text(json.dumps({'results':results,'uploads':uploads,'external':external,'errors':errors}, ensure_ascii=False, indent=2))
+        (evidence/'browser-office.json').write_text(json.dumps({'results':results,'uploads':uploads,'external':external,'errors':errors,'browserVersion':browser.version,'pageLifecycle':page.evaluate('window.__officeLifecycle'),'playwrightLifecycle':lifecycle,'targetEvents':target_events}, ensure_ascii=False, indent=2))
         print('PASS: real browser Office conversion, cached binary assets, repeated abort/restart, no surviving Office workers and no document uploads.', flush=True)
     except BaseException:
         print(page.locator('body').inner_text()[:8000], flush=True)
@@ -159,7 +236,7 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         print('Office progress: '+json.dumps(page.evaluate('window.__officeProgress')), flush=True)
         print('Completed conversions: '+json.dumps(results,ensure_ascii=False), flush=True)
         print('Recent console: '+json.dumps(console), flush=True)
-        (evidence/'browser-office-failure.json').write_text(json.dumps({'results':results,'progress':page.evaluate('window.__officeProgress'),'console':console,'errors':errors}, ensure_ascii=False, indent=2))
+        (evidence/'browser-office-failure.json').write_text(json.dumps({'results':results,'progress':page.evaluate('window.__officeProgress'),'console':console,'errors':errors,'browserVersion':browser.version,'pageLifecycle':page.evaluate('window.__officeLifecycle'),'playwrightLifecycle':lifecycle,'targetEvents':target_events}, ensure_ascii=False, indent=2))
         page.screenshot(path=str(evidence/'browser-office-failure.png'), full_page=True)
         raise
     finally:
