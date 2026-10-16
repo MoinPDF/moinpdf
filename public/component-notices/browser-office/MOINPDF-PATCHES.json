@@ -1,5 +1,5 @@
 {
-  "id": "moinpdf-conversion-worker-10",
+  "id": "moinpdf-conversion-worker-11",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
   "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
@@ -30,9 +30,9 @@
       "after": "[MoinPDF Office] Disabled verbose LibreOffice diagnostics"
     },
     {
-      "description": "The pinned Emscripten build exposes PThread on the worker global, not Module. Destroy that pool explicitly, also while asynchronous initialization has not yet assigned E.",
+      "description": "Let the outer browser Worker.terminate() stop the complete worker tree after document cleanup. Explicitly terminating pthread children immediately before their owner can strand native DedicatedWorker threads in Chromium; this also reproduces with a standalone nested-worker control on Chromium 140 and 156.",
       "before": "if(E&&E.PThread?.terminateAllThreads)try{E.PThread.terminateAllThreads();}catch{}",
-      "after": "try{(E?.PThread||self.Module?.PThread||self.PThread)?.terminateAllThreads();}catch{}"
+      "after": ""
     },
     {
       "description": "Pure load/save conversion does not post editor input events. Leave the regular LibreOfficeKit yield path enabled.",

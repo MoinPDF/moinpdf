@@ -123,6 +123,22 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         return [t for t in browser_session.send('Target.getTargets')['targetInfos']
                 if t['type'] == 'worker' and '/vendor/office/' in t['url']]
 
+    def dedicated_threads():
+        # CDP can remove a worker target before its native thread has stopped.
+        # This Linux acceptance runner also verifies the actual OS threads.
+        threads = []
+        for process in bounded_cdp(browser_session, 'SystemInfo.getProcessInfo')['processInfo']:
+            if process['type'] != 'renderer':
+                continue
+            pid = int(process['id'])
+            for name in Path(f'/proc/{pid}/task').glob('*/comm'):
+                try:
+                    if name.read_text().strip().startswith('DedicatedWorker'):
+                        threads.append({'pid': pid, 'tid': int(name.parent.name)})
+                except (OSError, ValueError):
+                    pass
+        return threads
+
     def diagnose_survivors(targets):
         """Inspect the failed state without changing the ten-second release assertion."""
         responses, sessions = [], []
@@ -178,11 +194,12 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
         deadline = started + 10
         while True:
             workers = office_targets()
-            if not workers:
+            native = dedicated_threads()
+            if not workers and not native:
                 return []
             if time.monotonic() >= deadline:
                 diagnose_survivors(workers)
-                raise AssertionError('Office workers survived cleanup: ' + repr(workers))
+                raise AssertionError('Office workers survived cleanup: ' + repr({'targets': workers, 'nativeThreads': native}))
             page.wait_for_timeout(100)
     def choose(path, reload=True):
         if reload: page.goto(origin)

@@ -1,10 +1,5 @@
 name: Office worker lifecycle investigation
 on:
-  push:
-    branches: [investigate/office-worker-shutdown]
-    paths:
-      - '.github/workflows/office-lifecycle.yml'
-      - 'tests/browser-office-browser.py'
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,58 @@
+name: Office shutdown correction verification
+on:
+  push:
+    branches: [investigate/office-worker-shutdown]
+    paths:
+      - '.github/workflows/office-shutdown-fix.yml'
+      - 'public/component-notices/browser-office/MOINPDF-PATCHES.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  corrected-office:
+    name: Corrected Office (${{ matrix.playwright }}, ${{ matrix.channel }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - playwright: '1.55.0'
+            channel: headless-shell
+          - playwright: '1.64.0'
+            channel: chromium
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install browser and fixture tools
+        run: |
+          python -m pip install playwright==${{ matrix.playwright }} pymupdf==1.28.2 python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 Pillow==11.3.0
+          python -m playwright install --with-deps chromium
+      - name: Regenerate the checksum-verified Office runtime
+        run: node scripts/prepare-office-assets.mjs
+      - name: Apply only the Office runtime correction to the published 0.14.4 image
+        run: |
+          docker run -d --name office-corrected -p 127.0.0.1:8080:8080 \
+            --cap-drop ALL --security-opt no-new-privileges \
+            -e MOINPDF_API_KEY=synthetic-office-lifecycle-key-00000000 \
+            ghcr.io/moinpdf/moinpdf-web@sha256:03216311bf55ef0571e1071739ecb96974b6be09a487fa51327bfd6acbf3df2b
+          docker cp public/vendor/office/browser.worker.global.js office-corrected:/srv/vendor/office/browser.worker.global.js
+          docker cp public/vendor/office/manifest.json office-corrected:/srv/vendor/office/manifest.json
+          curl --fail --retry 30 --retry-all-errors --retry-delay 1 http://localhost:8080/ -o /dev/null
+      - name: Convert real Office files and repeat cancellation and restart
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+          MOINPDF_OFFICE_CYCLES: '30'
+          MOINPDF_BROWSER_CHANNEL: ${{ matrix.channel == 'chromium' && 'chromium' || '' }}
+        run: python tests/browser-office-browser.py
+      - name: Retain conversion and native thread evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: office-corrected-${{ matrix.playwright }}
+          path: web-evidence/
+          retention-days: 14
+      - name: Cleanup
+        if: always()
+        run: docker rm -f office-corrected || true
