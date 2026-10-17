@@ -8,6 +8,8 @@ import time
 import unittest
 from unittest.mock import patch
 from fastapi.testclient import TestClient
+# Configure the shared application before importing it, regardless of test order.
+os.environ.setdefault('MOINPDF_ORIGINS', 'https://moinpdf.test')
 from server.app import app, command, job
 from server.job_queue import JobQueue
 

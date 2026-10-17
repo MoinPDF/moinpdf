@@ -56,7 +56,7 @@ def word(source: Path, directory: Path):
                 try:
                     completed = subprocess.run(['tesseract', str(image), 'stdout', '-l', 'deu+eng', '--psm', '3', 'tsv'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
                     lines = {}
-                    for item in csv.DictReader(completed.stdout.decode('utf-8'), delimiter='\t', quoting=csv.QUOTE_NONE):
+                    for item in csv.DictReader(completed.stdout.decode('utf-8').splitlines(), delimiter='\t', quoting=csv.QUOTE_NONE):
                         text = clean_text(item.get('text', '')).strip()
                         if item.get('level') == '5' and text:
                             key = (item['block_num'], item['par_num'], item['line_num'])
