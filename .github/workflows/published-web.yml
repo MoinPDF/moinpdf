@@ -66,7 +66,7 @@ jobs:
         run: python tests/published-web-smoke.py
       - name: Browser evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: published-web-evidence
           path: web-evidence
