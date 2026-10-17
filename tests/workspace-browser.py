@@ -21,6 +21,14 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             page = context.new_page()
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
+            page.on('console', lambda message: print(message.text, flush=True) if message.text.startswith('WORKSPACE_RECOVERY ') else None)
+            page.add_init_script('''(() => {
+                const put = IDBObjectStore.prototype.put;
+                IDBObjectStore.prototype.put = function(value, ...rest) {
+                    if (this.name === 'recovery') console.log('WORKSPACE_RECOVERY ' + JSON.stringify({pages:value.state.pages.length,history:value.state.history.map(s => s.pages.length),future:value.state.future.map(s => s.pages.length),sources:value.sources.map(s => s.name)}));
+                    return put.call(this,value,...rest);
+                };
+            })()''')
             try:
                 page.goto(origin)
                 page.locator('input[type=file]').first.set_input_files(str(source))
@@ -33,6 +41,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 expect(page.get_by_role('button', name='Seite 2 entfernen', exact=True)).to_be_visible()
                 page.get_by_role('button', name='Wiederholen', exact=True).click()
                 page.get_by_role('button', name='Wiederholen', exact=True).click()
+                expect(page.get_by_role('button', name='Wiederholen', exact=True)).to_be_disabled()
+                expect(page.get_by_role('button', name='Seite 2 entfernen', exact=True)).to_have_count(0)
                 page.wait_for_function('''() => new Promise(resolve => {
                     const request = indexedDB.open('moinpdf.workspace.v1');
                     request.onerror = () => resolve(false);
@@ -44,6 +54,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 })''')
                 page.reload()
                 page.get_by_role('button', name='Letzten Arbeitsstand wiederherstellen', exact=True).click()
+                expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
                 page.get_by_role('button', name='Seiten organisieren', exact=True).click()
                 page.get_by_role('button', name='Rückgängig', exact=True).click()
                 page.get_by_role('button', name='Rückgängig', exact=True).click()
