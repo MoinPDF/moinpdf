@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { contentUnderNavigation } from '@/lib/ui-feedback';
 import { createPortal } from 'react-dom';
 import {
+  Archive,
   BookOpen,
   FolderOpen,
   House,
@@ -83,6 +84,10 @@ function MoreMenu() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="harbor-more-menu" align="end" sideOffset={10}>
+        <DropdownMenuItem onSelect={() => window.dispatchEvent(new Event('moinpdf-open-results'))}>
+          <Archive size={18} aria-hidden="true" />
+          {t('Ergebnisse und Aufträge', 'Results and jobs')}
+        </DropdownMenuItem>
         {entries.map(({ label, de, en, icon: Icon }) => (
           <DropdownMenuItem key={de} asChild>
             <a href={language === 'en' ? en : de} target="_blank" rel="noopener noreferrer">

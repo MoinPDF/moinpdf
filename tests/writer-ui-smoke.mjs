@@ -12,6 +12,7 @@ const modules = {
   'lib/utils.ts': 'utils',
   'components/ui/button.tsx': 'button',
   'components/ui/dialog.tsx': 'dialog',
+  'components/studio/workspace-result-context.tsx': 'workspace-result-context',
   'components/studio/result-actions.tsx': 'result-actions',
   'components/studio/document-writer.tsx': 'document-writer',
 };
@@ -26,6 +27,7 @@ for (const [source, name] of Object.entries(modules)) {
     './writer-model': './writer-model.mjs', '@/lib/result-details': './result-details.mjs',
     '@/lib/utils': './utils.mjs', '@/components/ui/button': './button.mjs',
     '@/components/ui/dialog': './dialog.mjs', './result-actions': './result-actions.mjs',
+    './workspace-result-context': './workspace-result-context.mjs',
     './appearance': './appearance.mjs', sonner: './toast.mjs', '@/lib/pdf-engine': './pdf-engine.mjs',
   })) code = code.replaceAll(`'${from}'`, `'${to}'`).replaceAll(`"${from}"`, `"${to}"`);
   await writeFile(`.cache/writer-ui/${name}.mjs`, code);

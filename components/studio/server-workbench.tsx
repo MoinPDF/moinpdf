@@ -23,6 +23,7 @@ import type { ServerTool, ExportFile } from '@/lib/advanced-types';
 import {
   serverCapabilities,
   runServerJob,
+  runQueuedServerJob,
   serverCapabilityKey,
   integratedDocumentServer,
   integratedWebsiteServer,
@@ -76,6 +77,7 @@ function StandardServerWorkbench({
   const [processing, setProcessing] = useState('local');
   const [mode, setMode] = useState(tool === 'certificate-sign' ? 'validate' : 'create');
   const [progress, setProgress] = useState('');
+  const [backgroundAvailable, setBackgroundAvailable] = useState(false);
   const [htmlInput, setHtmlInput] = useState(initialFile ? 'file' : 'url');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [websiteSettings, setWebsiteSettings] = useState(initialWebsiteSettings);
@@ -186,7 +188,7 @@ function StandardServerWorkbench({
     void checkConnection();
     return () => {
       connection.current?.abort();
-      controller.current?.abort();
+      controller.current?.abort('detach');
     };
   }, [checkConnection]);
   useEffect(() => {
@@ -325,6 +327,8 @@ function StandardServerWorkbench({
   );
 
   async function process(signal: AbortSignal) {
+    setBackgroundAvailable(false);
+    setProgress('');
     setResult(null);
     setReport('');
     if (localOffice) {
@@ -369,7 +373,7 @@ function StandardServerWorkbench({
     if (localWord) {
       if (!source) throw new Error('Bitte zuerst eine PDF auswählen.');
       const { createTextWordFile } = await import('@/lib/word-export');
-      const out = await createTextWordFile(source, signal);
+      const out = await createTextWordFile(source, signal, { report: setProgress });
       if (!signal.aborted) setResult(out);
       return;
     }
@@ -471,7 +475,10 @@ function StandardServerWorkbench({
           `Diese Datei ist zu groß. Erlaubt sind höchstens ${formatSize(limit, uiLocale())} pro Datei.`,
         );
     try {
-      const out = await runServerJob(serverBase, '', path, body, signal);
+      setBackgroundAvailable(Boolean(capabilities?.jobQueue?.operations.includes(path)));
+      const out = capabilities?.jobQueue?.operations.includes(path)
+        ? await runQueuedServerJob(serverBase, '', path, body, signal, setProgress)
+        : await runServerJob(serverBase, '', path, body, signal);
       if (signal.aborted) return;
       setResult(out);
       if (out.blob.type.includes('json'))
@@ -973,7 +980,11 @@ function StandardServerWorkbench({
                   : ui(
                       'Mit dem Start wird die ausgewählte Datei für diesen Auftrag übertragen.',
                     )}{' '}
-              {ui('Die Daten werden nicht dauerhaft gespeichert.')}{' '}
+              {capabilities?.jobQueue
+                ? ui(
+                    'Hintergrundaufträge und Ergebnisse werden spätestens nach 24 Stunden gelöscht. Du kannst sie vorher unter Ergebnisse löschen.',
+                  )
+                : ui('Die Daten werden nicht dauerhaft gespeichert.')}{' '}
               <a href="/datenschutz.html" target="_blank" rel="noopener noreferrer">
                 {ui('Datenschutz')}
               </a>
@@ -988,11 +999,16 @@ function StandardServerWorkbench({
             {ui(
               websiteMode
                 ? 'Die Webseite wird geladen und als PDF gespeichert …'
-                : localOffice && progress
+                : progress
                   ? progress
                   : 'Deine Datei wird verarbeitet …',
             )}
           </span>
+          {backgroundAvailable && (
+            <Button variant="outline" onClick={() => controller.current?.abort('detach')}>
+              {ui('Im Hintergrund fortsetzen')}
+            </Button>
+          )}
           <Button variant="ghost" onClick={() => controller.current?.abort()}>
             {t('Abbrechen')}
           </Button>

@@ -9,6 +9,14 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.15.0 – 18. Oktober 2026
+
+- Tabellen über mehrere PDF-Seiten sammeln; wiederholte Kopfzeilen entfernen, Spaltentypen wählen und echte Zahlen, Prozent-, Währungs- und Datumszellen nach Excel exportieren. Kennungen und Formeln bleiben Text. Große Tabellen werden in der Korrekturansicht paginiert.
+- PDF zu Word erkennt reine Scan-Seiten automatisch. Die Docker-Ausgabe kombiniert native Layoutrekonstruktion mit bearbeitbaren OCR-Absätzen; die Browser-Ausgabe bietet einen Text-Export mit OCR. Erkennungen müssen kontrolliert werden.
+- Aktuelle Bearbeitungen beim Werkzeugwechsel übernehmen; unveränderte Dokumente bleiben bytegleich. Strukturverändernde Übergänge benötigen eine bewusste Übernahme. Der Rückgängig-Verlauf umfasst Originale, übernommene Ergebnisse und Formularentwürfe und bleibt in Projektdateien erhalten.
+- Automatische lokale Wiederherstellung sowie eine lokale Ablage der letzten zehn Ergebnisse (höchstens 160 MB). Arbeitsplatz, Verlauf und Projektdateien behalten klare Speichergrenzen.
+- Unterstützte Docker-Konvertierungen laufen in einer persistenten Warteschlange: zwei aktive, höchstens 16 offene Aufträge, bis zu 15 Minuten Verarbeitung und 24 Stunden Abrufzeit. Browser und Server dürfen neu starten; Abbrechen beendet Konverterprozesse. Signaturen und private Schlüssel sind ausgeschlossen.
+
 ## Unveröffentlicht
 
 - Repository-Dokumentation auf Deutsch und Englisch mit direktem Sprachwechsel,

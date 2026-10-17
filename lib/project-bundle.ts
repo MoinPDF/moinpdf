@@ -10,7 +10,7 @@ import {
 
 const magic = new TextEncoder().encode('MOINPDF-ARCHIVE\n');
 const headerSize = 64;
-const maxVersionBytes = 80 * 1024 * 1024;
+const maxVersionBytes = 240 * 1024 * 1024;
 const maxManifest = 100 * 1024 * 1024;
 export const MAX_PROJECT_ARCHIVE = headerSize + maxManifest + 5 * maxVersionBytes;
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
@@ -43,7 +43,7 @@ const manifestSchema = z
           .object({
             created: z.number().int().nonnegative(),
             state: projectStateSchema,
-            sources: z.array(sourceSchema).min(1).max(200),
+            sources: z.array(sourceSchema).min(1).max(600),
           })
           .strict(),
       )
@@ -81,7 +81,7 @@ export async function encodeProjectArchive(archive: ProjectArchive, signal?: Abo
         0,
       ) > maxVersionBytes
     )
-      throw new Error('Ein Arbeitsstand darf höchstens 80 MB Dokumentdaten enthalten.');
+      throw new Error('Ein Arbeitsstand darf höchstens 240 MB Dokumentdaten enthalten.');
     const sources = [];
     for (const s of version.sources)
       sources.push({
@@ -201,7 +201,7 @@ export async function decodeProjectArchive(
       sources.reduce((sum, s) => sum + s.bytes.length + (s.invoiceOriginal?.bytes.length || 0), 0) >
       maxVersionBytes
     )
-      throw new Error('Ein Arbeitsstand überschreitet die Grenze von 80 MB Dokumentdaten.');
+      throw new Error('Ein Arbeitsstand überschreitet die Grenze von 240 MB Dokumentdaten.');
     const state = version.state as ProjectState;
     validateProjectReferences(state, sources);
     return { created: version.created, state: cleanProjectState(state), sources };

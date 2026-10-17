@@ -6754,3 +6754,27 @@ summary:focus-visible {
   gap: 12px;
   color: var(--muted-foreground);
 }
+
+.workspace-tray {
+  max-width: 760px;
+}
+.workspace-tray-list {
+  display: grid;
+  gap: 12px;
+  max-height: 65vh;
+  overflow: auto;
+  padding: 2px;
+}
+.workspace-tray-list strong {
+  overflow-wrap: anywhere;
+}
+
+#moinpdf-recovery:has(button) {
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+}
+#moinpdf-recovery > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}

@@ -10,6 +10,12 @@ import { completePdfSelection } from '@/lib/result-details';
 import { useLanguage } from '@/components/studio/appearance';
 import { AppearanceProvider, AppearanceControls, useTools } from '@/components/studio/appearance';
 
+import {
+  WorkspaceResultsProvider,
+  WorkspaceTray,
+  useWorkspaceResults,
+} from '@/components/studio/workspace-results';
+import { WorkspaceRecovery } from '@/components/studio/workspace-recovery';
 import { ProjectManager } from '@/components/studio/project-manager';
 import { createPortal } from 'react-dom';
 import { emptyWriterDocument, type WriterDocument } from '@/lib/writer-model';
@@ -18,7 +24,13 @@ const DocumentWriter = lazy(() =>
     default: module.DocumentWriter,
   })),
 );
-import { retainPageEdits } from '@/lib/local-projects';
+import { retainPageEdits, type ProjectSnapshot, type ProjectState } from '@/lib/local-projects';
+import { snapshotSourceIds, workspaceSources, boundedHistory } from '@/lib/workspace-history';
+import {
+  hasWorkspaceChanges,
+  materializeWorkspace,
+  WorkspaceReviewRequired,
+} from '@/lib/workspace-document';
 import { captureProjectCheckpoint, type ProjectCheckpoint } from '@/lib/project-checkpoint';
 import {
   createUndoFeedbackGate,
@@ -32,6 +44,7 @@ import {
   lazy,
   Suspense,
   useCallback,
+  useMemo,
   useEffect,
   useRef,
   useState,
@@ -221,13 +234,15 @@ const defaults: StudioOptions = {
   orientation: 'portrait',
   perSheet: '2',
 };
-type Snapshot = { pages: PageItem[]; edits: Edits };
+type Snapshot = ProjectSnapshot;
 export default function Home() {
   useLanguage();
   return (
     <AppearanceProvider>
       <ToolBrowserMemory>
-        <WorkspaceShell />
+        <WorkspaceResultsProvider>
+          <WorkspaceShell />
+        </WorkspaceResultsProvider>
       </ToolBrowserMemory>
     </AppearanceProvider>
   );
@@ -251,6 +266,7 @@ function WorkspaceShell() {
         </div>
       </header>
       <div id="moinpdf-mobile-navigation" />
+      <div id="moinpdf-recovery" />
       <SidebarProvider
         defaultOpen={false}
         id="moinpdf-content"
@@ -294,6 +310,7 @@ function Studio() {
   const [writerHost, setWriterHost] = useState<HTMLElement | null>(null);
   useEffect(() => setWriterHost(document.getElementById('moinpdf-document-bar')), []);
   const [dragFileCount, setDragFileCount] = useState<number | null>(null);
+  const workspaceResults = useWorkspaceResults();
   const [sources, setSources] = useState<Source[]>([]),
     [pages, setPages] = useState<PageItem[]>([]),
     [edits, setEdits] = useState<Edits>(emptyEdits),
@@ -331,10 +348,62 @@ function Studio() {
     [editorDims, setEditorDims] = useState({ width: 595.28, height: 841.89 }),
     [imageBusy, setImageBusy] = useState(false);
   const imagePicker = useRef<HTMLInputElement>(null);
+  const [pendingToolReason, setPendingToolReason] = useState('');
+  const [pendingTool, setPendingTool] = useState<WorkspaceTool | null>(null);
+  const [archivedSources, setArchivedSources] = useState<Source[]>([]);
+  const sourcePool = useRef(new Map<string, Source>());
   const [history, setHistory] = useState<Snapshot[]>([]),
     [future, setFuture] = useState<Snapshot[]>([]);
   const [documentSessions, setDocumentSessions] = useState<DocumentSessions>({}),
     [documentBusy, setDocumentBusy] = useState(false);
+  const projectSources = useMemo(
+    () => workspaceSources(sources, archivedSources, history, future),
+    [sources, archivedSources, history, future],
+  );
+  for (const source of projectSources) {
+    const previous = sourcePool.current.get(source.id);
+    if (previous && previous.pdf !== source.pdf)
+      setTimeout(() => void previous.pdf.loadingTask.destroy(), 100);
+    sourcePool.current.set(source.id, source);
+  }
+  const projectState: ProjectState = {
+    pages,
+    edits,
+    options,
+    history,
+    future,
+    documentSessions,
+    activeId,
+    toolId,
+    sourceIds: sources.map((s) => s.id),
+  };
+  useEffect(() => {
+    const needed = new Set(projectSources.map((s) => s.id));
+    for (const [id, source] of sourcePool.current)
+      if (!needed.has(id)) {
+        sourcePool.current.delete(id);
+        setTimeout(() => void source.pdf.loadingTask.destroy(), 100);
+      }
+    setArchivedSources((old) =>
+      old.some((s) => !needed.has(s.id)) ? old.filter((s) => needed.has(s.id)) : old,
+    );
+  }, [projectSources]);
+  const snapshot = (): Snapshot => ({
+    pages,
+    edits,
+    sourceIds: sources.map((s) => s.id),
+    documentSessions,
+    activeId,
+  });
+  const restoreSnapshot = (saved: Snapshot) => {
+    const ids = snapshotSourceIds(saved);
+    setArchivedSources(projectSources);
+    setSources(ids.map((id) => sourcePool.current.get(id)!).filter(Boolean));
+    setPages(saved.pages);
+    setEdits(saved.edits);
+    if (saved.documentSessions) setDocumentSessions(saved.documentSessions);
+    setActiveId(saved.activeId || saved.pages[0]?.id || '');
+  };
   const [passwordRequest, setPasswordRequest] = useState<PasswordRequest | null>(null);
   const [duplicateRequest, setDuplicateRequest] = useState<DuplicateRequest | null>(null);
   const duplicateResolver = useRef<DuplicateRequest['resolve'] | null>(null);
@@ -403,7 +472,7 @@ function Studio() {
   useEffect(
     () => () => {
       job.current?.abort();
-      refs.current.sources.forEach((s) => void s.pdf.loadingTask.destroy());
+      sourcePool.current.forEach((s) => void s.pdf.loadingTask.destroy());
     },
     [],
   );
@@ -490,7 +559,7 @@ function Studio() {
   const commit = (next: Snapshot, feedback?: string) => {
     if (locked) return;
     dismissUndoNotice();
-    setHistory((old) => [...old, { pages, edits }].slice(-30));
+    setHistory((old) => boundedHistory([...old, snapshot()], sources, projectSources));
     setFuture([]);
     setPages(next.pages);
     setEdits(next.edits);
@@ -516,20 +585,18 @@ function Studio() {
     if (locked || !history.length) return;
     dismissUndoNotice();
     const prev = history[history.length - 1];
-    setFuture((old) => [{ pages, edits }, ...old]);
+    setFuture((old) => [snapshot(), ...old]);
     setHistory((old) => old.slice(0, -1));
-    setPages(prev.pages);
-    setEdits(prev.edits);
+    restoreSnapshot(prev);
     invalidate();
   }
   function redo() {
     if (locked || !future.length) return;
     dismissUndoNotice();
     const next = future[0];
-    setHistory((old) => [...old, { pages, edits }]);
+    setHistory((old) => boundedHistory([...old, snapshot()], sources, projectSources));
     setFuture((old) => old.slice(1));
-    setPages(next.pages);
-    setEdits(next.edits);
+    restoreSnapshot(next);
     invalidate();
   }
   const callbacks = useRef({ undo, redo });
@@ -757,6 +824,59 @@ function Studio() {
   }, [addFiles, choosingTool, writerOpen]);
   function chooseTool(id: WorkspaceTool) {
     if (locked) return;
+    if (
+      (isAdvancedTool(id) ||
+        isServerTool(id) ||
+        isDocumentTool(id) ||
+        ['protect', 'unlock', 'invoice-read', 'invoice-check'].includes(id)) &&
+      sources.length &&
+      hasWorkspaceChanges(sources, pages, edits, documentSessions)
+    ) {
+      void prepareWorkspace(id);
+      return;
+    }
+    showTool(id);
+  }
+  async function prepareWorkspace(id: WorkspaceTool, allowRebuild = false) {
+    setLoading(true);
+    const controller = new AbortController();
+    job.current = controller;
+    try {
+      const prepared = await materializeWorkspace(
+        sources,
+        pages,
+        edits,
+        documentSessions,
+        options,
+        { signal: controller.signal, report: setProgress },
+        allowRebuild,
+      );
+      setArchivedSources(projectSources);
+      prepared.sources.forEach((s) => sourcePool.current.set(s.id, s));
+      setHistory(
+        boundedHistory([...history, snapshot()], prepared.sources, [
+          ...projectSources,
+          ...prepared.sources,
+        ]),
+      );
+      setFuture([]);
+      setSources(prepared.sources);
+      setPages(prepared.pages);
+      setEdits(emptyEdits());
+      setDocumentSessions({});
+      setPendingTool(null);
+      showTool(id);
+    } catch (error) {
+      if (error instanceof WorkspaceReviewRequired) {
+        setPendingToolReason(error.message);
+        setPendingTool(id);
+      } else if (!controller.signal.aborted) toast.error((error as Error).message);
+    } finally {
+      setLoading(false);
+      job.current = null;
+    }
+  }
+  function showTool(id: WorkspaceTool) {
     if (choosingTool) toolNavigation.capture(homeVisible ? 'home' : 'all', id);
     setWriterOpen(false);
     setHomeRequested(false);
@@ -975,7 +1095,6 @@ function Studio() {
       delete next[id];
       return next;
     });
-    const source = sources.find((s) => s.id === id);
     setSources((old) => old.filter((s) => s.id !== id));
     setPages((old) => old.filter((p) => p.sourceId !== id));
     setEdits(
@@ -987,14 +1106,15 @@ function Studio() {
     setHistory([]);
     setFuture([]);
     invalidate();
-    setTimeout(() => void source?.pdf.loadingTask.destroy(), 100);
   }
   function clear() {
+    workspaceResults.clear();
+    window.dispatchEvent(new Event('moinpdf-clear-workspace'));
     setProjectCheckpoint(null);
     setRepairInput(null);
     setConversionInput(null);
     setDocumentSessions({});
-    sources.forEach((s) => setTimeout(() => void s.pdf.loadingTask.destroy(), 100));
+    setArchivedSources([]);
     setSources([]);
     setPages([]);
     setEdits(emptyEdits());
@@ -1115,20 +1235,21 @@ function Studio() {
       job.current = null;
     }
   }
-  async function useDocumentResult(output: JobResult) {
+  async function adoptDocumentResult(output: JobResult) {
     setLoading(true);
     try {
       const next = await openSource(
         new File([output.blob], output.filename, { type: 'application/pdf' }),
       );
       const nextPages = sourcePages(next);
-      sources.forEach((s) => setTimeout(() => void s.pdf.loadingTask.destroy(), 100));
+      setArchivedSources(projectSources);
+      sourcePool.current.set(next.id, next);
       setSources([next]);
       setPages(nextPages);
       setActiveId(nextPages[0].id);
       setEdits(emptyEdits());
       setDocumentSessions({});
-      setHistory([]);
+      setHistory(boundedHistory([...history, snapshot()], [next], [...projectSources, next]));
       setFuture([]);
       setResult(null);
       setToolId('organize');
@@ -1141,29 +1262,10 @@ function Studio() {
   }
   async function continueResult() {
     if (!result || result.kind !== 'pdf' || locked) return;
-    setLoading(true);
     try {
-      const next = await openSource(
-        new File([result.blob], resultName, { type: 'application/pdf' }),
-      );
-      const nextPages = sourcePages(next);
-      sources.forEach((s) => setTimeout(() => void s.pdf.loadingTask.destroy(), 100));
-      setSources([next]);
-      setPages(nextPages);
-      setActiveId(nextPages[0].id);
-      setEdits(emptyEdits());
-      setDocumentSessions({});
-      setHistory([]);
-      setFuture([]);
-      setResult(null);
-      setToolId('organize');
-      setView('pages');
-      setRange('');
-      toast.success(ui('Ergebnis als neues Arbeitsdokument geöffnet'));
-    } catch (err) {
-      toast.error(ui((err as Error).message));
-    } finally {
-      setLoading(false);
+      await adoptDocumentResult({ ...result, filename: resultName });
+    } catch (error) {
+      toast.error(ui((error as Error).message));
     }
   }
   async function word() {
@@ -1394,6 +1496,59 @@ function Studio() {
       />
       <PasswordPrompt request={passwordRequest} onClose={() => setPasswordRequest(null)} />
       <DuplicatePrompt request={duplicateRequest} onClose={() => setDuplicateRequest(null)} />
+      <Dialog
+        open={!!pendingTool}
+        onOpenChange={(open) => {
+          if (!open) setPendingTool(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('Arbeitsstand übernehmen', 'Apply workspace changes')}</DialogTitle>
+            <DialogDescription>
+              {ui(pendingToolReason)}{' '}
+              {t(
+                'Der bisherige Stand bleibt über Rückgängig erreichbar.',
+                'The previous state remains available through Undo.',
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="advanced-actions">
+            <Button variant="outline" onClick={() => setPendingTool(null)}>
+              {t('Zur Bearbeitung', 'Back to editing')}
+            </Button>
+            <Button
+              disabled={locked}
+              onClick={() => pendingTool && void prepareWorkspace(pendingTool, true)}
+            >
+              {t('Übernehmen und weiter', 'Apply and continue')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <WorkspaceTray locked={locked} onUse={adoptDocumentResult} />
+      <WorkspaceRecovery
+        sources={projectSources}
+        state={projectState}
+        locked={locked}
+        onRestore={(loaded, state) => {
+          setArchivedSources(loaded);
+          setSources(loaded.filter((s) => !state.sourceIds || state.sourceIds.includes(s.id)));
+          setPages(state.pages);
+          setEdits(state.edits);
+          setOptions({ ...defaults, ...state.options });
+          setHistory(state.history);
+          setFuture(state.future);
+          setDocumentSessions(state.documentSessions);
+          setActiveId(state.activeId);
+          setToolId(
+            tools.some((t) => t.id === state.toolId) ? (state.toolId as WorkspaceTool) : 'inspect',
+          );
+          setHomeRequested(false);
+          setChoosingTool(true);
+          setResult(null);
+        }}
+      />
       <ProjectManager
         open={projectsOpen}
         onOpenChange={setProjectsOpen}
@@ -1402,9 +1557,9 @@ function Studio() {
         checkpoint={projectCheckpoint}
         onCheckpoint={setProjectCheckpoint}
         onBusy={setProjectBusy}
-        sources={sources}
+        sources={projectSources}
         locked={locked}
-        state={{ pages, edits, options, history, future, documentSessions, activeId, toolId }}
+        state={projectState}
         onRestore={(loaded, state, identity) => {
           setWriterOpen(false);
           const restoredState = { ...state, options: { ...defaults, ...state.options } };
@@ -1413,8 +1568,9 @@ function Studio() {
             captureProjectCheckpoint(identity.id, identity.name, loaded, restoredState),
           );
           setHomeRequested(false);
-          refs.current.sources.forEach((s) => void s.pdf.loadingTask.destroy());
-          setSources(loaded);
+          setArchivedSources(loaded);
+          const activeSources = state.sourceIds || loaded.map((s) => s.id);
+          setSources(loaded.filter((s) => activeSources.includes(s.id)));
           setPages(state.pages);
           setEdits(state.edits);
           setOptions(restoredState.options);
@@ -1489,7 +1645,7 @@ function Studio() {
           onBack={returnToTools}
           onAdd={() => picker.current?.click()}
           onBusy={setDocumentBusy}
-          onUse={useDocumentResult}
+          onUse={adoptDocumentResult}
           pending={
             pages.some((p) => countEdits(edits, [p]) > 0 || p.rotation !== 0) ||
             Object.values(documentSessions).some((s) => s.past.length > 0)
@@ -1511,7 +1667,7 @@ function Studio() {
           onBack={returnToTools}
           onAdd={() => picker.current?.click()}
           onBusy={setDocumentBusy}
-          onUse={useDocumentResult}
+          onUse={adoptDocumentResult}
         />
       </>
     );
@@ -1566,7 +1722,7 @@ function Studio() {
           onSessions={setDocumentSessions}
           onBack={returnToTools}
           onTool={chooseTool}
-          onUse={useDocumentResult}
+          onUse={adoptDocumentResult}
           onBusy={setDocumentBusy}
           pending={pages.some((p) => countEdits(edits, [p]) > 0 || p.rotation !== 0)}
         />
@@ -1583,7 +1739,7 @@ function Studio() {
           onBack={returnToTools}
           onTool={chooseTool}
           onBusy={setDocumentBusy}
-          onUse={useDocumentResult}
+          onUse={adoptDocumentResult}
           pending={
             pages.some((p) => countEdits(edits, [p]) > 0 || p.rotation !== 0) ||
             Object.values(documentSessions).some((s) => s.past.length > 0)

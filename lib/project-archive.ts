@@ -13,7 +13,7 @@ import { parseOcrLanguages } from './ocr-languages';
 const magic = new TextEncoder().encode('MOINPDF-PROJECT\n');
 const headerSize = 32;
 const maxManifest = 20 * 1024 * 1024;
-const maxDocuments = 80 * 1024 * 1024;
+const maxDocuments = 240 * 1024 * 1024;
 export const MAX_PROJECT_FILE = headerSize + maxManifest + maxDocuments;
 const identifier = z
   .string()
@@ -65,6 +65,22 @@ const mark = rect.extend({
 const snapshot = z
   .object({
     pages: z.array(page).max(200),
+    sourceIds: z.array(identifier).max(200).optional(),
+    activeId: z.string().max(250).optional(),
+    documentSessions: z
+      .lazy(() =>
+        z.record(
+          identifier,
+          z
+            .object({
+              current: draft,
+              past: z.array(draft).max(100),
+              future: z.array(draft).max(100),
+            })
+            .strict(),
+        ),
+      )
+      .optional(),
     edits: z
       .object({
         marks: z.record(identifier, z.array(mark).max(10000)),
@@ -209,7 +225,7 @@ const manifestSchema = z
           .strict(),
       )
       .min(1)
-      .max(200),
+      .max(600),
   })
   .strict();
 function check(signal?: AbortSignal) {
@@ -243,6 +259,10 @@ export function validateProjectReferences(
   for (const snapshot of [state, ...state.history, ...state.future]) {
     if (
       new Set(snapshot.pages.map((p) => p.id)).size !== snapshot.pages.length ||
+      (snapshot.sourceIds &&
+        (new Set(snapshot.sourceIds).size !== snapshot.sourceIds.length ||
+          snapshot.sourceIds.some((id) => !ids.has(id)) ||
+          snapshot.pages.some((p) => !snapshot.sourceIds!.includes(p.sourceId)))) ||
       snapshot.pages.some(
         (p) => !ids.has(p.sourceId) || (counts && p.index >= counts.get(p.sourceId)!),
       )
@@ -251,19 +271,20 @@ export function validateProjectReferences(
         'Die Projektdatei enthält ungültige Seitenverweise im Arbeitsstand oder Verlauf.',
       );
   }
-  for (const [sourceId, session] of Object.entries(state.documentSessions)) {
-    if (!ids.has(sourceId))
-      throw new Error('Ein Formular im Projekt verweist auf eine fehlende Datei.');
-    if (counts)
-      for (const d of [session.current, ...session.past, ...session.future]) {
-        const count = counts.get(sourceId)!;
-        if (
-          d.fields.some((f) => f.widgets.some((w) => w.page >= count)) ||
-          d.bookmarks.some((b) => b.page !== null && b.page >= count)
-        )
-          throw new Error('Formulare oder Lesezeichen enthalten ungültige Seitenzahlen.');
-      }
-  }
+  for (const snapshot of [state, ...state.history, ...state.future])
+    for (const [sourceId, session] of Object.entries(snapshot.documentSessions || {})) {
+      if (!ids.has(sourceId))
+        throw new Error('Ein Formular im Projekt verweist auf eine fehlende Datei.');
+      if (counts)
+        for (const d of [session.current, ...session.past, ...session.future]) {
+          const count = counts.get(sourceId)!;
+          if (
+            d.fields.some((f) => f.widgets.some((w) => w.page >= count)) ||
+            d.bookmarks.some((b) => b.page !== null && b.page >= count)
+          )
+            throw new Error('Formulare oder Lesezeichen enthalten ungültige Seitenzahlen.');
+        }
+    }
 }
 export function validateOpenedProject(state: ProjectState, sources: Source[]) {
   validateProjectReferences(state, sources, new Map(sources.map((s) => [s.id, s.pdf.numPages])));
@@ -306,7 +327,7 @@ export async function encodeProjectFile(
   const documentSize = parts.reduce((n, p) => n + p.length, 0);
   if (json.length > maxManifest || documentSize > maxDocuments)
     throw new Error(
-      'Eine Projektdatei darf höchstens 80 MB Dokumente und 20 MB Bearbeitungsdaten enthalten.',
+      'Eine Projektdatei darf höchstens 240 MB Dokumente und 20 MB Bearbeitungsdaten enthalten.',
     );
   const bytes = new Uint8Array(headerSize + json.length + documentSize),
     view = new DataView(bytes.buffer);

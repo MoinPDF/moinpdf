@@ -173,7 +173,7 @@ export const guides = {
     'Erstelle die Markdown-Datei. Erkannte Überschriften und Abschnitte pro PDF-Seite strukturieren den Text.',
     'Öffne die Datei in einem Text- oder Markdown-Editor und kontrolliere Lesereihenfolge, Überschriften und Sonderzeichen.'
   ], 'Bearbeitbare Markdown-Datei (.md).', 'Bilder, komplexe Tabellen und das ursprüngliche Seitenlayout werden nicht übernommen. OCR zuerst anwenden und die durchsuchbare PDF als Arbeitsdokument übernehmen.'),
-  'pdf-html': guide('Eine PDF mit auslesbarem Text.', [
+  'pdf-html': guide('Eine PDF mit Text oder gut lesbaren Scan-Seiten.', [
     'Wähle die Datei und lege Titel und Sprache für die Ausgabe fest.',
     'Erstelle die HTML-Datei. MoinPDF setzt den Text mit Überschriften und einer Navigation zwischen den Seitenabschnitten.',
     'Lade die Datei herunter, öffne sie im Browser und prüfe die Lesereihenfolge.'
@@ -250,8 +250,8 @@ export const guides = {
     'Berechne die Teildateien und prüfe die Tabelle mit Seitenbereichen und tatsächlich gemessenen Größen.',
     'Speichere alle Teildateien als ZIP. Ist schon eine einzelne Seite zu groß, komprimiere die Quelle vorher.'
   ], 'ZIP mit aufeinanderfolgenden PDF-Teilen innerhalb des erreichbaren Limits.', 'Die Reihenfolge bleibt erhalten, Seiten werden nicht als Bilder neu komprimiert. Lesezeichen, Signaturen und interaktive Formularfunktionen werden nicht übernommen.'),
-  'pdf-word': guide('Eine PDF mit auslesbarem Text.', [
-    'Wähle die Datei. Bei reinen Scans erstelle zuerst mit „OCR & Text“ eine durchsuchbare PDF und übernimm sie.',
+  'pdf-word': guide('Eine PDF mit Text oder gut lesbaren Scan-Seiten.', [
+    'Wähle die Datei. Seiten ohne auslesbaren Text werden beim Word-Export automatisch per OCR erkannt.',
     'Starte die Word-Erstellung. In der vollständigen Installation verarbeitet der Dokumentenserver Text, Tabellen und Bilder; die Browser-Ausgabe bietet einen reinen Textexport.',
     'Öffne die DOCX-Datei in Word und kontrolliere insbesondere Tabellen, Schriften, Absätze und Seitenumbrüche.'
   ], 'Bearbeitbare DOCX-Datei.', 'Ein PDF speichert kein vollständiges Word-Layout. Auch die Server-Konvertierung kann Nacharbeit erfordern; die lokale Textausgabe rekonstruiert das Layout nicht.'),
@@ -280,11 +280,11 @@ export const guides = {
     'Starte die Erkennung und kontrolliere die vorgeschlagenen Abschnitte. Passe die Einstellungen an, wenn ein Trennblatt oder Begriff mehrfach vorkommt.',
     'Erstelle die Teildokumente und prüfe Anfang und Ende jedes Abschnitts.'
   ], 'ZIP mit PDF-Abschnitten.', 'Die Erkennung kann Trennstellen übersehen oder zu viele finden. Bei Scans kann vor der Texttrennung OCR nötig sein. Für bereits bekannte Grenzen ist „In Abschnitte teilen“ einfacher.'),
-  'table-export': guide('Eine PDF-Seite mit einer Tabelle; auslesbarer Text oder ein gut lesbarer Scan.', [
-    'Wähle die Seite und markiere den Tabellenbereich. Lasse Text beziehungsweise OCR auslesen.',
+  'table-export': guide('Eine PDF mit Tabellen auf einer oder mehreren Seiten; auslesbarer Text oder gut lesbare Scans.', [
+    'Wähle die Vorschauseite, markiere den Tabellenbereich und gib bei Bedarf einen Seitenbereich ein. Bereich und Spaltengrenzen gelten für alle gewählten Seiten.',
     'Gib Spaltengrenzen in Prozent ab dem linken Seitenrand an; 35, 65 ergibt drei Spalten. Teile bei Bedarf neu auf und korrigiere Zeilen und Zellen, besonders Dezimalzeichen, negative Beträge und mehrzeilige Inhalte.',
     'Exportiere die geprüfte Tabelle als Excel oder CSV und kontrolliere sie in deiner Tabellenanwendung.'
-  ], 'XLSX oder CSV mit den erkannten und korrigierten Werten.', 'Komplexe Tabellen werden nicht immer richtig strukturiert. Die XLSX-Ausgabe speichert Werte als Text, CSV schützt vor Formelausführung. Für anschließende Berechnungen können bewusst gesetzte Zahlenformate nötig sein.'),
+  ], 'XLSX oder CSV mit den erkannten und korrigierten Werten.', 'Prüfe Kopfzeilen, Spaltentypen und Zahlenformat (Deutsch oder Englisch). Excel erhält erkennbare Zahlen und Datumswerte als echte Werte; führende Nullen, lange Kennungen und Formeln bleiben Text. Wiederholte Kopfzeilen können entfernt werden. Komplexe Tabellen und mehrzeilige Zellen benötigen weiterhin Kontrolle.'),
   'search-redact': guide('Eine PDF und die Begriffe oder Muster, die entfernt werden sollen.', [
     'Gib Namen und eigene Suchbegriffe jeweils in einer Zeile ein. Aktiviere bei Bedarf die Erkennung von E-Mail-Adressen und möglichen IBANs sowie OCR für Scans.',
     'Lasse Fundstellen ermitteln und prüfe jeden ausgewählten Bereich in der Vorschau. Ergänze abweichende Schreibweisen und kontrolliere nicht erkannte Angaben.',

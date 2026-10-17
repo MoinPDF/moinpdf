@@ -21,18 +21,70 @@ def html_text(value):
 
 
 def word(source: Path, directory: Path):
+    import csv
+    import subprocess
     import pymupdf
+    from docx import Document
+    from docx.enum.section import WD_SECTION
+    from docx.shared import Pt
     from pdf2docx import Converter
-    with pymupdf.open(source) as pdf:
-        if pdf.needs_pass or not 0 < len(pdf) <= 200:
-            raise ValueError('Bitte eine unverschlüsselte PDF mit höchstens 200 Seiten verwenden.')
-        if not any(page.get_text().strip() for page in pdf):
-            raise ValueError('Kein auslesbarer Text gefunden. Den Scan zuerst mit OCR durchsuchbar machen.')
-    converter = Converter(str(source))
+    document = Document()
+    ocr_count = 0
+    empty_count = 0
+    any_text = False
+    converter = None
     try:
-        converter.convert(str(directory / 'output.docx'), multi_processing=False)
+        with pymupdf.open(source) as pdf:
+            if pdf.needs_pass or not 0 < len(pdf) <= 200:
+                raise ValueError('Bitte eine unverschlüsselte PDF mit höchstens 200 Seiten verwenden.')
+            native = [i for i, page in enumerate(pdf) if page.get_text().strip()]
+            if native:
+                converter = Converter(str(source))
+                settings = {**converter.default_settings, 'ignore_page_error': False, 'raw_exceptions': True, 'multi_processing': False}
+                converter.parse(pages=native, **settings)
+            for index, page in enumerate(pdf):
+                if index in native:
+                    converter.pages[index].make_docx(document)
+                    any_text = True
+                    continue
+                # OCR pages become real paragraphs, never a page-sized image
+                # with an invisible text layer. Native pages keep pdf2docx layout.
+                ocr_count += 1
+                image = directory / 'word-ocr.png'
+                scale = min(3.0, 3200 / max(page.rect.width, page.rect.height))
+                page.get_pixmap(matrix=pymupdf.Matrix(scale, scale), alpha=False).save(image)
+                try:
+                    completed = subprocess.run(['tesseract', str(image), 'stdout', '-l', 'deu+eng', '--psm', '3', 'tsv'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
+                    lines = {}
+                    for item in csv.DictReader(completed.stdout.decode('utf-8'), delimiter='\t', quoting=csv.QUOTE_NONE):
+                        text = clean_text(item.get('text', '')).strip()
+                        if item.get('level') == '5' and text:
+                            key = (item['block_num'], item['par_num'], item['line_num'])
+                            lines.setdefault(key, []).append(text)
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+                    raise ValueError(f'OCR auf Seite {index + 1} fehlgeschlagen. Bitte Scanqualität prüfen.') from error
+                finally:
+                    image.unlink(missing_ok=True)
+                section = document.add_section(WD_SECTION.NEW_PAGE) if index else document.sections[0]
+                section.page_width, section.page_height = Pt(page.rect.width), Pt(page.rect.height)
+                section.left_margin = section.right_margin = Pt(36)
+                section.top_margin = section.bottom_margin = Pt(36)
+                for words in lines.values():
+                    document.add_paragraph(' '.join(words))
+                    any_text = True
+                if not lines:
+                    empty_count += 1
+                    document.add_paragraph('')
+        if not any_text:
+            raise ValueError('Auch per OCR wurde kein Text erkannt. Bitte die Scanqualität prüfen.')
+        document.save(directory / 'output.docx')
+        note = f'{ocr_count} Seiten per OCR in bearbeitbare Absätze umgewandelt. Scanlayout und erkannte Texte bitte kontrollieren.' if ocr_count else 'Text, Tabellen und Bilder mit Layoutrekonstruktion übernommen. Ausgabe bitte kontrollieren.'
+        if empty_count:
+            note += f' {empty_count} Seiten ohne erkannten Text.'
+        (directory / 'word-note.txt').write_text(note, encoding='utf-8')
     finally:
-        converter.close()
+        if converter:
+            converter.close()
 
 
 def parse_email(source: Path):

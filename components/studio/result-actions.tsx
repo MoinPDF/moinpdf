@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Pencil, Share2, LoaderCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from './appearance';
+import { useWorkspaceResults } from './workspace-result-context';
 import { Button } from '@/components/ui/button';
 import {
   canShareResult,
@@ -20,6 +21,10 @@ export function useResultName(result: DownloadResult | null) {
   const [edit, setEdit] = useState<{ blob: Blob; name: string } | null>(null);
   useEffect(() => setEdit(null), [result?.blob]);
   const name = result ? (edit?.blob === result.blob ? edit.name : result.filename) : '';
+  const { remember } = useWorkspaceResults();
+  useEffect(() => {
+    if (result) remember({ ...result, filename: name });
+  }, [result, name, remember]);
   const rename = (draft: string) => {
     if (result) setEdit({ blob: result.blob, name: renameDownload(draft, result.filename) });
   };

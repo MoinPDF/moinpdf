@@ -25,3 +25,7 @@ def initialize(path: Path):
 
 if __name__ == '__main__':
     initialize(Path('/run/moinpdf/api-key'))
+    jobs = Path('/var/lib/moinpdf-jobs')
+    jobs.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chown(jobs, 10001, 10001)
+    os.chmod(jobs, 0o700)

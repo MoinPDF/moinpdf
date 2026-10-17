@@ -4,6 +4,14 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.15.0 – 18 October 2026
+
+- Multi-page table extraction, repeated headers and typed Excel numbers/dates with per-column controls. Identifiers and formulas remain text.
+- Automatic OCR for image-only Word pages, including mixed documents. Native PDF pages retain layout reconstruction on the document server; scan pages become editable paragraphs.
+- Shared workspace transitions, undo across adopted results, persisted source history and form drafts in project files.
+- Local recovery after reload and a tray of the latest ten results, up to 160 MB.
+- Persistent background conversion jobs in Docker: two workers, 16 outstanding jobs, 15-minute processing, 24-hour retrieval, restart recovery and real subprocess cancellation. Signing secrets are excluded.
+
 ## Unreleased
 
 - Repository documentation is available in German and English, with paired language navigation, a redesigned README and bilingual issue templates.

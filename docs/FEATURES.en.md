@@ -44,9 +44,9 @@ The browser-only edition offers local PDF-to-Word text export without layout pre
 
 Drop PDFs, invoice XML and supported image formats anywhere in the window. Change page order using drag-and-drop or arrows. Draw or place visual regions directly, or enter percentages. Undo/redo the last 30 page and region changes with Ctrl/⌘ + Z and Ctrl/⌘ + Shift + Z. Adding or closing files starts a new history.
 
-Results can be adopted as new working documents. OCR exports searchable PDF, TXT and DOCX; DOCX contains text without reconstruction of the original layout. Page tools apply pending visual changes on the selected pages. Form, bookmark, password-protection and e-invoice workspaces use the full source file; apply changes from other tools and adopt the result first.
+Results can be adopted as new working documents. OCR exports searchable PDF, TXT and DOCX; DOCX contains text without reconstruction of the original layout. Page tools apply pending visual changes on the selected pages. Switching to specialist tools applies the current workspace; potentially lossy structural transitions require an explicit choice. Adopting results retains undo history.
 
-**Projects** locally restore files and working states, including editing history, forms and bookmarks, from the last five saved states. Storage is unencrypted browser storage; the current session is saved before switching projects. First adopt intermediate results from standalone specialist tools. A chosen state can be transferred as an unencrypted `.moinpdf` file including originals and history, using “Download project file” or “Open project file”. Project files are not sanitised final PDFs. Limits: 80 MB of source files and 200 pages. Extensive OCR can be slow on mobile devices.
+**Projects** locally restore files and working states, including editing history, forms and bookmarks, from the last five saved states. Storage is unencrypted browser storage; the current session is saved before switching projects. The latest ten results are saved locally up to 160 MB in total, and the workspace is automatically saved for recovery after reloading. A chosen state can be transferred as an unencrypted `.moinpdf` file including originals and history, using “Download project file” or “Open project file”. Project files are not sanitised final PDFs. Limits: 80 MB of active source files, 200 active pages and 240 MB including undo history. Extensive OCR can be slow on mobile devices.
 
 ## Website link to PDF
 
@@ -59,7 +59,7 @@ The fetch does not inherit your browser login or cookies. Cookie banners, bot pr
 - Batch processing and saved multistep workflows with JSON import/export, if/else steps based on file name, existing text or page count, and a decision log. Passwords and documents are not stored in workflows.
 - Automatic file-name suggestions from dates, invoice numbers and titles, with an editable preview.
 - Split by text, bookmarks, blank pages or QR/barcode separator sheets, with section previews.
-- Table regions to Excel/CSV, OCR for scans, manual column boundaries and editable cells. XLSX stores values as text; CSV protects against formula execution.
+- Table regions to Excel/CSV, OCR for scans, manual column boundaries and editable cells. Multi-page extraction supports repeated headers, per-column types, German/English number formats, typed numbers and dates; identifiers and formulas remain text. CSV protects against formula execution.
 - Search for supplied terms/names, email addresses and possible IBANs; confirmed matches are removed by fully rebuilding page images. Detection does not guarantee completeness.
 - Pixel-based PDF comparison with coloured differences and a percentage for each page.
 - Scan enhancement with automatic deskewing, contrast, brightness and background cleanup.
@@ -111,7 +111,7 @@ Use the shortcuts, search or “All tools” to find tools grouped by task. Long
 | Tool | Runs in | Scope |
 | --- | --- | --- |
 | Split by file size | Browser | Actual measured bytes per PDF, complete page order, ZIP; oversized single pages are reported |
-| PDF to Word | Server | Editable DOCX from text, tables and images using pdf2docx; scans require OCR |
+| PDF to Word | Server | Editable DOCX from text, tables and images using pdf2docx; scanned pages receive automatic OCR and editable paragraphs |
 | PDF to PowerPoint | Server | One rendered page per slide by default; optional editable text with style and position. Complex layouts may differ. |
 | Emails to PDF | Server | EML/MSG, Unicode headers and message body; unchanged attachments with unique names in a ZIP |
 | HTML & websites to PDF | Server | Saved HTML with headings and tables without scripts/external resources; public website links use the separate Chromium service described above |

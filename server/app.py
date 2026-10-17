@@ -1,4 +1,4 @@
-"""Optional MoinPDF document service. No document persistence, no shared job directory."""
+"""MoinPDF document service with isolated conversion workspaces and bounded background jobs."""
 from __future__ import annotations
 
 import hmac
@@ -17,17 +17,19 @@ import uuid
 import zipfile
 from urllib.parse import urlsplit, quote
 from urllib.request import urlopen
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager, ExitStack
 from pathlib import Path
 
 from defusedxml import ElementTree as SafeET
-from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 if __package__:
+    from .job_queue import JobQueue, QueueError, context as queue_context
     from .audio_documents import voices_available, validate_request as validate_audio, MAX_CHARACTERS, MAX_SECTIONS
 else:
+    from job_queue import JobQueue, QueueError, context as queue_context
     from audio_documents import voices_available, validate_request as validate_audio, MAX_CHARACTERS, MAX_SECTIONS
 
 MAX_BYTES = 80 * 1024 * 1024
@@ -39,7 +41,13 @@ VERAPDF = str(TOOLS / "verapdf" / "verapdf")
 MUSTANG = TOOLS / "mustang.jar"
 ICC = Path(os.getenv("MOINPDF_ICC", "/usr/share/color/icc/ghostscript/srgb.icc"))
 slots = threading.BoundedSemaphore(2)
-app = FastAPI(title="MoinPDF Dokumentenserver", docs_url=None, redoc_url=None)
+@asynccontextmanager
+async def lifespan(_app):
+    store = background_queue()
+    try: yield
+    finally: store.close()
+
+app = FastAPI(title="MoinPDF Dokumentenserver", docs_url=None, redoc_url=None, lifespan=lifespan)
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -89,13 +97,17 @@ async def limit_request(request, call_next):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[x.strip() for x in os.getenv("MOINPDF_ORIGINS", "").split(",") if x.strip()],
-    allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type", "X-MoinPDF-Job-Ticket"],
     expose_headers=["Content-Disposition", "X-MoinPDF-Note"], allow_credentials=False,
 )
 
 @contextmanager
 def job():
-    if not slots.acquire(blocking=False):
+    if getattr(queue_context, 'cancel', None) is not None:
+        while not slots.acquire(timeout=0.2):
+            if queue_context.cancel.is_set(): raise HTTPException(499, 'Auftrag abgebrochen.')
+            if time.monotonic() >= queue_context.deadline: raise HTTPException(504, 'Der Auftrag hat das Zeitlimit erreicht.')
+    elif not slots.acquire(blocking=False):
         raise HTTPException(503, "Der Server verarbeitet bereits zwei Aufträge. Bitte später erneut versuchen.")
     try:
         with tempfile.TemporaryDirectory(prefix="moinpdf-") as directory:
@@ -131,12 +143,22 @@ def command(args: list[str], cwd: Path, accepted=(0,), timeout=TIMEOUT, extra_en
     try:
         with (cwd / "stdout.log").open("w+b") as out, (cwd / "stderr.log").open("w+b") as err:
             process = subprocess.Popen(args, cwd=cwd, env=environment, stdout=out, stderr=err, start_new_session=True)
+            cancel = getattr(queue_context, 'cancel', None)
+            deadline = min(time.monotonic() + (900 if cancel is not None and timeout == TIMEOUT else timeout), getattr(queue_context, 'deadline', float('inf')))
             try:
-                code = process.wait(timeout=timeout)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
+                while True:
+                    if cancel is not None and cancel.is_set(): raise HTTPException(499, 'Auftrag abgebrochen.')
+                    if time.monotonic() >= deadline: raise HTTPException(504, 'Das Dokument hat das Zeitlimit für die Verarbeitung erreicht.')
+                    try:
+                        code = process.wait(timeout=0.2)
+                        break
+                    except subprocess.TimeoutExpired:
+                        pass
+            except BaseException:
+                try: os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError: pass
                 process.wait()
-                raise HTTPException(504, "Das Dokument konnte nicht innerhalb von drei Minuten verarbeitet werden.")
+                raise
             out.seek(0)
             data = out.read(16 * 1024 * 1024)
             if code not in accepted:
@@ -179,7 +201,7 @@ def capabilities():
     voices = voices_available()
     signature_advanced = os.getenv("MOINPDF_TSA_URL", "").startswith("https://") and any(Path(os.getenv("MOINPDF_TRUST_ROOTS", "/trust")).glob("*.pem"))
     return {"apiVersion": 1, "service": "MoinPDF Dokumentenserver", "limits": {"maxBytes": MAX_BYTES, "audioCharacters": MAX_CHARACTERS, "audioSections": MAX_SECTIONS}, "audioVoices": voices, "signatureLevels": {"basic": True, "timestamp": signature_advanced, "lt": signature_advanced, "lta": signature_advanced},
-            "versions": versions(), "translationService": urlsplit(os.getenv('MOINPDF_TRANSLATE_URL','')).hostname,
+            "jobQueue": {"operations": sorted(QUEUED_OPERATIONS), "retentionSeconds": 86400, "timeoutSeconds": 900}, "versions": versions(), "translationService": urlsplit(os.getenv('MOINPDF_TRANSLATE_URL','')).hostname,
             "translationStatus": translation,
             "capabilities": {
                 "speech": len(voices) == 2,
@@ -323,7 +345,10 @@ def pdf_to_word(file: UploadFile = File(...)):
         output = directory / "output.docx"
         if not output.is_file() or not zipfile.is_zipfile(output):
             raise HTTPException(422, "Es wurde keine gültige Word-Datei erzeugt.")
-        return result(output.read_bytes(), "PDF-zu-Word.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        response = result(output.read_bytes(), "PDF-zu-Word.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        note = directory / 'word-note.txt'
+        if note.is_file(): response.headers['X-MoinPDF-Note'] = quote(note.read_text(encoding='utf-8'))
+        return response
 
 
 @app.post("/v1/email", dependencies=[Depends(authorize)])
@@ -661,3 +686,85 @@ def zugferd(mode: str, file: UploadFile = File(...), invoice: UploadFile | None 
         files={'Ergebnis.json':json.dumps(summary,ensure_ascii=False,indent=2).encode(),'Mustang-Pruefbericht.xml':raw,'veraPDF-Pruefbericht.xml':vera}
         if mode=='create':files['ZUGFeRD-geprueft.pdf' if compliant else 'NICHT-VALIDIERT-Rechnung.pdf']=source.read_bytes()
         return archive(files,'ZUGFeRD-Ergebnis.zip')
+
+
+# A closed operation list intentionally excludes private keys, passwords and
+# timestamp/signing side effects. Only idempotent document conversions restart.
+QUEUED_OPERATIONS = {'/v1/office', '/v1/pdf-to-word', '/v1/email', '/v1/pdfa/create', '/v1/pdfa/validate', '/v1/pdfua/validate', '/v1/word-merge'} | {'/v1/documents/' + action for action in ['powerpoint', 'html', 'orient', 'form', 'print', 'accessibility', 'redaction', 'dewarp', 'translate', 'optimize', 'ebook', 'svg', 'font-outlines', 'flatten-layers']}
+queue_lock = threading.Lock()
+
+
+def queued_conversion(item, directory):
+    with ExitStack() as stack:
+        files = {key: UploadFile(file=stack.enter_context((directory / value['path']).open('rb')), filename=value['name']) for key, value in item['files'].items()}
+        fields, operation = item['fields'], item['operation']
+        file = files.get('file')
+        if file is None: raise HTTPException(422, 'Bitte eine Datei auswählen.')
+        if operation == '/v1/office': response = office(file)
+        elif operation == '/v1/pdf-to-word': response = pdf_to_word(file)
+        elif operation == '/v1/email': response = email_to_pdf(file, fields.get('include_attachments', 'true') == 'true')
+        elif operation == '/v1/pdfa/create': response = create_pdfa(file, fields.get('profile', '2b'))
+        elif operation == '/v1/pdfa/validate': response = validate_pdfa(file, fields.get('profile', '2b'))
+        elif operation == '/v1/pdfua/validate': response = validate_pdfua(file, fields.get('profile', 'ua1'))
+        elif operation == '/v1/word-merge':
+            if 'spreadsheet' not in files: raise HTTPException(422, 'Bitte eine Excel-Tabelle auswählen.')
+            response = word_mail_merge(file, files['spreadsheet'])
+        elif operation in QUEUED_OPERATIONS and operation.startswith('/v1/documents/'):
+            response = extended_document(operation.rsplit('/', 1)[1], file, fields.get('options', '{}'))
+        else: raise HTTPException(422, 'Dieser Auftrag kann nicht in der Warteschlange ausgeführt werden.')
+        return response.body, response.media_type, {key: value for key, value in response.headers.items() if key.lower() in {'content-disposition', 'x-moinpdf-note'}}
+
+
+def background_queue():
+    with queue_lock:
+        if not getattr(app.state, 'job_queue', None) or app.state.job_queue.stopping.is_set():
+            app.state.job_queue = JobQueue(os.getenv('MOINPDF_JOB_DIR', '/tmp/moinpdf-jobs'), queued_conversion)
+        return app.state.job_queue
+
+
+@app.exception_handler(QueueError)
+async def queue_error(_request, error):
+    return JSONResponse({'detail': error.detail}, status_code=error.status)
+
+
+@app.post('/v1/jobs', dependencies=[Depends(authorize)])
+async def submit_job(request: Request, ticket: str = Header('', alias='X-MoinPDF-Job-Ticket')):
+    from starlette.concurrency import run_in_threadpool
+    from starlette.datastructures import UploadFile as FormUpload
+    async with request.form(max_files=2, max_fields=6, max_part_size=200000) as form:
+        operation = form.get('operation', '')
+        if operation not in QUEUED_OPERATIONS: raise HTTPException(422, 'Dieses Werkzeug unterstützt keine Hintergrundaufträge.')
+        fields, uploads, names = {}, [], set()
+        for key, value in form.multi_items():
+            if key in names: raise HTTPException(422, 'Doppelte Auftragsfelder sind nicht erlaubt.')
+            names.add(key)
+            if key == 'operation': continue
+            if isinstance(value, FormUpload):
+                if key not in {'file', 'spreadsheet'}: raise HTTPException(422, 'Unbekanntes Dateifeld.')
+                uploads.append((key, value.filename, value.file))
+            else:
+                if key not in {'options', 'profile', 'include_attachments'} or len(value) > 10000: raise HTTPException(422, 'Ungültige Auftragseinstellungen.')
+                fields[key] = value
+        if 'file' not in names: raise HTTPException(422, 'Bitte eine Datei auswählen.')
+        return await run_in_threadpool(background_queue().submit, ticket, operation, fields, uploads)
+
+
+@app.get('/v1/jobs/{job_id}', dependencies=[Depends(authorize)])
+def job_status(job_id: str, ticket: str = Header('', alias='X-MoinPDF-Job-Ticket')):
+    return background_queue().status(job_id, ticket)
+
+
+@app.get('/v1/jobs/{job_id}/result', dependencies=[Depends(authorize)])
+def job_result(job_id: str, ticket: str = Header('', alias='X-MoinPDF-Job-Ticket')):
+    data, media, headers = background_queue().output(job_id, ticket)
+    return Response(data, media_type=media, headers=headers)
+
+
+@app.post('/v1/jobs/{job_id}/cancel', dependencies=[Depends(authorize)])
+def cancel_job(job_id: str, ticket: str = Header('', alias='X-MoinPDF-Job-Ticket')):
+    return background_queue().cancel(job_id, ticket)
+
+
+@app.post('/v1/jobs/{job_id}/delete', dependencies=[Depends(authorize)])
+def delete_job(job_id: str, ticket: str = Header('', alias='X-MoinPDF-Job-Ticket')):
+    return background_queue().cancel(job_id, ticket, delete=True)
