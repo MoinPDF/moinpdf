@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import tempfile
+import time
 import pymupdf
 from playwright.sync_api import expect, sync_playwright
 
@@ -43,7 +44,10 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 page.locator('.history-tools').get_by_role('button', name='Wiederholen', exact=True).click()
                 expect(page.locator('.history-tools').get_by_role('button', name='Wiederholen', exact=True)).to_be_disabled()
                 expect(page.get_by_role('button', name='Seite 2 entfernen', exact=True)).to_have_count(0)
-                page.wait_for_function('''() => new Promise(resolve => {
+                # wait_for_function treats a returned Promise as truthy before it
+                # resolves. Poll completed IndexedDB reads before reloading.
+                deadline = time.monotonic() + 10
+                while not page.evaluate('''() => new Promise(resolve => {
                     const request = indexedDB.open('moinpdf.workspace.v1');
                     request.onerror = () => resolve(false);
                     request.onsuccess = () => {
@@ -51,7 +55,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                         const get = db.transaction('recovery').objectStore('recovery').get('current');
                         get.onsuccess = () => { const value = get.result; db.close(); resolve(value?.state.history.length >= 2 && value?.state.pages.length === 1 && value?.sources.length === 2); };
                     };
-                })''')
+                })'''):
+                    assert time.monotonic() < deadline, 'The edited workspace was not saved for recovery'
+                    page.wait_for_timeout(100)
                 page.reload()
                 page.get_by_role('button', name='Letzten Arbeitsstand wiederherstellen', exact=True).click()
                 expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
