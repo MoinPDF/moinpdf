@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 16. Oktober 2026, Version 0.15.0.
+Stand: 18. Oktober 2026, Version 0.15.1.
 
 Über „Neues Dokument“ direkt links neben „Projekte“ lassen sich leere Dokumente
 mit Rich-Text-Formatierung, Bildern und Tabellen verfassen. Entwürfe werden lokal

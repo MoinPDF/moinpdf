@@ -42,7 +42,7 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 - PDF schützen (AES-256) und mit bekanntem Passwort entsperren
 - E-Rechnungen lesen und mit einem Basischeck prüfen; UBL, UBL-Gutschriften und CII aus XML oder eingebetteten PDF-Anhängen
 
-PDFs, Rechnungs-XML und unterstützte Bildformate lassen sich überall ins Fenster ziehen. Die Seitenreihenfolge wird per Drag-and-drop oder über Pfeile geändert. Visuelle Bereiche lassen sich direkt aufziehen beziehungsweise platzieren oder über Prozentwerte eingeben. Die letzten 30 Seiten- und Bereichsänderungen können rückgängig gemacht und wiederholt werden (Strg/⌘ + Z und Strg/⌘ + Umschalt + Z). Nach dem Hinzufügen oder Schließen von Dateien beginnt der Verlauf neu.
+PDFs, Rechnungs-XML und unterstützte Bildformate lassen sich überall ins Fenster ziehen. Die Seitenreihenfolge wird per Drag-and-drop oder über Pfeile geändert. Visuelle Bereiche lassen sich direkt aufziehen beziehungsweise platzieren oder über Prozentwerte eingeben. Bis zu 30 Arbeitsstände einschließlich übernommener Ergebnisse sowie Seiten- und Bereichsänderungen können rückgängig gemacht und wiederholt werden (Strg/⌘ + Z und Strg/⌘ + Umschalt + Z). Nach dem Hinzufügen oder Schließen von Dateien beginnt der Verlauf neu.
 
 Ergebnisse können als neue Arbeitsdokumente übernommen werden. OCR exportiert durchsuchbare PDF, TXT und DOCX (Text ohne Rekonstruktion des ursprünglichen Layouts). Seitenwerkzeuge übernehmen ausstehende visuelle Änderungen auf den ausgewählten Seiten. Beim Wechsel in Spezialwerkzeuge wird der Arbeitsstand übernommen; bei möglichen Strukturverlusten ist eine bewusste Entscheidung nötig. Die Übernahme von Ergebnissen erhält den Rückgängig-Verlauf.
 

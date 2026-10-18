@@ -9,6 +9,14 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.15.1 – 18. Oktober 2026
+
+- Die Versionsanzeige in App, Handbuch und Medienbereich öffnet die Release-Notes der angezeigten Version auf GitHub in einem neuen Tab.
+- Englische Hinweise für OCR-/Word-Ergebnisse, Projektgrenzen, Originalobjekt-Bearbeitung und Hintergrundaufträge ergänzt. Fehlermeldungen und Datums-/Größenangaben in der Ergebnisablage folgen der App-Sprache.
+- Handbuch auf den gemeinsamen Arbeitsplatz, den erweiterten Rückgängig-Verlauf und das Fortsetzen von Hintergrundaufträgen abgestimmt; deutsche und englische Anleitungen gemeinsam aktualisiert.
+- Gelöschte Ergebnisse bleiben auch dann aus der Ablage entfernt, wenn ein vorheriger lokaler Speichervorgang erst danach fertig wird. Neue Ergebnisse werden nicht durch ältere Speichervorgänge ausgeblendet.
+
+
 ## 0.15.0 – 18. Oktober 2026
 
 - Tabellen über mehrere PDF-Seiten sammeln; wiederholte Kopfzeilen entfernen, Spaltentypen wählen und echte Zahlen, Prozent-, Währungs- und Datumszellen nach Excel exportieren. Kennungen und Formeln bleiben Text. Große Tabellen werden in der Korrekturansicht paginiert.

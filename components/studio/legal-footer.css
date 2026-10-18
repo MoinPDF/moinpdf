@@ -111,7 +111,10 @@
   outline: 2px solid var(--ui-teal, #176c64);
   outline-offset: 3px;
 }
-.moinpdf-version {
+.moinpdf-legal-footer a.moinpdf-version {
+  min-height: 24px;
+  padding: 2px;
+  gap: 0.3em;
   color: var(--ui-muted, #7b8f86);
   white-space: nowrap;
   font-size: 0.6875rem;
