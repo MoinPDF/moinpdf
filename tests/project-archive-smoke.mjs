@@ -154,3 +154,14 @@ for(const file of [emptyFile,await bundles.encodeProjectArchive(emptyBundle)]) {
   assert.ok(!(await file.text()).includes(orphan.text),'Removed-file content is absent from exported bytes');
 }
 console.log('PASS: zero-page projects save and transfer without blocking project switches; orphaned notes/crops are removed across current, undo, redo and legacy imports while valid undo edits survive.');
+
+const revised={...source,id:'revised',name:'Ergebnis.pdf',kind:'pdf'};
+const revisedPages=pages.map(p=>({...p,sourceId:'revised'}));
+const adopted={...state,pages:revisedPages,sourceIds:['revised'],documentSessions:{},history:[{...state,sourceIds:['original'],documentSessions:state.documentSessions,pages:state.pages,edits:state.edits}]};
+// Snapshots contain document identity and form state, not nested project history.
+delete adopted.history[0].history;delete adopted.history[0].future;delete adopted.history[0].options;delete adopted.history[0].toolId;
+const adoption=await decodeProjectFile(await encodeProjectFile('Ergebnis übernommen',[revised,source],adopted));
+assert.deepEqual(adoption.state.sourceIds,['revised']);assert.deepEqual(adoption.state.history[0].sourceIds,['original']);
+assert.equal(adoption.state.history[0].documentSessions.original.current.fields[0].value,'Denny');
+validateOpenedProject(adoption.state,[revised,source]);
+console.log('PASS: project export/import preserves undo across adopted documents and form drafts.');

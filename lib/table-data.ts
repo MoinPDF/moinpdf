@@ -79,7 +79,91 @@ const col = (index: number) => {
     out = String.fromCharCode(65 + ((index - 1) % 26)) + out;
   return out;
 };
-export async function makeXlsx(rows: string[][], sheetName = 'Tabelle') {
+export type ColumnType = 'auto' | 'text' | 'number' | 'date';
+export type TableExportOptions = {
+  columns?: ColumnType[];
+  locale?: 'de' | 'en';
+  headerRows?: number;
+};
+// Only explicit, unambiguous values become numbers. Account numbers, leading
+// zeroes, long identifiers and formula-like text must survive a round trip.
+export function spreadsheetValue(
+  input: string,
+  type: ColumnType = 'text',
+  locale: 'de' | 'en' = 'de',
+): { value: number; style: number } | null {
+  const text = input.trim();
+  if (type === 'text' || !text || /^[=+@]/.test(text)) return null;
+  if (type === 'auto' || type === 'date') {
+    const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const local = locale === 'de' ? text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/) : null;
+    if (iso || local) {
+      const [year, month, day] = iso
+        ? [Number(iso[1]), Number(iso[2]), Number(iso[3])]
+        : [Number(local![3]), Number(local![2]), Number(local![1])];
+      const stamp = Date.UTC(year, month - 1, day),
+        date = new Date(stamp);
+      if (
+        year >= 1900 &&
+        year <= 9999 &&
+        date.getUTCFullYear() === year &&
+        date.getUTCMonth() === month - 1 &&
+        date.getUTCDate() === day
+      ) {
+        const serial = (stamp - Date.UTC(1899, 11, 31)) / 86400000;
+        return { value: serial + (serial >= 60 ? 1 : 0), style: 1 };
+      }
+      return null;
+    }
+    if (type === 'date') return null;
+  }
+  const percent = /%$/.test(text);
+  const currency = /(?:€|EUR)$/.test(text);
+  const raw = text.replace(/\s*(?:%|€|EUR)$/, '').trim();
+  const pattern =
+    locale === 'de'
+      ? /^-?(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d+)?$/
+      : /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/;
+  if (!pattern.test(raw)) return null;
+  const canonical =
+    locale === 'de' ? raw.replace(/\./g, '').replace(',', '.') : raw.replace(/,/g, '');
+  if (/^-?0\d/.test(canonical) || canonical.replace(/\D/g, '').replace(/^0+/, '').length > 15)
+    return null;
+  const value = Number(canonical) / (percent ? 100 : 1);
+  return Number.isFinite(value) ? { value, style: percent ? 2 : currency ? 3 : 0 } : null;
+}
+
+export function joinTablePages(pages: string[][][], headerRows = 1, removeRepeatedHeaders = true) {
+  const rows: string[][] = [];
+  let header: string[][] | undefined;
+  const same = (a: string[], b: string[]) =>
+    a.length === b.length &&
+    a.every((v, i) => v.trim().replace(/\s+/g, ' ') === b[i].trim().replace(/\s+/g, ' '));
+  for (const page of pages) {
+    if (!page.length) continue;
+    if (!header) {
+      header = page.slice(0, headerRows);
+      rows.push(...page);
+    } else {
+      const repeated =
+        removeRepeatedHeaders &&
+        headerRows > 0 &&
+        header.length === headerRows &&
+        page.length >= headerRows &&
+        header.every((r, i) => same(r, page[i]));
+      rows.push(...page.slice(repeated ? headerRows : 0));
+    }
+  }
+  if (rows.length > 10000 || rows.some((r) => r.length > 100))
+    throw new Error('Maximal 10.000 Zeilen und 100 Spalten.');
+  return rows;
+}
+
+export async function makeXlsx(
+  rows: string[][],
+  sheetName = 'Tabelle',
+  options: TableExportOptions = {},
+) {
   const zip = new JSZip(),
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
   zip.file(
@@ -100,7 +184,51 @@ export async function makeXlsx(rows: string[][], sheetName = 'Tabelle') {
   );
   zip.file(
     'xl/worksheets/sheet1.xml',
-    `<worksheet xmlns="${ns}"><sheetData>${rows.map((row, y) => `<row r="${y + 1}">${row.map((value, x) => `<c r="${col(x)}${y + 1}" t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`).join('')}</row>`).join('')}</sheetData></worksheet>`,
+    `<worksheet xmlns="${ns}"><sheetData>${rows
+      .map(
+        (row, y) =>
+          `<row r="${y + 1}">${row
+            .map((value, x) => {
+              let type = options.columns?.[x] || 'text';
+              const header = rows
+                .slice(0, options.headerRows ?? 0)
+                .map((r) => r[x] || '')
+                .join(' ');
+              if (
+                y < (options.headerRows ?? 0) ||
+                (type === 'auto' &&
+                  /\b(?:id|iban|bic|konto|kontonummer|plz|postcode|zip|telefon|phone|artikelnummer|nummer|nr)\b/i.test(
+                    header,
+                  ))
+              )
+                type = 'text';
+              const parsed = spreadsheetValue(value, type, options.locale);
+              return parsed
+                ? `<c r="${col(x)}${y + 1}" s="${parsed.style}"><v>${parsed.value}</v></c>`
+                : `<c r="${col(x)}${y + 1}" t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
+            })
+            .join('')}</row>`,
+      )
+      .join('')}</sheetData></worksheet>`,
+  );
+  // Explicit styles keep numeric/date semantics in Excel and LibreOffice.
+  zip.file(
+    'xl/styles.xml',
+    `<styleSheet xmlns="${ns}"><numFmts count="1"><numFmt numFmtId="164" formatCode="#,##0.00 &quot;€&quot;"/></numFmts><fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4">${[0, 14, 10, 164].map((id) => `<xf numFmtId="${id}" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>`).join('')}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`,
+  );
+  zip.file(
+    '[Content_Types].xml',
+    (await zip.file('[Content_Types].xml')!.async('string')).replace(
+      '</Types>',
+      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+    ),
+  );
+  zip.file(
+    'xl/_rels/workbook.xml.rels',
+    (await zip.file('xl/_rels/workbook.xml.rels')!.async('string')).replace(
+      '</Relationships>',
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+    ),
   );
   return zip.generateAsync({
     type: 'blob',
@@ -112,7 +240,7 @@ export async function makeXlsx(rows: string[][], sheetName = 'Tabelle') {
 export function tableFromTargets(targets: TextTarget[], area: Rect, boundaries: number[]) {
   const edges = [
     area.x,
-    ...boundaries.filter((x) => x > area.x && x < area.x + area.w).sort((a, b) => a - b),
+    ...new Set(boundaries.filter((x) => x > area.x && x < area.x + area.w).sort((a, b) => a - b)),
     area.x + area.w,
   ];
   const candidates = targets

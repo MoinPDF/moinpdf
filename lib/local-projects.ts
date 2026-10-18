@@ -1,7 +1,13 @@
 import type { Source, PageItem } from './pdf-engine';
 import type { Edits, StudioOptions } from './studio-engine';
 import type { DocumentSessions } from './document-tools';
-export type ProjectSnapshot = { pages: PageItem[]; edits: Edits };
+export type ProjectSnapshot = {
+  pages: PageItem[];
+  edits: Edits;
+  sourceIds?: string[];
+  documentSessions?: DocumentSessions;
+  activeId?: string;
+};
 export type ProjectState = ProjectSnapshot & {
   options: StudioOptions;
   history: ProjectSnapshot[];
@@ -85,11 +91,14 @@ const id = () =>
 export function validateProject(state: ProjectState, sources: ProjectSource[]) {
   if (
     !sources.length ||
-    sources.length > 200 ||
+    sources.length > 600 ||
     state.pages.length > 200 ||
-    sources.reduce((n, s) => n + s.bytes.length, 0) > 80 * 1024 * 1024
+    sources.reduce((n, s) => n + s.bytes.length + (s.invoiceOriginal?.bytes.length || 0), 0) >
+      240 * 1024 * 1024
   )
-    throw new Error('Ein Projekt darf höchstens 200 Seiten und 80 MB PDF-Daten enthalten.');
+    throw new Error(
+      'Ein Projekt darf höchstens 200 aktive Seiten und 240 MB PDF-Daten einschließlich Verlauf enthalten.',
+    );
   if (
     new Set(sources.map((s) => s.id)).size !== sources.length ||
     new Set(state.pages.map((p) => p.id)).size !== state.pages.length ||

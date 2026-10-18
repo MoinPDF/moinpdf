@@ -8,12 +8,14 @@ services:
       MOINPDF_TSA_URL: ${MOINPDF_TSA_URL:-}
       MOINPDF_TSA_BEARER: ${MOINPDF_TSA_BEARER:-}
       MOINPDF_TRANSLATE_URL: ${MOINPDF_TRANSLATE_URL:-}
+      MOINPDF_JOB_DIR: /var/lib/moinpdf-jobs
       MOINPDF_TRANSLATE_KEY: ${MOINPDF_TRANSLATE_KEY:-}
     read_only: true
     tmpfs:
       - /tmp:size=1g,mode=1777
     volumes:
       - ./trust:/trust:ro
+      - document_jobs:/var/lib/moinpdf-jobs
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     mem_limit: 2g
@@ -36,5 +38,6 @@ networks:
     internal: true
   edge:
 volumes:
+  document_jobs:
   caddy_data:
   caddy_config:

@@ -127,3 +127,10 @@ For local tests, install Python dependencies, set `MOINPDF_TOOLS` to a dedicated
 ---
 
 [Project README](../README.en.md) · [Complete Docker installation](../DOCKER.en.md) · [Development](../docs/DEVELOPMENT.en.md)
+
+
+## Background jobs in 0.15.0
+
+The capability response lists `jobQueue.operations`. POST the usual multipart fields plus `operation` to `/v1/jobs`, with a random 64-character hexadecimal `X-MoinPDF-Job-Ticket`. The first 32 characters identify the job; the full ticket and the API key are required for every status, result, cancellation and deletion request. Reusing the same ticket does not submit a second job.
+
+Use `GET /v1/jobs/{id}`, `GET /v1/jobs/{id}/result`, `POST /v1/jobs/{id}/cancel` and `POST /v1/jobs/{id}/delete`. Two workers process up to 16 outstanding jobs. Limits are 80 MB input, 160 MB output, 1 GB spool storage and 15 minutes processing. Inputs are removed after completion or cancellation; results expire 24 hours after submission. Interrupted conversions resume after a restart. Compose persists `MOINPDF_JOB_DIR` in `document_jobs`. Private keys, certificate passwords and signing operations are excluded. The previous three-minute limits still apply to synchronous calls.

@@ -4,7 +4,7 @@ import { useLanguage } from '@/components/studio/appearance';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { downloadBlob } from '@/lib/pdf-engine';
+import { downloadBlob, selectRange } from '@/lib/pdf-engine';
 import {
   suggestNames,
   renamedZip,
@@ -16,7 +16,13 @@ import {
   type SplitPart,
   type RedactionHit,
 } from '@/lib/advanced-text';
-import { makeXlsx, csvText, tableFromTargets } from '@/lib/table-data';
+import {
+  makeXlsx,
+  csvText,
+  tableFromTargets,
+  joinTablePages,
+  type ColumnType,
+} from '@/lib/table-data';
 import type { TextTarget } from '@/lib/editor-model';
 import type { Rect } from '@/lib/studio-engine';
 import {
@@ -186,21 +192,38 @@ export function TablePanel({ source, busy, run }: PanelProps) {
     [area, setArea] = useState<Rect>({ x: 0.05, y: 0.05, w: 0.9, h: 0.9 }),
     [boundaries, setBoundaries] = useState('35, 65'),
     [ocr, setOcr] = useState(false),
-    [targets, setTargets] = useState<TextTarget[]>([]),
+    [targets, setTargets] = useState<TextTarget[][]>([]),
+    [pageRange, setPageRange] = useState(''),
+    [headerRows, setHeaderRows] = useState('1'),
+    [repeatHeaders, setRepeatHeaders] = useState(true),
+    [locale, setLocale] = useState<'de' | 'en'>('de'),
+    [columnTypes, setColumnTypes] = useState<ColumnType[]>([]),
+    [tableNote, setTableNote] = useState(''),
     [rows, setRows] = useState<string[][]>([]);
-  const split = (t: TextTarget[], r = area, b = boundaries) => {
+  const split = (t: TextTarget[][], r = area, b = boundaries) => {
     const edges = b
       .split(/[;,\s]+/)
       .filter(Boolean)
       .map(Number);
     if (edges.some((n) => !Number.isFinite(n) || n < 0 || n > 100))
       throw new Error('Spaltengrenzen als Prozentwerte von 0 bis 100 eingeben.');
-    setRows(
+    const headers = Number(headerRows);
+    if (!Number.isInteger(headers) || headers < 0 || headers > 5)
+      throw new Error('Bitte 0 bis 5 Kopfzeilen angeben.');
+    const parts = t.map((items) =>
       tableFromTargets(
-        t,
+        items,
         r,
         edges.map((n) => n / 100),
       ),
+    );
+    const combined = joinTablePages(parts, headers, repeatHeaders);
+    setRows(combined);
+    setColumnTypes((old) =>
+      Array.from({ length: combined[0]?.length || 0 }, (_, i) => old[i] || 'auto'),
+    );
+    setTableNote(
+      `${t.length} Seiten ausgewertet; ${combined.length} Zeilen. ${parts.filter((rows) => !rows.length).length} Seiten ohne Tabellenwerte.`,
     );
   };
   return (
@@ -213,6 +236,31 @@ export function TablePanel({ source, busy, run }: PanelProps) {
             onChange={(v) => {
               setPage(v);
               setTargets([]);
+              setRows([]);
+            }}
+          />
+          <Text
+            label={ui('Seitenbereich (leer = Vorschauseite)')}
+            value={pageRange}
+            onChange={(v) => {
+              setPageRange(v);
+              setTargets([]);
+              setRows([]);
+            }}
+          />
+          <Text
+            label={ui('Kopfzeilen (0–5)')}
+            value={headerRows}
+            onChange={(v) => {
+              setHeaderRows(v);
+              setRows([]);
+            }}
+          />
+          <Tick
+            label={ui('Wiederholte Kopfzeilen auf Folgeseiten entfernen')}
+            value={repeatHeaders}
+            onChange={(v) => {
+              setRepeatHeaders(v);
               setRows([]);
             }}
           />
@@ -238,17 +286,33 @@ export function TablePanel({ source, busy, run }: PanelProps) {
           />
           <p className="fine-note">
             {ui(
-              'Beispiel: 35, 65 ergibt drei Spalten. Erkennung arbeitet seitenweise. Werte und Spalten vor dem Export korrigieren.',
+              'Beispiel: 35, 65 ergibt drei Spalten. Bereich und Spalten gelten für alle gewählten Seiten. Werte und Spaltentypen vor dem Export kontrollieren.',
             )}
           </p>
           <Button
             disabled={busy}
             onClick={() =>
               run(async (c) => {
-                const t = await textTargets(source, page, ocr, c);
-                setTargets(t);
-                split(t);
-                if (!t.length)
+                const indices = pageRange.trim()
+                  ? [...selectRange(pageRange, source.pdf.numPages)]
+                  : [page];
+                const collected: TextTarget[][] = [];
+                for (let i = 0; i < indices.length; i++) {
+                  c.signal.throwIfAborted();
+                  collected.push(
+                    await textTargets(source, indices[i], ocr, {
+                      ...c,
+                      report: (p) =>
+                        c.report({
+                          percent: ((i + p.percent / 100) / indices.length) * 100,
+                          label: `Seite ${indices[i] + 1} · ${p.label}`,
+                        }),
+                    }),
+                  );
+                }
+                setTargets(collected);
+                split(collected);
+                if (!collected.some((t) => t.length))
                   throw new Error('Kein Text gefunden. Für einen Scan bitte OCR aktivieren.');
               })
             }
@@ -278,6 +342,45 @@ export function TablePanel({ source, busy, run }: PanelProps) {
       {!!rows.length && (
         <section className="advanced-card">
           <h2>{ui('Werte korrigieren')}</h2>
+          <p className="fine-note" role="status">
+            {ui(tableNote)}
+          </p>
+          <Choice
+            label={ui('Zahlenformat')}
+            value={locale}
+            onChange={(v) => setLocale(v as 'de' | 'en')}
+            items={[
+              ['de', 'Deutsch · 1.234,56'],
+              ['en', 'Englisch · 1,234.56'],
+            ]}
+          />
+          <div className="advanced-grid">
+            {Array.from({ length: rows[0]?.length || 0 }, (_, i) => (
+              <Choice
+                key={i}
+                label={ui(`Spalte ${i + 1}`)}
+                value={columnTypes[i] || 'auto'}
+                onChange={(v) =>
+                  setColumnTypes((old) =>
+                    Array.from({ length: rows[0]?.length || 0 }, (_, j) =>
+                      i === j ? (v as ColumnType) : old[j] || 'auto',
+                    ),
+                  )
+                }
+                items={[
+                  ['auto', 'Automatisch'],
+                  ['text', 'Text / Kennung'],
+                  ['number', 'Zahl'],
+                  ['date', 'Datum'],
+                ]}
+              />
+            ))}
+          </div>
+          <p className="fine-note">
+            {ui(
+              'Führende Nullen, lange Kennungen und Formeln bleiben Text. Nicht eindeutig erkennbare Werte werden unverändert übernommen.',
+            )}
+          </p>
           <EditTable rows={rows} onChange={setRows} />
           <div className="advanced-actions">
             <Button
@@ -302,7 +405,14 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               disabled={busy}
               onClick={() =>
                 run(async () => ({
-                  blob: await makeXlsx(rows, ui('Tabelle')),
+                  blob: await makeXlsx(rows, ui('Tabelle'), {
+                    columns: Array.from(
+                      { length: rows[0]?.length || 0 },
+                      (_, i) => columnTypes[i] || 'auto',
+                    ),
+                    locale,
+                    headerRows: Number(headerRows),
+                  }),
                   filename: 'PDF-Tabelle.xlsx',
                   kind: 'data',
                   pages: 1,

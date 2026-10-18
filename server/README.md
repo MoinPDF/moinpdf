@@ -36,7 +36,7 @@ Die API über die eigene Integration bzw. den Proxy mit dem konfigurierten Schl�
 
 ## Prüfungen und Betriebsverhalten
 
-- Pro Auftrag wird ein eigenes temporäres Verzeichnis verwendet und anschließend gelöscht. Aufträge und Dateiinhalte werden nicht dauerhaft gespeichert. Der MoinPDF-API-Schlüssel wird nicht an Konverter-Unterprozesse weitergegeben. Nur der Übersetzungsauftrag erhält bei Bedarf den separat konfigurierten LibreTranslate-Schlüssel. Zertifikatspasswörter werden weder in Befehlszeilen noch in Berichten abgelegt.
+- Synchrone Aufträge: Pro Auftrag wird ein eigenes temporäres Verzeichnis verwendet und anschließend gelöscht. Aufträge und Dateiinhalte werden nicht dauerhaft gespeichert. Der MoinPDF-API-Schlüssel wird nicht an Konverter-Unterprozesse weitergegeben. Nur der Übersetzungsauftrag erhält bei Bedarf den separat konfigurierten LibreTranslate-Schlüssel. Zertifikatspasswörter werden weder in Befehlszeilen noch in Berichten abgelegt.
 - Höchstens zwei gleichzeitige Dokumentenaufträge; native Konverter werden nach drei Minuten einschließlich Kindprozessen beendet. Dateigrenze 80 MB, Rechnungs-XML 10 MB, Zertifikat 2 MB. HTTP-Abbruch im Browser beendet zunächst das Warten; ein bereits gestarteter Serverauftrag läuft bis Abschluss oder Timeout weiter.
 - LibreOffice verwendet ein frisches Profil mit deaktivierten Makros. Der Container hat ein schreibgeschütztes Dateisystem, ein temporäres Arbeitsverzeichnis und keinen Internetzugriff. Office-Layout hängt unter anderem von den verfügbaren Schriften ab. Eigene lizenzierte Schriften können beim Image-Build ergänzt werden.
 - PDF/A gilt nur bei bestandenem veraPDF-Check als konform. Bei einem fehlgeschlagenen Check heißt die Ausgabedatei ausdrücklich `NICHT-PDF-A-konform.pdf`. Die neue Archivkopie kann Formulare, Anhänge, aktive Elemente und bestehende Signaturen verändern oder verlieren; die Originaldatei bleibt erhalten. Das Profil 3b allein erzeugt keine ZUGFeRD-Rechnung.
@@ -151,3 +151,17 @@ eigenes Testverzeichnis setzen, `python server/install_voices.py` ausführen und
 anschließend `python -m unittest server.test_audio -v`. Der Test erzeugt mit
 beiden Modellen echte WAV-Dateien, prüft Format, Signal und Tempo sowie einen
 authentifizierten Kapitel-ZIP-Export. Im Docker-Test läuft er ohne Netzwerk.
+
+
+## Hintergrundaufträge ab 0.15.0
+
+`POST /v1/jobs` nimmt die bisherigen Multipart-Felder sowie `operation` (z. B. `/v1/pdf-to-word`) entgegen. `X-MoinPDF-Job-Ticket` enthält ein vom Client erzeugtes zufälliges Ticket aus 64 Hex-Zeichen. Wiederholte Übertragung mit demselben Ticket erzeugt keinen zweiten Auftrag. Die Auftrags-ID sind die ersten 32 Zeichen des Tickets; für jeden Zugriff ist zusätzlich das vollständige Ticket erforderlich. Der gemeinsame API-Schlüssel bleibt verpflichtend.
+
+- `GET /v1/jobs/{id}`: Status; `GET /v1/jobs/{id}/result`: fertiges Ergebnis.
+- `POST /v1/jobs/{id}/cancel`: Verarbeitung samt Konverterprozess abbrechen.
+- `POST /v1/jobs/{id}/delete`: Auftrag und Ergebnis löschen, bei laufenden Jobs nach dem Abbruch.
+- Capability `jobQueue.operations` ist die verbindliche Liste unterstützter Operationen. Signieren, Zeitstempel, Zertifikate und Passwörter werden nicht gespeichert.
+
+Zwei Worker, höchstens 16 offene Aufträge, 80 MB Eingabe insgesamt, 160 MB Ergebnis, 1 GB Auftragsablage, 15 Minuten Laufzeit. Eine volle Ablage führt zu einer verständlichen Ablehnung. Eingaben werden nach Abschluss/Abbruch entfernt. Ergebnisse und Tickets verfallen 24 Stunden nach Erstellen. Bei Neustart werden unterbrochene Konvertierungen erneut ausgeführt. `MOINPDF_JOB_DIR` liegt in Compose im persistenten Volume `document_jobs`; ohne diese Einstellung ist die Ablage unter `/tmp/moinpdf-jobs` nur bis zum Container-Neustart verfügbar.
+
+Die App hält Tickets und Status lokal, bietet „Im Hintergrund fortsetzen“ sowie „Ergebnisse und Aufträge“. Schließen der Ansicht trennt das Warten, „Abbrechen“ stoppt den Serverauftrag. Die oben beschriebenen Drei-Minuten-Grenzen gelten weiterhin für synchrone API-Aufrufe.

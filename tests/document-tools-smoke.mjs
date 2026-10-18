@@ -10,8 +10,8 @@ const {createCanvas,loadImage,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/c
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model','document-tools']){
- const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-document-test.mjs${q}`);
+for(const name of ['pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model','document-tools','workspace-document']){
+ const code=ts.transpileModule((await readFile(`lib/${name}.ts`,'utf8')).replace("'/vendor/pdf/pdf.worker.min.mjs'",JSON.stringify(require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs'))),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-document-test.mjs${q}`);
  await writeFile(`.cache/${name}-document-test.mjs`,code);
 }
 const {readDocumentDraft,saveDocumentDraft,newFormField,writeBookmarks,moveBookmark,indentBookmark}=await import('../.cache/document-tools-document-test.mjs');
@@ -33,7 +33,20 @@ const canvas=createCanvas(12,8),ctx=canvas.getContext('2d');ctx.fillStyle='#64bf
 const png=await doc.embedPng(canvas.toBuffer('image/png'));page.drawImage(png,{x:400,y:600,width:72,height:48});page.drawImage(png,{x:400,y:500,width:36,height:24});doc.getPage(1).drawImage(png,{x:60,y:60,width:72,height:48});
 writeBookmarks(doc,[{id:'a',title:'Formular',page:0,depth:0,open:true,targetChanged:true},{id:'b',title:'Gedrehte Seite',page:1,depth:1,open:true,targetChanged:true},{id:'c',title:'Anhang',page:2,depth:0,open:true,targetChanged:true}]);
 const original=await source(await doc.save());await writeFile('.cache/PDF-Formular-Test.pdf',original.bytes);
+const {materializeWorkspace,hasWorkspaceChanges}=await import('../.cache/workspace-document-document-test.mjs');
 try{
+ const ctx={signal:new AbortController().signal,report:()=>{}},clean={marks:{},crops:{}},itemsBefore=items(original);
+ assert.equal(hasWorkspaceChanges([original],itemsBefore,clean,{}),false);
+ const untouched=await materializeWorkspace([original],itemsBefore,clean,{}, {},ctx);
+ assert.equal(untouched.sources[0],original,'Unchanged signed/form documents remain byte-identical');
+ const arranged=await materializeWorkspace([original],[...itemsBefore].reverse(),clean,{}, {},ctx);
+ proxies.push(arranged.sources[0].pdf);
+ const arrangedDoc=await PDFDocument.load(arranged.sources[0].bytes);
+ assert.equal(arrangedDoc.getForm().getTextField('Name').getText(),'Erika Beispiel');
+ assert.equal(arrangedDoc.getTitle(),'Formular Original');
+ assert.ok(arrangedDoc.catalog.has(PDFName.of('Outlines')));
+ assert.equal(arrangedDoc.getPage(0).getRotation().angle,270);
+ await assert.rejects(()=>materializeWorkspace([original],itemsBefore.slice(0,1),clean,{}, {},ctx),/Formulare|Strukturen/);
  // XFA must be inspected before pdf-lib.getForm(), which silently deletes it.
  for(const packetArray of [false,true])for(const indirectForm of [false,true]){
   const xfaDoc=await PDFDocument.load(original.bytes),xfaForm=xfaDoc.catalog.lookup(PDFName.of('AcroForm'),PDFDict);

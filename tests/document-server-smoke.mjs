@@ -54,5 +54,37 @@ try {
     await assert.rejects(bounded(docker.runServerJob('/api/documents','','/v1/office',new FormData(),signal)),/dauert zu lange/);
     await assert.rejects(bounded(docker.serverCapabilities('/api/documents','',signal)),/antwortet gerade nicht/);
   } finally {globalThis.setTimeout=originalTimer;}
+  const storage=new Map();
+  globalThis.localStorage={getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value)};
+  let ticket,jobId,requests=[];
+  globalThis.fetch=async(url,options)=>{
+    requests.push(url);
+    assert.equal(options.headers['X-MoinPDF-Client'],'web');
+    ticket=options.headers['X-MoinPDF-Job-Ticket'];assert.match(ticket,/^[a-f0-9]{64}$/);
+    jobId=ticket.slice(0,32);
+    if(url.endsWith('/v1/jobs')) {
+      assert.equal(options.body.get('operation'),'/v1/office');
+      return new Response(JSON.stringify({id:jobId,status:'queued',expires:Date.now()/1000+86400}));
+    }
+    if(url.endsWith('/result'))return new Response('PDF-result',{headers:{'content-type':'application/pdf','content-disposition':'attachment; filename="converted.pdf"'}});
+    return new Response(JSON.stringify({id:jobId,status:'completed',expires:Date.now()/1000+86400}));
+  };
+  const body=new FormData();body.append('file',new File(['office'],'sample.docx'));
+  const queued=await docker.runQueuedServerJob('/api/documents','','/v1/office',body,signal);
+  assert.equal(queued.filename,'converted.pdf');assert.equal(await queued.blob.text(),'PDF-result');assert.equal(requests.length,3);
+  const saved=docker.storedServerJobs()[0];assert.equal(saved.ticket,ticket);
+  requests=[];
+  await docker.resumeServerJob(saved,'',signal);
+  assert.equal(requests.length,2);assert.ok(!requests.some(url=>url.endsWith('/v1/jobs')),'Resume must not upload the input again');
+  let cancelled=false;
+  globalThis.fetch=async(url)=>{
+    if(url.endsWith('/cancel'))cancelled=true;
+    return new Response(JSON.stringify({status:cancelled?'cancelled':'running',expires:Date.now()/1000+86400}));
+  };
+  const cancel=new AbortController();const waiting=docker.resumeServerJob(saved,'',cancel.signal);originalTimer(()=>cancel.abort(),5);
+  await assert.rejects(waiting,{name:'AbortError'});assert.equal(cancelled,true,'User cancellation reaches the server');
+  cancelled=false;
+  const detach=new AbortController();const background=docker.resumeServerJob(saved,'',detach.signal);originalTimer(()=>detach.abort('detach'),5);
+  await assert.rejects(background);assert.equal(cancelled,false,'Closing the view leaves the background job running');
   console.log('PASS: integrated authentication, same-origin credentials, timeouts and cancellation through complete response-body downloads.');
 } finally { globalThis.fetch = originalFetch; }

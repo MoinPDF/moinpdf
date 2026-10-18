@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 16 October 2026, version 0.14.3.
+As of 16 October 2026, version 0.15.0.
 
 “New document”, beside “Projects”, opens a local document editor with rich text,
 images, tables, page settings, headers, footers and page numbers. Drafts are saved

@@ -278,45 +278,67 @@ export function EditTable({
   onChange: (r: string[][]) => void;
 }) {
   useLanguage();
+  const [offset, setOffset] = useState(0);
+  const start = Math.min(offset, Math.max(0, Math.floor((rows.length - 1) / 50) * 50));
   const columns = Math.max(1, ...rows.map((r) => r.length));
   return (
     <div className="advanced-table-wrap">
+      {rows.length > 50 && (
+        <div className="advanced-actions">
+          <Button variant="outline" disabled={!start} onClick={() => setOffset(start - 50)}>
+            {ui('Zurück')}
+          </Button>
+          <span aria-live="polite">
+            {start + 1}–{Math.min(start + 50, rows.length)} / {rows.length}
+          </span>
+          <Button
+            variant="outline"
+            disabled={start + 50 >= rows.length}
+            onClick={() => setOffset(start + 50)}
+          >
+            {ui('Weiter')}
+          </Button>
+        </div>
+      )}
       <table className="advanced-table">
         <tbody>
-          {rows.map((row, y) => (
-            <tr key={y}>
-              <th>{y + 1}</th>
-              {Array.from({ length: columns }, (_, x) => (
-                <td key={x}>
-                  <input
-                    aria-label={ui(`Zeile ${y + 1}, Spalte ${x + 1}`)}
-                    value={row[x] || ''}
-                    onChange={(e) =>
-                      onChange(
-                        rows.map((r, i) =>
-                          i === y
-                            ? Array.from({ length: columns }, (_, j) =>
-                                j === x ? e.target.value : r[j] || '',
-                              )
-                            : r,
-                        ),
-                      )
-                    }
-                  />
+          {rows.slice(start, start + 50).map((row, index) => {
+            const y = start + index;
+            return (
+              <tr key={y}>
+                <th>{y + 1}</th>
+                {Array.from({ length: columns }, (_, x) => (
+                  <td key={x}>
+                    <input
+                      aria-label={ui(`Zeile ${y + 1}, Spalte ${x + 1}`)}
+                      value={row[x] || ''}
+                      onChange={(e) =>
+                        onChange(
+                          rows.map((r, i) =>
+                            i === y
+                              ? Array.from({ length: columns }, (_, j) =>
+                                  j === x ? e.target.value : r[j] || '',
+                                )
+                              : r,
+                          ),
+                        )
+                      }
+                    />
+                  </td>
+                ))}
+                <td>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={ui(`Zeile ${y + 1} löschen`)}
+                    onClick={() => onChange(rows.filter((_, i) => i !== y))}
+                  >
+                    ×
+                  </Button>
                 </td>
-              ))}
-              <td>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label={ui(`Zeile ${y + 1} löschen`)}
-                  onClick={() => onChange(rows.filter((_, i) => i !== y))}
-                >
-                  ×
-                </Button>
-              </td>
-            </tr>
-          ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

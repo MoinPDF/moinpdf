@@ -32,7 +32,7 @@ services:
     command: [python, init_secret.py]
     network_mode: none
     read_only: true
-    volumes: [internal_key:/run/moinpdf]
+    volumes: [internal_key:/run/moinpdf, document_jobs:/var/lib/moinpdf-jobs]
     cap_drop: [ALL]
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
     security_opt: [no-new-privileges:true]
@@ -81,12 +81,14 @@ services:
       MOINPDF_TSA_URL: ${MOINPDF_TSA_URL:-}
       MOINPDF_TSA_BEARER: ${MOINPDF_TSA_BEARER:-}
       MOINPDF_TRANSLATE_URL: http://translation:5000
+      MOINPDF_JOB_DIR: /var/lib/moinpdf-jobs
     read_only: true
     tmpfs:
       - /tmp:size=1g,mode=1777
     volumes:
       - internal_key:/run/moinpdf:ro
       - ./server/trust:/trust:ro
+      - document_jobs:/var/lib/moinpdf-jobs
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     mem_limit: ${MOINPDF_DOCUMENT_MEMORY:-2g}
@@ -153,6 +155,7 @@ networks:
   web:
 
 volumes:
+  document_jobs:
   internal_key:
   translation_models:
   translation_cache:

@@ -47,6 +47,10 @@ jobs:
         env:
           MOINPDF_TEST_URL: http://localhost:8080
         run: python tests/project-switch-browser.py
+      - name: Workspace adoption, history, reload recovery and results on desktop/mobile
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+        run: python tests/workspace-browser.py
       - name: Mobile search geometry, touch navigation and document retention
         env:
           MOINPDF_TEST_URL: http://localhost:8080
@@ -126,7 +130,7 @@ jobs:
           docker build --target test -t moinpdf-document-tests ./server
           docker run --rm --network none --read-only --tmpfs /tmp:mode=1777,size=1g \
             --volume "$PWD:/repo:ro" --workdir /repo moinpdf-document-tests \
-            python -m unittest server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats server.test_upload_security -v
+            python -m unittest server.test_job_queue server.test_background_jobs server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats server.test_upload_security -v
       - name: Start complete stack with all seven languages
         id: start
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}

@@ -32,5 +32,12 @@ assert.match(xml,/Rechnung 335,00 EUR/);
 assert.match(xml,/Zweite Seite/);
 assert.equal((xml.match(/<w:sectPr>/g)||[]).length,2,'Each source page retains its section');
 await assert.rejects(()=>createTextWordFile(document,AbortSignal.abort()),{name:'AbortError'});
-await assert.rejects(()=>createTextWordFile({name:'Scan.pdf',pdf:{numPages:1,getPage:async()=>({streamTextContent:()=>new ReadableStream({start(c){c.enqueue({items:[],styles:{},lang:null});c.close();}})})}},new AbortController().signal),/OCR/);
+await assert.rejects(()=>createTextWordFile({name:'Scan.pdf',pdf:{numPages:1,getPage:async()=>({streamTextContent:()=>new ReadableStream({start(c){c.enqueue({items:[],styles:{},lang:null});c.close();}})})}},new AbortController().signal,{recognizePage:async()=>[]}),/OCR/);
 console.log('PASS: direct Office/email/HTML import, format direction, valid DOCX, Unicode, page boundaries, cancellation and scanned-PDF guidance.');
+
+const mixed={name:'Mixed.pdf',pdf:{numPages:2,getPage:async n=>({streamTextContent:()=>new ReadableStream({start(c){c.enqueue({items:n===1?pages[0]:[],styles:{},lang:null});c.close();}})})}};
+let recognized=[];
+const mixedOutput=await createTextWordFile(mixed,new AbortController().signal,{recognizePage:async index=>{recognized.push(index);return ['Erkannter Scantext'];}});
+const mixedXml=await(await JSZip.loadAsync(await mixedOutput.blob.arrayBuffer())).file('word/document.xml').async('string');
+assert.deepEqual(recognized,[1]);assert.match(mixedXml,/Moin &amp; Grüße/);assert.match(mixedXml,/Erkannter Scantext/);assert.match(mixedOutput.note,/1 Seiten per OCR/);
+console.log('PASS: mixed native/scan Word export retains editable text on every page.');

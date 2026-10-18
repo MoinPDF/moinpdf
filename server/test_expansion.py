@@ -52,6 +52,25 @@ class ExpansionTests(unittest.TestCase):
         self.assertEqual(response.status_code,422)
         self.assertIn('OCR',response.json()['detail'])
 
+    def test_word_mixed_native_and_scanned_pages_are_editable(self):
+        native = pymupdf.open(stream=pdf_bytes(), filetype='pdf')
+        scan_source = pymupdf.open()
+        page = scan_source.new_page()
+        page.insert_text((70, 120), 'SCANNED INVOICE 4815', fontsize=22)
+        page.insert_text((70, 160), 'Total amount 1234.56 EUR', fontsize=18)
+        image = page.get_pixmap(matrix=pymupdf.Matrix(2, 2)).tobytes('png')
+        scan = native.new_page()
+        scan.insert_image(scan.rect, stream=image)
+        response = self.post('/v1/pdf-to-word', 'mixed.pdf', native.tobytes())
+        native.close(); scan_source.close()
+        self.assertEqual(response.status_code, 200, response.text[:200])
+        document = Document(io.BytesIO(response.content))
+        text = '\n'.join(p.text for p in document.paragraphs)
+        self.assertIn('MoinPDF test', text)
+        self.assertIn('SCANNED INVOICE 4815', text)
+        self.assertIn('1234.56', text)
+        self.assertIn('OCR', response.headers.get('x-moinpdf-note', ''))
+
     def test_eml_preserves_unicode_and_duplicate_attachments(self):
         message=EmailMessage();message['From']='Test <test@example.org>';message['To']='empfang@example.org';message['Subject']='Grüße aus Köln'
         message.set_content('Moin Welt! Prüftext mit Umlauten.')

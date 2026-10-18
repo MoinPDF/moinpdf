@@ -7,6 +7,7 @@ export const integratedDocumentServer =
 export const integratedWebsiteServer = integratedDocumentServer ? '/api/website' : null;
 export type ServerCapabilities = {
   apiVersion: 1;
+  jobQueue?: { operations: string[]; retentionSeconds: number; timeoutSeconds: number };
   service: string;
   translationService?: string | null;
   translationStatus?: 'ready' | 'starting' | 'disabled';
@@ -34,7 +35,14 @@ export function documentServerUrl(input: string) {
     throw new Error('Für den Dokumentenserver bitte HTTPS verwenden.');
   return url.href.replace(/\/$/, '');
 }
-class ServerResponseError extends Error {}
+class ServerResponseError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
 async function call<T>(
   base: string,
   token: string,
@@ -42,6 +50,7 @@ async function call<T>(
   signal: AbortSignal,
   read: (response: Response) => Promise<T>,
   body?: FormData,
+  requestOptions: { method?: string; headers?: Record<string, string>; download?: boolean } = {},
 ): Promise<T> {
   const integrated =
     (!!integratedDocumentServer && base === integratedDocumentServer) ||
@@ -51,6 +60,7 @@ async function call<T>(
   const headers: Record<string, string> = integrated
     ? { 'X-MoinPDF-Client': 'web' }
     : { Authorization: `Bearer ${token.trim()}` };
+  Object.assign(headers, requestOptions.headers);
   signal.throwIfAborted();
   const request = new AbortController(),
     cancel = () => request.abort(signal.reason);
@@ -61,11 +71,11 @@ async function call<T>(
       timedOut = true;
       request.abort();
     },
-    body ? 180000 : 12000,
+    body || requestOptions.download ? 180000 : 12000,
   );
   try {
     const response = await fetch(documentServerUrl(base) + path, {
-      method: body ? 'POST' : 'GET',
+      method: requestOptions.method || (body ? 'POST' : 'GET'),
       headers,
       body,
       signal: request.signal,
@@ -83,6 +93,7 @@ async function call<T>(
           : response.status === 401
             ? 'Der API-Schlüssel wurde nicht akzeptiert.'
             : `Der Server meldet Fehler ${response.status}.`,
+        response.status,
       );
     }
     return await read(response);
@@ -142,14 +153,18 @@ export async function runServerJob(
   signal: AbortSignal,
 ): Promise<ExportFile> {
   const { blob, headers } = await call(
-      base,
-      token,
-      path,
-      signal,
-      async (r) => ({ blob: await r.blob(), headers: r.headers }),
-      body,
-    ),
-    disposition = headers.get('content-disposition') || '',
+    base,
+    token,
+    path,
+    signal,
+    async (r) => ({ blob: await r.blob(), headers: r.headers }),
+    body,
+  );
+  return serverResult(blob, headers);
+}
+
+function serverResult(blob: Blob, headers: Headers): ExportFile {
+  const disposition = headers.get('content-disposition') || '',
     encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1],
     plain = disposition.match(/filename="?([^";]+)"?/i)?.[1];
   let name = 'Ergebnis';
@@ -175,4 +190,179 @@ function decodeServerNote(value: string | null) {
   } catch {
     return value;
   }
+}
+
+export type BackgroundJob = {
+  id: string;
+  base: string;
+  ticket: string;
+  operation: string;
+  name: string;
+  created: number;
+  expires: number;
+  status: 'uploading' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
+  error?: string;
+};
+const jobStorage = 'moinpdf.background-jobs.v1';
+let memoryJobs: BackgroundJob[] = [];
+export function storedServerJobs(): BackgroundJob[] {
+  try {
+    const data = JSON.parse(localStorage.getItem(jobStorage) || '[]');
+    if (Array.isArray(data))
+      memoryJobs = data
+        .filter(
+          (j) =>
+            typeof j.id === 'string' &&
+            /^[a-f0-9]{32}$/.test(j.id) &&
+            typeof j.ticket === 'string' &&
+            /^[a-f0-9]{64}$/.test(j.ticket) &&
+            typeof j.base === 'string' &&
+            typeof j.name === 'string' &&
+            j.expires > Date.now() / 1000,
+        )
+        .slice(-32);
+  } catch {
+    /* The live queue remains usable when browser storage is disabled. */
+  }
+  return memoryJobs;
+}
+function storeServerJob(job: BackgroundJob, remove = false) {
+  memoryJobs = [
+    ...storedServerJobs().filter((j) => j.id !== job.id),
+    ...(remove ? [] : [job]),
+  ].slice(-32);
+  try {
+    localStorage.setItem(jobStorage, JSON.stringify(memoryJobs));
+  } catch {
+    /* Keep the ticket in memory. */
+  }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('moinpdf-jobs'));
+}
+export async function inspectServerJob(job: BackgroundJob, token: string, signal: AbortSignal) {
+  const status = (await call(
+    job.base,
+    token,
+    `/v1/jobs/${job.id}`,
+    signal,
+    (r) => r.json(),
+    undefined,
+    { headers: { 'X-MoinPDF-Job-Ticket': job.ticket } },
+  )) as Pick<BackgroundJob, 'status' | 'error' | 'expires'>;
+  const next = { ...job, ...status };
+  storeServerJob(next);
+  return next;
+}
+export async function cancelServerJob(job: BackgroundJob, token: string, remove = false) {
+  try {
+    await call(
+      job.base,
+      token,
+      `/v1/jobs/${job.id}/${remove ? 'delete' : 'cancel'}`,
+      new AbortController().signal,
+      (r) => r.json(),
+      undefined,
+      { method: 'POST', headers: { 'X-MoinPDF-Job-Ticket': job.ticket } },
+    );
+  } catch (error) {
+    if (!(remove && error instanceof ServerResponseError && error.status === 404)) throw error;
+  }
+  if (remove) storeServerJob(job, true);
+  else await inspectServerJob(job, token, new AbortController().signal);
+}
+export function forgetServerJob(job: BackgroundJob) {
+  storeServerJob(job, true);
+}
+function pollDelay(signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    signal.throwIfAborted();
+    const stop = () => {
+      clearTimeout(timer);
+      reject(signal.reason);
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', stop);
+      resolve();
+    }, 1500);
+    signal.addEventListener('abort', stop, { once: true });
+  });
+}
+export async function resumeServerJob(
+  job: BackgroundJob,
+  token: string,
+  signal: AbortSignal,
+  report?: (message: string) => void,
+): Promise<ExportFile> {
+  try {
+    for (;;) {
+      const next = await inspectServerJob(job, token, signal);
+      if (next.status === 'failed')
+        throw new Error(next.error || 'Die Verarbeitung ist fehlgeschlagen.');
+      if (next.status === 'cancelled') throw new Error('Auftrag abgebrochen.');
+      if (next.status === 'completed') {
+        const result = await call(
+          job.base,
+          token,
+          `/v1/jobs/${job.id}/result`,
+          signal,
+          async (r) => serverResult(await r.blob(), r.headers),
+          undefined,
+          { headers: { 'X-MoinPDF-Job-Ticket': job.ticket }, download: true },
+        );
+        return result;
+      }
+      report?.(
+        next.status === 'queued'
+          ? 'Auftrag wartet auf einen freien Platz …'
+          : 'Auftrag wird verarbeitet. Du kannst ihn im Hintergrund fortsetzen.',
+      );
+      await pollDelay(signal);
+    }
+  } catch (error) {
+    if (signal.aborted && signal.reason !== 'detach')
+      await cancelServerJob(job, token).catch(() => {});
+    throw error;
+  }
+}
+export async function runQueuedServerJob(
+  base: string,
+  token: string,
+  path: string,
+  body: FormData,
+  signal: AbortSignal,
+  report?: (message: string) => void,
+): Promise<ExportFile> {
+  const ticket = Array.from(crypto.getRandomValues(new Uint8Array(32)), (n) =>
+    n.toString(16).padStart(2, '0'),
+  ).join('');
+  const id = ticket.slice(0, 32);
+  const input = body.get('file');
+  const job: BackgroundJob = {
+    id,
+    base,
+    ticket,
+    operation: path,
+    name: input instanceof File ? input.name : 'Dokument',
+    created: Date.now() / 1000,
+    expires: Date.now() / 1000 + 86400,
+    status: 'uploading',
+  };
+  // Persist the lookup ticket before uploading. Lost HTTP responses cannot
+  // strand an accepted server job, and refreshing never resubmits the document.
+  storeServerJob(job);
+  const submitted = new FormData();
+  for (const [key, value] of body) submitted.append(key, value);
+  submitted.append('operation', path);
+  report?.('Datei für den Hintergrundauftrag übertragen …');
+  try {
+    const status = (await call(base, token, '/v1/jobs', signal, (r) => r.json(), submitted, {
+      headers: { 'X-MoinPDF-Job-Ticket': ticket },
+    })) as Partial<BackgroundJob>;
+    storeServerJob({ ...job, ...status });
+  } catch (error) {
+    if (error instanceof ServerResponseError) storeServerJob(job, true);
+    if (signal.aborted && signal.reason !== 'detach')
+      await cancelServerJob(job, token).catch(() => {});
+    throw error;
+  }
+  return resumeServerJob(job, token, signal, report);
 }
