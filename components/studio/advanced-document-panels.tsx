@@ -379,6 +379,7 @@ export function MailMergePanel({ source, busy, run }: PanelProps) {
             ref={input}
             type="file"
             accept=".csv,.tsv,text/csv,text/tab-separated-values"
+            aria-label={ui('Tabelle auswählen')}
             className="sr-only"
             onChange={(e) => {
               const file = e.target.files?.[0];

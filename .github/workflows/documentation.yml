@@ -65,7 +65,7 @@ jobs:
         run: |
           python -m http.server 8765 --bind 127.0.0.1 --directory dist/selfhost > "$RUNNER_TEMP/docs-http.log" 2>&1 &
           status=0
-          for test in hafenlicht-browser harbor-layout-browser language-smoke documentation-smoke; do
+          for test in hafenlicht-browser harbor-layout-browser language-smoke documentation-smoke accessibility-browser; do
             python "tests/$test.py" || status=1
           done
           exit "$status"

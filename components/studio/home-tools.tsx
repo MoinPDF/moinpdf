@@ -56,12 +56,15 @@ export function HomeTools({
         >
           <div className="harbor-search">
             <CommandInput
+              asChild
               value={query}
               onValueChange={setQuery}
               placeholder={t('Werkzeug suchen', 'Search tools')}
               aria-label={t('Werkzeug suchen', 'Search tools')}
               disabled={locked}
-            />
+            >
+              <input aria-expanded={Boolean(query.trim())} />
+            </CommandInput>
             {query && (
               <button
                 className="harbor-search-clear"
@@ -73,50 +76,52 @@ export function HomeTools({
               </button>
             )}
           </div>
-          {query.trim() && (
-            <CommandList className="harbor-search-results">
-              <p role="status">
-                {suggestions.length ? t('Passende Werkzeuge') : t('Kein passender Vorschlag')}
-              </p>
-              {suggestions.map((tool) => (
-                <CommandItem
-                  data-tool-id={tool.id}
-                  key={tool.id}
-                  value={tool.id}
-                  onSelect={() => onChoose(tool.id)}
-                  disabled={locked}
-                  className="harbor-search-result"
-                >
-                  <span
-                    className={`harbor-tool-icon tone-${tool.group}`}
-                    data-tool-tone={tool.group}
+          <CommandList className="harbor-search-results" hidden={!query.trim()}>
+            {query.trim() && (
+              <>
+                <p role="status">
+                  {suggestions.length ? t('Passende Werkzeuge') : t('Kein passender Vorschlag')}
+                </p>
+                {suggestions.map((tool) => (
+                  <CommandItem
+                    data-tool-id={tool.id}
+                    key={tool.id}
+                    value={tool.id}
+                    onSelect={() => onChoose(tool.id)}
+                    disabled={locked}
+                    className="harbor-search-result"
                   >
-                    <tool.icon size={22} aria-hidden="true" />
-                  </span>
-                  <span>
-                    <strong>
-                      <SearchHighlight text={tool.title} query={query} />
-                    </strong>
-                    <small>
-                      <SearchHighlight text={tool.description} query={query} />
-                    </small>
-                  </span>
-                  <ChevronRight size={17} aria-hidden="true" />
-                </CommandItem>
-              ))}
-              {!suggestions.length && (
-                <button
-                  className="harbor-text-button"
-                  type="button"
-                  disabled={locked}
-                  onClick={onTools}
-                >
-                  {t('Alle Werkzeuge anzeigen', 'View all tools')}
-                  <ChevronRight size={16} />
-                </button>
-              )}
-            </CommandList>
-          )}
+                    <span
+                      className={`harbor-tool-icon tone-${tool.group}`}
+                      data-tool-tone={tool.group}
+                    >
+                      <tool.icon size={22} aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong>
+                        <SearchHighlight text={tool.title} query={query} />
+                      </strong>
+                      <small>
+                        <SearchHighlight text={tool.description} query={query} />
+                      </small>
+                    </span>
+                    <ChevronRight size={17} aria-hidden="true" />
+                  </CommandItem>
+                ))}
+                {!suggestions.length && (
+                  <button
+                    className="harbor-text-button"
+                    type="button"
+                    disabled={locked}
+                    onClick={onTools}
+                  >
+                    {t('Alle Werkzeuge anzeigen', 'View all tools')}
+                    <ChevronRight size={16} />
+                  </button>
+                )}
+              </>
+            )}
+          </CommandList>
         </Command>
         <button type="button" className="home-all-tools" disabled={locked} onClick={onTools}>
           <LayoutGrid size={20} aria-hidden="true" />

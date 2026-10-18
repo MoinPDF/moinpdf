@@ -599,7 +599,7 @@ export function DocumentWorkbench({
                     : ui('Ein Feld auf der Seite oder in der Liste auswählen und ausfüllen.')}
             {creating && <button onClick={() => setCreating(null)}>{t('Abbrechen')}</button>}
           </div>
-          <div className="workbench-canvas">
+          <div className="workbench-canvas" tabIndex={0} role="region" aria-label={t('Vorschau')}>
             {showResult && output ? (
               <>
                 <div className="workbench-result-banner">

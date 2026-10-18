@@ -141,3 +141,6 @@
     outline-offset: 4px;
   }
 }
+.toaster[data-sonner-toaster][data-sonner-theme='light'] {
+  --success-text: #08752f;
+}

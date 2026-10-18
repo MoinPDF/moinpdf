@@ -260,6 +260,21 @@ const key = async (target, value) => {
 };
 try {
   await render(false);
+  const homeInput = document.querySelector('.harbor-command input[cmdk-input]');
+  const homeList = () => document.getElementById(homeInput.getAttribute('aria-controls'));
+  assert.ok(homeList(), 'The home search always references an existing result list');
+  assert.equal(homeInput.getAttribute('aria-expanded'), 'false');
+  assert.equal(homeList().hidden, true);
+  for (const value of ['zusammenfügen', '']) {
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(homeInput, value);
+      homeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await flush();
+    assert.equal(homeInput.getAttribute('aria-expanded'), String(Boolean(value)));
+    assert.equal(homeList().hidden, !value);
+    if (value) assert.ok(homeList().querySelector('[cmdk-item]'), 'Suggestions remain available');
+  }
   assert.deepEqual(
     [...nav().querySelectorAll('button')].map((el) => el.textContent),
     ['Start', 'Werkzeuge', 'Suche', 'Projekte', 'Mehr'],
