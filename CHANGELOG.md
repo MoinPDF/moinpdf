@@ -9,6 +9,14 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.15.4 – 18. Oktober 2026
+
+- Werkzeugsuche für Screenreader berichtigt: Öffnungszustand, Ergebnisliste und Tastaturbedienung bleiben konsistent.
+- Schieberegler, JSON-/CSV-Importfelder und Dokumentvorschauen korrekt benannt; Vorschauen sind mit der Tastatur erreichbar und Text-/Markierungsoptionen den richtigen Registerkarten zugeordnet.
+- Kontraste für Hilfetexte, Handbuch-Kapitelnummern, Erfolgsmeldungen und inaktive Bearbeitungsregister im hellen Design verbessert.
+- Linux-Startskripte behalten auch nach einem Windows-Checkout ihre erforderlichen Zeilenenden; mitgelieferte Drittherstellerhinweise bleiben bytegleich.
+- Dauerhafte Browserprüfungen für Barrierefreiheit in Deutsch und Englisch ergänzt. Änderungen an der Oberfläche lösen auch die Firefox- und Safari-Prüfungen aus; der Office-Abbruchtest unterstützt Windows ohne die Linux-Prüfung verbliebener Betriebssystem-Threads abzuschwächen.
+
 ## 0.15.3 – 18. Oktober 2026
 
 - Kompatible Bibliotheksupdates für Oberfläche, Word-Export, Schriftverarbeitung, HEIF-/PSD-Import und Build-Werkzeuge übernommen.

@@ -4,6 +4,14 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.15.4 – 18 October 2026
+
+- Corrected tool search for screen readers: expanded state, result list and keyboard navigation remain consistent.
+- Added correct accessible names to sliders, JSON/CSV imports and document previews; previews are keyboard reachable and text/annotation controls belong to the correct tab panels.
+- Improved light-theme contrast for supporting text, manual chapter numbers, success notifications and inactive editing tabs.
+- Linux entrypoints retain the required line endings after Windows checkouts; bundled third-party notices remain byte-for-byte unchanged.
+- Added persistent German and English browser accessibility checks. Interface changes also trigger Firefox and Safari checks; the Office cancellation test now supports Windows while retaining strict Linux checks for remaining operating-system threads.
+
 ## 0.15.3 – 18 October 2026
 
 - Adopted compatible library updates for the interface, Word export, font processing, HEIF/PSD import and build tools.
