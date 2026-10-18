@@ -20,7 +20,7 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'Schrift wechseln',
     'mehrere Texte bearbeiten',
     'bilder bearbeiten',
-    'text ersetzen',
+    'Originaltext ersetzen',
     'suchen ersetzen',
     'grafik löschen',
   ],
@@ -410,6 +410,9 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'Bild aus PDF holen',
   ],
   'edit-text': [
+    'Scan bearbeiten',
+    'gescannten Text ändern',
+    'OCR Dokument bearbeiten',
     'Text bearbeiten',
     'Schrift ändern',
     'Text ersetzen',

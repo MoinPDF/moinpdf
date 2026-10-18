@@ -2,10 +2,71 @@ import { readPdfText } from './pdf-text';
 import { StandardFonts } from 'pdf-lib';
 import type { Source, PageItem } from './pdf-engine';
 import type { Mark, Rect } from './studio-engine';
+import { editorFontPage, originalEditorFont } from './editor-fonts';
 
 export type FontFamily = 'sans' | 'serif' | 'mono';
 export type EditorAction = 'pick' | 'replace-area' | 'add-text' | 'erase' | 'image' | 'select';
-export type TextTarget = Rect & { id: string; text: string; fontSize: number; family: FontFamily };
+export type TextTarget = Rect & {
+  id: string;
+  text: string;
+  fontSize: number;
+  family: FontFamily;
+  origin?: 'pdf' | 'ocr';
+  confidence?: number;
+  rotation?: number;
+  fill?: string;
+  color?: string;
+  bold?: boolean;
+  italic?: boolean;
+  fontName?: string;
+  originalFontId?: string;
+  baselineScale?: number;
+  insetScale?: number;
+  tracking?: number;
+  textScaleX?: number;
+  lineHeight?: number;
+  fragments?: TextTarget[];
+};
+export const editorRemovalRects = (mark: Mark): Rect[] =>
+  mark.sourceRects?.length
+    ? mark.sourceRects
+    : mark.sourceRect
+      ? [mark.sourceRect]
+      : mark.kind === 'erase'
+        ? [mark]
+        : [];
+export function editorMarkSignature(mark: Mark) {
+  const appearance: Partial<Mark> = { ...mark };
+  delete appearance.originalState;
+  delete appearance.id;
+  return JSON.stringify(appearance);
+}
+export const editorMarkChanged = (mark: Mark) =>
+  !mark.originalState || mark.originalState !== editorMarkSignature(mark);
+export const editorRectsOverlap = (a: Rect, b: Rect) =>
+  Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) *
+    Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)) >
+  0.0000001;
+export function editorTextCollision(mark: Mark, marks: Mark[], targets: TextTarget[]) {
+  if (mark.kind !== 'text' || !mark.sourceRect || !mark.text || !editorMarkChanged(mark))
+    return false;
+  const removed = marks.filter(editorMarkChanged).flatMap(editorRemovalRects);
+  return (
+    marks.some(
+      (other) =>
+        other.id !== mark.id &&
+        other.kind === 'text' &&
+        other.text &&
+        editorMarkChanged(other) &&
+        editorRectsOverlap(mark, other),
+    ) ||
+    targets.some(
+      (target) =>
+        !removed.some((rect) => editorRectsOverlap(rect, target)) &&
+        editorRectsOverlap(mark, target),
+    )
+  );
+}
 export const editorTools = ['edit-text', 'erase', 'insert-image'];
 export const cssFont = (family?: FontFamily) =>
   family === 'serif' ? 'Times New Roman' : family === 'mono' ? 'Courier New' : 'Arial';
@@ -40,14 +101,21 @@ export function wrapEditorText(text: string, width: number, measure: (s: string)
   const lines: string[] = [];
   for (const paragraph of text.replace(/\t/g, '    ').split(/\r?\n/)) {
     let line = '';
-    for (const word of paragraph.split(' ')) {
-      const candidate = line ? line + ' ' + word : word;
-      if (measure(candidate) <= width) {
+    for (const word of paragraph.match(/\S+| +/gu) || []) {
+      const candidate = line + word;
+      if (measure(candidate) <= width + 0.0001) {
         line = candidate;
         continue;
       }
+      if (/^ +$/.test(word)) {
+        // Spaces at a soft line boundary have no visible ink. Preserve interior
+        // spacing and explicit newlines, without manufacturing blank lines.
+        if (line) lines.push(line);
+        line = '';
+        continue;
+      }
       if (line) {
-        lines.push(line);
+        lines.push(line.trimEnd());
         line = '';
       }
       for (const char of word) {
@@ -80,14 +148,29 @@ export async function readTextTargets(
     viewport = page.getViewport({ scale: 1, rotation: (page.rotate + item.rotation) % 360 }),
     content = await readPdfText(page),
     v = viewport.transform;
+  const typography = await editorFontPage(source, item.index).catch(() => undefined);
+  const runsForText = new Map<string, { color: string; invisible: boolean }[]>(),
+    fontsWithRuns = new Set<string>(),
+    colorsForFont = new Map<string, Set<string>>();
+  for (const run of typography?.runs || []) {
+    fontsWithRuns.add(run.fontKey);
+    const key = run.fontKey + ':' + run.text.replace(/\s/gu, '');
+    const entries = runsForText.get(key) || [];
+    entries.push(run);
+    runsForText.set(key, entries);
+    if (run.invisible) continue;
+    const colors = colorsForFont.get(run.fontKey) || new Set<string>();
+    colors.add(run.color);
+    colorsForFont.set(run.fontKey, colors);
+  }
+  for (const runs of runsForText.values()) runs.reverse();
   const targets: TextTarget[] = [];
   for (const [i, part] of content.items.entries()) {
     if (!('str' in part) || !part.str.trim()) continue;
     const t = part.transform,
       dx = v[0] * t[0] + v[2] * t[1],
       dy = v[1] * t[0] + v[3] * t[1];
-    // Upright text only. Rotated or vertical glyphs can be edited with a manual area.
-    if (dx <= 0 || Math.abs(Math.atan2(dy, dx)) > 0.04) continue;
+    const angle = Math.atan2(dy, dx);
     const fontSize = Math.hypot(v[2] * t[3] + v[0] * t[2], v[3] * t[3] + v[1] * t[2]);
     if (!fontSize) continue;
     const style = content.styles[part.fontName],
@@ -96,11 +179,34 @@ export async function readTextTargets(
       pad = Math.max(0.8, fontSize * 0.08);
     const px = v[0] * t[4] + v[2] * t[5] + v[4],
       baseline = v[1] * t[4] + v[3] * t[5] + v[5];
-    const left = Math.max(0, px - pad),
-      top = Math.max(0, baseline - fontSize * ascent - pad),
-      right = Math.min(viewport.width, px + part.width + pad),
-      bottom = Math.min(viewport.height, baseline + fontSize * descent + pad);
+    const points = [
+      [0, -fontSize * ascent],
+      [part.width, -fontSize * ascent],
+      [0, fontSize * descent],
+      [part.width, fontSize * descent],
+    ].map(([x, y]) => [
+      px + x * Math.cos(angle) - y * Math.sin(angle),
+      baseline + x * Math.sin(angle) + y * Math.cos(angle),
+    ]);
+    const left = Math.max(0, Math.min(...points.map((p) => p[0])) - pad),
+      top = Math.max(0, Math.min(...points.map((p) => p[1])) - pad),
+      right = Math.min(viewport.width, Math.max(...points.map((p) => p[0])) + pad),
+      bottom = Math.min(viewport.height, Math.max(...points.map((p) => p[1])) + pad);
     if (right <= left || bottom <= top) continue;
+    const run = runsForText.get(part.fontName + ':' + part.str.replace(/\s/gu, ''))?.pop(),
+      invisible =
+        run?.invisible ?? (fontsWithRuns.has(part.fontName) && !colorsForFont.has(part.fontName)),
+      // An OCR search layer's invisible font is not the font in the scan.
+      // Keep its native origin so export does not add a duplicate search layer.
+      metadata = invisible ? undefined : typography?.fonts.get(part.fontName),
+      font = originalEditorFont(source, metadata?.originalId),
+      fontColors = colorsForFont.get(part.fontName),
+      color =
+        !invisible && run ? run.color : fontColors?.size === 1 ? [...fontColors][0] : '#000000',
+      scaleX = Math.hypot(dx, dy) / fontSize;
+    const natural = font?.covers(part.str) ? font.measure(part.str, fontSize) * scaleX : part.width;
+    const spacing =
+      part.str.length > 1 ? (part.width - natural) / (part.str.length - 1) / fontSize / scaleX : 0;
     targets.push({
       id: `text-${i}`,
       text: part.str,
@@ -109,12 +215,104 @@ export async function readTextTargets(
       w: (right - left) / viewport.width,
       h: (bottom - top) / viewport.height,
       fontSize,
-      family: style?.fontFamily?.includes('monospace')
-        ? 'mono'
-        : style?.fontFamily === 'serif'
-          ? 'serif'
-          : 'sans',
+      origin: 'pdf',
+      rotation: (angle * 180) / Math.PI,
+      ...(metadata?.name ? { fontName: metadata.name } : {}),
+      ...(metadata?.originalId ? { originalFontId: metadata.originalId } : {}),
+      bold: metadata?.bold || false,
+      italic: metadata?.italic || false,
+      color,
+      baselineScale: ascent + pad / fontSize,
+      insetScale: pad / fontSize / scaleX,
+      tracking: Number.isFinite(spacing) && Math.abs(spacing) < 0.5 ? spacing : 0,
+      textScaleX: Number.isFinite(scaleX) && scaleX >= 0.1 && scaleX <= 10 ? scaleX : 1,
+      family: invisible
+        ? 'sans'
+        : metadata?.family ||
+          (style?.fontFamily?.includes('monospace')
+            ? 'mono'
+            : style?.fontFamily === 'serif'
+              ? 'serif'
+              : 'sans'),
     });
   }
   return { targets, width: viewport.width, height: viewport.height };
+}
+
+// Conservative paragraph grouping: separate columns, font changes, headings,
+// rotations and large vertical gaps remain independently editable.
+export function editorParagraphs(
+  targets: TextTarget[],
+  width: number,
+  height: number,
+): TextTarget[] {
+  const sorted = [...targets].sort((a, b) => a.y - b.y || a.x - b.x),
+    groups: TextTarget[][] = [];
+  const same = (a: TextTarget, b: TextTarget) =>
+    !a.rotation &&
+    !b.rotation &&
+    a.origin === b.origin &&
+    a.originalFontId === b.originalFontId &&
+    a.fontName === b.fontName &&
+    a.family === b.family &&
+    !!a.bold === !!b.bold &&
+    !!a.italic === !!b.italic &&
+    a.color === b.color &&
+    a.fill === b.fill &&
+    Math.abs(a.fontSize - b.fontSize) < Math.max(0.5, a.fontSize * 0.08);
+  for (const target of sorted) {
+    const previous = groups.at(-1),
+      last = previous?.at(-1);
+    if (
+      last &&
+      same(last, target) &&
+      Math.abs(last.y - target.y) * height < last.fontSize * 0.3 &&
+      target.x >= last.x &&
+      (target.x - last.x - last.w) * width < last.fontSize * 1.6
+    )
+      previous!.push(target);
+    else groups.push([target]);
+  }
+  const merge = (parts: TextTarget[], separator: string): TextTarget => {
+    if (parts.length === 1) return parts[0];
+    const x = Math.min(...parts.map((p) => p.x)),
+      y = Math.min(...parts.map((p) => p.y));
+    return {
+      ...parts[0],
+      id: 'paragraph-' + parts.map((p) => p.id).join('-'),
+      x,
+      y,
+      w: Math.max(...parts.map((p) => p.x + p.w)) - x,
+      h: Math.max(...parts.map((p) => p.y + p.h)) - y,
+      // Extracted PDF line breaks are layout, not paragraph boundaries.
+      text: parts.map((p) => p.text.trim()).join(' '),
+      fragments: parts.flatMap((p) => p.fragments || [p]),
+      ...(separator === '\n'
+        ? {
+            lineHeight: Math.max(
+              1,
+              Math.min(3, ((parts[1].y - parts[0].y) * height) / parts[0].fontSize),
+            ),
+          }
+        : {}),
+      confidence: Math.min(...parts.map((p) => p.confidence ?? 100)),
+    };
+  };
+  const paragraphs: TextTarget[][] = [];
+  for (const line of groups.map((g) => merge(g, ' '))) {
+    const previous = paragraphs.at(-1),
+      last = previous?.at(-1);
+    const gap = last ? ((line.y - last.y) * height) / last.fontSize : 0;
+    if (
+      last &&
+      same(last, line) &&
+      Math.abs(last.x - line.x) * width < last.fontSize * 0.65 &&
+      gap >= 0.75 &&
+      gap <= 1.65 &&
+      last.w >= line.w * 0.65
+    )
+      previous!.push(line);
+    else paragraphs.push([line]);
+  }
+  return paragraphs.map((p) => merge(p, '\n'));
 }

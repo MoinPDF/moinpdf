@@ -1,5 +1,6 @@
 import { PDFDocument, PDFName, PDFDict, type PDFFont } from 'pdf-lib';
 import JSZip from 'jszip';
+import { localFontBytes } from './local-font-bytes';
 import type { Worker } from 'tesseract.js';
 import { renderPage, sourcePages, abortable, pdfBlob, type Source } from './pdf-engine';
 import { readTextTargets } from './editor-model';
@@ -325,7 +326,7 @@ export async function embedFont(pdf: PDFDocument, fontBytes?: Uint8Array): Promi
     fontBytes ||
     (await fetch('/vendor/invoice-font/NotoSans-Regular.ttf').then((r) => {
       if (!r.ok) throw new Error('Die lokale PDF-Schrift konnte nicht geladen werden.');
-      return r.arrayBuffer();
+      return localFontBytes(r);
     }));
   if (!bytes) throw new Error('Die lokale PDF-Schrift konnte nicht geladen werden.');
   return pdf.embedFont(bytes, { subset: true });

@@ -455,19 +455,20 @@ function Studio() {
     selectedMark = pageMarks.find((m) => m.id === selectedMarkId);
   useEffect(() => setSelectedMarkId(''), [activePage?.id]);
   const sourceBytes = sources.reduce((n, s) => n + s.size, 0);
-  const hasNeededEdit = isEditor
-    ? editCount > 0
-    : toolId === 'redact'
-      ? selected.some((p) => edits.marks[p.id]?.some((m) => m.kind === 'redact'))
-      : toolId === 'crop'
-        ? selected.some((p) => edits.crops[p.id])
-        : toolId === 'sign'
-          ? selected.some((p) => edits.marks[p.id]?.some((m) => m.kind === 'signature'))
-          : toolId === 'annotate'
-            ? selected.some((p) =>
-                edits.marks[p.id]?.some((m) => m.kind === 'text' || m.kind === 'highlight'),
-              )
-            : true;
+  const hasNeededEdit =
+    isEditor && toolId !== 'edit-text'
+      ? editCount > 0
+      : toolId === 'redact'
+        ? selected.some((p) => edits.marks[p.id]?.some((m) => m.kind === 'redact'))
+        : toolId === 'crop'
+          ? selected.some((p) => edits.crops[p.id])
+          : toolId === 'sign'
+            ? selected.some((p) => edits.marks[p.id]?.some((m) => m.kind === 'signature'))
+            : toolId === 'annotate'
+              ? selected.some((p) =>
+                  edits.marks[p.id]?.some((m) => m.kind === 'text' || m.kind === 'highlight'),
+                )
+              : true;
 
   useEffect(
     () => () => {
@@ -984,20 +985,33 @@ function Studio() {
       },
     });
   }
-  function patchMark(id: string, patch: Partial<Mark>) {
+  const typingHistory = useRef<{ id: string; edits: Edits; time: number } | null>(null);
+  function patchMark(id: string, patch: Partial<Mark>, mode?: 'typing') {
     if (!activePage || locked) return;
     const old = pageMarks.find((m) => m.id === id);
     if (!old) return;
     const next = { ...old, ...patch };
     if (JSON.stringify(old) === JSON.stringify(next)) return;
-    commit({
-      pages,
-      edits: {
-        ...edits,
-        marks: { ...edits.marks, [activePage.id]: pageMarks.map((m) => (m.id === id ? next : m)) },
-      },
-    });
+    const nextEdits = {
+      ...edits,
+      marks: { ...edits.marks, [activePage.id]: pageMarks.map((m) => (m.id === id ? next : m)) },
+    };
+    const now = Date.now(),
+      previous = typingHistory.current;
+    if (
+      mode === 'typing' &&
+      previous?.id === id &&
+      previous.edits === edits &&
+      now - previous.time < 1500
+    ) {
+      dismissUndoNotice();
+      setEdits(nextEdits);
+      setFuture([]);
+      invalidate();
+    } else commit({ pages, edits: nextEdits });
+    typingHistory.current = mode === 'typing' ? { id, edits: nextEdits, time: now } : null;
   }
+
   function newText() {
     if (locked) return;
     setEditorAction('select');
@@ -1011,6 +1025,7 @@ function Studio() {
       text: ui('Dein Text'),
       fontScale: 16 / editorDims.width,
       fontFamily: 'sans',
+      fontChoice: 'auto',
       color: '#222222',
     });
     setView('document');
@@ -1033,6 +1048,8 @@ function Studio() {
       id: uid(),
     };
     delete copy.sourceRect;
+    delete copy.sourceRects;
+    delete copy.originalState;
     mark(copy);
   }
   async function insertImage(file: File) {
@@ -2383,6 +2400,8 @@ function Studio() {
                           <div className="zoom-frame" style={{ width: `${zoom}%` }}>
                             {isEditor ? (
                               <EditorCanvas
+                                autoOcr={toolId === 'edit-text'}
+                                language={options.editorLanguage || 'deu+eng'}
                                 source={activeSource}
                                 page={activePage}
                                 marks={pageMarks}
@@ -2446,6 +2465,13 @@ function Studio() {
                             }
                           />
                         </div>
+                        {result.kind === 'pdf' && result.note && (
+                          <div className="result-notes" role="status">
+                            {result.note.split('\n').map((note, index) => (
+                              <p key={index}>{ui(note)}</p>
+                            ))}
+                          </div>
+                        )}
                         {result.kind === 'report' && result.report ? (
                           <ReportView report={result.report} />
                         ) : result.text !== undefined ? (
@@ -2650,6 +2676,7 @@ function Studio() {
               {isEditor && (
                 <EditorPanel
                   tool={toolId}
+                  source={activeSource}
                   mark={selectedMark}
                   marks={pageMarks}
                   width={editorDims.width}
@@ -2694,6 +2721,14 @@ function Studio() {
                     )}
                   </p>
                 </>
+              )}
+              {toolId === 'edit-text' && (
+                <OcrLanguagePicker
+                  label={ui('Sprache gescannter Texte')}
+                  value={options.editorLanguage || 'deu+eng'}
+                  disabled={locked}
+                  onChange={(editorLanguage) => setOptions((old) => ({ ...old, editorLanguage }))}
+                />
               )}
               {toolId === 'ocr' && (
                 <>
@@ -3163,7 +3198,7 @@ function Studio() {
               <h3>{ui('Sitzung und gespeicherte Projekte')}</h3>
               <p>
                 {ui(
-                  'Ohne Speichern bleiben Dokumente und Änderungen im Arbeitsspeicher. Über „Projekte“ kannst du bis zu fünf Arbeitsstände lokal im Browser speichern und eine Projektdatei herunterladen. Diese enthält Originale und den Bearbeitungsverlauf unverschlüsselt, auch zuvor entsperrte PDFs. Projekte lassen sich in der App löschen; auch das Löschen der Browserdaten entfernt sie. Ungespeicherte Änderungen gehen beim Neuladen verloren. Die Website und Sprachpakete werden vom Hostinganbieter geladen; dabei entstehen übliche Zugriffsdaten. Es gibt keine eigenen Analyse- oder Werbetracker.',
+                  'Der Arbeitsstand wird automatisch unverschlüsselt in diesem Browser gespeichert. Zusätzlich bleiben die letzten zehn Ergebnisse mit insgesamt höchstens 160 MB in der lokalen Ergebnisablage. Über „Projekte“ kannst du zusätzlich bis zu fünf Arbeitsstände speichern und als Projektdatei herunterladen. Diese enthält Originale und den Bearbeitungsverlauf unverschlüsselt, auch zuvor entsperrte PDFs. „Arbeitsbereich leeren“ entfernt die automatische Sicherung und Ergebnisablage. Projekte lassen sich separat in der App löschen; auch das Löschen der Browserdaten entfernt lokale Daten. Browser können gespeicherte Daten bei Speichermangel entfernen. Wichtige Ergebnisse zusätzlich herunterladen. Die Website und Sprachpakete werden vom Hostinganbieter geladen; dabei entstehen übliche Zugriffsdaten. Es gibt keine eigenen Analyse- oder Werbetracker.',
                 )}
               </p>
               <h3>{ui('Vorlagen und Einstellungen')}</h3>

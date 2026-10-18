@@ -7,6 +7,7 @@ import type {
   TableCell,
 } from 'pdfmake/interfaces';
 import { validateWriterDocument, writerPageSize, type WriterDocument } from './writer-model';
+import { localFontBytes } from './local-font-bytes';
 
 export const writerFonts = {
   MoinSans: {
@@ -259,7 +260,7 @@ async function loadFonts() {
               throw new Error(
                 'Die Schriftarten konnten nicht geladen werden. Bitte erneut versuchen.',
               );
-            const bytes = new Uint8Array(await response.arrayBuffer());
+            const bytes = new Uint8Array(await localFontBytes(response));
             let binary = '';
             for (let i = 0; i < bytes.length; i += 8192)
               binary += String.fromCharCode(...bytes.subarray(i, i + 8192));

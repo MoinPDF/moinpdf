@@ -20,15 +20,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
 import type { Mark } from '@/lib/studio-engine';
-import { fitRect, type EditorAction, type FontFamily } from '@/lib/editor-model';
+import { fitRect, type EditorAction } from '@/lib/editor-model';
+import type { Source } from '@/lib/pdf-engine';
+import { EditorFontPicker, EditorFontStatus, type EditorPatch } from './editor-typography';
 
 type ToolbarProps = {
   tool: string;
@@ -112,12 +107,13 @@ export function EditorToolbar({
         <Settings2 size={16} />
         {ui('Einstellungen')}
       </Button>
-      <span>{ui('Ziehen · Größe am Eckpunkt ändern')}</span>
+      <span>{ui('Direkt schreiben · Verschieben am Griff · Größe am Eckpunkt ändern')}</span>
     </div>
   );
 }
 export function EditorPanel({
   tool,
+  source,
   mark,
   marks,
   width,
@@ -130,11 +126,12 @@ export function EditorPanel({
   onImage,
 }: {
   tool: string;
+  source?: Source;
   mark?: Mark;
   marks: Mark[];
   width: number;
   disabled: boolean;
-  onPatch: (id: string, patch: Partial<Mark>) => void;
+  onPatch: EditorPatch;
   onRemove: (id: string) => void;
   onSelect: (id: string) => void;
   onDuplicate: () => void;
@@ -214,8 +211,8 @@ export function EditorPanel({
                 <Textarea
                   aria-label={ui('Textinhalt')}
                   value={mark.text || ''}
-                  maxLength={1500}
-                  onChange={(e) => patch({ text: e.target.value })}
+                  maxLength={20000}
+                  onChange={(e) => onPatch(mark.id, { text: e.target.value }, 'typing')}
                   disabled={disabled}
                   placeholder={
                     mark.sourceRect ? ui('Leer lassen, um den Text zu entfernen') : ui('Dein Text')
@@ -225,21 +222,8 @@ export function EditorPanel({
               </label>
               <div className="editor-font-row">
                 <label className="field">
-                  <span>{ui('Ersatzschrift')}</span>
-                  <Select
-                    value={mark.fontFamily || 'sans'}
-                    onValueChange={(v) => patch({ fontFamily: v as FontFamily })}
-                    disabled={disabled}
-                  >
-                    <SelectTrigger aria-label={ui('Schriftart')}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sans">{ui('Helvetica / Arial')}</SelectItem>
-                      <SelectItem value="serif">{ui('Times')}</SelectItem>
-                      <SelectItem value="mono">{ui('Courier')}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <span>{ui('Schriftart')}</span>
+                  <EditorFontPicker mark={mark} disabled={disabled} onPatch={onPatch} />
                 </label>
                 <label className="field">
                   <span>{ui('Größe · pt')}</span>
@@ -247,17 +231,34 @@ export function EditorPanel({
                     aria-label={ui('Textgröße in Punkt')}
                     type="number"
                     min={1}
-                    max={96}
-                    step={1}
+                    max={288}
+                    step={0.1}
                     value={Math.round((mark.fontScale || 0.028) * width * 10) / 10}
                     onChange={(e) => {
                       const n = Number(e.target.value);
-                      if (n >= 1 && n <= 96) patch({ fontScale: n / width });
+                      if (n >= 1 && n <= 288) patch({ fontScale: n / width });
                     }}
                     disabled={disabled}
                   />
                 </label>
               </div>
+              <EditorFontStatus mark={mark} source={source} />
+              <label className="field">
+                <span>{ui('Zeilenabstand')}</span>
+                <Input
+                  type="number"
+                  aria-label={ui('Zeilenabstand')}
+                  min={1}
+                  max={3}
+                  step={0.05}
+                  value={mark.lineHeight || 1.25}
+                  disabled={disabled}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (value >= 1 && value <= 3) patch({ lineHeight: value });
+                  }}
+                />
+              </label>
               <div className="editor-format-bar">
                 <Button
                   variant={mark.bold ? 'secondary' : 'ghost'}
@@ -424,7 +425,9 @@ export function EditorPanel({
       {(tool === 'edit-text' || tool === 'erase') && (
         <div className="notice editor-export-note">
           {ui(
-            'Entfernte Inhalte werden aus neuen Seitenbildern gelöscht. Auf betroffenen Seiten entfallen ursprünglicher kopierbarer Text, Links und Formularfelder. Neuer Text bleibt kopierbar, sofern du die Seite nicht zusätzlich schwärzt, zuschneidest oder als Bild exportierst. Ersatzschriften und farbige Hintergründe bitte in der Vorschau prüfen.',
+            tool === 'edit-text'
+              ? 'Scans werden automatisch lokal erkannt. Beim Export werden alle ausgewählten Seiten vorbereitet. Ersetzte Inhalte werden aus dem Seitenbild und der Suchtextebene entfernt; übriger erkannter Text bleibt kopierbar. Auf neu aufgebauten Seiten können Links und Formularfelder entfallen. OCR, Ersatzschriften und Hintergründe bitte prüfen.'
+              : 'Entfernte Inhalte werden aus neuen Seitenbildern gelöscht. Auf betroffenen Seiten entfallen ursprünglicher kopierbarer Text, Links und Formularfelder. Neuer Text bleibt kopierbar, sofern du die Seite nicht zusätzlich schwärzt, zuschneidest oder als Bild exportierst. Ersatzschriften und farbige Hintergründe bitte in der Vorschau prüfen.',
           )}
         </div>
       )}

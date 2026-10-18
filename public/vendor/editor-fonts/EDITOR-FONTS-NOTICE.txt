@@ -1,0 +1,46 @@
+MoinPDF direct editor font catalogue
+
+These 56 local font faces are served by MoinPDF itself. No external font service
+is used. All families include regular, bold, italic/oblique and bold italic/oblique.
+The accompanying manifest records the exact file hashes.
+
+Liberation Sans / Serif / Mono 2.1.5
+Metric-compatible alternatives to Arial / Times New Roman / Courier New.
+Licence: SIL Open Font License 1.1; see LIBERATION-LICENSE.txt.
+Source: https://github.com/liberationfonts/liberation-fonts
+
+Carlito 1.103
+Metric-compatible alternative to Calibri.
+Licence: SIL Open Font License 1.1; see CARLITO-LICENSE.txt.
+Source: https://github.com/googlefonts/carlito
+
+Caladea 1.002 (2013 release, not the differently licensed current release)
+Metric-compatible alternative to Cambria.
+Licence: Apache License 2.0; see CALADEA-LICENSE.txt and CALADEA-NOTICE.txt.
+Source: LibreOffice bundled crosextrafonts-carlito/caladea distribution.
+
+DejaVu Sans / Serif / Sans Mono / Sans Condensed / Serif Condensed 2.37
+Licence: Bitstream Vera / DejaVu; see LICENSE and MANIFEST.json.
+Source: https://dejavu-fonts.github.io/
+
+Noto Sans / Serif 2.015
+Licence: SIL Open Font License 1.1; see NOTO-LATIN-LICENSE.txt.
+Source: https://github.com/notofonts/latin-greek-cyrillic
+
+Rubik 1.100
+Licence: SIL Open Font License 1.1; see RUBIK-LICENSE.txt and RUBIK-NOTICE.md.
+Source: LibreOffice bundled libre-hebrew distribution.
+
+Liberation Sans Narrow (1.07.6 distribution; font metadata reports 1.07.5)
+Metric-compatible alternative to Arial Narrow.
+Licence: GPL v2 with the Liberation font embedding exception;
+see LIBERATION-NARROW-LICENSE.txt, LIBERATION-NARROW-COPYING.txt and
+LIBERATION-NARROW-AUTHORS.txt.
+Corresponding source is distributed with MoinPDF at:
+/component-notices/browser-office/liberation-narrow-fonts-1.07.6.tar.gz
+
+The additional font files are copied unmodified from the LibreOffice runtime
+distribution. These are alternative families;
+MoinPDF does not bundle or rename proprietary Microsoft font files.
+Embedded fonts taken from a user's PDF are used only in that local document
+session and output. Missing glyphs trigger an explicitly identified substitute.

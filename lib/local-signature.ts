@@ -1,3 +1,6 @@
+import localSignatureWorkerUrl from '../workers/local-signature.ts?worker&url';
+import { createLocalModuleWorker } from './module-worker';
+
 export function signLocally(
   bytes: Uint8Array,
   certificate: Uint8Array,
@@ -6,14 +9,12 @@ export function signLocally(
 ): Promise<Uint8Array> {
   if (signal?.aborted) return Promise.reject(new DOMException('Abgebrochen', 'AbortError'));
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('../workers/local-signature.ts', import.meta.url), {
-      type: 'module',
-    });
+    const { worker, dispose } = createLocalModuleWorker(localSignatureWorkerUrl);
     let settled = false;
     const finish = (error?: Error, value?: Uint8Array) => {
       if (settled) return;
       settled = true;
-      worker.terminate();
+      dispose();
       clearTimeout(timer);
       signal?.removeEventListener('abort', abort);
       error ? reject(error) : resolve(value!);

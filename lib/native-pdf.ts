@@ -1,3 +1,5 @@
+import nativePdfWorkerUrl from '../workers/native-pdf.ts?worker&url';
+import { createLocalModuleWorker } from './module-worker';
 import type {
   NativeObject,
   NativeChange,
@@ -19,14 +21,12 @@ function nativeJob<T>(
 ): Promise<T> {
   if (signal?.aborted) return Promise.reject(new DOMException('Abgebrochen', 'AbortError'));
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('../workers/native-pdf.ts', import.meta.url), {
-      type: 'module',
-    });
+    const { worker, dispose } = createLocalModuleWorker(nativePdfWorkerUrl);
     let settled = false;
     const finish = (error?: Error, value?: T) => {
       if (settled) return;
       settled = true;
-      worker.terminate();
+      dispose();
       clearTimeout(timer);
       signal?.removeEventListener('abort', abort);
       error ? reject(error) : resolve(value!);

@@ -919,9 +919,9 @@ export const tools = [
   },
   {
     id: 'edit-text',
-    title: 'Text bearbeiten',
+    title: 'PDF bearbeiten',
     description:
-      'Textstellen auswählen, entfernen und ersetzen. Eigene Textfelder formatieren, verschieben und skalieren.',
+      'PDF-Texte direkt ändern und Scans automatisch erkennen. Text ersetzen, ergänzen, verschieben und formatieren.',
     icon: TextCursorInput,
     group: 3,
     action: 'Bearbeitete PDF erstellen',

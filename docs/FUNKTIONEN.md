@@ -6,7 +6,7 @@ Diese Übersicht erklärt Werkzeuge, Ausgabeformate und technische Grenzen. Das 
 
 ## Browser und Dokumentenserver
 
-Viele Werkzeuge arbeiten lokal im Browser. Die vollständige Docker-Installation ergänzt einen automatisch verbundenen Dokumentenserver. Dessen Aufträge starten erst mit dem jeweiligen Aktionsknopf.
+Viele Werkzeuge arbeiten lokal im Browser. Die vollständige Docker-Installation ergänzt einen automatisch verbundenen Dokumentenserver. Dessen Aufträge starten erst mit dem jeweiligen Aktionsknopf. Der PDF-Editor bereitet sichtbare Seiten und Scan-Texte automatisch lokal vor.
 
 Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme und für die Wunschgrößen-Komprimierung eine lokale Optimierung ohne Bild-Downsampling. Erweiterte Konvertierungen und Prüfungen benötigen die entsprechenden Serverkomponenten; Details stehen in der [Serverdokumentation](../server/README.md).
 
@@ -30,7 +30,7 @@ Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne 
 - Graustufen
 - PDF fixieren (Seitenbilder)
 - Dokumentinfos entfernen
-- Text bearbeiten, Inhalte entfernen und Bilder einfügen
+- PDF bearbeiten mit automatischer Scan-OCR, Inhalte entfernen und Bilder einfügen
 - Originalobjekte bearbeiten: Text in vorhandener Schrift, Suchen/Ersetzen pro Seite, Bilder ersetzen, Objekte verschieben/drehen/skalieren/löschen; zusätzlich Absatzmodus mit mehreren Textobjekten, gemischten Formatierungen, Schriftformung, Umbruch auf zusätzliche Seiten, Vorschau und Überlaufprüfung; einzelne Unterobjekte verschachtelter Gruppen öffnen und bearbeiten; wiederverwendete Instanzen bleiben unabhängig
 - Linearisierung für schnelle Webansicht; strukturierter JSON-Export mit Textpositionen
 - PDF-Informationen und Textvergleich zweier PDFs
@@ -141,6 +141,8 @@ Schnellzugriffe, Suche und „Alle Werkzeuge“ führen zu den nach Aufgabe gegl
 Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die vollständige Docker-Installation richtet den benötigten LibreTranslate-Dienst automatisch ein; bei separatem Serverbetrieb muss er selbst angebunden werden. Der Import gespeicherter HTML-Dateien ist kein Live-URL-Browser. Buchkorrektur und Prüfungen sind bewusst mit ihren konkreten Grenzen beschrieben.
 
 ## Verhalten und Grenzen
+
+- PDF bearbeiten: direkt in Absätzen schreiben, lokale Schriftwahl mit 14 Familien und 56 Schnitten; Originalschrift, Größe, Fett/Kursiv und Farbe aus digitalen Texten übernehmen. Eingebettete Teil-Schriften können neue Zeichen nicht enthalten; Schriftersatz wird angezeigt. Scan-Schriften sind geschätzt. Bei bestätigter Originalobjekt-Bearbeitung bleiben unveränderte Vektoren erhalten, ansonsten gibt es einen gekennzeichneten Bild-Fallback. Überlauf und Überlappungen mit anderen Texten blockieren den Export.
 
 - Check und Seitenfinder prüfen importierte Seiten. Für ausstehende visuelle Änderungen zuerst das Ergebnis anwenden und weiterbearbeiten. Die Scan-Erkennung im Seitenfinder erstellt nur einen lokalen Suchindex; für eine dauerhaft durchsuchbare PDF das OCR-Werkzeug verwenden. Kommagetrennte Suchbegriffe werden als Oder-Suche behandelt, jeweils ab zwei Zeichen.
 - Leerseiten- und Duplikaterkennung sind Hinweise anhand von Text, Seitenbild und Seitengröße. Kleine Unterschiede können in der Vorschau fehlen. Abwählen entfernt Seiten nur aus der Exportauswahl und kann rückgängig gemacht werden.

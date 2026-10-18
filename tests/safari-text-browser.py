@@ -283,7 +283,7 @@ try:
             check('Reading export '+extension,lambda t=title,a=action,e=extension:reading(t,a,e))
 
         def editor():
-            fresh(source);tool('Text bearbeiten')
+            fresh(source);tool('PDF bearbeiten')
             target=visible('.editor-text-target')
             assert 'SAFARI ORIGINAL 123' in target.get_attribute('aria-label')
             rect=target.rect;assert rect['width']>100 and rect['height']>5,rect

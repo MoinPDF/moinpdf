@@ -9,6 +9,11 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Adopted compatible library updates for the interface, Word export, font processing, HEIF/PSD import and build tools.
 - Updated BeautifulSoup and FontTools in the document server, plus the GitHub Actions for Python setup and verification artifacts.
 - Limited automated Node and Node typings proposals to the existing runtime strategy. Future Pydantic and Pydantic Core updates are proposed together.
+- Aligned German and English help and Docker documentation with automatic local backups and persistent job storage; corrected outdated test documentation.
+- Aligned Docker with the current web features: automatic local scan OCR in the PDF editor, direct paragraph editing, 14 font families, original font detection and explicit substitution notices.
+- Bundled local workers and their WASM assets reliably and verified the generated output.
+- Added Edit PDF, Office to PDF and Page numbers to quick access; included Results under More and the latest typography and alignment fixes.
+
 
 ## 0.15.2 – 18 October 2026
 

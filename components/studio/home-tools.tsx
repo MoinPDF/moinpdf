@@ -166,7 +166,15 @@ export function HomeTools({
               description={description}
               locked={locked}
               onChoose={onChoose}
-              layout={index === 0 ? 'feature' : index % 3 === 0 ? 'wide' : 'tile'}
+              layout={
+                category === 'quick'
+                  ? (shortcut?.layout ?? 'tile')
+                  : index === 0
+                    ? 'feature'
+                    : index % 3 === 0
+                      ? 'wide'
+                      : 'tile'
+              }
             />
           );
         })}

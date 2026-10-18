@@ -1,3 +1,4 @@
+import { gzipSync } from 'node:zlib';
 import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import ts from 'typescript';
@@ -6,9 +7,9 @@ import { indexedDB } from 'fake-indexeddb';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 await mkdir('.cache', { recursive: true });
-for (const name of ['writer-model', 'writer-extensions', 'writer-pdf']) {
+for (const name of ['local-font-bytes','writer-model', 'writer-extensions', 'writer-pdf']) {
   const source = await readFile(`lib/${name}.ts`, 'utf8');
-  const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText.replace(/(['"])\.\/(writer-[a-z]+)\1/g, '$1./$2-test.mjs$1');
+  const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText.replace(/(['"])\.\/(writer-[a-z]+|local-font-bytes)\1/g, '$1./$2-test.mjs$1');
   await writeFile(`.cache/${name}-test.mjs`, code);
 }
 const model = await import('../.cache/writer-model-test.mjs');
@@ -81,7 +82,8 @@ const rich = { ...base, settings: { ...base.settings, header: 'Kopfzeile – Moi
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async url => {
   assert.match(String(url), /^\/vendor\/editor-fonts\/[\w.-]+\.ttf$/);
-  return new Response(await readFile('public' + url));
+  const bytes = await readFile('public' + url);
+  return new Response(process.env.MOINPDF_TEST_COMPRESSED_FONTS ? gzipSync(bytes) : bytes);
 };
 const { createWriterPdf, writerPdfDefinition } = await import('../.cache/writer-pdf-test.mjs');
 const blob = await createWriterPdf(rich);

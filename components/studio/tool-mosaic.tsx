@@ -16,11 +16,13 @@ export const MosaicHomeIcon = House;
 
 export const mosaicShortcuts: {
   id: WorkspaceTool;
+  layout?: 'tile' | 'feature' | 'wide';
   title: [string, string];
   description: [string, string];
 }[] = [
   {
     id: 'merge',
+    layout: 'feature',
     title: ['PDF zusammenfügen', 'Merge PDFs'],
     description: ['Mehrere PDFs zu einer Datei verbinden.', 'Combine multiple PDFs into one file.'],
   },
@@ -42,6 +44,7 @@ export const mosaicShortcuts: {
   },
   {
     id: 'organize',
+    layout: 'wide',
     title: ['Seiten sortieren', 'Organize pages'],
     description: [
       'PDF-Seiten neu anordnen, drehen oder entfernen.',
@@ -57,6 +60,28 @@ export const mosaicShortcuts: {
     id: 'batch',
     title: ['Stapelverarbeitung', 'Batch processing'],
     description: ['Mehrere PDFs gleichzeitig bearbeiten.', 'Process multiple PDFs at once.'],
+  },
+  {
+    id: 'numbers',
+    title: ['Seitennummern', 'Page numbers'],
+    description: ['Seitenzahlen in dein PDF einfügen.', 'Add page numbers to a PDF.'],
+  },
+  {
+    id: 'office-pdf',
+    title: ['Office zu PDF', 'Office to PDF'],
+    description: [
+      'Word, Excel und PowerPoint als PDF speichern.',
+      'Save Word, Excel and PowerPoint files as PDFs.',
+    ],
+  },
+  {
+    id: 'edit-text',
+    layout: 'wide',
+    title: ['PDF bearbeiten', 'Edit PDF'],
+    description: [
+      'Texte direkt ändern, Schriften wählen und Scans bearbeiten.',
+      'Edit text directly, choose fonts and work with scanned pages.',
+    ],
   },
 ];
 

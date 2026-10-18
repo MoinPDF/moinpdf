@@ -47,7 +47,7 @@ Die folgenden Prüfungen decken Dokumentverarbeitung und Ausgaben ab. Serverprü
 - `python -m pip_audit --disable-pip --no-deps -r server/requirements.lock.txt`: vollständiger Python-Lockfile einschließlich transitiver Pakete (pip-audit 2.10.1)
 - `pnpm run lint`: ESLint ohne zugelassene Warnungen
 - `node tests/release-workflow-smoke.mjs`: Freigabesicherheit bei falschen Images, Quellständen oder Prüfläufen
-- `pnpm test`: alle 33 Browser-Engine-Testsuiten
+- `pnpm test`: alle Browser-Engine-Testsuiten aus `tests/run-all.mjs`
 - `node tests/complex-scripts-smoke.mjs`: 19 mit nativem HarfBuzz erzeugte Referenzen, Glyphenpositionen, unabhängige PDF-Bilder, Unicode und atomare Absatzänderung
 - `node tests/nested-native-smoke.mjs`: geteilte und verschachtelte Form-/Bildressourcen, Transformationen, Beschnitt, Transparenz und mehrfache Bearbeitung
 - `python tests/native-editor-browser.py`: Produktionsbrowser, lokales HarfBuzz/WASM, Font-Fallback und Gruppenbedienung

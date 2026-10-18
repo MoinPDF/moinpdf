@@ -154,6 +154,7 @@ export async function openSource(
       cMapPacked: true,
       standardFontDataUrl: '/vendor/pdf/standard_fonts/',
       wasmUrl: '/vendor/pdf/wasm/',
+      fontExtraProperties: true,
     });
     try {
       const pdf = await task.promise;
@@ -227,10 +228,22 @@ export async function renderPage(
   maxSide = 360,
   signal?: AbortSignal,
 ) {
+  signal?.throwIfAborted();
   const page = await source.pdf.getPage(item.index + 1);
+  signal?.throwIfAborted();
+  if (page.isPureXfa)
+    throw new Error(
+      'Dieses dynamische XFA-Formular kann nicht als Seitenbild bearbeitet werden. Bitte zuerst in der ursprünglichen Anwendung als normale PDF speichern.',
+    );
   const rotation = (page.rotate + item.rotation) % 360;
   const base = page.getViewport({ scale: 1, rotation });
-  const scale = Math.min(maxSide / Math.max(base.width, base.height), 4.2);
+  if (![base.width, base.height].every((n) => Number.isFinite(n) && n > 0))
+    throw new Error('Die Seite hat ungültige Abmessungen.');
+  const scale = Math.min(
+    maxSide / Math.max(base.width, base.height),
+    4.2,
+    Math.sqrt(16000000 / (base.width * base.height)),
+  );
   const viewport = page.getViewport({ scale, rotation });
   const canvas = document.createElement('canvas');
   canvas.width = Math.ceil(viewport.width);
@@ -240,6 +253,10 @@ export async function renderPage(
   signal?.addEventListener('abort', cancel, { once: true });
   try {
     await task.promise;
+    signal?.throwIfAborted();
+  } catch (error) {
+    canvas.width = canvas.height = 0;
+    throw error;
   } finally {
     signal?.removeEventListener('abort', cancel);
   }

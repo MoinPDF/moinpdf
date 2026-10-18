@@ -18,7 +18,7 @@ globalThis.__evidenceOcr={PSM,async createWorker(languages,oem,options){
   const recognize=worker.recognize.bind(worker);worker.recognize=(canvas,...args)=>recognize(canvas.toBuffer('image/png'),...args);return worker;
 }};
 await mkdir('.cache',{recursive:true});
-for(const name of ['pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','editor-model','document-tools','advanced-types','table-data','evidence-model','evidence-engine']) {
+for(const name of ['local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','editor-model','editor-font-catalog','editor-font-cmap','editor-fonts','document-tools','advanced-types','table-data','evidence-model','evidence-engine']) {
   let code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-evidence-test.mjs${q}`);
   if(name==='evidence-engine')code=code.replace("import('tesseract.js')",'Promise.resolve(globalThis.__evidenceOcr)');
   await writeFile(`.cache/${name}-evidence-test.mjs`,code);

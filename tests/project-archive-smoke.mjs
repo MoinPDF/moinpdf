@@ -5,12 +5,13 @@ import ts from 'typescript';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import 'fake-indexeddb/auto';
 await mkdir('.cache', {recursive:true});
-for (const name of ['project-archive','project-bundle','content-digest','local-projects','ocr-languages']) {
+for (const name of ['project-archive','project-bundle','content-digest','local-projects','ocr-languages','editor-font-catalog']) {
   const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-archive-test.mjs${q}`);
   await writeFile(`.cache/${name}-archive-test.mjs`,code);
 }
 const {encodeProjectFile,decodeProjectFile,validateOpenedProject,MAX_PROJECT_FILE}=await import('../.cache/project-archive-archive-test.mjs');
 const projects=await import('../.cache/local-projects-archive-test.mjs');
+const {editorFontCatalog}=await import('../.cache/editor-font-catalog-archive-test.mjs');
 const doc=await PDFDocument.create(),font=await doc.embedFont(StandardFonts.Helvetica);
 doc.addPage([400,500]).drawText('Original bleibt erhalten',{x:20,y:420,size:18,font});
 doc.addPage([400,500]).drawText('Zweite Seite',{x:20,y:420,size:18,font});
@@ -18,9 +19,10 @@ const bytes=await doc.save(),source={id:'original',name:'Rechnung.xml',bytes,siz
 source.originalDigest=createHash('sha256').update(source.invoiceOriginal.bytes).digest('hex');
 const pages=[{id:'one',sourceId:'original',index:1,rotation:90,selected:true},{id:'two',sourceId:'original',index:0,rotation:0,selected:false}];
 const rect={x:.1,y:.1,w:.3,h:.1};
-const edits={marks:{one:[{id:'redact',kind:'redact',...rect},{id:'text',kind:'text',text:'Geändert',...rect,fontScale:.03,fontFamily:'sans',bold:true,color:'#000000'}]},crops:{two:{x:.1,y:.2,w:.8,h:.7}}};
+const edits={marks:{one:[{id:'redact',kind:'redact',...rect},{id:'text',kind:'text',text:'Geändert',textRotation:90,...rect,fontScale:.03,fontFamily:'sans',fontChoice:'auto',originalFontId:'original:LiberationSans:abc',originalFontName:'LiberationSans',originalFontPage:1,originalState:'{original}',sourceRect:rect,sourceRects:[rect],baselineScale:.98,insetScale:.08,lineHeight:1.2,tracking:.04,textScaleX:1.1,bold:true,color:'#000000'}]},crops:{two:{x:.1,y:.2,w:.8,h:.7}}};
+edits.marks.two=editorFontCatalog.map(font=>({id:font.id,kind:'text',...rect,text:'ÄÖÜ ß €',fontChoice:font.id,fontFamily:font.family}));
 const draft={fields:[{id:'field',name:'Name',kind:'text',value:'Denny',initialValue:'',options:[],widgets:[{page:1,rect}],existing:true,required:true,readOnly:false,multiline:false,fontSize:12}],bookmarks:[{id:'bookmark',title:'Kapitel',page:1,depth:0,open:true}],signed:false,xfa:false,originalBookmarkCount:0,originalBookmarks:'[]'};
-const state={pages,edits,options:{language:'deu+fra+spa',ocrLayout:'6',compareMode:'content'},history:[{pages:[...pages].reverse(),edits:{marks:{},crops:{}}}],future:[],documentSessions:{original:{current:draft,past:[],future:[]}},activeId:'one',toolId:'edit-text'};
+const state={pages,edits,options:{editorLanguage:'deu+eng',language:'deu+fra+spa',ocrLayout:'6',compareMode:'content'},history:[{pages:[...pages].reverse(),edits:{marks:{},crops:{}}}],future:[],documentSessions:{original:{current:draft,past:[],future:[]}},activeId:'one',toolId:'edit-text'};
 const archive=await encodeProjectFile('Übertragbares Projekt',[source],state);
 await writeFile('.cache/project-transfer.moinpdf',new Uint8Array(await archive.arrayBuffer()));
 const decoded=await decodeProjectFile(archive);
@@ -135,7 +137,7 @@ const emptyState={...state,pages:[],edits:dirtyEdits,activeId:'',
 const cleanEmpty=projects.cleanProjectState(emptyState);
 assert.deepEqual(cleanEmpty.edits,{marks:{},crops:{}});
 assert.deepEqual(cleanEmpty.history[0].edits,edits,'Undo keeps edits for pages present in that historical snapshot');
-assert.deepEqual(cleanEmpty.future[0].edits,{marks:edits.marks,crops:{}});
+assert.deepEqual(cleanEmpty.future[0].edits,{marks:{one:edits.marks.one},crops:{}});
 assert.equal(emptyState.edits.marks.removed[0].text,orphan.text,'Cleanup does not mutate the active undo state');
 const emptyId=await projects.saveProject('Leere Seitenliste',undefined,[source],emptyState);
 const emptyRecord=(await projects.listProjects()).find(p=>p.id===emptyId);

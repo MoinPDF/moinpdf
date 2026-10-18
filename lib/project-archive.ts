@@ -42,13 +42,43 @@ const mark = rect.extend({
   kind: z.enum(['redact', 'highlight', 'text', 'signature', 'erase', 'image']),
   text: z.string().max(100000).optional(),
   fontScale: z.number().finite().min(0).max(10).optional(),
+  textRotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).optional(),
   image: z
     .string()
     .max(maxManifest)
     .regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/)
     .optional(),
   sourceRect: rect.optional(),
+  sourceRects: z.array(rect).max(2000).optional(),
   fontFamily: z.enum(['sans', 'serif', 'mono']).optional(),
+  fontChoice: z
+    .enum([
+      'auto',
+      'liberation-sans',
+      'liberation-serif',
+      'liberation-mono',
+      'carlito',
+      'caladea',
+      'dejavu-sans',
+      'dejavu-serif',
+      'dejavu-mono',
+      'noto-sans',
+      'noto-serif',
+      'rubik',
+      'liberation-sans-narrow',
+      'dejavu-sans-condensed',
+      'dejavu-serif-condensed',
+    ])
+    .optional(),
+  originalFontId: short.optional(),
+  originalFontName: short.optional(),
+  originalFontPage: z.number().int().min(0).max(199).optional(),
+  originalState: z.string().max(500000).optional(),
+  baselineScale: z.number().finite().min(0).max(5).optional(),
+  insetScale: z.number().finite().min(0).max(5).optional(),
+  lineHeight: z.number().finite().min(0.5).max(5).optional(),
+  tracking: z.number().finite().min(-0.5).max(0.5).optional(),
+  textScaleX: z.number().finite().min(0.1).max(10).optional(),
   bold: z.boolean().optional(),
   italic: z.boolean().optional(),
   align: z.enum(['left', 'center', 'right']).optional(),
@@ -142,6 +172,18 @@ const draft = z
   .strict();
 const options = z
   .object({
+    editorLanguage: z
+      .string()
+      .max(100)
+      .refine((v) => {
+        try {
+          parseOcrLanguages(v);
+          return true;
+        } catch {
+          return false;
+        }
+      })
+      .optional(),
     language: z
       .string()
       .max(100)

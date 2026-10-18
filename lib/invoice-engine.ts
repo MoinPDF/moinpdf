@@ -1,5 +1,6 @@
 import { PDFDocument, rgb, type PDFPage } from 'pdf-lib';
 import type { Source } from './pdf-engine';
+import { localFontBytes } from './local-font-bytes';
 
 export const INVOICE_MAX_BYTES = 5 * 1024 * 1024;
 export const INVOICE_CHECK_SCOPE =
@@ -664,7 +665,7 @@ async function invoiceFont() {
     .then((r) => {
       if (!r.ok)
         throw new Error('Die Schrift konnte nicht geladen werden. Bitte erneut versuchen.');
-      return r.arrayBuffer();
+      return localFontBytes(r);
     })
     .catch((e) => {
       fontPromise = undefined;

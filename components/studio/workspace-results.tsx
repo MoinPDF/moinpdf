@@ -1,7 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { Archive, Download, LoaderCircle, Trash2 } from 'lucide-react';
+import { Download, LoaderCircle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -107,12 +106,10 @@ export function WorkspaceTray({
   const { t } = useLanguage();
   const { results, remember, remove } = useWorkspaceResults();
   const [open, setOpen] = useState(false),
-    [host, setHost] = useState<HTMLElement | null>(null),
     [jobs, setJobs] = useState<BackgroundJob[]>([]),
     [working, setWorking] = useState('');
   const controller = useRef<AbortController | null>(null);
   useEffect(() => {
-    setHost(document.getElementById('moinpdf-project-bar'));
     const refresh = () => setJobs([...storedServerJobs()]);
     refresh();
     const show = () => setOpen(true);
@@ -155,22 +152,6 @@ export function WorkspaceTray({
   };
   return (
     <>
-      {host &&
-        createPortal(
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setOpen(true)}
-            aria-label={t('Ergebnisse und Aufträge', 'Results and jobs')}
-          >
-            <Archive size={17} />
-            <span>
-              {t('Ergebnisse', 'Results')}
-              {results.length + jobs.length ? ` (${results.length + jobs.length})` : ''}
-            </span>
-          </Button>,
-          host,
-        )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="workspace-tray">
           <DialogHeader>
@@ -184,7 +165,7 @@ export function WorkspaceTray({
           </DialogHeader>
           <div className="workspace-tray-list">
             {!results.length && !jobs.length && (
-              <p>
+              <p className="text-center">
                 {t(
                   'Hier findest du deine nächsten Ergebnisse.',
                   'Your next results will appear here.',

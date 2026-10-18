@@ -13,7 +13,7 @@ const {DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');Object.assign(g
 globalThis.DOMParser=class{parseFromString(xml,type){try{return new DOMParser({onError:()=>{throw Error('XML');}}).parseFromString(xml,type);}catch{return new DOMParser().parseFromString('<parsererror/>',type);}}};
 globalThis.Worker=class {constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
 await mkdir('.cache',{recursive:true});
-for(const name of ['pdf-security','invoice-engine'])await writeFile(`.cache/${name}-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+for(const name of ['local-font-bytes','pdf-security','invoice-engine'])await writeFile(`.cache/${name}-test.mjs`,ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace("'./local-font-bytes'", "'./local-font-bytes-test.mjs'"));
 const {protectPdf,unlockPdf,checkNewPassword,PdfPasswordError}=await import('../.cache/pdf-security-test.mjs');
 const {parseInvoice,checkInvoice,invoiceFromBytes,invoicePdf,invoiceEntries,invoiceCsv,invoiceCheckText}=await import('../.cache/invoice-engine-test.mjs');
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json')),proxies=[];

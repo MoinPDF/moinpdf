@@ -328,7 +328,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         lifecycle.goto(origin)
         lifecycle.locator('input[type="file"]').first.set_input_files(str(pdf_path))
         chooser(lifecycle)
-        lifecycle.get_by_role('button', name='Text bearbeiten', exact=True).click()
+        lifecycle.get_by_role('button', name='PDF bearbeiten', exact=True).click()
         lifecycle.get_by_role('button', name='Neuer Text', exact=True).click()
         lifecycle.get_by_label('Textinhalt', exact=True).fill('REMOVED-FILE-PRIVATE-NOTE')
         back(lifecycle)

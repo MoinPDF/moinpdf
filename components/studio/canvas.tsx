@@ -234,7 +234,12 @@ export function PageCanvas({
             {error ? ui('Vorschau nicht verfügbar') : <LoaderCircle className="spin" />}
           </div>
         )}
-        <MarkLayers marks={marks} width={displayWidth} />
+        <MarkLayers
+          source={source}
+          marks={marks}
+          width={displayWidth}
+          height={(displayWidth * dims.height) / dims.width}
+        />
         {crop && (
           <div
             className="crop-selection"
