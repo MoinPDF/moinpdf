@@ -71,7 +71,7 @@ jobs:
           exit "$status"
       - name: Retain screenshots and verification report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: documentation-verification
           path: documentation-evidence/

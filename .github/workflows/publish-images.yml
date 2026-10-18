@@ -126,7 +126,7 @@ jobs:
           jq -n --arg image "$IMAGE" --arg digest "$DIGEST" --arg source "$SOURCE_SHA" --argjson verificationRun "$VERIFICATION_RUN_ID" '{image:$image,digest:$digest,source:$source,verificationRun:$verificationRun,platforms:["linux/amd64","linux/arm64"]}' > "image-reference/${IMAGE_NAME}.json"
           echo "### ${IMAGE_NAME}" >> "$GITHUB_STEP_SUMMARY"
           echo "$IMAGE@$DIGEST" >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: docker-image-${{ matrix.name }}
           path: image-reference/

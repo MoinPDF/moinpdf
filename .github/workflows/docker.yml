@@ -87,7 +87,7 @@ jobs:
         run: python tests/local-assistant-browser.py
       - name: Retain local model evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: local-model-verification
           path: web-evidence/
@@ -168,7 +168,7 @@ jobs:
           exit "$status"
       - name: Retain browser evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: complete-ui-verification
           path: |
