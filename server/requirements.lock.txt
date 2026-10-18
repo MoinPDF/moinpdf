@@ -49,7 +49,7 @@ red-black-tree-mod==1.22
 requests==2.34.2
 RTFDE==0.1.2.2
 soupsieve==2.10
-starlette==1.7.0
+starlette==1.8.0
 termcolor==3.3.0
 typing_extensions==4.16.0
 typing-inspection==0.4.4
