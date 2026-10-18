@@ -255,6 +255,9 @@ body,
   color: var(--ui-teal);
   background: var(--ui-teal-soft);
 }
+.docs-section-number {
+  color: var(--ui-heading);
+}
 .docs-primary,
 .docs-filters button[aria-pressed='true'] {
   background: var(--harbor-accent);

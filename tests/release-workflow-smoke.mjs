@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-const workflow = await readFile('.github/workflows/release.yml', 'utf8');
+const workflow = (await readFile('.github/workflows/release.yml', 'utf8')).replace(/\r\n/g, '\n');
 const script = workflow.match(/          script: \|\n([\s\S]*?)\n      - name:/)?.[1]
   .split('\n').map(line => line.replace(/^            /, '')).join('\n');
 assert.ok(script, 'Release verification script exists');
@@ -143,7 +143,7 @@ await assert.rejects(() => run({...existing, images: refs => { refs[1].source = 
 assert.equal(existingReleaseLookups, 0, 'An existing release never bypasses source, platform or Docker verification');
 console.log('PASS: already released versions keep their original artifacts only after full verification and a complete metadata-only tree comparison; application changes, invalid releases, API/Git failures and unsafe rename/path cases are rejected.');
 
-const publishWorkflow = await readFile('.github/workflows/publish-images.yml', 'utf8');
+const publishWorkflow = (await readFile('.github/workflows/publish-images.yml', 'utf8')).replace(/\r\n/g, '\n');
 const publishScript = publishWorkflow.match(/          script: \|\n([\s\S]*?)\n  image:/)?.[1]
   .split('\n').map(line => line.replace(/^            /, '')).join('\n');
 assert.ok(publishScript);

@@ -386,6 +386,7 @@ export function WorkflowPanel({
               className="sr-only"
               type="file"
               accept=".json,application/json"
+              aria-label={ui('JSON importieren')}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 e.target.value = '';

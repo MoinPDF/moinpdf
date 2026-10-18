@@ -3,6 +3,8 @@ on:
   push:
     branches: [main, fix/safari-pdf-text]
     paths:
+      - 'app/**'
+      - 'components/**'
       - 'lib/**'
       - 'tests/*text*'
       - 'package.json'
@@ -11,6 +13,8 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - 'app/**'
+      - 'components/**'
       - 'lib/**'
       - 'tests/*text*'
       - 'package.json'

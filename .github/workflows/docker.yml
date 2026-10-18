@@ -162,7 +162,7 @@ jobs:
           for test in xfa-browser published-web-smoke hafenlicht-browser harbor-layout-browser website-browser; do
             python "tests/$test.py" || status=1
           done
-          for test in language-smoke documentation-smoke; do
+          for test in language-smoke documentation-smoke accessibility-browser; do
             MOINPDF_DOCUMENTATION_URL=http://localhost:8080 python "tests/$test.py" || status=1
           done
           exit "$status"

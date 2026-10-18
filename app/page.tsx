@@ -2892,9 +2892,7 @@ function Studio() {
                         {t('Marker')}
                       </TabsTrigger>
                     </TabsList>
-                  </Tabs>
-                  {noteMode === 'text' ? (
-                    <>
+                    <TabsContent value="text">
                       <label className="field">
                         <span>{t('Deine Notiz')}</span>
                         <Textarea
@@ -2921,10 +2919,11 @@ function Studio() {
                           disabled={locked}
                         />
                       </label>
-                    </>
-                  ) : (
-                    <div className="marker-sample">{t('Wichtiges hervorheben.')}</div>
-                  )}
+                    </TabsContent>
+                    <TabsContent value="highlight">
+                      <div className="marker-sample">{t('Wichtiges hervorheben.')}</div>
+                    </TabsContent>
+                  </Tabs>
                 </>
               )}
               {toolId === 'sign' && (

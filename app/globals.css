@@ -1322,6 +1322,7 @@ summary:focus-visible {
   flex: 1;
   font-size: 12px;
   gap: 6px;
+  color: var(--ui-ink);
 }
 .marker-sample {
   color: var(--ui-muted, #3c8074);

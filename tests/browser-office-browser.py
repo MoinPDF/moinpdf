@@ -126,6 +126,10 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
     def dedicated_threads():
         # CDP can remove a worker target before its native thread has stopped.
         # This Linux acceptance runner also verifies the actual OS threads.
+        # Other platforms have no /proc thread names; do not report an empty
+        # measurement and compare it with the intentionally live PDF preview.
+        if sys.platform != 'linux':
+            return None
         threads = []
         for process in bounded_cdp(browser_session, 'SystemInfo.getProcessInfo')['processInfo']:
             if process['type'] != 'renderer':
@@ -201,11 +205,12 @@ with tempfile.TemporaryDirectory() as temp, sync_playwright() as api:
                 # native thread still fails the same cleanup deadline.
                 previews = [worker for worker in page.workers
                             if worker.url == origin.rstrip('/') + '/vendor/pdf/pdf.worker.min.mjs']
-                if len(native) == len(previews):
+                if native is None or len(native) == len(previews):
                     for preview in previews:
                         assert preview._sync(asyncio.wait_for(preview._impl_obj.evaluate('location.href'), timeout=2)) == preview.url
                     cleanup_checks.append({'seconds': round(time.monotonic() - started, 3),
                                            'nativeThreads': native,
+                                           'nativeThreadInspection': 'linux-proc' if native is not None else 'unavailable',
                                            'previewWorkers': [worker.url for worker in previews],
                                            'remainingOfficeWorkers': workers})
                     return []

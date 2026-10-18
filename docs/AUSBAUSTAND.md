@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 18. Oktober 2026, Version 0.15.3.
+Stand: 18. Oktober 2026, Version 0.15.4.
 
 „PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
 

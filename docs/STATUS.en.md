@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 18 October 2026, version 0.15.3.
+As of 18 October 2026, version 0.15.4.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
