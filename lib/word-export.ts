@@ -68,6 +68,20 @@ export async function createTextWordFile(
     filename: source.name.replace(/\.pdf$/i, '') + '.docx',
     kind: 'data',
     pages: source.pdf.numPages,
-    note: `Bearbeitbarer Text. Bilder und das ursprüngliche Seitenlayout werden in dieser Ausgabe nicht übernommen.${ocrPages ? ` ${ocrPages} Seiten per OCR geprüft; erkannte Texte bitte kontrollieren.` : ''}${emptyPages ? ` ${emptyPages} Seiten ohne erkannten Text.` : ''}`,
+    note: [
+      'Bearbeitbarer Text. Bilder und das ursprüngliche Seitenlayout werden in dieser Ausgabe nicht übernommen.',
+      ocrPages === 1
+        ? 'Eine Seite per OCR geprüft; erkannte Texte bitte kontrollieren.'
+        : ocrPages > 1
+          ? `${ocrPages} Seiten per OCR geprüft; erkannte Texte bitte kontrollieren.`
+          : '',
+      emptyPages === 1
+        ? 'Eine Seite ohne erkannten Text.'
+        : emptyPages > 1
+          ? `${emptyPages} Seiten ohne erkannten Text.`
+          : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
   };
 }

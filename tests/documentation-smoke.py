@@ -14,6 +14,8 @@ origin = os.environ.get('MOINPDF_DOCUMENTATION_URL', 'http://127.0.0.1:8765').rs
 evidence = Path('documentation-evidence')
 evidence.mkdir(exist_ok=True)
 completed, errors = [], []
+version = json.loads(Path('package.json').read_text())['version']
+release_url = f'https://github.com/MoinPDF/moinpdf/releases/tag/v{version}'
 for attempt in range(50):
     try:
         urllib.request.urlopen(origin, timeout=1).close()
@@ -43,12 +45,32 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
             document.save(pdf)
         page.locator('input[type=file]').first.set_input_files(str(pdf))
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
+        # Keep the test independent of publication timing and GitHub availability.
+        # The actual destination is checked separately after the release is published.
+        context.route(release_url, lambda route: route.fulfill(status=200, content_type='text/html', body='<title>Release notes</title>'))
+        version_link = footer.locator('a.moinpdf-version')
+        expect(version_link).to_have_attribute('href', release_url)
+        expect(version_link).to_have_attribute('target', '_blank')
+        assert {'noopener', 'noreferrer'} <= set(version_link.get_attribute('rel').split())
+        with context.expect_page() as release_popup:
+            version_link.focus()
+            page.keyboard.press('Enter')
+        release = release_popup.value
+        release.wait_for_load_state()
+        expect(release).to_have_url(release_url)
+        assert release.evaluate('window.opener === null')
+        release.close()
+        expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
+        completed.append('Keyboard-accessible version link opens matching GitHub release in an isolated new tab and retains the PDF')
         with context.expect_page() as popup:
             footer.get_by_role('link', name='Dokumentation (neuer Tab)', exact=True).click()
         manual = popup.value
         manual.on('pageerror', lambda error: errors.append(str(error)))
         manual.wait_for_load_state()
         expect(manual).to_have_title('Dokumentation · MoinPDF')
+        expect(manual.locator('a.docs-release')).to_have_count(2)
+        for link in manual.locator('a.docs-release').all():
+            expect(link).to_have_attribute('href', release_url)
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
         completed.append('Footer order, new documentation tab and original PDF retained')
         with context.expect_page() as popup:
@@ -56,6 +78,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         media = popup.value
         media.wait_for_load_state()
         expect(media).to_have_title('Medienbereich · MoinPDF')
+        expect(media.locator('a.docs-release')).to_have_attribute('href', release_url)
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·1 Seite')
         expect(media.locator('.media-banner')).to_have_count(6)
         video = media.locator('video')

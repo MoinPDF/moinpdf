@@ -4,6 +4,14 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.15.1 – 18 October 2026
+
+- Version labels in the app, handbook and media area open the matching GitHub release notes in a new tab.
+- Added English messages for OCR/Word results, project limits, original-object editing and background jobs. Results-tray errors, dates and file sizes follow the app language.
+- Updated the German and English handbook for the shared workspace, extended undo history and resuming background jobs.
+- Clearing or deleting results remains effective when an earlier local save finishes later. Older saves no longer hide newer results.
+
+
 ## 0.15.0 – 18 October 2026
 
 - Multi-page table extraction, repeated headers and typed Excel numbers/dates with per-column controls. Identifiers and formulas remain text.

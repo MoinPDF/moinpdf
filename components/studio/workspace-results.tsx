@@ -28,6 +28,7 @@ import {
   type BackgroundJob,
 } from '@/lib/document-server';
 import { useLanguage } from './appearance';
+import { ui, uiLocale } from '@/lib/ui-language';
 
 import { ResultsContext, useWorkspaceResults } from './workspace-result-context';
 export { useWorkspaceResults } from './workspace-result-context';
@@ -53,18 +54,20 @@ export function WorkspaceResultsProvider({ children }: { children: ReactNode }) 
     const meta = ids.current.get(result.blob) || { id: uuid(), created: Date.now() };
     ids.current.set(result.blob, meta);
     const saved = { ...result, ...meta };
-    generation.current++;
+    const current = ++generation.current;
     setResults((old) => [saved, ...old.filter((r) => r.id !== saved.id)].slice(0, 10));
     writes.current = writes.current
       .then(async () => {
         const rows = await storeResult(saved);
-        setResults(rows);
+        if (current === generation.current) setResults(rows);
       })
       .catch(() => {
         if (!warned.current) {
           warned.current = true;
           toast.error(
-            'Ergebnisse bleiben in dieser Sitzung verfügbar; der lokale Speicher ist nicht verfügbar oder voll. Bitte herunterladen.',
+            ui(
+              'Ergebnisse bleiben in dieser Sitzung verfügbar; der lokale Speicher ist nicht verfügbar oder voll. Bitte herunterladen.',
+            ),
           );
         }
       });
@@ -136,7 +139,7 @@ export function WorkspaceTray({
     try {
       await fn();
     } catch (error) {
-      toast.error(String((error as Error).message || error));
+      toast.error(ui(String((error as Error).message || error)));
     } finally {
       setWorking('');
     }
@@ -204,7 +207,7 @@ export function WorkspaceTray({
                     }[job.status]
                   }
                 </p>
-                {job.error && <p role="alert">{job.error}</p>}
+                {job.error && <p role="alert">{t(job.error)}</p>}
                 <div className="advanced-actions">
                   {!['cancelled', 'failed'].includes(job.status) && (
                     <Button
@@ -253,7 +256,8 @@ export function WorkspaceTray({
               <section className="advanced-card" key={result.id}>
                 <strong>{result.filename}</strong>
                 <p className="fine-note">
-                  {formatSize(result.blob.size)} · {new Date(result.created).toLocaleString()}
+                  {formatSize(result.blob.size, uiLocale())} ·{' '}
+                  {new Date(result.created).toLocaleString(uiLocale())}
                 </p>
                 <div className="advanced-actions">
                   <Button onClick={() => downloadBlob(result.blob, result.filename)}>

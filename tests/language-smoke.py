@@ -5,6 +5,7 @@ import os
 import re
 from pathlib import Path
 import tempfile
+import time
 import zipfile
 import pymupdf
 from playwright.sync_api import sync_playwright, expect
@@ -17,6 +18,8 @@ catalog = json.loads(Path('public/locales/en.json').read_text())
 # names, entered values and PDF text are deliberately not translation targets.
 german = {k:v for k,v in catalog.items() if k != v and len(k)>2 and '{' not in k}
 completed, misses, errors = [], [], []
+version = json.loads(Path('package.json').read_text())['version']
+release_url = f'https://github.com/MoinPDF/moinpdf/releases/tag/v{version}'
 
 def check(page, name):
     expect(page.locator('html')).to_have_attribute('lang', 'en')
@@ -67,6 +70,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.locator('html')).to_have_attribute('lang','en')
         expect(page.get_by_role('menuitemradio',name='English',exact=True)).not_to_be_visible()
         check(page,'home')
+        expect(page.locator('a.moinpdf-version')).to_have_attribute('href', release_url)
+        expect(page.locator('a.moinpdf-version')).to_have_attribute('aria-label', f'Changes in MoinPDF {version} on GitHub (new tab)')
         assert 40 <= page.locator('.theme-toggle').bounding_box()['width'] <= 44
         assert 40 <= page.locator('.language-trigger').bounding_box()['height'] <= 44
         page.reload()
@@ -94,11 +99,32 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     page.keyboard.press('Escape')
             back(page)
         completed.append('All 112 English tool views and available selection menus, with the PDF retained')
+        # Exercise server-authored failures at their actual rendering boundaries.
+        job = {'id':'a'*32, 'ticket':'a'*64, 'base':origin+'/api/documents', 'name':'Auftrag Original-123.pdf', 'operation':'/v1/pdf-word', 'created':time.time(), 'expires':time.time()+3600, 'status':'failed', 'error':'Der Auftrag hat das Zeitlimit erreicht.'}
+        job_url = job['base']+'/v1/jobs/'+job['id']
+        context.route(job_url, lambda route: route.fulfill(status=200, content_type='application/json', body=json.dumps(job)))
+        context.route(job_url+'/delete', lambda route: route.fulfill(status=403, content_type='application/json', body=json.dumps({'detail':'Ungültiges Auftragsticket.'})))
+        page.evaluate('job => { localStorage.setItem("moinpdf.background-jobs.v1", JSON.stringify([job])); window.dispatchEvent(new Event("moinpdf-jobs")); }', job)
+        page.get_by_role('button',name='Results and jobs',exact=True).click()
+        tray=page.get_by_role('dialog')
+        expect(tray.get_by_role('alert')).to_have_text('The job reached its time limit.')
+        expect(tray.get_by_text('Auftrag Original-123.pdf',exact=True)).to_be_visible()
+        check(page,'background job failure')
+        tray.get_by_role('button',name='Delete job',exact=True).click()
+        expect(page.locator('[data-sonner-toast]').filter(has_text='Invalid job ticket.')).to_be_visible()
+        page.keyboard.press('Escape')
+        page.evaluate('() => { localStorage.removeItem("moinpdf.background-jobs.v1"); window.dispatchEvent(new Event("moinpdf-jobs")); }')
+        context.unroute(job_url)
+        context.unroute(job_url+'/delete')
+        completed.append('English background-job errors and error toast preserve original filenames')
         for route in ('documentation','media','legal','privacy'):
             info = context.new_page()
             info.goto(origin+'/en/'+route+'.html')
             check(info,route)
             if route=='documentation':
+                for link in info.locator('a.docs-release').all():
+                    expect(link).to_have_attribute('href', release_url)
+                    expect(link).to_have_attribute('title', 'Changes in this version on GitHub (new tab)')
                 expect(info.locator('.docs-tool')).to_have_count(112)
                 info.get_by_role('searchbox').fill('Compress to target size')
                 expect(info.locator('#docs-search-status')).to_contain_text('guides')

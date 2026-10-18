@@ -42,7 +42,7 @@ The browser-only edition offers local PDF-to-Word text export without layout pre
 - Protect PDFs with AES-256 and unlock using a known password
 - Read e-invoices and run a basic check; UBL, UBL credit notes and CII from XML or embedded PDF attachments
 
-Drop PDFs, invoice XML and supported image formats anywhere in the window. Change page order using drag-and-drop or arrows. Draw or place visual regions directly, or enter percentages. Undo/redo the last 30 page and region changes with Ctrl/⌘ + Z and Ctrl/⌘ + Shift + Z. Adding or closing files starts a new history.
+Drop PDFs, invoice XML and supported image formats anywhere in the window. Change page order using drag-and-drop or arrows. Draw or place visual regions directly, or enter percentages. Undo/redo up to 30 working states, including adopted results and page and region changes with Ctrl/⌘ + Z and Ctrl/⌘ + Shift + Z. Adding or closing files starts a new history.
 
 Results can be adopted as new working documents. OCR exports searchable PDF, TXT and DOCX; DOCX contains text without reconstruction of the original layout. Page tools apply pending visual changes on the selected pages. Switching to specialist tools applies the current workspace; potentially lossy structural transitions require an explicit choice. Adopting results retains undo history.
 

@@ -1,7 +1,7 @@
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 import './legal-footer.css';
-import { APP_VERSION } from '@/lib/version';
+import { APP_RELEASE_URL, APP_VERSION } from '@/lib/version';
 
 export function LegalFooter() {
   const { t, language } = useLanguage();
@@ -50,10 +50,17 @@ export function LegalFooter() {
           alt=""
           decoding="async"
         />
-        <span className="moinpdf-version" aria-label={ui(`MoinPDF Version ${APP_VERSION}`)}>
+        <a
+          className="moinpdf-version"
+          href={APP_RELEASE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t(`Änderungen in MoinPDF ${APP_VERSION} auf GitHub (neuer Tab)`)}
+          title={t('Änderungen dieser Version auf GitHub')}
+        >
           {ui('MoinPDF ')}
           <span>v{APP_VERSION}</span>
-        </span>
+        </a>
       </div>
     </footer>
   );

@@ -870,7 +870,7 @@ function Studio() {
       if (error instanceof WorkspaceReviewRequired) {
         setPendingToolReason(error.message);
         setPendingTool(id);
-      } else if (!controller.signal.aborted) toast.error((error as Error).message);
+      } else if (!controller.signal.aborted) toast.error(ui((error as Error).message));
     } finally {
       setLoading(false);
       job.current = null;
