@@ -9,6 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.15.2 – 18. Oktober 2026
+
+- Versionslinks bleiben auch beim Darüberfahren und nach dem Antippen ohne Unterstreichung. Der sichtbare Tastaturfokus bleibt erhalten.
+
 ## 0.15.1 – 18. Oktober 2026
 
 - Die Versionsanzeige in App, Handbuch und Medienbereich öffnet die Release-Notes der angezeigten Version auf GitHub in einem neuen Tab.

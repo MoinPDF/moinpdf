@@ -4,6 +4,10 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.15.2 – 18 October 2026
+
+- Version links no longer show an underline on hover or after tapping. Keyboard focus remains visible.
+
 ## 0.15.1 – 18 October 2026
 
 - Version labels in the app, handbook and media area open the matching GitHub release notes in a new tab.
