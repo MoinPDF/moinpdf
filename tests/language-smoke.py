@@ -100,8 +100,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             back(page)
         completed.append('All 112 English tool views and available selection menus, with the PDF retained')
         # Exercise server-authored failures at their actual rendering boundaries.
-        job = {'id':'a'*32, 'ticket':'a'*64, 'base':origin+'/api/documents', 'name':'Auftrag Original-123.pdf', 'operation':'/v1/pdf-word', 'created':time.time(), 'expires':time.time()+3600, 'status':'failed', 'error':'Der Auftrag hat das Zeitlimit erreicht.'}
-        job_url = job['base']+'/v1/jobs/'+job['id']
+        job = {'id':'a'*32, 'ticket':'a'*64, 'base':'/api/documents', 'name':'Auftrag Original-123.pdf', 'operation':'/v1/pdf-word', 'created':time.time(), 'expires':time.time()+3600, 'status':'failed', 'error':'Der Auftrag hat das Zeitlimit erreicht.'}
+        job_url = origin+job['base']+'/v1/jobs/'+job['id']
         context.route(job_url, lambda route: route.fulfill(status=200, content_type='application/json', body=json.dumps(job)))
         context.route(job_url+'/delete', lambda route: route.fulfill(status=403, content_type='application/json', body=json.dumps({'detail':'Ungültiges Auftragsticket.'})))
         page.evaluate('job => { localStorage.setItem("moinpdf.background-jobs.v1", JSON.stringify([job])); window.dispatchEvent(new Event("moinpdf-jobs")); }', job)
