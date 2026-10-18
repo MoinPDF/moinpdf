@@ -9,6 +9,12 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.15.3 – 18. Oktober 2026
+
+- Kompatible Bibliotheksupdates für Oberfläche, Word-Export, Schriftverarbeitung, HEIF-/PSD-Import und Build-Werkzeuge übernommen.
+- BeautifulSoup und FontTools des Dokumentenservers sowie die GitHub-Actions für Python-Einrichtung und Prüfartefakte aktualisiert.
+- Automatische Versionsvorschläge für Node und seine Typdefinitionen auf die bestehende Laufzeitstrategie begrenzt. Pydantic und Pydantic Core werden für künftige Updates gemeinsam vorgeschlagen.
+
 ## 0.15.2 – 18. Oktober 2026
 
 - Versionslinks bleiben auch beim Darüberfahren und nach dem Antippen ohne Unterstreichung. Der sichtbare Tastaturfokus bleibt erhalten.

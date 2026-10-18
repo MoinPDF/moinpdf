@@ -4,6 +4,12 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.15.3 – 18 October 2026
+
+- Adopted compatible library updates for the interface, Word export, font processing, HEIF/PSD import and build tools.
+- Updated BeautifulSoup and FontTools in the document server, plus the GitHub Actions for Python setup and verification artifacts.
+- Limited automated Node and Node typings proposals to the existing runtime strategy. Future Pydantic and Pydantic Core updates are proposed together.
+
 ## 0.15.2 – 18 October 2026
 
 - Version links no longer show an underline on hover or after tapping. Keyboard focus remains visible.
