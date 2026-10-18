@@ -94,10 +94,15 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     back()
     for name in ['Lesezeichen bearbeiten', 'Formular ausfüllen', 'Formular erstellen']:
         tool(name)
-        preview = page.get_by_role('region', name='Vorschau', exact=True)
+        preview = page.get_by_role('region', name='Vorschaudokument', exact=True)
         expect(preview).to_have_attribute('tabindex', '0')
         preview.focus()
         expect(preview).to_be_focused()
+        page.locator('.language-trigger').click()
+        page.get_by_role('menuitemradio', name='English', exact=True).click()
+        expect(page.get_by_role('region', name='Preview document', exact=True)).to_be_visible()
+        page.locator('.language-trigger').click()
+        page.get_by_role('menuitemradio', name='Deutsch', exact=True).click()
         back()
     for name, accept, label in [('Arbeitsabläufe', '.json,application/json', 'JSON importieren'),
                                 ('Serienformulare', '.csv,.tsv,text/csv,text/tab-separated-values', 'Tabelle auswählen')]:
