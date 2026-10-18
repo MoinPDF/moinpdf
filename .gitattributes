@@ -1,0 +1,5 @@
+# Keep source files and Linux container entrypoints portable across checkouts.
+# In particular, Windows core.autocrlf must not turn /bin/sh into /bin/sh\r.
+* text=auto eol=lf
+# Preserve upstream notices and source archives byte for byte.
+public/component-notices/** -text
