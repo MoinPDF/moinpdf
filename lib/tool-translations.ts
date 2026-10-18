@@ -496,8 +496,9 @@ export const englishTools: Record<
     action: 'Arrange pages',
   },
   'edit-text': {
-    title: 'Edit text',
-    description: 'Select, remove and replace text. Format, move and resize your own text boxes.',
+    title: 'Edit PDF',
+    description:
+      'Edit PDF text and automatically recognise scans. Replace, add, move and format text.',
     action: 'Create edited PDF',
   },
   erase: {

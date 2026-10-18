@@ -1,0 +1,8 @@
+MoinPDF Search Regular
+
+Generated from scratch by scripts/build-search-font.py using fonttools.
+No third-party glyph outlines or source fonts are incorporated.
+The glyph contours have zero area. This font is only for invisible, selectable
+Unicode search text in PDFs, and must never be used for visible replacement text.
+Each supported Unicode code point has a separate glyph ID for exact ToUnicode
+mapping. Rendering mode 3 keeps the search layer invisible.

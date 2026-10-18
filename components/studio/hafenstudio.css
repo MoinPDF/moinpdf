@@ -136,7 +136,7 @@
   padding: 6px;
   border-radius: 16px;
 }
-.harbor-more-menu a {
+.harbor-more-menu [data-slot='dropdown-menu-item'] {
   gap: 12px;
   min-height: 44px;
   border-radius: 10px;

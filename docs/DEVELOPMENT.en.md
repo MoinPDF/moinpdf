@@ -47,7 +47,7 @@ These checks cover document processing and outputs. Server checks require the in
 - `python -m pip_audit --disable-pip --no-deps -r server/requirements.lock.txt`: the complete Python lockfile, including transitive packages (pip-audit 2.10.1)
 - `pnpm run lint`: ESLint with no warnings allowed
 - `node tests/release-workflow-smoke.mjs`: release safeguards against incorrect images, source commits or verification runs
-- `pnpm test`: all 33 browser-engine test suites
+- `pnpm test`: all browser-engine test suites listed in `tests/run-all.mjs`
 - `node tests/complex-scripts-smoke.mjs`: 19 references generated with native HarfBuzz, glyph positions, independent PDF images, Unicode and atomic paragraph changes
 - `node tests/nested-native-smoke.mjs`: shared and nested form/image resources, transformations, clipping, transparency and repeated editing
 - `python tests/native-editor-browser.py`: production browser, local HarfBuzz/WASM, font fallback and group controls

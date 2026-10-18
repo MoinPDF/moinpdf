@@ -26,7 +26,14 @@ import {
   type ExtraOptions,
 } from './extra-options';
 import { rasterTransform, runSourceTool, runExtraPdfTool } from './extra-tools';
-import { fontName, cssFont, wrapEditorText, hexColor, type FontFamily } from './editor-model';
+import {
+  hexColor,
+  editorRemovalRects,
+  editorMarkChanged,
+  editorTextCollision,
+  type FontFamily,
+} from './editor-model';
+import type { EditorFontChoice } from './editor-font-catalog';
 
 export type StudioTool =
   | ToolId
@@ -55,17 +62,30 @@ export type Mark = Rect & {
   fontScale?: number;
   image?: string;
   sourceRect?: Rect;
+  sourceRects?: Rect[];
   fontFamily?: FontFamily;
+  fontChoice?: EditorFontChoice;
+  originalFontId?: string;
+  originalFontName?: string;
+  originalFontPage?: number;
+  originalState?: string;
+  baselineScale?: number;
+  insetScale?: number;
+  lineHeight?: number;
+  tracking?: number;
+  textScaleX?: number;
   bold?: boolean;
   italic?: boolean;
   align?: 'left' | 'center' | 'right';
   color?: string;
   fill?: string;
   opacity?: number;
+  textRotation?: number;
 };
 export type Edits = { marks: Record<string, Mark[]>; crops: Record<string, Rect> };
 export type StudioOptions = JobOptions &
   ExtraOptions & {
+    editorLanguage?: string;
     pageSize: 'a4' | 'letter';
     orientation: 'portrait' | 'landscape';
     perSheet: '2' | '4';
@@ -106,7 +126,8 @@ export function normalizedRect(a: { x: number; y: number }, b: { x: number; y: n
 }
 export function countEdits(edits: Edits, pages: PageItem[]) {
   return pages.reduce(
-    (n, p) => n + (edits.marks[p.id]?.length || 0) + (edits.crops[p.id] ? 1 : 0),
+    (n, p) =>
+      n + (edits.marks[p.id]?.filter(editorMarkChanged).length || 0) + (edits.crops[p.id] ? 1 : 0),
     0,
   );
 }
@@ -143,20 +164,25 @@ export async function normalizedPage(dest: PDFDocument, source: PDFPage, addedRo
 function paintErasures(canvas: HTMLCanvasElement, marks: Mark[]) {
   const ctx = canvas.getContext('2d')!;
   for (const mark of marks) {
-    const r = mark.sourceRect || (mark.kind === 'erase' ? mark : null);
-    if (!r) continue;
-    ctx.fillStyle = hexColor(mark.fill, '#ffffff');
-    const x = Math.floor(r.x * canvas.width),
-      y = Math.floor(r.y * canvas.height);
-    ctx.fillRect(
-      x,
-      y,
-      Math.ceil((r.x + r.w) * canvas.width) - x,
-      Math.ceil((r.y + r.h) * canvas.height) - y,
-    );
+    for (const r of editorRemovalRects(mark)) {
+      ctx.fillStyle = hexColor(mark.fill, '#ffffff');
+      const x = Math.floor(r.x * canvas.width),
+        y = Math.floor(r.y * canvas.height);
+      ctx.fillRect(
+        x,
+        y,
+        Math.ceil((r.x + r.w) * canvas.width) - x,
+        Math.ceil((r.y + r.h) * canvas.height) - y,
+      );
+    }
   }
 }
-async function paintMarks(canvas: HTMLCanvasElement, marks: Mark[]) {
+async function paintMarks(
+  canvas: HTMLCanvasElement,
+  marks: Mark[],
+  source?: Source,
+  warnings?: string[],
+) {
   const ctx = canvas.getContext('2d')!,
     w = canvas.width,
     h = canvas.height;
@@ -180,17 +206,40 @@ async function paintMarks(canvas: HTMLCanvasElement, marks: Mark[]) {
       ctx.fillRect(x, y, mw, mh);
     }
     if (mark.kind === 'text') {
-      const size = (mark.fontScale || 0.028) * w;
+      const { layoutEditorText } = await import('./editor-text-layer');
+      const { resolveEditorFont, loadEditorCssFont } = await import('./editor-fonts');
+      const resolution = await resolveEditorFont(mark, source);
+      await loadEditorCssFont(resolution.font, source);
+      if (resolution.substituted)
+        warnings?.push(
+          `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
+        );
+      const layout = layoutEditorText(mark, w, h, resolution.font.measure, resolution.font.descent);
+      if (layout.overflow)
+        throw new Error(
+          'Ein Textfeld ist zu klein. Vergrößere seine Höhe oder reduziere die Schriftgröße.',
+        );
+      const { geometry, size } = layout;
+      ctx.translate(geometry.x, geometry.y);
+      ctx.rotate((geometry.rotation * Math.PI) / 180);
+      ctx.scale(layout.scaleX, 1);
       ctx.fillStyle = hexColor(mark.color, '#222222');
-      ctx.font = `${mark.italic ? 'italic ' : ''}${mark.bold ? 'bold ' : ''}${size}px ${cssFont(mark.fontFamily)}`;
+      ctx.font = `${mark.italic ? 'italic ' : ''}${mark.bold ? 'bold ' : ''}${size}px "${resolution.font.cssFamily}"`;
+      ctx.fontKerning = 'none';
       ctx.textBaseline = 'alphabetic';
-      ctx.beginPath();
-      ctx.rect(x, y, mw, mh);
-      ctx.clip();
-      wrapEditorText(mark.text || '', mw, (s) => ctx.measureText(s).width).forEach((line, i) => {
-        const tw = ctx.measureText(line).width,
-          dx = mark.align === 'center' ? (mw - tw) / 2 : mark.align === 'right' ? mw - tw : 0;
-        ctx.fillText(line, x + dx, y + size * 0.9 + i * size * 1.25);
+      layout.lines.forEach((line, i) => {
+        const tw = layout.measured(line);
+        let dx =
+          layout.inset +
+          (mark.align === 'center'
+            ? (layout.available - tw) / 2
+            : mark.align === 'right'
+              ? layout.available - tw
+              : 0);
+        for (const character of line) {
+          ctx.fillText(character, dx, layout.baseline + i * layout.lineHeight);
+          dx += resolution.font.measure(character, size) + layout.tracking;
+        }
       });
     }
     if ((mark.kind === 'signature' || mark.kind === 'image') && mark.image) {
@@ -203,7 +252,13 @@ async function paintMarks(canvas: HTMLCanvasElement, marks: Mark[]) {
     ctx.restore();
   }
 }
-async function paintVectorMarks(doc: PDFDocument, page: PDFPage, marks: Mark[]) {
+async function paintVectorMarks(
+  doc: PDFDocument,
+  page: PDFPage,
+  marks: Mark[],
+  source?: Source,
+  warnings?: string[],
+) {
   const { width: w, height: h } = page.getSize();
   for (const mark of marks) {
     const x = mark.x * w,
@@ -224,37 +279,13 @@ async function paintVectorMarks(doc: PDFDocument, page: PDFPage, marks: Mark[]) 
       page.drawImage(image, { x, y, width, height, opacity: mark.opacity ?? 1 });
     }
     if (mark.kind === 'text' && mark.text) {
-      const font = await doc.embedFont(fontName(mark)),
-        size = (mark.fontScale || 0.028) * w;
-      let lines: string[];
-      try {
-        lines = wrapEditorText(mark.text, width, (s) => font.widthOfTextAtSize(s, size));
-      } catch {
-        throw new Error(
-          'Die Ersatzschriften unterstützen lateinische Buchstaben, Umlaute und übliche Satzzeichen. Bitte nicht unterstützte Zeichen ersetzen.',
-        );
-      }
-      if (lines.length * size * 1.25 > height + 0.5)
-        throw new Error(
-          'Ein Textfeld ist zu klein. Vergrößere seine Höhe oder reduziere die Schriftgröße.',
-        );
-      const color = hexColor(mark.color, '#222222');
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i],
-          tw = font.widthOfTextAtSize(line, size),
-          dx = mark.align === 'center' ? (width - tw) / 2 : mark.align === 'right' ? width - tw : 0;
-        page.drawText(line, {
-          x: x + dx,
-          y: h - mark.y * h - size * 0.9 - i * size * 1.25,
-          size,
-          font,
-          color: rgb(
-            parseInt(color.slice(1, 3), 16) / 255,
-            parseInt(color.slice(3, 5), 16) / 255,
-            parseInt(color.slice(5, 7), 16) / 255,
-          ),
-        });
-      }
+      const { drawEditorText } = await import('./editor-text-layer');
+      await drawEditorText(doc, page, mark, w, h, source, (resolution) => {
+        if (resolution.substituted)
+          warnings?.push(
+            `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
+          );
+      });
     }
   }
 }
@@ -271,94 +302,248 @@ export async function applyPageEdits(
     width: number,
     height: number,
   ) => { canvas: HTMLCanvasElement; width: number; height: number },
+  editor?: { language: string; warnings: string[] },
 ) {
   const doc = await PDFDocument.create();
-  const loaded = await prepareSources(sources, pages);
-  for (let i = 0; i < pages.length; i++) {
-    check(signal);
-    const item = pages[i],
-      marks = edits.marks[item.id] || [],
-      crop = edits.crops[item.id];
-    report({
-      percent: (i / pages.length) * 90,
-      label: `Seite ${i + 1} von ${pages.length} vorbereiten …`,
-    });
-    const contentRemoval = marks.some((m) => m.kind === 'erase' || !!m.sourceRect),
-      rasterMarks = forceRaster || !!crop || marks.some((m) => m.kind === 'redact');
-    if (rasterMarks || contentRemoval) {
-      const source = sources.find((s) => s.id === item.sourceId)!;
-      const rendered = await renderPage(source, item, 2800, signal);
-      let canvas = rendered.canvas;
+  const loaded = new Map<string, PDFDocument>();
+  if (editor) {
+    // PDFs rendered successfully by PDF.js can still be unsupported by pdf-lib
+    // (e.g. dynamic XFA). Rebuild their visible pages without losing the job.
+    for (const source of sources.filter((s) => pages.some((p) => p.sourceId === s.id))) {
       try {
-        if (rasterMarks) await paintMarks(canvas, marks);
-        else paintErasures(canvas, marks);
-        let width = rendered.width,
-          height = rendered.height;
-        if (crop) {
-          const rect = normalizedRect(
-            { x: crop.x, y: crop.y },
-            { x: crop.x + crop.w, y: crop.y + crop.h },
-          );
-          if (rect.w < 0.01 || rect.h < 0.01)
-            throw new Error('Der Zuschneidebereich ist zu klein.');
-          const next = document.createElement('canvas');
-          next.width = Math.max(1, Math.round(canvas.width * rect.w));
-          next.height = Math.max(1, Math.round(canvas.height * rect.h));
-          next
-            .getContext('2d')!
-            .drawImage(
-              canvas,
-              canvas.width * rect.x,
-              canvas.height * rect.y,
-              canvas.width * rect.w,
-              canvas.height * rect.h,
-              0,
-              0,
-              next.width,
-              next.height,
-            );
-          canvas.width = canvas.height = 0;
-          canvas = next;
-          width *= rect.w;
-          height *= rect.h;
-        }
-        if (grayscale) {
-          const ctx = canvas.getContext('2d')!,
-            data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          for (let j = 0; j < data.data.length; j += 4) {
-            const gray = Math.round(
-              0.2126 * data.data[j] + 0.7152 * data.data[j + 1] + 0.0722 * data.data[j + 2],
-            );
-            data.data[j] = data.data[j + 1] = data.data[j + 2] = gray;
-          }
-          ctx.putImageData(data, 0, 0);
-        }
-        if (transform) {
-          const next = transform(canvas, width, height);
-          if (next.canvas !== canvas) canvas.width = canvas.height = 0;
-          canvas = next.canvas;
-          width = next.width;
-          height = next.height;
-        }
-        // Embed only the already modified pixels. No original objects or text layer are copied.
-        const image = await doc.embedPng(canvas.toDataURL('image/png'));
-        const outputPage = doc.addPage([width, height]);
-        outputPage.drawImage(image, { x: 0, y: 0, width, height });
-        if (!rasterMarks) await paintVectorMarks(doc, outputPage, marks);
-      } finally {
-        canvas.width = canvas.height = 0;
+        for (const [id, pdf] of await prepareSources(
+          [source],
+          pages.filter((p) => p.sourceId === source.id),
+        ))
+          loaded.set(id, pdf);
+      } catch {
+        check(signal);
+        editor.warnings.push(
+          'Eine PDF musste aus ihrer sichtbaren Seitenansicht neu aufgebaut werden. Interaktive Inhalte bitte im Ergebnis prüfen.',
+        );
       }
-    } else if (marks.length) {
-      const page = await normalizedPage(
-        doc,
-        loaded.get(item.sourceId)!.getPage(item.index),
-        item.rotation,
-      );
-      await paintVectorMarks(doc, page, marks);
-    } else {
-      await appendPage(doc, loaded, item);
     }
-    await new Promise((resolve) => setTimeout(resolve, 0));
+  } else {
+    for (const [id, pdf] of await prepareSources(sources, pages)) loaded.set(id, pdf);
+  }
+  const editorTools = editor ? await import('./editor-analysis') : undefined;
+  let recognizer = editorTools?.createEditorRecognizer(signal);
+  try {
+    for (let i = 0; i < pages.length; i++) {
+      check(signal);
+      const item = pages[i],
+        marks = (edits.marks[item.id] || []).filter(editorMarkChanged),
+        crop = edits.crops[item.id];
+      report({
+        percent: (i / pages.length) * 90,
+        label: `Seite ${i + 1} von ${pages.length} vorbereiten …`,
+      });
+      const source = sources.find((s) => s.id === item.sourceId)!;
+      const contentRemoval = marks.some((m) => m.kind === 'erase' || !!m.sourceRect),
+        rasterMarks = forceRaster || !!crop || marks.some((m) => m.kind === 'redact');
+      let analysis: import('./editor-analysis').EditorPageText | undefined;
+      if (editor && editorTools && !rasterMarks) {
+        try {
+          analysis = await editorTools.analyzeEditorPage(source, item, {
+            signal,
+            language: editor.language,
+            recognizer,
+            report: (p) =>
+              report({
+                percent: ((i + (p.percent / 100) * 0.7) / pages.length) * 90,
+                label: `Seite ${i + 1} / ${pages.length} · ${p.label}`,
+              }),
+          });
+          if (analysis.uncertain)
+            editor.warnings.push(
+              `Seite ${i + 1}: ${analysis.uncertain} Wörter unsicher erkannt. Bitte am Original prüfen.`,
+            );
+        } catch {
+          check(signal);
+          await recognizer?.dispose();
+          recognizer = editorTools.createEditorRecognizer(signal);
+          const { readTextTargets } = await import('./editor-model');
+          try {
+            analysis = {
+              ...(await readTextTargets(source, item)),
+              ocr: false,
+              replaceTextLayer: false,
+              uncertain: 0,
+            };
+          } catch {
+            check(signal);
+          }
+          editor.warnings.push(
+            `Seite ${i + 1}: Automatische Texterkennung nicht abgeschlossen. Vorhandene Inhalte und manuelle Änderungen wurden übernommen.`,
+          );
+        }
+      }
+      if (analysis && marks.some((mark) => editorTextCollision(mark, marks, analysis.targets)))
+        throw new Error(
+          'Der Text überlappt einen anderen Inhalt. Bitte Text kürzen, Schriftgröße anpassen oder das Textfeld verschieben.',
+        );
+      let preserved: PDFDocument | undefined;
+      if (
+        editor &&
+        analysis &&
+        !analysis.ocr &&
+        !analysis.replaceTextLayer &&
+        contentRemoval &&
+        !rasterMarks &&
+        loaded.has(item.sourceId) &&
+        marks.every((m) => m.kind === 'text' || m.kind === 'erase')
+      ) {
+        try {
+          const { removeEditorContent } = await import('./editor-native');
+          preserved = await removeEditorContent(
+            loaded.get(item.sourceId)!,
+            item,
+            marks,
+            analysis.targets,
+            signal,
+          );
+        } catch {
+          check(signal);
+          editor.warnings.push(
+            `Seite ${i + 1}: Der Hintergrund wurde als Bild erhalten, weil die Bearbeitung der Originalobjekte nicht vollständig bestätigt werden konnte.`,
+          );
+        }
+      }
+      if (preserved && analysis) {
+        const [outputPage] = await doc.copyPages(preserved, [0]);
+        doc.addPage(outputPage);
+        const { drawEditorText } = await import('./editor-text-layer');
+        for (const mark of marks.filter((m) => m.kind === 'text' && m.text))
+          await drawEditorText(
+            doc,
+            outputPage,
+            mark,
+            analysis.width,
+            analysis.height,
+            source,
+            (resolution) => {
+              if (resolution.substituted)
+                editor?.warnings.push(
+                  `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
+                );
+            },
+          );
+      } else if (
+        rasterMarks ||
+        contentRemoval ||
+        analysis?.replaceTextLayer ||
+        !loaded.has(item.sourceId)
+      ) {
+        const rendered = await renderPage(source, item, 2800, signal);
+        let canvas = rendered.canvas;
+        try {
+          if (rasterMarks) await paintMarks(canvas, marks, source, editor?.warnings);
+          else paintErasures(canvas, marks);
+          let width = rendered.width,
+            height = rendered.height;
+          if (crop) {
+            const rect = normalizedRect(
+              { x: crop.x, y: crop.y },
+              { x: crop.x + crop.w, y: crop.y + crop.h },
+            );
+            if (rect.w < 0.01 || rect.h < 0.01)
+              throw new Error('Der Zuschneidebereich ist zu klein.');
+            const next = document.createElement('canvas');
+            next.width = Math.max(1, Math.round(canvas.width * rect.w));
+            next.height = Math.max(1, Math.round(canvas.height * rect.h));
+            next
+              .getContext('2d')!
+              .drawImage(
+                canvas,
+                canvas.width * rect.x,
+                canvas.height * rect.y,
+                canvas.width * rect.w,
+                canvas.height * rect.h,
+                0,
+                0,
+                next.width,
+                next.height,
+              );
+            canvas.width = canvas.height = 0;
+            canvas = next;
+            width *= rect.w;
+            height *= rect.h;
+          }
+          if (grayscale) {
+            const ctx = canvas.getContext('2d')!,
+              data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            for (let j = 0; j < data.data.length; j += 4) {
+              const gray = Math.round(
+                0.2126 * data.data[j] + 0.7152 * data.data[j + 1] + 0.0722 * data.data[j + 2],
+              );
+              data.data[j] = data.data[j + 1] = data.data[j + 2] = gray;
+            }
+            ctx.putImageData(data, 0, 0);
+          }
+          if (transform) {
+            const next = transform(canvas, width, height);
+            if (next.canvas !== canvas) canvas.width = canvas.height = 0;
+            canvas = next.canvas;
+            width = next.width;
+            height = next.height;
+          }
+          // Embed only the already modified pixels. No original objects or text layer are copied.
+          const image = await doc.embedPng(canvas.toDataURL('image/png'));
+          const outputPage = doc.addPage([width, height]);
+          outputPage.drawImage(image, { x: 0, y: 0, width, height });
+          if (!rasterMarks) {
+            if (analysis && editorTools) {
+              const removals = marks
+                .filter((m) => m.kind === 'erase' || m.sourceRect)
+                .flatMap(editorRemovalRects);
+              const { addEditorTextLayer } = await import('./editor-text-layer');
+              await addEditorTextLayer(
+                doc,
+                outputPage,
+                editorTools.remainingEditorTargets(analysis.targets, removals),
+                width,
+                height,
+              );
+            }
+            await paintVectorMarks(doc, outputPage, marks, source, editor?.warnings);
+          }
+        } finally {
+          canvas.width = canvas.height = 0;
+        }
+      } else if (marks.length) {
+        const page = await normalizedPage(
+          doc,
+          loaded.get(item.sourceId)!.getPage(item.index),
+          item.rotation,
+        );
+        await paintVectorMarks(doc, page, marks, source, editor?.warnings);
+        if (analysis?.ocr) {
+          const { addEditorTextLayer } = await import('./editor-text-layer');
+          await addEditorTextLayer(
+            doc,
+            page,
+            analysis.targets.filter((t) => t.origin === 'ocr'),
+            analysis.width,
+            analysis.height,
+          );
+        }
+      } else {
+        const page = await appendPage(doc, loaded, item);
+        if (analysis?.ocr) {
+          const { addEditorTextLayer } = await import('./editor-text-layer');
+          await addEditorTextLayer(
+            doc,
+            page,
+            analysis.targets.filter((t) => t.origin === 'ocr'),
+            analysis.width,
+            analysis.height,
+          );
+        }
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  } finally {
+    await recognizer?.dispose();
   }
   check(signal);
   return doc;
@@ -419,6 +604,7 @@ export async function runStudioJob(
   }
   if (baseTools.includes(tool) && !hasEdits)
     return runJob(tool as ToolId, sources, pages, options, report, signal);
+  const editorWarnings: string[] = [];
   let doc = await applyPageEdits(
     sources,
     pages,
@@ -427,6 +613,10 @@ export async function runStudioJob(
     signal,
     tool === 'flatten' || tool === 'grayscale',
     tool === 'grayscale',
+    undefined,
+    tool === 'edit-text'
+      ? { language: options.editorLanguage || 'deu+eng', warnings: editorWarnings }
+      : undefined,
   );
   if (baseTools.includes(tool)) {
     const file = new File([new Uint8Array(await doc.save())], 'Bearbeitet.pdf', {
@@ -509,6 +699,7 @@ export async function runStudioJob(
     kind: 'pdf',
     pages: doc.getPageCount(),
     inputSize: sources.reduce((n, s) => n + s.size, 0),
+    ...(editorWarnings.length ? { note: [...new Set(editorWarnings)].join('\n') } : {}),
   };
 }
 export async function makeBlankFile(landscape = false, language: 'de' | 'en' = 'de') {

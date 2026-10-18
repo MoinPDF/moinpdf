@@ -6,7 +6,7 @@ This overview explains tools, output formats and technical limitations. Open **D
 
 ## Browser and document server
 
-Many tools run locally in the browser. The complete Docker installation adds an automatically connected document server. Jobs start only when you press the respective action button.
+Many tools run locally in the browser. The complete Docker installation adds an automatically connected document server. Server jobs start only when you press the respective action button. The PDF editor automatically prepares visible pages and recognises scans locally.
 
 The browser-only edition offers local PDF-to-Word text export without layout preservation, and local target-size optimisation without image downsampling. Advanced conversions and validation require the corresponding server components; see the [server documentation](../server/README.en.md).
 
@@ -30,7 +30,7 @@ The browser-only edition offers local PDF-to-Word text export without layout pre
 - Greyscale
 - Flatten PDF to page images
 - Remove document information
-- Edit text, remove content and insert images
+- Edit PDF with automatic scan OCR, remove content and insert images
 - Edit original objects: text in the existing font, per-page find/replace, image replacement, moving/rotating/scaling/deleting objects; paragraph mode for multiple text objects, mixed formatting, shaping, flow onto additional pages, preview and overflow checks; open and edit individual objects in nested groups while keeping reused instances independent
 - Linearisation for fast web viewing; structured JSON export with text positions
 - PDF information and text comparison between two PDFs
@@ -128,6 +128,8 @@ Use the shortcuts, search or “All tools” to find tools grouped by task. Long
 Advanced converters are part of the complete Docker installation, which sets up LibreTranslate automatically. Separate server deployments must connect it themselves. Saved HTML import is not live URL browsing. Book correction and document checks have the specific limitations described here.
 
 ## Behaviour and limitations
+
+- Edit PDF: type directly in paragraphs and choose among 14 local families with 56 faces; reuse original fonts, sizes, bold/italic and colours from digital text. Embedded subsets may lack new characters; substitutions are shown. Scan fonts are estimates. Verified original object edits retain unchanged vectors; otherwise an image fallback is reported. Overflow and collisions with other text block export.
 
 - Check and page finder inspect imported pages. Apply pending visual changes and continue with the result first. Scan recognition in the page finder creates only a local search index; use OCR for a permanently searchable PDF. Comma-separated search terms are treated as alternatives, each at least two characters long.
 - Blank-page and duplicate detection provide hints based on text, page images and page size. Small differences may not appear in the preview. Deselecting a page only removes it from the export selection and can be undone.

@@ -14,6 +14,7 @@ import {
   type PDFPageDrawImageOptions,
 } from 'pdf-lib';
 import JSZip from 'jszip';
+import { localFontBytes } from './local-font-bytes';
 import { filenameStem, pdfBlob, uid, type Source } from './pdf-engine';
 import { readDocumentDraft, saveDocumentDraft, writeBookmarks } from './document-tools';
 import {
@@ -372,7 +373,7 @@ export async function coverToc(
     fontBytes ||
       (await fetch('/vendor/invoice-font/NotoSans-Regular.ttf').then((r) => {
         if (!r.ok) throw new Error('Schrift konnte nicht geladen werden.');
-        return r.arrayBuffer();
+        return localFontBytes(r);
       })),
     { subset: true },
   );

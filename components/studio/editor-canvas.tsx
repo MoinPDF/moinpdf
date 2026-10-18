@@ -3,12 +3,26 @@ import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
 import { useEffect, useRef, useState, type PointerEvent, type CSSProperties } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Move } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { analyzeEditorPage } from '@/lib/editor-analysis';
+import {
+  EditorInlineText,
+  EditorInlineToolbar,
+  editorTextCss,
+  useEditorTypography,
+  type EditorPatch,
+} from './editor-typography';
 import { renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
 import { normalizedRect, type Mark, type Rect } from '@/lib/studio-engine';
 import {
-  cssFont,
   fitRect,
+  editorMarkSignature,
+  editorMarkChanged,
+  editorRemovalRects,
+  editorParagraphs,
+  editorRectsOverlap,
+  editorTextCollision,
   readTextTargets,
   type EditorAction,
   type TextTarget,
@@ -20,20 +34,25 @@ const box = (r: Rect): CSSProperties => ({
   width: `${r.w * 100}%`,
   height: `${r.h * 100}%`,
 });
-export function MarkContent({ mark, width }: { mark: Mark; width: number }) {
+export function MarkContent({
+  mark,
+  width,
+  height = (width * 841.89) / 595.28,
+  source,
+}: {
+  mark: Mark;
+  width: number;
+  height?: number;
+  source?: Source;
+}) {
   useLanguage();
+  const typography = useEditorTypography(mark, source);
+  if (!editorMarkChanged(mark)) return null;
   if (mark.kind === 'text')
     return (
       <span
         className="editor-text-content"
-        style={{
-          fontSize: `${(mark.fontScale || 0.028) * width}px`,
-          fontFamily: cssFont(mark.fontFamily),
-          fontWeight: mark.bold ? 700 : 400,
-          fontStyle: mark.italic ? 'italic' : 'normal',
-          textAlign: mark.align || 'left',
-          color: mark.color || '#222222',
-        }}
+        style={editorTextCss(mark, width, height, typography.resolution)}
       >
         {mark.text}
       </span>
@@ -50,25 +69,37 @@ export function MarkContent({ mark, width }: { mark: Mark; width: number }) {
     );
   return null;
 }
-export function MarkLayers({ marks, width }: { marks: Mark[]; width: number }) {
+export function MarkLayers({
+  marks,
+  width,
+  height,
+  source,
+}: {
+  marks: Mark[];
+  width: number;
+  height?: number;
+  source?: Source;
+}) {
   useLanguage();
   return (
     <>
       {marks
-        .filter((m) => m.kind === 'erase' || m.sourceRect)
-        .map((m) => (
-          <div
-            key={`erase-${m.id}`}
-            className="editor-erasure"
-            style={{ ...box(m.sourceRect || m), background: m.fill || '#ffffff' }}
-          />
-        ))}
+        .filter(editorMarkChanged)
+        .flatMap((m) =>
+          editorRemovalRects(m).map((rect, i) => (
+            <div
+              key={`erase-${m.id}-${i}`}
+              className="editor-erasure"
+              style={{ ...box(rect), background: m.fill || '#ffffff' }}
+            />
+          )),
+        )}
       {[
         ...marks.filter((m) => m.kind !== 'redact'),
         ...marks.filter((m) => m.kind === 'redact'),
       ].map((m) => (
         <div key={m.id} className={`page-mark ${m.kind}`} style={box(m)}>
-          <MarkContent mark={m} width={width} />
+          <MarkContent mark={m} width={width} height={height} source={source} />
         </div>
       ))}
     </>
@@ -86,6 +117,8 @@ export function EditorCanvas({
   onPatch,
   onSelect,
   onDimensions,
+  autoOcr = false,
+  language = 'deu+eng',
 }: {
   source: Source;
   page: PageItem;
@@ -95,9 +128,11 @@ export function EditorCanvas({
   selectedId: string;
   disabled: boolean;
   onMark: (mark: Mark) => void;
-  onPatch: (id: string, patch: Partial<Mark>) => void;
+  onPatch: EditorPatch;
   onSelect: (id: string) => void;
   onDimensions: (dims: { width: number; height: number }) => void;
+  autoOcr?: boolean;
+  language?: string;
 }) {
   useLanguage();
   const [url, setUrl] = useState(''),
@@ -106,6 +141,14 @@ export function EditorCanvas({
     [targets, setTargets] = useState<TextTarget[]>([]),
     [loadingText, setLoadingText] = useState(true),
     [error, setError] = useState('');
+  const [detectionError, setDetectionError] = useState(''),
+    [progress, setProgress] = useState({ percent: 0, label: 'Textstellen werden erkannt …' }),
+    [uncertain, setUncertain] = useState(0),
+    [retry, setRetry] = useState(0),
+    [renderRetry, setRenderRetry] = useState(0),
+    [paragraphMode, setParagraphMode] = useState(true);
+  const recognition = useRef<AbortController | null>(null);
+  const forceRecognition = useRef(false);
   const [draft, setDraft] = useState<Rect | null>(null),
     [moving, setMoving] = useState<Mark | null>(null);
   const host = useRef<HTMLDivElement>(null),
@@ -116,15 +159,14 @@ export function EditorCanvas({
       url = '';
     const cancel = new AbortController();
     setUrl('');
-    setTargets([]);
-    setLoadingText(true);
     setError('');
-    renderPage(source, { index: page.index, rotation: page.rotation }, 1800, cancel.signal)
+    renderPage(source, { index: page.index, rotation: page.rotation }, 1400, cancel.signal)
       .then(async ({ canvas, width, height }) => {
         const blob = await new Promise<Blob | null>((resolve) =>
           canvas.toBlob(resolve, 'image/png'),
         );
         canvas.width = canvas.height = 0;
+        if (!blob) throw new Error('Bild konnte nicht erstellt werden.');
         if (live && blob) {
           url = URL.createObjectURL(blob);
           setUrl(url);
@@ -135,22 +177,63 @@ export function EditorCanvas({
       .catch(() => {
         if (live) setError('Diese Seite konnte nicht angezeigt werden.');
       });
-    readTextTargets(source, { index: page.index, rotation: page.rotation })
-      .then((value) => {
-        if (live) setTargets(value.targets);
-      })
-      .catch(() => {
-        if (live) setTargets([]);
-      })
-      .finally(() => {
-        if (live) setLoadingText(false);
-      });
     return () => {
       live = false;
       cancel.abort();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [source, page.index, page.rotation, onDimensions]);
+  }, [source, page.index, page.rotation, onDimensions, renderRetry]);
+  useEffect(() => {
+    if (disabled) {
+      setLoadingText(false);
+      return;
+    }
+    const controller = new AbortController();
+    recognition.current = controller;
+    setTargets([]);
+    setUncertain(0);
+    setDetectionError('');
+    setLoadingText(true);
+    setProgress({ percent: 0, label: 'Textstellen werden erkannt …' });
+    const forceOcr = forceRecognition.current;
+    forceRecognition.current = false;
+    const prepare = autoOcr
+      ? analyzeEditorPage(source, page, {
+          signal: controller.signal,
+          language,
+          forceOcr,
+          report: (value) => {
+            if (!controller.signal.aborted) setProgress(value);
+          },
+          onNative: (value) => {
+            if (!controller.signal.aborted) setTargets(value.targets);
+          },
+        })
+      : readTextTargets(source, page);
+    void prepare
+      .then((value) => {
+        if (controller.signal.aborted) return;
+        setTargets(value.targets);
+        setUncertain(
+          'uncertain' in value && typeof value.uncertain === 'number' ? value.uncertain : 0,
+        );
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted)
+          setDetectionError(
+            error instanceof Error
+              ? error.message
+              : 'Die Texterkennung konnte nicht gestartet werden.',
+          );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingText(false);
+      });
+    return () => {
+      controller.abort();
+      if (recognition.current === controller) recognition.current = null;
+    };
+  }, [source, page, language, autoOcr, disabled, retry]);
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       if (entries[0]) setDisplayWidth(entries[0].contentRect.width);
@@ -238,6 +321,7 @@ export function EditorCanvas({
             fill: '#ffffff',
             fontScale: 12 / dims.width,
             fontFamily: 'sans',
+            fontChoice: 'auto',
           },
     );
   }
@@ -245,44 +329,149 @@ export function EditorCanvas({
     if (disabled) return;
     const { text, fontSize, family, x, y, w, h } = target;
     const r = { x, y, w, h };
-    onMark({
+    const rotation = (((Math.round((target.rotation || 0) / 90) * 90) % 360) + 360) % 360;
+    const size = Math.max(0.1, fontSize);
+    const fill = target.fill || '#ffffff';
+    const brightness = [1, 3, 5].reduce(
+      (sum, start, i) =>
+        sum + parseInt(fill.slice(start, start + 2), 16) * [0.2126, 0.7152, 0.0722][i],
+      0,
+    );
+    const next: Mark = {
       ...r,
       id: uid(),
       kind: 'text',
       text,
       sourceRect: { ...r },
-      fill: '#ffffff',
+      fill,
+      color: target.color || (brightness < 110 ? '#ffffff' : '#222222'),
+      textRotation: rotation,
       fontFamily: family,
-      fontScale: Math.max(6, Math.min(72, fontSize)) / dims.width,
-      w: Math.min(1 - r.x, Math.max(r.w, 0.16)),
-      h: Math.min(1 - r.y, Math.max(r.h, (fontSize * 1.65) / dims.height)),
-    });
+      fontChoice: 'auto',
+      bold: !!target.bold,
+      italic: !!target.italic,
+      originalFontId: target.originalFontId,
+      originalFontName: target.fontName,
+      originalFontPage: page.index,
+      baselineScale: target.baselineScale,
+      insetScale: target.insetScale,
+      lineHeight: target.lineHeight,
+      tracking: target.tracking,
+      textScaleX: target.textScaleX,
+      ...(target.fragments?.length
+        ? { sourceRects: target.fragments.map(({ x, y, w, h }) => ({ x, y, w, h })) }
+        : {}),
+      fontScale: size / dims.width,
+    };
+    next.originalState = editorMarkSignature(next);
+    onMark(next);
   }
   const displayed = marks.map((m) => (moving?.id === m.id ? moving : m)),
     removals = displayed.filter((m) => m.kind === 'erase' || m.sourceRect);
-  const available = targets.filter(
+  const textTargets =
+    paragraphMode && autoOcr ? editorParagraphs(targets, dims.width, dims.height) : targets;
+  const selectedText = displayed.find((m) => m.id === selectedId && m.kind === 'text');
+  const available = textTargets.filter(
     (t) =>
-      !removals.some((m) => {
-        const r = m.sourceRect || m;
-        return (
-          t.x + t.w / 2 >= r.x &&
-          t.x + t.w / 2 <= r.x + r.w &&
-          t.y + t.h / 2 >= r.y &&
-          t.y + t.h / 2 <= r.y + r.h
-        );
-      }),
+      !(t.fragments || [t]).some((part) =>
+        removals.flatMap(editorRemovalRects).some((r) => editorRectsOverlap(part, r)),
+      ),
   );
   return (
     <div className="editor-canvas-wrap">
-      {action === 'pick' && (
-        <p className="editor-detection" aria-live="polite">
-          {loadingText
-            ? ui('Textstellen werden erkannt …')
-            : available.length
+      {(action === 'pick' || autoOcr) && (
+        <div className="editor-preparation">
+          <div className="editor-detection" role="status" aria-live="polite">
+            {loadingText && (
+              <>
+                <LoaderCircle size={15} className="spin" /> {ui(progress.label)}{' '}
+                {Math.round(progress.percent)}%<br />
+              </>
+            )}
+            {available.length > 0
               ? ui(`${available.length} Textstellen · anklicken und bearbeiten`)
-              : ui(
-                  'Keine weiteren geraden Textstellen erkannt. Bei Scans oder gedrehter Schrift „Bereich ersetzen“ verwenden.',
+              : !loadingText &&
+                ui(
+                  'Kein lesbarer Text erkannt. Du kannst einen Bereich ersetzen oder neuen Text hinzufügen.',
                 )}
+            {uncertain > 0 && (
+              <p className="editor-ocr-warning">
+                {ui(
+                  'Orange markierte Wörter wurden unsicher erkannt. Bitte vor der Übernahme am Original prüfen.',
+                )}
+              </p>
+            )}
+            {detectionError && <p role="alert">{ui(detectionError)}</p>}
+          </div>
+          {autoOcr && (
+            <div className="editor-detection-actions">
+              {loadingText ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    recognition.current?.abort();
+                    setLoadingText(false);
+                    setDetectionError(
+                      'Texterkennung angehalten. Bereits erkannte Texte bleiben bearbeitbar.',
+                    );
+                  }}
+                >
+                  {ui('Erkennung anhalten')}
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onClick={() => {
+                    forceRecognition.current = true;
+                    setRetry((n) => n + 1);
+                  }}
+                >
+                  {ui('Text erneut erkennen')}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      {autoOcr && (
+        <div className="editor-text-mode" role="group" aria-label={ui('Textauswahl')}>
+          <Button
+            size="sm"
+            variant={paragraphMode ? 'secondary' : 'ghost'}
+            aria-pressed={paragraphMode}
+            onClick={() => setParagraphMode(true)}
+          >
+            {ui('Absätze')}
+          </Button>
+          <Button
+            size="sm"
+            variant={!paragraphMode ? 'secondary' : 'ghost'}
+            aria-pressed={!paragraphMode}
+            onClick={() => setParagraphMode(false)}
+          >
+            {ui('Einzelne Textstellen')}
+          </Button>
+          <span>{ui('Anklicken und direkt auf der Seite schreiben. Verschieben am Griff.')}</span>
+        </div>
+      )}
+      {selectedText && autoOcr && (
+        <EditorInlineToolbar
+          mark={selectedText}
+          source={source}
+          width={dims.width}
+          disabled={disabled}
+          onPatch={onPatch}
+          onDone={() => onSelect('')}
+        />
+      )}
+      {selectedText && editorTextCollision(selectedText, displayed, targets) && (
+        <p className="editor-layout-warning" role="alert">
+          {ui(
+            'Der Text überlappt einen anderen Inhalt. Bitte Text kürzen, Schriftgröße anpassen oder das Textfeld verschieben.',
+          )}
         </p>
       )}
       <div className="canvas-holder">
@@ -308,25 +497,44 @@ export function EditorCanvas({
           {url ? (
             <img src={url} alt={ui(`${source.name}, Seite ${page.index + 1}`)} draggable={false} />
           ) : (
-            <div className="canvas-loading">{error || <LoaderCircle className="spin" />}</div>
+            <div className="canvas-loading">
+              {error ? (
+                <div>
+                  {ui(error)}
+                  <Button variant="outline" onClick={() => setRenderRetry((n) => n + 1)}>
+                    {ui('Erneut versuchen')}
+                  </Button>
+                </div>
+              ) : (
+                <LoaderCircle className="spin" />
+              )}
+            </div>
           )}
-          {removals.map((m) => (
-            <div
-              key={`erase-${m.id}`}
-              className="editor-erasure"
-              style={{ ...box(m.sourceRect || m), background: m.fill || '#ffffff' }}
-            />
-          ))}
+          {removals
+            .filter(editorMarkChanged)
+            .flatMap((m) =>
+              editorRemovalRects(m).map((rect, i) => (
+                <div
+                  key={`erase-${m.id}-${i}`}
+                  className="editor-erasure"
+                  style={{ ...box(rect), background: m.fill || '#ffffff' }}
+                />
+              )),
+            )}
           {url &&
             action === 'pick' &&
             available.map((t) => (
               <button
-                className="editor-text-target"
+                className={`editor-text-target ${t.origin === 'ocr' && (t.confidence ?? 100) < 75 ? 'is-uncertain' : ''}`}
                 key={t.id}
                 style={box(t)}
                 disabled={disabled}
                 aria-label={ui(`Text bearbeiten: ${t.text}`)}
-                title={t.text}
+                title={
+                  t.origin === 'ocr'
+                    ? `${t.text} · ${ui('Erkennungssicherheit')}: ${Math.round(t.confidence || 0)}%`
+                    : t.text
+                }
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => pick(t)}
               />
@@ -340,7 +548,7 @@ export function EditorCanvas({
               className={`page-mark editor-object ${m.kind} ${selectedId === m.id ? 'is-selected' : ''}`}
               style={{
                 ...box(m),
-                touchAction: 'none',
+                touchAction: m.kind === 'text' ? 'pan-y' : 'none',
                 background: m.kind === 'erase' ? m.fill || '#ffffff' : undefined,
               }}
               tabIndex={disabled ? -1 : 0}
@@ -353,7 +561,12 @@ export function EditorCanvas({
                 e.stopPropagation();
                 onSelect(m.id);
               }}
-              onPointerDown={(e) => begin(e, m)}
+              onPointerDown={(e) => {
+                if (m.kind === 'text') {
+                  e.stopPropagation();
+                  onSelect(m.id);
+                } else begin(e, m);
+              }}
               onKeyDown={(e) => {
                 if (disabled) return;
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -381,7 +594,38 @@ export function EditorCanvas({
                 }
               }}
             >
-              <MarkContent mark={m} width={displayWidth} />
+              {selectedId === m.id && m.kind === 'text' && autoOcr ? (
+                <EditorInlineText
+                  mark={m}
+                  source={source}
+                  width={displayWidth}
+                  height={(displayWidth * dims.height) / dims.width}
+                  pageWidth={dims.width}
+                  pageHeight={dims.height}
+                  disabled={disabled}
+                  onPatch={onPatch}
+                  onDone={() => onSelect('')}
+                />
+              ) : (
+                <MarkContent
+                  mark={m}
+                  width={displayWidth}
+                  height={(displayWidth * dims.height) / dims.width}
+                  source={source}
+                />
+              )}
+              {selectedId === m.id && m.kind === 'text' && (
+                <button
+                  type="button"
+                  className="editor-move-handle"
+                  aria-label={ui('Textfeld verschieben')}
+                  title={ui('Textfeld verschieben')}
+                  onPointerDown={(e) => begin(e, m)}
+                  disabled={disabled}
+                >
+                  <Move size={16} />
+                </button>
+              )}
               {selectedId === m.id && (
                 <span
                   className="editor-resize"

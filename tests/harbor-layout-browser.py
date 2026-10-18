@@ -83,7 +83,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     expect(page.locator('.harbor-mobile-nav button')).to_have_count(5)
                 assert page.locator('.harbor-upload-cta').bounding_box()['height'] >= 44
                 assert page.get_by_text('Papierkram. Läuft.', exact=True).count() == 1
-                assert page.locator('.tool-mosaic-card').count() == 6
+                assert page.locator('.tool-mosaic-card').evaluate_all('(cards) => cards.map(card => card.dataset.toolId)') == ['merge', 'pdf-word', 'ocr', 'organize', 'sign', 'batch', 'numbers', 'office-pdf', 'edit-text']
                 assert page.locator('.tool-mosaic-card').first.evaluate('(el) => parseFloat(getComputedStyle(el).borderRadius)') >= 16
                 assert abs(image['width'] / image['height'] - 16 / 9) < 0.02
                 if width > 1000:

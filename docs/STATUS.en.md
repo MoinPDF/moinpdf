@@ -2,7 +2,11 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 18 October 2026, version 0.15.2.
+As of 18 October 2026, version 0.15.3.
+
+“Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
+
+Paragraphs can be edited directly on the PDF with a text cursor and font toolbar. Digital text detection retains original font, point size, bold/italic, colour and character spacing. Reusable embedded fonts are retained; missing characters trigger explicitly reported substitution. 14 local families provide 56 faces, including Liberation, Carlito and Caladea. Text edits retain unchanged vectors when targeted original object editing and independent text verification succeed. Otherwise an image fallback is reported. Overflow and collisions with other text block export. Selection alone does not count as an edit. Scans do not provide a reliably recoverable original font; their font and size remain estimates. Paragraphs wrap inside their text box, without document-wide Word-style page flow.
 
 “New document”, beside “Projects”, opens a local document editor with rich text,
 images, tables, page settings, headers, footers and page numbers. Drafts are saved
@@ -16,7 +20,7 @@ counts, allow filename editing and support native file sharing when available.
 
 The entire language catalogue, originally 4,513 entries, has been reviewed. Around 2,000 translations were improved; missing UI messages and app-owned text in reports and document outputs were added. Regression tests check original data, form values, embedded invoices and language coverage.
 
-The interface includes 22 fully visible header images, six shortcuts, a document overview and a mobile action bar in the shared PDF workspace. On desktop, the header image is limited to 640 pixels; its mobile presentation is unchanged. Tool cards and icons remain still. The project button uses a subtle white/green design. Working states without pages also offer undo and redo. The tool sidebar starts collapsed. The header and upload area retain their existing layout and colours; compression offers Gentle, Balanced and As small as possible. The handbook is available in German and English. Sample PDFs are generated in the selected app language. Evidence for technical features is recorded in the corresponding verification runs; a version number does not replace a functional check.
+The interface includes 22 fully visible header images, nine shortcuts, a document overview and a mobile action bar in the shared PDF workspace. On desktop, the header image is limited to 640 pixels; its mobile presentation is unchanged. Tool cards and icons remain still. The project button uses a subtle white/green design. Working states without pages also offer undo and redo. The tool sidebar starts collapsed. The header and upload area retain their existing layout and colours; compression offers Gentle, Balanced and As small as possible. The handbook is available in German and English. Sample PDFs are generated in the selected app language. Evidence for technical features is recorded in the corresponding verification runs; a version number does not replace a functional check.
 
 This overview describes the actual scope. The original 22-area plan is not yet fully complete. Unsupported conversions and validation standards are not presented as available.
 
@@ -47,7 +51,7 @@ This overview describes the actual scope. The original 22-area plan is not yet f
 
 ## Verification and release
 
-36 engine and interface test suites check processing, navigation and display settings. PDF outputs are read back independently, covering text, glyphs, image pixels, links, forms, font sizes, page order, project archives, real HEIC/PSD decoding and actual OCR with the shipped language models. Dense two-column pages are ordered without quadratic full comparisons and checked for complete text preservation.
+44 engine and interface test suites check processing, navigation and display settings. PDF outputs are read back independently, covering text, glyphs, image pixels, links, forms, font sizes, page order, project archives, real HEIC/PSD decoding and actual OCR with the shipped language models. Dense two-column pages are ordered without quadratic full comparisons and checked for complete text preservation.
 
 Server checks cover real LibreOffice inputs, SVG/vectors, editable slides, translation overflow, veraPDF and synthetic CA/TSA/CRL evidence for long-term signatures. Passing a synthetic test does not replace production configuration of the timestamp service.
 

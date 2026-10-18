@@ -1,3 +1,5 @@
+import proToolsWorkerUrl from '../workers/pro-tools.ts?worker&url';
+import { createLocalModuleWorker } from './module-worker';
 import type { Source } from './pdf-engine';
 import type { ExportFile, RunContext } from './advanced-types';
 import type { BatesOptions, LabelRule, PosterPrint } from './pro-tools';
@@ -10,11 +12,9 @@ export type ProJob =
 export function runProJob(sources: Source[], job: ProJob, ctx: RunContext): Promise<ExportFile> {
   ctx.signal.throwIfAborted();
   return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('../workers/pro-tools.ts', import.meta.url), {
-      type: 'module',
-    });
+    const { worker, dispose } = createLocalModuleWorker(proToolsWorkerUrl);
     const cleanup = () => {
-      worker.terminate();
+      dispose();
       ctx.signal.removeEventListener('abort', abort);
       clearTimeout(timer);
     };

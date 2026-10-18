@@ -99,7 +99,9 @@ docker compose up -d --wait --wait-timeout 1800
 
 `docker compose stop` stoppt die Dienste; `docker compose up -d` startet sie erneut. `docker compose down` entfernt die Container und Netze, behält aber die Volumes. **`docker compose down -v` löscht auch Schlüssel, Modelle, Cache und HTTPS-Zertifikate** und ist nur für einen bewussten vollständigen Neustart gedacht.
 
-Dokumente und Ergebnisse werden nicht dauerhaft in Docker-Volumes gespeichert. Serveraufträge verwenden temporäre Verzeichnisse; Browserdokumente liegen in der Sitzung. Ergebnisse vor dem Schließen herunterladen. Die Volumes enthalten ausschließlich Betriebsdaten. Ein Backup der Volumes spart bei einer Wiederherstellung Downloads und erhält den internen Schlüssel sowie HTTPS-Zertifikate.
+Synchrone Serveraufträge verwenden temporäre Verzeichnisse, die nach der Verarbeitung entfernt werden. Unterstützte Hintergrundaufträge liegen dagegen im Volume `document_jobs`, damit sie nach einem Neustart fortgesetzt werden können. Eingaben werden nach Abschluss oder Abbruch entfernt; Auftragstickets und Ergebnisse verfallen 24 Stunden nach Auftragserstellung. Die laufende Warteschlange bereinigt abgelaufene Aufträge, beim nächsten Start ebenso. Unter „Ergebnisse und Aufträge“ lassen sich Aufträge abbrechen und Ergebnisse früher löschen. Ein Backup dieses Volumes kann daher Dokumentinhalte und Ergebnisse enthalten; eine externe Sicherung wird durch die Bereinigung des laufenden Volumes nicht gelöscht.
+
+Der Browser speichert den Arbeitsstand automatisch lokal und unverschlüsselt. Zusätzlich bleiben die letzten zehn Ergebnisse mit insgesamt höchstens 160 MB in der lokalen Ergebnisablage. Projekte und Dokumententwürfe werden ebenfalls lokal gespeichert. „Arbeitsbereich leeren“ entfernt automatische Sicherung und Ergebnisablage; Projekte und Entwürfe separat löschen. Wichtige Ergebnisse zusätzlich herunterladen. Die übrigen Docker-Volumes enthalten Schlüssel, Modelle, Cache und HTTPS-Zertifikate.
 
 ## Probleme eingrenzen
 

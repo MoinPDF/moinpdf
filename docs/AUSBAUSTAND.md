@@ -2,7 +2,11 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 18. Oktober 2026, Version 0.15.2.
+Stand: 18. Oktober 2026, Version 0.15.3.
+
+„PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
+
+Absätze werden direkt auf der PDF mit Textcursor und Schriftleiste bearbeitet. Die Erkennung übernimmt bei digitalem Text Originalschrift, Punktgröße, Fett/Kursiv, Farbe und Zeichenabstände. Wiederverwendbare eingebettete Schriften bleiben erhalten; fehlende Zeichen führen zu ausdrücklich angezeigtem Schriftersatz. 14 lokale Familien mit 56 Schnitten stehen zur Wahl, einschließlich Liberation, Carlito und Caladea. Textänderungen erhalten unveränderte Vektoren, wenn die gezielte Originalobjekt-Bearbeitung und Rückleseprüfung gelingen. Andernfalls wird ein Bild-Fallback gemeldet. Überlauf und Überlappungen mit anderen Texten blockieren den Export. Auswahl ohne Änderung zählt nicht als Bearbeitung. Scans liefern keine verlässlich rekonstruierbare Originalschrift; Schrift und Größe bleiben dort geschätzt. Der Absatzumbruch erfolgt im Textfeld, nicht als dokumentweiter Word-Seitenfluss.
 
 Über „Neues Dokument“ direkt links neben „Projekte“ lassen sich leere Dokumente
 mit Rich-Text-Formatierung, Bildern und Tabellen verfassen. Entwürfe werden lokal
@@ -21,7 +25,7 @@ Der gesamte Sprachkatalog mit ursprünglich 4.513 Einträgen wurde geprüft. Run
 Texte in Berichts- und Dokumentausgaben sind ergänzt. Regressionstests prüfen
 Originaldaten, Formularwerte, Rechnungseinbettungen und Sprachabdeckung.
 
-Die Oberfläche enthält 22 vollständig sichtbare Headerbilder, sechs Schnellzugriffe,
+Die Oberfläche enthält 22 vollständig sichtbare Headerbilder, neun Schnellzugriffe,
 eine Dokumentübersicht und eine mobile Aktionsleiste im gemeinsamen PDF-Arbeitsbereich.
 Am Desktop ist das Headerbild auf 640 Pixel begrenzt; mobil bleibt es unverändert.
 Werkzeugkacheln und Symbole bleiben ruhig. Der Projekt-Button ist dezent weiß-grün.
@@ -64,7 +68,7 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 
 ## Prüfung und Freigabe
 
-36 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
+44 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
 Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
 Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
 Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche

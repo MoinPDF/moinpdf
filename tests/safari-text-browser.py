@@ -171,13 +171,24 @@ def output_bytes(selector, name, actual_download=False, timeout=120):
         errors=driver.execute_script('return (window.__qaToasts||[]).filter(t=>t.type==="error")')
         if errors: raise AssertionError('Processing errors: '+json.dumps(errors,ensure_ascii=False))
         links=driver.find_elements(By.CSS_SELECTOR,selector)
-        return next((e for e in links if e.is_displayed()),False)
-    link = WebDriverWait(driver, timeout).until(ready)
+        for link in links:
+            # ResultActions renders before its effect creates the blob URL.
+            # A visible but disabled anchor is not a completed export yet.
+            href=link.get_attribute('href')
+            if (link.is_displayed() and link.is_enabled()
+                    and link.get_attribute('aria-disabled') != 'true'
+                    and href and href.startswith(('blob:', 'data:'))):
+                return link,href
+        return False
+    link,href = WebDriverWait(driver, timeout).until(ready)
     payload = driver.execute_async_script('''const done=arguments[arguments.length-1];
-      fetch(arguments[0]).then(r=>r.blob()).then(blob=>{
+      fetch(arguments[0]).then(r=>{
+        if(!r.ok)throw new Error('Export read failed: HTTP '+r.status);
+        return r.blob();
+      }).then(blob=>{
         const reader=new FileReader(); reader.onload=()=>done({data:reader.result});
         reader.onerror=()=>done({error:String(reader.error)}); reader.readAsDataURL(blob);
-      }).catch(e=>done({error:String(e)}));''', link.get_attribute('href'))
+      }).catch(e=>done({error:String(e)}));''', href)
     assert 'data' in payload, payload
     data = base64.b64decode(payload['data'].split(',', 1)[1])
     (out / name).write_bytes(data)
@@ -283,7 +294,7 @@ try:
             check('Reading export '+extension,lambda t=title,a=action,e=extension:reading(t,a,e))
 
         def editor():
-            fresh(source);tool('Text bearbeiten')
+            fresh(source);tool('PDF bearbeiten')
             target=visible('.editor-text-target')
             assert 'SAFARI ORIGINAL 123' in target.get_attribute('aria-label')
             rect=target.rect;assert rect['width']>100 and rect['height']>5,rect

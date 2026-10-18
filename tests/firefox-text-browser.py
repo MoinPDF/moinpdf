@@ -64,7 +64,7 @@ with sync_playwright() as api,tempfile.TemporaryDirectory() as temporary:
             assert 'FIREFOX ORIGINAL 123' in text and 'ZWEITE SEITE BLEIBT ERHALTEN' in text,text
 
     def editor(page):
-        fresh(page);tool(page,'Text bearbeiten')
+        fresh(page);tool(page,'PDF bearbeiten')
         target=page.locator('.editor-text-target').first
         expect(target).to_have_attribute('aria-label',re.compile('FIREFOX ORIGINAL 123'))
         target.click();expect(page.get_by_label('Textinhalt',exact=True)).to_have_value(re.compile('FIREFOX ORIGINAL 123'))

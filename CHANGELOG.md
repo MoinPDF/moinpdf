@@ -9,6 +9,17 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.15.3 – 18. Oktober 2026
+
+- Kompatible Bibliotheksupdates für Oberfläche, Word-Export, Schriftverarbeitung, HEIF-/PSD-Import und Build-Werkzeuge übernommen.
+- BeautifulSoup und FontTools des Dokumentenservers sowie die GitHub-Actions für Python-Einrichtung und Prüfartefakte aktualisiert.
+- Automatische Versionsvorschläge für Node und seine Typdefinitionen auf die bestehende Laufzeitstrategie begrenzt. Pydantic und Pydantic Core werden für künftige Updates gemeinsam vorgeschlagen.
+- Deutsche und englische Hilfe sowie Docker-Dokumentation auf automatische lokale Sicherungen und die persistente Auftragsablage abgestimmt; veraltete Testangaben berichtigt.
+- Aktuelle Webfunktionen mit der Docker-Ausgabe abgeglichen: automatische lokale Scan-OCR im PDF-Editor, direktes Bearbeiten von Absätzen, 14 Schriftfamilien, Originalschrifterkennung und sichtbar ausgewiesener Schriftersatz.
+- Lokale Hintergrundprozesse einschließlich ihrer WASM-Dateien zuverlässig gebündelt und anhand der erzeugten Ausgaben geprüft.
+- Schnellzugriff um PDF bearbeiten, Office zu PDF und Seitennummern ergänzt; Ergebnisse unter „Mehr“ sowie die aktuellen Schrift- und Ausrichtungskorrekturen übernommen.
+
+
 ## 0.15.2 – 18. Oktober 2026
 
 - Versionslinks bleiben auch beim Darüberfahren und nach dem Antippen ohne Unterstreichung. Der sichtbare Tastaturfokus bleibt erhalten.

@@ -1,3 +1,5 @@
+import modelChecksumWorkerUrl from '../workers/model-checksum.ts?worker&url';
+import { createLocalModuleWorker } from './module-worker';
 import type { Wllama } from '@wllama/wllama/esm/index.js';
 import type { RunContext } from './advanced-types';
 import { abortable } from './pdf-engine';
@@ -19,11 +21,9 @@ export async function verifyLocalModel(file: Blob, signal: AbortSignal) {
     );
   if (verified.has(file)) return;
   const digest = await new Promise<string>((resolve, reject) => {
-    const worker = new Worker(new URL('../workers/model-checksum.ts', import.meta.url), {
-      type: 'module',
-    });
+    const { worker, dispose } = createLocalModuleWorker(modelChecksumWorkerUrl);
     const cleanup = () => {
-      worker.terminate();
+      dispose();
       signal.removeEventListener('abort', abort);
       clearTimeout(timer);
     };

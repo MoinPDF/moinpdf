@@ -99,7 +99,9 @@ docker compose up -d --wait --wait-timeout 1800
 
 `docker compose stop` stops services; `docker compose up -d` starts them again. `docker compose down` removes containers and networks but keeps volumes. **`docker compose down -v` also deletes keys, models, caches and HTTPS certificates** and is intended only for a deliberate complete reset.
 
-Documents and results are not stored permanently in Docker volumes. Server jobs use temporary directories; browser documents live in the session. Download results before closing it. Volumes contain only operational data. Backing up volumes saves downloads during recovery and preserves the internal key and HTTPS certificates.
+Synchronous server jobs use temporary directories that are removed after processing. Supported background jobs are stored in the `document_jobs` volume so they can resume after a restart. Inputs are removed on completion or cancellation; job tickets and results expire 24 hours after submission. The running queue cleans up expired jobs, as does the next startup. Use “Results and jobs” to cancel jobs and delete results earlier. Backups of this volume may therefore contain document contents and results; cleanup of the running volume does not delete an external backup.
+
+The browser automatically stores the workspace locally without encryption. The local results tray also retains the latest ten results, up to 160 MB in total. Projects and document drafts are also stored locally. “Clear workspace” removes the automatic backup and results tray; delete projects and drafts separately. Download important results as well. The other Docker volumes contain keys, models, caches and HTTPS certificates.
 
 ## Troubleshooting
 

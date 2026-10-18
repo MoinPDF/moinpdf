@@ -234,6 +234,12 @@
 .moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] > :nth-child(n + 5) {
   grid-column: span 2;
 }
+/* Append the editor beneath all existing shortcuts at every screen width. */
+.moinpdf-shell
+  .tool-mosaic-grid[data-mosaic-kind='quick']
+  > .tool-mosaic-card[data-tool-id='edit-text'] {
+  grid-column: 1 / -1;
+}
 .moinpdf-shell .mosaic-all-tools {
   align-self: center;
   min-height: 44px;

@@ -9,8 +9,8 @@ The version number is in [package.json](package.json). A successful run provides
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| Browser engines | 36 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
-| Document server | 60 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
+| Browser engines | 44 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| Document server | 65 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and mobile, PDF/EPUB/audio downloads |
 | Documentation and media | Search, categories, printing, downloads, video, no horizontal overflow and preserved working files |
