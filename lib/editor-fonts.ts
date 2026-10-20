@@ -11,7 +11,12 @@ import {
 import { fontFingerprint, unicodeFont } from './editor-font-cmap';
 import { localFontBytes } from './local-font-bytes';
 
-type Glyph = { id: number; advanceWidth: number; path: { commands: unknown[] } };
+type Glyph = {
+  id: number;
+  advanceWidth: number;
+  path: { commands: unknown[] };
+  bbox: { minY: number };
+};
 type Face = {
   unitsPerEm: number;
   ascent: number;
@@ -35,6 +40,7 @@ export type EditorFont = {
   original: boolean;
   covers: (text: string) => boolean;
   measure: (text: string, size: number) => number;
+  measureDescent: (text: string) => number;
 };
 export type EditorFontDescriptor = {
   name: string;
@@ -88,15 +94,35 @@ async function fontFace(bytes: Uint8Array) {
 }
 async function makeFont(
   bytes: Uint8Array,
-  metadata: Omit<EditorFont, 'bytes' | 'covers' | 'measure' | 'ascent' | 'descent'>,
+  metadata: Omit<
+    EditorFont,
+    'bytes' | 'covers' | 'measure' | 'measureDescent' | 'ascent' | 'descent'
+  >,
 ): Promise<EditorFont> {
   const face = await fontFace(bytes);
   const coverage = new Set(face.characterSet.filter((code) => face.glyphForCodePoint(code).id > 0));
+  const descents = new Map<number, number>();
   return {
     ...metadata,
     bytes,
     ascent: face.ascent / face.unitsPerEm,
     descent: Math.abs(face.descent / face.unitsPerEm),
+    // Font-wide descenders can exceed the PDF's line metrics even when the
+    // edited word has no descenders. Measure the actual glyph outlines.
+    measureDescent: (text) =>
+      significant(text).reduce((maximum, ch) => {
+        if (/\s/u.test(ch)) return maximum;
+        const code = ch.codePointAt(0)!;
+        let descent = descents.get(code);
+        if (descent === undefined) {
+          const minimum = face.glyphForCodePoint(code).bbox.minY;
+          descent = Number.isFinite(minimum)
+            ? Math.max(0, -minimum / face.unitsPerEm)
+            : Math.abs(face.descent / face.unitsPerEm);
+          descents.set(code, descent);
+        }
+        return Math.max(maximum, descent);
+      }, 0),
     covers: (text) => significant(text).every((ch) => coverage.has(ch.codePointAt(0)!)),
     measure: (text, size) =>
       (significant(text).reduce(
@@ -116,9 +142,14 @@ async function originalFont(
   const data = raw.data;
   if (
     !(data instanceof Uint8Array) ||
-    !data.length ||
+    data.length < 4 ||
     raw.isType3Font ||
     raw.missingFile ||
+    // PDF.js converts Type 1/CFF fonts to OpenType for display. Re-subsetting
+    // these converted outlines can produce invalid CIDFontType0C streams in
+    // pdf-lib/fontkit. Keep untouched original objects, but use an explicitly
+    // reported local substitute for edited text until that export is reliable.
+    (data[0] === 0x4f && data[1] === 0x54 && data[2] === 0x54 && data[3] === 0x4f) ||
     data.length > 16 * 1024 * 1024
   )
     return;
@@ -214,13 +245,18 @@ async function readPage(source: Source, page: PDFPageProxy): Promise<EditorFontP
     const metadata: EditorFontDescriptor = {
       name: name ? readableFontName(name) : '',
       family:
-        raw.isMonospace || raw.fallbackName === 'monospace'
+        raw.isMonospace || raw.fallbackName === 'monospace' || /courier|nimbusmono/i.test(name)
           ? 'mono'
-          : raw.isSerifFont || raw.fallbackName === 'serif'
+          : raw.isSerifFont ||
+              raw.fallbackName === 'serif' ||
+              /times|nimbusrom|liberationserif|dejavuserif|notoserif|cambria|caladea/i.test(name)
             ? 'serif'
             : 'sans',
-      bold: !!raw.bold || !!raw.black || /bold|black|heavy|demi/i.test(name),
-      italic: !!raw.italic || /italic|oblique/i.test(name),
+      bold:
+        !!raw.bold ||
+        !!raw.black ||
+        /bold|black|heavy|demi|nimbusrom(?:no9l|an)[-_]?medi/i.test(name),
+      italic: !!raw.italic || /italic|oblique|nimbus.*(?:ital|obli)/i.test(name),
       ...(typeof raw.ascent === 'number' ? { ascent: raw.ascent } : {}),
       ...(typeof raw.descent === 'number' ? { descent: Math.abs(raw.descent) } : {}),
     };

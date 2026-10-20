@@ -288,7 +288,7 @@ export function EditorInlineText({
         pageWidth,
         pageHeight,
         font.measure,
-        font.descent,
+        font.measureDescent(mark.text || ''),
       );
       if (layout.requiredHeight > layout.geometry.height) {
         if ((mark.textRotation || 0) % 180)

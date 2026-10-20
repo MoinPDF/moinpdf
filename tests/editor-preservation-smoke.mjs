@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
+import { deflateSync, inflateSync } from 'node:zlib';
 import ts from 'typescript';
 import { PDFDocument, PDFName, rgb, degrees } from 'pdf-lib';
 
@@ -60,6 +61,7 @@ const { readTextTargets } = await import('../.cache/editor-preservation/editor-m
 const { drawEditorText, layoutEditorText } =
   await import('../.cache/editor-preservation/editor-text-layer.mjs');
 const { runStudioJob } = await import('../.cache/editor-preservation/studio-engine.mjs');
+const { loadEditorPdf } = await import('../.cache/editor-preservation/editor-native.mjs');
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (input) =>
   typeof input === 'string' && input.startsWith('/vendor/')
@@ -151,6 +153,45 @@ await writeFile(
   `export const openEditorRecognizer=()=>({recognize:async()=>({blocks:[],confidence:100}),dispose:async()=>{}});`,
 );
 try {
+  // Real compressed payload ends in CR, followed by the PDF's LF separator.
+  // A forward /Length reference must not make the parser trim that real byte.
+  const pixels = Uint8Array.from({ length: 64 }, (_, i) => (i * 37) % 256);
+  pixels[63] = (12 - pixels.slice(0, 63).reduce((sum, n) => sum + n, 0)) & 255;
+  const compressed = deflateSync(pixels);
+  assert.equal(compressed.at(-1), 13);
+  const objects = [
+    Buffer.from('<< /Type /Catalog /Pages 2 0 R >>'),
+    Buffer.from('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'),
+    Buffer.from(
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 64 64] /Resources << /XObject << /Im0 4 0 R >> >> >>',
+    ),
+    Buffer.concat([
+      Buffer.from(
+        '<< /Type /XObject /Subtype /Image /Width 64 /Height 1 /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode /Length 5 0 R >>\nstream\n',
+      ),
+      compressed,
+      Buffer.from('\nendstream'),
+    ]),
+    Buffer.from(String(compressed.length)),
+  ];
+  const parts = [Buffer.from('%PDF-1.7\n')],
+    offsets = [];
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.concat(parts).length);
+    parts.push(Buffer.from(`${index + 1} 0 obj\n`), object, Buffer.from('\nendobj\n'));
+  });
+  const xref = Buffer.concat(parts).length;
+  parts.push(
+    Buffer.from(
+      `xref\n0 6\n0000000000 65535 f \n${offsets.map((n) => String(n).padStart(10, '0') + ' 00000 n \n').join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`,
+    ),
+  );
+  const recovered = await loadEditorPdf(new Uint8Array(Buffer.concat(parts)));
+  const repairedImage = recovered.context
+    .enumerateIndirectObjects()
+    .find(([ref]) => ref.objectNumber === 4)[1];
+  assert.deepEqual(new Uint8Array(inflateSync(repairedImage.getContents())), pixels);
+
   const d = await PDFDocument.create(),
     p = d.addPage([500, 700]);
   p.drawRectangle({ x: 0, y: 0, width: 500, height: 700, color: rgb(0.83, 0.91, 0.98) });
@@ -313,6 +354,48 @@ try {
   console.log(
     'PASS: actual text deletion preserves image background, table rules, vector footer, links and unchanged page pixels/sizes; adding text retains links; ambiguous objects/forms/signatures fail closed; explicit rebuild; slanted-text guard, invisible layer and DE/EN messages.',
   );
+  // Optional, independently produced two-column paper. Keep third-party PDFs
+  // outside git; the audit records its upstream URL and checksum.
+  if (process.env.MOINPDF_EDITOR_CORPUS) {
+    const paper = await source(await readFile(process.env.MOINPDF_EDITOR_CORPUS), 'paper.pdf');
+    const heading = (await readTextTargets(paper, pageOf(paper))).targets.find(
+      (target) => target.text === 'Abstract',
+    );
+    assert(heading, 'Expected the public paper abstract heading');
+    assert.equal(heading.family, 'serif');
+    assert.equal(heading.bold, true);
+    const replacement = { ...markFor(heading, 612), text: 'Edited' };
+    const allPages = Array.from({ length: paper.pdf.numPages }, (_, index) => ({
+      ...pageOf(paper),
+      id: index === 0 ? 'p0' : `p${index}`,
+      index,
+    }));
+    const result = await runStudioJob(
+      'edit-text',
+      [paper],
+      allPages,
+      options,
+      { marks: { p0: [replacement] }, crops: {} },
+      () => {},
+      new AbortController().signal,
+    );
+    assert.doesNotMatch(result.note || '', /als Bild neu aufgebaut/i);
+    assert.match(result.note || '', /Schriftersatz:.*NimbusRomNo9L-Medi.*Liberation Serif/);
+    const editedPaper = await source(await result.blob.arrayBuffer(), 'edited-paper.pdf');
+    assert.match(await text(editedPaper), /Edited/);
+    assert.doesNotMatch(await text(editedPaper), /\bAbstract\b/);
+    assert.equal(editedPaper.pdf.numPages, paper.pdf.numPages);
+    for (let index = 2; index <= paper.pdf.numPages; index++) {
+      const before = await (await paper.pdf.getPage(index)).getTextContent();
+      const after = await (await editedPaper.pdf.getPage(index)).getTextContent();
+      const geometry = (content) => content.items.map(({ fontName, ...item }) => item);
+      assert.deepEqual(geometry(after), geometry(before), `Unchanged public paper page ${index}`);
+    }
+    await writeFile(folder + '/public-paper-edited.pdf', editedPaper.bytes);
+    console.log(
+      'PASS: independently produced 14-page two-column paper: actual replacement, no raster fallback, all other page text and positions unchanged.',
+    );
+  }
 } finally {
   for (const p of proxies) await p.loadingTask.destroy();
   globalThis.fetch = originalFetch;

@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.15.5 – 20 October 2026
+
+- “Edit PDF” removes replaced source text from the PDF. Backgrounds, table rules, images and links are retained when native text objects can be edited reliably; preview and export use the same removal path.
+- Complex text pages no longer silently become images. Unsafe removal stops export; an explicit image rebuild remains available with a warning. Scan preparation stays local.
+- Individual text runs are selected by default. Paragraph line breaks, undo/redo while typing and OCR corrections without duplicate text layers have been improved. Slanted, mirrored and vertical text receives a clear limitation message.
+- Better Nimbus family/style recognition and overflow checks using actual glyph descenders. Type 1/CFF fonts that cannot be reliably re-embedded receive a visible local substitute; reusable TrueType originals are retained.
+- Signature and form structures are checked before export. German and English messages and documentation have been updated.
+- Added permanent preservation/export checks and Chromium, Firefox and WebKit flows covering desktop, 390-pixel layout, an OCR scan and English. The [implementation status](docs/STATUS.en.md) records validation and remaining limits.
+
 ## 0.15.4 – 18 October 2026
 
 - Corrected tool search for screen readers: expanded state, result list and keyboard navigation remain consistent.

@@ -2,11 +2,11 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 18 October 2026, version 0.15.4.
+As of 20 October 2026, version 0.15.5.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
-Paragraphs can be edited directly on the PDF with a text cursor and font toolbar. Digital text detection retains original font, point size, bold/italic, colour and character spacing. Reusable embedded fonts are retained; missing characters trigger explicitly reported substitution. 14 local families provide 56 faces, including Liberation, Carlito and Caladea. Text edits retain unchanged vectors when targeted original object editing and independent text verification succeed. Otherwise an image fallback is reported. Overflow and collisions with other text block export. Selection alone does not count as an edit. Scans do not provide a reliably recoverable original font; their font and size remain estimates. Paragraphs wrap inside their text box, without document-wide Word-style page flow.
+Individual text runs can be edited directly on the PDF with a text cursor and font toolbar; paragraph selection is optional and must be checked for columns and tables. Digital text detection retains original font, point size, bold/italic, colour and character spacing. Reusable embedded fonts are retained; missing characters trigger explicitly reported substitution. 14 local families provide 56 faces, including Liberation, Carlito and Caladea. Text edits retain unchanged vectors when targeted original object editing and independent text verification succeed. Otherwise export stops until an image rebuild is explicitly enabled. Pure scans may be rebuilt automatically with an export notice. Native text editing preserves images, table rules and links. Type 1/CFF fonts receive a reported local replacement for changed text because their re-embedding is not consistently reliable here. Slanted, mirrored and vertical text is rejected by this tool. Overflow and collisions with other text block export. Selection alone does not count as an edit. Scans do not provide a reliably recoverable original font; their font and size remain estimates. Paragraphs wrap inside their text box, without document-wide Word-style page flow.
 
 “New document”, beside “Projects”, opens a local document editor with rich text,
 images, tables, page settings, headers, footers and page numbers. Drafts are saved
@@ -74,3 +74,9 @@ The paragraph editor also stores logical text as PDF ActualText. Readers without
 ## Website link to PDF
 
 Public HTTP/HTTPS websites can be loaded directly by link in “HTML & websites to PDF”. The separate Docker web converter includes images, CSS, fonts and publicly loadable JavaScript content. Options include A4/Letter, portrait/landscape, backgrounds and screen/print rendering. Private network targets are blocked; login, bot protection and dynamic content may limit rendering. Saved HTML files remain available as simplified text conversion.
+
+## PDF editor validation (20 October 2026)
+
+The [detailed audit](AUSBAUSTAND.md#nachprüfung-des-pdf-editors-20-oktober-2026) distinguishes verified behaviour from untested cases. All 45 existing test groups passed locally. Chromium 140, Firefox 141 and Playwright-WebKit 26 passed desktop, 390-pixel, searchable-scan and English flows, including undo/redo, download and reopening. Native replacements were independently read with MuPDF; unchanged fixture pages were pixel-identical. A separate 14-page two-column PDF.js paper was edited, retaining all 13 other pages. True local OCR was exercised on generated scan/mixed fixtures; font, geometry, error and deduplication checks are retained in the test suite.
+
+This is not a general customer-document corpus or a physical device test. Full editor workflows on native Safari/iPhone/Android, handwriting, arbitrary camera scans and arbitrary nested text groups remain unverified. There is no Word-style document-wide reflow. Scan background reconstruction and OCR are not universally reliable; explicit page rasterisation can discard vectors, links and interactive fields. No document uploads or third-party runtime requests were introduced.

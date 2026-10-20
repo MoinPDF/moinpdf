@@ -213,7 +213,7 @@ export async function drawEditorText(
     );
   let descent = 0.2;
   const font = await editorFont(doc, mark.text || '', mark, source, (resolution) => {
-    descent = resolution.font.descent;
+    descent = resolution.font.measureDescent(mark.text || '');
     report?.(resolution);
   });
   const layout = layoutEditorText(

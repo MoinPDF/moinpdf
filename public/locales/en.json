@@ -4775,5 +4775,6 @@
   "Schriftersatz: {0} → {1}. Die eingebettete Originalschrift enthält nicht alle benötigten Zeichen.": "Font substitution: {0} → {1}. The embedded original font does not contain all required characters.",
   "Schriftersatz: {0} → {1}. Die Originalschrift ist in diesem Schriftschnitt nicht wiederverwendbar.": "Font substitution: {0} → {1}. The original font cannot be reused in this weight or style.",
   "Schriftersatz: {0} → {1}. Die Originalschrift ist nicht vollständig eingebettet oder nicht wiederverwendbar.": "Font substitution: {0} → {1}. The original font is not fully embedded or cannot be reused.",
-  "Schriftersatz: {0} → {1}. Für einige Zeichen wird eine andere Schrift benötigt.": "Font substitution: {0} → {1}. Some characters require a different font."
+  "Schriftersatz: {0} → {1}. Für einige Zeichen wird eine andere Schrift benötigt.": "Font substitution: {0} → {1}. Some characters require a different font.",
+  "Ein PDF-Datenstrom konnte nicht verlustfrei gelesen werden. Bitte die Datei erneut als PDF speichern.": "A PDF data stream could not be read without loss. Please save the file as a PDF again."
 }

@@ -218,7 +218,13 @@ async function paintMarks(
         warnings?.push(
           `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
         );
-      const layout = layoutEditorText(mark, w, h, resolution.font.measure, resolution.font.descent);
+      const layout = layoutEditorText(
+        mark,
+        w,
+        h,
+        resolution.font.measure,
+        resolution.font.measureDescent(mark.text || ''),
+      );
       if (layout.overflow)
         throw new Error(
           'Ein Textfeld ist zu klein. Vergrößere seine Höhe oder reduziere die Schriftgröße.',
@@ -315,7 +321,7 @@ export async function applyPageEdits(
     for (const source of sources.filter((s) => pages.some((p) => p.sourceId === s.id))) {
       let pdf: PDFDocument;
       try {
-        pdf = await PDFDocument.load(source.bytes.slice(), { updateMetadata: false });
+        pdf = await (await import('./editor-native')).loadEditorPdf(source.bytes);
         if (!pdf.catalog) throw new Error('Ungültige PDF-Struktur.');
       } catch {
         check(signal);
