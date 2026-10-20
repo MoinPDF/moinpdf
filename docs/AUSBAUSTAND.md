@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 20. Oktober 2026, Version 0.18.0.
+Stand: 20. Oktober 2026, Version 0.19.0.
 
 „PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
 
@@ -181,3 +181,14 @@ Regressionen in `tests/editor-rich-smoke.mjs` prüfen interleavte Spalten, Tabel
 Der externe Korpus wird ausschließlich für Tests geladen: `python tests/editor-download-corpus.py`. Quellen, unveränderliche Revisionen, SHA-256, Lizenz und bekannte Einschränkungen stehen in `tests/editor-public-corpus.json`. Die AWS-Rechnung enthält bereits Fehler in ihrer Textzuordnung; die Prüfung unterscheidet diese vom bearbeiteten Inhalt. Die gemischte Datei wird für den Test aus öffentlichen Vorlagen zusammengestellt. Ein kleines AcroForm prüft die ausdrückliche Ablehnung vor verlustreichem Abflachen, nicht die Bearbeitung beliebiger amtlicher Formulare. Der Korpus wird nicht mit der Anwendung ausgeliefert und führt keine externe Dokumentenübertragung ein.
 
 Nicht geprüft bleiben reale iPhone-/Android-Geräte, die vollständige Editorbedienung in nativem Safari und eine breite Sammlung produktiver Kundenunterlagen. Der Browserkorpus ersetzt diese Prüfungen nicht. Kameraaufnahmen, Handschrift, komplexe Schriffformung, beliebige Signaturen und Formulare bleiben weitere Grenzen.
+
+## 0.19.0 – 20. Oktober 2026
+
+- Geeignete waagerechte Wortänderungen entfernen nur die betroffenen Originalzeichen. Unveränderte Präfixe und bei gleicher Position auch Suffixe bleiben als PDF-Text erhalten. Mehrdeutige Zeichen, Ligaturen, Schriftschnitt- oder Layoutänderungen verwenden weiterhin die geprüfte Textfeldbearbeitung.
+- Textfelder lassen sich in frei gewählter Reihenfolge über bestehende Seiten verknüpfen. Eine Vorschau verteilt Text und Formatierung ohne automatische Verkleinerung; Überlauf und Kollisionen verhindern die Übernahme. Weitere Änderungen erfordern eine erneute Textfluss-Vorschau.
+- Einfach ausgerichtete Tabellen erhalten einen Zellenmodus mit Tab/Umschalt+Tab. Formatübernahme, Millimetermaße und Hilfslinien für Kanten, Mittelpunkte und Grundlinien ergänzen die Bearbeitung.
+- Dokumentweite Änderungsübersicht mit Vorher/Nachher, Sprung zur Seite und gezielter Rücknahme. Zusammenhängende Teilungen und Textflüsse werden gemeinsam zurückgenommen; spätere unabhängige Änderungen bleiben erhalten.
+- Vorhandene Einzelbilder im Texteditor verschieben, proportional skalieren, ersetzen und zuschneiden. Zuschnitt entfernt Bildpixel und erhält die Ausrichtung. Scan-Hintergründe, Gruppen und Bilder mit zugehöriger vorhandener OCR-Ebene werden konservativ behandelt; Dekodierung und Zuschnitt sind auf 4 Megapixel begrenzt.
+- Lokale OCR-Arbeitskopien mit kleiner Schräglagenkorrektur, Schattenausgleich, Kontrast und vorsichtiger Rauschminderung. Original- und aufbereitete Bereichserkennung sind vergleichbar; auffällige Buchstaben in Zahlen werden zur Prüfung markiert. Keine automatische Zahlenkorrektur und keine zusätzliche Dokumentübertragung.
+- Touch-Modus mit größeren Griffen, kompakter erweiterbarer Schriftleiste, Auswahl-Lupe und Anpassung an den sichtbaren Tastaturbereich. Reale Geräte und native virtuelle Tastaturen bleiben gesondert zu prüfen.
+- Schriftbildvergleich mit an Schriftgröße angepasster Auflösung bis 3.600 Pixeln und markierbaren Abweichungsbereichen. Erweiterter öffentlicher Korpus enthält einen französischen Scan mit Akzenten; sämtliche Dateien sind fest versioniert, mit Prüfsummen und Lizenzhinweisen versehen und werden nicht mit der Anwendung ausgeliefert.

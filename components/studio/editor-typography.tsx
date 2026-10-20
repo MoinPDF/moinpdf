@@ -241,6 +241,7 @@ export function EditorInlineToolbar({
   useLanguage();
   const [fontError, setFontError] = useState('');
   const [fontLoading, setFontLoading] = useState(false);
+  const [details, setDetails] = useState(false);
   const context = editorSelectionStyle(mark, selection),
     active = { ...mark, ...context.style };
   const mixedFont =
@@ -250,7 +251,7 @@ export function EditorInlineToolbar({
       (context.mixed.has('originalFontId') || context.mixed.has('originalFontName')));
   return (
     <div
-      className="editor-inline-toolbar"
+      className={`editor-inline-toolbar${details ? ' show-touch-details' : ''}`}
       role="toolbar"
       aria-label={ui('Text direkt formatieren')}
     >
@@ -353,6 +354,15 @@ export function EditorInlineToolbar({
           {ui('Fertig')}
         </Button>
       </div>
+      <Button
+        size="sm"
+        variant="outline"
+        className="editor-touch-details"
+        aria-expanded={details}
+        onClick={() => setDetails(!details)}
+      >
+        {ui(details ? 'Weniger Textoptionen' : 'Mehr Textoptionen')}
+      </Button>
       <EditorFontStatus mark={mark} source={source} selection={selection} />
       <small className="editor-selection-help">
         <strong>

@@ -8,6 +8,7 @@ self.onmessage = async ({ data }) => {
       createNativeEngine,
       groupNativeObjects,
       inspectNativeObjects,
+      readNativeImage,
       removeNativeRegions,
       replaceNativeParagraph,
     } = await import('../lib/native-pdf-core');
@@ -15,19 +16,21 @@ self.onmessage = async ({ data }) => {
     if (!response.ok) throw new Error('Der lokale PDF-Prozessor konnte nicht geladen werden.');
     const api = await createNativeEngine(new Uint8Array(await response.arrayBuffer()));
     const value =
-      data.action === 'group'
-        ? groupNativeObjects(api, data.bytes, data.page, data.indices, data.duplicate)
-        : data.action === 'inspect'
-          ? inspectNativeObjects(api, data.bytes, data.page, data.path || [])
-          : data.action === 'edit'
-            ? await (
-                await import('../lib/nested-native')
-              ).editNativeDocument(api, data.bytes, data.page, data.changes, data.path || [])
-            : data.action === 'redact'
-              ? removeNativeRegions(api, data.bytes, data.removals)
-              : data.action === 'paragraph'
-                ? await replaceNativeParagraph(api, data.bytes, data.page, data.settings)
-                : null;
+      data.action === 'image'
+        ? readNativeImage(api, data.bytes, data.page, data.index)
+        : data.action === 'group'
+          ? groupNativeObjects(api, data.bytes, data.page, data.indices, data.duplicate)
+          : data.action === 'inspect'
+            ? inspectNativeObjects(api, data.bytes, data.page, data.path || [])
+            : data.action === 'edit'
+              ? await (
+                  await import('../lib/nested-native')
+                ).editNativeDocument(api, data.bytes, data.page, data.changes, data.path || [])
+              : data.action === 'redact'
+                ? removeNativeRegions(api, data.bytes, data.removals)
+                : data.action === 'paragraph'
+                  ? await replaceNativeParagraph(api, data.bytes, data.page, data.settings)
+                  : null;
     if (value === null) throw new Error('Unbekannter Auftrag.');
     if (value instanceof Uint8Array) self.postMessage({ value }, { transfer: [value.buffer] });
     else if (value && typeof value === 'object' && 'bytes' in value)

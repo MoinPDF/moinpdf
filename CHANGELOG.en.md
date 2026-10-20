@@ -4,6 +4,17 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.19.0 – 20 October 2026
+
+- Eligible horizontal word edits remove only affected original characters. Unchanged prefixes, and suffixes whose positions still agree, retain native PDF text. Ambiguous mappings, ligatures, style or layout changes continue to use verified whole-field editing.
+- Link text fields in a chosen order across existing pages. Preview text and style distribution without automatic shrinking; overflow and collisions prevent application. Preview the flow again after further edits.
+- Simple aligned tables gain cell editing with Tab/Shift+Tab. A format painter, millimetre measurements and edge, centre and baseline guides support precise editing.
+- Document-wide change list with before/after text, navigation and independent reversion. Related splits and text flows revert together while unrelated later edits remain.
+- Move, proportionally resize, replace and crop individual original images in the text editor. Cropping removes image pixels while retaining orientation. Scan backgrounds, groups and images with existing associated OCR layers are handled conservatively; image decoding and cropping are limited to 4 megapixels.
+- Local OCR working copies support small-angle deskew, shadow compensation, contrast and conservative noise reduction. Compare original and processed region recognition; suspicious letters in numbers are flagged for review. No automatic numeric correction or new document transmission.
+- Touch mode adds larger handles, a compact expandable font toolbar, a selection magnifier and caret adjustment for the visible keyboard area. Physical devices and native virtual keyboards require separate verification.
+- Font appearance checks adapt resolution to text size up to a 3,600-pixel long edge and highlight mismatch locations. The pinned public corpus adds a French accent scan, with checksums and licence attribution; test documents are not shipped with the application.
+
 ## 0.18.0 – 20 October 2026
 
 - Untouched pages retain their original text layer even after local search preparation. Tight text lines tolerate tiny rounding differences in reconstructed font widths, preventing spurious line breaks from thousandths of a point.

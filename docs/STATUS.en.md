@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 20 October 2026, version 0.18.0.
+As of 20 October 2026, version 0.19.0.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
@@ -112,3 +112,14 @@ Regressions cover interleaved columns, tables, styled joining/splitting, Unicode
 Run `python tests/editor-download-corpus.py` for immutable public samples. Sources, revisions, SHA-256 hashes, licences and caveats are in `tests/editor-public-corpus.json`. AWS's sample already contains text mapping errors; preserve that baseline outside edited anchors. The mixed file is assembled for testing. A minimal AcroForm checks explicit refusal before destructive flattening, not arbitrary government-form editing. These PDFs are not deployed with the app, and no document upload has been added.
 
 Physical iPhone/Android devices, full native Safari editor interaction and a broad production-customer corpus remain unverified. Camera captures, handwriting, complex shaping, arbitrary signatures and forms remain technical limits.
+
+## 0.19.0 – 20 October 2026
+
+- Eligible horizontal word edits remove only affected original characters. Unchanged prefixes, and suffixes whose positions still agree, retain native PDF text. Ambiguous mappings, ligatures, style or layout changes continue to use verified whole-field editing.
+- Link text fields in a chosen order across existing pages. Preview text and style distribution without automatic shrinking; overflow and collisions prevent application. Preview the flow again after further edits.
+- Simple aligned tables gain cell editing with Tab/Shift+Tab. A format painter, millimetre measurements and edge, centre and baseline guides support precise editing.
+- Document-wide change list with before/after text, navigation and independent reversion. Related splits and text flows revert together while unrelated later edits remain.
+- Move, proportionally resize, replace and crop individual original images in the text editor. Cropping removes image pixels while retaining orientation. Scan backgrounds, groups and images with existing associated OCR layers are handled conservatively; image decoding and cropping are limited to 4 megapixels.
+- Local OCR working copies support small-angle deskew, shadow compensation, contrast and conservative noise reduction. Compare original and processed region recognition; suspicious letters in numbers are flagged for review. No automatic numeric correction or new document transmission.
+- Touch mode adds larger handles, a compact expandable font toolbar, a selection magnifier and caret adjustment for the visible keyboard area. Physical devices and native virtual keyboards require separate verification.
+- Font appearance checks adapt resolution to text size up to a 3,600-pixel long edge and highlight mismatch locations. The pinned public corpus adds a French accent scan, with checksums and licence attribution; test documents are not shipped with the application.

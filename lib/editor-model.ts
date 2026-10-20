@@ -44,6 +44,8 @@ export function editorMarkSignature(mark: Mark) {
   const appearance: Partial<Mark> = { ...mark };
   delete appearance.originalState;
   delete appearance.id;
+  delete appearance.flow;
+  delete appearance.changeGroup;
   return JSON.stringify(appearance);
 }
 export const editorMarkChanged = (mark: Mark) =>
@@ -52,6 +54,29 @@ export const editorRectsOverlap = (a: Rect, b: Rect) =>
   Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) *
     Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)) >
   0.0000001;
+export function editorImageCropBounds(rect: Rect, corners?: [number, number][], crop?: Rect): Rect {
+  if (!crop) return rect;
+  if (!corners || corners.length !== 3)
+    throw new Error('Die Bildausrichtung konnte nicht gelesen werden.');
+  const [a, b, c] = corners;
+  const points = [
+    [crop.x, crop.y],
+    [crop.x + crop.w, crop.y],
+    [crop.x, crop.y + crop.h],
+    [crop.x + crop.w, crop.y + crop.h],
+  ].map(([x, y]) => [
+    a[0] + x * (b[0] - a[0]) + y * (c[0] - a[0]),
+    a[1] + x * (b[1] - a[1]) + y * (c[1] - a[1]),
+  ]);
+  const x = Math.min(...points.map((p) => p[0])),
+    y = Math.min(...points.map((p) => p[1]));
+  return {
+    x,
+    y,
+    w: Math.max(...points.map((p) => p[0])) - x,
+    h: Math.max(...points.map((p) => p[1])) - y,
+  };
+}
 export function editorTextCollision(mark: Mark, marks: Mark[], targets: TextTarget[]) {
   if (mark.kind !== 'text' || !mark.text || !editorMarkChanged(mark)) return false;
   const removed = marks.filter(editorMarkChanged).flatMap(editorRemovalRects);

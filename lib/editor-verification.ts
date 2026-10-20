@@ -5,7 +5,7 @@ import {
   type PageItem,
   type ProgressUpdate,
 } from './pdf-engine';
-import type { Edits, Rect } from './studio-engine';
+import type { Edits, Rect, Mark } from './studio-engine';
 import {
   editorMarkChanged,
   editorRemovalRects,
@@ -21,8 +21,9 @@ export type EditorVerification = {
   textPages: number;
   imagePages: number;
   editedImageFields: number;
+  sparseFields?: number;
   changedPages: number[];
-  issues: { page: number; message: string }[];
+  issues: { page: number; message: string; rect?: Rect }[];
   sourcePages: Pick<PageItem, 'sourceId' | 'index' | 'rotation'>[];
 };
 const normalized = (text: string) => text.normalize('NFKC').replace(/\s/gu, '');
@@ -74,6 +75,7 @@ export async function verifyEditorExport(
   language: string,
   signal: AbortSignal,
   report: (progress: ProgressUpdate) => void,
+  painted: Record<string, Mark[]> = {},
 ): Promise<EditorVerification> {
   const output = await openSource(
     new File([bytes.slice().buffer], 'Prüfung.pdf', { type: 'application/pdf' }),
@@ -83,6 +85,7 @@ export async function verifyEditorExport(
     textPages: 0,
     imagePages: 0,
     editedImageFields: 0,
+    sparseFields: 0,
     changedPages: [],
     issues: [],
     sourcePages: pages.map(({ sourceId, index, rotation }) => ({ sourceId, index, rotation })),
@@ -106,9 +109,19 @@ export async function verifyEditorExport(
       const analysis = cachedEditorPage(source, page, language);
       const incompatible = !!crop || marks.some((m) => !['text', 'image'].includes(m.kind));
       if (!incompatible) {
-        const original =
-            (marks.length ? analysis : undefined) || (await readTextTargets(source, page)),
-          actual = await readTextTargets(output, outPage);
+        let original =
+          (marks.length ? analysis : undefined) || (await readTextTargets(source, page));
+        const actual = await readTextTargets(output, outPage);
+        const imageRegions = marks
+          .filter((m) => m.nativeImage)
+          .flatMap((m) => [m.nativeImage!.rect, m]);
+        if (imageRegions.length)
+          original = {
+            ...original,
+            targets: original.targets.filter(
+              (t) => t.origin !== 'ocr' || !imageRegions.some((r) => editorRectsOverlap(t, r)),
+            ),
+          };
         const expected = [
           ...remainingEditorTargets(original.targets, marks.flatMap(editorRemovalRects)).map(
             (t) => t.text,
@@ -123,6 +136,11 @@ export async function verifyEditorExport(
           const local = normalized(
             actual.targets
               .filter((t) => editorRectsOverlap(t, mark))
+              .sort((a, b) =>
+                Math.abs(a.y - b.y) * original.height < Math.min(a.fontSize, b.fontSize) * 0.4
+                  ? a.x - b.x
+                  : a.y - b.y,
+              )
               .map((t) => t.text)
               .join(''),
           );
@@ -132,7 +150,10 @@ export async function verifyEditorExport(
             );
         }
         result.textPages++;
-        const changedText = marks.filter((m) => m.kind === 'text' && normalized(m.text || ''));
+        const changedText = (painted[page.id] || marks).filter(
+          (m) => m.kind === 'text' && normalized(m.text || ''),
+        );
+        result.sparseFields! += (painted[page.id] || []).filter((m) => m.nativeTextSlice).length;
         if (changedText.length) {
           let background: Awaited<ReturnType<typeof renderPage>> | undefined,
             actualImage: Awaited<ReturnType<typeof renderPage>> | undefined,
@@ -142,20 +163,33 @@ export async function verifyEditorExport(
             // and images as the reference background for direct glyph painting.
             const removals = changedText.map((m) => ({
               ...m,
+              nativeTextSlice: undefined,
               sourceRects: actual.targets
                 .filter((t) => editorRectsOverlap(t, m))
                 .map((t) => ({ x: t.x, y: t.y, w: t.w, h: t.h })),
             }));
             if (removals.some((m) => !m.sourceRects.length)) throw new Error('Textposition unklar');
+            const smallest = Math.min(
+              ...changedText.map((m) => (m.fontScale || 0.028) * original.width),
+            );
+            const comparisonSide = Math.min(
+              3600,
+              Math.max(
+                1600,
+                Math.ceil(
+                  (Math.max(original.width, original.height) * 22) / Math.max(3, smallest) / 400,
+                ) * 400,
+              ),
+            );
             background = await renderEditorBackground(
               output,
               outPage,
               removals,
               actual.targets,
               signal,
-              1600,
+              comparisonSide,
             );
-            actualImage = await renderPage(output, outPage, 1600, signal);
+            actualImage = await renderPage(output, outPage, comparisonSide, signal);
             const base = background.canvas
               .getContext('2d')!
               .getImageData(0, 0, background.canvas.width, background.canvas.height);
@@ -184,7 +218,6 @@ export async function verifyEditorExport(
               savedImage = actualImage.canvas
                 .getContext('2d')!
                 .getImageData(0, 0, actualImage.canvas.width, actualImage.canvas.height);
-            let mismatches = 0;
             for (const [n, mark] of changedText.entries()) {
               signal.throwIfAborted();
               const comparison = compareEditorInk(
@@ -195,15 +228,15 @@ export async function verifyEditorExport(
               );
               if (comparison.expectedInk < 8)
                 throw new Error('Schriftbild zu klein oder kontrastarm');
-              if (comparison.missing > 0.12 || comparison.extra > 0.12) mismatches++;
+              if (comparison.missing > 0.12 || comparison.extra > 0.12)
+                result.issues.push({
+                  page: i,
+                  rect: comparison.differenceRect || mark,
+                  message:
+                    'Das gespeicherte Schriftbild weicht innerhalb bearbeiteter Textfelder von der vorgesehenen Darstellung ab. Bitte Schrift, Größe, Farbe und Umbruch vergleichen.',
+                });
               result.editedImageFields++;
             }
-            if (mismatches)
-              result.issues.push({
-                page: i,
-                message:
-                  'Das gespeicherte Schriftbild weicht innerhalb bearbeiteter Textfelder von der vorgesehenen Darstellung ab. Bitte Schrift, Größe, Farbe und Umbruch vergleichen.',
-              });
           } catch {
             signal.throwIfAborted();
             result.issues.push({
@@ -251,7 +284,11 @@ export async function verifyEditorExport(
           b.data,
           a.width,
           a.height,
-          marks.flatMap((m) => [m, ...editorRemovalRects(m)]),
+          marks.flatMap((m) => [
+            m,
+            ...editorRemovalRects(m),
+            ...(m.nativeImage ? [m.nativeImage.rect] : []),
+          ]),
         );
         if (ratio > 0.001)
           result.issues.push({

@@ -178,12 +178,14 @@ export function splitEditorBlock(
     );
   const first = {
     ...mark,
+    changeGroup: mark.changeGroup || id,
     ...replaceEditorRange(mark, at, text.length, ''),
     originalState: undefined,
     h: firstHeight / pageHeight,
   };
   const second: Mark = {
     ...mark,
+    changeGroup: mark.changeGroup || id,
     ...replaceEditorRange(mark, 0, at, ''),
     id,
     originalState: undefined,

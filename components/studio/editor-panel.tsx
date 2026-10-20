@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -98,7 +99,7 @@ export function EditorToolbar({
           </Button>
         </>
       )}
-      {tool === 'insert-image' && (
+      {(tool === 'insert-image' || tool === 'edit-text') && (
         <Button variant="ghost" disabled={disabled} onClick={onImage}>
           <ImagePlus size={16} />
           {ui('Bild auswählen')}
@@ -126,6 +127,7 @@ export function EditorPanel({
   mark,
   marks,
   width,
+  height,
   disabled,
   onPatch,
   onRemove,
@@ -139,6 +141,7 @@ export function EditorPanel({
   mark?: Mark;
   marks: Mark[];
   width: number;
+  height: number;
   disabled: boolean;
   onPatch: EditorPatch;
   onRemove: (id: string) => void;
@@ -148,12 +151,15 @@ export function EditorPanel({
   onImage: () => void;
 }) {
   useLanguage();
+  const [unit, setUnit] = useState<'mm' | '%'>('mm');
+  const measure = (key: 'x' | 'y' | 'w' | 'h') =>
+    unit === '%' ? 100 : ((key === 'x' || key === 'w' ? width : height) * 25.4) / 72;
   const patch = (v: Partial<Mark>) => {
     if (mark) onPatch(mark.id, v);
   };
   function geometry(key: 'x' | 'y' | 'w' | 'h', value: string) {
     if (!mark || value === '') return;
-    const n = Number(value) / 100;
+    const n = Number(value) / measure(key);
     if (!Number.isFinite(n)) return;
     const next = { ...mark, [key]: n };
     if (key === 'x') next.x = Math.min(1 - mark.w, n);
@@ -337,7 +343,7 @@ export function EditorPanel({
               />
             </label>
           )}
-          {(mark.kind === 'image' || mark.kind === 'signature') && (
+          {!mark.nativeImage && (mark.kind === 'image' || mark.kind === 'signature') && (
             <label className="field">
               <span>
                 {ui('Deckkraft · ')}
@@ -355,10 +361,23 @@ export function EditorPanel({
               />
             </label>
           )}
+          <label className="field">
+            <span>{ui('Maßeinheit')}</span>
+            <select
+              aria-label={ui('Maßeinheit')}
+              value={unit}
+              onChange={(e) => setUnit(e.target.value as 'mm' | '%')}
+            >
+              <option value="mm">mm</option>
+              <option value="%">%</option>
+            </select>
+          </label>
           <div className="editor-geometry">
             {(['x', 'y', 'w', 'h'] as const).map((key) => (
               <label className="field" key={key}>
-                <span>{ui({ x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key])}</span>
+                <span>
+                  {ui({ x: 'Links', y: 'Oben', w: 'Breite', h: 'Höhe' }[key])} · {unit}
+                </span>
                 <Input
                   aria-label={ui(
                     { x: 'Objekt links', y: 'Objekt oben', w: 'Objektbreite', h: 'Objekthöhe' }[
@@ -366,10 +385,10 @@ export function EditorPanel({
                     ],
                   )}
                   type="number"
-                  min={key === 'x' || key === 'y' ? 0 : 1}
-                  max={100}
-                  step={0.5}
-                  value={Math.round(mark[key] * 1000) / 10}
+                  min={key === 'x' || key === 'y' ? 0 : 0.1}
+                  max={Math.round(measure(key) * 100) / 100}
+                  step={0.1}
+                  value={Math.round(mark[key] * measure(key) * 100) / 100}
                   onChange={(e) => geometry(key, e.target.value)}
                   disabled={disabled}
                 />
@@ -393,7 +412,7 @@ export function EditorPanel({
                 {ui('Nur Text entfernen')}
               </Button>
             )}
-            {mark.kind !== 'erase' && (
+            {mark.kind !== 'erase' && !mark.nativeImage && (
               <Button variant="outline" disabled={disabled} onClick={onDuplicate}>
                 <Copy size={15} />
                 {ui('Duplizieren')}
@@ -401,7 +420,7 @@ export function EditorPanel({
             )}
             <Button variant="ghost" disabled={disabled} onClick={() => onRemove(mark.id)}>
               <Undo2 size={15} />
-              {mark.sourceRect || mark.kind === 'erase'
+              {mark.sourceRect || mark.nativeImage || mark.kind === 'erase'
                 ? ui('Änderung verwerfen')
                 : ui('Objekt entfernen')}
             </Button>

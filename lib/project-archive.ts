@@ -110,6 +110,18 @@ const mark = rect.extend({
     .regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/)
     .optional(),
   sourceRect: rect.optional(),
+  nativeImage: z
+    .object({
+      index: z.number().int().min(0).max(9999),
+      rect,
+      crop: rect.optional(),
+      corners: z
+        .array(z.tuple([z.number().finite().min(-2).max(2), z.number().finite().min(-2).max(2)]))
+        .length(3)
+        .optional(),
+    })
+    .strict()
+    .optional(),
   sourceRects: z.array(rect).max(2000).optional(),
   sourceIsScan: z.boolean().optional(),
   fontFamily: z.enum(['sans', 'serif', 'mono']).optional(),
@@ -137,6 +149,11 @@ const mark = rect.extend({
   originalFontName: short.optional(),
   originalFontPage: z.number().int().min(0).max(199).optional(),
   originalState: z.string().max(500000).optional(),
+  flow: z
+    .object({ id: identifier, order: z.number().int().min(0).max(199) })
+    .strict()
+    .optional(),
+  changeGroup: identifier.optional(),
   baselineScale: z.number().finite().min(0).max(5).optional(),
   insetScale: z.number().finite().min(0).max(5).optional(),
   lineHeight: z.number().finite().min(0.5).max(5).optional(),
@@ -156,6 +173,11 @@ const mark = rect.extend({
   opacity: z.number().finite().min(0).max(1).optional(),
 });
 const validMark = mark.superRefine((value, ctx) => {
+  if (
+    value.nativeImage &&
+    (value.kind !== 'image' || value.sourceRect || value.sourceRects?.length)
+  )
+    ctx.addIssue({ code: 'custom', message: 'Invalid original image edit' });
   let end = 0;
   for (const run of value.runs || []) {
     if (run.start < end || run.end <= run.start || run.end > (value.text || '').length)

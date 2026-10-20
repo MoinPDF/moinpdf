@@ -7297,3 +7297,229 @@ html:has(.editor-canvas-wrap) {
     font-size: 16px;
   }
 }
+
+/* Precise editing tools use the established MoinPDF controls and colours. */
+.editor-precision-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0.65rem 0;
+  font-size: 0.8rem;
+}
+.editor-precision-tools label {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+.editor-precision-tools > span {
+  flex-basis: 100%;
+  color: var(--muted-foreground);
+}
+.editor-snap-guide {
+  position: absolute;
+  z-index: 24;
+  pointer-events: none;
+  border-color: #009e8e;
+  border-style: dashed;
+  border-width: 0;
+}
+.editor-snap-guide.x {
+  top: 0;
+  bottom: 0;
+  border-left-width: 1px;
+}
+.editor-snap-guide.y {
+  left: 0;
+  right: 0;
+  border-top-width: 1px;
+}
+.editor-snap-guide.baseline {
+  border-color: #d56c00;
+}
+.editor-text-target.is-table-cell {
+  outline: 1px solid #00877988;
+  background: #0087790a;
+}
+.editor-workflow-panel {
+  margin-block: 1rem;
+}
+.editor-workflow-section {
+  border-top: 1px solid var(--border);
+  padding: 0.8rem 0;
+  font-size: 0.82rem;
+}
+.editor-workflow-section summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.editor-workflow-section p {
+  margin-block: 0.65rem;
+}
+.editor-flow-fields {
+  max-height: 15rem;
+  overflow: auto;
+  margin-block: 0.6rem;
+}
+.editor-flow-fields label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
+}
+.editor-flow-fields label span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.editor-flow-fields button,
+.editor-change-entry button:not([data-slot]) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.editor-flow-preview {
+  max-height: 24rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+}
+.editor-workflow-section ol {
+  list-style: decimal;
+  padding-left: 1.3rem;
+  margin-block: 0.65rem;
+}
+.editor-workflow-section li button {
+  padding: 0.3rem 0.5rem;
+}
+.editor-change-entry {
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 0;
+  display: grid;
+  gap: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.editor-selection-magnifier {
+  position: fixed;
+  z-index: 100;
+  transform: translateX(-50%);
+  pointer-events: none;
+  max-width: 240px;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 20px;
+  line-height: 1.5;
+  box-shadow: 0 4px 16px #0003;
+}
+.editor-selection-magnifier mark {
+  background: #00877944;
+  color: inherit;
+}
+.is-touch-mode .editor-resize {
+  width: 30px;
+  height: 30px;
+  right: -15px;
+  bottom: -15px;
+  border-radius: 50%;
+}
+.is-touch-mode .editor-move-handle {
+  min-width: 44px;
+  min-height: 44px;
+}
+.is-touch-mode .editor-inline-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  gap: 0.3rem;
+  padding: 0.5rem;
+}
+.is-touch-mode .editor-inline-toolbar button {
+  min-height: 44px;
+  min-width: 44px;
+}
+.is-touch-mode .editor-inline-toolbar .editor-selection-help,
+.is-touch-mode .editor-inline-toolbar .editor-font-upload {
+  display: none;
+}
+@media (max-width: 600px) {
+  .editor-precision-tools {
+    gap: 0.4rem;
+  }
+  .editor-workflow-section button {
+    min-height: 40px;
+  }
+}
+.editor-image-target {
+  position: absolute;
+  border: 2px dashed #008779;
+  background: #0087790b;
+  z-index: 12;
+  cursor: pointer;
+}
+.editor-image-target:hover {
+  background: #00877925;
+}
+.editor-image-tools {
+  margin-block: 0.6rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  font-size: 0.85rem;
+}
+.editor-image-tools p {
+  margin-block: 0.6rem;
+}
+.editor-image-tools summary {
+  font-weight: 650;
+  cursor: pointer;
+}
+.editor-image-crop-preview {
+  position: relative;
+  display: table;
+  max-width: 320px;
+  margin: 0.7rem auto;
+}
+.editor-image-crop-preview img {
+  max-width: 100%;
+  max-height: 300px;
+}
+.editor-image-crop-preview span {
+  position: absolute;
+  border: 2px solid #008779;
+  box-shadow: 0 0 0 1px #fff8;
+  pointer-events: none;
+}
+.editor-verification-region {
+  position: absolute;
+  border: 3px solid #d56c00;
+  box-shadow: 0 0 0 2px #fffa;
+  pointer-events: none;
+}
+.editor-touch-details {
+  display: none;
+}
+.is-touch-mode .editor-touch-details {
+  display: inline-flex;
+}
+.is-touch-mode .show-touch-details .editor-font-upload,
+.is-touch-mode .show-touch-details .editor-selection-help {
+  display: block;
+}
+.editor-ocr-variants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.7rem;
+  margin-block: 0.75rem;
+}
+.editor-ocr-variants > div {
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  overflow-wrap: anywhere;
+}
