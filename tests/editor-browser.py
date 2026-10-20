@@ -194,9 +194,11 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         result.update(status='passed',page_errors=errors,blocked_requests=blocked)
     except Exception as e:
         result.update(status='failed',error=str(e),traceback=traceback.format_exc(),page_errors=errors,blocked_requests=blocked)
-        page.screenshot(path=str(out/(name+'-failure.png')),full_page=True,timeout=10000)
-        (out/(name+'-failure.txt')).write_text(page.locator('body').inner_text())
         print(result['traceback'],flush=True)
+        try:
+            page.screenshot(path=str(out/(name+'-failure.png')),full_page=True,timeout=10000)
+            (out/(name+'-failure.txt')).write_text(page.locator('body').inner_text(timeout=5000))
+        except Exception as capture_error:result['capture_error']=str(capture_error)
     finally:
         report['results'].append(result);context.close()
         (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))

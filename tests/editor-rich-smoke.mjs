@@ -38,6 +38,13 @@ try{
  const mixed=editorParagraphs(targets,500,700);assert.equal(mixed.length,1,'Inline font/color changes stay in one paragraph');assert(mixed[0].runs.some(r=>r.style.bold));
  const table=[0,1].flatMap(row=>[0,1].map(col=>({id:`${row}-${col}`,text:'Zelle',x:.1+col*.4,y:.1+row*.024,w:.1,h:.02,fontSize:12,family:'sans',origin:'pdf'})));
  assert.equal(editorParagraphs(table,500,700).length,4,'Aligned table cells never become one paragraph');
+ const colored={...mark,runs:undefined,text:'Links ROT rechts',bold:false};
+ Object.assign(colored,rich.formatEditorRange(colored,6,9,{color:'#cc0000'}));
+ const colorPdf=await PDFDocument.create();await drawEditorText(colorPdf,colorPdf.addPage([500,700]),colored,500,700);
+ const colorSource=await source(await colorPdf.save()),colorTargets=(await readTextTargets(colorSource,pageOf(colorSource))).targets;
+ const colorParagraph=editorParagraphs(colorTargets,500,700)[0];
+ assert.equal(colorParagraph.text,'Links ROT rechts');
+ assert(colorParagraph.runs.some(r=>r.style.color==='#cc0000' && colorParagraph.text.slice(r.start,r.end).trim()==='ROT'),'Colour changes within the same PDF font are recovered');
  const original=await PDFDocument.create(),p=original.addPage([500,700]);p.drawText('KEEP 4815',{x:50,y:600,size:18,font:await original.embedFont(StandardFonts.Helvetica)});
  const untouched=original.addPage([420,500]);untouched.drawText('Untouched ÄÖÜ €',{x:40,y:400,size:14});
  const originalBytes=await original.save();await writeFile(folder+'/original.pdf',originalBytes);const originalSource=await source(originalBytes);
@@ -57,6 +64,8 @@ try{
  const customMark={...mark,runs:undefined,fontChoice:'custom',customFont:custom};assert((await resolveEditorFont(customMark)).font.covers(mark.text));
  await assert.rejects(()=>importEditorFont(new File([new Uint8Array(12)],'broken.ttf')),/TrueType/);
  await assert.rejects(()=>resolveEditorFont({...customMark,bold:true}),/Schriftschnitt/);
+ const customPdf=await PDFDocument.create();await drawEditorText(customPdf,customPdf.addPage([500,700]),customMark,500,700);
+ const customSource=await source(await customPdf.save());assert.equal((await readTextTargets(customSource,pageOf(customSource))).targets.map(t=>t.text).join(''),mark.text,'Custom font embeds and reopens with full Unicode text');
  const state={pages,edits:{marks:{p0:[customMark]},crops:{}},options:{language:'deu',forceOcr:false,imageFormat:'png',quality:'balanced',watermark:'',numberStart:1,pageSize:'a4',orientation:'portrait',perSheet:'2'},history:[],future:[],documentSessions:{},activeId:'p0',toolId:'edit-text'};
  state.history=Array.from({length:25},()=>({pages,edits:state.edits}));
  const json=stringifyEditorProject(state);assert(json.length<custom.data.length*2,'Font bytes are stored once across the undo history');

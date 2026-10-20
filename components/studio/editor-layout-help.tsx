@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Mark, Rect } from '@/lib/studio-engine';
 import type { Source } from '@/lib/pdf-engine';
 import { editorTextGeometry, layoutEditorText } from '@/lib/editor-text-layer';
@@ -54,7 +54,7 @@ export function EditorLayoutHelp({
   onPatch: EditorPatch;
 }) {
   const [proposal, setProposal] = useState<Partial<Mark> | null>(null),
-    candidate = { ...mark, ...proposal };
+    candidate = useMemo(() => ({ ...mark, ...proposal }), [mark, proposal]);
   const typography = useEditorTypography(candidate, source),
     font = typography.resolution?.font;
   const geometry = editorTextGeometry(candidate, width, height, candidate.textRotation);

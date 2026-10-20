@@ -8,7 +8,7 @@ for(const file of ['lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/ed
  const code=ts.transpileModule(await readFile(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/(['"])(@\/[^'"]+|\.\/[^'"]+)\1/g,(_,q,p)=>q+'./'+p.split('/').at(-1)+'.mjs'+q);
  await writeFile(folder+'/'+file.split('/').at(-1).replace(/\.tsx?$/,'.mjs'),code);
 }
-await writeFile(folder+'/editor-fonts.mjs',`export const importEditorFont=async()=>{throw Error('not used')};export const editorFontPage=async()=>({fonts:new Map(),runs:[]});export const originalEditorFont=()=>undefined;export const loadEditorCssFont=async()=>{};export const resolveEditorFont=async(mark)=>({font:{name:'Liberation Sans',cssFamily:'TestFont',ascent:.9,descent:.2,original:false,measureDescent:()=>.2,measure:(text,size)=>text.length*size*.5},substituted:false});`);
+await writeFile(folder+'/editor-fonts.mjs',`export const importEditorFont=async()=>{throw Error('not used')};export const editorFontPage=async()=>({fonts:new Map(),runs:[]});export const originalEditorFont=()=>undefined;export const loadEditorCssFont=async()=>{};export let resolutions=0;export const resolveEditorFont=async(mark)=>(resolutions++,{font:{name:'Liberation Sans',cssFamily:'TestFont',ascent:.9,descent:.2,original:false,measureDescent:()=>.2,measure:(text,size)=>text.length*size*.5},substituted:false});`);
 await writeFile(folder+'/pdf-text.mjs','export const readPdfText=async()=>({items:[],styles:{}});');
 await writeFile(folder+'/appearance.mjs','export const useLanguage=()=>({});');
 await writeFile(folder+'/button.mjs',`import React from 'react';export function Button({variant,size,...props}){return React.createElement('button',props);}`);
@@ -22,6 +22,8 @@ const React=await import('react'),{createRoot}=await import('react-dom/client');
 const {applyEditorPatch,editorSegments}=await import('../.cache/editor-ui/editor-rich-text.mjs');
 const {setEditorDomSelection,editorDomSelection}=await import('../.cache/editor-ui/editor-dom.mjs');
 const {EditorInlineText,EditorFontPicker}=await import('../.cache/editor-ui/editor-typography.mjs');
+const {EditorLayoutHelp}=await import('../.cache/editor-ui/editor-layout-help.mjs');
+const fontMock=await import('../.cache/editor-ui/editor-fonts.mjs');
 const {EditorCanvas}=await import('../.cache/editor-ui/editor-canvas.mjs'),{jobs}=await import('../.cache/editor-ui/editor-analysis.mjs');
 const root=createRoot(document.getElementById('root'));
 const source={id:'source',name:'fixture.pdf'},page={id:'p0',sourceId:'source',index:0,rotation:0,selected:true};
@@ -68,5 +70,14 @@ try {
  await setText('Ein längerer Absatz mit mehreren Zeilen. '.repeat(6));assert.equal(current.h,.08,'Typing keeps the layout stable until an explicit layout adjustment');
  await act(async()=>field.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true})));assert.equal(done,1);
  await act(async()=>inlineRoot.unmount());
+ const layoutRoot=createRoot(inlineHost),beforeResolutions=fontMock.resolutions;
+ await act(async()=>layoutRoot.render(React.createElement(EditorLayoutHelp,{mark:current,source,width:400,height:560,onPatch:()=>{}})));
+ await act(async()=>new Promise(resolve=>setTimeout(resolve,25)));
+ assert(fontMock.resolutions-beforeResolutions<=2,'Layout font preparation settles without a render loop');
+ await click([...inlineHost.querySelectorAll('button')].find(b=>b.textContent==='Schrift etwas verkleinern'));
+ assert(inlineHost.querySelector('[aria-label="Anpassungsvorschau"]'));
+ await act(async()=>new Promise(resolve=>setTimeout(resolve,25)));
+ assert(fontMock.resolutions-beforeResolutions<=4,'Proposal font preparation also settles');
+ await act(async()=>layoutRoot.unmount());
  console.log('PASS: rich text focus, typing, cursor keys, IME composition, font selection, keyboard formatting, explicit layout adjustment and done shortcut; automatic preparation, preview before OCR, early text selection, confidence styling, scan replacement/rotation, forced retry, page-switch race, stop, disabled controls and unmount cancellation.');
 } finally {dom.window.close();}
