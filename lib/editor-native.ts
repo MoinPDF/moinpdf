@@ -115,6 +115,7 @@ export async function renderEditorBackground(
   marks: Mark[],
   targets: TextTarget[],
   signal: AbortSignal,
+  previewSide = 1400,
 ) {
   const original = await loadEditorPdf(source.bytes);
   const cleaned = await removeEditorContent(original, item, marks, targets, signal);
@@ -134,7 +135,7 @@ export async function renderEditorBackground(
   try {
     const pdf = await task.promise;
     signal.throwIfAborted();
-    return await renderPage({ ...source, pdf }, { index: 0, rotation: 0 }, 1400, signal);
+    return await renderPage({ ...source, pdf }, { index: 0, rotation: 0 }, previewSide, signal);
   } finally {
     signal.removeEventListener('abort', cancel);
     await task.destroy();

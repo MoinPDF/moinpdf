@@ -12,6 +12,101 @@ export const editorStyleKeys = [
   'color',
 ] as const;
 export type EditorSelection = { id: string; start: number; end: number };
+/** The toolbar describes the range it will actually format, or the whole box. */
+export function editorSelectionStyle(mark: Mark, selection?: EditorSelection | null) {
+  const length = (mark.text || '').length;
+  const selected = selection?.id === mark.id && selection.end > selection.start;
+  const start = selected ? Math.max(0, Math.min(length, selection.start)) : 0;
+  const end = selected ? Math.max(start, Math.min(length, selection.end)) : length;
+  const runs = editorSegments(mark).filter((r) => r.start < end && r.end > start);
+  const style = runs[0]?.style || editorStyle(mark);
+  const mixed = new Set(
+    editorStyleKeys.filter((key) => runs.some((r) => r.style[key] !== style[key])),
+  );
+  return { start, end, selected: !!selected, style, mixed };
+}
+export type EditorTextMatch = { start: number; end: number };
+export function findEditorText(
+  text: string,
+  query: string,
+  matchCase = false,
+  wholeWord = false,
+): EditorTextMatch[] {
+  if (!query || query.length > 256) return [];
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matches: EditorTextMatch[] = [];
+  for (const match of text.matchAll(new RegExp(escaped, matchCase ? 'gu' : 'giu'))) {
+    const start = match.index!,
+      end = start + match[0].length;
+    if (
+      wholeWord &&
+      (/[\p{L}\p{N}\p{M}_]$/u.test(text.slice(Math.max(0, start - 2), start)) ||
+        /^[\p{L}\p{N}\p{M}_]/u.test(text.slice(end, end + 2)))
+    )
+      continue;
+    matches.push({ start, end });
+  }
+  return matches;
+}
+export function replaceEditorMatches(
+  mark: Mark,
+  matches: EditorTextMatch[],
+  replacement: string,
+): Partial<Mark> {
+  replacement = replacement.replace(/\r\n?/g, '\n').replace(/\t/g, '    ');
+  const sorted = [...matches].sort((a, b) => a.start - b.start),
+    length = (mark.text || '').length;
+  if (
+    sorted.some(
+      (m, i) =>
+        !Number.isSafeInteger(m.start) ||
+        !Number.isSafeInteger(m.end) ||
+        m.start < 0 ||
+        m.end <= m.start ||
+        m.end > length ||
+        (i > 0 && m.start < sorted[i - 1].end),
+    )
+  )
+    throw new Error('Die Suchtreffer sind nicht mehr gültig. Bitte erneut suchen.');
+  if (length + sorted.reduce((n, m) => n + replacement.length - (m.end - m.start), 0) > 20000)
+    throw new Error('Das Ergebnis wäre länger als 20.000 Zeichen. Bitte weniger Text ersetzen.');
+  const text = mark.text || '',
+    segments = editorSegments(mark),
+    chunks: string[] = [],
+    runs: EditorTextRun[] = [];
+  let sourceOffset = 0,
+    outputOffset = 0,
+    runIndex = 0;
+  const append = (part: string, style: EditorTextStyle) => {
+    if (!part) return;
+    chunks.push(part);
+    const start = outputOffset;
+    outputOffset += part.length;
+    const last = runs.at(-1);
+    if (last && sameStyle(last.style, style)) last.end = outputOffset;
+    else runs.push({ start, end: outputOffset, style });
+  };
+  const advanceRun = (offset: number) => {
+    while (runIndex < segments.length - 1 && segments[runIndex].end <= offset) runIndex++;
+  };
+  const copy = (end: number) => {
+    while (sourceOffset < end) {
+      advanceRun(sourceOffset);
+      const run = segments[runIndex],
+        stop = Math.min(end, run?.end ?? end);
+      append(text.slice(sourceOffset, stop), run?.style || editorStyle(mark));
+      sourceOffset = stop;
+    }
+  };
+  for (const match of sorted) {
+    copy(match.start);
+    advanceRun(match.start);
+    append(replacement, segments[runIndex]?.style || editorStyle(mark));
+    sourceOffset = match.end;
+  }
+  copy(length);
+  return { text: chunks.join(''), runs: mark.runs?.length ? runs : undefined };
+}
 export function editorStyle(mark: EditorTextStyle): EditorTextStyle {
   return Object.fromEntries(
     editorStyleKeys.filter((key) => mark[key] !== undefined).map((key) => [key, mark[key]]),

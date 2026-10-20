@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 20 October 2026, version 0.16.0.
+As of 20 October 2026, version 0.17.0.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
@@ -90,3 +90,9 @@ Layout proposals leave other text boxes in place. PDF tables and columns often l
 Export reopens the generated PDF and checks character counts and edited-text positions, normalising whitespace and Unicode compatibility forms. Visual comparison checks outside the edited rectangles at 900-pixel preview resolution with a raster tolerance. It may miss small differences and does not verify typography inside edited areas. Cropped or additionally raster-edited pages are labelled as partially checked. The original and export remain available for manual comparison.
 
 Verification: 46 local test suites, production build, typecheck and lint, including word formatting, Unicode, project/font round trips and missing/duplicated export text. Browser results are retained as artifacts in the editor CI. No claim for arbitrary customer PDFs, handwriting or physical mobile devices. Complex shaping, custom variable/CFF fonts and document-wide Word reflow remain technical limits.
+
+## Editing precision in 0.17.0
+
+Mixed formatting is explicit; font status and controls follow the selected text range. Without a text selection, formatting still applies to the whole text box. Built-in find/replace (Ctrl/⌘+F or +H within the text box) deliberately searches only that box. Each match retains its own style and replacements share one undo step. Queries are literal; the 20,000-character text-box limit remains.
+
+The actual editor page zooms up to 400 percent while controls retain their size. The page has a separate scrolling area. Screen previews are bounded to a 3,200-pixel longest side and existing renderer limits; this does not describe export resolution. Full Acrobat equivalence or a best-internet-tool ranking has not been demonstrated. An independent comparative corpus and physical-device testing are still needed for such an assessment.

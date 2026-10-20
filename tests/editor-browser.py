@@ -80,7 +80,7 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
             blocked.append({'method':r.request.method,'url':r.request.url});r.abort()
         else:r.continue_()
     page.route('**/*',route)
-    result={'case':name,'viewport':width}
+    result={'case':name,'viewport':width};reopen=None;rp=None
     try:
         print('START: '+name,flush=True)
         page.goto(origin)
@@ -92,6 +92,18 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         target=page.get_by_role('button',name=re.compile(('Edit text: ' if english else 'Text bearbeiten: ')+('Rechnung 2026' if scan_case else 'ORIGINAL 4815')))
         print(name+': waiting for text targets',flush=True)
         expect(target).to_be_visible(timeout=120000)
+        zoom=page.get_by_label('PDF page zoom' if english else 'Zoom der PDF-Seite',exact=True)
+        holder=page.locator('.editor-page-scroll .canvas-holder')
+        initial_page_width=holder.evaluate('(el) => getComputedStyle(el).width')
+        before_width=target.bounding_box()['width']
+        zoom.select_option('400')
+        expect(holder).to_have_css('max-width','2880px')
+        assert target.bounding_box()['width']>before_width*3.5, '400% zoom must enlarge the actual PDF page'
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Zoom leaked outside page scroller'
+        zoom.select_option('100')
+        # React can commit the zoom after select_option returns. Never cache a
+        # click offset from the previous 400% page geometry.
+        expect(holder).to_have_css('width',initial_page_width)
         box=target.bounding_box()
         target.click(position={'x':box['width']*.55,'y':box['height']*.55})
         print(name+': text selected',flush=True)
@@ -131,6 +143,28 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
             toolbar.get_by_label('Text colour' if english else 'Textfarbe',exact=True).fill('#006644')
             expect(field.locator('span').filter(has_text=re.compile('^NEU$'))).to_have_css('font-weight','700')
             expect(field.locator('span').filter(has_text=re.compile('^NEU$'))).to_have_css('font-style','italic')
+            # Mixed formatting is explicit; toggling from mixed applies to the entire selection.
+            field.press('Control+a')
+            expect(toolbar.get_by_role('button',name='Bold' if english else 'Fett',exact=True)).to_have_attribute('aria-pressed','mixed')
+            toolbar.get_by_role('button',name='Bold' if english else 'Fett',exact=True).click()
+            expect(field).to_be_focused()
+            field.press('Control+z')
+            # Search is scoped to this text box, replacements retain styles and share undo/redo.
+            field.press('Control+h')
+            search=page.get_by_role('region',name='Find and replace in text box' if english else 'Suchen und ersetzen im Textfeld')
+            expect(search).to_be_visible()
+            search.get_by_label('Find text' if english else 'Suchtext',exact=True).fill('NEU')
+            search.get_by_label('Replace with' if english else 'Ersetzen durch',exact=True).fill('ALT')
+            search.get_by_role('button',name='Next match' if english else 'Nächster Treffer',exact=True).click()
+            expect(field).to_be_focused()
+            assert field.evaluate('getSelection().toString()')=='NEU'
+            search.get_by_role('button',name='Replace all in text box' if english else 'Alle im Textfeld ersetzen',exact=True).click()
+            expect(field).to_have_text('ALT ÄÖÜ €')
+            search.get_by_role('button',name='Close search' if english else 'Suche schließen',exact=True).click()
+            expect(field).to_be_focused()
+            field.press('Control+z');expect(field).to_have_text(replacement)
+            field.press('Control+Shift+z');expect(field).to_have_text('ALT ÄÖÜ €')
+            field.press('Control+z');expect(field).to_have_text(replacement)
             # An explicit layout proposal changes nothing before acceptance.
             page.get_by_text('Adjust layout' if english else 'Layout anpassen',exact=True).click()
             size=toolbar.get_by_label('Font size in points' if english else 'Textgröße in Punkt',exact=True)
@@ -179,14 +213,17 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
                 edited[0].get_pixmap(matrix=pymupdf.Matrix(1.5,1.5)).save(out/(name+'-export.png'))
         # Reopen the actual download in the same application, then inspect targets.
         reopen=browser.new_context(viewport={'width':width,'height':1000})
-        rp=reopen.new_page();rp.route('**/*',route);rp.goto(origin)
+        rp=reopen.new_page();rp.set_default_timeout(45000);rp.on('pageerror',lambda e:errors.append('Reopen: '+str(e)));rp.route('**/*',route);rp.goto(origin)
         rp.locator('input[type=file]').first.set_input_files(str(exported.resolve()))
         rp.locator('.chooser-tool').filter(has=rp.get_by_text('PDF bearbeiten',exact=True)).click()
         if not scan_case:
             # Font changes split PDF text objects; paragraph mode must recover one selectable line.
-            rp.get_by_role('button',name='Absätze',exact=True).click()
+            paragraph_mode=rp.get_by_role('button',name='Absätze',exact=True)
+            # The fresh context must finish local page/font analysis before
+            # paragraph selection is available, just as on the initial import.
+            expect(paragraph_mode).to_be_visible(timeout=120000)
+            paragraph_mode.click()
         expect(rp.get_by_role('button',name='Text bearbeiten: '+replacement,exact=True)).to_be_visible(timeout=120000)
-        reopen.close()
         if english:
             assert 'Die Originalschrift' not in page.locator('body').inner_text(), 'Untranslated font substitution warning'
         assert not errors,errors
@@ -196,10 +233,14 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         result.update(status='failed',error=str(e),traceback=traceback.format_exc(),page_errors=errors,blocked_requests=blocked)
         print(result['traceback'],flush=True)
         try:
+            if rp:
+                rp.screenshot(path=str(out/(name+'-reopen-failure.png')),full_page=True,timeout=10000)
+                (out/(name+'-reopen-failure.txt')).write_text(rp.locator('body').inner_text(timeout=5000))
             page.screenshot(path=str(out/(name+'-failure.png')),full_page=True,timeout=10000)
             (out/(name+'-failure.txt')).write_text(page.locator('body').inner_text(timeout=5000))
         except Exception as capture_error:result['capture_error']=str(capture_error)
     finally:
+        if reopen:reopen.close()
         report['results'].append(result);context.close()
         (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
         print(result['status'].upper()+': '+name,flush=True)
