@@ -9,6 +9,18 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.19.0 – 20. Oktober 2026
+
+- Geeignete waagerechte Wortänderungen entfernen nur die betroffenen Originalzeichen. Unveränderte Präfixe und bei gleicher Position auch Suffixe bleiben als PDF-Text erhalten. Mehrdeutige Zeichen, Ligaturen, Schriftschnitt- oder Layoutänderungen verwenden weiterhin die geprüfte Textfeldbearbeitung.
+- Textfelder lassen sich in frei gewählter Reihenfolge über bestehende Seiten verknüpfen. Eine Vorschau verteilt Text und Formatierung ohne automatische Verkleinerung; Überlauf und Kollisionen verhindern die Übernahme. Weitere Änderungen erfordern eine erneute Textfluss-Vorschau.
+- Einfach ausgerichtete Tabellen erhalten einen Zellenmodus mit Tab/Umschalt+Tab. Formatübernahme, Millimetermaße und Hilfslinien für Kanten, Mittelpunkte und Grundlinien ergänzen die Bearbeitung.
+- Dokumentweite Änderungsübersicht mit Vorher/Nachher, Sprung zur Seite und gezielter Rücknahme. Zusammenhängende Teilungen und Textflüsse werden gemeinsam zurückgenommen; spätere unabhängige Änderungen bleiben erhalten.
+- Vorhandene Einzelbilder im Texteditor verschieben, proportional skalieren, ersetzen und zuschneiden. Zuschnitt entfernt Bildpixel und erhält die Ausrichtung. Scan-Hintergründe, Gruppen und Bilder mit zugehöriger vorhandener OCR-Ebene werden konservativ behandelt; Dekodierung und Zuschnitt sind auf 4 Megapixel begrenzt.
+- Lokale OCR-Arbeitskopien mit kleiner Schräglagenkorrektur, Schattenausgleich, Kontrast und vorsichtiger Rauschminderung. Original- und aufbereitete Bereichserkennung sind vergleichbar; auffällige Buchstaben in Zahlen werden zur Prüfung markiert. Keine automatische Zahlenkorrektur und keine zusätzliche Dokumentübertragung.
+- Eindeutige ganzseitige Scanbilder bis 4 Megapixel behalten beim Bearbeiten ihr ursprüngliches Pixelraster, sofern eine unabhängige Darstellung übereinstimmt. Komplexere Scanseiten verwenden weiterhin den geprüften Bildneuaufbau.
+- Touch-Modus mit größeren Griffen, kompakter erweiterbarer Schriftleiste, Auswahl-Lupe und Anpassung an den sichtbaren Tastaturbereich. Reale Geräte und native virtuelle Tastaturen bleiben gesondert zu prüfen.
+- Schriftbildvergleich mit an Schriftgröße angepasster Auflösung bis 3.600 Pixeln und markierbaren Abweichungsbereichen. Erweiterter öffentlicher Korpus enthält einen französischen Scan mit Akzenten; sämtliche Dateien sind fest versioniert, mit Prüfsummen und Lizenzhinweisen versehen und werden nicht mit der Anwendung ausgeliefert.
+
 ## 0.18.0 – 20. Oktober 2026
 
 - Unbearbeitete Seiten werden unverändert übernommen, auch wenn sie zuvor für die lokale Suche erkannt wurden. Eng bemessene Textzeilen tolerieren Rundungsdifferenzen rekonstruierter Schriftbreiten; dadurch entstehen keine zusätzlichen Umbrüche durch Tausendstel Punkt.

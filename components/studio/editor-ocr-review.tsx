@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { Mark } from '@/lib/studio-engine';
 import type { Source, PageItem } from '@/lib/pdf-engine';
 import type { TextTarget } from '@/lib/editor-model';
-import { recognizeEditorRegion } from '@/lib/editor-analysis';
+import { recognizeEditorRegion, editorOcrNeedsReview } from '@/lib/editor-analysis';
+import { ambiguousEditorNumber } from '@/lib/editor-scan';
 import { EditorOriginalSnippet } from './editor-layout-help';
 import type { EditorPatch } from './editor-typography';
 import { Button } from '@/components/ui/button';
@@ -36,8 +37,11 @@ export function EditorOcrReview({
     [notice, setNotice] = useState('');
   const task = useRef<AbortController | null>(null);
   const [open, setOpen] = useState(false);
+  const [variants, setVariants] = useState<{ label: string; text: string; confidence: number }[]>(
+    [],
+  );
   useEffect(() => () => task.current?.abort(), []);
-  const uncertain = targets.filter((t) => t.origin === 'ocr' && (t.confidence ?? 100) < 75);
+  const uncertain = targets.filter(editorOcrNeedsReview);
   async function recognize() {
     if (!mark.sourceRect) return;
     const controller = new AbortController();
@@ -45,6 +49,7 @@ export function EditorOcrReview({
     setBusy(true);
     setNotice('');
     setSuggestion('');
+    setVariants([]);
     try {
       const value = await recognizeEditorRegion(
         source,
@@ -56,6 +61,7 @@ export function EditorOcrReview({
       );
       if (!controller.signal.aborted) {
         setSuggestion(value.text);
+        setVariants(value.variants);
         setNotice('Erkennungsvorschlag bitte am Original prüfen.');
       }
     } catch (error) {
@@ -95,6 +101,13 @@ export function EditorOcrReview({
         </label>
       </div>
       <p>{ui('Namen, Zahlen und Beträge besonders sorgfältig am Original prüfen.')}</p>
+      {ambiguousEditorNumber(mark.text || '') && (
+        <p className="editor-ocr-warning" role="status">
+          {ui(
+            'Diese Zahl enthält ähnlich aussehende Buchstaben, etwa O/0 oder l/1. Bitte am Original prüfen; es erfolgt keine automatische Ersetzung.',
+          )}
+        </p>
+      )}
       <div className="editor-review-actions">
         <Button size="sm" variant="outline" disabled={busy} onClick={() => void recognize()}>
           {ui('Diesen Bereich erneut erkennen')}
@@ -130,6 +143,26 @@ export function EditorOcrReview({
         </Button>
       </div>
       {notice && <p role="status">{ui(notice)}</p>}
+      {!!variants.length && (
+        <div className="editor-ocr-variants">
+          {variants.map((v, i) => (
+            <div key={i}>
+              <strong>
+                {ui(v.label)} · {Math.round(v.confidence)}%
+              </strong>
+              <p>{v.text || ui('Kein Text erkannt')}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!v.text}
+                onClick={() => setSuggestion(v.text)}
+              >
+                {ui('Als Korrekturvorschlag wählen')}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
       {suggestion && (
         <label>
           {ui('Neuer Erkennungsvorschlag')}

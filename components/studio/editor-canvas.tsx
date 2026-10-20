@@ -4,7 +4,17 @@ import { EditorOcrReview } from './editor-ocr-review';
 import { EditorFontAlternatives } from './editor-font-alternatives';
 import { EditorBlockTools } from './editor-block-tools';
 import { EditorLayoutOutline } from './editor-layout-outline';
+import { EditorImageTools } from './editor-image-tools';
+import type { NativeObject } from '@/lib/native-pdf';
 import { editorTargetMark } from '@/lib/editor-blocks';
+import {
+  captureEditorFormat,
+  applyEditorFormat,
+  snapEditorRect,
+  detectEditorCells,
+  type EditorFormat,
+  type EditorGuide,
+} from '@/lib/editor-workflow';
 import { EditorTextSearch } from './editor-text-search';
 import { flushSync } from 'react-dom';
 import { editorSegments, type EditorSelection } from '@/lib/editor-rich-text';
@@ -22,7 +32,7 @@ import {
 } from 'react';
 import { LoaderCircle, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { analyzeEditorPage } from '@/lib/editor-analysis';
+import { analyzeEditorPage, editorOcrNeedsReview } from '@/lib/editor-analysis';
 import {
   EditorInlineText,
   EditorInlineToolbar,
@@ -35,6 +45,7 @@ import { normalizedRect, type Mark, type Rect } from '@/lib/studio-engine';
 import {
   fitRect,
   editorMarkChanged,
+  editorMarkSignature,
   editorRemovalRects,
   editorParagraphs,
   editorRectsOverlap,
@@ -63,6 +74,7 @@ export function MarkContent({
 }) {
   useLanguage();
   const typography = useEditorTypography(mark, source);
+  if (mark.nativeImage) return null;
   if (!editorMarkChanged(mark)) return null;
   if (mark.kind === 'text')
     return (
@@ -191,6 +203,39 @@ export function EditorCanvas({
   const [selectionRequest, setSelectionRequest] = useState<EditorSelection | null>(null);
   const [joining, setJoining] = useState(false);
   const [joinedKeys, setJoinedKeys] = useState<string[]>([]);
+  const [tableMode, setTableMode] = useState(false);
+  const [snap, setSnap] = useState(true);
+  const [guides, setGuides] = useState<EditorGuide[]>([]);
+  const [format, setFormat] = useState<EditorFormat | null>(null);
+  const [touchMode, setTouchMode] = useState(false);
+  const [imageMode, setImageMode] = useState(false),
+    [images, setImages] = useState<NativeObject[]>([]),
+    [imageLoading, setImageLoading] = useState(false);
+  useEffect(() => {
+    setImages([]);
+    if (!imageMode) return;
+    const ctrl = new AbortController();
+    setImageLoading(true);
+    void import('@/lib/editor-native')
+      .then((m) => m.readEditorImages(source, page, ctrl.signal))
+      .then((value) => {
+        if (!ctrl.signal.aborted) setImages(value);
+      })
+      .catch((e) => {
+        if (!ctrl.signal.aborted)
+          setDetectionError(
+            e instanceof Error ? e.message : 'Bilder konnten nicht gelesen werden.',
+          );
+      })
+      .finally(() => {
+        if (!ctrl.signal.aborted) setImageLoading(false);
+      });
+    return () => ctrl.abort();
+  }, [source, page, imageMode]);
+  useEffect(() => {
+    const query = window.matchMedia('(pointer: coarse)');
+    setTouchMode(query.matches);
+  }, []);
   const toggleJoin = (key: string) => {
     if (!blockChoices.some((choice) => choice.key === key)) {
       setDetectionError('Bitte 2 bis 50 waagerechte Textfelder auf derselben Seite auswählen.');
@@ -264,11 +309,12 @@ export function EditorCanvas({
   const physicalRemovals = marks
     .filter(editorMarkChanged)
     .filter((m) => editorRemovalRects(m).length);
+  const imageChanges = marks.filter((m) => m.nativeImage && editorMarkChanged(m));
   const removalKey =
     autoOcr &&
-    physicalRemovals.length &&
+    (physicalRemovals.length || imageChanges.length) &&
     physicalRemovals.every((m) => m.kind === 'text') &&
-    targets.length &&
+    (targets.length || imageChanges.length) &&
     !physicalRemovals.some((m) =>
       targets.some(
         (t) =>
@@ -276,14 +322,15 @@ export function EditorCanvas({
           editorRemovalRects(m).some((r) => editorRectsOverlap(t, r)),
       ),
     )
-      ? JSON.stringify(
-          physicalRemovals.map((m) => ({
+      ? JSON.stringify([
+          ...physicalRemovals.map((m) => ({
             id: m.id,
             kind: m.kind,
             sourceRect: m.sourceRect,
             sourceRects: m.sourceRects,
           })),
-        )
+          ...imageChanges,
+        ])
       : '';
   useEffect(() => {
     setBackground({ key: '', url: '', failed: false });
@@ -452,7 +499,7 @@ export function EditorCanvas({
     drag.current = { mark, point: position(e), resize };
     host.current!.setPointerCapture(e.pointerId);
   }
-  function transform(p: { x: number; y: number }) {
+  function transform(p: { x: number; y: number }, noSnap = false) {
     const d = drag.current!;
     let r: Rect;
     if (d.resize) {
@@ -467,20 +514,27 @@ export function EditorCanvas({
         x: Math.max(0, Math.min(1 - d.mark.w, d.mark.x + p.x - d.point.x)),
         y: Math.max(0, Math.min(1 - d.mark.h, d.mark.y + p.y - d.point.y)),
       };
-    return { ...d.mark, ...fitRect(r) };
+    const next = { ...d.mark, ...fitRect(r) };
+    const snapped =
+      snap && !noSnap && !['image', 'signature'].includes(next.kind)
+        ? snapEditorRect(next, marks, available, dims.width, dims.height, displayWidth, d.resize)
+        : { mark: next, guides: [] };
+    setGuides(snapped.guides);
+    return snapped.mark;
   }
   function move(e: PointerEvent<HTMLDivElement>) {
     if (drag.current) {
-      setMoving(transform(position(e)));
+      setMoving(transform(position(e), e.altKey));
       return;
     }
     if (start.current) setDraft(normalizedRect(start.current, position(e)));
   }
   function up(e: PointerEvent<HTMLDivElement>) {
     if (drag.current) {
-      const m = transform(position(e));
+      const m = transform(position(e), e.altKey);
       drag.current = null;
       setMoving(null);
+      setGuides([]);
       onPatch(m.id, m);
       return;
     }
@@ -543,14 +597,39 @@ export function EditorCanvas({
       return;
     }
     const next = editorTargetMark(target, page.index, dims.width, uid());
+    const cell = tableMode ? cells.find((c) => c.target.id === target.id) : undefined;
+    if (cell) {
+      next.w = cell.rect.w;
+      next.originalState = editorMarkSignature(next);
+    }
     setInitialPoint(point ? { id: next.id, ...point } : null);
     onMark(next);
   }
   const displayed = marks.map((m) => (moving?.id === m.id ? moving : m)),
     removals = displayed.filter((m) => m.kind === 'erase' || m.sourceRect);
   const textTargets =
-    paragraphMode && autoOcr ? editorParagraphs(targets, dims.width, dims.height) : targets;
+    paragraphMode && autoOcr && !tableMode
+      ? editorParagraphs(targets, dims.width, dims.height)
+      : targets;
+  const cells = detectEditorCells(targets, dims.width, dims.height);
+  const cellFor = (mark: Mark) =>
+    cells.find(
+      (c) =>
+        mark.sourceRect &&
+        Math.abs(c.target.x - mark.sourceRect.x) < 0.000001 &&
+        Math.abs(c.target.y - mark.sourceRect.y) < 0.000001,
+    );
+  const nextCell = (backward: boolean) => {
+    const selected = marks.find((m) => m.id === selectedId),
+      cell = selected && cellFor(selected),
+      at = cell ? cells.indexOf(cell) : -1;
+    const next = cells[at + (backward ? -1 : 1)];
+    if (!next || (cell && next.table !== cell.table)) return false;
+    pick(next.target);
+    return true;
+  };
   const selectedText = displayed.find((m) => m.id === selectedId && m.kind === 'text');
+  const selectedImage = displayed.find((m) => m.id === selectedId && m.nativeImage);
   const available = textTargets.filter(
     (t) =>
       !(t.fragments || [t]).some((part) =>
@@ -570,7 +649,21 @@ export function EditorCanvas({
       .map((mark) => ({ key: 'mark:' + mark.id, mark, existing: true })),
   ];
   return (
-    <div className="editor-canvas-wrap">
+    <div
+      className={`editor-canvas-wrap${touchMode ? ' is-touch-mode' : ''}`}
+      onKeyDownCapture={(e) => {
+        if (
+          tableMode &&
+          e.key === 'Tab' &&
+          e.target instanceof HTMLElement &&
+          e.target.closest('.editor-sheet') &&
+          nextCell(e.shiftKey)
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }}
+    >
       {(action === 'pick' || autoOcr) && (
         <div className="editor-preparation">
           <div className="editor-detection" role="status" aria-live="polite">
@@ -603,9 +696,7 @@ export function EditorCanvas({
                   variant="outline"
                   disabled={disabled}
                   onClick={() => {
-                    const target = targets.find(
-                      (t) => t.origin === 'ocr' && (t.confidence ?? 100) < 75,
-                    );
+                    const target = targets.find(editorOcrNeedsReview);
                     if (target) pick(target);
                   }}
                 >
@@ -647,9 +738,21 @@ export function EditorCanvas({
         <div className="editor-text-mode" role="group" aria-label={ui('Textauswahl')}>
           <Button
             size="sm"
+            variant={tableMode ? 'secondary' : 'ghost'}
+            aria-pressed={tableMode}
+            disabled={!cells.length || disabled}
+            onClick={() => setTableMode(!tableMode)}
+          >
+            {ui('Tabellenzellen')}
+          </Button>
+          <Button
+            size="sm"
             variant={paragraphMode ? 'secondary' : 'ghost'}
             aria-pressed={paragraphMode}
-            onClick={() => setParagraphMode(true)}
+            onClick={() => {
+              setParagraphMode(true);
+              setTableMode(false);
+            }}
           >
             {ui('Absätze')}
           </Button>
@@ -657,7 +760,10 @@ export function EditorCanvas({
             size="sm"
             variant={!paragraphMode ? 'secondary' : 'ghost'}
             aria-pressed={!paragraphMode}
-            onClick={() => setParagraphMode(false)}
+            onClick={() => {
+              setParagraphMode(false);
+              setTableMode(false);
+            }}
           >
             {ui('Einzelne Textstellen')}
           </Button>
@@ -670,6 +776,94 @@ export function EditorCanvas({
             </span>
           )}
         </div>
+      )}
+      {autoOcr && (
+        <div className="editor-precision-tools">
+          <Button
+            size="sm"
+            variant={imageMode ? 'secondary' : 'outline'}
+            aria-pressed={imageMode}
+            disabled={disabled}
+            onClick={() => {
+              setImageMode(!imageMode);
+              onSelect('');
+            }}
+          >
+            {ui('Bilder und Logos')}
+          </Button>
+          {imageMode && (
+            <span role="status">
+              {ui(
+                imageLoading
+                  ? 'Bilder werden gelesen …'
+                  : images.length
+                    ? 'Bildrahmen auf der Seite auswählen.'
+                    : 'Keine einzeln bearbeitbaren Bilder gefunden. Scan-Hintergründe und Objektgruppen bleiben geschützt.',
+              )}
+            </span>
+          )}
+          <label>
+            <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
+            {ui('An Hilfslinien einrasten')}
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={touchMode}
+              onChange={(e) => setTouchMode(e.target.checked)}
+            />
+            {ui('Touch-Modus')}
+          </label>
+          {selectedText && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled}
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() =>
+                  setFormat(captureEditorFormat(selectedText, dims.width, source.id, textSelection))
+                }
+              >
+                {ui('Format aufnehmen')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled || !format}
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  if (format)
+                    onPatch(selectedText.id, applyEditorFormat(format, dims.width, source.id));
+                }}
+              >
+                {ui('Format übertragen')}
+              </Button>
+            </>
+          )}
+          {format && (
+            <span role="status">
+              {ui('Format gespeichert. Zieltext auswählen und übertragen.')}
+            </span>
+          )}
+          {tableMode && (
+            <span>
+              {ui(
+                'Tab: nächste Zelle · Umschalt+Tab: vorherige Zelle. Erkannte Zeilen und Spalten bitte prüfen.',
+              )}
+            </span>
+          )}
+        </div>
+      )}
+      {selectedImage && (
+        <EditorImageTools
+          key={selectedImage.id}
+          mark={selectedImage}
+          source={source}
+          page={page}
+          disabled={disabled}
+          onPatch={onPatch}
+        />
       )}
       {autoOcr && onReplaceMarks && (
         <EditorBlockTools
@@ -728,73 +922,6 @@ export function EditorCanvas({
           }}
         />
       )}
-      {selectedText && autoOcr && (
-        <>
-          <EditorLayoutHelp
-            key={`layout-${selectedText.id}`}
-            mark={selectedText}
-            source={source}
-            width={dims.width}
-            height={dims.height}
-            onPatch={onPatch}
-          />
-          <EditorFontAlternatives
-            mark={selectedText}
-            source={source}
-            width={dims.width}
-            height={dims.height}
-            selection={textSelection}
-            disabled={disabled}
-            onPatch={onPatch}
-          />
-          {selectedText.sourceRect && (
-            <details className="editor-font-compare">
-              <summary>{ui('Schriftbild mit dem Original vergleichen')}</summary>
-              <div className="editor-review-grid">
-                <div>
-                  <strong>{ui('Original')}</strong>
-                  <div
-                    style={{ width: selectedText.sourceRect.w * displayWidth, maxWidth: '100%' }}
-                  >
-                    <EditorOriginalSnippet
-                      url={url}
-                      rect={selectedText.sourceRect}
-                      width={dims.width}
-                      height={dims.height}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <strong>{ui('Aktuelle Bearbeitung')}</strong>
-                  <div className="editor-font-sample">
-                    <MarkContent
-                      mark={{ ...selectedText, x: 0, y: 0, originalState: undefined }}
-                      source={source}
-                      width={displayWidth}
-                      height={(displayWidth * dims.height) / dims.width}
-                    />
-                  </div>
-                </div>
-              </div>
-            </details>
-          )}
-          {selectedText.sourceIsScan && (
-            <EditorOcrReview
-              key={`ocr-${selectedText.id}`}
-              mark={selectedText}
-              source={source}
-              page={page}
-              url={url}
-              width={dims.width}
-              height={dims.height}
-              language={language}
-              targets={targets}
-              onPick={pick}
-              onPatch={onPatch}
-            />
-          )}
-        </>
-      )}
       {selectedText && editorTextCollision(selectedText, displayed, targets) && (
         <p className="editor-layout-warning" role="alert">
           {ui(
@@ -829,6 +956,7 @@ export function EditorCanvas({
               drag.current = null;
               setDraft(null);
               setMoving(null);
+              setGuides([]);
             }}
             aria-label={ui('PDF-Bearbeitungsfläche')}
             role="region"
@@ -867,13 +995,18 @@ export function EditorCanvas({
               )}
             {url &&
               action === 'pick' &&
+              !imageMode &&
               available.map((t) => (
                 <button
-                  className={`editor-text-target ${joining && joinedKeys.includes('target:' + t.id) ? 'is-joining' : ''} ${t.origin === 'ocr' && (t.confidence ?? 100) < 75 ? 'is-uncertain' : ''}`}
+                  className={`editor-text-target ${tableMode && cells.some((c) => c.target.id === t.id) ? 'is-table-cell' : ''} ${joining && joinedKeys.includes('target:' + t.id) ? 'is-joining' : ''} ${editorOcrNeedsReview(t) ? 'is-uncertain' : ''}`}
                   key={t.id}
                   style={box(t)}
                   disabled={disabled}
-                  aria-label={ui(`Text bearbeiten: ${t.text}`)}
+                  aria-label={
+                    tableMode && cells.some((c) => c.target.id === t.id)
+                      ? `${ui('Tabellenzelle')} ${cells.find((c) => c.target.id === t.id)!.row + 1}, ${cells.find((c) => c.target.id === t.id)!.column + 1}: ${t.text}`
+                      : ui(`Text bearbeiten: ${t.text}`)
+                  }
                   aria-pressed={joining ? joinedKeys.includes('target:' + t.id) : undefined}
                   title={
                     t.unsupportedReason
@@ -894,6 +1027,36 @@ export function EditorCanvas({
                   }}
                 />
               ))}
+            {url &&
+              imageMode &&
+              images
+                .filter((image) => !marks.some((m) => m.nativeImage?.index === image.index))
+                .map((image) => (
+                  <button
+                    type="button"
+                    key={'image-' + image.index}
+                    className="editor-image-target"
+                    style={box(image)}
+                    aria-label={ui('Vorhandenes Bild auswählen') + ' ' + (image.index + 1)}
+                    disabled={disabled}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const { x, y, w, h, index } = image;
+                      const next: Mark = {
+                        id: uid(),
+                        kind: 'image',
+                        x,
+                        y,
+                        w,
+                        h,
+                        nativeImage: { index, rect: { x, y, w, h }, corners: image.imageCorners },
+                      };
+                      next.originalState = editorMarkSignature(next);
+                      onMark(next);
+                    }}
+                  />
+                ))}
             {[
               ...displayed.filter((m) => m.kind !== 'redact'),
               ...displayed.filter((m) => m.kind === 'redact'),
@@ -1035,6 +1198,18 @@ export function EditorCanvas({
                 aria-label={ui('Suchtreffer auf der Seite')}
               />
             )}
+            {guides.map((guide, i) => (
+              <div
+                key={i}
+                className={`editor-snap-guide ${guide.axis}${guide.baseline ? ' baseline' : ''}`}
+                style={
+                  guide.axis === 'x'
+                    ? { left: `${guide.value * 100}%` }
+                    : { top: `${guide.value * 100}%` }
+                }
+                aria-hidden="true"
+              />
+            ))}
             {crop && (
               <div className="crop-selection" style={box(crop)}>
                 <span>{ui('AUSSCHNITT')}</span>
@@ -1044,6 +1219,73 @@ export function EditorCanvas({
           </div>
         </div>
       </div>
+      {selectedText && autoOcr && (
+        <>
+          <EditorLayoutHelp
+            key={`layout-${selectedText.id}`}
+            mark={selectedText}
+            source={source}
+            width={dims.width}
+            height={dims.height}
+            onPatch={onPatch}
+          />
+          <EditorFontAlternatives
+            mark={selectedText}
+            source={source}
+            width={dims.width}
+            height={dims.height}
+            selection={textSelection}
+            disabled={disabled}
+            onPatch={onPatch}
+          />
+          {selectedText.sourceRect && (
+            <details className="editor-font-compare">
+              <summary>{ui('Schriftbild mit dem Original vergleichen')}</summary>
+              <div className="editor-review-grid">
+                <div>
+                  <strong>{ui('Original')}</strong>
+                  <div
+                    style={{ width: selectedText.sourceRect.w * displayWidth, maxWidth: '100%' }}
+                  >
+                    <EditorOriginalSnippet
+                      url={url}
+                      rect={selectedText.sourceRect}
+                      width={dims.width}
+                      height={dims.height}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <strong>{ui('Aktuelle Bearbeitung')}</strong>
+                  <div className="editor-font-sample">
+                    <MarkContent
+                      mark={{ ...selectedText, x: 0, y: 0, originalState: undefined }}
+                      source={source}
+                      width={displayWidth}
+                      height={(displayWidth * dims.height) / dims.width}
+                    />
+                  </div>
+                </div>
+              </div>
+            </details>
+          )}
+          {selectedText.sourceIsScan && (
+            <EditorOcrReview
+              key={`ocr-${selectedText.id}`}
+              mark={selectedText}
+              source={source}
+              page={page}
+              url={url}
+              width={dims.width}
+              height={dims.height}
+              language={language}
+              targets={targets}
+              onPick={pick}
+              onPatch={onPatch}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }

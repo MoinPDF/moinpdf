@@ -1,9 +1,204 @@
 import { PDFDocument, PDFName, PDFNumber, PDFRawStream, PDFRef, degrees } from 'pdf-lib';
 import { renderPage, type PageItem, type Source } from './pdf-engine';
 import type { Mark } from './studio-engine';
-import { editorRemovalRects, type TextTarget } from './editor-model';
+import { editorRemovalRects, editorImageCropBounds, type TextTarget } from './editor-model';
 import { remainingEditorTargets } from './editor-analysis';
 import { readPdfText } from './pdf-text';
+
+export async function editorSinglePage(original: PDFDocument, item: PageItem) {
+  const single = await PDFDocument.create(),
+    [page] = await single.copyPages(original, [item.index]);
+  page.setRotation(degrees((page.getRotation().angle + item.rotation) % 360));
+  single.addPage(page);
+  return single;
+}
+export async function readEditorImages(source: Source, item: PageItem, signal: AbortSignal) {
+  const single = await editorSinglePage(await loadEditorPdf(source.bytes), item);
+  const { inspectObjects } = await import('./native-pdf');
+  return (await inspectObjects(await single.save(), 0, signal)).filter(
+    (o) =>
+      o.type === 'image' &&
+      o.x >= 0 &&
+      o.y >= 0 &&
+      o.w > 0 &&
+      o.h > 0 &&
+      o.x + o.w <= 1.001 &&
+      o.y + o.h <= 1.001 &&
+      o.w * o.h < 0.8,
+  );
+}
+
+/** Preserve the pixel grid of a simple full-page scan. A separate PDF.js render
+ * must agree before using decoded image pixels; clipping, blend effects, extra
+ * objects, annotations, layers, and ambiguous geometry keep the normal path. */
+export async function readEditorScanPixels(
+  original: PDFDocument,
+  source: Source,
+  item: PageItem,
+  signal: AbortSignal,
+): Promise<Awaited<ReturnType<typeof renderPage>> | undefined> {
+  let canvas: HTMLCanvasElement | undefined,
+    reference: HTMLCanvasElement | undefined,
+    pixelsCanvas: HTMLCanvasElement | undefined;
+  try {
+    signal.throwIfAborted();
+    if (original.catalog.has(PDFName.of('OCProperties'))) return;
+    const pdfPage = await source.pdf.getPage(item.index + 1);
+    if ((await pdfPage.getAnnotations()).length) return;
+    const single = await editorSinglePage(original, item),
+      bytes = await single.save();
+    const { inspectObjects, readImage } = await import('./native-pdf');
+    const objects = await inspectObjects(bytes, 0, signal),
+      image = objects[0];
+    if (objects.length !== 1 || image.type !== 'image' || !image.imageCorners) return;
+    if (
+      Math.abs(image.x) + Math.abs(image.y) + Math.abs(image.w - 1) + Math.abs(image.h - 1) >
+      0.000001
+    )
+      return;
+    if (
+      image.imageCorners
+        .flat()
+        .some((v) => Math.abs(v - Math.round(v)) > 0.000001 || v < -0.000001 || v > 1.000001)
+    )
+      return;
+    const [a, b, c] = image.imageCorners.map((p) => p.map(Math.round)),
+      dx = b[0] - a[0],
+      dy = b[1] - a[1],
+      ex = c[0] - a[0],
+      ey = c[1] - a[1];
+    if (Math.abs(dx * ey - dy * ex) !== 1 || dx * ex + dy * ey !== 0) return;
+    const pixels = await readImage(bytes, 0, image.index, signal),
+      width = dx ? pixels.width : pixels.height,
+      height = dx ? pixels.height : pixels.width,
+      base = pdfPage.getViewport({ scale: 1, rotation: (pdfPage.rotate + item.rotation) % 360 }),
+      scale = width / base.width;
+    if (Math.abs(base.height * scale - height) > 0.01) return;
+    canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    pixelsCanvas = document.createElement('canvas');
+    pixelsCanvas.width = pixels.width;
+    pixelsCanvas.height = pixels.height;
+    pixelsCanvas
+      .getContext('2d')!
+      .putImageData(
+        new ImageData(new Uint8ClampedArray(pixels.rgba), pixels.width, pixels.height),
+        0,
+        0,
+      );
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.setTransform(
+      (dx * width) / pixels.width,
+      (dy * height) / pixels.width,
+      (ex * width) / pixels.height,
+      (ey * height) / pixels.height,
+      a[0] * width,
+      a[1] * height,
+    );
+    ctx.drawImage(pixelsCanvas, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    reference = document.createElement('canvas');
+    reference.width = width;
+    reference.height = height;
+    const task = pdfPage.render({
+        canvas: reference,
+        viewport: pdfPage.getViewport({ scale, rotation: (pdfPage.rotate + item.rotation) % 360 }),
+        background: 'rgb(255,255,255)',
+      }),
+      cancel = () => task.cancel();
+    signal.addEventListener('abort', cancel, { once: true });
+    try {
+      await task.promise;
+      signal.throwIfAborted();
+    } finally {
+      signal.removeEventListener('abort', cancel);
+    }
+    const actual = reference.getContext('2d')!.getImageData(0, 0, width, height).data,
+      candidate = ctx.getImageData(0, 0, width, height).data;
+    let differences = 0;
+    for (let i = 0; i < actual.length; i += 4) {
+      if (
+        Math.max(
+          Math.abs(actual[i] - candidate[i]),
+          Math.abs(actual[i + 1] - candidate[i + 1]),
+          Math.abs(actual[i + 2] - candidate[i + 2]),
+        ) > 12
+      )
+        differences++;
+    }
+    if (differences / (width * height) > 0.0001) return;
+    const result = { canvas, width: base.width, height: base.height, scale };
+    canvas = undefined;
+    return result;
+  } catch {
+    signal.throwIfAborted();
+    return;
+  } finally {
+    for (const buffer of [canvas, reference, pixelsCanvas])
+      if (buffer) buffer.width = buffer.height = 0;
+  }
+}
+async function replacementPixels(data: string, crop?: import('./studio-engine').Rect) {
+  const image = new Image();
+  image.src = data;
+  await image.decode();
+  const r = crop || { x: 0, y: 0, w: 1, h: 1 };
+  if (image.naturalWidth * image.naturalHeight > 4000000)
+    throw new Error('Das Ersatzbild darf höchstens 4 Megapixel haben.');
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(image.naturalWidth * r.w));
+  canvas.height = Math.max(1, Math.round(image.naturalHeight * r.h));
+  try {
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(
+      image,
+      r.x * image.naturalWidth,
+      r.y * image.naturalHeight,
+      r.w * image.naturalWidth,
+      r.h * image.naturalHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      rgba: new Uint8Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data),
+    };
+  } finally {
+    canvas.width = canvas.height = 0;
+  }
+}
+export async function editorImagePreview(
+  source: Source,
+  item: PageItem,
+  index: number,
+  signal: AbortSignal,
+) {
+  const single = await editorSinglePage(await loadEditorPdf(source.bytes), item),
+    { readImage } = await import('./native-pdf');
+  const pixels = await readImage(await single.save(), 0, index, signal),
+    canvas = document.createElement('canvas');
+  canvas.width = pixels.width;
+  canvas.height = pixels.height;
+  try {
+    canvas
+      .getContext('2d')!
+      .putImageData(
+        new ImageData(new Uint8ClampedArray(pixels.rgba), pixels.width, pixels.height),
+        0,
+        0,
+      );
+    return canvas.toDataURL('image/png');
+  } finally {
+    canvas.width = canvas.height = 0;
+  }
+}
 
 /** pdf-lib may trim a real trailing CR/LF byte from compressed streams when
  * their /Length is an indirect reference parsed later. Restore only the exact,
@@ -57,20 +252,69 @@ export async function removeEditorContent(
   targets: TextTarget[],
   signal: AbortSignal,
 ) {
-  const single = await PDFDocument.create();
-  const [page] = await single.copyPages(original, [item.index]);
-  page.setRotation(degrees((page.getRotation().angle + item.rotation) % 360));
-  single.addPage(page);
+  const single = await editorSinglePage(original, item);
   const removals = marks.flatMap((mark) =>
     editorRemovalRects(mark).map((rect) => ({
       page: 0,
       rect,
       color: mark.fill || '#ffffff',
       textOnly: mark.kind === 'text',
+      ...(mark.nativeTextSlice ? { textSlice: mark.nativeTextSlice } : {}),
     })),
   );
-  const { removeRegions } = await import('./native-pdf');
-  const cleaned = await removeRegions(await single.save(), removals, signal);
+  const { removeRegions, editObjects, readImage, inspectObjects } = await import('./native-pdf');
+  let cleaned = await single.save();
+  const images = marks.filter((m) => m.nativeImage);
+  if (images.length) {
+    const objects = await inspectObjects(cleaned, 0, signal);
+    if (new Set(images.map((m) => m.nativeImage!.index)).size !== images.length)
+      throw new Error('Dasselbe Bild wurde mehrfach ausgewählt.');
+    const changes = [];
+    for (const mark of images) {
+      const native = mark.nativeImage!;
+      const actual = objects.find((o) => o.index === native.index && o.type === 'image');
+      if (
+        !actual ||
+        (['x', 'y', 'w', 'h'] as const).some(
+          (key) => Math.abs(actual[key] - native.rect[key]) > 0.0001,
+        )
+      )
+        throw new Error('Das ursprüngliche Bildobjekt stimmt nicht mehr mit der Auswahl überein.');
+      const r = editorImageCropBounds(native.rect, actual.imageCorners, native.crop),
+        scale = mark.w / r.w;
+      if (Math.abs(mark.h / r.h - scale) > 0.001)
+        throw new Error('Vorhandene Bilder bitte proportional skalieren.');
+      let image = mark.image ? await replacementPixels(mark.image, native.crop) : undefined;
+      if (native.crop && !image) {
+        const pixels = await readImage(cleaned, 0, native.index, signal),
+          canvas = document.createElement('canvas');
+        canvas.width = pixels.width;
+        canvas.height = pixels.height;
+        try {
+          canvas
+            .getContext('2d')!
+            .putImageData(
+              new ImageData(new Uint8ClampedArray(pixels.rgba), pixels.width, pixels.height),
+              0,
+              0,
+            );
+          image = await replacementPixels(canvas.toDataURL('image/png'), native.crop);
+        } finally {
+          canvas.width = canvas.height = 0;
+        }
+      }
+      changes.push({
+        index: native.index,
+        dx: mark.x + mark.w / 2 - r.x - r.w / 2,
+        dy: mark.y + mark.h / 2 - r.y - r.h / 2,
+        scale,
+        ...(native.crop ? { imageCrop: native.crop } : {}),
+        ...(image ? { image } : {}),
+      });
+    }
+    cleaned = await editObjects(cleaned, 0, changes, signal);
+  }
+  if (removals.length) cleaned = await removeRegions(cleaned, removals, signal);
   if (signal.aborted) throw new DOMException('Abgebrochen', 'AbortError');
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const task = getDocument({
@@ -91,14 +335,20 @@ export async function removeEditorContent(
       .filter((p) => 'str' in p)
       .map((p) => ('str' in p ? p.str : ''))
       .join('');
-    const expected = remainingEditorTargets(
-      targets,
-      removals.map((r) => r.rect),
-    )
-      .map((t) => t.text)
-      .join('');
+    const expected =
+      remainingEditorTargets(
+        targets,
+        removals.map((r) => r.rect),
+      )
+        .map((t) => t.text)
+        .join('') +
+      marks
+        .filter((m) => m.nativeTextSlice)
+        .map((m) => m.nativeTextSlice!.before + m.nativeTextSlice!.after)
+        .join('');
     const normalized = (text: string) => text.normalize('NFKC').replace(/\s/gu, '');
-    if (normalized(actual) !== normalized(expected))
+    const counts = (text: string) => [...normalized(text)].sort().join('');
+    if (counts(actual) !== counts(expected))
       throw new Error('Die verbleibenden Textinhalte konnten nicht vollständig bestätigt werden.');
   } finally {
     signal.removeEventListener('abort', cancel);

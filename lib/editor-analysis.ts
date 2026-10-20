@@ -3,6 +3,10 @@ import { abortable, renderPage, type Source, type PageItem } from './pdf-engine'
 import { readTextTargets, type TextTarget } from './editor-model';
 import { parseOcrLanguages } from './ocr-languages';
 import type { Rect } from './studio-engine';
+import { estimateEditorSkew, preprocessEditorScan, ambiguousEditorNumber } from './editor-scan';
+export const editorOcrNeedsReview = (target: TextTarget) =>
+  target.origin === 'ocr' &&
+  ((target.confidence ?? 100) < 75 || ambiguousEditorNumber(target.text));
 
 export type EditorPageText = {
   targets: TextTarget[];
@@ -127,7 +131,30 @@ export async function recognizeEditorRegion(
         canvas.width,
         canvas.height,
       );
-    const data = await recognizer.recognize(canvas, language, report);
+    const original = await recognizer.recognize(canvas, language, report);
+    const prepared = preprocessEditorScan(canvas);
+    let processed: OcrPage;
+    try {
+      processed = await recognizer.recognize(prepared.canvas, language, report);
+    } finally {
+      prepared.canvas.width = prepared.canvas.height = 0;
+    }
+    const variants = [
+      { label: 'Originalscan', data: original },
+      { label: 'Aufbereitet: Ausrichtung, Schatten und Kontrast', data: processed },
+    ]
+      .sort((a, b) => ocrScore(b.data) - ocrScore(a.data))
+      .map((v) => ({
+        label: v.label,
+        confidence: v.data.confidence,
+        text: (v.data.blocks || [])
+          .flatMap((b) =>
+            b.paragraphs.flatMap((p) => p.lines.map((l) => l.words.map((w) => w.text).join(' '))),
+          )
+          .join('\n')
+          .trim(),
+      }));
+    const data = ocrScore(processed) > ocrScore(original) ? processed : original;
     signal.throwIfAborted();
     const text = (data.blocks || [])
       .flatMap((b) =>
@@ -139,7 +166,7 @@ export async function recognizeEditorRegion(
       throw new Error(
         'In diesem Bereich wurde kein lesbarer Text erkannt. Bitte manuell korrigieren.',
       );
-    return { text, confidence: data.confidence };
+    return { text, confidence: data.confidence, variants };
   } finally {
     rendered.canvas.width = rendered.canvas.height = canvas.width = canvas.height = 0;
     await recognizer.dispose();
@@ -200,6 +227,7 @@ export function ocrEditorTargets(
   width: number,
   height: number,
   quarter = 0,
+  prepared?: { canvas: HTMLCanvasElement; restore: (x: number, y: number) => [number, number] },
 ): TextTarget[] {
   const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
   const cw = quarter % 2 ? canvas.height : canvas.width,
@@ -214,16 +242,26 @@ export function ocrEditorTargets(
     .map(({ word, baseline }, i) => {
       const { bbox: b } = word;
       const corners = [
-        [b.x0 / cw, b.y0 / ch],
-        [b.x1 / cw, b.y1 / ch],
-      ].map(([x, y]) => restorePoint(x, y, quarter));
+        [b.x0, b.y0],
+        [b.x1, b.y0],
+        [b.x0, b.y1],
+        [b.x1, b.y1],
+      ]
+        .map(([x, y]) => (prepared ? prepared.restore(x, y) : [x, y]))
+        .map(([x, y]) => restorePoint(x / cw, y / ch, quarter));
       const x = Math.max(0, Math.min(...corners.map((p) => p[0])) - 0.001),
         y = Math.max(0, Math.min(...corners.map((p) => p[1])) - 0.001);
       const r = {
         x,
         y,
-        w: Math.min(1 - x, Math.abs(corners[1][0] - corners[0][0]) + 0.002),
-        h: Math.min(1 - y, Math.abs(corners[1][1] - corners[0][1]) + 0.002),
+        w: Math.min(
+          1 - x,
+          Math.max(...corners.map((p) => p[0])) - Math.min(...corners.map((p) => p[0])) + 0.002,
+        ),
+        h: Math.min(
+          1 - y,
+          Math.max(...corners.map((p) => p[1])) - Math.min(...corners.map((p) => p[1])) + 0.002,
+        ),
       };
       // Tesseract can recognise sideways lines without rotating the input. Its
       // baseline, not only our recovery rotation, defines the word orientation.
@@ -403,6 +441,7 @@ export async function analyzeEditorPage(
       let data = await recognizer.recognize(rendered.canvas, language, report),
         quarter = 0,
         score = ocrScore(data);
+      let prepared: ReturnType<typeof preprocessEditorScan> | undefined;
       // Only difficult pages take the slower orientation recovery path.
       if (data.confidence < 55 || score < 4) {
         for (const turn of [2, 1, 3]) {
@@ -423,13 +462,37 @@ export async function analyzeEditorPage(
           }
         }
       }
+      const oriented = quarter ? rotatedCanvas(rendered.canvas, quarter) : rendered.canvas;
+      try {
+        const skew = estimateEditorSkew(oriented);
+        if (data.confidence < 80 || score < 20 || skew) {
+          signal.throwIfAborted();
+          report({ percent: 25, label: 'Scan wird lokal aufbereitet und verglichen …' });
+          const candidate = preprocessEditorScan(oriented, skew);
+          try {
+            const next = await recognizer.recognize(candidate.canvas, language, report),
+              nextScore = ocrScore(next);
+            if (nextScore > score * 1.08 && next.confidence >= data.confidence - 3) {
+              data = next;
+              score = nextScore;
+              prepared = candidate;
+            }
+          } finally {
+            if (prepared !== candidate) candidate.canvas.width = candidate.canvas.height = 0;
+          }
+        }
+      } finally {
+        if (oriented !== rendered.canvas) oriented.width = oriented.height = 0;
+      }
       recognized = ocrEditorTargets(
         data,
         rendered.canvas,
         rendered.width,
         rendered.height,
         quarter,
+        prepared,
       );
+      if (prepared) prepared.canvas.width = prepared.canvas.height = 0;
     }
     signal.throwIfAborted();
     // Re-recognition can replace an existing invisible search layer, but must
@@ -445,7 +508,7 @@ export async function analyzeEditorPage(
       height: rendered.height,
       ocr: true,
       replaceTextLayer: base.replaceTextLayer || (replaceSearch && valid.some((t) => t.invisible)),
-      uncertain: targets.filter((t) => t.origin === 'ocr' && (t.confidence ?? 100) < 75).length,
+      uncertain: targets.filter(editorOcrNeedsReview).length,
     };
     const entries = cache.get(source) || new Map();
     // Only text/coordinates are retained, never canvases or document copies.

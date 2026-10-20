@@ -176,6 +176,7 @@ import { EditorCanvas } from '@/components/studio/editor-canvas';
 import { EditorDocumentSearch } from '@/components/studio/editor-document-search';
 import { editorDocumentFingerprint } from '@/lib/editor-document-search';
 import { EditorPanel, EditorToolbar } from '@/components/studio/editor-panel';
+import { EditorWorkflowPanel } from '@/components/studio/editor-workflow-panel';
 import { editorTools, fitRect, type EditorAction } from '@/lib/editor-model';
 import { ExtraSettings } from '@/components/studio/extra-settings';
 import { ReportView } from '@/components/studio/report-view';
@@ -991,12 +992,18 @@ function Studio() {
   }
   function removeMark(id: string) {
     if (!activePage) return;
+    const group = pageMarks.find((m) => m.id === id)?.changeGroup;
     setSelectedMarkId('');
     commit({
       pages,
       edits: {
         ...edits,
-        marks: { ...edits.marks, [activePage.id]: pageMarks.filter((m) => m.id !== id) },
+        marks: Object.fromEntries(
+          Object.entries(edits.marks).map(([pageId, marks]) => [
+            pageId,
+            marks.filter((m) => (group ? m.changeGroup !== group : m.id !== id)),
+          ]),
+        ),
       },
     });
   }
@@ -1033,13 +1040,29 @@ function Studio() {
     if (!activePage || locked) return;
     typingHistory.current = null;
     textSelection.current = null;
+    const groups = new Set(
+      pageMarks.filter((m) => remove.includes(m.id) && m.changeGroup).map((m) => m.changeGroup!),
+    );
+    const group = groups.size ? uid() : add.find((m) => m.changeGroup)?.changeGroup;
+    const linked = Object.fromEntries(
+      Object.entries(edits.marks).map(([pageId, marks]) => [
+        pageId,
+        marks.map((m) =>
+          group && m.changeGroup && groups.has(m.changeGroup) ? { ...m, changeGroup: group } : m,
+        ),
+      ]),
+    );
+    if (group) add = add.map((m) => ({ ...m, changeGroup: group }));
     commit({
       pages,
       edits: {
         ...edits,
         marks: {
-          ...edits.marks,
-          [activePage.id]: [...pageMarks.filter((m) => !remove.includes(m.id)), ...add],
+          ...linked,
+          [activePage.id]: [
+            ...(linked[activePage.id] || []).filter((m) => !remove.includes(m.id)),
+            ...add,
+          ],
         },
       },
     });
@@ -1084,6 +1107,10 @@ function Studio() {
     delete copy.sourceRect;
     delete copy.sourceRects;
     delete copy.originalState;
+    delete copy.originalText;
+    delete copy.changeGroup;
+    delete copy.flow;
+    delete copy.nativeImage;
     mark(copy);
   }
   async function insertImage(file: File) {
@@ -2804,6 +2831,7 @@ function Studio() {
                   mark={selectedMark}
                   marks={pageMarks}
                   width={editorDims.width}
+                  height={editorDims.height}
                   disabled={locked}
                   onPatch={patchMark}
                   onRemove={removeMark}
@@ -2811,6 +2839,27 @@ function Studio() {
                   onDuplicate={duplicateMark}
                   onNewText={newText}
                   onImage={() => imagePicker.current?.click()}
+                />
+              )}
+              {toolId === 'edit-text' && (
+                <EditorWorkflowPanel
+                  sources={sources}
+                  pages={pages}
+                  edits={edits}
+                  disabled={locked}
+                  onApply={(next) => {
+                    if (locked) return;
+                    typingHistory.current = null;
+                    textSelection.current = null;
+                    setSelectedMarkId('');
+                    commit({ pages, edits: next });
+                  }}
+                  onReveal={(pageId, mark) => {
+                    setActiveId(pageId);
+                    setSelectedMarkId(mark.id);
+                    setEditorSearchHighlight({ pageId, rect: mark });
+                    setView('document');
+                  }}
                 />
               )}
               {toolId === 'edit-text' && (

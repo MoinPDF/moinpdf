@@ -121,6 +121,17 @@ export function compareEditorInk(
     extra = 0,
     expectedCoverage = 0,
     actualCoverage = 0;
+  let differenceLeft = width,
+    differenceTop = height,
+    differenceRight = 0,
+    differenceBottom = 0;
+  const locate = (x: number, y: number, coverage: number, loss: number) => {
+    if (loss <= Math.max(90, coverage * 0.4)) return;
+    differenceLeft = Math.min(differenceLeft, x);
+    differenceTop = Math.min(differenceTop, y);
+    differenceRight = Math.max(differenceRight, x + 1);
+    differenceBottom = Math.max(differenceBottom, y + 1);
+  };
   const uncovered = (from: Uint8ClampedArray, to: Uint8ClampedArray, x: number, y: number) => {
     const i = (y * width + x) * 4;
     const ink = [0, 1, 2].map((c) => background.data[i + c] - from[i + c]);
@@ -150,12 +161,14 @@ export function compareEditorInk(
         const ink = uncovered(expected.data, actual.data, x, y);
         expectedCoverage += ink.coverage;
         missing += ink.loss;
+        locate(x, y, ink.coverage, ink.loss);
       }
       if (distance(background.data, actual.data, i) > 40) {
         actualInk++;
         const ink = uncovered(actual.data, expected.data, x, y);
         actualCoverage += ink.coverage;
         extra += ink.loss;
+        locate(x, y, ink.coverage, ink.loss);
       }
     }
   return {
@@ -163,5 +176,14 @@ export function compareEditorInk(
     actualInk,
     missing: expectedCoverage ? missing / expectedCoverage : 0,
     extra: actualCoverage ? extra / actualCoverage : 0,
+    differenceRect:
+      differenceRight > differenceLeft
+        ? {
+            x: differenceLeft / width,
+            y: differenceTop / height,
+            w: (differenceRight - differenceLeft) / width,
+            h: (differenceBottom - differenceTop) / height,
+          }
+        : undefined,
   };
 }

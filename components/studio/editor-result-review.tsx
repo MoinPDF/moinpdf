@@ -20,6 +20,11 @@ export function EditorResultReview({
   if (!choices.length) choices.push(0);
   const [page, setPage] = useState(choices[0]),
     [view, setView] = useState<'before' | 'after' | 'both'>('both');
+  const [issueIndex, setIssueIndex] = useState<number | null>(null);
+  const issueRect =
+    issueIndex !== null && verification.issues[issueIndex]?.page === page
+      ? verification.issues[issueIndex].rect
+      : undefined;
   const ref = verification.sourcePages[page],
     original = sources.find((s) => s.id === ref?.sourceId);
   return (
@@ -38,6 +43,12 @@ export function EditorResultReview({
         {ui('Bildvergleich geprüfter Seiten')}: {verification.imagePages}
         {' · '}
         {ui('Schriftbild geprüfter Textfelder')}: {verification.editedImageFields || 0}
+        {!!verification.sparseFields && (
+          <>
+            {' '}
+            · {ui('Textfelder mit erhaltenen Originalzeichen')}: {verification.sparseFields}
+          </>
+        )}
       </p>
       <p>
         {ui(
@@ -49,6 +60,19 @@ export function EditorResultReview({
           {verification.issues.map((issue, i) => (
             <li key={i}>
               {ui('Seite')} {issue.page + 1}: {ui(issue.message)}
+              {issue.rect && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setPage(issue.page);
+                    setIssueIndex(i);
+                    setView('both');
+                  }}
+                >
+                  {ui('Abweichung auf der Seite zeigen')}
+                </Button>
+              )}
             </li>
           ))}
         </ul>
@@ -90,13 +114,37 @@ export function EditorResultReview({
         {view !== 'after' && original && (
           <div>
             <h4>{ui('Original')}</h4>
-            <PageStage source={original} page={ref.index} rotation={ref.rotation} />
+            <PageStage source={original} page={ref.index} rotation={ref.rotation}>
+              {issueRect && (
+                <div
+                  className="editor-verification-region"
+                  style={{
+                    left: `${issueRect.x * 100}%`,
+                    top: `${issueRect.y * 100}%`,
+                    width: `${issueRect.w * 100}%`,
+                    height: `${issueRect.h * 100}%`,
+                  }}
+                />
+              )}
+            </PageStage>
           </div>
         )}
         {view !== 'before' && (
           <div>
             <h4>{ui('Gespeicherte PDF')}</h4>
-            <PageStage source={output} page={page} />
+            <PageStage source={output} page={page}>
+              {issueRect && (
+                <div
+                  className="editor-verification-region"
+                  style={{
+                    left: `${issueRect.x * 100}%`,
+                    top: `${issueRect.y * 100}%`,
+                    width: `${issueRect.w * 100}%`,
+                    height: `${issueRect.h * 100}%`,
+                  }}
+                />
+              )}
+            </PageStage>
           </div>
         )}
       </div>

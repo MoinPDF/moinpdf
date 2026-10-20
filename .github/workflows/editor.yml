@@ -44,6 +44,7 @@ jobs:
           pnpm run build:selfhost
           node tests/editor-preservation-smoke.mjs
           node tests/editor-rich-smoke.mjs
+          node tests/editor-workflow-smoke.mjs
       - name: Independently produced two-column PDF
         run: |
           mkdir -p .cache/editor-corpus
@@ -64,6 +65,7 @@ jobs:
           python tests/editor-corpus-check.py || status=1
           python tests/editor-browser.py || status=1
           python tests/editor-quality-browser.py || status=1
+          python tests/editor-workflow-browser.py || status=1
           exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()

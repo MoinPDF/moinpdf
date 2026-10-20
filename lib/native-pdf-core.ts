@@ -19,6 +19,7 @@ export type NativeObject = NativeRect & {
   fontSize: number;
   children?: number;
   shaped?: boolean;
+  imageCorners?: [number, number][];
 };
 export type NativeChange = {
   index: number;
@@ -32,10 +33,17 @@ export type NativeChange = {
   scale?: number;
   rotation?: number;
   image?: { width: number; height: number; rgba: Uint8Array };
+  imageCrop?: NativeRect;
   /** Internal transform in the containing Form's coordinate system. */
   transform?: NativeMatrix;
 };
-export type NativeRemoval = { page: number; rect: NativeRect; color?: string; textOnly?: boolean };
+export type NativeRemoval = {
+  page: number;
+  rect: NativeRect;
+  color?: string;
+  textOnly?: boolean;
+  textSlice?: { source: NativeRect; before: string; removed: string; after: string };
+};
 export type NativeParagraphStyle = {
   from: number;
   to: number;
@@ -416,6 +424,28 @@ export function inspectNativeObjects(
         let fontSize = 0;
         if (type === 1 && api.FPDFTextObj_GetFontSize(obj, sizePtr))
           fontSize = api.pdfium.getValue(sizePtr, 'float');
+        let imageCorners: [number, number][] | undefined;
+        if (type === 3) {
+          const ptr = ctx.alloc(24);
+          try {
+            if (api.FPDFPageObj_GetMatrix(obj, ptr)) {
+              const m = [0, 4, 8, 12, 16, 20].map((n) => api.pdfium.getValue(ptr + n, 'float'));
+              imageCorners = [
+                [0, 1],
+                [1, 1],
+                [0, 0],
+              ].map(
+                ([x, y]) =>
+                  toView(ctx, page, m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]) as [
+                    number,
+                    number,
+                  ],
+              );
+            }
+          } finally {
+            ctx.free(ptr);
+          }
+        }
         objects.push({
           index: i,
           type:
@@ -430,6 +460,7 @@ export function inspectNativeObjects(
                     : 'other',
           text,
           fontSize,
+          ...(imageCorners ? { imageCorners } : {}),
           ...(type === 5 ? { children: api.FPDFFormObj_CountObjects(obj) } : {}),
           ...(members.has(i) ? { shaped: true } : {}),
           x: r.x,
@@ -493,6 +524,64 @@ function changeMatrix(
     center[1] - b * center[0] - d * center[1] + offset[1] - origin[1],
   ] as NativeMatrix;
 }
+export function readNativeImage(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+  objectIndex: number,
+) {
+  return open(api, bytes, (ctx) => {
+    const page = pageHandle(ctx, index);
+    let bitmap = 0;
+    const metadata = ctx.alloc(40);
+    try {
+      if (
+        !Number.isInteger(objectIndex) ||
+        objectIndex < 0 ||
+        objectIndex >= api.FPDFPage_CountObjects(page)
+      )
+        throw new Error('Ungültiges Bildobjekt.');
+      const object = api.FPDFPage_GetObject(page, objectIndex);
+      if (api.FPDFPageObj_GetType(object) !== 3) throw new Error('Kein einzelnes Bildobjekt.');
+      if (!api.FPDFImageObj_GetImageMetadata(object, page, metadata))
+        throw new Error('Die Bilddaten konnten nicht gelesen werden.');
+      const inputWidth = api.pdfium.getValue(metadata, 'i32'),
+        inputHeight = api.pdfium.getValue(metadata + 4, 'i32');
+      if (inputWidth < 1 || inputHeight < 1 || inputWidth * inputHeight > 4000000)
+        throw new Error('Das Bild darf zum Zuschneiden höchstens 4 Megapixel haben.');
+      if (!api.FPDFImageObj_SetMatrix(object, inputWidth, 0, 0, inputHeight, 0, 0))
+        throw new Error('Die Bildausrichtung konnte nicht gelesen werden.');
+      // A rendered object includes its soft mask and colour conversion. It does
+      // not capture neighbouring page text or backgrounds as a screenshot would.
+      bitmap = api.FPDFImageObj_GetRenderedBitmap(ctx.doc, page, object);
+      if (!bitmap) throw new Error('Das Bild konnte nicht lokal dekodiert werden.');
+      const width = api.FPDFBitmap_GetWidth(bitmap),
+        height = api.FPDFBitmap_GetHeight(bitmap),
+        format = api.FPDFBitmap_GetFormat(bitmap),
+        stride = api.FPDFBitmap_GetStride(bitmap),
+        buffer = api.FPDFBitmap_GetBuffer(bitmap);
+      if (width * height > 4000000 || ![1, 2, 3, 4].includes(format))
+        throw new Error('Das Bildformat ist nicht zum Zuschneiden geeignet.');
+      const rgba = new Uint8Array(width * height * 4),
+        data = heap(api),
+        channels = format === 1 ? 1 : format === 2 ? 3 : 4;
+      for (let y = 0; y < height; y++)
+        for (let x = 0; x < width; x++) {
+          const from = buffer + y * stride + x * channels,
+            to = (y * width + x) * 4;
+          rgba[to] = data[from + (channels === 1 ? 0 : 2)];
+          rgba[to + 1] = data[from + (channels === 1 ? 0 : 1)];
+          rgba[to + 2] = data[from];
+          rgba[to + 3] = format === 4 ? data[from + 3] : 255;
+        }
+      return { width, height, rgba };
+    } finally {
+      if (bitmap) api.FPDFBitmap_Destroy(bitmap);
+      ctx.free(metadata);
+      api.FPDF_ClosePage(page);
+    }
+  });
+}
 export function editNativeObjects(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
@@ -553,6 +642,24 @@ export function editNativeObjects(
           else if (!api.FPDFPage_InsertObjectAtIndex(page, obj, 0)) {
             api.FPDFPage_InsertObject(page, obj);
             throw new Error('Das Objekt konnte nicht nach hinten gestellt werden.');
+          }
+        }
+        if (change.imageCrop) {
+          const r = change.imageCrop;
+          if (api.FPDFPageObj_GetType(obj) !== 3 || !validRemovalRect(r))
+            throw new Error('Ungültiger Bildzuschnitt.');
+          const ptr = ctx.alloc(24);
+          try {
+            if (!api.FPDFPageObj_GetMatrix(obj, ptr))
+              throw new Error('Die Bildausrichtung konnte nicht gelesen werden.');
+            const matrix = [0, 4, 8, 12, 16, 20].map((n) =>
+              api.pdfium.getValue(ptr + n, 'float'),
+            ) as NativeMatrix;
+            const next = multiply(matrix, [r.w, 0, 0, r.h, r.x, 1 - r.y - r.h]);
+            if (!api.FPDFImageObj_SetMatrix(obj, ...next))
+              throw new Error('Der Bildzuschnitt konnte nicht gesetzt werden.');
+          } finally {
+            ctx.free(ptr);
           }
         }
         if (change.image) {
@@ -1686,7 +1793,7 @@ export function removeNativeRegions(
     // Text editing must not redact intersecting pictures, rules or backgrounds.
     // Remove whole text objects only; partial or ambiguous objects fail closed.
     const textPages = new Map<number, NativeRect[]>();
-    for (const removal of removals.filter((r) => r.textOnly)) {
+    for (const removal of removals.filter((r) => r.textOnly && !r.textSlice)) {
       const r = removal.rect;
       if (!validRemovalRect(r)) throw new Error('Ungültiger Löschbereich.');
       const rects = textPages.get(removal.page) || [];
@@ -1721,6 +1828,109 @@ export function removeNativeRegions(
         if (!api.FPDFPage_GenerateContent(page))
           throw new Error('Die bereinigte Seite konnte nicht gespeichert werden.');
       } finally {
+        api.FPDF_ClosePage(page);
+      }
+    }
+    for (const removal of removals.filter((r) => r.textOnly && r.textSlice)) {
+      const page = pageHandle(ctx, removal.page),
+        slice = removal.textSlice!;
+      let textPage = 0,
+        ptr = 0;
+      try {
+        requireSerializablePage(ctx, page);
+        if (!validRemovalRect(slice.source) || !slice.removed.trim())
+          throw new Error('Ungültige Wortänderung.');
+        textPage = api.FPDFText_LoadPage(page);
+        ptr = ctx.alloc(32);
+        const matching: number[] = [];
+        for (let i = 0; i < api.FPDFPage_CountObjects(page); i++) {
+          const obj = api.FPDFPage_GetObject(page, i),
+            bounds = objectRect(ctx, page, obj);
+          if (!bounds || !overlapsRemoval(bounds, slice.source)) continue;
+          if (api.FPDFPageObj_GetType(obj) === 5 || clusterMark(ctx, obj))
+            throw new Error('Wortänderung in einer Objektgruppe.');
+          if (api.FPDFPageObj_GetType(obj) !== 1) continue;
+          if (
+            !containsRemoval(slice.source, bounds) ||
+            api.FPDFTextObj_GetTextRenderMode(obj) !== 0
+          )
+            throw new Error('Nicht eindeutig zugeordnetes Textobjekt.');
+          matching.push(obj);
+        }
+        if (
+          matching.length !== 1 ||
+          objectText(ctx, matching[0], textPage) !== slice.before + slice.removed + slice.after
+        )
+          throw new Error('Die ursprüngliche Zeichenfolge ist nicht eindeutig.');
+        const chars: {
+          text: string;
+          left: number;
+          right: number;
+          bottom: number;
+          top: number;
+          start: number;
+          end: number;
+        }[] = [];
+        let offset = 0;
+        for (let i = 0; i < api.FPDFText_CountChars(textPage); i++) {
+          if (
+            api.FPDFText_GetTextObject(textPage, i) !== matching[0] ||
+            api.FPDFText_IsGenerated(textPage, i)
+          )
+            continue;
+          if (api.FPDFText_HasUnicodeMapError(textPage, i))
+            throw new Error('Unklare Zeichenzuordnung.');
+          const value = api.FPDFText_GetUnicode(textPage, i);
+          if (!value || !api.FPDFText_GetCharBox(textPage, i, ptr, ptr + 8, ptr + 16, ptr + 24))
+            throw new Error('Unklare Zeichenposition.');
+          const text = String.fromCodePoint(value);
+          chars.push({
+            text,
+            left: api.pdfium.getValue(ptr, 'double'),
+            right: api.pdfium.getValue(ptr + 8, 'double'),
+            bottom: api.pdfium.getValue(ptr + 16, 'double'),
+            top: api.pdfium.getValue(ptr + 24, 'double'),
+            start: offset,
+            end: offset + text.length,
+          });
+          offset += text.length;
+        }
+        if (chars.map((c) => c.text).join('') !== slice.before + slice.removed + slice.after)
+          throw new Error('Ligaturen oder erzeugte Zeichen verhindern die Wortänderung.');
+        const selected = chars.filter(
+          (c) =>
+            c.start >= slice.before.length &&
+            c.end <= slice.before.length + slice.removed.length &&
+            !/\s/u.test(c.text),
+        );
+        if (!selected.length) throw new Error('Keine löschbaren Zeichen.');
+        const left = Math.min(...selected.map((c) => c.left)) - 0.01,
+          right = Math.max(...selected.map((c) => c.right)) + 0.01,
+          bottom = Math.min(...selected.map((c) => c.bottom)) - 0.01,
+          top = Math.max(...selected.map((c) => c.top)) + 0.01;
+        if (
+          chars.some(
+            (c) =>
+              !selected.includes(c) &&
+              !/^\s$/u.test(c.text) &&
+              c.right > left &&
+              c.left < right &&
+              c.top > bottom &&
+              c.bottom < top,
+          )
+        )
+          throw new Error('Die Wortänderung berührt Nachbarzeichen.');
+        api.FPDFText_ClosePage(textPage);
+        textPage = 0;
+        [left, top, right, bottom].forEach((n, i) => api.pdfium.setValue(ptr + i * 4, n, 'float'));
+        if (
+          !api.EPDFText_RedactInRect(page, ptr, false, false) ||
+          !api.FPDFPage_GenerateContent(page)
+        )
+          throw new Error('Die Zeichen konnten nicht einzeln entfernt werden.');
+      } finally {
+        if (textPage) api.FPDFText_ClosePage(textPage);
+        if (ptr) ctx.free(ptr);
         api.FPDF_ClosePage(page);
       }
     }

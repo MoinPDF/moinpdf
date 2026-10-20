@@ -54,7 +54,13 @@ def open_editor(page, path):
     expect(page.locator('.editor-sheet img')).to_be_visible(timeout=120000)
 
 def download(page, name):
-    page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True).click()
+    button = page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True)
+    # Scrolling away from a focused edit must stay where the user put it, even
+    # if selection/layout callbacks still have a pending caret-reveal frame.
+    button.scroll_into_view_if_needed()
+    page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+    expect(button).to_be_in_viewport(ratio=.9)
+    button.click()
     link = page.get_by_role('link', name='PDF herunterladen', exact=True).first
     expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=240000)
     assert link.is_visible(), page.locator('.error-box').inner_text()

@@ -80,6 +80,7 @@ export type Mark = Rect & {
   customFont?: { name: string; data: string; bold: boolean; italic: boolean };
   fontScale?: number;
   image?: string;
+  nativeImage?: { index: number; rect: Rect; crop?: Rect; corners?: [number, number][] };
   sourceRect?: Rect;
   sourceRects?: Rect[];
   sourceIsScan?: boolean;
@@ -89,6 +90,11 @@ export type Mark = Rect & {
   originalFontName?: string;
   originalFontPage?: number;
   originalState?: string;
+  /** Editing relationships do not change the appearance until text is redistributed. */
+  flow?: { id: string; order: number };
+  changeGroup?: string;
+  /** Ephemeral export plan; never persisted in an editor project. */
+  nativeTextSlice?: { source: Rect; before: string; removed: string; after: string };
   baselineScale?: number;
   insetScale?: number;
   lineHeight?: number;
@@ -329,7 +335,12 @@ export async function applyPageEdits(
     width: number,
     height: number,
   ) => { canvas: HTMLCanvasElement; width: number; height: number },
-  editor?: { language: string; warnings: string[]; allowRaster?: boolean },
+  editor?: {
+    language: string;
+    warnings: string[];
+    allowRaster?: boolean;
+    painted?: Record<string, Mark[]>;
+  },
 ) {
   const doc = await PDFDocument.create();
   const loaded = new Map<string, PDFDocument>();
@@ -389,6 +400,11 @@ export async function applyPageEdits(
       }
       const contentRemoval = marks.some((m) => m.kind === 'erase' || !!m.sourceRect),
         rasterMarks = forceRaster || !!crop || marks.some((m) => m.kind === 'redact');
+      const imageEdit = marks.some((m) => m.nativeImage);
+      if (imageEdit && rasterMarks)
+        throw new Error(
+          'Vorhandene Bilder bitte ohne Seitenbeschnitt oder Raster-Neuaufbau bearbeiten.',
+        );
       let analysis: import('./editor-analysis').EditorPageText | undefined;
       if (editor && editorTools && !rasterMarks) {
         try {
@@ -426,11 +442,27 @@ export async function applyPageEdits(
           );
         }
       }
+      if (analysis && imageEdit) {
+        const regions = marks.filter((m) => m.nativeImage).flatMap((m) => [m.nativeImage!.rect, m]);
+        if (
+          analysis.targets.some((t) => t.invisible && regions.some((r) => editorRectsOverlap(t, r)))
+        )
+          throw new Error(
+            'Dieses Bild besitzt eine vorhandene OCR-Textebene. Bitte den Scan als Text bearbeiten, damit keine veraltete Textebene zurückbleibt.',
+          );
+        analysis = {
+          ...analysis,
+          targets: analysis.targets.filter(
+            (t) => t.origin !== 'ocr' || !regions.some((r) => editorRectsOverlap(t, r)),
+          ),
+        };
+      }
       if (analysis && marks.some((mark) => editorTextCollision(mark, marks, analysis.targets)))
         throw new Error(
           'Der Text überlappt einen anderen Inhalt. Bitte Text kürzen, Schriftgröße anpassen oder das Textfeld verschieben.',
         );
       let preserved: PDFDocument | undefined;
+      let drawMarks = marks;
       const removals = marks.flatMap(editorRemovalRects);
       const nativeTextRemoval =
         analysis &&
@@ -443,22 +475,37 @@ export async function applyPageEdits(
       if (
         editor &&
         analysis &&
-        nativeTextRemoval &&
+        (nativeTextRemoval || imageEdit) &&
         !analysis.replaceTextLayer &&
-        contentRemoval &&
+        (contentRemoval || imageEdit) &&
         !rasterMarks &&
         loaded.has(item.sourceId) &&
-        marks.every((m) => m.kind === 'text')
+        marks.every((m) => m.kind === 'text' || m.kind === 'image')
       ) {
         try {
           const { removeEditorContent } = await import('./editor-native');
-          preserved = await removeEditorContent(
-            loaded.get(item.sourceId)!,
-            item,
-            marks,
-            analysis.targets,
-            signal,
-          );
+          const { sparseEditorMark } = await import('./editor-sparse');
+          drawMarks = marks.map((mark) => sparseEditorMark(mark, analysis!.width, source));
+          try {
+            preserved = await removeEditorContent(
+              loaded.get(item.sourceId)!,
+              item,
+              drawMarks,
+              analysis.targets,
+              signal,
+            );
+          } catch (error) {
+            check(signal);
+            if (!drawMarks.some((m) => m.nativeTextSlice)) throw error;
+            drawMarks = marks;
+            preserved = await removeEditorContent(
+              loaded.get(item.sourceId)!,
+              item,
+              marks,
+              analysis.targets,
+              signal,
+            );
+          }
         } catch {
           check(signal);
           if (!editor.allowRaster)
@@ -472,6 +519,10 @@ export async function applyPageEdits(
       }
       const scanPage =
         analysis && !analysis.targets.some((t) => t.origin === 'pdf' && !t.invisible);
+      if (imageEdit && !preserved)
+        throw new Error(
+          'Das Bild konnte nicht als Originalobjekt geändert werden. Bitte die Bildänderung zurücknehmen.',
+        );
       if (editor && !preserved && !rasterMarks && (contentRemoval || analysis?.replaceTextLayer)) {
         if (!scanPage && !editor.allowRaster)
           throw new Error(
@@ -489,28 +540,47 @@ export async function applyPageEdits(
         !rasterMarks &&
         !analysis.replaceTextLayer &&
         loaded.has(item.sourceId) &&
-        marks.every((m) => m.kind === 'text');
+        marks.every((m) => m.kind === 'text' || (m.kind === 'image' && !m.nativeImage));
       if ((preserved || appendNative) && analysis) {
+        if (editor?.painted) editor.painted[item.id] = drawMarks;
         const outputPage = preserved
           ? (await doc.copyPages(preserved, [0]))[0]
           : await appendPage(doc, loaded, item);
         if (preserved) doc.addPage(outputPage);
-        const { drawEditorText } = await import('./editor-text-layer');
-        for (const mark of marks.filter((m) => m.kind === 'text' && m.text))
-          await drawEditorText(
-            doc,
-            outputPage,
-            mark,
-            analysis.width,
-            analysis.height,
-            source,
-            (resolution) => {
-              if (resolution.substituted)
-                editor?.warnings.push(
-                  `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
-                );
-            },
-          );
+        const { drawEditorText, editorPointToPdf } = await import('./editor-text-layer');
+        for (const mark of drawMarks.filter((m) => !m.nativeImage)) {
+          if (mark.kind === 'text' && mark.text)
+            await drawEditorText(
+              doc,
+              outputPage,
+              mark,
+              analysis.width,
+              analysis.height,
+              source,
+              (resolution) => {
+                if (resolution.substituted)
+                  editor?.warnings.push(
+                    `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
+                  );
+              },
+            );
+          else if (mark.kind === 'image' && mark.image) {
+            const image = await doc.embedPng(mark.image);
+            const [x, y] = editorPointToPdf(
+              outputPage,
+              mark.x * analysis.width,
+              (mark.y + mark.h) * analysis.height,
+            );
+            outputPage.drawImage(image, {
+              x,
+              y,
+              width: mark.w * analysis.width,
+              height: mark.h * analysis.height,
+              rotate: degrees(outputPage.getRotation().angle),
+              opacity: mark.opacity ?? 1,
+            });
+          }
+        }
         if (analysis.ocr) {
           const { addEditorTextLayer } = await import('./editor-text-layer');
           await addEditorTextLayer(
@@ -529,7 +599,14 @@ export async function applyPageEdits(
         analysis?.replaceTextLayer ||
         !loaded.has(item.sourceId)
       ) {
-        const rendered = await renderPage(source, item, 2800, signal);
+        const original = loaded.get(item.sourceId),
+          scan =
+            analysis?.ocr && original
+              ? await (
+                  await import('./editor-native')
+                ).readEditorScanPixels(original, source, item, signal)
+              : undefined,
+          rendered = scan || (await renderPage(source, item, 2800, signal));
         let canvas = rendered.canvas;
         try {
           if (rasterMarks) await paintMarks(canvas, marks, source, editor?.warnings);
@@ -700,6 +777,7 @@ export async function runStudioJob(
   if (baseTools.includes(tool) && !hasEdits)
     return runJob(tool as ToolId, sources, pages, options, report, signal);
   const editorWarnings: string[] = [];
+  const editorPainted: Record<string, Mark[]> = {};
   let doc = await applyPageEdits(
     sources,
     pages,
@@ -714,6 +792,7 @@ export async function runStudioJob(
           language: options.editorLanguage || 'deu+eng',
           warnings: editorWarnings,
           allowRaster: options.editorAllowRaster,
+          painted: editorPainted,
         }
       : undefined,
   );
@@ -789,6 +868,7 @@ export async function runStudioJob(
           options.editorLanguage || 'deu+eng',
           signal,
           report,
+          editorPainted,
         )
       : undefined;
   const suffix: Record<string, string> = {

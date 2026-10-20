@@ -75,6 +75,18 @@
       "case": "Image-only rotated and skewed document",
       "name": "rotated_skew.pdf",
       "caution": "Skew is simulated upstream, not a real camera capture."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ocrmypdf/OCRmyPDF/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/tests/resources/francais.pdf",
+      "size": 483256,
+      "sha256": "600c27f8dd2ef085a94d3500f6ccdb3b37f4b89aa8ffdf9a00a06a1367887e8b",
+      "license": "CC-BY-SA-4.0",
+      "copyright": "2025 James R. Barlow",
+      "licenseEvidence": "https://github.com/ocrmypdf/OCRmyPDF/blob/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/REUSE.toml",
+      "provenance": "Externally authored synthetic image-only French diacritics test",
+      "case": "Optional French OCR model/diacritics fixture",
+      "caution": "English-only OCR has expected accent errors; test with fra if included.",
+      "name": "francais.pdf"
     }
   ]
 }

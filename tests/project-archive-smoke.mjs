@@ -22,6 +22,8 @@ const rect={x:.1,y:.1,w:.3,h:.1};
 const edits={marks:{one:[{id:'redact',kind:'redact',...rect},{id:'text',kind:'text',text:'Geändert',textRotation:90,...rect,fontScale:.03,fontFamily:'sans',fontChoice:'auto',originalFontId:'original:LiberationSans:abc',originalFontName:'LiberationSans',originalFontPage:1,originalState:'{original}',sourceRect:rect,sourceRects:[rect],baselineScale:.98,insetScale:.08,lineHeight:1.2,tracking:.04,textScaleX:1.1,bold:true,color:'#000000'}]},crops:{two:{x:.1,y:.2,w:.8,h:.7}}};
 edits.marks.two=editorFontCatalog.map(font=>({id:font.id,kind:'text',...rect,text:'ÄÖÜ ß €',fontChoice:font.id,fontFamily:font.family}));
 const draft={fields:[{id:'field',name:'Name',kind:'text',value:'Denny',initialValue:'',options:[],widgets:[{page:1,rect}],existing:true,required:true,readOnly:false,multiline:false,fontSize:12}],bookmarks:[{id:'bookmark',title:'Kapitel',page:1,depth:0,open:true}],signed:false,xfa:false,originalBookmarkCount:0,originalBookmarks:'[]'};
+edits.marks.one[1].flow={id:'linked-frames',order:0};edits.marks.one[1].changeGroup='linked-change';
+edits.marks.one.push({id:'native-logo',kind:'image',...rect,nativeImage:{index:7,rect:{...rect},crop:{x:0,y:0,w:.5,h:1},corners:[[.1,.1],[.4,.1],[.1,.2]]}});
 const state={pages,edits,options:{editorLanguage:'deu+eng',language:'deu+fra+spa',ocrLayout:'6',compareMode:'content'},history:[{pages:[...pages].reverse(),edits:{marks:{},crops:{}}}],future:[],documentSessions:{original:{current:draft,past:[],future:[]}},activeId:'one',toolId:'edit-text'};
 const archive=await encodeProjectFile('Übertragbares Projekt',[source],state);
 await writeFile('.cache/project-transfer.moinpdf',new Uint8Array(await archive.arrayBuffer()));

@@ -59,6 +59,13 @@ export function EditorRichInput({
   onSearch?: () => void;
 }) {
   const [repair, setRepair] = useState(0);
+  const [magnifier, setMagnifier] = useState<{
+    x: number;
+    y: number;
+    before: string;
+    selected: string;
+    after: string;
+  } | null>(null);
   const input = useRef<HTMLDivElement>(null),
     composing = useRef(false),
     signature = useRef(''),
@@ -213,6 +220,137 @@ export function EditorRichInput({
       document.removeEventListener('pointercancel', up);
     };
   }, []);
+  useEffect(() => {
+    let frame = 0,
+      touch = false,
+      followCaret = true,
+      position = { x: 0, y: 0 };
+    const reveal = () => {
+      cancelAnimationFrame(frame);
+      if (!followCaret) return;
+      frame = requestAnimationFrame(() => {
+        const root = input.current,
+          selection = window.getSelection();
+        if (!followCaret || !root || document.activeElement !== root || !selection?.rangeCount)
+          return;
+        const range = selection.getRangeAt(0);
+        if (!root.contains(range.commonAncestorContainer)) return;
+        if (typeof range.getBoundingClientRect !== 'function') return;
+        const viewport = window.visualViewport;
+        if (range.getBoundingClientRect().height > 0) {
+          // The page has its own scroll area inside the workbench. Reveal the
+          // caret through every clipping ancestor, rather than scrolling only
+          // the page while its entire viewport remains hidden below controls.
+          for (
+            let parent = root.parentElement;
+            parent && parent !== document.body;
+            parent = parent.parentElement
+          ) {
+            if (!['auto', 'scroll'].includes(getComputedStyle(parent).overflowY)) continue;
+            const box = parent.getBoundingClientRect(),
+              rect = range.getBoundingClientRect();
+            const toolbar = parent.querySelector<HTMLElement>('.editor-inline-toolbar'),
+              toolbarBox = toolbar?.getBoundingClientRect(),
+              inset =
+                toolbar &&
+                getComputedStyle(toolbar).position === 'sticky' &&
+                toolbarBox &&
+                toolbarBox.top <= box.top + 2
+                  ? toolbarBox.height + 12
+                  : 12;
+            const top = box.top + inset,
+              bottom = box.bottom - 12;
+            if (bottom > top) {
+              if (rect.bottom > bottom) parent.scrollTop += rect.bottom - bottom;
+              else if (rect.top < top) parent.scrollTop -= top - rect.top;
+            }
+          }
+          const rect = range.getBoundingClientRect(),
+            top = (viewport?.offsetTop || 0) + 100,
+            bottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight) - 64;
+          if (bottom > top && typeof window.scrollBy === 'function') {
+            if (rect.bottom > bottom)
+              window.scrollBy({ top: rect.bottom - bottom, behavior: 'instant' });
+            else if (rect.top < top) window.scrollBy({ top: rect.top - top, behavior: 'instant' });
+          }
+        }
+        if (touch) {
+          const picked = editorDomSelection(root),
+            text = latest.current.mark.text || '';
+          if (picked)
+            setMagnifier({
+              x: Math.max(120, Math.min(window.innerWidth - 120, position.x)),
+              y: Math.max((viewport?.offsetTop || 0) + 12, position.y - 90),
+              before: text.slice(Math.max(0, picked.start - 12), picked.start),
+              selected: text.slice(picked.start, picked.end).slice(0, 24),
+              after: text.slice(picked.end, picked.end + 12),
+            });
+        }
+      });
+    };
+    const pause = () => {
+      // Manual scrolling and clicks on other controls take precedence over a
+      // pending caret/layout update. Otherwise a late frame can move a button
+      // between pointer-down and pointer-up, silently swallowing its click.
+      followCaret = false;
+      cancelAnimationFrame(frame);
+    };
+    const resume = () => {
+      followCaret = true;
+      reveal();
+    };
+    const down = (e: PointerEvent) => {
+      if (!input.current?.contains(e.target as Node)) {
+        pause();
+        return;
+      }
+      followCaret = true;
+      if (e.pointerType === 'touch' && input.current.closest('.is-touch-mode')) {
+        touch = true;
+        position = { x: e.clientX, y: e.clientY };
+        reveal();
+      }
+    };
+    const move = (e: PointerEvent) => {
+      if (touch) {
+        followCaret = true;
+        position = { x: e.clientX, y: e.clientY };
+        reveal();
+      }
+    };
+    const up = () => {
+      touch = false;
+      setMagnifier(null);
+    };
+    const root = input.current;
+    root?.addEventListener('keydown', resume, true);
+    root?.addEventListener('beforeinput', resume);
+    root?.addEventListener('focus', resume);
+    document.addEventListener('selectionchange', reveal);
+    document.addEventListener('pointerdown', down, true);
+    document.addEventListener('scroll', pause, true);
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+    document.addEventListener('pointercancel', up);
+    window.visualViewport?.addEventListener('resize', reveal);
+    const resize = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(reveal);
+    const canvas = input.current?.closest('.editor-canvas-wrap');
+    if (canvas) resize?.observe(canvas);
+    return () => {
+      cancelAnimationFrame(frame);
+      root?.removeEventListener('keydown', resume, true);
+      root?.removeEventListener('beforeinput', resume);
+      root?.removeEventListener('focus', resume);
+      document.removeEventListener('selectionchange', reveal);
+      document.removeEventListener('pointerdown', down, true);
+      document.removeEventListener('scroll', pause, true);
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      document.removeEventListener('pointercancel', up);
+      window.visualViewport?.removeEventListener('resize', reveal);
+      resize?.disconnect();
+    };
+  }, []);
   function insert(text: string) {
     const root = input.current;
     if (!root) return;
@@ -243,72 +381,85 @@ export function EditorRichInput({
     remember();
   }
   return (
-    <div
-      ref={input}
-      className="editor-inline-input"
-      role="textbox"
-      aria-multiline="true"
-      aria-label={ui('Text direkt in der PDF bearbeiten')}
-      data-editor-history="true"
-      contentEditable={!disabled}
-      suppressContentEditableWarning
-      spellCheck={false}
-      style={style}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-      onBeforeInput={(e) => {
-        const type = (e.nativeEvent as InputEvent).inputType;
-        if (type === 'insertParagraph' || type === 'insertLineBreak') {
+    <>
+      {magnifier && (
+        <div
+          className="editor-selection-magnifier"
+          aria-hidden="true"
+          style={{ left: magnifier.x, top: magnifier.y }}
+        >
+          {magnifier.before}
+          <mark>{magnifier.selected || '│'}</mark>
+          {magnifier.after}
+        </div>
+      )}
+      <div
+        ref={input}
+        className="editor-inline-input"
+        role="textbox"
+        aria-multiline="true"
+        aria-label={ui('Text direkt in der PDF bearbeiten')}
+        data-editor-history="true"
+        contentEditable={!disabled}
+        suppressContentEditableWarning
+        spellCheck={false}
+        style={style}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onBeforeInput={(e) => {
+          const type = (e.nativeEvent as InputEvent).inputType;
+          if (type === 'insertParagraph' || type === 'insertLineBreak') {
+            e.preventDefault();
+            insert('\n');
+          }
+        }}
+        onPaste={(e) => {
           e.preventDefault();
-          insert('\n');
-        }
-      }}
-      onPaste={(e) => {
-        e.preventDefault();
-        insert(e.clipboardData.getData('text/plain'));
-      }}
-      onDrop={(e) => e.preventDefault()}
-      onCompositionStart={() => {
-        composing.current = true;
-      }}
-      onCompositionEnd={(e) => {
-        composing.current = false;
-        change(e);
-      }}
-      onInput={change}
-      onKeyDown={(e) => {
-        e.stopPropagation();
-        if (e.nativeEvent.isComposing || composing.current) return;
-        if (e.key === 'Escape' || (e.key === 'Enter' && (e.ctrlKey || e.metaKey))) {
-          e.preventDefault();
-          onDone();
-        } else if (e.key === 'Enter') {
-          e.preventDefault();
-          insert('\n');
-        } else if (
-          (e.ctrlKey || e.metaKey) &&
-          ['f', 'h'].includes(e.key.toLowerCase()) &&
-          onSearch
-        ) {
-          e.preventDefault();
-          remember();
-          onSearch();
-        } else if ((e.ctrlKey || e.metaKey) && ['b', 'i'].includes(e.key.toLowerCase())) {
-          e.preventDefault();
-          remember();
-          const selection = input.current ? editorDomSelection(input.current) : null;
-          const active = editorSelectionStyle(
-            mark,
-            selection ? { id: mark.id, ...selection } : null,
-          );
-          onPatch(
-            mark.id,
-            e.key.toLowerCase() === 'b'
-              ? { bold: active.mixed.has('bold') || !active.style.bold }
-              : { italic: active.mixed.has('italic') || !active.style.italic },
-          );
-        }
-      }}
-    />
+          insert(e.clipboardData.getData('text/plain'));
+        }}
+        onDrop={(e) => e.preventDefault()}
+        onCompositionStart={() => {
+          composing.current = true;
+        }}
+        onCompositionEnd={(e) => {
+          composing.current = false;
+          change(e);
+        }}
+        onInput={change}
+        onKeyDown={(e) => {
+          e.stopPropagation();
+          if (e.nativeEvent.isComposing || composing.current) return;
+          if (e.key === 'Escape' || (e.key === 'Enter' && (e.ctrlKey || e.metaKey))) {
+            e.preventDefault();
+            onDone();
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            insert('\n');
+          } else if (
+            (e.ctrlKey || e.metaKey) &&
+            ['f', 'h'].includes(e.key.toLowerCase()) &&
+            onSearch
+          ) {
+            e.preventDefault();
+            remember();
+            onSearch();
+          } else if ((e.ctrlKey || e.metaKey) && ['b', 'i'].includes(e.key.toLowerCase())) {
+            e.preventDefault();
+            remember();
+            const selection = input.current ? editorDomSelection(input.current) : null;
+            const active = editorSelectionStyle(
+              mark,
+              selection ? { id: mark.id, ...selection } : null,
+            );
+            onPatch(
+              mark.id,
+              e.key.toLowerCase() === 'b'
+                ? { bold: active.mixed.has('bold') || !active.style.bold }
+                : { italic: active.mixed.has('italic') || !active.style.italic },
+            );
+          }
+        }}
+      />
+    </>
   );
 }
