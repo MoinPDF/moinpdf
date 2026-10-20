@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import ts from 'typescript';
 import { JSDOM } from 'jsdom';
 const folder='.cache/editor-ui';await mkdir(folder,{recursive:true});
-for(const file of ['lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/editor-dom.ts','components/studio/editor-rich-input.tsx','components/studio/editor-layout-help.tsx','components/studio/editor-ocr-review.tsx','lib/local-font-bytes.ts','components/studio/editor-canvas.tsx','components/studio/editor-typography.tsx','lib/editor-font-catalog.ts','lib/editor-model.ts','lib/editor-text-layer.ts','lib/ui-language.ts']) {
+for(const file of ['lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/editor-dom.ts','components/studio/editor-text-search.tsx','components/studio/editor-rich-input.tsx','components/studio/editor-layout-help.tsx','components/studio/editor-ocr-review.tsx','lib/local-font-bytes.ts','components/studio/editor-canvas.tsx','components/studio/editor-typography.tsx','lib/editor-font-catalog.ts','lib/editor-model.ts','lib/editor-text-layer.ts','lib/ui-language.ts']) {
  const code=ts.transpileModule(await readFile(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/(['"])(@\/[^'"]+|\.\/[^'"]+)\1/g,(_,q,p)=>q+'./'+p.split('/').at(-1)+'.mjs'+q);
  await writeFile(folder+'/'+file.split('/').at(-1).replace(/\.tsx?$/,'.mjs'),code);
 }
@@ -21,7 +21,8 @@ globalThis.IS_REACT_ACT_ENVIRONMENT=true;globalThis.ResizeObserver=class{observe
 const React=await import('react'),{createRoot}=await import('react-dom/client');const {act}=React;
 const {applyEditorPatch,editorSegments}=await import('../.cache/editor-ui/editor-rich-text.mjs');
 const {setEditorDomSelection,editorDomSelection}=await import('../.cache/editor-ui/editor-dom.mjs');
-const {EditorInlineText,EditorFontPicker}=await import('../.cache/editor-ui/editor-typography.mjs');
+const {EditorInlineText,EditorInlineToolbar}=await import('../.cache/editor-ui/editor-typography.mjs');
+const {EditorTextSearch}=await import('../.cache/editor-ui/editor-text-search.mjs');
 const {EditorLayoutHelp}=await import('../.cache/editor-ui/editor-layout-help.mjs');
 const fontMock=await import('../.cache/editor-ui/editor-fonts.mjs');
 const {EditorCanvas}=await import('../.cache/editor-ui/editor-canvas.mjs'),{jobs}=await import('../.cache/editor-ui/editor-analysis.mjs');
@@ -48,7 +49,7 @@ try {
  await act(async()=>root.unmount());assert(jobs.every(j=>j.options.signal.aborted));
  const inlineHost=document.createElement('div');document.body.append(inlineHost);const inlineRoot=createRoot(inlineHost);
  let current={...picked,text:'Original',textRotation:0,w:.6,h:.08,baselineScale:.9,fontScale:15/400};const patches=[];let done=0,selection=null;
- function Harness(){const [mark,setMark]=React.useState(current);current=mark;const onPatch=(id,patch,mode)=>{patches.push({id,patch,mode});setMark(old=>({...old,...applyEditorPatch(old,patch,selection)}));};return React.createElement(React.Fragment,null,React.createElement(EditorFontPicker,{mark,disabled:false,onPatch}),React.createElement(EditorInlineText,{mark,source,width:400,height:560,pageWidth:400,pageHeight:560,disabled:false,onPatch,onDone:()=>done++,onSelection:s=>selection=s}));}
+ function Harness(){const [mark,setMark]=React.useState(current),[selected,setSelected]=React.useState(null),[request,setRequest]=React.useState(null);current=mark;const onPatch=(id,patch,mode)=>{patches.push({id,patch,mode});setMark(old=>({...old,...applyEditorPatch(old,patch,selection)}));};return React.createElement(React.Fragment,null,React.createElement(EditorInlineToolbar,{mark,source,width:400,selection:selected,disabled:false,onPatch,onDone:()=>done++,onFocusText:()=>setRequest({...selection})}),React.createElement(EditorInlineText,{mark,source,width:400,height:560,pageWidth:400,pageHeight:560,disabled:false,onPatch,onDone:()=>done++,selectionRequest:request,onSelection:s=>{selection=s;setSelected(old=>old?.id===s.id&&old.start===s.start&&old.end===s.end?old:s);}}));}
  await act(async()=>inlineRoot.render(React.createElement(Harness)));
  let field=inlineHost.querySelector('[contenteditable=true]');assert.equal(document.activeElement,field);assert.equal(window.getSelection().anchorOffset,0);
  const setText=async text=>act(async()=>{field.textContent=text;field.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:text}));});
@@ -63,6 +64,11 @@ try {
  await act(async()=>{const event=new Event('paste',{bubbles:true,cancelable:true});Object.defineProperty(event,'clipboardData',{value:{getData:type=>type==='text/plain'?'125,50 €':'<b>unsafe</b>'}});field.dispatchEvent(event);});
  assert.equal(current.text,'Netto 125,50 € brutto');assert(editorSegments(current).find(r=>r.start===6).style.italic,'Pasted replacement retains the selected word style');
  assert(!field.querySelector('b'),'Paste imports plain text only');
+ const italic=inlineHost.querySelector('[aria-label="Kursiv"]');assert.equal(italic.getAttribute('aria-pressed'),'mixed','The whole text box has visibly mixed formatting');
+ await act(async()=>{setEditorDomSelection(field,6,14);document.dispatchEvent(new Event('selectionchange'));});
+ assert.equal(italic.getAttribute('aria-pressed'),'true','Toolbar follows the selected styled range');
+ await click(italic);assert.equal(document.activeElement,field,'Toolbar commands restore the writing focus');assert.equal(editorSegments(current).find(r=>r.start<=6&&r.end>6)?.style.italic,false);assert.deepEqual(editorDomSelection(field),{anchor:6,focus:14,start:6,end:14});
+ await click(italic);assert(editorSegments(current).find(r=>r.start===6).style.italic);
  const saved=current.text;await setText('x'.repeat(20001));assert.equal(current.text,saved);assert.equal(field.textContent,saved,'Oversized browser edits are restored even when state is unchanged');
  const before={x:current.x,y:current.y};await act(async()=>field.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true})));assert.deepEqual({x:current.x,y:current.y},before,'Arrow keys stay inside the text cursor');
  await act(async()=>{field.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));});await setText('Änderung');await act(async()=>field.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:'Änderung'})));assert.equal(current.text,'Änderung','IME composition preserves the completed text');
@@ -79,5 +85,13 @@ try {
  await act(async()=>new Promise(resolve=>setTimeout(resolve,25)));
  assert(fontMock.resolutions-beforeResolutions<=4,'Proposal font preparation also settles');
  await act(async()=>layoutRoot.unmount());
+ const searchRoot=createRoot(inlineHost);let searched={id:'search',kind:'text',text:'eins eins',fontScale:.03,runs:[{start:5,end:9,style:{bold:true}}]},range;
+ function SearchHarness(){const [mark,setMark]=React.useState(searched);searched=mark;return React.createElement(EditorTextSearch,{mark,disabled:false,onPatch:(id,patch)=>setMark(old=>({...old,...patch})),onRange:s=>range=s,onClose:()=>done++});}
+ await act(async()=>searchRoot.render(React.createElement(SearchHarness)));
+ const fields=inlineHost.querySelectorAll('input[type=text]'),setValue=async(input,value)=>act(async()=>{Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));});
+ await setValue(fields[0],'eins');await setValue(fields[1],'zwei');assert.match(inlineHost.querySelector('[role=status]').textContent,/2/);
+ await click([...inlineHost.querySelectorAll('button')].find(b=>b.textContent==='Nächster Treffer'));assert.deepEqual(range,{id:'search',start:0,end:4});
+ await click([...inlineHost.querySelectorAll('button')].find(b=>b.textContent==='Alle im Textfeld ersetzen'));assert.equal(searched.text,'zwei zwei');assert(editorSegments(searched).find(r=>r.start===5).style.bold,'Bulk search replacement retains the second match font style');
+ await act(async()=>searchRoot.unmount());
  console.log('PASS: rich text focus, typing, cursor keys, IME composition, font selection, keyboard formatting, explicit layout adjustment and done shortcut; automatic preparation, preview before OCR, early text selection, confidence styling, scan replacement/rotation, forced retry, page-switch race, stop, disabled controls and unmount cancellation.');
 } finally {dom.window.close();}

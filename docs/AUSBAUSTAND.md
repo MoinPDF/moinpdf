@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 20. Oktober 2026, Version 0.16.0.
+Stand: 20. Oktober 2026, Version 0.17.0.
 
 „PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
 
@@ -159,3 +159,9 @@ Layoutvorschläge verändern andere Textfelder nicht. Tabellen und Spalten besit
 Der Export öffnet die erzeugte PDF erneut. Textmenge und Position geänderter Texte werden geprüft; Leerraum und Unicode-Kompatibilitätsformen werden normalisiert. Der Bildvergleich arbeitet außerhalb der bearbeiteten Rechtecke mit 900 Pixeln Vorschauauflösung und einer Toleranz für Rasterunterschiede. Er kann kleine Änderungen übersehen und überprüft das Schriftbild innerhalb der geänderten Stellen nicht. Beschnittene oder zusätzlich als Bild bearbeitete Seiten werden als eingeschränkt geprüft gekennzeichnet. Original und Export bleiben zum eigenen Vergleich verfügbar.
 
 Prüfstand: 46 lokale Testsammlungen, Produktionsbuild, Typprüfung und Lint; zusätzliche Prüfungen für Wortformatierung, Unicode, Projekt-/Schriftrundlauf, fehlenden oder doppelten Exporttext. Browserergebnisse werden in der zugehörigen Editor-CI als Artefakte gespeichert. Keine Zusage für beliebige Kunden-PDFs, Handschrift oder reale mobile Geräte. Umfangreiche Schriffformung, variable/CFF-Eigenschriften und dokumentweiter Word-Umbruch bleiben technische Grenzen.
+
+## Bedienungspräzision 0.17.0
+
+Gemischte Formatierung wird ausdrücklich angezeigt; Schriftstatus und Formatierungsleiste folgen der ausgewählten Textspanne. Ohne Textmarkierung bleibt das ganze Textfeld der Formatierungsbereich. Die integrierte Suche (Strg/⌘+F oder +H im Textfeld) bearbeitet bewusst nur dieses Feld. Ersetzungen behalten den Stil der jeweiligen Fundstelle und bilden einen gemeinsamen Rückgängig-Schritt. Suchbegriffe werden wörtlich interpretiert; Textfelder bleiben auf 20.000 Zeichen begrenzt.
+
+Der Editor vergrößert die tatsächliche Seite bis 400 Prozent. Bedienelemente bleiben in normaler Größe; die Seite besitzt einen eigenen Scrollbereich. Vorschauen sind auf 3.200 Pixel längste Seite und die bestehenden Rendergrenzen begrenzt. Das ist eine Bildschirmvorschau, keine Aussage über die Exportauflösung. Vollständige Acrobat-Gleichwertigkeit und der Rang als bestes Internetwerkzeug sind nicht nachgewiesen. Für eine solche Bewertung fehlen unter anderem ein unabhängiger Vergleichskorpus und reale Geräteprüfungen.

@@ -92,6 +92,13 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         target=page.get_by_role('button',name=re.compile(('Edit text: ' if english else 'Text bearbeiten: ')+('Rechnung 2026' if scan_case else 'ORIGINAL 4815')))
         print(name+': waiting for text targets',flush=True)
         expect(target).to_be_visible(timeout=120000)
+        zoom=page.get_by_label('PDF page zoom' if english else 'Zoom der PDF-Seite',exact=True)
+        before_width=target.bounding_box()['width']
+        zoom.select_option('400')
+        expect(page.locator('.editor-page-scroll .canvas-holder')).to_have_css('width',re.compile(r'\d'))
+        assert target.bounding_box()['width']>before_width*3.5, '400% zoom must enlarge the actual PDF page'
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Zoom leaked outside page scroller'
+        zoom.select_option('100')
         box=target.bounding_box()
         target.click(position={'x':box['width']*.55,'y':box['height']*.55})
         print(name+': text selected',flush=True)
@@ -131,6 +138,28 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
             toolbar.get_by_label('Text colour' if english else 'Textfarbe',exact=True).fill('#006644')
             expect(field.locator('span').filter(has_text=re.compile('^NEU$'))).to_have_css('font-weight','700')
             expect(field.locator('span').filter(has_text=re.compile('^NEU$'))).to_have_css('font-style','italic')
+            # Mixed formatting is explicit; toggling from mixed applies to the entire selection.
+            field.press('Control+a')
+            expect(toolbar.get_by_role('button',name='Bold' if english else 'Fett',exact=True)).to_have_attribute('aria-pressed','mixed')
+            toolbar.get_by_role('button',name='Bold' if english else 'Fett',exact=True).click()
+            expect(field).to_be_focused()
+            field.press('Control+z')
+            # Search is scoped to this text box, replacements retain styles and share undo/redo.
+            field.press('Control+h')
+            search=page.get_by_role('region',name='Find and replace in text box' if english else 'Suchen und ersetzen im Textfeld')
+            expect(search).to_be_visible()
+            search.get_by_label('Find text' if english else 'Suchtext',exact=True).fill('NEU')
+            search.get_by_label('Replace with' if english else 'Ersetzen durch',exact=True).fill('ALT')
+            search.get_by_role('button',name='Next match' if english else 'Nächster Treffer',exact=True).click()
+            expect(field).to_be_focused()
+            assert field.evaluate('getSelection().toString()')=='NEU'
+            search.get_by_role('button',name='Replace all in text box' if english else 'Alle im Textfeld ersetzen',exact=True).click()
+            expect(field).to_have_text('ALT ÄÖÜ €')
+            search.get_by_role('button',name='Close search' if english else 'Suche schließen',exact=True).click()
+            expect(field).to_be_focused()
+            field.press('Control+z');expect(field).to_have_text(replacement)
+            field.press('Control+Shift+z');expect(field).to_have_text('ALT ÄÖÜ €')
+            field.press('Control+z');expect(field).to_have_text(replacement)
             # An explicit layout proposal changes nothing before acceptance.
             page.get_by_text('Adjust layout' if english else 'Layout anpassen',exact=True).click()
             size=toolbar.get_by_label('Font size in points' if english else 'Textgröße in Punkt',exact=True)

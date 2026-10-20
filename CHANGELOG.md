@@ -9,6 +9,13 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.17.0 – 20. Oktober 2026
+
+- „PDF bearbeiten“ zeigt gemischte Schriftarten, Größen und Formatierungen ausdrücklich an. Schriftstatus und Formatierungsleiste beziehen sich auf die tatsächliche Auswahl; Fett/Kursiv kehren direkt zum Text zurück.
+- Suchen und Ersetzen im ausgewählten Textfeld: einzelne oder alle Treffer, Groß-/Kleinschreibung, ganze Wörter, Markierung der Fundstelle und gemeinsames Rückgängig/Wiederholen. Jede Ersetzung erhält den Stil ihrer Fundstelle; reguläre Ausdrücke werden nicht ausgeführt.
+- Tatsächlicher Seitenzoom von 50 bis 400 Prozent mit Rückkehr zur Seitenbreite, höher aufgelöster Vorschau und begrenztem Bildspeicher. Die frühere feste Seitenbreite begrenzte die Vergrößerung auf breiten Bildschirmen.
+- Neue Regressionen für gemischte Auswahl, Suchtreffer, Stilübernahme, große Ersetzungslisten und Zoom. Dokumentweiter Word-Seitenfluss, beliebige Scanqualität und vollständige Acrobat-Gleichwertigkeit werden weiterhin nicht zugesichert.
+
 ## 0.16.0 – 20. Oktober 2026
 
 - Direkte Textauswahl mit Cursor an der angeklickten Stelle, Markieren einzelner Wörter sowie Fett, Kursiv, Farbe, Schrift und Größe innerhalb eines Textfelds. Änderungen und Formatierung bleiben im Rückgängig-Verlauf und in Projektdateien erhalten.

@@ -12,6 +12,7 @@ import type { PreparedEditorRun } from '@/lib/editor-rich-layout';
 import {
   editorSegments,
   editorStyle,
+  editorSelectionStyle,
   replaceEditorRange,
   type EditorSelection,
 } from '@/lib/editor-rich-text';
@@ -42,6 +43,8 @@ export function EditorRichInput({
   onDone,
   onSelection,
   initialPoint,
+  selectionRequest,
+  onSearch,
 }: {
   mark: Mark;
   width: number;
@@ -52,6 +55,8 @@ export function EditorRichInput({
   onDone: () => void;
   onSelection?: (selection: EditorSelection) => void;
   initialPoint?: EditorStartPoint | null;
+  selectionRequest?: EditorSelection | null;
+  onSearch?: () => void;
 }) {
   const [repair, setRepair] = useState(0);
   const input = useRef<HTMLDivElement>(null),
@@ -123,12 +128,18 @@ export function EditorRichInput({
         const delta =
           sheet.getBoundingClientRect().top + p.pageY * sheet.getBoundingClientRect().height - p.y;
         let remaining = delta;
+        const pageScroller = root.closest('.editor-page-scroll');
         for (
           let parent = sheet.parentElement;
           parent && Math.abs(remaining) > 0.5;
           parent = parent.parentElement
         ) {
-          if (['auto', 'scroll'].includes(getComputedStyle(parent).overflowY)) {
+          // The toolbar moves the page viewport itself. Scrolling inside that
+          // viewport would hide the clicked line above its clipped edge.
+          if (
+            parent !== pageScroller &&
+            ['auto', 'scroll'].includes(getComputedStyle(parent).overflowY)
+          ) {
             const previous = parent.scrollTop;
             parent.scrollTop += remaining;
             remaining -= parent.scrollTop - previous;
@@ -148,6 +159,35 @@ export function EditorRichInput({
     } else if (selection) setEditorDomSelection(root, selection.anchor, selection.focus);
     remember();
   });
+  useLayoutEffect(() => {
+    const root = input.current;
+    if (!root || disabled || selectionRequest?.id !== mark.id) return;
+    root.focus({ preventScroll: true });
+    setEditorDomSelection(root, selectionRequest.start, selectionRequest.end);
+    const scroller = root.closest<HTMLElement>('.editor-page-scroll'),
+      selection = window.getSelection();
+    if (scroller && selection?.rangeCount) {
+      const range = selection.getRangeAt(0);
+      if (typeof range.getBoundingClientRect === 'function') {
+        scroller.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const rect = range.getBoundingClientRect(),
+          viewport = scroller.getBoundingClientRect();
+        if (rect.top < viewport.top + 16) scroller.scrollTop += rect.top - viewport.top - 16;
+        else if (rect.bottom > viewport.bottom - 16)
+          scroller.scrollTop += Math.min(
+            rect.top - viewport.top - 16,
+            rect.bottom - viewport.bottom + 16,
+          );
+        if (rect.left < viewport.left + 16) scroller.scrollLeft += rect.left - viewport.left - 16;
+        else if (rect.right > viewport.right - 16)
+          scroller.scrollLeft += Math.min(
+            rect.left - viewport.left - 16,
+            rect.right - viewport.right + 16,
+          );
+      }
+    }
+    remember();
+  }, [selectionRequest, mark.id, disabled]);
   useEffect(() => {
     const selection = () => remember();
     const move = (e: PointerEvent) => {
@@ -245,17 +285,27 @@ export function EditorRichInput({
         } else if (e.key === 'Enter') {
           e.preventDefault();
           insert('\n');
+        } else if (
+          (e.ctrlKey || e.metaKey) &&
+          ['f', 'h'].includes(e.key.toLowerCase()) &&
+          onSearch
+        ) {
+          e.preventDefault();
+          remember();
+          onSearch();
         } else if ((e.ctrlKey || e.metaKey) && ['b', 'i'].includes(e.key.toLowerCase())) {
           e.preventDefault();
           remember();
           const selection = input.current ? editorDomSelection(input.current) : null;
-          const active =
-            editorSegments(mark).find(
-              (r) => r.start <= (selection?.start || 0) && r.end > (selection?.start || 0),
-            )?.style || mark;
+          const active = editorSelectionStyle(
+            mark,
+            selection ? { id: mark.id, ...selection } : null,
+          );
           onPatch(
             mark.id,
-            e.key.toLowerCase() === 'b' ? { bold: !active.bold } : { italic: !active.italic },
+            e.key.toLowerCase() === 'b'
+              ? { bold: active.mixed.has('bold') || !active.style.bold }
+              : { italic: active.mixed.has('italic') || !active.style.italic },
           );
         }
       }}

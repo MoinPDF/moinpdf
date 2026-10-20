@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState, type CSSProperties } from 'react';
-import { Bold, Italic, Check } from 'lucide-react';
+import { Bold, Italic, Check, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from './appearance';
@@ -16,7 +16,7 @@ import {
 import { cssFont, editorMarkChanged } from '@/lib/editor-model';
 import { editorTextGeometry } from '@/lib/editor-text-layer';
 import { prepareEditorRuns, type PreparedEditorRun } from '@/lib/editor-rich-layout';
-import type { EditorSelection } from '@/lib/editor-rich-text';
+import { editorSelectionStyle, type EditorSelection } from '@/lib/editor-rich-text';
 import { EditorRichInput, type EditorStartPoint } from './editor-rich-input';
 
 export type EditorPatch = (id: string, patch: Partial<Mark>, mode?: 'typing') => void;
@@ -102,16 +102,18 @@ export function EditorFontPicker({
   mark,
   disabled,
   onPatch,
+  mixed = false,
 }: {
   mark: Mark;
   disabled: boolean;
   onPatch: EditorPatch;
+  mixed?: boolean;
 }) {
   useLanguage();
   return (
     <select
       aria-label={ui('Schriftart')}
-      value={mark.fontChoice || 'auto'}
+      value={mixed ? 'mixed' : mark.fontChoice || 'auto'}
       disabled={disabled}
       onChange={(event) => {
         const value = event.target.value as EditorFontChoice,
@@ -122,6 +124,11 @@ export function EditorFontPicker({
         });
       }}
     >
+      {mixed && (
+        <option value="mixed" disabled>
+          {ui('Gemischt')}
+        </option>
+      )}
       <option value="auto">{ui('Automatisch / Originalschrift')}</option>
       {mark.customFont && (
         <option value="custom">
@@ -137,14 +144,36 @@ export function EditorFontPicker({
     </select>
   );
 }
-export function EditorFontStatus({ mark, source }: { mark: Mark; source?: Source }) {
+export function EditorFontStatus({
+  mark,
+  source,
+  selection,
+}: {
+  mark: Mark;
+  source?: Source;
+  selection?: EditorSelection | null;
+}) {
   useLanguage();
-  const { resolution, error, pending } = useEditorTypography(mark, source);
+  const typography = useEditorTypography(mark, source),
+    { error, pending } = typography;
+  const context = editorSelectionStyle(mark, selection);
+  const selectedRuns = typography.runs?.filter(
+    (r) => r.start < context.end && r.end > context.start,
+  );
+  const resolution = selectedRuns?.[0]?.resolution || typography.resolution;
+  const resolutions = selectedRuns?.length
+    ? selectedRuns.map((r) => r.resolution)
+    : resolution
+      ? [resolution]
+      : [];
+  const names = [...new Set(resolutions.map((r) => r.font.name))];
+  const reasons = [...new Set(resolutions.map((r) => r.reason).filter(Boolean))];
+  const originalName = context.mixed.has('originalFontName') ? '' : context.style.originalFontName;
   return (
     <div className="editor-font-status" aria-live="polite">
-      {mark.originalFontName && (
+      {originalName && (
         <span>
-          {ui('Erkannte Schrift')}: <strong>{mark.originalFontName}</strong>
+          {ui('Erkannte Schrift')}: <strong>{originalName}</strong>
         </span>
       )}
       {error ? (
@@ -153,16 +182,22 @@ export function EditorFontStatus({ mark, source }: { mark: Mark; source?: Source
         <>
           <span>
             {ui(
-              resolution.font.original
-                ? 'Originalschrift wird verwendet'
-                : resolution.substituted
-                  ? 'Ersatzschrift'
-                  : 'Verwendete Schrift',
+              names.length > 1
+                ? 'Verwendete Schriften'
+                : resolution.font.original
+                  ? 'Originalschrift wird verwendet'
+                  : resolution.substituted
+                    ? 'Ersatzschrift'
+                    : 'Verwendete Schrift',
             )}
-            : <strong>{resolution.font.name}</strong>
+            : <strong>{names.join(', ')}</strong>
           </span>
-          {resolution.reason && <p className="editor-ocr-warning">{ui(resolution.reason)}</p>}
-          {resolution.widthDeviation !== undefined && (
+          {reasons.map((reason) => (
+            <p key={reason} className="editor-ocr-warning">
+              {ui(reason!)}
+            </p>
+          ))}
+          {resolutions.length === 1 && resolution.widthDeviation !== undefined && (
             <span>
               {ui('Abweichung der Textbreite')}: {Math.round(resolution.widthDeviation * 10) / 10}%
               · {ui('am ursprünglichen Text gemessen')}
@@ -189,6 +224,9 @@ export function EditorInlineToolbar({
   disabled,
   onPatch,
   onDone,
+  selection,
+  onFocusText,
+  onSearch,
 }: {
   mark: Mark;
   source: Source;
@@ -196,10 +234,20 @@ export function EditorInlineToolbar({
   disabled: boolean;
   onPatch: EditorPatch;
   onDone: () => void;
+  selection?: EditorSelection | null;
+  onFocusText?: () => void;
+  onSearch?: () => void;
 }) {
   useLanguage();
   const [fontError, setFontError] = useState('');
   const [fontLoading, setFontLoading] = useState(false);
+  const context = editorSelectionStyle(mark, selection),
+    active = { ...mark, ...context.style };
+  const mixedFont =
+    context.mixed.has('fontChoice') ||
+    context.mixed.has('fontFamily') ||
+    ((active.fontChoice || 'auto') === 'auto' &&
+      (context.mixed.has('originalFontId') || context.mixed.has('originalFontName')));
   return (
     <div
       className="editor-inline-toolbar"
@@ -208,7 +256,15 @@ export function EditorInlineToolbar({
     >
       <label>
         <span>{ui('Schriftart')}</span>
-        <EditorFontPicker mark={mark} disabled={disabled} onPatch={onPatch} />
+        <EditorFontPicker
+          mark={active}
+          mixed={mixedFont}
+          disabled={disabled}
+          onPatch={(id, patch) => {
+            onPatch(id, patch);
+            onFocusText?.();
+          }}
+        />
       </label>
       <label className="editor-inline-size">
         <span>{ui('Größe · pt')}</span>
@@ -218,11 +274,22 @@ export function EditorInlineToolbar({
           min={1}
           max={288}
           step={0.1}
-          value={Math.round((mark.fontScale || 0.028) * width * 100) / 100}
+          value={
+            context.mixed.has('fontScale')
+              ? ''
+              : Math.round((active.fontScale || 0.028) * width * 100) / 100
+          }
+          placeholder={context.mixed.has('fontScale') ? ui('Gemischt') : undefined}
           disabled={disabled}
           onChange={(e) => {
             const size = Number(e.target.value);
             if (size >= 1 && size <= 288) onPatch(mark.id, { fontScale: size / width });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === 'Escape') {
+              e.preventDefault();
+              onFocusText?.();
+            }
           }}
         />
       </label>
@@ -232,9 +299,13 @@ export function EditorInlineToolbar({
           variant="ghost"
           title={ui('Fett')}
           aria-label={ui('Fett')}
-          aria-pressed={!!mark.bold}
+          aria-pressed={context.mixed.has('bold') ? 'mixed' : !!active.bold}
           disabled={disabled}
-          onClick={() => onPatch(mark.id, { bold: !mark.bold })}
+          onPointerDown={(e) => e.preventDefault()}
+          onClick={() => {
+            onPatch(mark.id, { bold: context.mixed.has('bold') || !active.bold });
+            onFocusText?.();
+          }}
         >
           <Bold size={17} />
         </Button>
@@ -243,28 +314,51 @@ export function EditorInlineToolbar({
           variant="ghost"
           title={ui('Kursiv')}
           aria-label={ui('Kursiv')}
-          aria-pressed={!!mark.italic}
+          aria-pressed={context.mixed.has('italic') ? 'mixed' : !!active.italic}
           disabled={disabled}
-          onClick={() => onPatch(mark.id, { italic: !mark.italic })}
+          onPointerDown={(e) => e.preventDefault()}
+          onClick={() => {
+            onPatch(mark.id, { italic: context.mixed.has('italic') || !active.italic });
+            onFocusText?.();
+          }}
         >
           <Italic size={17} />
         </Button>
-        <label className="editor-inline-color" title={ui('Textfarbe')}>
+        <label
+          className={`editor-inline-color${context.mixed.has('color') ? ' is-mixed' : ''}`}
+          title={ui(context.mixed.has('color') ? 'Gemischte Textfarben' : 'Textfarbe')}
+        >
           <input
             aria-label={ui('Textfarbe')}
             type="color"
             disabled={disabled}
-            value={mark.color || '#222222'}
+            value={active.color || '#222222'}
             onChange={(e) => onPatch(mark.id, { color: e.target.value })}
           />
         </label>
+        {onSearch && (
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label={ui('Suchen und ersetzen')}
+            title={ui('Suchen und ersetzen')}
+            disabled={disabled}
+            onClick={onSearch}
+          >
+            <Search size={17} />
+          </Button>
+        )}
         <Button size="sm" variant="outline" disabled={disabled} onClick={onDone}>
           <Check size={17} />
           {ui('Fertig')}
         </Button>
       </div>
-      <EditorFontStatus mark={mark} source={source} />
+      <EditorFontStatus mark={mark} source={source} selection={selection} />
       <small className="editor-selection-help">
+        <strong>
+          {ui(context.selected ? 'Formatierung: markierter Text' : 'Formatierung: ganzes Textfeld')}
+          {context.mixed.size ? ` · ${ui('Gemischt')}` : ''}
+        </strong>{' '}
         {ui(
           'Markiere Wörter, um nur diese zu formatieren. Ohne Markierung gilt die Formatierung für das ganze Textfeld.',
         )}
@@ -330,6 +424,8 @@ export function EditorInlineText({
   onDone,
   onSelection,
   initialPoint,
+  selectionRequest,
+  onSearch,
 }: {
   mark: Mark;
   source: Source;
@@ -342,6 +438,8 @@ export function EditorInlineText({
   onDone: () => void;
   onSelection?: (selection: EditorSelection) => void;
   initialPoint?: EditorStartPoint | null;
+  selectionRequest?: EditorSelection | null;
+  onSearch?: () => void;
 }) {
   useLanguage();
   const typography = useEditorTypography(mark, source);
@@ -355,6 +453,8 @@ export function EditorInlineText({
       onDone={onDone}
       onSelection={onSelection}
       initialPoint={initialPoint}
+      selectionRequest={selectionRequest}
+      onSearch={onSearch}
       style={{
         ...editorTextCss(mark, width, height, typography.resolution),
         ...(!editorMarkChanged(mark)

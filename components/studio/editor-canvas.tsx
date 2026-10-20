@@ -1,13 +1,21 @@
 'use client';
 import { EditorLayoutHelp, EditorOriginalSnippet } from './editor-layout-help';
 import { EditorOcrReview } from './editor-ocr-review';
+import { EditorTextSearch } from './editor-text-search';
 import { flushSync } from 'react-dom';
 import { editorSegments, type EditorSelection } from '@/lib/editor-rich-text';
 import type { EditorStartPoint } from './editor-rich-input';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
-import { useEffect, useRef, useState, type PointerEvent, type CSSProperties } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type CSSProperties,
+} from 'react';
 import { LoaderCircle, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { analyzeEditorPage } from '@/lib/editor-analysis';
@@ -140,6 +148,7 @@ export function EditorCanvas({
   onTextSelection,
   autoOcr = false,
   language = 'deu+eng',
+  zoom = 100,
 }: {
   source: Source;
   page: PageItem;
@@ -155,6 +164,7 @@ export function EditorCanvas({
   onDimensions: (dims: { width: number; height: number }) => void;
   autoOcr?: boolean;
   language?: string;
+  zoom?: number;
 }) {
   useLanguage();
   const [url, setUrl] = useState(''),
@@ -171,6 +181,38 @@ export function EditorCanvas({
     [paragraphMode, setParagraphMode] = useState(false);
   const [initialPoint, setInitialPoint] = useState<EditorStartPoint | null>(null);
   const [textSelection, setTextSelection] = useState<EditorSelection | null>(null);
+  const [selectionRequest, setSelectionRequest] = useState<EditorSelection | null>(null);
+  const [searchId, setSearchId] = useState('');
+  const [searchRequest, setSearchRequest] = useState(0);
+  const openSearch = (id: string) => {
+    setSearchId(id);
+    setSearchRequest((n) => n + 1);
+  };
+  const pageScroll = useRef<HTMLDivElement>(null),
+    previousZoom = useRef(zoom);
+  const previewSide = Math.min(
+    3200,
+    Math.max(
+      1400,
+      Math.ceil(
+        (displayWidth *
+          Math.max(1, dims.height / dims.width) *
+          (typeof window === 'undefined' ? 1 : Math.min(window.devicePixelRatio || 1, 2))) /
+          700,
+      ) * 700,
+    ),
+  );
+  useLayoutEffect(() => {
+    const element = pageScroll.current,
+      ratio = zoom / previousZoom.current;
+    previousZoom.current = zoom;
+    if (element && ratio !== 1) {
+      element.scrollLeft =
+        (element.scrollLeft + element.clientWidth / 2) * ratio - element.clientWidth / 2;
+      element.scrollTop =
+        (element.scrollTop + element.clientHeight / 2) * ratio - element.clientHeight / 2;
+    }
+  }, [zoom]);
   const selectionChanged = (selection: EditorSelection) => {
     onTextSelection?.(selection);
     setTextSelection((old) =>
@@ -178,6 +220,10 @@ export function EditorCanvas({
         ? old
         : selection,
     );
+  };
+  const focusRange = (selection: EditorSelection) => {
+    selectionChanged(selection);
+    setSelectionRequest({ ...selection });
   };
   const recognition = useRef<AbortController | null>(null);
   const forceRecognition = useRef(false);
@@ -225,6 +271,7 @@ export function EditorCanvas({
             JSON.parse(removalKey) as Mark[],
             targets,
             controller.signal,
+            previewSide,
           ),
         )
         .then(async ({ canvas }) => {
@@ -250,14 +297,17 @@ export function EditorCanvas({
       controller.abort();
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
-  }, [source, page, targets, removalKey]);
+  }, [source, page, targets, removalKey, previewSide]);
+  const renderedPage = useRef('');
   useEffect(() => {
     let live = true,
       url = '';
     const cancel = new AbortController();
-    setUrl('');
+    const key = `${source.id}:${page.index}:${page.rotation}`;
+    if (renderedPage.current !== key) setUrl('');
+    renderedPage.current = key;
     setError('');
-    renderPage(source, { index: page.index, rotation: page.rotation }, 1400, cancel.signal)
+    renderPage(source, { index: page.index, rotation: page.rotation }, previewSide, cancel.signal)
       .then(async ({ canvas, width, height }) => {
         const blob = await new Promise<Blob | null>((resolve) =>
           canvas.toBlob(resolve, 'image/png'),
@@ -279,7 +329,7 @@ export function EditorCanvas({
       cancel.abort();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [source, page.index, page.rotation, onDimensions, renderRetry]);
+  }, [source, page.index, page.rotation, onDimensions, renderRetry, previewSide]);
   useEffect(() => {
     if (disabled) {
       setLoadingText(false);
@@ -620,19 +670,39 @@ export function EditorCanvas({
       )}
       {selectedText && autoOcr && (
         <EditorInlineToolbar
-          mark={{
-            ...selectedText,
-            ...(textSelection?.id === selectedText.id
-              ? editorSegments(selectedText).find(
-                  (r) => r.start <= textSelection.start && r.end > textSelection.start,
-                )?.style
-              : {}),
-          }}
+          mark={selectedText}
+          selection={textSelection}
           source={source}
           width={dims.width}
           disabled={disabled}
           onPatch={onPatch}
           onDone={() => onSelect('')}
+          onFocusText={() =>
+            focusRange(
+              textSelection?.id === selectedText.id
+                ? textSelection
+                : { id: selectedText.id, start: 0, end: 0 },
+            )
+          }
+          onSearch={() => openSearch(selectedText.id)}
+        />
+      )}
+      {selectedText && autoOcr && searchId === selectedText.id && (
+        <EditorTextSearch
+          key={selectedText.id}
+          request={searchRequest}
+          mark={selectedText}
+          disabled={disabled}
+          onPatch={onPatch}
+          onRange={focusRange}
+          onClose={() => {
+            setSearchId('');
+            focusRange(
+              textSelection?.id === selectedText.id
+                ? textSelection
+                : { id: selectedText.id, start: 0, end: 0 },
+            );
+          }}
         />
       )}
       {selectedText && autoOcr && (
@@ -707,195 +777,202 @@ export function EditorCanvas({
           )}
         </p>
       )}
-      <div className="canvas-holder">
+      <div className="editor-page-scroll" ref={pageScroll}>
         <div
-          ref={host}
-          className="document-sheet editor-sheet"
-          style={{
-            aspectRatio: `${dims.width}/${dims.height}`,
-            touchAction: action === 'erase' || action === 'replace-area' ? 'none' : 'pan-y',
-          }}
-          onPointerDown={down}
-          onPointerMove={move}
-          onPointerUp={up}
-          onPointerCancel={() => {
-            start.current = null;
-            drag.current = null;
-            setDraft(null);
-            setMoving(null);
-          }}
-          aria-label={ui('PDF-Bearbeitungsfläche')}
-          role="region"
+          className="canvas-holder"
+          style={{ width: `${zoom}%`, maxWidth: `${(720 * zoom) / 100}px` }}
         >
-          {url ? (
-            <img
-              src={background.key === removalKey && background.url ? background.url : url}
-              alt={ui(`${source.name}, Seite ${page.index + 1}`)}
-              draggable={false}
-            />
-          ) : (
-            <div className="canvas-loading">
-              {error ? (
-                <div>
-                  {ui(error)}
-                  <Button variant="outline" onClick={() => setRenderRetry((n) => n + 1)}>
-                    {ui('Erneut versuchen')}
-                  </Button>
-                </div>
-              ) : (
-                <LoaderCircle className="spin" />
-              )}
-            </div>
-          )}
-          {removals
-            .filter(() => !(background.key === removalKey && background.url))
-            .filter(editorMarkChanged)
-            .flatMap((m) =>
-              editorRemovalRects(m).map((rect, i) => (
-                <div
-                  key={`erase-${m.id}-${i}`}
-                  className="editor-erasure"
-                  style={{ ...box(rect), background: m.fill || '#ffffff' }}
-                />
-              )),
+          <div
+            ref={host}
+            className="document-sheet editor-sheet"
+            style={{
+              aspectRatio: `${dims.width}/${dims.height}`,
+              touchAction: action === 'erase' || action === 'replace-area' ? 'none' : 'pan-x pan-y',
+            }}
+            onPointerDown={down}
+            onPointerMove={move}
+            onPointerUp={up}
+            onPointerCancel={() => {
+              start.current = null;
+              drag.current = null;
+              setDraft(null);
+              setMoving(null);
+            }}
+            aria-label={ui('PDF-Bearbeitungsfläche')}
+            role="region"
+          >
+            {url ? (
+              <img
+                src={background.key === removalKey && background.url ? background.url : url}
+                alt={ui(`${source.name}, Seite ${page.index + 1}`)}
+                draggable={false}
+              />
+            ) : (
+              <div className="canvas-loading">
+                {error ? (
+                  <div>
+                    {ui(error)}
+                    <Button variant="outline" onClick={() => setRenderRetry((n) => n + 1)}>
+                      {ui('Erneut versuchen')}
+                    </Button>
+                  </div>
+                ) : (
+                  <LoaderCircle className="spin" />
+                )}
+              </div>
             )}
-          {url &&
-            action === 'pick' &&
-            available.map((t) => (
-              <button
-                className={`editor-text-target ${t.origin === 'ocr' && (t.confidence ?? 100) < 75 ? 'is-uncertain' : ''}`}
-                key={t.id}
-                style={box(t)}
-                disabled={disabled}
-                aria-label={ui(`Text bearbeiten: ${t.text}`)}
-                title={
-                  t.unsupportedReason
-                    ? ui(t.unsupportedReason)
-                    : t.origin === 'ocr'
-                      ? `${t.text} · ${ui('Erkennungssicherheit')}: ${Math.round(t.confidence || 0)}%`
-                      : t.text
-                }
-                onPointerDown={(e) => {
+            {removals
+              .filter(() => !(background.key === removalKey && background.url))
+              .filter(editorMarkChanged)
+              .flatMap((m) =>
+                editorRemovalRects(m).map((rect, i) => (
+                  <div
+                    key={`erase-${m.id}-${i}`}
+                    className="editor-erasure"
+                    style={{ ...box(rect), background: m.fill || '#ffffff' }}
+                  />
+                )),
+              )}
+            {url &&
+              action === 'pick' &&
+              available.map((t) => (
+                <button
+                  className={`editor-text-target ${t.origin === 'ocr' && (t.confidence ?? 100) < 75 ? 'is-uncertain' : ''}`}
+                  key={t.id}
+                  style={box(t)}
+                  disabled={disabled}
+                  aria-label={ui(`Text bearbeiten: ${t.text}`)}
+                  title={
+                    t.unsupportedReason
+                      ? ui(t.unsupportedReason)
+                      : t.origin === 'ocr'
+                        ? `${t.text} · ${ui('Erkennungssicherheit')}: ${Math.round(t.confidence || 0)}%`
+                        : t.text
+                  }
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    if (e.button === 0 && !disabled) {
+                      e.preventDefault();
+                      flushSync(() => pick(t, startPoint(e)));
+                    }
+                  }}
+                  onClick={(e) => {
+                    if (e.detail === 0) pick(t);
+                  }}
+                />
+              ))}
+            {[
+              ...displayed.filter((m) => m.kind !== 'redact'),
+              ...displayed.filter((m) => m.kind === 'redact'),
+            ].map((m) => (
+              <div
+                key={m.id}
+                className={`page-mark editor-object ${m.kind} ${selectedId === m.id ? 'is-selected' : ''}`}
+                style={{
+                  ...box(m),
+                  touchAction: m.kind === 'text' ? 'pan-y' : 'none',
+                  background: m.kind === 'erase' ? m.fill || '#ffffff' : undefined,
+                }}
+                tabIndex={disabled ? -1 : 0}
+                role="button"
+                aria-label={ui(
+                  `${m.kind === 'text' ? 'Textfeld' : m.kind === 'erase' ? 'Entfernter Bereich' : m.kind === 'image' ? 'Bild' : 'Markierung'} auswählen${m.kind === 'text' && m.text ? `: ${m.text.slice(0, 60)}` : ''}`,
+                )}
+                aria-pressed={selectedId === m.id}
+                onClick={(e) => {
                   e.stopPropagation();
-                  if (e.button === 0 && !disabled) {
+                  onSelect(m.id);
+                }}
+                onPointerDown={(e) => {
+                  if (m.kind === 'text') {
+                    e.stopPropagation();
+                    if (selectedId !== m.id)
+                      setInitialPoint({
+                        id: m.id,
+                        ...startPoint(e),
+                      });
+                    onSelect(m.id);
+                  } else begin(e, m);
+                }}
+                onKeyDown={(e) => {
+                  if (disabled) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    flushSync(() => pick(t, startPoint(e)));
+                    onSelect(m.id);
+                  }
+                  const shifts: Record<string, [number, number]> = {
+                    ArrowLeft: [-1, 0],
+                    ArrowRight: [1, 0],
+                    ArrowUp: [0, -1],
+                    ArrowDown: [0, 1],
+                  };
+                  const s = shifts[e.key];
+                  if (s) {
+                    e.preventDefault();
+                    const step = e.shiftKey ? 10 : 1;
+                    onPatch(
+                      m.id,
+                      fitRect({
+                        ...m,
+                        x: Math.min(1 - m.w, m.x + (s[0] * step) / dims.width),
+                        y: Math.min(1 - m.h, m.y + (s[1] * step) / dims.height),
+                      }),
+                    );
                   }
                 }}
-                onClick={(e) => {
-                  if (e.detail === 0) pick(t);
-                }}
-              />
+              >
+                {selectedId === m.id && m.kind === 'text' && autoOcr ? (
+                  <EditorInlineText
+                    mark={m}
+                    source={source}
+                    width={displayWidth}
+                    height={(displayWidth * dims.height) / dims.width}
+                    pageWidth={dims.width}
+                    pageHeight={dims.height}
+                    disabled={disabled}
+                    onPatch={onPatch}
+                    onSelection={selectionChanged}
+                    initialPoint={initialPoint}
+                    selectionRequest={selectionRequest}
+                    onSearch={() => openSearch(m.id)}
+                    onDone={() => onSelect('')}
+                  />
+                ) : (
+                  <MarkContent
+                    mark={m}
+                    width={displayWidth}
+                    height={(displayWidth * dims.height) / dims.width}
+                    source={source}
+                  />
+                )}
+                {selectedId === m.id && m.kind === 'text' && (
+                  <button
+                    type="button"
+                    className="editor-move-handle"
+                    aria-label={ui('Textfeld verschieben')}
+                    title={ui('Textfeld verschieben')}
+                    onPointerDown={(e) => begin(e, m)}
+                    disabled={disabled}
+                  >
+                    <Move size={16} />
+                  </button>
+                )}
+                {selectedId === m.id && (
+                  <span
+                    className="editor-resize"
+                    title={ui('Größe ändern')}
+                    onPointerDown={(e) => begin(e, m, true)}
+                  />
+                )}
+              </div>
             ))}
-          {[
-            ...displayed.filter((m) => m.kind !== 'redact'),
-            ...displayed.filter((m) => m.kind === 'redact'),
-          ].map((m) => (
-            <div
-              key={m.id}
-              className={`page-mark editor-object ${m.kind} ${selectedId === m.id ? 'is-selected' : ''}`}
-              style={{
-                ...box(m),
-                touchAction: m.kind === 'text' ? 'pan-y' : 'none',
-                background: m.kind === 'erase' ? m.fill || '#ffffff' : undefined,
-              }}
-              tabIndex={disabled ? -1 : 0}
-              role="button"
-              aria-label={ui(
-                `${m.kind === 'text' ? 'Textfeld' : m.kind === 'erase' ? 'Entfernter Bereich' : m.kind === 'image' ? 'Bild' : 'Markierung'} auswählen${m.kind === 'text' && m.text ? `: ${m.text.slice(0, 60)}` : ''}`,
-              )}
-              aria-pressed={selectedId === m.id}
-              onClick={(e) => {
-                e.stopPropagation();
-                onSelect(m.id);
-              }}
-              onPointerDown={(e) => {
-                if (m.kind === 'text') {
-                  e.stopPropagation();
-                  if (selectedId !== m.id)
-                    setInitialPoint({
-                      id: m.id,
-                      ...startPoint(e),
-                    });
-                  onSelect(m.id);
-                } else begin(e, m);
-              }}
-              onKeyDown={(e) => {
-                if (disabled) return;
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onSelect(m.id);
-                }
-                const shifts: Record<string, [number, number]> = {
-                  ArrowLeft: [-1, 0],
-                  ArrowRight: [1, 0],
-                  ArrowUp: [0, -1],
-                  ArrowDown: [0, 1],
-                };
-                const s = shifts[e.key];
-                if (s) {
-                  e.preventDefault();
-                  const step = e.shiftKey ? 10 : 1;
-                  onPatch(
-                    m.id,
-                    fitRect({
-                      ...m,
-                      x: Math.min(1 - m.w, m.x + (s[0] * step) / dims.width),
-                      y: Math.min(1 - m.h, m.y + (s[1] * step) / dims.height),
-                    }),
-                  );
-                }
-              }}
-            >
-              {selectedId === m.id && m.kind === 'text' && autoOcr ? (
-                <EditorInlineText
-                  mark={m}
-                  source={source}
-                  width={displayWidth}
-                  height={(displayWidth * dims.height) / dims.width}
-                  pageWidth={dims.width}
-                  pageHeight={dims.height}
-                  disabled={disabled}
-                  onPatch={onPatch}
-                  onSelection={selectionChanged}
-                  initialPoint={initialPoint}
-                  onDone={() => onSelect('')}
-                />
-              ) : (
-                <MarkContent
-                  mark={m}
-                  width={displayWidth}
-                  height={(displayWidth * dims.height) / dims.width}
-                  source={source}
-                />
-              )}
-              {selectedId === m.id && m.kind === 'text' && (
-                <button
-                  type="button"
-                  className="editor-move-handle"
-                  aria-label={ui('Textfeld verschieben')}
-                  title={ui('Textfeld verschieben')}
-                  onPointerDown={(e) => begin(e, m)}
-                  disabled={disabled}
-                >
-                  <Move size={16} />
-                </button>
-              )}
-              {selectedId === m.id && (
-                <span
-                  className="editor-resize"
-                  title={ui('Größe ändern')}
-                  onPointerDown={(e) => begin(e, m, true)}
-                />
-              )}
-            </div>
-          ))}
-          {crop && (
-            <div className="crop-selection" style={box(crop)}>
-              <span>{ui('AUSSCHNITT')}</span>
-            </div>
-          )}
-          {draft && <div className="editor-area-draft" style={box(draft)} />}
+            {crop && (
+              <div className="crop-selection" style={box(crop)}>
+                <span>{ui('AUSSCHNITT')}</span>
+              </div>
+            )}
+            {draft && <div className="editor-area-draft" style={box(draft)} />}
+          </div>
         </div>
       </div>
     </div>

@@ -2306,16 +2306,49 @@ function Studio() {
                           <div className="zoom-controls">
                             <button
                               aria-label={ui('Verkleinern')}
-                              disabled={zoom <= 60}
-                              onClick={() => setZoom((v) => v - 20)}
+                              disabled={zoom <= (isEditor ? 50 : 60)}
+                              onClick={() =>
+                                setZoom((v) =>
+                                  isEditor
+                                    ? [50, 75, 100, 125, 150, 200, 300, 400]
+                                        .filter((step) => step < v)
+                                        .at(-1) || 50
+                                    : Math.max(60, v - 20),
+                                )
+                              }
                             >
                               <ZoomOut size={16} />
                             </button>
-                            <span>{zoom}%</span>
+                            {isEditor ? (
+                              <select
+                                aria-label={ui('Zoom der PDF-Seite')}
+                                value={zoom}
+                                onChange={(e) => setZoom(Number(e.target.value))}
+                              >
+                                {[50, 75, 100, 125, 150, 200, 300, 400].map((step) => (
+                                  <option key={step} value={step}>
+                                    {step === 100 ? ui('Seitenbreite') : `${step}%`}
+                                  </option>
+                                ))}
+                                {![50, 75, 100, 125, 150, 200, 300, 400].includes(zoom) && (
+                                  <option value={zoom}>{zoom}%</option>
+                                )}
+                              </select>
+                            ) : (
+                              <span>{zoom}%</span>
+                            )}
                             <button
                               aria-label={ui('Vergrößern')}
-                              disabled={zoom >= 160}
-                              onClick={() => setZoom((v) => v + 20)}
+                              disabled={zoom >= (isEditor ? 400 : 160)}
+                              onClick={() =>
+                                setZoom((v) =>
+                                  isEditor
+                                    ? [50, 75, 100, 125, 150, 200, 300, 400].find(
+                                        (step) => step > v,
+                                      ) || 400
+                                    : Math.min(160, v + 20),
+                                )
+                              }
                             >
                               <ZoomIn size={16} />
                             </button>
@@ -2382,7 +2415,7 @@ function Studio() {
                           />
                         )}
                         <div
-                          className="document-scroll"
+                          className={`document-scroll${isEditor ? ' editor-document-scroll' : ''}`}
                           onDragOver={(e) => {
                             if (toolId === 'insert-image') {
                               e.preventDefault();
@@ -2407,9 +2440,13 @@ function Studio() {
                             }
                           }}
                         >
-                          <div className="zoom-frame" style={{ width: `${zoom}%` }}>
+                          <div
+                            className="zoom-frame"
+                            style={{ width: `${isEditor ? 100 : zoom}%` }}
+                          >
                             {isEditor ? (
                               <EditorCanvas
+                                zoom={zoom}
                                 autoOcr={toolId === 'edit-text'}
                                 language={options.editorLanguage || 'deu+eng'}
                                 source={activeSource}
