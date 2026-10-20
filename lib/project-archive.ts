@@ -50,6 +50,7 @@ const mark = rect.extend({
     .optional(),
   sourceRect: rect.optional(),
   sourceRects: z.array(rect).max(2000).optional(),
+  sourceIsScan: z.boolean().optional(),
   fontFamily: z.enum(['sans', 'serif', 'mono']).optional(),
   fontChoice: z
     .enum([
@@ -172,6 +173,7 @@ const draft = z
   .strict();
 const options = z
   .object({
+    editorAllowRaster: z.boolean().optional(),
     editorLanguage: z
       .string()
       .max(100)

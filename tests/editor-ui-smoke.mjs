@@ -8,7 +8,7 @@ for(const file of ['lib/local-font-bytes.ts','components/studio/editor-canvas.ts
  const code=ts.transpileModule(await readFile(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/(['"])(@\/[^'"]+|\.\/[^'"]+)\1/g,(_,q,p)=>q+'./'+p.split('/').at(-1)+'.mjs'+q);
  await writeFile(folder+'/'+file.split('/').at(-1).replace(/\.tsx?$/,'.mjs'),code);
 }
-await writeFile(folder+'/editor-fonts.mjs',`export const editorFontPage=async()=>({fonts:new Map(),runs:[]});export const originalEditorFont=()=>undefined;export const loadEditorCssFont=async()=>{};export const resolveEditorFont=async(mark)=>({font:{name:'Liberation Sans',cssFamily:'TestFont',ascent:.9,descent:.2,original:false,measure:(text,size)=>text.length*size*.5},substituted:false});`);
+await writeFile(folder+'/editor-fonts.mjs',`export const editorFontPage=async()=>({fonts:new Map(),runs:[]});export const originalEditorFont=()=>undefined;export const loadEditorCssFont=async()=>{};export const resolveEditorFont=async(mark)=>({font:{name:'Liberation Sans',cssFamily:'TestFont',ascent:.9,descent:.2,original:false,measureDescent:()=>.2,measure:(text,size)=>text.length*size*.5},substituted:false});`);
 await writeFile(folder+'/pdf-text.mjs','export const readPdfText=async()=>({items:[],styles:{}});');
 await writeFile(folder+'/appearance.mjs','export const useLanguage=()=>({});');
 await writeFile(folder+'/button.mjs',`import React from 'react';export function Button({variant,size,...props}){return React.createElement('button',props);}`);

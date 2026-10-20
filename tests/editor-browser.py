@@ -1,0 +1,170 @@
+"""Editor acceptance against the production build; exports independently read by MuPDF.
+MOINPDF_TEST_BROWSERS=chromium,firefox,webkit (default all), MOINPDF_TEST_URL required.
+All fixture data is synthetic and every off-origin request/document POST is blocked.
+"""
+import json
+import os
+import re
+import traceback
+import atexit
+import subprocess
+import time
+from urllib.request import urlopen
+from pathlib import Path
+from urllib.parse import urlsplit
+import pymupdf
+from playwright.sync_api import sync_playwright, expect
+
+origin = os.environ.get('MOINPDF_TEST_URL', 'http://127.0.0.1:8765').rstrip('/')
+out = Path('.cache/editor-browser');out.mkdir(parents=True, exist_ok=True)
+if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
+    server_log=open(out/'http.log','w')
+    server=subprocess.Popen(['python','tests/text-browser-server.py'],stdout=server_log,stderr=subprocess.STDOUT)
+    atexit.register(server.terminate)
+    for attempt in range(50):
+        try:
+            with urlopen(origin,timeout=1) as response:
+                if response.status==200:break
+        except OSError:time.sleep(.1)
+    else:raise RuntimeError('Local production test server did not start')
+report = {'results': [], 'limitations': ['Synthetic documents; not a corpus of customer PDFs.', 'WebKit is not native Safari or a physical iPhone.']}
+
+def fixtures():
+    source = out/'source.pdf'
+    with pymupdf.open() as d, pymupdf.open() as scan:
+        p=d.new_page(width=500,height=700)
+        p.draw_rect(p.rect,color=None,fill=(.83,.91,.98))
+        p.insert_text((50,100),'ORIGINAL 4815',fontsize=18)
+        p.draw_line((40,105),(460,105),color=(.8,.1,.1),width=.4)
+        p.insert_text((50,640),'KEEP FOOTER',fontsize=12)
+        p.insert_link({'kind':pymupdf.LINK_URI,'from':pymupdf.Rect(350,620,470,650),'uri':'https://example.org/'})
+        sp=scan.new_page(width=500,height=700)
+        sp.insert_text((50,100),'Rechnung 2026',fontsize=24)
+        sp.insert_text((50,200),'Betrag 125,50 EUR',fontsize=24)
+        png=sp.get_pixmap(matrix=pymupdf.Matrix(2,2)).tobytes('png')
+        sp=d.new_page(width=500,height=700);sp.insert_image(sp.rect,stream=png)
+        # This existing OCR layer has the exact same geometry as the scan.
+        sp.insert_text((50,100),'Rechnung 2026',fontsize=24,render_mode=3)
+        sp.insert_text((50,200),'Betrag 125,50 EUR',fontsize=24,render_mode=3)
+        hidden=out/'searchable-scan.pdf'
+        with pymupdf.open() as one:
+            one.insert_pdf(d,from_page=1,to_page=1);one.save(hidden)
+        mixed=d.new_page(width=420,height=500)
+        mixed.insert_text((30,50),'NATIVE MIXED',fontsize=18)
+        mixed.insert_image(pymupdf.Rect(0,80,420,480),stream=png,keep_proportion=False)
+        d.save(source)
+    return source, hidden
+
+print('Preparing fixtures',flush=True)
+source,scan=fixtures()
+print('Fixtures ready',flush=True)
+
+def check_pixels(a,b,page_index):
+    # MuPDF caches downsampled images by object identity. A shared source image
+    # and copied destination images must both start with an empty render cache.
+    pymupdf.TOOLS.store_shrink(100)
+    pa=a[page_index].get_pixmap(matrix=pymupdf.Matrix(1,1))
+    pymupdf.TOOLS.store_shrink(100)
+    pb=b[page_index].get_pixmap(matrix=pymupdf.Matrix(1,1))
+    assert (pa.width,pa.height)==(pb.width,pb.height)
+    # Independent renderer should see the unchanged page, including invisible OCR.
+    assert pa.samples==pb.samples, 'Unchanged page pixels differ'
+
+def run_case(browser, name, width, path, scan_case=False, english=False):
+    context=browser.new_context(viewport={'width':width,'height':1000},accept_downloads=True,reduced_motion='reduce',locale='en-GB' if english else 'de-DE')
+    page=context.new_page();page.set_default_timeout(45000)
+    errors=[];blocked=[]
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    def route(r):
+        if r.request.method not in ('GET','HEAD') or (urlsplit(r.request.url).netloc!=urlsplit(origin).netloc and not r.request.url.startswith(('blob:','data:'))):
+            blocked.append({'method':r.request.method,'url':r.request.url});r.abort()
+        else:r.continue_()
+    page.route('**/*',route)
+    result={'case':name,'viewport':width}
+    try:
+        print('START: '+name,flush=True)
+        page.goto(origin)
+        if english:
+            page.locator('.language-trigger').click();page.get_by_role('menuitemradio',name='English',exact=True).click()
+        page.locator('input[type=file]').first.set_input_files(str(path.resolve()))
+        title='Edit PDF' if english else 'PDF bearbeiten'
+        page.locator('.chooser-tool').filter(has=page.get_by_text(title,exact=True)).click()
+        target=page.get_by_role('button',name=re.compile(('Edit text: ' if english else 'Text bearbeiten: ')+('Rechnung 2026' if scan_case else 'ORIGINAL 4815')))
+        print(name+': waiting for text targets',flush=True)
+        expect(target).to_be_visible(timeout=120000);target.click()
+        print(name+': text selected',flush=True)
+        field=page.get_by_label('Edit text directly in the PDF' if english else 'Text direkt in der PDF bearbeiten',exact=True)
+        expect(field).to_be_focused()
+        original='Rechnung 2026' if scan_case else 'ORIGINAL 4815'
+        replacement='BELEG' if scan_case else 'NEU ÄÖÜ €'
+        field.fill(replacement)
+        expect(field).to_have_value(replacement)
+        field.press('Control+z');expect(field).to_have_value(original)
+        field.press('Control+Shift+z');expect(field).to_have_value(replacement)
+        field.press('Control+z');expect(field).to_have_value(original)
+        field.press('Control+y');expect(field).to_have_value(replacement)
+        print(name+': undo/redo passed',flush=True)
+        if not scan_case:
+            # Wait for physical-removal preview rather than white rectangle overlay.
+            expect(page.locator('.editor-sheet .editor-erasure')).to_have_count(0,timeout=120000)
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Horizontal viewport overflow'
+        page.screenshot(path=str(out/(name+'-edit.png')),full_page=True)
+        action='Create edited PDF' if english else 'Bearbeitete PDF erstellen'
+        page.get_by_role('button',name=action,exact=True).click()
+        print(name+': exporting',flush=True)
+        link=page.get_by_role('link',name='Download PDF' if english else 'PDF herunterladen',exact=True).first
+        expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=150000)
+        assert link.is_visible(), page.locator('.error-box').inner_text()
+        with page.expect_download() as pending:link.click()
+        exported=out/(name+'.pdf');pending.value.save_as(exported)
+        print(name+': downloaded',flush=True)
+        with pymupdf.open(exported) as edited,pymupdf.open(path) as before:
+            text=edited[0].get_text()
+            assert replacement in text,(name,text)
+            assert original not in text,(name,text)
+            if scan_case:
+                assert text.count('BELEG')==1 and text.count('Betrag')==1,text
+            else:
+                assert 'KEEP FOOTER' in text,text
+                assert len(edited[0].get_links())==1,'Link lost'
+                assert len(edited)==3
+                check_pixels(before,edited,1)
+                check_pixels(before,edited,2)
+                assert edited[2].get_text().count('NATIVE MIXED')==1
+                edited[0].get_pixmap(matrix=pymupdf.Matrix(1.5,1.5)).save(out/(name+'-export.png'))
+        # Reopen the actual download in the same application, then inspect targets.
+        reopen=browser.new_context(viewport={'width':width,'height':1000})
+        rp=reopen.new_page();rp.route('**/*',route);rp.goto(origin)
+        rp.locator('input[type=file]').first.set_input_files(str(exported.resolve()))
+        rp.locator('.chooser-tool').filter(has=rp.get_by_text('PDF bearbeiten',exact=True)).click()
+        expect(rp.get_by_role('button',name='Text bearbeiten: '+replacement,exact=True)).to_be_visible(timeout=120000)
+        reopen.close()
+        if english:
+            assert 'Die Originalschrift' not in page.locator('body').inner_text(), 'Untranslated font substitution warning'
+        assert not errors,errors
+        assert not blocked,blocked
+        result.update(status='passed',page_errors=errors,blocked_requests=blocked)
+    except Exception as e:
+        result.update(status='failed',error=str(e),traceback=traceback.format_exc(),page_errors=errors,blocked_requests=blocked)
+        page.screenshot(path=str(out/(name+'-failure.png')),full_page=True,timeout=10000)
+        (out/(name+'-failure.txt')).write_text(page.locator('body').inner_text())
+        print(result['traceback'],flush=True)
+    finally:
+        report['results'].append(result);context.close()
+        (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+        print(result['status'].upper()+': '+name,flush=True)
+
+with sync_playwright() as api:
+    for kind in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
+        print('Launching '+kind,flush=True)
+        try:browser=getattr(api,kind).launch()
+        except Exception as e:
+            report['results'].append({'case':kind,'status':'unavailable','error':str(e)})
+            (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));continue
+        report[kind]=browser.version
+        run_case(browser,kind+'-desktop',1440,source)
+        run_case(browser,kind+'-mobile',390,source)
+        run_case(browser,kind+'-scan',1440,scan,scan_case=True)
+        run_case(browser,kind+'-english',1440,source,english=True)
+        browser.close()
+raise SystemExit(0 if all(r['status']=='passed' for r in report['results']) else 1)

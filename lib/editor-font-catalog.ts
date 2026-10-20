@@ -98,7 +98,7 @@ export function matchingEditorFont(name = '', family: FontFamily = 'sans'): Edit
   if (/dejavuserif/.test(value)) return 'dejavu-serif';
   if (/dejavusans/.test(value)) return 'dejavu-sans';
   if (/courier|liberationmono|nimbusmono/.test(value)) return 'liberation-mono';
-  if (/times|liberationserif|nimbusroman/.test(value)) return 'liberation-serif';
+  if (/times|liberationserif|nimbusrom/.test(value)) return 'liberation-serif';
   if (/arial|helvetica|liberationsans|nimbussans/.test(value)) return 'liberation-sans';
   return family === 'serif'
     ? 'liberation-serif'

@@ -380,14 +380,19 @@ export async function analyzeEditorPage(
       );
     }
     signal.throwIfAborted();
-    const targets =
-      options.forceOcr && recognized.length ? recognized : mergeEditorTargets(valid, recognized);
+    // Re-recognition can replace an existing invisible search layer, but must
+    // never discard visible native text and its font/geometry on mixed pages.
+    const replaceSearch = !!options.forceOcr && recognized.length > 0;
+    const targets = mergeEditorTargets(
+      replaceSearch ? valid.filter((t) => !t.invisible) : valid,
+      recognized,
+    );
     const result: EditorPageText = {
       targets,
       width: rendered.width,
       height: rendered.height,
       ocr: true,
-      replaceTextLayer: base.replaceTextLayer || (!!options.forceOcr && recognized.length > 0),
+      replaceTextLayer: base.replaceTextLayer || (replaceSearch && valid.some((t) => t.invisible)),
       uncertain: targets.filter((t) => t.origin === 'ocr' && (t.confidence ?? 100) < 75).length,
     };
     const entries = cache.get(source) || new Map();

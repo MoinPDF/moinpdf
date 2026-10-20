@@ -210,6 +210,7 @@ export function EditorPanel({
                 <span>{mark.sourceRect ? ui('Ersatztext') : ui('Text')}</span>
                 <Textarea
                   aria-label={ui('Textinhalt')}
+                  data-editor-history="true"
                   value={mark.text || ''}
                   maxLength={20000}
                   onChange={(e) => onPatch(mark.id, { text: e.target.value }, 'typing')}
@@ -314,7 +315,7 @@ export function EditorPanel({
               </label>
             </>
           )}
-          {(mark.kind === 'erase' || mark.sourceRect) && (
+          {(mark.kind === 'erase' || (mark.sourceRect && mark.sourceIsScan !== false)) && (
             <label className="editor-color">
               <span>{ui('Füllfarbe des entfernten Bereichs')}</span>
               <Input
@@ -411,13 +412,15 @@ export function EditorPanel({
               {String(i + 1).padStart(2, '0')} ·{' '}
               {m.kind === 'text'
                 ? m.text?.slice(0, 38) || ui('Text entfernt')
-                : {
-                    erase: 'Entfernter Bereich',
-                    image: 'Bild',
-                    signature: 'Unterschrift',
-                    redact: 'Schwärzung',
-                    highlight: 'Markierung',
-                  }[m.kind]}
+                : ui(
+                    {
+                      erase: 'Entfernter Bereich',
+                      image: 'Bild',
+                      signature: 'Unterschrift',
+                      redact: 'Schwärzung',
+                      highlight: 'Markierung',
+                    }[m.kind],
+                  )}
             </button>
           ))}
         </div>
@@ -426,7 +429,7 @@ export function EditorPanel({
         <div className="notice editor-export-note">
           {ui(
             tool === 'edit-text'
-              ? 'Scans werden automatisch lokal erkannt. Beim Export werden alle ausgewählten Seiten vorbereitet. Ersetzte Inhalte werden aus dem Seitenbild und der Suchtextebene entfernt; übriger erkannter Text bleibt kopierbar. Auf neu aufgebauten Seiten können Links und Formularfelder entfallen. OCR, Ersatzschriften und Hintergründe bitte prüfen.'
+              ? 'Scans werden lokal erkannt. Originaltext wird beim Export tatsächlich entfernt. Wenn die direkte Bearbeitung nicht sicher möglich ist, wird der Export angehalten. Scan-Seiten werden aus bearbeiteten Bilddaten neu aufgebaut. OCR, Ersatzschriften und Hintergründe bitte prüfen.'
               : 'Entfernte Inhalte werden aus neuen Seitenbildern gelöscht. Auf betroffenen Seiten entfallen ursprünglicher kopierbarer Text, Links und Formularfelder. Neuer Text bleibt kopierbar, sofern du die Seite nicht zusätzlich schwärzt, zuschneidest oder als Bild exportierst. Ersatzschriften und farbige Hintergründe bitte in der Vorschau prüfen.',
           )}
         </div>

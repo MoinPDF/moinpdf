@@ -12,10 +12,11 @@ const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs'), assets = dirname(
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async input => typeof input === 'string' && input.startsWith('/vendor/') ? new Response(await readFile('public'+input)) : originalFetch(input);
 await mkdir('.cache/editor-auto', {recursive:true});
-for (const name of ['local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model','editor-font-catalog','editor-font-cmap','editor-fonts','editor-analysis','editor-text-layer']) {
+for (const name of ['local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-font-catalog','editor-font-cmap','editor-fonts','editor-analysis','editor-text-layer','editor-native','native-pdf-core']) {
  const output=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'), {compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}.mjs${q}`);
  await writeFile(`.cache/editor-auto/${name}.mjs`,output);
 }
+await writeFile('.cache/editor-auto/native-pdf.mjs', `import {readFile} from 'node:fs/promises';import {createNativeEngine,removeNativeRegions} from './native-pdf-core.mjs';let api;export const removeRegions=async(bytes,removals)=>removeNativeRegions(await(api ||= readFile('public/vendor/pdfium/pdfium.wasm').then(b=>createNativeEngine(new Uint8Array(b)))),bytes,removals);`);
 const {analyzeEditorPage,remainingEditorTargets,mergeEditorTargets,cachedEditorPage} = await import('../.cache/editor-auto/editor-analysis.mjs');
 const {runStudioJob} = await import('../.cache/editor-auto/studio-engine.mjs');
 const {renderPage} = await import('../.cache/editor-auto/pdf-engine.mjs');
@@ -49,6 +50,7 @@ try {
  ['Rechnung 2026','Betrag 125,50 EUR','Unchanged footer'].forEach((t,i)=>ctx.fillText(t,90,200+i*170));
  const scanDoc=await PDFDocument.create();const scanPage=scanDoc.addPage([400,560]);scanPage.drawImage(await scanDoc.embedPng(canvas.toBuffer('image/png')),{x:0,y:0,width:400,height:560});
  const scan=await source(await scanDoc.save(),'scan');const first=await analyze(scan);assert(first.ocr);assert(first.targets.some(t=>t.text.includes('Rechnung')));assert(first.targets.every(t=>t.x>=0&&t.y>=0&&t.x+t.w<=1&&t.y+t.h<=1));
+ const forced=await analyze(native,pageOf(native),{forceOcr:true});assert.equal(forced.targets.find(t=>t.text==='Native text is ready').origin,'pdf','Forced OCR preserves visible native text');assert(!forced.replaceTextLayer,'Forced OCR must not rebuild ordinary digital text');
  const before=recognitions;await analyze(scan);assert.equal(recognitions,before,'Page revisit does not repeat OCR');
  const searchable=await exportPdf(scan,[pageOf(scan)]);assert.match(await textOf(searchable),/Rechnung/);assert.match(await textOf(searchable),/125,50/);
  const a=(await renderPage(scan,pageOf(scan),600)).canvas,b=(await renderPage(searchable,pageOf(searchable),600)).canvas;
@@ -59,6 +61,7 @@ try {
  const changed=await exportPdf(scan,[pageOf(scan)],{[pageOf(scan).id]:[mark]});const changedText=await textOf(changed);
  assert.match(changedText,/Korrigierte Rechnung/);assert.match(changedText,/125,50/);assert.match(changedText,/Unchanged/);assert.equal((changedText.match(/Rechnung/g)||[]).length,1,'Removed source text is not restored beneath its replacement');
  const removed=await exportPdf(scan,[pageOf(scan)],{[pageOf(scan).id]:[{...mark,text:''}]});assert.doesNotMatch(await textOf(removed),/Rechnung/);
+ const existingOcr=(await readTextTargets(searchable,pageOf(searchable))).targets.find(t=>t.text.includes('Rechnung'));assert(existingOcr.invisible);await analyze(searchable);const existingEdit=await exportPdf(searchable,[pageOf(searchable)],{[pageOf(searchable).id]:[{...mark,sourceRect:{x:existingOcr.x,y:existingOcr.y,w:existingOcr.w,h:existingOcr.h}}]});assert.equal(((await textOf(existingEdit)).match(/Rechnung/g)||[]).length,1,'Editing a pre-existing invisible search layer removes its original scan text');
  const sample={id:'whole',text:'secret',x:.1,y:.1,w:.3,h:.1,fontSize:10,family:'sans'};
  assert.equal(remainingEditorTargets([sample],[{x:.1,y:.1,w:.01,h:.1}]).length,0,'Even a partial deletion must not restore a complete hidden word');
  assert.equal(mergeEditorTargets([sample],[{...sample,id:'ocr'}]).length,1,'Overlapping OCR cannot duplicate native text');
@@ -93,7 +96,7 @@ try {
  const unicode=await PDFDocument.create(),up=unicode.addPage([400,560]);await addEditorTextLayer(unicode,up,[{...sample,text:'Überweisung Привет',fontSize:12}],400,560);const unicodeSource=await source(await unicode.save(),'unicode');assert.match(await textOf(unicodeSource),/Привет/);
  const cjk=await PDFDocument.create();await addEditorTextLayer(cjk,cjk.addPage(),[{...sample,text:'漢字 日本語 हिन्दी',fontSize:12}],595,842);const cjkSource=await source(await cjk.save(),'cjk');assert.match(await textOf(cjkSource),/漢字 日本語 हिन्दी/);
  // Parser incompatibility falls back to a verified visible rendering.
- const broken={...native,id:'repair-fallback',bytes:new TextEncoder().encode('%PDF-1.7 broken')};await analyze(broken);const repaired=await exportPdf(broken,[pageOf(broken)]);assert.match(await textOf(repaired),/Native text/);
+ const broken={...native,id:'repair-fallback',bytes:new TextEncoder().encode('%PDF-1.7 broken')};await analyze(broken);await assert.rejects(()=>exportPdf(broken,[pageOf(broken)]),/originalgetreu/);options.editorAllowRaster=true;const repaired=await exportPdf(broken,[pageOf(broken)]);options.editorAllowRaster=false;assert.match(await textOf(repaired),/Native text/);
  await assert.rejects(()=>renderPage({pdf:{getPage:async()=>({isPureXfa:true})}},pageOf(scan),600,signal),/dynamische XFA/,'Dynamic XFA must never silently export a blank page');
  // Removal plus redaction never restores OCR behind the black output.
  const redact=await source(await (await runStudioJob('edit-text',[scan],[pageOf(scan)],options,{marks:{[pageOf(scan).id]:[{id:'red',kind:'redact',x:0,y:0,w:1,h:1}]},crops:{}},()=>{},signal)).blob.arrayBuffer(),'redacted');assert.equal(await textOf(redact),'');

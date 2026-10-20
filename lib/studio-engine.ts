@@ -7,6 +7,7 @@ import {
   openSource,
   renderPage,
   prepareSources,
+  requireAcroForm,
   appendPage,
   filenameStem,
   pdfBlob,
@@ -31,6 +32,7 @@ import {
   editorRemovalRects,
   editorMarkChanged,
   editorTextCollision,
+  editorRectsOverlap,
   type FontFamily,
 } from './editor-model';
 import type { EditorFontChoice } from './editor-font-catalog';
@@ -63,6 +65,7 @@ export type Mark = Rect & {
   image?: string;
   sourceRect?: Rect;
   sourceRects?: Rect[];
+  sourceIsScan?: boolean;
   fontFamily?: FontFamily;
   fontChoice?: EditorFontChoice;
   originalFontId?: string;
@@ -86,6 +89,7 @@ export type Edits = { marks: Record<string, Mark[]>; crops: Record<string, Rect>
 export type StudioOptions = JobOptions &
   ExtraOptions & {
     editorLanguage?: string;
+    editorAllowRaster?: boolean;
     pageSize: 'a4' | 'letter';
     orientation: 'portrait' | 'landscape';
     perSheet: '2' | '4';
@@ -214,7 +218,13 @@ async function paintMarks(
         warnings?.push(
           `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
         );
-      const layout = layoutEditorText(mark, w, h, resolution.font.measure, resolution.font.descent);
+      const layout = layoutEditorText(
+        mark,
+        w,
+        h,
+        resolution.font.measure,
+        resolution.font.measureDescent(mark.text || ''),
+      );
       if (layout.overflow)
         throw new Error(
           'Ein Textfeld ist zu klein. Vergrößere seine Höhe oder reduziere die Schriftgröße.',
@@ -302,26 +312,41 @@ export async function applyPageEdits(
     width: number,
     height: number,
   ) => { canvas: HTMLCanvasElement; width: number; height: number },
-  editor?: { language: string; warnings: string[] },
+  editor?: { language: string; warnings: string[]; allowRaster?: boolean },
 ) {
   const doc = await PDFDocument.create();
   const loaded = new Map<string, PDFDocument>();
   if (editor) {
-    // PDFs rendered successfully by PDF.js can still be unsupported by pdf-lib
-    // (e.g. dynamic XFA). Rebuild their visible pages without losing the job.
+    const { rejectSignedPdf } = await import('./pdf-signature-guard');
     for (const source of sources.filter((s) => pages.some((p) => p.sourceId === s.id))) {
+      let pdf: PDFDocument;
       try {
-        for (const [id, pdf] of await prepareSources(
-          [source],
-          pages.filter((p) => p.sourceId === source.id),
-        ))
-          loaded.set(id, pdf);
+        pdf = await (await import('./editor-native')).loadEditorPdf(source.bytes);
+        if (!pdf.catalog) throw new Error('Ungültige PDF-Struktur.');
       } catch {
         check(signal);
+        if (!editor.allowRaster)
+          throw new Error(
+            'Diese PDF kann nicht originalgetreu übernommen werden. Bitte eine gewöhnliche PDF verwenden oder „Seiten als Bild neu aufbauen“ aktivieren.',
+          );
         editor.warnings.push(
           'Eine PDF musste aus ihrer sichtbaren Seitenansicht neu aufgebaut werden. Interaktive Inhalte bitte im Ergebnis prüfen.',
         );
+        continue;
       }
+      rejectSignedPdf(pdf);
+      const form = requireAcroForm(pdf);
+      if (form.getFields().length) {
+        if (!editor.allowRaster)
+          throw new Error(
+            'Diese PDF enthält Formularfelder. Bitte eine ausgefüllte Druckkopie verwenden oder „Seiten als Bild neu aufbauen“ aktivieren. Interaktive Felder werden dabei in sichtbare Inhalte umgewandelt.',
+          );
+        form.flatten();
+        editor.warnings.push(
+          'Formularfelder wurden in sichtbare Inhalte umgewandelt und sind nicht mehr interaktiv.',
+        );
+      }
+      loaded.set(source.id, pdf);
     }
   } else {
     for (const [id, pdf] of await prepareSources(sources, pages)) loaded.set(id, pdf);
@@ -383,15 +408,24 @@ export async function applyPageEdits(
           'Der Text überlappt einen anderen Inhalt. Bitte Text kürzen, Schriftgröße anpassen oder das Textfeld verschieben.',
         );
       let preserved: PDFDocument | undefined;
+      const removals = marks.flatMap(editorRemovalRects);
+      const nativeTextRemoval =
+        analysis &&
+        removals.length > 0 &&
+        analysis.targets.some((t) => removals.some((r) => editorRectsOverlap(t, r))) &&
+        !analysis.targets.some(
+          (t) =>
+            (t.origin === 'ocr' || t.invisible) && removals.some((r) => editorRectsOverlap(t, r)),
+        );
       if (
         editor &&
         analysis &&
-        !analysis.ocr &&
+        nativeTextRemoval &&
         !analysis.replaceTextLayer &&
         contentRemoval &&
         !rasterMarks &&
         loaded.has(item.sourceId) &&
-        marks.every((m) => m.kind === 'text' || m.kind === 'erase')
+        marks.every((m) => m.kind === 'text')
       ) {
         try {
           const { removeEditorContent } = await import('./editor-native');
@@ -404,14 +438,40 @@ export async function applyPageEdits(
           );
         } catch {
           check(signal);
+          if (!editor.allowRaster)
+            throw new Error(
+              'Der Originaltext kann auf dieser Seite nicht sicher einzeln entfernt werden. Bitte eine vollständige Textstelle auswählen oder „Seiten als Bild neu aufbauen“ aktivieren.',
+            );
           editor.warnings.push(
             `Seite ${i + 1}: Der Hintergrund wurde als Bild erhalten, weil die Bearbeitung der Originalobjekte nicht vollständig bestätigt werden konnte.`,
           );
         }
       }
-      if (preserved && analysis) {
-        const [outputPage] = await doc.copyPages(preserved, [0]);
-        doc.addPage(outputPage);
+      const scanPage =
+        analysis && !analysis.targets.some((t) => t.origin === 'pdf' && !t.invisible);
+      if (editor && !preserved && !rasterMarks && (contentRemoval || analysis?.replaceTextLayer)) {
+        if (!scanPage && !editor.allowRaster)
+          throw new Error(
+            'Diese Änderung erfordert einen Neuaufbau der Seite als Bild. Dabei können Vektoren, Links und Formularfelder verloren gehen. Bitte „Seiten als Bild neu aufbauen“ aktivieren oder die Änderung verwerfen.',
+          );
+        editor.warnings.push(
+          `Seite ${i + 1}: Als Bild neu aufgebaut. Hintergrund, OCR und unveränderte Bereiche bitte im Ergebnis prüfen.`,
+        );
+      }
+      const appendNative =
+        editor &&
+        analysis &&
+        !contentRemoval &&
+        marks.length > 0 &&
+        !rasterMarks &&
+        !analysis.replaceTextLayer &&
+        loaded.has(item.sourceId) &&
+        marks.every((m) => m.kind === 'text');
+      if ((preserved || appendNative) && analysis) {
+        const outputPage = preserved
+          ? (await doc.copyPages(preserved, [0]))[0]
+          : await appendPage(doc, loaded, item);
+        if (preserved) doc.addPage(outputPage);
         const { drawEditorText } = await import('./editor-text-layer');
         for (const mark of marks.filter((m) => m.kind === 'text' && m.text))
           await drawEditorText(
@@ -428,6 +488,18 @@ export async function applyPageEdits(
                 );
             },
           );
+        if (analysis.ocr) {
+          const { addEditorTextLayer } = await import('./editor-text-layer');
+          await addEditorTextLayer(
+            doc,
+            outputPage,
+            editorTools!
+              .remainingEditorTargets(analysis.targets, removals)
+              .filter((t) => t.origin === 'ocr'),
+            analysis.width,
+            analysis.height,
+          );
+        }
       } else if (
         rasterMarks ||
         contentRemoval ||
@@ -615,7 +687,11 @@ export async function runStudioJob(
     tool === 'grayscale',
     undefined,
     tool === 'edit-text'
-      ? { language: options.editorLanguage || 'deu+eng', warnings: editorWarnings }
+      ? {
+          language: options.editorLanguage || 'deu+eng',
+          warnings: editorWarnings,
+          allowRaster: options.editorAllowRaster,
+        }
       : undefined,
   );
   if (baseTools.includes(tool)) {

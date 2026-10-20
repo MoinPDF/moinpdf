@@ -584,6 +584,7 @@ function Studio() {
   };
   function undo() {
     if (locked || !history.length) return;
+    typingHistory.current = null;
     dismissUndoNotice();
     const prev = history[history.length - 1];
     setFuture((old) => [snapshot(), ...old]);
@@ -593,6 +594,7 @@ function Studio() {
   }
   function redo() {
     if (locked || !future.length) return;
+    typingHistory.current = null;
     dismissUndoNotice();
     const next = future[0];
     setHistory((old) => boundedHistory([...old, snapshot()], sources, projectSources));
@@ -605,19 +607,23 @@ function Studio() {
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (writerOpen) return;
+      if (e.isComposing) return;
       if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target instanceof HTMLElement && e.target.isContentEditable)
+        !(e.target instanceof HTMLElement && e.target.dataset.editorHistory === 'true') &&
+        (e.target instanceof HTMLInputElement ||
+          e.target instanceof HTMLTextAreaElement ||
+          (e.target instanceof HTMLElement && e.target.isContentEditable))
       )
         return;
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      const key = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && (key === 'z' || key === 'y')) {
         e.preventDefault();
-        e.shiftKey ? callbacks.current.redo() : callbacks.current.undo();
+        e.stopPropagation();
+        key === 'y' || e.shiftKey ? callbacks.current.redo() : callbacks.current.undo();
       }
     };
-    window.addEventListener('keydown', key);
-    return () => window.removeEventListener('keydown', key);
+    window.addEventListener('keydown', key, true);
+    return () => window.removeEventListener('keydown', key, true);
   }, [writerOpen]);
   const addFiles = useCallback(
     async (files: File[], showToolChoice = true) => {
@@ -2688,6 +2694,26 @@ function Studio() {
                   onNewText={newText}
                   onImage={() => imagePicker.current?.click()}
                 />
+              )}
+              {toolId === 'edit-text' && (
+                <label className="switch-field">
+                  <span>
+                    {ui('Seiten als Bild neu aufbauen')}
+                    <small>
+                      {ui(
+                        'Nur für nicht direkt bearbeitbare Seiten. Vektoren, Links und Formularfelder können entfallen. Ergebnis sorgfältig prüfen.',
+                      )}
+                    </small>
+                  </span>
+                  <Switch
+                    aria-label={ui('Seiten als Bild neu aufbauen')}
+                    checked={!!options.editorAllowRaster}
+                    disabled={locked}
+                    onCheckedChange={(value) =>
+                      setOptions((old) => ({ ...old, editorAllowRaster: value }))
+                    }
+                  />
+                </label>
               )}
               {isExtraTool(toolId) && (
                 <ExtraSettings

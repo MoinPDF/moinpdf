@@ -146,14 +146,79 @@ export function EditorCanvas({
     [uncertain, setUncertain] = useState(0),
     [retry, setRetry] = useState(0),
     [renderRetry, setRenderRetry] = useState(0),
-    [paragraphMode, setParagraphMode] = useState(true);
+    [paragraphMode, setParagraphMode] = useState(false);
   const recognition = useRef<AbortController | null>(null);
   const forceRecognition = useRef(false);
+  const [background, setBackground] = useState({ key: '', url: '', failed: false });
   const [draft, setDraft] = useState<Rect | null>(null),
     [moving, setMoving] = useState<Mark | null>(null);
   const host = useRef<HTMLDivElement>(null),
     start = useRef<{ x: number; y: number } | null>(null),
     drag = useRef<{ mark: Mark; point: { x: number; y: number }; resize: boolean } | null>(null);
+  const physicalRemovals = marks
+    .filter(editorMarkChanged)
+    .filter((m) => editorRemovalRects(m).length);
+  const removalKey =
+    autoOcr &&
+    physicalRemovals.length &&
+    physicalRemovals.every((m) => m.kind === 'text') &&
+    targets.length &&
+    !physicalRemovals.some((m) =>
+      targets.some(
+        (t) =>
+          (t.origin === 'ocr' || t.invisible) &&
+          editorRemovalRects(m).some((r) => editorRectsOverlap(t, r)),
+      ),
+    )
+      ? JSON.stringify(
+          physicalRemovals.map((m) => ({
+            id: m.id,
+            kind: m.kind,
+            sourceRect: m.sourceRect,
+            sourceRects: m.sourceRects,
+          })),
+        )
+      : '';
+  useEffect(() => {
+    setBackground({ key: '', url: '', failed: false });
+    if (!removalKey) return;
+    const controller = new AbortController();
+    let previewUrl = '';
+    const timer = setTimeout(() => {
+      void import('@/lib/editor-native')
+        .then(({ renderEditorBackground }) =>
+          renderEditorBackground(
+            source,
+            page,
+            JSON.parse(removalKey) as Mark[],
+            targets,
+            controller.signal,
+          ),
+        )
+        .then(async ({ canvas }) => {
+          try {
+            const blob = await new Promise<Blob | null>((resolve) =>
+              canvas.toBlob(resolve, 'image/png'),
+            );
+            if (!blob) throw new Error('Bild konnte nicht erstellt werden.');
+            if (!controller.signal.aborted) {
+              previewUrl = URL.createObjectURL(blob);
+              setBackground({ key: removalKey, url: previewUrl, failed: false });
+            }
+          } finally {
+            canvas.width = canvas.height = 0;
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setBackground({ key: removalKey, url: '', failed: true });
+        });
+    }, 180);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [source, page, targets, removalKey]);
   useEffect(() => {
     let live = true,
       url = '';
@@ -327,6 +392,10 @@ export function EditorCanvas({
   }
   function pick(target: TextTarget) {
     if (disabled) return;
+    if (target.unsupportedReason) {
+      setDetectionError(target.unsupportedReason);
+      return;
+    }
     const { text, fontSize, family, x, y, w, h } = target;
     const r = { x, y, w, h };
     const rotation = (((Math.round((target.rotation || 0) / 90) * 90) % 360) + 360) % 360;
@@ -343,6 +412,7 @@ export function EditorCanvas({
       kind: 'text',
       text,
       sourceRect: { ...r },
+      sourceIsScan: target.origin === 'ocr' || !!target.invisible,
       fill,
       color: target.color || (brightness < 110 ? '#ffffff' : '#222222'),
       textRotation: rotation,
@@ -455,6 +525,13 @@ export function EditorCanvas({
             {ui('Einzelne Textstellen')}
           </Button>
           <span>{ui('Anklicken und direkt auf der Seite schreiben. Verschieben am Griff.')}</span>
+          {paragraphMode && (
+            <span>
+              {ui(
+                'Absätze bitte prüfen: Tabellenzellen und Spalten bei Bedarf einzeln bearbeiten.',
+              )}
+            </span>
+          )}
         </div>
       )}
       {selectedText && autoOcr && (
@@ -471,6 +548,13 @@ export function EditorCanvas({
         <p className="editor-layout-warning" role="alert">
           {ui(
             'Der Text überlappt einen anderen Inhalt. Bitte Text kürzen, Schriftgröße anpassen oder das Textfeld verschieben.',
+          )}
+        </p>
+      )}
+      {background.key === removalKey && background.failed && (
+        <p className="editor-layout-warning" role="alert">
+          {ui(
+            'Die direkte Textentfernung konnte nicht bestätigt werden. Die Vorschau zeigt vorläufig eine Abdeckung; der Export prüft die Änderung erneut.',
           )}
         </p>
       )}
@@ -495,7 +579,11 @@ export function EditorCanvas({
           role="region"
         >
           {url ? (
-            <img src={url} alt={ui(`${source.name}, Seite ${page.index + 1}`)} draggable={false} />
+            <img
+              src={background.key === removalKey && background.url ? background.url : url}
+              alt={ui(`${source.name}, Seite ${page.index + 1}`)}
+              draggable={false}
+            />
           ) : (
             <div className="canvas-loading">
               {error ? (
@@ -511,6 +599,7 @@ export function EditorCanvas({
             </div>
           )}
           {removals
+            .filter(() => !(background.key === removalKey && background.url))
             .filter(editorMarkChanged)
             .flatMap((m) =>
               editorRemovalRects(m).map((rect, i) => (
@@ -531,9 +620,11 @@ export function EditorCanvas({
                 disabled={disabled}
                 aria-label={ui(`Text bearbeiten: ${t.text}`)}
                 title={
-                  t.origin === 'ocr'
-                    ? `${t.text} · ${ui('Erkennungssicherheit')}: ${Math.round(t.confidence || 0)}%`
-                    : t.text
+                  t.unsupportedReason
+                    ? ui(t.unsupportedReason)
+                    : t.origin === 'ocr'
+                      ? `${t.text} · ${ui('Erkennungssicherheit')}: ${Math.round(t.confidence || 0)}%`
+                      : t.text
                 }
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => pick(t)}

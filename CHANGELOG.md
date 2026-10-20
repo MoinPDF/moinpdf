@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.15.5 – 20. Oktober 2026
+
+- „PDF bearbeiten“ entfernt ersetzte Originaltexte gezielt aus der PDF. Hintergründe, Tabellenlinien, Bilder und Links bleiben auf zuverlässig bearbeitbaren Textseiten erhalten; die Vorschau nutzt dieselbe Entfernung wie der Export.
+- Keine stillschweigende Bildumwandlung komplexer Textseiten mehr: Nicht sicher entfernbarer Text stoppt den Export. Ein ausdrücklich gewählter Bildneuaufbau bleibt mit Hinweis möglich; reine Scans werden weiterhin lokal vorbereitet.
+- Einzelne Textstellen sind die Standardauswahl. Absatzzeilen, einheitliches Rückgängig/Wiederholen beim Tippen und OCR-Korrekturen ohne doppelte Textebenen verbessert. Schräger, gespiegelter und vertikaler Text wird verständlich abgefangen.
+- Nimbus-Schriftfamilien und -schnitte genauer erkannt; Überlauf anhand tatsächlicher Unterlängen geprüft. Nicht zuverlässig erneut einbettbare Type-1/CFF-Schriften erhalten einen sichtbaren lokalen Schriftersatz. Wiederverwendbare TrueType-Originalschriften bleiben erhalten.
+- Geschützte Signatur- und Formularstrukturen werden vor dem Export geprüft. Deutsche und englische Meldungen sowie Handbuchtexte ergänzt.
+- Dauerhafte Export- und Erhaltungstests sowie Chromium-, Firefox- und WebKit-Abläufe für Desktop, 390-Pixel-Ansicht, OCR-Scan und englische Oberfläche ergänzt. Prüfstand und verbleibende Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md#nachprüfung-des-pdf-editors-20-oktober-2026).
+
 ## 0.15.4 – 18. Oktober 2026
 
 - Werkzeugsuche für Screenreader berichtigt: Öffnungszustand, Ergebnisliste und Tastaturbedienung bleiben konsistent.
