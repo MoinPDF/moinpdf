@@ -62,7 +62,7 @@ const { readTextTargets } = await import('../.cache/editor-workflow/editor-model
 const { drawEditorText, layoutEditorText } =
   await import('../.cache/editor-workflow/editor-text-layer.mjs');
 const { runStudioJob } = await import('../.cache/editor-workflow/studio-engine.mjs');
-const { loadEditorPdf, readEditorImages } = await import('../.cache/editor-workflow/editor-native.mjs');
+const { loadEditorPdf, readEditorImages, readEditorScanPixels } = await import('../.cache/editor-workflow/editor-native.mjs');
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (input) =>
   typeof input === 'string' && input.startsWith('/vendor/')
@@ -157,6 +157,25 @@ try {
    for(const key of ['x','y','w','h'])assert(Math.abs(io[key]-bounds[key])<.0001,`${rotation} crop ${key}: ${io[key]} != ${bounds[key]}`);
    const px=readNativeImage(api,ro.bytes,0,io.index);assert.equal(px.width,25);assert(px.rgba.every((v,i)=>i%4===0?v>=220:i%4===3?v===255:v<=5));
  }
+ for(const rotation of [0,90,180,270]) {
+   const originalScan=await PDFDocument.create(),sp=originalScan.addPage([216,216]);sp.setRotation(degrees(rotation));sp.drawImage(await originalScan.embedPng(logo.toBuffer('image/png')),{x:0,y:0,width:216,height:216});
+   const ss=await source(await originalScan.save(),`pixel-scan-${rotation}.pdf`),si=pageOf(ss),pixels=await readEditorScanPixels(originalScan,ss,si,signal);
+   assert(pixels,`Full-page scan at ${rotation} degrees should retain its pixel grid`);assert.equal(pixels.canvas.width,50);assert.equal(pixels.canvas.height,50);pixels.canvas.width=pixels.canvas.height=0;
+   if(rotation===0){
+     originalScan.catalog.set(PDFName.of('OCProperties'),originalScan.context.obj({}));
+     assert.equal(await readEditorScanPixels(originalScan,ss,si,signal),undefined,'Layers retain the normal rendering path');
+     originalScan.catalog.delete(PDFName.of('OCProperties'));
+     sp.node.set(PDFName.of('Annots'),originalScan.context.obj([originalScan.context.register(originalScan.context.obj({Type:'Annot',Subtype:'Text',Rect:[10,10,20,20]}))]));
+     const annotated=await source(await originalScan.save(),'annotated-scan.pdf');
+     assert.equal(await readEditorScanPixels(originalScan,annotated,pageOf(annotated),signal),undefined,'Annotations cannot disappear through the pixel preservation path');
+     sp.node.delete(PDFName.of('Annots'));
+     sp.drawText('EXTRA',{x:10,y:30,size:10});
+     const extra=await source(await originalScan.save(),'extra-scan.pdf');
+     assert.equal(await readEditorScanPixels(originalScan,extra,pageOf(extra),signal),undefined,'Extra objects prevent direct image reuse');
+   }
+ }
+ const frenchBytes=await readFile('.cache/editor-corpus/francais.pdf').catch(error=>{if(error.code==='ENOENT')return;throw error;});
+ if(frenchBytes){const fs=await source(frenchBytes,'public-french.pdf'),pixels=await readEditorScanPixels(await loadEditorPdf(fs.bytes),fs,pageOf(fs),signal);assert(pixels,'Pinned French JPEG scan must retain its original pixels');assert.equal(pixels.canvas.width,900);assert.equal(pixels.canvas.height,900);pixels.canvas.width=pixels.canvas.height=0;}
  const scan=createCanvas(800,900),sc=scan.getContext('2d');sc.fillStyle='#eee';sc.fillRect(0,0,800,900);sc.translate(400,450);sc.rotate(2*Math.PI/180);sc.fillStyle='#111';sc.font='24px sans-serif';for(let i=0;i<16;i++)sc.fillText('Rechnung 2026. Betrag 125,50 EUR.',-300,-340+i*38);
  const angle=estimateEditorSkew(scan);assert(Math.abs(angle+2)<=.5,`Deskew ${angle}`);const prepared=preprocessEditorScan(scan,angle);const point=prepared.restore(prepared.canvas.width/2,prepared.canvas.height/2);assert.deepEqual(point,[400,450]);assert(Math.abs(estimateEditorSkew(prepared.canvas))<=.5);prepared.canvas.width=prepared.canvas.height=0;
  assert(ambiguousEditorNumber('10O,50'));assert(ambiguousEditorNumber('l234'));assert(!ambiguousEditorNumber('IBAN DE12'));assert(!ambiguousEditorNumber('100,50'));

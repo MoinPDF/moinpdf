@@ -12,6 +12,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Document-wide change list with before/after text, navigation and independent reversion. Related splits and text flows revert together while unrelated later edits remain.
 - Move, proportionally resize, replace and crop individual original images in the text editor. Cropping removes image pixels while retaining orientation. Scan backgrounds, groups and images with existing associated OCR layers are handled conservatively; image decoding and cropping are limited to 4 megapixels.
 - Local OCR working copies support small-angle deskew, shadow compensation, contrast and conservative noise reduction. Compare original and processed region recognition; suspicious letters in numbers are flagged for review. No automatic numeric correction or new document transmission.
+- Unambiguous full-page scans up to 4 megapixels retain their original pixel grid during editing when an independent rendering agrees. Complex scan pages continue to use the verified raster rebuild.
 - Touch mode adds larger handles, a compact expandable font toolbar, a selection magnifier and caret adjustment for the visible keyboard area. Physical devices and native virtual keyboards require separate verification.
 - Font appearance checks adapt resolution to text size up to a 3,600-pixel long edge and highlight mismatch locations. The pinned public corpus adds a French accent scan, with checksums and licence attribution; test documents are not shipped with the application.
 

@@ -223,13 +223,16 @@ export function EditorRichInput({
   useEffect(() => {
     let frame = 0,
       touch = false,
+      followCaret = true,
       position = { x: 0, y: 0 };
     const reveal = () => {
       cancelAnimationFrame(frame);
+      if (!followCaret) return;
       frame = requestAnimationFrame(() => {
         const root = input.current,
           selection = window.getSelection();
-        if (!root || document.activeElement !== root || !selection?.rangeCount) return;
+        if (!followCaret || !root || document.activeElement !== root || !selection?.rangeCount)
+          return;
         const range = selection.getRangeAt(0);
         if (!root.contains(range.commonAncestorContainer)) return;
         if (typeof range.getBoundingClientRect !== 'function') return;
@@ -285,12 +288,24 @@ export function EditorRichInput({
         }
       });
     };
+    const pause = () => {
+      // Manual scrolling and clicks on other controls take precedence over a
+      // pending caret/layout update. Otherwise a late frame can move a button
+      // between pointer-down and pointer-up, silently swallowing its click.
+      followCaret = false;
+      cancelAnimationFrame(frame);
+    };
+    const resume = () => {
+      followCaret = true;
+      reveal();
+    };
     const down = (e: PointerEvent) => {
-      if (
-        e.pointerType === 'touch' &&
-        input.current?.contains(e.target as Node) &&
-        input.current.closest('.is-touch-mode')
-      ) {
+      if (!input.current?.contains(e.target as Node)) {
+        pause();
+        return;
+      }
+      followCaret = true;
+      if (e.pointerType === 'touch' && input.current.closest('.is-touch-mode')) {
         touch = true;
         position = { x: e.clientX, y: e.clientY };
         reveal();
@@ -298,6 +313,7 @@ export function EditorRichInput({
     };
     const move = (e: PointerEvent) => {
       if (touch) {
+        followCaret = true;
         position = { x: e.clientX, y: e.clientY };
         reveal();
       }
@@ -306,8 +322,13 @@ export function EditorRichInput({
       touch = false;
       setMagnifier(null);
     };
+    const root = input.current;
+    root?.addEventListener('keydown', resume, true);
+    root?.addEventListener('beforeinput', resume);
+    root?.addEventListener('focus', resume);
     document.addEventListener('selectionchange', reveal);
-    document.addEventListener('pointerdown', down);
+    document.addEventListener('pointerdown', down, true);
+    document.addEventListener('scroll', pause, true);
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);
     document.addEventListener('pointercancel', up);
@@ -317,8 +338,12 @@ export function EditorRichInput({
     if (canvas) resize?.observe(canvas);
     return () => {
       cancelAnimationFrame(frame);
+      root?.removeEventListener('keydown', resume, true);
+      root?.removeEventListener('beforeinput', resume);
+      root?.removeEventListener('focus', resume);
       document.removeEventListener('selectionchange', reveal);
-      document.removeEventListener('pointerdown', down);
+      document.removeEventListener('pointerdown', down, true);
+      document.removeEventListener('scroll', pause, true);
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
       document.removeEventListener('pointercancel', up);

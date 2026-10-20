@@ -178,6 +178,10 @@ def french(page,name):
     page.get_by_role('toolbar',name='Text direkt formatieren').get_by_label('Textgröße in Punkt',exact=True).fill('6')
     saved=export(page,name)
     with pymupdf.open(saved) as doc:assert doc[0].get_text().count('Été')==1
+    assert 'Sichtbare Abweichungen außerhalb' not in (out/(name+'-verification.txt')).read_text()
+    with pymupdf.open(saved) as doc,pymupdf.open(corpus/'francais.pdf') as original:
+        before=original[0].get_images(full=True)[0];after=doc[0].get_images(full=True)[0]
+        assert before[2:4]==after[2:4],(before,after)
     return {'scope':'pinned public French scan, local model, original/processed OCR variants, accent correction and independent Unicode export'}
 
 def execute(browser,name,width,callback):

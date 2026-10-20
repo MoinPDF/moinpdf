@@ -27,6 +27,121 @@ export async function readEditorImages(source: Source, item: PageItem, signal: A
       o.w * o.h < 0.8,
   );
 }
+
+/** Preserve the pixel grid of a simple full-page scan. A separate PDF.js render
+ * must agree before using decoded image pixels; clipping, blend effects, extra
+ * objects, annotations, layers, and ambiguous geometry keep the normal path. */
+export async function readEditorScanPixels(
+  original: PDFDocument,
+  source: Source,
+  item: PageItem,
+  signal: AbortSignal,
+): Promise<Awaited<ReturnType<typeof renderPage>> | undefined> {
+  let canvas: HTMLCanvasElement | undefined,
+    reference: HTMLCanvasElement | undefined,
+    pixelsCanvas: HTMLCanvasElement | undefined;
+  try {
+    signal.throwIfAborted();
+    if (original.catalog.has(PDFName.of('OCProperties'))) return;
+    const pdfPage = await source.pdf.getPage(item.index + 1);
+    if ((await pdfPage.getAnnotations()).length) return;
+    const single = await editorSinglePage(original, item),
+      bytes = await single.save();
+    const { inspectObjects, readImage } = await import('./native-pdf');
+    const objects = await inspectObjects(bytes, 0, signal),
+      image = objects[0];
+    if (objects.length !== 1 || image.type !== 'image' || !image.imageCorners) return;
+    if (
+      Math.abs(image.x) + Math.abs(image.y) + Math.abs(image.w - 1) + Math.abs(image.h - 1) >
+      0.000001
+    )
+      return;
+    if (
+      image.imageCorners
+        .flat()
+        .some((v) => Math.abs(v - Math.round(v)) > 0.000001 || v < -0.000001 || v > 1.000001)
+    )
+      return;
+    const [a, b, c] = image.imageCorners.map((p) => p.map(Math.round)),
+      dx = b[0] - a[0],
+      dy = b[1] - a[1],
+      ex = c[0] - a[0],
+      ey = c[1] - a[1];
+    if (Math.abs(dx * ey - dy * ex) !== 1 || dx * ex + dy * ey !== 0) return;
+    const pixels = await readImage(bytes, 0, image.index, signal),
+      width = dx ? pixels.width : pixels.height,
+      height = dx ? pixels.height : pixels.width,
+      base = pdfPage.getViewport({ scale: 1, rotation: (pdfPage.rotate + item.rotation) % 360 }),
+      scale = width / base.width;
+    if (Math.abs(base.height * scale - height) > 0.01) return;
+    canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    pixelsCanvas = document.createElement('canvas');
+    pixelsCanvas.width = pixels.width;
+    pixelsCanvas.height = pixels.height;
+    pixelsCanvas
+      .getContext('2d')!
+      .putImageData(
+        new ImageData(new Uint8ClampedArray(pixels.rgba), pixels.width, pixels.height),
+        0,
+        0,
+      );
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.setTransform(
+      (dx * width) / pixels.width,
+      (dy * height) / pixels.width,
+      (ex * width) / pixels.height,
+      (ey * height) / pixels.height,
+      a[0] * width,
+      a[1] * height,
+    );
+    ctx.drawImage(pixelsCanvas, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    reference = document.createElement('canvas');
+    reference.width = width;
+    reference.height = height;
+    const task = pdfPage.render({
+        canvas: reference,
+        viewport: pdfPage.getViewport({ scale, rotation: (pdfPage.rotate + item.rotation) % 360 }),
+        background: 'rgb(255,255,255)',
+      }),
+      cancel = () => task.cancel();
+    signal.addEventListener('abort', cancel, { once: true });
+    try {
+      await task.promise;
+      signal.throwIfAborted();
+    } finally {
+      signal.removeEventListener('abort', cancel);
+    }
+    const actual = reference.getContext('2d')!.getImageData(0, 0, width, height).data,
+      candidate = ctx.getImageData(0, 0, width, height).data;
+    let differences = 0;
+    for (let i = 0; i < actual.length; i += 4) {
+      if (
+        Math.max(
+          Math.abs(actual[i] - candidate[i]),
+          Math.abs(actual[i + 1] - candidate[i + 1]),
+          Math.abs(actual[i + 2] - candidate[i + 2]),
+        ) > 12
+      )
+        differences++;
+    }
+    if (differences / (width * height) > 0.0001) return;
+    const result = { canvas, width: base.width, height: base.height, scale };
+    canvas = undefined;
+    return result;
+  } catch {
+    signal.throwIfAborted();
+    return;
+  } finally {
+    for (const buffer of [canvas, reference, pixelsCanvas])
+      if (buffer) buffer.width = buffer.height = 0;
+  }
+}
 async function replacementPixels(data: string, crop?: import('./studio-engine').Rect) {
   const image = new Image();
   image.src = data;

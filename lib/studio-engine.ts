@@ -599,7 +599,14 @@ export async function applyPageEdits(
         analysis?.replaceTextLayer ||
         !loaded.has(item.sourceId)
       ) {
-        const rendered = await renderPage(source, item, 2800, signal);
+        const original = loaded.get(item.sourceId),
+          scan =
+            analysis?.ocr && original
+              ? await (
+                  await import('./editor-native')
+                ).readEditorScanPixels(original, source, item, signal)
+              : undefined,
+          rendered = scan || (await renderPage(source, item, 2800, signal));
         let canvas = rendered.canvas;
         try {
           if (rasterMarks) await paintMarks(canvas, marks, source, editor?.warnings);
