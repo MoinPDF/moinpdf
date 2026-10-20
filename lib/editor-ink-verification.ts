@@ -91,8 +91,10 @@ export async function paintEditorReference(
   }
 }
 
-/** Compare the changed ink in a bounded edit region. One pixel of positional
- * tolerance accommodates rasterizer antialiasing; colour remains checked. */
+/** Compare signed RGB ink coverage in a bounded edit region. One pixel of
+ * positional tolerance accommodates grayscale/subpixel antialiasing. Coverage,
+ * rather than a count of unmatched edge pixels, keeps thin glyph edges from
+ * dominating the score; per-channel coverage still detects colour changes. */
 export function compareEditorInk(
   background: ImageData,
   expected: ImageData,
@@ -116,35 +118,50 @@ export function compareEditorInk(
   let expectedInk = 0,
     actualInk = 0,
     missing = 0,
-    extra = 0;
-  const matches = (from: Uint8ClampedArray, to: Uint8ClampedArray, x: number, y: number) => {
+    extra = 0,
+    expectedCoverage = 0,
+    actualCoverage = 0;
+  const uncovered = (from: Uint8ClampedArray, to: Uint8ClampedArray, x: number, y: number) => {
     const i = (y * width + x) * 4;
+    const ink = [0, 1, 2].map((c) => background.data[i + c] - from[i + c]);
+    const coverage = ink.reduce((sum, value) => sum + Math.abs(value), 0);
+    let loss = coverage;
     for (let dy = -1; dy <= 1; dy++)
       for (let dx = -1; dx <= 1; dx++) {
         const xx = x + dx,
           yy = y + dy;
         if (xx < x0 || xx >= x1 || yy < y0 || yy >= y1) continue;
         const j = (yy * width + xx) * 4;
-        if (distance(background.data, to, j) > 24 && distance(from, to, i, j) < 65) return true;
+        let difference = 0;
+        for (let c = 0; c < 3; c++)
+          difference += Math.max(
+            0,
+            Math.abs(ink[c]) - Math.sign(ink[c]) * (background.data[j + c] - to[j + c]),
+          );
+        loss = Math.min(loss, difference);
       }
-    return false;
+    return { coverage, loss };
   };
   for (let y = y0; y < y1; y++)
     for (let x = x0; x < x1; x++) {
       const i = (y * width + x) * 4;
       if (distance(background.data, expected.data, i) > 40) {
         expectedInk++;
-        if (!matches(expected.data, actual.data, x, y)) missing++;
+        const ink = uncovered(expected.data, actual.data, x, y);
+        expectedCoverage += ink.coverage;
+        missing += ink.loss;
       }
       if (distance(background.data, actual.data, i) > 40) {
         actualInk++;
-        if (!matches(actual.data, expected.data, x, y)) extra++;
+        const ink = uncovered(actual.data, expected.data, x, y);
+        actualCoverage += ink.coverage;
+        extra += ink.loss;
       }
     }
   return {
     expectedInk,
     actualInk,
-    missing: expectedInk ? missing / expectedInk : 0,
-    extra: actualInk ? extra / actualInk : 0,
+    missing: expectedCoverage ? missing / expectedCoverage : 0,
+    extra: actualCoverage ? extra / actualCoverage : 0,
   };
 }

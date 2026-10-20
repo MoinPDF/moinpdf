@@ -17,6 +17,7 @@ const rich=await import('../.cache/editor-rich/editor-rich-text.mjs');
 const {drawEditorText}=await import('../.cache/editor-rich/editor-text-layer.mjs');
 const {readTextTargets,editorParagraphs}=await import('../.cache/editor-rich/editor-model.mjs');
 const {verifyEditorExport,compareEditorPixels}=await import('../.cache/editor-rich/editor-verification.mjs');
+const {compareEditorInk}=await import('../.cache/editor-rich/editor-ink-verification.mjs');
 const {importEditorFont,resolveEditorFont}=await import('../.cache/editor-rich/editor-fonts.mjs');
 const {encodeProjectFile,decodeProjectFile}=await import('../.cache/editor-rich/project-archive.mjs');
 const {stringifyEditorProject,editorProjectReviver}=await import('../.cache/editor-rich/editor-project-codec.mjs');
@@ -24,6 +25,21 @@ const {openSource}=await import('../.cache/editor-rich/pdf-engine.mjs');
 const sources=[];const source=async(bytes,name='fixture.pdf')=>{const s=await openSource(new File([bytes],name,{type:'application/pdf'}));sources.push(s);return s;};
 const pageOf=s=>({id:'p0',sourceId:s.id,index:0,rotation:0,selected:true});
 try{
+ // A thin edge may be gray in a vector rasterizer and coloured in a browser's
+ // subpixel rasterizer. Compare coverage against neighbouring ink, while still
+ // rejecting a real colour change in the solid glyph interior.
+ const inkImage=()=>({width:12,height:12,data:new Uint8ClampedArray(12*12*4).fill(255)});
+ const inkBase=inkImage(),inkReference=inkImage(),inkBrowser=inkImage(),inkWrong=inkImage();
+ for(let y=2;y<10;y++)for(let x=4;x<8;x++){
+  const i=(y*12+x)*4,edge=x===4||x===7;
+  inkReference.data.set(edge?[150,150,150,255]:[0,0,0,255],i);
+  inkBrowser.data.set(edge?[110,170,220,255]:[0,0,0,255],i);
+  inkWrong.data.set(edge?[255,150,150,255]:[255,0,0,255],i);
+ }
+ const inkRect={x:0,y:0,w:1,h:1};
+ const antialias=compareEditorInk(inkBase,inkReference,inkBrowser,inkRect);
+ assert(antialias.missing<.12&&antialias.extra<.12,'Subpixel edge colours alone are not an export error');
+ assert(compareEditorInk(inkBase,inkReference,inkWrong,inkRect).missing>.12,'A black-to-red change is still detected');
  const matchMark={id:'matches',kind:'text',text:'Äpfel ÄPFEL Apfelmus 🧾 Apfel a.b',fontScale:.03,color:'#000000',runs:[{start:0,end:5,style:{bold:true}},{start:6,end:11,style:{italic:true,color:'#006644'}}]};
  assert.deepEqual(rich.findEditorText(matchMark.text,'äpfel',false,true),[{start:0,end:5},{start:6,end:11}]);
  assert.equal(rich.findEditorText(matchMark.text,'Äpfel',true,true).length,1);

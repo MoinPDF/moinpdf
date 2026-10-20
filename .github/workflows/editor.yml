@@ -60,9 +60,11 @@ jobs:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
           MOINPDF_TEST_START_SERVER: '1'
         run: |
-          python tests/editor-corpus-check.py
-          python tests/editor-browser.py
-          python tests/editor-quality-browser.py
+          status=0
+          python tests/editor-corpus-check.py || status=1
+          python tests/editor-browser.py || status=1
+          python tests/editor-quality-browser.py || status=1
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

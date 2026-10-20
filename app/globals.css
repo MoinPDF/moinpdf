@@ -3984,6 +3984,17 @@ summary:focus-visible {
 }
 
 /* Direct document editing, using the existing teal and green workspace. */
+html:has(.editor-canvas-wrap) {
+  /* Focus and selection must settle immediately while local page/font analysis
+     changes the controls' height. Explicit navigation can still scroll smoothly. */
+  scroll-behavior: auto;
+  scroll-padding-block: 100px 24px;
+}
+@media (max-width: 1000px) {
+  html:has(.editor-canvas-wrap) {
+    scroll-padding-bottom: 180px;
+  }
+}
 .editor-toolbar {
   display: flex;
   flex-wrap: wrap;
