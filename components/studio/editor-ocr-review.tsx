@@ -1,0 +1,146 @@
+'use client';
+import { useEffect, useRef, useState } from 'react';
+import type { Mark } from '@/lib/studio-engine';
+import type { Source, PageItem } from '@/lib/pdf-engine';
+import type { TextTarget } from '@/lib/editor-model';
+import { recognizeEditorRegion } from '@/lib/editor-analysis';
+import { EditorOriginalSnippet } from './editor-layout-help';
+import type { EditorPatch } from './editor-typography';
+import { Button } from '@/components/ui/button';
+import { ui } from '@/lib/ui-language';
+export function EditorOcrReview({
+  mark,
+  source,
+  page,
+  url,
+  width,
+  height,
+  language,
+  targets,
+  onPick,
+  onPatch,
+}: {
+  mark: Mark;
+  source: Source;
+  page: PageItem;
+  url: string;
+  width: number;
+  height: number;
+  language: string;
+  targets: TextTarget[];
+  onPick: (target: TextTarget) => void;
+  onPatch: EditorPatch;
+}) {
+  const [busy, setBusy] = useState(false),
+    [suggestion, setSuggestion] = useState(''),
+    [notice, setNotice] = useState('');
+  const task = useRef<AbortController | null>(null);
+  useEffect(() => () => task.current?.abort(), []);
+  const uncertain = targets.filter((t) => t.origin === 'ocr' && (t.confidence ?? 100) < 75);
+  async function recognize() {
+    if (!mark.sourceRect) return;
+    const controller = new AbortController();
+    task.current = controller;
+    setBusy(true);
+    setNotice('');
+    setSuggestion('');
+    try {
+      const value = await recognizeEditorRegion(
+        source,
+        page,
+        mark.sourceRect,
+        language,
+        controller.signal,
+        (p) => setNotice(p.label),
+      );
+      if (!controller.signal.aborted) {
+        setSuggestion(value.text);
+        setNotice('Erkennungsvorschlag bitte am Original prüfen.');
+      }
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setNotice(error instanceof Error ? error.message : 'Texterkennung fehlgeschlagen.');
+    } finally {
+      if (!controller.signal.aborted) setBusy(false);
+    }
+  }
+  return (
+    <details className="editor-ocr-review">
+      <summary>{ui('Scantext prüfen und korrigieren')}</summary>
+      <div className="editor-review-grid">
+        <div>
+          <strong>{ui('Original')}</strong>
+          {mark.sourceRect && (
+            <EditorOriginalSnippet url={url} rect={mark.sourceRect} width={width} height={height} />
+          )}
+        </div>
+        <label>
+          {ui('Erkannter Text')}
+          <textarea
+            aria-label={ui('OCR-Korrektur')}
+            data-editor-history="true"
+            value={mark.text || ''}
+            maxLength={20000}
+            onChange={(e) => onPatch(mark.id, { text: e.target.value }, 'typing')}
+          />
+        </label>
+      </div>
+      <p>{ui('Namen, Zahlen und Beträge besonders sorgfältig am Original prüfen.')}</p>
+      <div className="editor-review-actions">
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => void recognize()}>
+          {ui('Diesen Bereich erneut erkennen')}
+        </Button>
+        {busy && (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              task.current?.abort();
+              setBusy(false);
+              setNotice('Texterkennung angehalten.');
+            }}
+          >
+            {ui('Abbrechen')}
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={!uncertain.length}
+          onClick={() => {
+            const index = uncertain.findIndex(
+              (t) =>
+                mark.sourceRect &&
+                Math.abs(t.x - mark.sourceRect.x) < 0.00001 &&
+                Math.abs(t.y - mark.sourceRect.y) < 0.00001,
+            );
+            onPick(uncertain[(index + 1) % uncertain.length]);
+          }}
+        >
+          {ui('Nächste unsichere Stelle')} ({uncertain.length})
+        </Button>
+      </div>
+      {notice && <p role="status">{ui(notice)}</p>}
+      {suggestion && (
+        <label>
+          {ui('Neuer Erkennungsvorschlag')}
+          <textarea
+            aria-label={ui('Erkennungsvorschlag')}
+            value={suggestion}
+            maxLength={20000}
+            onChange={(e) => setSuggestion(e.target.value)}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              onPatch(mark.id, { text: suggestion });
+              setSuggestion('');
+            }}
+          >
+            {ui('Korrektur übernehmen')}
+          </Button>
+        </label>
+      )}
+    </details>
+  );
+}

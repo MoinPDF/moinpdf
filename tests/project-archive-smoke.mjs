@@ -5,7 +5,7 @@ import ts from 'typescript';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import 'fake-indexeddb/auto';
 await mkdir('.cache', {recursive:true});
-for (const name of ['project-archive','project-bundle','content-digest','local-projects','ocr-languages','editor-font-catalog']) {
+for (const name of ['editor-project-codec','project-archive','project-bundle','content-digest','local-projects','ocr-languages','editor-font-catalog']) {
   const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-archive-test.mjs${q}`);
   await writeFile(`.cache/${name}-archive-test.mjs`,code);
 }

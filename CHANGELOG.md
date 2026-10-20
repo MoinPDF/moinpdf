@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.16.0 – 20. Oktober 2026
+
+- Direkte Textauswahl mit Cursor an der angeklickten Stelle, Markieren einzelner Wörter sowie Fett, Kursiv, Farbe, Schrift und Größe innerhalb eines Textfelds. Änderungen und Formatierung bleiben im Rückgängig-Verlauf und in Projektdateien erhalten.
+- Konservativere Absatzbildung für Tabellen und gemischte Schriftstile. Textfeldvergrößerung, erneuter Zeilenumbruch und Schriftverkleinerung sind ausdrücklich wählbar und haben eine Vorschau.
+- Automatische Ersatzschriftwahl berücksichtigt bei geeigneten einzeiligen Texten auch die Textbreite. Original und Bearbeitung lassen sich vergleichen. Eigene statische TrueType-Schriften können lokal geladen und mit dem Projekt gespeichert werden.
+- OCR-Korrektur neben dem Originalausschnitt, Navigation zu unsicheren Wörtern und lokale Neuerkennung eines ausgewählten Bereichs mit überprüfbarem Vorschlag.
+- Der Export wird erneut geöffnet und auf Textinhalt, Textposition und sichtbare Unterschiede außerhalb der Änderungen geprüft. Erkannte Textverluste stoppen den Export; eingeschränkte oder auffällige Bildprüfungen werden am Ergebnis angezeigt. Original und gespeicherte PDF stehen nebeneinander bereit.
+- Deutsche und englische Hilfen ergänzt. Neue Regressionstests sowie erweiterte Browserabläufe für Auswahl, Wortformatierung, OCR-Korrektur und Exportprüfung. Technische Grenzen bleiben ausdrücklich dokumentiert; kein dokumentweiter Word-Seitenfluss und keine garantierte Originalschrift bei Scans.
+
 ## 0.15.5 – 20. Oktober 2026
 
 - „PDF bearbeiten“ entfernt ersetzte Originaltexte gezielt aus der PDF. Hintergründe, Tabellenlinien, Bilder und Links bleiben auf zuverlässig bearbeitbaren Textseiten erhalten; die Vorschau nutzt dieselbe Entfernung wie der Export.

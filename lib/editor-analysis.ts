@@ -94,6 +94,58 @@ export function createEditorRecognizer(signal: AbortSignal): EditorRecognizer {
   };
 }
 
+/** Re-read only the selected scan region. It is a suggestion, never a second text layer. */
+export async function recognizeEditorRegion(
+  source: Source,
+  page: Pick<PageItem, 'index' | 'rotation'>,
+  rect: Rect,
+  language: string,
+  signal: AbortSignal,
+  report: (p: EditorProgress) => void,
+) {
+  const rendered = await renderPage(source, page, 2800, signal),
+    canvas = document.createElement('canvas'),
+    recognizer = createEditorRecognizer(signal);
+  try {
+    const pad = 0.006,
+      x = Math.max(0, rect.x - pad),
+      y = Math.max(0, rect.y - pad),
+      w = Math.min(1 - x, rect.w + 2 * pad),
+      h = Math.min(1 - y, rect.h + 2 * pad);
+    canvas.width = Math.max(1, Math.round(w * rendered.canvas.width));
+    canvas.height = Math.max(1, Math.round(h * rendered.canvas.height));
+    canvas
+      .getContext('2d')!
+      .drawImage(
+        rendered.canvas,
+        x * rendered.canvas.width,
+        y * rendered.canvas.height,
+        w * rendered.canvas.width,
+        h * rendered.canvas.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+    const data = await recognizer.recognize(canvas, language, report);
+    signal.throwIfAborted();
+    const text = (data.blocks || [])
+      .flatMap((b) =>
+        b.paragraphs.flatMap((p) => p.lines.map((l) => l.words.map((w) => w.text).join(' '))),
+      )
+      .join('\n')
+      .trim();
+    if (!text)
+      throw new Error(
+        'In diesem Bereich wurde kein lesbarer Text erkannt. Bitte manuell korrigieren.',
+      );
+    return { text, confidence: data.confidence };
+  } finally {
+    rendered.canvas.width = rendered.canvas.height = canvas.width = canvas.height = 0;
+    await recognizer.dispose();
+  }
+}
+
 function imageHasInk(canvas: HTMLCanvasElement) {
   const small = document.createElement('canvas');
   small.width = 160;

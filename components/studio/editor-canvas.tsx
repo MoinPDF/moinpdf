@@ -1,4 +1,9 @@
 'use client';
+import { EditorLayoutHelp, EditorOriginalSnippet } from './editor-layout-help';
+import { EditorOcrReview } from './editor-ocr-review';
+import { flushSync } from 'react-dom';
+import { editorSegments, type EditorSelection } from '@/lib/editor-rich-text';
+import type { EditorStartPoint } from './editor-rich-input';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -54,7 +59,22 @@ export function MarkContent({
         className="editor-text-content"
         style={editorTextCss(mark, width, height, typography.resolution)}
       >
-        {mark.text}
+        {editorSegments(mark).map((run, i) => (
+          <span
+            key={i}
+            style={{
+              fontWeight: run.style.bold ? 700 : 400,
+              fontStyle: run.style.italic ? 'italic' : 'normal',
+              color: run.style.color,
+              fontSize: (run.style.fontScale || mark.fontScale || 0.028) * width,
+              fontFamily: typography.runs?.[i]
+                ? `"${typography.runs[i].resolution.font.cssFamily}"`
+                : undefined,
+            }}
+          >
+            {(mark.text || '').slice(run.start, run.end)}
+          </span>
+        ))}
       </span>
     );
   if (mark.kind === 'image' || mark.kind === 'signature')
@@ -117,6 +137,7 @@ export function EditorCanvas({
   onPatch,
   onSelect,
   onDimensions,
+  onTextSelection,
   autoOcr = false,
   language = 'deu+eng',
 }: {
@@ -130,6 +151,7 @@ export function EditorCanvas({
   onMark: (mark: Mark) => void;
   onPatch: EditorPatch;
   onSelect: (id: string) => void;
+  onTextSelection?: (selection: EditorSelection) => void;
   onDimensions: (dims: { width: number; height: number }) => void;
   autoOcr?: boolean;
   language?: string;
@@ -147,6 +169,16 @@ export function EditorCanvas({
     [retry, setRetry] = useState(0),
     [renderRetry, setRenderRetry] = useState(0),
     [paragraphMode, setParagraphMode] = useState(false);
+  const [initialPoint, setInitialPoint] = useState<EditorStartPoint | null>(null);
+  const [textSelection, setTextSelection] = useState<EditorSelection | null>(null);
+  const selectionChanged = (selection: EditorSelection) => {
+    onTextSelection?.(selection);
+    setTextSelection((old) =>
+      old?.id === selection.id && old.start === selection.start && old.end === selection.end
+        ? old
+        : selection,
+    );
+  };
   const recognition = useRef<AbortController | null>(null);
   const forceRecognition = useRef(false);
   const [background, setBackground] = useState({ key: '', url: '', failed: false });
@@ -390,8 +422,35 @@ export function EditorCanvas({
           },
     );
   }
-  function pick(target: TextTarget) {
+  function startPoint(e: PointerEvent): Omit<EditorStartPoint, 'id'> {
+    const rect = host.current?.getBoundingClientRect();
+    return {
+      x: e.clientX,
+      y: e.clientY,
+      pointerType: e.pointerType,
+      ...(rect
+        ? {
+            pageX: (e.clientX - rect.left) / rect.width,
+            pageY: (e.clientY - rect.top) / rect.height,
+          }
+        : {}),
+    };
+  }
+  function pick(target: TextTarget, point?: Omit<EditorStartPoint, 'id'>) {
     if (disabled) return;
+    const existing = marks.find(
+      (m) =>
+        m.sourceRect &&
+        ['x', 'y', 'w', 'h'].every(
+          (key) =>
+            Math.abs(m.sourceRect![key as keyof Rect] - target[key as keyof Rect]) < 0.000001,
+        ),
+    );
+    if (existing) {
+      setInitialPoint(point ? { id: existing.id, ...point } : null);
+      onSelect(existing.id);
+      return;
+    }
     if (target.unsupportedReason) {
       setDetectionError(target.unsupportedReason);
       return;
@@ -411,6 +470,15 @@ export function EditorCanvas({
       id: uid(),
       kind: 'text',
       text,
+      originalText: text,
+      ...(target.runs?.length
+        ? {
+            runs: target.runs.map((r) => ({
+              ...r,
+              style: { ...r.style, originalFontPage: page.index },
+            })),
+          }
+        : {}),
       sourceRect: { ...r },
       sourceIsScan: target.origin === 'ocr' || !!target.invisible,
       fill,
@@ -434,6 +502,7 @@ export function EditorCanvas({
       fontScale: size / dims.width,
     };
     next.originalState = editorMarkSignature(next);
+    setInitialPoint(point ? { id: next.id, ...point } : null);
     onMark(next);
   }
   const displayed = marks.map((m) => (moving?.id === m.id ? moving : m)),
@@ -475,6 +544,21 @@ export function EditorCanvas({
           </div>
           {autoOcr && (
             <div className="editor-detection-actions">
+              {uncertain > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onClick={() => {
+                    const target = targets.find(
+                      (t) => t.origin === 'ocr' && (t.confidence ?? 100) < 75,
+                    );
+                    if (target) pick(target);
+                  }}
+                >
+                  {ui('Unsichere Textstellen prüfen')}
+                </Button>
+              )}
               {loadingText ? (
                 <Button
                   size="sm"
@@ -536,13 +620,78 @@ export function EditorCanvas({
       )}
       {selectedText && autoOcr && (
         <EditorInlineToolbar
-          mark={selectedText}
+          mark={{
+            ...selectedText,
+            ...(textSelection?.id === selectedText.id
+              ? editorSegments(selectedText).find(
+                  (r) => r.start <= textSelection.start && r.end > textSelection.start,
+                )?.style
+              : {}),
+          }}
           source={source}
           width={dims.width}
           disabled={disabled}
           onPatch={onPatch}
           onDone={() => onSelect('')}
         />
+      )}
+      {selectedText && autoOcr && (
+        <>
+          <EditorLayoutHelp
+            key={`layout-${selectedText.id}`}
+            mark={selectedText}
+            source={source}
+            width={dims.width}
+            height={dims.height}
+            onPatch={onPatch}
+          />
+          {selectedText.sourceRect && (
+            <details className="editor-font-compare">
+              <summary>{ui('Schriftbild mit dem Original vergleichen')}</summary>
+              <div className="editor-review-grid">
+                <div>
+                  <strong>{ui('Original')}</strong>
+                  <div
+                    style={{ width: selectedText.sourceRect.w * displayWidth, maxWidth: '100%' }}
+                  >
+                    <EditorOriginalSnippet
+                      url={url}
+                      rect={selectedText.sourceRect}
+                      width={dims.width}
+                      height={dims.height}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <strong>{ui('Aktuelle Bearbeitung')}</strong>
+                  <div className="editor-font-sample">
+                    <MarkContent
+                      mark={{ ...selectedText, x: 0, y: 0, originalState: undefined }}
+                      source={source}
+                      width={displayWidth}
+                      height={(displayWidth * dims.height) / dims.width}
+                    />
+                  </div>
+                </div>
+              </div>
+            </details>
+          )}
+          {selectedText.sourceIsScan && (
+            <EditorOcrReview
+              key={`ocr-${selectedText.id}`}
+              mark={selectedText}
+              source={source}
+              page={page}
+              url={url}
+              width={dims.width}
+              height={dims.height}
+              language={language}
+              targets={targets}
+              onPick={pick}
+              onPatch={onPatch}
+            />
+          )}
+        </>
       )}
       {selectedText && editorTextCollision(selectedText, displayed, targets) && (
         <p className="editor-layout-warning" role="alert">
@@ -626,8 +775,16 @@ export function EditorCanvas({
                       ? `${t.text} · ${ui('Erkennungssicherheit')}: ${Math.round(t.confidence || 0)}%`
                       : t.text
                 }
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => pick(t)}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  if (e.button === 0 && !disabled) {
+                    e.preventDefault();
+                    flushSync(() => pick(t, startPoint(e)));
+                  }
+                }}
+                onClick={(e) => {
+                  if (e.detail === 0) pick(t);
+                }}
               />
             ))}
           {[
@@ -655,6 +812,11 @@ export function EditorCanvas({
               onPointerDown={(e) => {
                 if (m.kind === 'text') {
                   e.stopPropagation();
+                  if (selectedId !== m.id)
+                    setInitialPoint({
+                      id: m.id,
+                      ...startPoint(e),
+                    });
                   onSelect(m.id);
                 } else begin(e, m);
               }}
@@ -695,6 +857,8 @@ export function EditorCanvas({
                   pageHeight={dims.height}
                   disabled={disabled}
                   onPatch={onPatch}
+                  onSelection={selectionChanged}
+                  initialPoint={initialPoint}
                   onDone={() => onSelect('')}
                 />
               ) : (

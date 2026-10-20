@@ -13,7 +13,7 @@ Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(nam
 globalThis.Worker=class {constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','editor-model','editor-font-catalog','editor-font-cmap','editor-fonts','document-tools','advanced-types','table-data','evidence-model','evidence-engine','century-model','century-engine','advanced-documents','pdf-security','pdf-sanitize']) {
+for(const name of ['editor-rich-text','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','editor-model','editor-font-catalog','editor-font-cmap','editor-fonts','document-tools','advanced-types','table-data','evidence-model','evidence-engine','century-model','century-engine','advanced-documents','pdf-security','pdf-sanitize']) {
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-century-test.mjs${q}`);
  await writeFile(`.cache/${name}-century-test.mjs`,code);
 }

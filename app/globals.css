@@ -6967,3 +6967,108 @@ summary:focus-visible {
   background: rgba(202, 151, 54, 0.11);
   border-style: dashed;
 }
+
+/* PDF editing: compact review controls keep the established surface styling. */
+.editor-layout-help,
+.editor-ocr-review,
+.editor-font-compare,
+.editor-result-review {
+  border: 1px solid var(--ui-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  font-size: 13px;
+  min-width: 0;
+}
+.editor-layout-help summary,
+.editor-ocr-review summary,
+.editor-font-compare summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.editor-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0;
+}
+.editor-review-grid,
+.editor-export-compare.is-both {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 10px;
+}
+.editor-review-grid > *,
+.editor-export-compare > * {
+  min-width: 0;
+}
+.editor-original-snippet {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  min-height: 20px;
+  max-height: 180px;
+  background: white;
+}
+.editor-review-grid textarea,
+.editor-ocr-review textarea {
+  display: block;
+  width: 100%;
+  min-height: 75px;
+  padding: 8px;
+  border: 1px solid var(--ui-line);
+  border-radius: 6px;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+}
+.editor-font-sample {
+  position: relative;
+  min-height: 90px;
+  overflow: auto;
+  background: var(--ui-soft);
+}
+.editor-font-upload {
+  flex: 1 0 100% !important;
+}
+.editor-font-upload input {
+  max-width: 100%;
+  font-size: 13px;
+}
+.editor-font-upload small {
+  display: block;
+  margin-top: 5px;
+  color: var(--ui-muted);
+}
+.editor-layout-sample {
+  border: 1px dashed var(--ui-line);
+  border-radius: 6px;
+  margin: 10px 0;
+}
+.editor-inline-input {
+  line-height: 1.25;
+  overscroll-behavior: contain;
+}
+.editor-inline-input span {
+  line-height: inherit;
+}
+@media (max-width: 600px) {
+  .editor-review-grid,
+  .editor-export-compare.is-both {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .editor-review-grid textarea,
+  .editor-ocr-review textarea {
+    font-size: 16px;
+  }
+  .editor-review-actions button {
+    min-height: 40px;
+  }
+  .editor-review-actions select {
+    max-width: 100%;
+    font-size: 16px;
+  }
+}

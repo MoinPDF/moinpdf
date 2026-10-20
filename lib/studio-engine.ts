@@ -57,10 +57,27 @@ export type StudioTool =
   | 'erase'
   | 'insert-image';
 export type Rect = { x: number; y: number; w: number; h: number };
+export type EditorTextStyle = Pick<
+  Mark,
+  | 'fontScale'
+  | 'fontFamily'
+  | 'fontChoice'
+  | 'originalFontId'
+  | 'originalFontName'
+  | 'originalFontPage'
+  | 'bold'
+  | 'italic'
+  | 'color'
+>;
+export type EditorTextRun = { start: number; end: number; style: EditorTextStyle };
 export type Mark = Rect & {
   id: string;
   kind: 'redact' | 'highlight' | 'text' | 'signature' | 'erase' | 'image';
   text?: string;
+  runs?: EditorTextRun[];
+  originalText?: string;
+  /** Local font bytes travel with the project; no external font URL is accepted. */
+  customFont?: { name: string; data: string; bold: boolean; italic: boolean };
   fontScale?: number;
   image?: string;
   sourceRect?: Rect;
@@ -754,6 +771,20 @@ export async function runStudioJob(
     removeDocumentMetadata(doc);
   const bytes = await doc.save();
   check(signal);
+  const editorVerification =
+    tool === 'edit-text'
+      ? await (
+          await import('./editor-verification')
+        ).verifyEditorExport(
+          bytes,
+          sources,
+          pages,
+          edits,
+          options.editorLanguage || 'deu+eng',
+          signal,
+          report,
+        )
+      : undefined;
   const suffix: Record<string, string> = {
     'edit-text': 'Text-bearbeitet',
     erase: 'bereinigt',
@@ -774,6 +805,7 @@ export async function runStudioJob(
     filename: `${sources.length === 1 ? filenameStem(sources[0].name) : 'Dokumente'}-${suffix[tool]}.pdf`,
     kind: 'pdf',
     pages: doc.getPageCount(),
+    ...(editorVerification ? { editorVerification } : {}),
     inputSize: sources.reduce((n, s) => n + s.size, 0),
     ...(editorWarnings.length ? { note: [...new Set(editorWarnings)].join('\n') } : {}),
   };

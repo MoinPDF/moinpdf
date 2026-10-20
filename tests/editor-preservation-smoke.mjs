@@ -24,7 +24,7 @@ const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs'),
   assets = dirname(require.resolve('pdfjs-dist/package.json'));
 const folder = '.cache/editor-preservation';
 await mkdir(folder, { recursive: true });
-for (const name of [
+for (const name of ['editor-rich-text','editor-rich-layout','editor-verification',
   'local-font-bytes',
   'pdf-text',
   'ocr-languages',

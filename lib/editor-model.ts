@@ -1,7 +1,8 @@
+import { editorSegments } from './editor-rich-text';
 import { readPdfText } from './pdf-text';
 import { StandardFonts } from 'pdf-lib';
 import type { Source, PageItem } from './pdf-engine';
-import type { Mark, Rect } from './studio-engine';
+import type { Mark, Rect, EditorTextRun } from './studio-engine';
 import { editorFontPage, originalEditorFont } from './editor-fonts';
 
 export type FontFamily = 'sans' | 'serif' | 'mono';
@@ -29,6 +30,7 @@ export type TextTarget = Rect & {
   textScaleX?: number;
   lineHeight?: number;
   fragments?: TextTarget[];
+  runs?: EditorTextRun[];
 };
 export const editorRemovalRects = (mark: Mark): Rect[] =>
   mark.sourceRects?.length
@@ -167,6 +169,41 @@ export async function readTextTargets(
     colorsForFont.set(run.fontKey, colors);
   }
   for (const runs of runsForText.values()) runs.reverse();
+  const characterStyles = new Map<string, { text: string; color: string; invisible: boolean }[]>(),
+    styleOffsets = new Map<string, number>();
+  for (const run of typography?.runs || []) {
+    const queue = characterStyles.get(run.fontKey) || [];
+    for (const char of run.text)
+      if (!/\s/u.test(char)) queue.push({ text: char, color: run.color, invisible: run.invisible });
+    characterStyles.set(run.fontKey, queue);
+  }
+  function readStyles(font: string, text: string) {
+    const queue = characterStyles.get(font),
+      start = styleOffsets.get(font) || 0,
+      chars = [...text].filter((c) => !/\s/u.test(c));
+    if (!queue || chars.some((c, i) => queue[start + i]?.text !== c)) return [];
+    styleOffsets.set(font, start + chars.length);
+    const result: { start: number; end: number; color: string; invisible: boolean }[] = [];
+    let index = 0,
+      offset = 0;
+    for (const char of text) {
+      const style = queue[start + Math.min(index, chars.length - 1)];
+      if (!style) continue;
+      const last = result.at(-1);
+      if (last && last.color === style.color && last.invisible === style.invisible)
+        last.end = offset + char.length;
+      else
+        result.push({
+          start: offset,
+          end: offset + char.length,
+          color: style.color,
+          invisible: style.invisible,
+        });
+      if (!/\s/u.test(char)) index++;
+      offset += char.length;
+    }
+    return result;
+  }
   const targets: TextTarget[] = [];
   for (const [i, part] of content.items.entries()) {
     if (!('str' in part) || !part.str.trim()) continue;
@@ -196,6 +233,7 @@ export async function readTextTargets(
       right = Math.min(viewport.width, Math.max(...points.map((p) => p[0])) + pad),
       bottom = Math.min(viewport.height, Math.max(...points.map((p) => p[1])) + pad);
     if (right <= left || bottom <= top) continue;
+    const styled = readStyles(part.fontName, part.str);
     const run = runsForText.get(part.fontName + ':' + part.str.replace(/\s/gu, ''))?.pop(),
       invisible =
         run?.invisible ?? (fontsWithRuns.has(part.fontName) && !colorsForFont.has(part.fontName)),
@@ -205,7 +243,13 @@ export async function readTextTargets(
       font = originalEditorFont(source, metadata?.originalId),
       fontColors = colorsForFont.get(part.fontName),
       color =
-        !invisible && run ? run.color : fontColors?.size === 1 ? [...fontColors][0] : '#000000',
+        !invisible && styled.length
+          ? styled[0].color
+          : !invisible && run
+            ? run.color
+            : fontColors?.size === 1
+              ? [...fontColors][0]
+              : '#000000',
       scaleX = Math.hypot(dx, dy) / fontSize;
     const natural = font?.covers(part.str) ? font.measure(part.str, fontSize) * scaleX : part.width;
     const vx = v[0] * t[2] + v[2] * t[3],
@@ -221,6 +265,9 @@ export async function readTextTargets(
     targets.push({
       id: `text-${i}`,
       text: part.str,
+      ...(styled.length > 1
+        ? { runs: styled.map((r) => ({ start: r.start, end: r.end, style: { color: r.color } })) }
+        : {}),
       x: left / viewport.width,
       y: top / viewport.height,
       w: (right - left) / viewport.width,
@@ -273,12 +320,6 @@ export function editorParagraphs(
     !b.rotation &&
     a.origin === b.origin &&
     a.invisible === b.invisible &&
-    a.originalFontId === b.originalFontId &&
-    a.fontName === b.fontName &&
-    a.family === b.family &&
-    !!a.bold === !!b.bold &&
-    !!a.italic === !!b.italic &&
-    a.color === b.color &&
     a.fill === b.fill &&
     Math.abs(a.fontSize - b.fontSize) < Math.max(0.5, a.fontSize * 0.08);
   for (const target of sorted) {
@@ -298,6 +339,48 @@ export function editorParagraphs(
     if (parts.length === 1) return parts[0];
     const x = Math.min(...parts.map((p) => p.x)),
       y = Math.min(...parts.map((p) => p.y));
+    let text = '';
+    const runs: EditorTextRun[] = [];
+    for (const [i, p] of parts.entries()) {
+      if (i) {
+        const previous = parts[i - 1];
+        // Targets include selection padding. Measure the actual glyph gap so
+        // a narrow space between different font faces is not swallowed.
+        const gap =
+          (p.x - previous.x - previous.w) * width +
+          (previous.insetScale || 0) * previous.fontSize +
+          (p.insetScale || 0) * p.fontSize;
+        const join =
+          separator === '\n'
+            ? '\n'
+            : /\s$/u.test(previous.text) || /^\s/u.test(p.text) || gap < previous.fontSize * 0.12
+              ? ''
+              : ' ';
+        if (join) {
+          runs.push({
+            start: text.length,
+            end: text.length + join.length,
+            style: runs.at(-1)?.style || {},
+          });
+          text += join;
+        }
+      }
+      const offset = text.length;
+      const nested = editorSegments({
+        runs: p.runs,
+        text: p.text,
+        fontScale: p.fontSize / width,
+        fontFamily: p.family,
+        fontChoice: 'auto',
+        originalFontId: p.originalFontId,
+        originalFontName: p.fontName,
+        bold: !!p.bold,
+        italic: !!p.italic,
+        color: p.color || '#222222',
+      });
+      runs.push(...nested.map((r) => ({ ...r, start: r.start + offset, end: r.end + offset })));
+      text += p.text;
+    }
     return {
       ...parts[0],
       id: 'paragraph-' + parts.map((p) => p.id).join('-'),
@@ -306,7 +389,8 @@ export function editorParagraphs(
       w: Math.max(...parts.map((p) => p.x + p.w)) - x,
       h: Math.max(...parts.map((p) => p.y + p.h)) - y,
       // Keep intentional line breaks and interior spacing on first edit.
-      text: parts.map((p) => p.text.trim()).join(separator),
+      text,
+      runs,
       fragments: parts.flatMap((p) => p.fragments || [p]),
       ...(separator === '\n'
         ? {
@@ -320,13 +404,25 @@ export function editorParagraphs(
     };
   };
   const paragraphs: TextTarget[][] = [];
-  for (const line of groups.map((g) => merge(g, ' '))) {
+  const lines = groups.map((g) => merge(g, ' '));
+  const tableRow = (line: TextTarget) =>
+    line.w * width < line.fontSize * 14 &&
+    lines.some(
+      (peer) =>
+        peer !== line &&
+        Math.abs(peer.y - line.y) * height < line.fontSize * 0.3 &&
+        (peer.x >= line.x + line.w || line.x >= peer.x + peer.w),
+    );
+  for (const line of lines) {
     const previous = paragraphs.at(-1),
       last = previous?.at(-1);
     const gap = last ? ((line.y - last.y) * height) / last.fontSize : 0;
     if (
       last &&
       same(last, line) &&
+      !!last.bold === !!line.bold &&
+      !tableRow(last) &&
+      !tableRow(line) &&
       Math.abs(last.x - line.x) * width < last.fontSize * 0.65 &&
       gap >= 0.75 &&
       gap <= 1.65 &&

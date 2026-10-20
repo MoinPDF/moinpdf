@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Bold, Italic, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
@@ -10,15 +10,20 @@ import { editorFontCatalog, type EditorFontChoice } from '@/lib/editor-font-cata
 import {
   loadEditorCssFont,
   resolveEditorFont,
+  importEditorFont,
   type EditorFontResolution,
 } from '@/lib/editor-fonts';
 import { cssFont, editorMarkChanged } from '@/lib/editor-model';
-import { editorTextGeometry, layoutEditorText } from '@/lib/editor-text-layer';
+import { editorTextGeometry } from '@/lib/editor-text-layer';
+import { prepareEditorRuns, type PreparedEditorRun } from '@/lib/editor-rich-layout';
+import type { EditorSelection } from '@/lib/editor-rich-text';
+import { EditorRichInput, type EditorStartPoint } from './editor-rich-input';
 
 export type EditorPatch = (id: string, patch: Partial<Mark>, mode?: 'typing') => void;
 export function useEditorTypography(mark?: Mark, source?: Source) {
   const [value, setValue] = useState<{
     resolution?: EditorFontResolution;
+    runs?: PreparedEditorRun[];
     pending: boolean;
     error: string;
   }>({ pending: false, error: '' });
@@ -29,21 +34,23 @@ export function useEditorTypography(mark?: Mark, source?: Source) {
       return;
     }
     setValue((old) => ({ ...old, pending: true, error: '' }));
-    resolveEditorFont(mark, source)
-      .then(async (resolution) => {
-        await loadEditorCssFont(resolution.font, source);
-        if (active) setValue({ resolution, pending: false, error: '' });
-      })
-      .catch((error) => {
-        if (active)
-          setValue({
-            pending: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : 'Die Schrift konnte nicht vorbereitet werden.',
-          });
-      });
+    (async () => {
+      const runs = mark.runs?.length ? await prepareEditorRuns(mark, source) : undefined;
+      const resolution = runs?.[0]?.resolution || (await resolveEditorFont(mark, source));
+      await Promise.all(
+        [resolution.font, ...(runs || []).map((r) => r.resolution.font)].map((font) =>
+          loadEditorCssFont(font, source),
+        ),
+      );
+      if (active) setValue({ resolution, runs, pending: false, error: '' });
+    })().catch((error) => {
+      if (active)
+        setValue({
+          pending: false,
+          error:
+            error instanceof Error ? error.message : 'Die Schrift konnte nicht vorbereitet werden.',
+        });
+    });
     return () => {
       active = false;
     };
@@ -116,6 +123,11 @@ export function EditorFontPicker({
       }}
     >
       <option value="auto">{ui('Automatisch / Originalschrift')}</option>
+      {mark.customFont && (
+        <option value="custom">
+          {mark.customFont.name} · {ui('Eigene Schrift')}
+        </option>
+      )}
       {editorFontCatalog.map((font) => (
         <option key={font.id} value={font.id}>
           {font.name}
@@ -150,6 +162,12 @@ export function EditorFontStatus({ mark, source }: { mark: Mark; source?: Source
             : <strong>{resolution.font.name}</strong>
           </span>
           {resolution.reason && <p className="editor-ocr-warning">{ui(resolution.reason)}</p>}
+          {resolution.widthDeviation !== undefined && (
+            <span>
+              {ui('Abweichung der Textbreite')}: {Math.round(resolution.widthDeviation * 10) / 10}%
+              · {ui('am ursprünglichen Text gemessen')}
+            </span>
+          )}
         </>
       ) : pending ? (
         <span>{ui('Schrift wird vorbereitet …')}</span>
@@ -180,6 +198,8 @@ export function EditorInlineToolbar({
   onDone: () => void;
 }) {
   useLanguage();
+  const [fontError, setFontError] = useState('');
+  const [fontLoading, setFontLoading] = useState(false);
   return (
     <div
       className="editor-inline-toolbar"
@@ -244,6 +264,59 @@ export function EditorInlineToolbar({
         </Button>
       </div>
       <EditorFontStatus mark={mark} source={source} />
+      <small className="editor-selection-help">
+        {ui(
+          'Markiere Wörter, um nur diese zu formatieren. Ohne Markierung gilt die Formatierung für das ganze Textfeld.',
+        )}
+      </small>
+      <label className="editor-font-upload">
+        <span>{ui('Eigenen Schriftschnitt für dieses Textfeld laden')}</span>
+        <input
+          type="file"
+          accept=".ttf,.otf"
+          aria-label={ui('Eigene Schriftdatei')}
+          disabled={disabled || fontLoading}
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (!file) return;
+            setFontError('');
+            setFontLoading(true);
+            try {
+              const customFont = await importEditorFont(file);
+              onPatch(mark.id, {
+                customFont,
+                fontChoice: 'custom',
+                bold: customFont.bold,
+                italic: customFont.italic,
+                runs: mark.runs?.map((r) => ({
+                  ...r,
+                  style: {
+                    ...r.style,
+                    fontChoice: 'custom',
+                    bold: customFont.bold,
+                    italic: customFont.italic,
+                  },
+                })),
+              });
+            } catch (error) {
+              setFontError(
+                error instanceof Error
+                  ? error.message
+                  : 'Die Schrift konnte nicht vorbereitet werden.',
+              );
+            } finally {
+              setFontLoading(false);
+            }
+          }}
+        />
+        <small>
+          {ui(
+            'Lokal verarbeitet. Bitte nur Schriften verwenden, die du einbetten darfst. Die Schrift wird im Projekt mitgespeichert.',
+          )}
+        </small>
+      </label>
+      {fontError && <p role="alert">{ui(fontError)}</p>}
     </div>
   );
 }
@@ -252,11 +325,11 @@ export function EditorInlineText({
   source,
   width,
   height,
-  pageWidth,
-  pageHeight,
   disabled,
   onPatch,
   onDone,
+  onSelection,
+  initialPoint,
 }: {
   mark: Mark;
   source: Source;
@@ -267,84 +340,26 @@ export function EditorInlineText({
   disabled: boolean;
   onPatch: EditorPatch;
   onDone: () => void;
+  onSelection?: (selection: EditorSelection) => void;
+  initialPoint?: EditorStartPoint | null;
 }) {
   useLanguage();
-  const typography = useEditorTypography(mark, source),
-    input = useRef<HTMLTextAreaElement>(null);
-  const composing = useRef(false);
-  useEffect(() => {
-    const field = input.current;
-    if (field && !disabled) {
-      field.focus({ preventScroll: true });
-      field.setSelectionRange(field.value.length, field.value.length);
-    }
-  }, [mark.id, disabled]);
-  function update(text: string) {
-    const patch: Partial<Mark> = { text };
-    const font = typography.resolution?.font;
-    if (font && !composing.current) {
-      const layout = layoutEditorText(
-        { ...mark, text },
-        pageWidth,
-        pageHeight,
-        font.measure,
-        font.measureDescent(mark.text || ''),
-      );
-      if (layout.requiredHeight > layout.geometry.height) {
-        if ((mark.textRotation || 0) % 180)
-          patch.w = Math.min(
-            1 - mark.x,
-            Math.max(mark.w, (layout.requiredHeight + layout.size * 0.08) / pageWidth),
-          );
-        else
-          patch.h = Math.min(
-            1 - mark.y,
-            Math.max(mark.h, (layout.requiredHeight + layout.size * 0.08) / pageHeight),
-          );
-      }
-    }
-    onPatch(mark.id, patch, 'typing');
-  }
+  const typography = useEditorTypography(mark, source);
   return (
-    <textarea
-      ref={input}
-      className="editor-inline-input"
-      aria-label={ui('Text direkt in der PDF bearbeiten')}
-      data-editor-history="true"
+    <EditorRichInput
+      mark={mark}
+      width={width}
+      runs={typography.runs}
       disabled={disabled}
-      value={mark.text || ''}
-      maxLength={20000}
-      spellCheck={false}
+      onPatch={onPatch}
+      onDone={onDone}
+      onSelection={onSelection}
+      initialPoint={initialPoint}
       style={{
         ...editorTextCss(mark, width, height, typography.resolution),
         ...(!editorMarkChanged(mark)
           ? { color: 'transparent', caretColor: mark.color || '#222222' }
           : {}),
-      }}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-      onCompositionStart={() => {
-        composing.current = true;
-      }}
-      onCompositionEnd={(e) => {
-        composing.current = false;
-        update(e.currentTarget.value);
-      }}
-      onChange={(e) => update(e.target.value)}
-      onKeyDown={(e) => {
-        e.stopPropagation();
-        if (e.nativeEvent.isComposing || composing.current) return;
-        if (e.key === 'Escape' || (e.key === 'Enter' && (e.ctrlKey || e.metaKey))) {
-          e.preventDefault();
-          onDone();
-        }
-        if ((e.ctrlKey || e.metaKey) && ['b', 'i'].includes(e.key.toLowerCase())) {
-          e.preventDefault();
-          onPatch(
-            mark.id,
-            e.key.toLowerCase() === 'b' ? { bold: !mark.bold } : { italic: !mark.italic },
-          );
-        }
       }}
     />
   );
