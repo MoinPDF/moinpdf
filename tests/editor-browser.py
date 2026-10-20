@@ -80,7 +80,7 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
             blocked.append({'method':r.request.method,'url':r.request.url});r.abort()
         else:r.continue_()
     page.route('**/*',route)
-    result={'case':name,'viewport':width}
+    result={'case':name,'viewport':width};reopen=None;rp=None
     try:
         print('START: '+name,flush=True)
         page.goto(origin)
@@ -213,14 +213,17 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
                 edited[0].get_pixmap(matrix=pymupdf.Matrix(1.5,1.5)).save(out/(name+'-export.png'))
         # Reopen the actual download in the same application, then inspect targets.
         reopen=browser.new_context(viewport={'width':width,'height':1000})
-        rp=reopen.new_page();rp.route('**/*',route);rp.goto(origin)
+        rp=reopen.new_page();rp.set_default_timeout(45000);rp.on('pageerror',lambda e:errors.append('Reopen: '+str(e)));rp.route('**/*',route);rp.goto(origin)
         rp.locator('input[type=file]').first.set_input_files(str(exported.resolve()))
         rp.locator('.chooser-tool').filter(has=rp.get_by_text('PDF bearbeiten',exact=True)).click()
         if not scan_case:
             # Font changes split PDF text objects; paragraph mode must recover one selectable line.
-            rp.get_by_role('button',name='Absätze',exact=True).click()
+            paragraph_mode=rp.get_by_role('button',name='Absätze',exact=True)
+            # The fresh context must finish local page/font analysis before
+            # paragraph selection is available, just as on the initial import.
+            expect(paragraph_mode).to_be_visible(timeout=120000)
+            paragraph_mode.click()
         expect(rp.get_by_role('button',name='Text bearbeiten: '+replacement,exact=True)).to_be_visible(timeout=120000)
-        reopen.close()
         if english:
             assert 'Die Originalschrift' not in page.locator('body').inner_text(), 'Untranslated font substitution warning'
         assert not errors,errors
@@ -230,10 +233,14 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         result.update(status='failed',error=str(e),traceback=traceback.format_exc(),page_errors=errors,blocked_requests=blocked)
         print(result['traceback'],flush=True)
         try:
+            if rp:
+                rp.screenshot(path=str(out/(name+'-reopen-failure.png')),full_page=True,timeout=10000)
+                (out/(name+'-reopen-failure.txt')).write_text(rp.locator('body').inner_text(timeout=5000))
             page.screenshot(path=str(out/(name+'-failure.png')),full_page=True,timeout=10000)
             (out/(name+'-failure.txt')).write_text(page.locator('body').inner_text(timeout=5000))
         except Exception as capture_error:result['capture_error']=str(capture_error)
     finally:
+        if reopen:reopen.close()
         report['results'].append(result);context.close()
         (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
         print(result['status'].upper()+': '+name,flush=True)
