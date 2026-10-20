@@ -45,6 +45,11 @@ try{
  const colorParagraph=editorParagraphs(colorTargets,500,700)[0];
  assert.equal(colorParagraph.text,'Links ROT rechts');
  assert(colorParagraph.runs.some(r=>r.style.color==='#cc0000' && colorParagraph.text.slice(r.start,r.end).trim()==='ROT'),'Colour changes within the same PDF font are recovered');
+ const spaced={...mark,runs:undefined,text:'NEU ÄÖÜ €',fontScale:18/500};
+ Object.assign(spaced,rich.formatEditorRange(spaced,0,3,{bold:true,italic:true,color:'#006644'}));
+ const spacedPdf=await PDFDocument.create();await drawEditorText(spacedPdf,spacedPdf.addPage([500,700]),spaced,500,700);
+ const spacedSource=await source(await spacedPdf.save()),spacedTargets=(await readTextTargets(spacedSource,pageOf(spacedSource))).targets;
+ assert.equal(editorParagraphs(spacedTargets,500,700)[0].text,spaced.text,'Reopened mixed-style paragraphs preserve inter-word spaces despite selection padding');
  const original=await PDFDocument.create(),p=original.addPage([500,700]);p.drawText('KEEP 4815',{x:50,y:600,size:18,font:await original.embedFont(StandardFonts.Helvetica)});
  const untouched=original.addPage([420,500]);untouched.drawText('Untouched ÄÖÜ €',{x:40,y:400,size:14});
  const originalBytes=await original.save();await writeFile(folder+'/original.pdf',originalBytes);const originalSource=await source(originalBytes);

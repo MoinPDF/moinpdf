@@ -344,12 +344,16 @@ export function editorParagraphs(
     for (const [i, p] of parts.entries()) {
       if (i) {
         const previous = parts[i - 1];
+        // Targets include selection padding. Measure the actual glyph gap so
+        // a narrow space between different font faces is not swallowed.
+        const gap =
+          (p.x - previous.x - previous.w) * width +
+          (previous.insetScale || 0) * previous.fontSize +
+          (p.insetScale || 0) * p.fontSize;
         const join =
           separator === '\n'
             ? '\n'
-            : /\s$/u.test(previous.text) ||
-                /^\s/u.test(p.text) ||
-                (p.x - previous.x - previous.w) * width < previous.fontSize * 0.12
+            : /\s$/u.test(previous.text) || /^\s/u.test(p.text) || gap < previous.fontSize * 0.12
               ? ''
               : ' ';
         if (join) {
