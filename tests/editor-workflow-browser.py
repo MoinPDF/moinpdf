@@ -104,6 +104,8 @@ def text_table(page,name):
     page.get_by_role('button',name='Mehr Textoptionen',exact=True).click()
     expect(page.get_by_label('Eigene Schriftdatei',exact=True)).to_be_visible()
     page.get_by_role('button',name='Weniger Textoptionen',exact=True).click()
+    field.press('ArrowRight')
+    expect(field).to_be_in_viewport(ratio=.8)
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
     page.screenshot(path=str(out/(name+'-page.png')),full_page=True)
     saved=export(page,name)
@@ -138,8 +140,9 @@ def flow(page,name):
     saved=export(page,name)
     with pymupdf.open(saved) as doc:
         assert len(doc)==2 and tuple(doc[0].rect)[2:] == (500,700) and tuple(doc[1].rect)[2:]==(600,500)
-        combined=' '.join(p.get_text(sort=True) for p in doc)
-        assert combined.count('Linked text')==9,combined
+        combined=' '.join(' '.join(p.get_text(sort=True).split()) for p in doc)
+        flow_text=' '.join(' '.join(doc[i].get_text(sort=True,clip=box).split()) for i,box in enumerate([pymupdf.Rect(45,175,345,310),pymupdf.Rect(45,75,345,300)]))
+        assert flow_text==' '.join((text+'FLOW END').split()),flow_text
         assert 'FLOW BEGIN' not in combined and combined.count('FLOW END')==1
         assert 'Linked text'in doc[1].get_text()
         assert 'KEEP PAGE ONE'in combined and 'KEEP PAGE TWO'in combined

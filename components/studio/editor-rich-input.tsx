@@ -233,18 +233,43 @@ export function EditorRichInput({
         const range = selection.getRangeAt(0);
         if (!root.contains(range.commonAncestorContainer)) return;
         if (typeof range.getBoundingClientRect !== 'function') return;
-        const rect = range.getBoundingClientRect(),
-          viewport = window.visualViewport;
-        const scroll = root.closest<HTMLElement>('.editor-page-scroll');
-        if (scroll && rect.height > 0) {
-          const box = scroll.getBoundingClientRect(),
-            top = Math.max(box.top, (viewport?.offsetTop || 0) + 12),
-            bottom = Math.min(
-              box.bottom,
-              (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight) - 64,
-            );
-          if (rect.bottom > bottom) scroll.scrollTop += rect.bottom - bottom;
-          else if (rect.top < top) scroll.scrollTop -= top - rect.top;
+        const viewport = window.visualViewport;
+        if (range.getBoundingClientRect().height > 0) {
+          // The page has its own scroll area inside the workbench. Reveal the
+          // caret through every clipping ancestor, rather than scrolling only
+          // the page while its entire viewport remains hidden below controls.
+          for (
+            let parent = root.parentElement;
+            parent && parent !== document.body;
+            parent = parent.parentElement
+          ) {
+            if (!['auto', 'scroll'].includes(getComputedStyle(parent).overflowY)) continue;
+            const box = parent.getBoundingClientRect(),
+              rect = range.getBoundingClientRect();
+            const toolbar = parent.querySelector<HTMLElement>('.editor-inline-toolbar'),
+              toolbarBox = toolbar?.getBoundingClientRect(),
+              inset =
+                toolbar &&
+                getComputedStyle(toolbar).position === 'sticky' &&
+                toolbarBox &&
+                toolbarBox.top <= box.top + 2
+                  ? toolbarBox.height + 12
+                  : 12;
+            const top = box.top + inset,
+              bottom = box.bottom - 12;
+            if (bottom > top) {
+              if (rect.bottom > bottom) parent.scrollTop += rect.bottom - bottom;
+              else if (rect.top < top) parent.scrollTop -= top - rect.top;
+            }
+          }
+          const rect = range.getBoundingClientRect(),
+            top = (viewport?.offsetTop || 0) + 100,
+            bottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight) - 64;
+          if (bottom > top && typeof window.scrollBy === 'function') {
+            if (rect.bottom > bottom)
+              window.scrollBy({ top: rect.bottom - bottom, behavior: 'instant' });
+            else if (rect.top < top) window.scrollBy({ top: rect.top - top, behavior: 'instant' });
+          }
         }
         if (touch) {
           const picked = editorDomSelection(root),
@@ -287,6 +312,9 @@ export function EditorRichInput({
     document.addEventListener('pointerup', up);
     document.addEventListener('pointercancel', up);
     window.visualViewport?.addEventListener('resize', reveal);
+    const resize = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(reveal);
+    const canvas = input.current?.closest('.editor-canvas-wrap');
+    if (canvas) resize?.observe(canvas);
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener('selectionchange', reveal);
@@ -295,6 +323,7 @@ export function EditorRichInput({
       document.removeEventListener('pointerup', up);
       document.removeEventListener('pointercancel', up);
       window.visualViewport?.removeEventListener('resize', reveal);
+      resize?.disconnect();
     };
   }, []);
   function insert(text: string) {

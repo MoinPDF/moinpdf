@@ -922,73 +922,6 @@ export function EditorCanvas({
           }}
         />
       )}
-      {selectedText && autoOcr && (
-        <>
-          <EditorLayoutHelp
-            key={`layout-${selectedText.id}`}
-            mark={selectedText}
-            source={source}
-            width={dims.width}
-            height={dims.height}
-            onPatch={onPatch}
-          />
-          <EditorFontAlternatives
-            mark={selectedText}
-            source={source}
-            width={dims.width}
-            height={dims.height}
-            selection={textSelection}
-            disabled={disabled}
-            onPatch={onPatch}
-          />
-          {selectedText.sourceRect && (
-            <details className="editor-font-compare">
-              <summary>{ui('Schriftbild mit dem Original vergleichen')}</summary>
-              <div className="editor-review-grid">
-                <div>
-                  <strong>{ui('Original')}</strong>
-                  <div
-                    style={{ width: selectedText.sourceRect.w * displayWidth, maxWidth: '100%' }}
-                  >
-                    <EditorOriginalSnippet
-                      url={url}
-                      rect={selectedText.sourceRect}
-                      width={dims.width}
-                      height={dims.height}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <strong>{ui('Aktuelle Bearbeitung')}</strong>
-                  <div className="editor-font-sample">
-                    <MarkContent
-                      mark={{ ...selectedText, x: 0, y: 0, originalState: undefined }}
-                      source={source}
-                      width={displayWidth}
-                      height={(displayWidth * dims.height) / dims.width}
-                    />
-                  </div>
-                </div>
-              </div>
-            </details>
-          )}
-          {selectedText.sourceIsScan && (
-            <EditorOcrReview
-              key={`ocr-${selectedText.id}`}
-              mark={selectedText}
-              source={source}
-              page={page}
-              url={url}
-              width={dims.width}
-              height={dims.height}
-              language={language}
-              targets={targets}
-              onPick={pick}
-              onPatch={onPatch}
-            />
-          )}
-        </>
-      )}
       {selectedText && editorTextCollision(selectedText, displayed, targets) && (
         <p className="editor-layout-warning" role="alert">
           {ui(
@@ -1286,6 +1219,73 @@ export function EditorCanvas({
           </div>
         </div>
       </div>
+      {selectedText && autoOcr && (
+        <>
+          <EditorLayoutHelp
+            key={`layout-${selectedText.id}`}
+            mark={selectedText}
+            source={source}
+            width={dims.width}
+            height={dims.height}
+            onPatch={onPatch}
+          />
+          <EditorFontAlternatives
+            mark={selectedText}
+            source={source}
+            width={dims.width}
+            height={dims.height}
+            selection={textSelection}
+            disabled={disabled}
+            onPatch={onPatch}
+          />
+          {selectedText.sourceRect && (
+            <details className="editor-font-compare">
+              <summary>{ui('Schriftbild mit dem Original vergleichen')}</summary>
+              <div className="editor-review-grid">
+                <div>
+                  <strong>{ui('Original')}</strong>
+                  <div
+                    style={{ width: selectedText.sourceRect.w * displayWidth, maxWidth: '100%' }}
+                  >
+                    <EditorOriginalSnippet
+                      url={url}
+                      rect={selectedText.sourceRect}
+                      width={dims.width}
+                      height={dims.height}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <strong>{ui('Aktuelle Bearbeitung')}</strong>
+                  <div className="editor-font-sample">
+                    <MarkContent
+                      mark={{ ...selectedText, x: 0, y: 0, originalState: undefined }}
+                      source={source}
+                      width={displayWidth}
+                      height={(displayWidth * dims.height) / dims.width}
+                    />
+                  </div>
+                </div>
+              </div>
+            </details>
+          )}
+          {selectedText.sourceIsScan && (
+            <EditorOcrReview
+              key={`ocr-${selectedText.id}`}
+              mark={selectedText}
+              source={source}
+              page={page}
+              url={url}
+              width={dims.width}
+              height={dims.height}
+              language={language}
+              targets={targets}
+              onPick={pick}
+              onPatch={onPatch}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }

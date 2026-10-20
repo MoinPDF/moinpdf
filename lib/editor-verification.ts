@@ -170,10 +170,22 @@ export async function verifyEditorExport(
             }));
             if (removals.some((m) => !m.sourceRects.length)) throw new Error('Textposition unklar');
             const smallest = Math.min(
-              ...changedText.map((m) => (m.fontScale || 0.028) * original.width),
+              ...changedText.flatMap((m) =>
+                [
+                  m.fontScale || 0.028,
+                  ...(m.runs || []).map((r) => r.style.fontScale || m.fontScale || 0.028),
+                ].map((size) => size * original.width),
+              ),
             );
+            // Three canvases and their pixel buffers coexist during comparison.
+            // Bound their area so tiny text on large pages does not multiply
+            // memory use beyond what a narrow-screen browser can reasonably hold.
             const comparisonSide = Math.min(
               3600,
+              Math.floor(
+                Math.max(original.width, original.height) *
+                  Math.sqrt(4000000 / (original.width * original.height)),
+              ),
               Math.max(
                 1600,
                 Math.ceil(
