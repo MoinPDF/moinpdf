@@ -99,11 +99,13 @@ The actual editor page zooms up to 400 percent while controls retain their size.
 
 ## Text blocks, export verification and public corpus in 0.18.0
 
+Untouched pages are copied directly on export. Opening, searching or re-recognizing a scan alone neither adds a text layer nor replaces an existing one. OCR text is applied only when that page is actually edited.
+
 Explicitly join 2–50 horizontal fields on the same page or split at the cursor. Preview reading order before applying. Source removal rectangles stay separate; grouping alone does not rewrite the PDF. Splitting is an explicit layout change and only its first half owns the original removals. Different custom font files or scan backgrounds are not silently unified.
 
 Whole-document search includes current edits, reports skipped pages and optionally runs local OCR. Limits: five million indexed characters, 5,000 matches, 20,000 characters per field. Font, overflow and collision checks run before a batch replacement; one failing match retains the entire previous state. Content changes invalidate stale results. Undo reverts the whole replacement together.
 
-Inside edited fields, the export check renders intended glyph outlines directly to Canvas and compares them with the reopened PDF.js rendering at 1,600 pixels along the longest side. A one-pixel positional tolerance and colour tolerances allow raster differences. More than twelve percent unmatched ink yields a review notice; tiny/low-contrast text or failed background separation is marked incompletely checked. This is not an equality proof or an OCR correctness check. The unchanged-area comparison remains at 900 pixels.
+Inside edited fields, the export check renders intended glyph outlines directly to Canvas and compares them with the reopened PDF.js rendering at 1,600 pixels along the longest side. A one-pixel positional tolerance accommodates raster differences. Signed ink coverage is compared per RGB channel, so antialiased edges do not count like fully missing text pixels. More than twelve percent missing or additional coverage yields a review notice; tiny/low-contrast text or failed background separation is marked incompletely checked. This is not an equality proof or an OCR correctness check. The unchanged-area comparison remains at 900 pixels.
 
 Regressions cover interleaved columns, tables, styled joining/splitting, Unicode boundaries, search invalidation and deliberately incorrect font, size, colour and position. `tests/editor-quality-browser.py` adds desktop and 390-pixel Chromium, Firefox and WebKit flows. Actual CI results, exported PDFs, reports and screenshots are retained in `editor-*` artifacts.
 
