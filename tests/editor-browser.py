@@ -93,12 +93,17 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         print(name+': waiting for text targets',flush=True)
         expect(target).to_be_visible(timeout=120000)
         zoom=page.get_by_label('PDF page zoom' if english else 'Zoom der PDF-Seite',exact=True)
+        holder=page.locator('.editor-page-scroll .canvas-holder')
+        initial_page_width=holder.evaluate('(el) => getComputedStyle(el).width')
         before_width=target.bounding_box()['width']
         zoom.select_option('400')
         expect(page.locator('.editor-page-scroll .canvas-holder')).to_have_css('width',re.compile(r'\d'))
         assert target.bounding_box()['width']>before_width*3.5, '400% zoom must enlarge the actual PDF page'
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Zoom leaked outside page scroller'
         zoom.select_option('100')
+        # React can commit the zoom after select_option returns. Never cache a
+        # click offset from the previous 400% page geometry.
+        expect(holder).to_have_css('width',initial_page_width)
         box=target.bounding_box()
         target.click(position={'x':box['width']*.55,'y':box['height']*.55})
         print(name+': text selected',flush=True)
