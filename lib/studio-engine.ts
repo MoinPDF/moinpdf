@@ -381,6 +381,12 @@ export async function applyPageEdits(
         label: `Seite ${i + 1} von ${pages.length} vorbereiten …`,
       });
       const source = sources.find((s) => s.id === item.sourceId)!;
+      // Opening or searching a scan prepares the editor, but does not request
+      // changes to an otherwise untouched page or its existing search layer.
+      if (editor && !marks.length && !crop && !forceRaster && loaded.has(item.sourceId)) {
+        await appendPage(doc, loaded, item);
+        continue;
+      }
       const contentRemoval = marks.some((m) => m.kind === 'erase' || !!m.sourceRect),
         rasterMarks = forceRaster || !!crop || marks.some((m) => m.kind === 'redact');
       let analysis: import('./editor-analysis').EditorPageText | undefined;

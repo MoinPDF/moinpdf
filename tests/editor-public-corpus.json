@@ -1,0 +1,80 @@
+{
+  "policy": "Prefer CI-only immutable downloads verified by size and SHA-256; preserve per-file attribution/licenses with derived artifacts. No private documents, no corpus files deployed to application.",
+  "limits": [
+    "Not an anonymized customer corpus; public examples and scans plus externally synthesized fixtures.",
+    "Real photographed invoices, handwriting, diverse encrypted/signed forms and physical device interactions remain unverified.",
+    "A mixed-page assembly made from these sources is a derived test fixture, not an independently authored mixed production PDF."
+  ],
+  "fixtures": [
+    {
+      "url": "https://raw.githubusercontent.com/aws-samples/sample-idp-patterns-and-tools/baaa22b065057fef30bb48c0a270f28f7f7657b2/sample-files/sample-invoice.pdf",
+      "size": 46682,
+      "sha256": "a9ca217287a6dae8add0a45590ea974fd96550423dbab2dfd61a7caf251f5c63",
+      "license": "MIT-0",
+      "copyright": "Amazon.com, Inc. or its affiliates",
+      "licenseEvidence": "https://github.com/aws-samples/sample-idp-patterns-and-tools/blob/baaa22b065057fef30bb48c0a270f28f7f7657b2/LICENSE",
+      "provenance": "Public sample invoice from AWS; externally generated example, not a customer invoice",
+      "case": "Native TrueType invoice, table lines, two address columns",
+      "name": "aws-invoice.pdf",
+      "caution": "Pre-existing ToUnicode errors outside selected anchor: visible Eastfield extracts as Eas9ield; preserve baseline extraction rather than silently correcting."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/treyhunner/invoices/3b34a669e69f5a2f3a9fb790b273ebfeea616556/invoice.pdf",
+      "size": 34037,
+      "sha256": "77235b4d4212e67ec457c02022dc49ea384cba14919b010adc3d6635a3ae43a7",
+      "license": "MIT",
+      "copyright": "2011 Trey Hunner",
+      "licenseEvidence": "https://github.com/treyhunner/invoices/blob/3b34a669e69f5a2f3a9fb790b273ebfeea616556/LICENSE",
+      "provenance": "Public LaTeX invoice example with fictional Joe Shmoe / John Doe / ACME names",
+      "case": "Native Type1 fonts, business table, font substitution",
+      "name": "latex-invoice.pdf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ocrmypdf/OCRmyPDF/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/tests/resources/acroform.pdf",
+      "size": 10733,
+      "sha256": "16f2b7b564587ce0c515c6b12252b94a0d62e2dec6e8b33a0cf7606328720509",
+      "license": "CC-BY-SA-4.0",
+      "copyright": "2025 James R. Barlow",
+      "licenseEvidence": "https://github.com/ocrmypdf/OCRmyPDF/blob/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/REUSE.toml",
+      "provenance": "Externally authored minimal synthetic AcroForm regression fixture",
+      "case": "Form-preservation or explicit refusal: Check Box4 widget",
+      "name": "acroform.pdf",
+      "caution": "Very small minimal form; not a representative tax/government form."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ocrmypdf/OCRmyPDF/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/tests/resources/c03-29.pdf",
+      "size": 167938,
+      "sha256": "c2ff83af7d028c95209cc7eebdf80fd5bb4cd292973ed6601e4bab7d1929f201",
+      "license": "public-domain (as declared upstream)",
+      "copyright": "Public domain",
+      "licenseEvidence": "https://github.com/ocrmypdf/OCRmyPDF/blob/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/REUSE.toml",
+      "provenance": "Historical printed page from Adventures of Huckleberry Finn, source Project Gutenberg; actual scan with illustration and paper artifacts",
+      "case": "Difficult image-only OCR with illustration, varying text flow and noise",
+      "name": "c03-29.pdf",
+      "caution": "Native OCR misses decorative Chapter III heading and contains recognition errors; anchor strings are OCR observations, not an accuracy guarantee."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ocrmypdf/OCRmyPDF/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/tests/resources/ccitt.pdf",
+      "size": 103856,
+      "sha256": "5f4b129bf0eb0d32358a917cd1754c6fd68cac589ad79076b6d0191ebe84f0f1",
+      "license": "CC-BY-SA-3.0 (chosen from upstream dual license)",
+      "copyright": "1985 Forat Electronics",
+      "licenseEvidence": "https://github.com/ocrmypdf/OCRmyPDF/blob/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/REUSE.toml",
+      "provenance": "LinnSequencer hardware brochure scan, converted to CCITT by upstream",
+      "case": "Image-only two-column brochure OCR",
+      "name": "ccitt.pdf"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ocrmypdf/OCRmyPDF/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/tests/resources/rotated_skew.pdf",
+      "size": 76401,
+      "sha256": "5122c07d05a61219eb9f8305776ef16def6b34c29358e05c5ae2e884a351438f",
+      "license": "CC-BY-SA-3.0 (chosen from upstream dual license)",
+      "copyright": "1985 Forat Electronics",
+      "licenseEvidence": "https://github.com/ocrmypdf/OCRmyPDF/blob/cf0df3da06aef04fe9a5bf91c6feff36370bb3eb/REUSE.toml",
+      "provenance": "Upstream transformation of brochure scan with page rotation and simulated skew",
+      "case": "Image-only rotated and skewed document",
+      "name": "rotated_skew.pdf",
+      "caution": "Skew is simulated upstream, not a real camera capture."
+    }
+  ]
+}

@@ -23,7 +23,7 @@ jobs:
   browser:
     name: Editor in ${{ matrix.browser }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -49,6 +49,7 @@ jobs:
           mkdir -p .cache/editor-corpus
           curl --fail --location --retry 3 https://raw.githubusercontent.com/mozilla/pdf.js/0d5f92deedb16d3e8b85fc2c6dcf753f572cedd2/test/pdfs/tracemonkey.pdf --output .cache/editor-corpus/tracemonkey.pdf
           echo '3662ff519e485810520552bf301d8c3b2b917fd2f83303f4965d7abed367e113  .cache/editor-corpus/tracemonkey.pdf' | sha256sum --check
+          python tests/editor-download-corpus.py
           MOINPDF_EDITOR_CORPUS=.cache/editor-corpus/tracemonkey.pdf node tests/editor-preservation-smoke.mjs
       - name: Prepare browser
         run: |
@@ -59,8 +60,11 @@ jobs:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
           MOINPDF_TEST_START_SERVER: '1'
         run: |
-          python tests/editor-corpus-check.py
-          python tests/editor-browser.py
+          status=0
+          python tests/editor-corpus-check.py || status=1
+          python tests/editor-browser.py || status=1
+          python tests/editor-quality-browser.py || status=1
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

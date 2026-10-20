@@ -53,8 +53,7 @@ export const editorRectsOverlap = (a: Rect, b: Rect) =>
     Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)) >
   0.0000001;
 export function editorTextCollision(mark: Mark, marks: Mark[], targets: TextTarget[]) {
-  if (mark.kind !== 'text' || !mark.sourceRect || !mark.text || !editorMarkChanged(mark))
-    return false;
+  if (mark.kind !== 'text' || !mark.text || !editorMarkChanged(mark)) return false;
   const removed = marks.filter(editorMarkChanged).flatMap(editorRemovalRects);
   return (
     marks.some(
@@ -414,21 +413,23 @@ export function editorParagraphs(
         (peer.x >= line.x + line.w || line.x >= peer.x + peer.w),
     );
   for (const line of lines) {
-    const previous = paragraphs.at(-1),
-      last = previous?.at(-1);
-    const gap = last ? ((line.y - last.y) * height) / last.fontSize : 0;
-    if (
-      last &&
-      same(last, line) &&
-      !!last.bold === !!line.bold &&
-      !tableRow(last) &&
-      !tableRow(line) &&
-      Math.abs(last.x - line.x) * width < last.fontSize * 0.65 &&
-      gap >= 0.75 &&
-      gap <= 1.65 &&
-      last.w >= line.w * 0.65
-    )
-      previous!.push(line);
+    // Follow the same column even when extraction interleaves left/right rows.
+    // Require one unambiguous predecessor; table rows remain independent.
+    const candidates = paragraphs.filter((group) => {
+      const last = group.at(-1)!;
+      const gap = ((line.y - last.y) * height) / last.fontSize;
+      return (
+        same(last, line) &&
+        !!last.bold === !!line.bold &&
+        !tableRow(last) &&
+        !tableRow(line) &&
+        Math.abs(last.x - line.x) * width < last.fontSize * 0.65 &&
+        gap >= 0.75 &&
+        gap <= 1.65 &&
+        last.w >= line.w * 0.65
+      );
+    });
+    if (candidates.length === 1) candidates[0].push(line);
     else paragraphs.push([line]);
   }
   return paragraphs.map((p) => merge(p, '\n'));

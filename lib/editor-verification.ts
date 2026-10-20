@@ -13,10 +13,14 @@ import {
   readTextTargets,
 } from './editor-model';
 import { cachedEditorPage, remainingEditorTargets } from './editor-analysis';
+import { renderEditorBackground } from './editor-native';
+import { paintEditorReference, compareEditorInk } from './editor-ink-verification';
+import { editorBounds } from './editor-blocks';
 export type EditorVerification = {
   status: 'passed' | 'review';
   textPages: number;
   imagePages: number;
+  editedImageFields: number;
   changedPages: number[];
   issues: { page: number; message: string }[];
   sourcePages: Pick<PageItem, 'sourceId' | 'index' | 'rotation'>[];
@@ -78,6 +82,7 @@ export async function verifyEditorExport(
     status: 'passed',
     textPages: 0,
     imagePages: 0,
+    editedImageFields: 0,
     changedPages: [],
     issues: [],
     sourcePages: pages.map(({ sourceId, index, rotation }) => ({ sourceId, index, rotation })),
@@ -101,7 +106,8 @@ export async function verifyEditorExport(
       const analysis = cachedEditorPage(source, page, language);
       const incompatible = !!crop || marks.some((m) => !['text', 'image'].includes(m.kind));
       if (!incompatible) {
-        const original = analysis || (await readTextTargets(source, page)),
+        const original =
+            (marks.length ? analysis : undefined) || (await readTextTargets(source, page)),
           actual = await readTextTargets(output, outPage);
         const expected = [
           ...remainingEditorTargets(original.targets, marks.flatMap(editorRemovalRects)).map(
@@ -126,6 +132,91 @@ export async function verifyEditorExport(
             );
         }
         result.textPages++;
+        const changedText = marks.filter((m) => m.kind === 'text' && normalized(m.text || ''));
+        if (changedText.length) {
+          let background: Awaited<ReturnType<typeof renderPage>> | undefined,
+            actualImage: Awaited<ReturnType<typeof renderPage>> | undefined,
+            reference: HTMLCanvasElement | undefined;
+          try {
+            // Remove only actual replacement text, leaving scan fill, vectors,
+            // and images as the reference background for direct glyph painting.
+            const removals = changedText.map((m) => ({
+              ...m,
+              sourceRects: actual.targets
+                .filter((t) => editorRectsOverlap(t, m))
+                .map((t) => ({ x: t.x, y: t.y, w: t.w, h: t.h })),
+            }));
+            if (removals.some((m) => !m.sourceRects.length)) throw new Error('Textposition unklar');
+            background = await renderEditorBackground(
+              output,
+              outPage,
+              removals,
+              actual.targets,
+              signal,
+              1600,
+            );
+            actualImage = await renderPage(output, outPage, 1600, signal);
+            const base = background.canvas
+              .getContext('2d')!
+              .getImageData(0, 0, background.canvas.width, background.canvas.height);
+            // Do not inherit a PDF renderer's transforms, clipping or colour
+            // state. Browser rendering can leave state unlike the Node adapter.
+            reference = document.createElement('canvas');
+            reference.width = background.canvas.width;
+            reference.height = background.canvas.height;
+            const context = reference.getContext('2d')!;
+            context.putImageData(base, 0, 0);
+            for (const mark of changedText)
+              await paintEditorReference(
+                context,
+                mark,
+                original.width,
+                original.height,
+                source,
+                signal,
+              );
+            const expectedImage = context.getImageData(
+                0,
+                0,
+                background.canvas.width,
+                background.canvas.height,
+              ),
+              savedImage = actualImage.canvas
+                .getContext('2d')!
+                .getImageData(0, 0, actualImage.canvas.width, actualImage.canvas.height);
+            let mismatches = 0;
+            for (const [n, mark] of changedText.entries()) {
+              signal.throwIfAborted();
+              const comparison = compareEditorInk(
+                base,
+                expectedImage,
+                savedImage,
+                editorBounds([mark, ...removals[n].sourceRects]),
+              );
+              if (comparison.expectedInk < 8)
+                throw new Error('Schriftbild zu klein oder kontrastarm');
+              if (comparison.missing > 0.12 || comparison.extra > 0.12) mismatches++;
+              result.editedImageFields++;
+            }
+            if (mismatches)
+              result.issues.push({
+                page: i,
+                message:
+                  'Das gespeicherte Schriftbild weicht innerhalb bearbeiteter Textfelder von der vorgesehenen Darstellung ab. Bitte Schrift, Größe, Farbe und Umbruch vergleichen.',
+              });
+          } catch {
+            signal.throwIfAborted();
+            result.issues.push({
+              page: i,
+              message:
+                'Die Schriftbildprüfung innerhalb bearbeiteter Textfelder konnte auf dieser Seite nicht vollständig abgeschlossen werden. Bitte diese Stellen selbst vergleichen.',
+            });
+          } finally {
+            if (background) background.canvas.width = background.canvas.height = 0;
+            if (actualImage) actualImage.canvas.width = actualImage.canvas.height = 0;
+            if (reference) reference.width = reference.height = 0;
+          }
+        }
       } else
         result.issues.push({
           page: i,

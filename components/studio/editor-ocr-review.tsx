@@ -35,6 +35,7 @@ export function EditorOcrReview({
     [suggestion, setSuggestion] = useState(''),
     [notice, setNotice] = useState('');
   const task = useRef<AbortController | null>(null);
+  const [open, setOpen] = useState(false);
   useEffect(() => () => task.current?.abort(), []);
   const uncertain = targets.filter((t) => t.origin === 'ocr' && (t.confidence ?? 100) < 75);
   async function recognize() {
@@ -65,8 +66,16 @@ export function EditorOcrReview({
     }
   }
   return (
-    <details className="editor-ocr-review">
-      <summary>{ui('Scantext prüfen und korrigieren')}</summary>
+    <details className="editor-ocr-review" open={open}>
+      <summary
+        onClick={(event) => {
+          event.preventDefault();
+          setOpen((value) => !value);
+        }}
+        aria-expanded={open}
+      >
+        {ui('Scantext prüfen und korrigieren')}
+      </summary>
       <div className="editor-review-grid">
         <div>
           <strong>{ui('Original')}</strong>

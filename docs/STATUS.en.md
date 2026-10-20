@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 20 October 2026, version 0.17.0.
+As of 20 October 2026, version 0.18.0.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
@@ -96,3 +96,19 @@ Verification: 46 local test suites, production build, typecheck and lint, includ
 Mixed formatting is explicit; font status and controls follow the selected text range. Without a text selection, formatting still applies to the whole text box. Built-in find/replace (Ctrl/⌘+F or +H within the text box) deliberately searches only that box. Each match retains its own style and replacements share one undo step. Queries are literal; the 20,000-character text-box limit remains.
 
 The actual editor page zooms up to 400 percent while controls retain their size. The page has a separate scrolling area. Screen previews are bounded to a 3,200-pixel longest side and existing renderer limits; this does not describe export resolution. Full Acrobat equivalence or a best-internet-tool ranking has not been demonstrated. An independent comparative corpus and physical-device testing are still needed for such an assessment.
+
+## Text blocks, export verification and public corpus in 0.18.0
+
+Untouched pages are copied directly on export. Opening, searching or re-recognizing a scan alone neither adds a text layer nor replaces an existing one. OCR text is applied only when that page is actually edited.
+
+Explicitly join 2–50 horizontal fields on the same page or split at the cursor. Preview reading order before applying. Source removal rectangles stay separate; grouping alone does not rewrite the PDF. Splitting is an explicit layout change and only its first half owns the original removals. Different custom font files or scan backgrounds are not silently unified.
+
+Whole-document search includes current edits, reports skipped pages and optionally runs local OCR. Limits: five million indexed characters, 5,000 matches, 20,000 characters per field. Font, overflow and collision checks run before a batch replacement; one failing match retains the entire previous state. Content changes invalidate stale results. Undo reverts the whole replacement together.
+
+Inside edited fields, the export check renders intended glyph outlines directly to Canvas and compares them with the reopened PDF.js rendering at 1,600 pixels along the longest side. A one-pixel positional tolerance accommodates raster differences. Signed ink coverage is compared per RGB channel, so antialiased edges do not count like fully missing text pixels. More than twelve percent missing or additional coverage yields a review notice; tiny/low-contrast text or failed background separation is marked incompletely checked. This is not an equality proof or an OCR correctness check. The unchanged-area comparison remains at 900 pixels.
+
+Regressions cover interleaved columns, tables, styled joining/splitting, Unicode boundaries, search invalidation and deliberately incorrect font, size, colour and position. `tests/editor-quality-browser.py` adds desktop and 390-pixel Chromium, Firefox and WebKit flows. Actual CI results, exported PDFs, reports and screenshots are retained in `editor-*` artifacts.
+
+Run `python tests/editor-download-corpus.py` for immutable public samples. Sources, revisions, SHA-256 hashes, licences and caveats are in `tests/editor-public-corpus.json`. AWS's sample already contains text mapping errors; preserve that baseline outside edited anchors. The mixed file is assembled for testing. A minimal AcroForm checks explicit refusal before destructive flattening, not arbitrary government-form editing. These PDFs are not deployed with the app, and no document upload has been added.
+
+Physical iPhone/Android devices, full native Safari editor interaction and a broad production-customer corpus remain unverified. Camera captures, handwriting, complex shaping, arbitrary signatures and forms remain technical limits.

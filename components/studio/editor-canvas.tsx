@@ -1,6 +1,10 @@
 'use client';
 import { EditorLayoutHelp, EditorOriginalSnippet } from './editor-layout-help';
 import { EditorOcrReview } from './editor-ocr-review';
+import { EditorFontAlternatives } from './editor-font-alternatives';
+import { EditorBlockTools } from './editor-block-tools';
+import { EditorLayoutOutline } from './editor-layout-outline';
+import { editorTargetMark } from '@/lib/editor-blocks';
 import { EditorTextSearch } from './editor-text-search';
 import { flushSync } from 'react-dom';
 import { editorSegments, type EditorSelection } from '@/lib/editor-rich-text';
@@ -30,7 +34,6 @@ import { renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
 import { normalizedRect, type Mark, type Rect } from '@/lib/studio-engine';
 import {
   fitRect,
-  editorMarkSignature,
   editorMarkChanged,
   editorRemovalRects,
   editorParagraphs,
@@ -146,6 +149,8 @@ export function EditorCanvas({
   onSelect,
   onDimensions,
   onTextSelection,
+  onReplaceMarks,
+  searchHighlight,
   autoOcr = false,
   language = 'deu+eng',
   zoom = 100,
@@ -161,6 +166,8 @@ export function EditorCanvas({
   onPatch: EditorPatch;
   onSelect: (id: string) => void;
   onTextSelection?: (selection: EditorSelection) => void;
+  onReplaceMarks?: (remove: string[], add: Mark[]) => void;
+  searchHighlight?: Rect;
   onDimensions: (dims: { width: number; height: number }) => void;
   autoOcr?: boolean;
   language?: string;
@@ -182,6 +189,27 @@ export function EditorCanvas({
   const [initialPoint, setInitialPoint] = useState<EditorStartPoint | null>(null);
   const [textSelection, setTextSelection] = useState<EditorSelection | null>(null);
   const [selectionRequest, setSelectionRequest] = useState<EditorSelection | null>(null);
+  const [joining, setJoining] = useState(false);
+  const [joinedKeys, setJoinedKeys] = useState<string[]>([]);
+  const toggleJoin = (key: string) => {
+    if (!blockChoices.some((choice) => choice.key === key)) {
+      setDetectionError('Bitte 2 bis 50 waagerechte Textfelder auf derselben Seite auswählen.');
+      return;
+    }
+    setJoinedKeys((old) => (old.includes(key) ? old.filter((k) => k !== key) : [...old, key]));
+  };
+  useEffect(() => {
+    setJoining(false);
+    setJoinedKeys([]);
+  }, [page.id, paragraphMode]);
+  const searchHighlightRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    searchHighlightRef.current?.scrollIntoView({
+      block: 'center',
+      inline: 'center',
+      behavior: 'smooth',
+    });
+  }, [searchHighlight, url]);
   const [searchId, setSearchId] = useState('');
   const [searchRequest, setSearchRequest] = useState(0);
   const openSearch = (id: string) => {
@@ -493,6 +521,10 @@ export function EditorCanvas({
   }
   function pick(target: TextTarget, point?: Omit<EditorStartPoint, 'id'>) {
     if (disabled) return;
+    if (joining) {
+      toggleJoin('target:' + target.id);
+      return;
+    }
     const existing = marks.find(
       (m) =>
         m.sourceRect &&
@@ -510,53 +542,7 @@ export function EditorCanvas({
       setDetectionError(target.unsupportedReason);
       return;
     }
-    const { text, fontSize, family, x, y, w, h } = target;
-    const r = { x, y, w, h };
-    const rotation = (((Math.round((target.rotation || 0) / 90) * 90) % 360) + 360) % 360;
-    const size = Math.max(0.1, fontSize);
-    const fill = target.fill || '#ffffff';
-    const brightness = [1, 3, 5].reduce(
-      (sum, start, i) =>
-        sum + parseInt(fill.slice(start, start + 2), 16) * [0.2126, 0.7152, 0.0722][i],
-      0,
-    );
-    const next: Mark = {
-      ...r,
-      id: uid(),
-      kind: 'text',
-      text,
-      originalText: text,
-      ...(target.runs?.length
-        ? {
-            runs: target.runs.map((r) => ({
-              ...r,
-              style: { ...r.style, originalFontPage: page.index },
-            })),
-          }
-        : {}),
-      sourceRect: { ...r },
-      sourceIsScan: target.origin === 'ocr' || !!target.invisible,
-      fill,
-      color: target.color || (brightness < 110 ? '#ffffff' : '#222222'),
-      textRotation: rotation,
-      fontFamily: family,
-      fontChoice: 'auto',
-      bold: !!target.bold,
-      italic: !!target.italic,
-      originalFontId: target.originalFontId,
-      originalFontName: target.fontName,
-      originalFontPage: page.index,
-      baselineScale: target.baselineScale,
-      insetScale: target.insetScale,
-      lineHeight: target.lineHeight,
-      tracking: target.tracking,
-      textScaleX: target.textScaleX,
-      ...(target.fragments?.length
-        ? { sourceRects: target.fragments.map(({ x, y, w, h }) => ({ x, y, w, h })) }
-        : {}),
-      fontScale: size / dims.width,
-    };
-    next.originalState = editorMarkSignature(next);
+    const next = editorTargetMark(target, page.index, dims.width, uid());
     setInitialPoint(point ? { id: next.id, ...point } : null);
     onMark(next);
   }
@@ -571,6 +557,18 @@ export function EditorCanvas({
         removals.flatMap(editorRemovalRects).some((r) => editorRectsOverlap(part, r)),
       ),
   );
+  const blockChoices = [
+    ...available
+      .filter((t) => !t.unsupportedReason && !t.rotation)
+      .map((t) => ({
+        key: 'target:' + t.id,
+        mark: editorTargetMark(t, page.index, dims.width, 'group-' + page.id + '-' + t.id),
+        existing: false,
+      })),
+    ...displayed
+      .filter((m) => m.kind === 'text' && !m.textRotation)
+      .map((mark) => ({ key: 'mark:' + mark.id, mark, existing: true })),
+  ];
   return (
     <div className="editor-canvas-wrap">
       {(action === 'pick' || autoOcr) && (
@@ -673,7 +671,27 @@ export function EditorCanvas({
           )}
         </div>
       )}
-      {selectedText && autoOcr && (
+      {autoOcr && onReplaceMarks && (
+        <EditorBlockTools
+          source={source}
+          width={dims.width}
+          height={dims.height}
+          choices={blockChoices}
+          chosen={joinedKeys}
+          joining={joining}
+          selected={selectedText}
+          selection={textSelection}
+          disabled={disabled}
+          onJoining={(value) => {
+            setJoining(value);
+            setJoinedKeys([]);
+            if (value) onSelect('');
+          }}
+          onToggle={toggleJoin}
+          onApply={onReplaceMarks}
+        />
+      )}
+      {selectedText && autoOcr && !joining && (
         <EditorInlineToolbar
           mark={selectedText}
           selection={textSelection}
@@ -718,6 +736,15 @@ export function EditorCanvas({
             source={source}
             width={dims.width}
             height={dims.height}
+            onPatch={onPatch}
+          />
+          <EditorFontAlternatives
+            mark={selectedText}
+            source={source}
+            width={dims.width}
+            height={dims.height}
+            selection={textSelection}
+            disabled={disabled}
             onPatch={onPatch}
           />
           {selectedText.sourceRect && (
@@ -842,11 +869,12 @@ export function EditorCanvas({
               action === 'pick' &&
               available.map((t) => (
                 <button
-                  className={`editor-text-target ${t.origin === 'ocr' && (t.confidence ?? 100) < 75 ? 'is-uncertain' : ''}`}
+                  className={`editor-text-target ${joining && joinedKeys.includes('target:' + t.id) ? 'is-joining' : ''} ${t.origin === 'ocr' && (t.confidence ?? 100) < 75 ? 'is-uncertain' : ''}`}
                   key={t.id}
                   style={box(t)}
                   disabled={disabled}
                   aria-label={ui(`Text bearbeiten: ${t.text}`)}
+                  aria-pressed={joining ? joinedKeys.includes('target:' + t.id) : undefined}
                   title={
                     t.unsupportedReason
                       ? ui(t.unsupportedReason)
@@ -872,7 +900,7 @@ export function EditorCanvas({
             ].map((m) => (
               <div
                 key={m.id}
-                className={`page-mark editor-object ${m.kind} ${selectedId === m.id ? 'is-selected' : ''}`}
+                className={`page-mark editor-object ${m.kind} ${joining && joinedKeys.includes('mark:' + m.id) ? 'is-joining' : ''} ${selectedId === m.id ? 'is-selected' : ''}`}
                 style={{
                   ...box(m),
                   touchAction: m.kind === 'text' ? 'pan-y' : 'none',
@@ -883,14 +911,24 @@ export function EditorCanvas({
                 aria-label={ui(
                   `${m.kind === 'text' ? 'Textfeld' : m.kind === 'erase' ? 'Entfernter Bereich' : m.kind === 'image' ? 'Bild' : 'Markierung'} auswählen${m.kind === 'text' && m.text ? `: ${m.text.slice(0, 60)}` : ''}`,
                 )}
-                aria-pressed={selectedId === m.id}
+                aria-pressed={joining ? joinedKeys.includes('mark:' + m.id) : selectedId === m.id}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (disabled) return;
+                  if (joining && m.kind === 'text') {
+                    toggleJoin('mark:' + m.id);
+                    return;
+                  }
                   onSelect(m.id);
                 }}
                 onPointerDown={(e) => {
+                  if (disabled) return;
                   if (m.kind === 'text') {
                     e.stopPropagation();
+                    if (joining) {
+                      e.preventDefault();
+                      return;
+                    }
                     if (selectedId !== m.id)
                       setInitialPoint({
                         id: m.id,
@@ -903,6 +941,10 @@ export function EditorCanvas({
                   if (disabled) return;
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
+                    if (joining && m.kind === 'text') {
+                      toggleJoin('mark:' + m.id);
+                      return;
+                    }
                     onSelect(m.id);
                   }
                   const shifts: Record<string, [number, number]> = {
@@ -912,7 +954,7 @@ export function EditorCanvas({
                     ArrowDown: [0, 1],
                   };
                   const s = shifts[e.key];
-                  if (s) {
+                  if (s && !joining) {
                     e.preventDefault();
                     const step = e.shiftKey ? 10 : 1;
                     onPatch(
@@ -926,7 +968,7 @@ export function EditorCanvas({
                   }
                 }}
               >
-                {selectedId === m.id && m.kind === 'text' && autoOcr ? (
+                {selectedId === m.id && m.kind === 'text' && autoOcr && !joining ? (
                   <EditorInlineText
                     mark={m}
                     source={source}
@@ -971,6 +1013,28 @@ export function EditorCanvas({
                 )}
               </div>
             ))}
+            {autoOcr &&
+              displayed
+                .filter((m) => m.kind === 'text' && editorMarkChanged(m))
+                .map((m) => (
+                  <EditorLayoutOutline
+                    key={'layout-' + m.id}
+                    mark={m}
+                    marks={displayed}
+                    targets={targets}
+                    source={source}
+                    width={dims.width}
+                    height={dims.height}
+                  />
+                ))}
+            {searchHighlight && (
+              <div
+                ref={searchHighlightRef}
+                className="editor-search-highlight"
+                style={box(searchHighlight)}
+                aria-label={ui('Suchtreffer auf der Seite')}
+              />
+            )}
             {crop && (
               <div className="crop-selection" style={box(crop)}>
                 <span>{ui('AUSSCHNITT')}</span>

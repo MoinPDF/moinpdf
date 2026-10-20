@@ -173,6 +173,8 @@ import { conversionToolForFile, documentAccept } from '@/lib/import-routing';
 import { isDocumentTool, type DocumentSessions } from '@/lib/document-tools';
 import { ToolChooser } from '@/components/studio/tool-chooser';
 import { EditorCanvas } from '@/components/studio/editor-canvas';
+import { EditorDocumentSearch } from '@/components/studio/editor-document-search';
+import { editorDocumentFingerprint } from '@/lib/editor-document-search';
 import { EditorPanel, EditorToolbar } from '@/components/studio/editor-panel';
 import { editorTools, fitRect, type EditorAction } from '@/lib/editor-model';
 import { ExtraSettings } from '@/components/studio/extra-settings';
@@ -350,6 +352,11 @@ function Studio() {
     [editorDims, setEditorDims] = useState({ width: 595.28, height: 841.89 }),
     [imageBusy, setImageBusy] = useState(false);
   const imagePicker = useRef<HTMLInputElement>(null);
+  const [editorDocumentSearchOpen, setEditorDocumentSearchOpen] = useState(false);
+  const [editorSearchHighlight, setEditorSearchHighlight] = useState<{
+    pageId: string;
+    rect: Rect;
+  } | null>(null);
   const [pendingToolReason, setPendingToolReason] = useState('');
   const [pendingTool, setPendingTool] = useState<WorkspaceTool | null>(null);
   const [archivedSources, setArchivedSources] = useState<Source[]>([]);
@@ -1020,6 +1027,23 @@ function Studio() {
       invalidate();
     } else commit({ pages, edits: nextEdits });
     typingHistory.current = mode === 'typing' ? { id, edits: nextEdits, time: now } : null;
+  }
+
+  function replacePageMarks(remove: string[], add: Mark[]) {
+    if (!activePage || locked) return;
+    typingHistory.current = null;
+    textSelection.current = null;
+    commit({
+      pages,
+      edits: {
+        ...edits,
+        marks: {
+          ...edits.marks,
+          [activePage.id]: [...pageMarks.filter((m) => !remove.includes(m.id)), ...add],
+        },
+      },
+    });
+    setSelectedMarkId(add[0]?.id || '');
   }
 
   function newText() {
@@ -2412,6 +2436,42 @@ function Studio() {
                             onNewText={newText}
                             onImage={() => imagePicker.current?.click()}
                             onErase={newErase}
+                            onSearch={() => setEditorDocumentSearchOpen((old) => !old)}
+                          />
+                        )}
+                        {toolId === 'edit-text' && editorDocumentSearchOpen && (
+                          <EditorDocumentSearch
+                            sources={sources}
+                            pages={pages}
+                            edits={edits}
+                            language={options.editorLanguage || 'deu+eng'}
+                            disabled={locked}
+                            onClose={() => {
+                              setEditorDocumentSearchOpen(false);
+                              setEditorSearchHighlight(null);
+                            }}
+                            onReveal={(pageId, rect) => {
+                              setActiveId(pageId);
+                              setSelectedMarkId('');
+                              setEditorSearchHighlight({ pageId, rect });
+                            }}
+                            onApply={(next, fingerprint) => {
+                              if (
+                                locked ||
+                                fingerprint !== editorDocumentFingerprint(sources, pages, edits)
+                              )
+                                return;
+                              typingHistory.current = null;
+                              textSelection.current = null;
+                              setSelectedMarkId('');
+                              setEditorSearchHighlight(null);
+                              commit(
+                                { pages, edits: next },
+                                t(
+                                  'Ausgewählte Treffer ersetzt. Rückgängig nimmt die gesamte Ersetzung zurück.',
+                                ),
+                              );
+                            }}
                           />
                         )}
                         <div
@@ -2458,6 +2518,12 @@ function Studio() {
                                 disabled={locked}
                                 onMark={mark}
                                 onPatch={patchMark}
+                                onReplaceMarks={replacePageMarks}
+                                searchHighlight={
+                                  editorSearchHighlight?.pageId === activePage.id
+                                    ? editorSearchHighlight.rect
+                                    : undefined
+                                }
                                 onSelect={setSelectedMarkId}
                                 onTextSelection={(selection) => {
                                   textSelection.current = selection;
