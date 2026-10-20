@@ -54,6 +54,7 @@ export type JobResult = {
   inputSize: number;
   report?: PdfReport;
   note?: string;
+  editorVerification?: import('./editor-verification').EditorVerification;
 };
 export type ProgressUpdate = { percent: number; label: string };
 type Report = (progress: ProgressUpdate) => void;

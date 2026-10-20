@@ -43,6 +43,7 @@ jobs:
           pnpm run typecheck:selfhost
           pnpm run build:selfhost
           node tests/editor-preservation-smoke.mjs
+          node tests/editor-rich-smoke.mjs
       - name: Independently produced two-column PDF
         run: |
           mkdir -p .cache/editor-corpus

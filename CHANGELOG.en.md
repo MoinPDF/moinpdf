@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.16.0 – 20 October 2026
+
+- Direct caret placement and word selection, with bold, italic, colour, font and size within a text box. Formatting and edits persist through undo and project archives.
+- More conservative paragraph grouping for tables and mixed fonts. Explicit previews for enlarging a text box, reflowing lines or reducing font size.
+- Automatic font substitution also compares text width for suitable single-line text. Compare the original with the edit and load a custom static TrueType font locally; font bytes are retained in the project.
+- Correct OCR beside the original crop, navigate uncertain words and recognise a selected area again locally, reviewing the suggestion before applying it.
+- Export reopens the saved PDF and checks text content, text position and visual differences outside edited regions. Detected text loss stops export; incomplete or suspicious visual checks are reported with side-by-side original/result views.
+- German and English help, regression tests and browser coverage expanded for selection, word formatting, OCR correction and export checks. Document-wide Word reflow and guaranteed original fonts in scans remain outside the editor’s capabilities.
+
 ## 0.15.5 – 20 October 2026
 
 - “Edit PDF” removes replaced source text from the PDF. Backgrounds, table rules, images and links are retained when native text objects can be edited reliably; preview and export use the same removal path.

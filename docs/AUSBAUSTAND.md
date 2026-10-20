@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 20. Oktober 2026, Version 0.15.5.
+Stand: 20. Oktober 2026, Version 0.16.0.
 
 „PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
 
@@ -149,3 +149,13 @@ Nicht nachgewiesen sind eine beliebige Sammlung produktiver Kundendokumente, sch
 Technische Grenzen bleiben: kein dokumentweiter Word-Seitenfluss; Auswahl und Formatierung pro Textstelle/Absatz; Originalschrift nur bei sicher wiederverwendbaren Glyphen; OCR-Schrift und -Größe sind Schätzungen. Auf Scans werden Bildpixel lokal ersetzt, komplexe Bildhintergründe lassen sich dabei nicht garantiert rekonstruieren. Explizit als Bild aufgebaute Seiten können Vektoren, Links und interaktive Felder verlieren. Handschrift und OCR-Erkennungsfehler benötigen manuelle Kontrolle. Nicht sicher trennbare Textobjekte werden nicht stillschweigend verändert. Eine universelle oder hundertprozentige Bearbeitungszuverlässigkeit wird nicht zugesichert.
 
 Reproduktion: `node tests/editor-preservation-smoke.mjs`; optional mit `MOINPDF_EDITOR_CORPUS=/pfad/tracemonkey.pdf`. Für die Browserabnahme nach `pnpm build:selfhost`: `MOINPDF_TEST_START_SERVER=1 python tests/editor-browser.py` (Playwright-Browser und Systembibliotheken erforderlich). Test-PDFs, Downloads und Bildschirmaufnahmen entstehen ausschließlich unter `.cache/`.
+
+## Erweiterung des PDF-Editors 0.16.0
+
+Markierte Wörter können innerhalb einer Textstelle unterschiedlich formatiert werden. Die Auswahl wird beim Formatieren erhalten; Einfügen und Ersetzen übernehmen den Stil der betroffenen Stelle. Ohne Markierung gilt eine Formatänderung für das ganze Textfeld. Eigene statische TrueType-Schriften werden lokal geprüft und mit dem Projekt gespeichert, ohne ihre Bytes in jedem Rückgängig-Schritt zu duplizieren. Eine Schriftdatei enthält einen Schriftschnitt; ein anderer Fett-/Kursivschnitt benötigt eine entsprechende Datei oder eine mitgelieferte Familie.
+
+Layoutvorschläge verändern andere Textfelder nicht. Tabellen und Spalten besitzen in einer PDF häufig keine semantische Struktur; die Absatzbildung bleibt deshalb konservativ. OCR-Korrekturen lassen sich am Originalausschnitt prüfen und gezielt neu erkennen. Die neue Erkennung ersetzt Text erst nach Übernahme.
+
+Der Export öffnet die erzeugte PDF erneut. Textmenge und Position geänderter Texte werden geprüft; Leerraum und Unicode-Kompatibilitätsformen werden normalisiert. Der Bildvergleich arbeitet außerhalb der bearbeiteten Rechtecke mit 900 Pixeln Vorschauauflösung und einer Toleranz für Rasterunterschiede. Er kann kleine Änderungen übersehen und überprüft das Schriftbild innerhalb der geänderten Stellen nicht. Beschnittene oder zusätzlich als Bild bearbeitete Seiten werden als eingeschränkt geprüft gekennzeichnet. Original und Export bleiben zum eigenen Vergleich verfügbar.
+
+Prüfstand: 46 lokale Testsammlungen, Produktionsbuild, Typprüfung und Lint; zusätzliche Prüfungen für Wortformatierung, Unicode, Projekt-/Schriftrundlauf, fehlenden oder doppelten Exporttext. Browserergebnisse werden in der zugehörigen Editor-CI als Artefakte gespeichert. Keine Zusage für beliebige Kunden-PDFs, Handschrift oder reale mobile Geräte. Umfangreiche Schriffformung, variable/CFF-Eigenschriften und dokumentweiter Word-Umbruch bleiben technische Grenzen.

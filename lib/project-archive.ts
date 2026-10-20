@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { stringifyEditorProject, editorProjectReviver } from './editor-project-codec';
 import {
   cleanProjectState,
   validateProject,
@@ -37,10 +38,70 @@ const page = z
     selected: z.boolean(),
   })
   .strict();
+const editorStyleSchema = z
+  .object({
+    fontScale: z.number().finite().min(0.00001).max(10).optional(),
+    fontFamily: z.enum(['sans', 'serif', 'mono']).optional(),
+    fontChoice: z
+      .enum([
+        'auto',
+        'custom',
+        'liberation-sans',
+        'liberation-serif',
+        'liberation-mono',
+        'carlito',
+        'caladea',
+        'dejavu-sans',
+        'dejavu-serif',
+        'dejavu-mono',
+        'noto-sans',
+        'noto-serif',
+        'rubik',
+        'liberation-sans-narrow',
+        'dejavu-sans-condensed',
+        'dejavu-serif-condensed',
+      ])
+      .optional(),
+    originalFontId: short.optional(),
+    originalFontName: short.optional(),
+    originalFontPage: z.number().int().min(0).max(199).optional(),
+    bold: z.boolean().optional(),
+    italic: z.boolean().optional(),
+    color: z
+      .string()
+      .regex(/^#[a-f\d]{6}$/i)
+      .optional(),
+  })
+  .strict();
 const mark = rect.extend({
   id: identifier,
   kind: z.enum(['redact', 'highlight', 'text', 'signature', 'erase', 'image']),
   text: z.string().max(100000).optional(),
+  originalText: z.string().max(100000).optional(),
+  runs: z
+    .array(
+      z
+        .object({
+          start: z.number().int().min(0).max(100000),
+          end: z.number().int().min(1).max(100000),
+          style: editorStyleSchema,
+        })
+        .strict(),
+    )
+    .max(4000)
+    .optional(),
+  customFont: z
+    .object({
+      name: z.string().min(1).max(120),
+      data: z
+        .string()
+        .max(2800000)
+        .regex(/^[A-Za-z0-9+/]+={0,2}$/),
+      bold: z.boolean(),
+      italic: z.boolean(),
+    })
+    .strict()
+    .optional(),
   fontScale: z.number().finite().min(0).max(10).optional(),
   textRotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).optional(),
   image: z
@@ -55,6 +116,7 @@ const mark = rect.extend({
   fontChoice: z
     .enum([
       'auto',
+      'custom',
       'liberation-sans',
       'liberation-serif',
       'liberation-mono',
@@ -93,6 +155,14 @@ const mark = rect.extend({
     .optional(),
   opacity: z.number().finite().min(0).max(1).optional(),
 });
+const validMark = mark.superRefine((value, ctx) => {
+  let end = 0;
+  for (const run of value.runs || []) {
+    if (run.start < end || run.end <= run.start || run.end > (value.text || '').length)
+      ctx.addIssue({ code: 'custom', message: 'Invalid rich text range' });
+    end = run.end;
+  }
+});
 const snapshot = z
   .object({
     pages: z.array(page).max(200),
@@ -114,7 +184,7 @@ const snapshot = z
       .optional(),
     edits: z
       .object({
-        marks: z.record(identifier, z.array(mark).max(10000)),
+        marks: z.record(identifier, z.array(validMark).max(10000)),
         crops: z.record(identifier, rect),
       })
       .strict(),
@@ -363,7 +433,7 @@ export async function encodeProjectFile(
     throw new Error(
       'Der Arbeitsstand enthält ungültige Einstellungen. Bitte Eingaben prüfen oder das PDF-Ergebnis übernehmen.',
     );
-  const json = new TextEncoder().encode(JSON.stringify(manifest.data));
+  const json = new TextEncoder().encode(stringifyEditorProject(manifest.data));
   const parts = sources.flatMap((s) => [
     s.bytes,
     ...(s.invoiceOriginal ? [s.invoiceOriginal.bytes] : []),
@@ -415,11 +485,7 @@ export async function decodeProjectFile(file: Blob, signal?: AbortSignal) {
       new TextDecoder('utf-8', { fatal: true }).decode(
         bytes.subarray(headerSize, headerSize + length),
       ),
-      (key, val) => {
-        if (['__proto__', 'constructor', 'prototype'].includes(key))
-          throw new Error('Ungültiger Schlüssel');
-        return val;
-      },
+      editorProjectReviver(),
     );
   } catch {
     throw new Error('Die Projektbeschreibung ist beschädigt.');

@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 20 October 2026, version 0.15.5.
+As of 20 October 2026, version 0.16.0.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
@@ -80,3 +80,13 @@ Public HTTP/HTTPS websites can be loaded directly by link in “HTML & websites 
 The [detailed audit](AUSBAUSTAND.md#nachprüfung-des-pdf-editors-20-oktober-2026) distinguishes verified behaviour from untested cases. All 45 existing test groups passed locally. Chromium 140, Firefox 141 and Playwright-WebKit 26 passed desktop, 390-pixel, searchable-scan and English flows, including undo/redo, download and reopening. Native replacements were independently read with MuPDF; unchanged fixture pages were pixel-identical. A separate 14-page two-column PDF.js paper was edited, retaining all 13 other pages. True local OCR was exercised on generated scan/mixed fixtures; font, geometry, error and deduplication checks are retained in the test suite.
 
 This is not a general customer-document corpus or a physical device test. Full editor workflows on native Safari/iPhone/Android, handwriting, arbitrary camera scans and arbitrary nested text groups remain unverified. There is no Word-style document-wide reflow. Scan background reconstruction and OCR are not universally reliable; explicit page rasterisation can discard vectors, links and interactive fields. No document uploads or third-party runtime requests were introduced.
+
+## PDF editor extension 0.16.0
+
+Selected words can use different formatting within one text box. Selection survives formatting; insertion and replacement retain the affected style. Without a selection, formatting applies to the entire text box. Custom static TrueType fonts are checked locally and retained in project files without duplicating their bytes in each undo step. A font file contains one face; another bold/italic face requires a matching file or a bundled family.
+
+Layout proposals leave other text boxes in place. PDF tables and columns often lack semantic structure, so paragraph grouping remains conservative. OCR corrections can be checked against the original crop and the selected area can be recognised again. Suggestions only replace text after acceptance.
+
+Export reopens the generated PDF and checks character counts and edited-text positions, normalising whitespace and Unicode compatibility forms. Visual comparison checks outside the edited rectangles at 900-pixel preview resolution with a raster tolerance. It may miss small differences and does not verify typography inside edited areas. Cropped or additionally raster-edited pages are labelled as partially checked. The original and export remain available for manual comparison.
+
+Verification: 46 local test suites, production build, typecheck and lint, including word formatting, Unicode, project/font round trips and missing/duplicated export text. Browser results are retained as artifacts in the editor CI. No claim for arbitrary customer PDFs, handwriting or physical mobile devices. Complex shaping, custom variable/CFF fonts and document-wide Word reflow remain technical limits.

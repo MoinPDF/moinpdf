@@ -91,19 +91,55 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         page.locator('.chooser-tool').filter(has=page.get_by_text(title,exact=True)).click()
         target=page.get_by_role('button',name=re.compile(('Edit text: ' if english else 'Text bearbeiten: ')+('Rechnung 2026' if scan_case else 'ORIGINAL 4815')))
         print(name+': waiting for text targets',flush=True)
-        expect(target).to_be_visible(timeout=120000);target.click()
+        expect(target).to_be_visible(timeout=120000)
+        box=target.bounding_box()
+        target.click(position={'x':box['width']*.55,'y':box['height']*.55})
         print(name+': text selected',flush=True)
         field=page.get_by_label('Edit text directly in the PDF' if english else 'Text direkt in der PDF bearbeiten',exact=True)
         expect(field).to_be_focused()
+        caret=field.evaluate('(el) => {const s=getSelection(),r=document.createRange();r.selectNodeContents(el);r.setEnd(s.focusNode,s.focusOffset);return r.toString().length}')
+        assert 0<caret<len('Rechnung 2026' if scan_case else 'ORIGINAL 4815'),('First click caret',caret)
+        if scan_case:
+            page.get_by_text('Scantext prüfen und korrigieren',exact=True).click()
+            expect(page.get_by_label('OCR-Korrektur',exact=True)).to_have_value('Rechnung 2026')
+            expect(page.locator('.editor-ocr-review img')).to_be_visible()
+            page.get_by_role('button',name='Diesen Bereich erneut erkennen',exact=True).click()
+            suggestion=page.get_by_label('Erkennungsvorschlag',exact=True)
+            expect(suggestion).to_be_visible(timeout=120000)
+            assert 'Rechnung' in suggestion.input_value(),suggestion.input_value()
+            suggestion.fill('BELEG')
+            page.get_by_role('button',name='Korrektur übernehmen',exact=True).click()
+            expect(field).to_have_text('BELEG')
+            field.press('Control+z');expect(field).to_have_text('Rechnung 2026')
+            page.get_by_text('Scantext prüfen und korrigieren',exact=True).click()
         original='Rechnung 2026' if scan_case else 'ORIGINAL 4815'
         replacement='BELEG' if scan_case else 'NEU ÄÖÜ €'
         field.fill(replacement)
-        expect(field).to_have_value(replacement)
-        field.press('Control+z');expect(field).to_have_value(original)
-        field.press('Control+Shift+z');expect(field).to_have_value(replacement)
-        field.press('Control+z');expect(field).to_have_value(original)
-        field.press('Control+y');expect(field).to_have_value(replacement)
+        expect(field).to_have_text(replacement)
+        field.press('Control+z');expect(field).to_have_text(original)
+        field.press('Control+Shift+z');expect(field).to_have_text(replacement)
+        field.press('Control+z');expect(field).to_have_text(original)
+        field.press('Control+y');expect(field).to_have_text(replacement)
         print(name+': undo/redo passed',flush=True)
+        if not scan_case:
+            # A real native selection spans only the first word, including on the small viewport.
+            field.press('Home')
+            for _ in range(3):field.press('Shift+ArrowRight')
+            assert field.evaluate('getSelection().toString()')=='NEU'
+            field.press('Control+b');field.press('Control+i')
+            toolbar=page.get_by_role('toolbar',name='Format text directly' if english else 'Text direkt formatieren')
+            toolbar.get_by_label('Text colour' if english else 'Textfarbe',exact=True).fill('#006644')
+            expect(field.locator('span').filter(has_text=re.compile('^NEU$'))).to_have_css('font-weight','700')
+            expect(field.locator('span').filter(has_text=re.compile('^NEU$'))).to_have_css('font-style','italic')
+            # An explicit layout proposal changes nothing before acceptance.
+            page.get_by_text('Adjust layout' if english else 'Layout anpassen',exact=True).click()
+            size=toolbar.get_by_label('Font size in points' if english else 'Textgröße in Punkt',exact=True)
+            old_size=size.input_value()
+            page.get_by_role('button',name='Reduce font size slightly' if english else 'Schrift etwas verkleinern',exact=True).click()
+            expect(page.get_by_label('Adjustment preview' if english else 'Anpassungsvorschau',exact=True)).to_be_visible()
+            assert size.input_value()==old_size
+            page.get_by_role('button',name='Discard' if english else 'Verwerfen',exact=True).click()
+            page.get_by_text('Adjust layout' if english else 'Layout anpassen',exact=True).click()
         if not scan_case:
             # Wait for physical-removal preview rather than white rectangle overlay.
             expect(page.locator('.editor-sheet .editor-erasure')).to_have_count(0,timeout=120000)
@@ -118,6 +154,9 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         with page.expect_download() as pending:link.click()
         exported=out/(name+'.pdf');pending.value.save_as(exported)
         print(name+': downloaded',flush=True)
+        comparison=page.get_by_role('region',name='Export verification and comparison' if english else 'Exportprüfung und Vergleich')
+        expect(comparison).to_be_visible()
+        expect(comparison.get_by_role('button',name='Side by side' if english else 'Nebeneinander',exact=True)).to_have_attribute('aria-pressed','true')
         with pymupdf.open(exported) as edited,pymupdf.open(path) as before:
             text=edited[0].get_text()
             assert replacement in text,(name,text)
@@ -126,6 +165,12 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
                 assert text.count('BELEG')==1 and text.count('Betrag')==1,text
             else:
                 assert 'KEEP FOOTER' in text,text
+                spans=[s for b in edited[0].get_text('dict')['blocks'] if 'lines' in b for l in b['lines'] for s in l['spans']]
+                first=next(s for s in spans if s['text'].strip()=='NEU')
+                assert first['flags'] & 16 and first['flags'] & 2,first
+                assert first['color']==0x006644,first
+                rest=next(s for s in spans if 'ÄÖÜ' in s['text'])
+                assert not rest['flags'] & 16 and not rest['flags'] & 2,rest
                 assert len(edited[0].get_links())==1,'Link lost'
                 assert len(edited)==3
                 check_pixels(before,edited,1)
@@ -137,6 +182,9 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         rp=reopen.new_page();rp.route('**/*',route);rp.goto(origin)
         rp.locator('input[type=file]').first.set_input_files(str(exported.resolve()))
         rp.locator('.chooser-tool').filter(has=rp.get_by_text('PDF bearbeiten',exact=True)).click()
+        if not scan_case:
+            # Font changes split PDF text objects; paragraph mode must recover one selectable line.
+            rp.get_by_role('button',name='Absätze',exact=True).click()
         expect(rp.get_by_role('button',name='Text bearbeiten: '+replacement,exact=True)).to_be_visible(timeout=120000)
         reopen.close()
         if english:

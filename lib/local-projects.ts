@@ -1,3 +1,4 @@
+import { stringifyEditorProject } from './editor-project-codec';
 import type { Source, PageItem } from './pdf-engine';
 import type { Edits, StudioOptions } from './studio-engine';
 import type { DocumentSessions } from './document-tools';
@@ -107,7 +108,7 @@ export function validateProject(state: ProjectState, sources: ProjectSource[]) {
     )
   )
     throw new Error('Der Projektstand enthält ungültige Seitenverweise.');
-  if (JSON.stringify(state).length > 20 * 1024 * 1024)
+  if (stringifyEditorProject(state).length > 20 * 1024 * 1024)
     throw new Error(
       'Dieser Arbeitsstand enthält zu viele Bearbeitungsdaten. Bitte das aktuelle PDF-Ergebnis übernehmen und dann speichern.',
     );

@@ -325,7 +325,81 @@ async function localFont(choice: string, bold: boolean, italic: boolean) {
   }
   return pending;
 }
-export type EditorFontResolution = { font: EditorFont; substituted: boolean; reason?: string };
+export type EditorFontResolution = {
+  font: EditorFont;
+  substituted: boolean;
+  reason?: string;
+  widthDeviation?: number;
+};
+const customFonts = new Map<string, Promise<EditorFont>>();
+export async function importEditorFont(file: File): Promise<NonNullable<Mark['customFont']>> {
+  if (file.size > 2 * 1024 * 1024)
+    throw new Error('Eigene Schriften dürfen höchstens 2 MB groß sein.');
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (bytes.length < 12 || new DataView(bytes.buffer).getUint32(0) !== 0x00010000)
+    throw new Error(
+      'Bitte eine statische TrueType-Schrift (TTF oder OpenType mit TrueType-Konturen) auswählen. CFF- und variable Schriften werden hier nicht übernommen.',
+    );
+  const view = new DataView(bytes.buffer),
+    tables = view.getUint16(4);
+  if (tables > 128 || 12 + 16 * tables > bytes.length)
+    throw new Error('Die Schriftdatei ist beschädigt.');
+  let bold = false,
+    italic = false;
+  for (let i = 0; i < tables; i++) {
+    const pos = 12 + i * 16,
+      tag = new TextDecoder().decode(bytes.slice(pos, pos + 4)),
+      offset = view.getUint32(pos + 8),
+      length = view.getUint32(pos + 12);
+    if (offset + length > bytes.length) throw new Error('Die Schriftdatei ist beschädigt.');
+    if (tag === 'fvar')
+      throw new Error(
+        'Variable Schriften werden hier noch nicht unterstützt. Bitte einen statischen Schriftschnitt verwenden.',
+      );
+    if (tag === 'OS/2' && length >= 64) {
+      const rights = view.getUint16(offset + 8),
+        flags = view.getUint16(offset + 62);
+      if (rights & (2 | 0x100 | 0x200))
+        throw new Error(
+          'Diese Schrift erlaubt keine für den Editor geeignete PDF-Einbettung. Bitte eine andere Schrift auswählen.',
+        );
+      bold = !!(flags & 32);
+      italic = !!(flags & 1);
+    }
+  }
+  await fontFace(bytes);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 8192)
+    binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return {
+    name: file.name.replace(/\.(ttf|otf)$/i, '').slice(0, 120),
+    data: btoa(binary),
+    bold,
+    italic,
+  };
+}
+async function customEditorFont(data: NonNullable<Mark['customFont']>, family: FontFamily) {
+  const bytes = Uint8Array.from(atob(data.data), (c) => c.charCodeAt(0));
+  const id = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), (v) =>
+    v.toString(16).padStart(2, '0'),
+  ).join('');
+  let pending = customFonts.get(id);
+  if (!pending) {
+    pending = makeFont(bytes, {
+      id,
+      name: data.name,
+      family,
+      bold: data.bold,
+      italic: data.italic,
+      original: false,
+      cssFamily: 'MoinCustom_' + id,
+    });
+    customFonts.set(id, pending);
+    if (customFonts.size > 16) customFonts.delete(customFonts.keys().next().value!);
+    pending.catch(() => customFonts.delete(id));
+  }
+  return pending;
+}
 export async function resolveEditorFont(
   mark: Pick<
     Mark,
@@ -337,6 +411,13 @@ export async function resolveEditorFont(
     | 'italic'
     | 'fontFamily'
     | 'text'
+    | 'customFont'
+    | 'originalText'
+    | 'sourceRect'
+    | 'fontScale'
+    | 'insetScale'
+    | 'textScaleX'
+    | 'tracking'
   >,
   source?: Source,
 ): Promise<EditorFontResolution> {
@@ -344,6 +425,20 @@ export async function resolveEditorFont(
     bold = !!mark.bold,
     italic = !!mark.italic;
   let reason: string | undefined;
+  if (mark.fontChoice === 'custom') {
+    if (!mark.customFont)
+      throw new Error('Die eigene Schrift fehlt. Bitte die Schriftdatei erneut auswählen.');
+    const font = await customEditorFont(mark.customFont, mark.fontFamily || 'sans');
+    if (font.bold !== bold || font.italic !== italic)
+      throw new Error(
+        'Der geladene Schriftschnitt passt nicht zu Fett oder Kursiv. Bitte den passenden Schriftschnitt laden oder eine lokale Schrift auswählen.',
+      );
+    if (!font.covers(text))
+      throw new Error(
+        'Die gewählte Schrift enthält nicht alle Zeichen. Bitte eine andere Schrift wählen.',
+      );
+    return { font, substituted: false };
+  }
   if ((!mark.fontChoice || mark.fontChoice === 'auto') && source && mark.originalFontId) {
     if (!originalEditorFont(source, mark.originalFontId) && mark.originalFontPage !== undefined)
       await editorFontPage(source, mark.originalFontPage).catch(() => {});
@@ -361,6 +456,40 @@ export async function resolveEditorFont(
       ? mark.fontChoice
       : matchingEditorFont(mark.originalFontName, mark.fontFamily);
   let font = await localFont(choice, bold, italic);
+  let widthDeviation: number | undefined;
+  if (
+    (!mark.fontChoice || mark.fontChoice === 'auto') &&
+    mark.originalText &&
+    mark.sourceRect &&
+    mark.fontScale &&
+    !mark.originalText.includes('\n')
+  ) {
+    const sample = mark.originalText,
+      reference =
+        mark.sourceRect.w / mark.fontScale / (mark.textScaleX || 1) -
+        2 * (mark.insetScale || 0) -
+        Math.max(0, [...sample].length - 1) * (mark.tracking || 0);
+    if (reference > 0) {
+      // Compare metrics at one point, not a font-name guess. Load only a bounded
+      // family shortlist and require coverage of both existing and edited text.
+      const shortlist = editorFontCatalog
+        .filter((c) => c.family === (mark.fontFamily || 'sans'))
+        .slice(0, 5);
+      const candidates = await Promise.all(
+        shortlist.map((c) => localFont(c.id, bold, italic).catch(() => undefined)),
+      );
+      const score = (f: EditorFont) =>
+        Math.abs(Math.log(Math.max(0.001, f.measure(sample, 1)) / reference));
+      for (const candidate of candidates)
+        if (
+          candidate?.covers(text) &&
+          candidate.covers(sample) &&
+          score(candidate) + 0.02 < score(font)
+        )
+          font = candidate;
+      widthDeviation = (font.measure(sample, 1) / reference - 1) * 100;
+    }
+  }
   if (!font.covers(text)) {
     if (mark.fontChoice && mark.fontChoice !== 'auto')
       throw new Error(
@@ -379,7 +508,7 @@ export async function resolveEditorFont(
     throw new Error(
       'Der Text enthält nicht unterstützte Zeichen in der Ersatzschrift. Bitte im Werkzeug „PDF-Objekte bearbeiten“ eine passende Schrift verwenden.',
     );
-  return { font, substituted: !!reason, ...(reason ? { reason } : {}) };
+  return { font, substituted: !!reason, ...(reason ? { reason } : {}), widthDeviation };
 }
 export async function loadEditorCssFont(font: EditorFont, source?: Source) {
   if (typeof FontFace === 'undefined' || typeof document === 'undefined' || !document.fonts) return;

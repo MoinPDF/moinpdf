@@ -1,6 +1,8 @@
 'use client';
 import { reportText } from '@/lib/pdf-report';
 import { ui, uiLocale } from '@/lib/ui-language';
+import { EditorResultReview } from '@/components/studio/editor-result-review';
+import { applyEditorPatch, type EditorSelection } from '@/lib/editor-rich-text';
 import { ResultActions, ResultSummary, useResultName } from '@/components/studio/result-actions';
 import { ToolBrowserMemory, useToolNavigation } from '@/components/studio/tool-browser-memory';
 import { DuplicatePrompt, type DuplicateRequest } from '@/components/studio/duplicate-prompt';
@@ -609,7 +611,7 @@ function Studio() {
       if (writerOpen) return;
       if (e.isComposing) return;
       if (
-        !(e.target instanceof HTMLElement && e.target.dataset.editorHistory === 'true') &&
+        !(e.target instanceof HTMLElement && !!e.target.closest('[data-editor-history="true"]')) &&
         (e.target instanceof HTMLInputElement ||
           e.target instanceof HTMLTextAreaElement ||
           (e.target instanceof HTMLElement && e.target.isContentEditable))
@@ -991,11 +993,13 @@ function Studio() {
       },
     });
   }
+  const textSelection = useRef<EditorSelection | null>(null);
   const typingHistory = useRef<{ id: string; edits: Edits; time: number } | null>(null);
   function patchMark(id: string, patch: Partial<Mark>, mode?: 'typing') {
     if (!activePage || locked) return;
     const old = pageMarks.find((m) => m.id === id);
     if (!old) return;
+    patch = applyEditorPatch(old, patch, textSelection.current);
     const next = { ...old, ...patch };
     if (JSON.stringify(old) === JSON.stringify(next)) return;
     const nextEdits = {
@@ -2418,6 +2422,9 @@ function Studio() {
                                 onMark={mark}
                                 onPatch={patchMark}
                                 onSelect={setSelectedMarkId}
+                                onTextSelection={(selection) => {
+                                  textSelection.current = selection;
+                                }}
                                 onDimensions={setEditorDims}
                               />
                             ) : (
@@ -2632,6 +2639,14 @@ function Studio() {
                               )}
                             </p>
                           </div>
+                        )}
+                        {result.editorVerification && resultSource && (
+                          <EditorResultReview
+                            key={result.filename}
+                            verification={result.editorVerification}
+                            sources={sources}
+                            output={resultSource}
+                          />
                         )}
                         {result.kind === 'pdf' && (
                           <div className="continue-result">
@@ -3284,7 +3299,7 @@ function Studio() {
               </p>
               <p>
                 {ui(
-                  '„Text bearbeiten“ erkennt horizontal ausgerichtete Textstellen. „Bereich ersetzen“ funktioniert auch für Scans; den Ersatztext gibst du selbst ein. Eigene Texte und Bilder lassen sich auswählen, ziehen, skalieren und per Koordinaten setzen. Ersatzschriften können vom Original abweichen. Entfernen und Ersetzen bauen betroffene Seiten neu auf: Die alte Textebene, Links und Formularfelder entfallen. Neuer Text bleibt kopierbar, solange die Seite nicht zusätzlich geschwärzt, zugeschnitten oder als Bild exportiert wird.',
+                  'Klicke Text direkt auf der PDF an. Markierte Wörter lassen sich einzeln formatieren; ohne Markierung gilt die Änderung für das ganze Textfeld. Absätze und Tabellen bitte prüfen. Layoutanpassungen haben eine Vorschau. Originalschriften bleiben erhalten, soweit wiederverwendbar; Ersatzschriften und eigene statische TrueType-Schriften stehen zur Wahl. Scans werden lokal erkannt und lassen sich neben dem Original korrigieren. Der Export ersetzt vorhandenen Text tatsächlich und prüft die gespeicherte PDF erneut. Bei neu aufgebauten Scan- oder Bildseiten können Links und interaktive Felder entfallen. Der Umbruch bleibt auf das einzelne Textfeld begrenzt.',
                 )}
               </p>
               <p>

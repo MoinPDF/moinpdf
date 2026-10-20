@@ -23,6 +23,7 @@ import { wrapEditorText, hexColor } from './editor-model';
 import { resolveEditorFont, type EditorFontResolution } from './editor-fonts';
 import type { Source } from './pdf-engine';
 import { localFontBytes } from './local-font-bytes';
+import { prepareEditorRuns, richEditorLayout } from './editor-rich-layout';
 
 const fonts = new WeakMap<PDFDocument, Map<string, Promise<PDFFont>>>();
 const characterSets = new WeakMap<PDFFont, Set<number>>();
@@ -61,6 +62,13 @@ export async function editorFont(
     | 'originalFontId'
     | 'originalFontName'
     | 'originalFontPage'
+    | 'customFont'
+    | 'originalText'
+    | 'sourceRect'
+    | 'fontScale'
+    | 'insetScale'
+    | 'tracking'
+    | 'textScaleX'
   >,
   source?: Source,
   report?: (resolution: EditorFontResolution) => void,
@@ -207,6 +215,7 @@ export async function drawEditorText(
   source?: Source,
   report?: (resolution: EditorFontResolution) => void,
 ) {
+  if (mark.runs?.length) return drawRichEditorText(doc, page, mark, width, height, source, report);
   if (Math.abs((mark.textRotation || 0) - Math.round((mark.textRotation || 0) / 90) * 90) > 0.5)
     throw new Error(
       'Schräger, gespiegelter oder vertikaler Text kann hier nicht zuverlässig bearbeitet werden. Bitte „PDF-Objekte bearbeiten“ verwenden.',
@@ -286,6 +295,93 @@ export async function drawEditorText(
         endText(),
       );
     });
+  } finally {
+    page.pushOperators(popGraphicsState());
+  }
+}
+async function drawRichEditorText(
+  doc: PDFDocument,
+  page: PDFPage,
+  mark: Mark,
+  width: number,
+  height: number,
+  source?: Source,
+  report?: (resolution: EditorFontResolution) => void,
+) {
+  const geometry = editorTextGeometry(mark, width, height, mark.textRotation),
+    scaleX = mark.textScaleX || 1;
+  const inset = (mark.insetScale || 0) * (mark.fontScale || 0.028) * width,
+    available = geometry.width / scaleX - 2 * inset;
+  const runs = await prepareEditorRuns(mark, source),
+    layout = richEditorLayout(mark, width, available, runs);
+  if (
+    layout.requiredHeight > geometry.height + 0.5 ||
+    layout.lines.some((line) => line.width > available + 0.5)
+  )
+    throw new Error(
+      'Ein Textfeld ist zu klein. Vergrößere seine Breite oder Höhe oder reduziere die Schriftgröße.',
+    );
+  const embedded = new Map<(typeof runs)[number], PDFFont>();
+  for (const run of runs) {
+    report?.(run.resolution);
+    embedded.set(
+      run,
+      await editorFont(
+        doc,
+        (mark.text || '').slice(run.start, run.end),
+        { ...mark, ...run.style },
+        source,
+      ),
+    );
+  }
+  const radians = (geometry.rotation * Math.PI) / 180;
+  page.pushOperators(pushGraphicsState(), setTextRenderingMode(TextRenderingMode.Fill));
+  try {
+    for (const line of layout.lines)
+      for (const piece of line.pieces) {
+        const font = embedded.get(piece.run)!,
+          key = page.node.newFontDictionary(font.name, font.ref);
+        const align =
+          mark.align === 'center'
+            ? (available - line.width) / 2
+            : mark.align === 'right'
+              ? available - line.width
+              : 0;
+        const x = (inset + align + piece.x) * scaleX,
+          y = line.baseline;
+        const [px, py] = editorPointToPdf(
+          page,
+          geometry.x + Math.cos(radians) * x - Math.sin(radians) * y,
+          geometry.y + Math.sin(radians) * x + Math.cos(radians) * y,
+        );
+        const [ex, ey] = editorPointToPdf(
+          page,
+          geometry.x + Math.cos(radians) * (x + 1) - Math.sin(radians) * y,
+          geometry.y + Math.sin(radians) * (x + 1) + Math.cos(radians) * y,
+        );
+        const angle = Math.atan2(ey - py, ex - px),
+          color = hexColor(piece.run.style.color, mark.color || '#222222');
+        page.pushOperators(
+          setFillingRgbColor(
+            parseInt(color.slice(1, 3), 16) / 255,
+            parseInt(color.slice(3, 5), 16) / 255,
+            parseInt(color.slice(5, 7), 16) / 255,
+          ),
+          beginText(),
+          setFontAndSize(key, piece.size),
+          setCharacterSpacing(layout.tracking),
+          setTextMatrix(
+            Math.cos(angle) * scaleX,
+            Math.sin(angle) * scaleX,
+            -Math.sin(angle),
+            Math.cos(angle),
+            px,
+            py,
+          ),
+          showText(font.encodeText(piece.text)),
+          endText(),
+        );
+      }
   } finally {
     page.pushOperators(popGraphicsState());
   }

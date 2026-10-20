@@ -64,7 +64,7 @@ export const editorFontCatalog = [
     equivalent: '',
   },
 ] as const;
-export type EditorFontChoice = 'auto' | (typeof editorFontCatalog)[number]['id'];
+export type EditorFontChoice = 'custom' | 'auto' | (typeof editorFontCatalog)[number]['id'];
 export function fontFile(id: EditorFontChoice, bold = false, italic = false) {
   const entry = editorFontCatalog.find((font) => font.id === id) || editorFontCatalog[0];
   const dejavu = entry.file.startsWith('DejaVu');

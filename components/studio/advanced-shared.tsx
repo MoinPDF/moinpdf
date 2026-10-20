@@ -164,12 +164,14 @@ export function RectFields({ rect, onChange }: { rect: Rect; onChange: (r: Rect)
 export function PageStage({
   source,
   page = 0,
+  rotation = 0,
   rects = [],
   onRect,
   children,
 }: {
   source: Source;
   page?: number;
+  rotation?: number;
   rects?: (Rect & { label?: string })[];
   onRect?: (r: Rect) => void;
   children?: ReactNode;
@@ -181,14 +183,14 @@ export function PageStage({
     source.pdf
       .getPage(page + 1)
       .then((p) => {
-        const v = p.getViewport({ scale: 1 });
+        const v = p.getViewport({ scale: 1, rotation: (p.rotate + rotation) % 360 });
         if (active) setAspect(`${v.width} / ${v.height}`);
       })
       .catch(() => {});
     return () => {
       active = false;
     };
-  }, [source, page]);
+  }, [source, page, rotation]);
   const ref = useRef<HTMLDivElement>(null),
     start = useRef<{ x: number; y: number } | null>(null),
     [drawing, setDrawing] = useState<Rect | null>(null);
@@ -242,7 +244,7 @@ export function PageStage({
             id: `adv-${source.id}-${page}`,
             sourceId: source.id,
             index: page,
-            rotation: 0,
+            rotation,
             selected: true,
           }}
         />
