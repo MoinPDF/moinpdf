@@ -67,6 +67,8 @@ try{
  assert.throws(()=>splitEditorBlock({...joined,text:'A😀B'},2,20,20,700,'bad'),/Textcursor/);
  assert.throws(()=>splitEditorBlock({...joined,y:.99},5,20,20,700,'bad'),/genug Platz/);
  assert.throws(()=>joinEditorBlocks([{...blocks[0],textRotation:90},blocks[1]],500,700,'bad'),/waagerechte/);
+
+ const roundingMark={...mark,text:'Absatz zwei',fontScale:14/500,w:(74.69+2.24)/500,insetScale:.08,runs:[{start:0,end:11,style:{fontScale:14/500}}]};assert.equal((await prepareEditorLayout(roundingMark,500,700)).lineCount,1,'Seven thousandths of a point in reconstructed advances cannot insert a spurious line break');
  const tooTall={...mark,text:'Text with several words '.repeat(4),w:.3,h:.06,runs:undefined};const prepared=await prepareEditorRuns(tooTall);assert((await prepareEditorLayout(tooTall,500,700)).overflow);
  const fit=fitEditorLayout(tooTall,500,700,prepared);assert(fit);assert(!(await prepareEditorLayout({...tooTall,...fit},500,700)).overflow);assert(fit.fontScale*500>=6);
  assert(editorTextCollision({...mark,id:'new',sourceRect:undefined},[],[{...columnTargets[0],x:mark.x,y:mark.y}]),'Added text gets collision checks too');

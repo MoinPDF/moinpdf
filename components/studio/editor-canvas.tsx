@@ -191,8 +191,13 @@ export function EditorCanvas({
   const [selectionRequest, setSelectionRequest] = useState<EditorSelection | null>(null);
   const [joining, setJoining] = useState(false);
   const [joinedKeys, setJoinedKeys] = useState<string[]>([]);
-  const toggleJoin = (key: string) =>
+  const toggleJoin = (key: string) => {
+    if (!blockChoices.some((choice) => choice.key === key)) {
+      setDetectionError('Bitte 2 bis 50 waagerechte Textfelder auf derselben Seite auswählen.');
+      return;
+    }
     setJoinedKeys((old) => (old.includes(key) ? old.filter((k) => k !== key) : [...old, key]));
+  };
   useEffect(() => {
     setJoining(false);
     setJoinedKeys([]);

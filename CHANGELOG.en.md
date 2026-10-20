@@ -6,6 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## 0.18.0 – 20 October 2026
 
+- Untouched pages retain their original text layer even after local search preparation. Tight text lines tolerate tiny rounding differences in reconstructed font widths, preventing spurious line breaks from thousandths of a point.
 - Paragraph grouping follows interleaved column extraction. Join text blocks on a page with a preview, or split at the cursor; original removal areas remain separate and inline formatting is retained.
 - On-page overflow and collision warnings include newly added text. An explicit fit option reduces relative font sizes proportionally, with a six-point lower limit.
 - Whole-document search with optional local OCR, page preview, selectable matches, literal queries and atomic undo. Batch replacements are checked for space and collisions; document changes invalidate stale results.

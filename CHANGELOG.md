@@ -11,6 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## 0.18.0 – 20. Oktober 2026
 
+- Unbearbeitete Seiten werden unverändert übernommen, auch wenn sie zuvor für die lokale Suche erkannt wurden. Eng bemessene Textzeilen tolerieren Rundungsdifferenzen rekonstruierter Schriftbreiten; dadurch entstehen keine zusätzlichen Umbrüche durch Tausendstel Punkt.
 - Absatzbildung folgt auch abwechselnd ausgelesenen Spalten. Textstellen lassen sich auf einer Seite mit Vorschau verbinden und am Textcursor trennen; ursprüngliche Entfernungsbereiche bleiben getrennt, Formatierungen erhalten.
 - Unmittelbare Überlauf- und Kollisionswarnungen auf der Seite, auch für neue Textfelder. Eine ausdrückliche Layoutoption passt die Schriftgröße unter Erhalt relativer Größen an; die automatische Verkleinerung unterschreitet sechs Punkt nicht.
 - Dokumentweite Suche mit optionaler lokaler OCR, Seitenvorschau, auswählbaren Treffern, wörtlichen Suchbegriffen und gemeinsamen Rückgängig-Schritten. Platz- und Kollisionsprüfung vor Sammelersetzungen; geänderte Dokumentstände verwerfen veraltete Suchergebnisse.

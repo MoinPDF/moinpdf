@@ -52,7 +52,8 @@ try {
  const scan=await source(await scanDoc.save(),'scan');const first=await analyze(scan);assert(first.ocr);assert(first.targets.some(t=>t.text.includes('Rechnung')));assert(first.targets.every(t=>t.x>=0&&t.y>=0&&t.x+t.w<=1&&t.y+t.h<=1));
  const forced=await analyze(native,pageOf(native),{forceOcr:true});assert.equal(forced.targets.find(t=>t.text==='Native text is ready').origin,'pdf','Forced OCR preserves visible native text');assert(!forced.replaceTextLayer,'Forced OCR must not rebuild ordinary digital text');
  const before=recognitions;await analyze(scan);assert.equal(recognitions,before,'Page revisit does not repeat OCR');
- const searchable=await exportPdf(scan,[pageOf(scan)]);assert.match(await textOf(searchable),/Rechnung/);assert.match(await textOf(searchable),/125,50/);
+ const untouchedScan=await exportPdf(scan,[pageOf(scan)]);assert.equal(await textOf(untouchedScan),'','Preparing an untouched scan does not add a search layer on export');
+ const searchableDoc=await PDFDocument.load(scan.bytes);await addEditorTextLayer(searchableDoc,searchableDoc.getPage(0),first.targets,400,560);const searchable=await source(await searchableDoc.save(),'searchable-fixture');assert.match(await textOf(searchable),/Rechnung/);assert.match(await textOf(searchable),/125,50/);
  const a=(await renderPage(scan,pageOf(scan),600)).canvas,b=(await renderPage(searchable,pageOf(searchable),600)).canvas;
  const pa=a.getContext('2d').getImageData(0,0,a.width,a.height).data,pb=b.getContext('2d').getImageData(0,0,b.width,b.height).data;
  assert.deepEqual(pa,pb,'Adding OCR text must not change a single visible pixel');a.width=a.height=b.width=b.height=0;
@@ -66,7 +67,7 @@ try {
  assert.equal(remainingEditorTargets([sample],[{x:.1,y:.1,w:.01,h:.1}]).length,0,'Even a partial deletion must not restore a complete hidden word');
  assert.equal(mergeEditorTargets([sample],[{...sample,id:'ocr'}]).length,1,'Overlapping OCR cannot duplicate native text');
  // Explicit re-recognition replaces an incorrect hidden OCR layer.
- const wrongDoc=await PDFDocument.load(scan.bytes);wrongDoc.getPage(0).drawText('WRONG HIDDEN LAYER',{x:35,y:480,size:14,opacity:0});const wrong=await source(await wrongDoc.save(),'wrong-ocr');await analyze(wrong,pageOf(wrong),{forceOcr:true});const corrected=await exportPdf(wrong,[pageOf(wrong)]);assert.doesNotMatch(await textOf(corrected),/WRONG HIDDEN/);assert.match(await textOf(corrected),/Rechnung/);
+ const wrongDoc=await PDFDocument.load(scan.bytes);wrongDoc.getPage(0).drawText('WRONG HIDDEN LAYER',{x:35,y:480,size:14,opacity:0});const wrong=await source(await wrongDoc.save(),'wrong-ocr');await analyze(wrong,pageOf(wrong),{forceOcr:true});const unchangedWrong=await exportPdf(wrong,[pageOf(wrong)]);assert.match(await textOf(unchangedWrong),/WRONG HIDDEN/,'Recognition alone does not rewrite untouched pages');const corrected=await exportPdf(wrong,[pageOf(wrong)],{[pageOf(wrong).id]:[mark]});assert.doesNotMatch(await textOf(corrected),/WRONG HIDDEN/);assert.match(await textOf(corrected),/Rechnung/);
  // An OCR runtime failure still allows a clearly labelled manual export.
  await writeFile('.cache/editor-auto/editor-recognizer.mjs',`export const openEditorRecognizer=()=>({recognize:async()=>{throw Error('model unavailable')},dispose:async()=>{}});`);
  const unavailable=await source(scan.bytes,'unavailable');const partial=await runStudioJob('edit-text',[unavailable],[pageOf(unavailable)],options,{marks:{[pageOf(unavailable).id]:[{...mark,sourceRect:undefined}]},crops:{}},()=>{},signal);assert.match(partial.note,/Texterkennung nicht abgeschlossen/);const manual=await source(await partial.blob.arrayBuffer(),'manual');assert.match(await textOf(manual),/Korrigierte Rechnung/);
@@ -76,12 +77,13 @@ try {
  const [ocrCopy]=await mixed.copyPages(await PDFDocument.load(searchable.bytes),[0]);mixed.addPage(ocrCopy);
  const mix=await source(await mixed.save(),'mixed'),mixPages=Array.from({length:4},(_,i)=>pageOf(mix,i));
  for(const page of mixPages)await analyze(mix,page);
- const mixedOut=await exportPdf(mix,mixPages);assert.equal(mixedOut.pdf.numPages,4);assert.match(await textOf(mixedOut),/Original vector text/);assert.match(await textOf(mixedOut,1),/Rechnung/);assert.equal(await textOf(mixedOut,2),'');assert.equal(((await textOf(mixedOut,3)).match(/Rechnung/g)||[]).length,1,'Existing OCR is not duplicated');
+ const mixedOut=await exportPdf(mix,mixPages);assert.equal(mixedOut.pdf.numPages,4);assert.match(await textOf(mixedOut),/Original vector text/);assert.equal(await textOf(mixedOut,1),'','Untouched image-only pages retain their empty text layer');assert.equal(await textOf(mixedOut,2),'');assert.equal(((await textOf(mixedOut,3)).match(/Rechnung/g)||[]).length,1,'Existing OCR is not duplicated');
+ const mixedEdited=await exportPdf(mix,mixPages,{[mixPages[0].id]:[{...mark,sourceRect:undefined}]});assert.equal(await textOf(mixedEdited,1),'','Editing another page cannot add OCR to an untouched scan');assert.equal(await textOf(mixedEdited,3),await textOf(mix,3),'Existing OCR on untouched pages is retained exactly');
  // Real OCR for a sideways scan; output coordinates must map back to the image.
  const sideways=await PDFDocument.load(scan.bytes);sideways.getPage(0).setRotation(degrees(90));sideways.getPage(0).setCropBox(10,10,380,540);
  const side=await source(await sideways.save(),'sideways'),sideText=await analyze(side);
  assert(sideText.targets.some(t=>t.text.includes('Rechnung')),'Sideways scan orientation recovery');
- const sideOut=await exportPdf(side,[pageOf(side)]);assert.match(await textOf(sideOut),/Rechnung/);
+ const {editorTargetMark}=await import('../.cache/editor-auto/editor-blocks.mjs');const sideTarget=sideText.targets.find(t=>t.text.includes('Rechnung'));const sideMark={...editorTargetMark(sideTarget,0,sideText.width,'side-edit'),fontScale:6/sideText.width};const sideOut=await exportPdf(side,[pageOf(side)],{[pageOf(side).id]:[sideMark]});assert.match(await textOf(sideOut),/Rechnung/);
  const reopened=await readTextTargets(sideOut,pageOf(sideOut));const originalWord=sideText.targets.find(t=>t.text.includes('Rechnung')),readWord=reopened.targets.find(t=>t.text.includes('Rechnung'));
  assert(readWord);assert(Math.abs(originalWord.x-readWord.x)<.04&&Math.abs(originalWord.y-readWord.y)<.04,JSON.stringify({originalWord,readWord,all:sideText.targets}));
  // Existing native text remains selectable in every quarter-turn orientation.

@@ -106,7 +106,8 @@ export async function verifyEditorExport(
       const analysis = cachedEditorPage(source, page, language);
       const incompatible = !!crop || marks.some((m) => !['text', 'image'].includes(m.kind));
       if (!incompatible) {
-        const original = analysis || (await readTextTargets(source, page)),
+        const original =
+            (marks.length ? analysis : undefined) || (await readTextTargets(source, page)),
           actual = await readTextTargets(output, outPage);
         const expected = [
           ...remainingEditorTargets(original.targets, marks.flatMap(editorRemovalRects)).map(
@@ -134,7 +135,8 @@ export async function verifyEditorExport(
         const changedText = marks.filter((m) => m.kind === 'text' && normalized(m.text || ''));
         if (changedText.length) {
           let background: Awaited<ReturnType<typeof renderPage>> | undefined,
-            actualImage: Awaited<ReturnType<typeof renderPage>> | undefined;
+            actualImage: Awaited<ReturnType<typeof renderPage>> | undefined,
+            reference: HTMLCanvasElement | undefined;
           try {
             // Remove only actual replacement text, leaving scan fill, vectors,
             // and images as the reference background for direct glyph painting.
@@ -154,8 +156,16 @@ export async function verifyEditorExport(
               1600,
             );
             actualImage = await renderPage(output, outPage, 1600, signal);
-            const context = background.canvas.getContext('2d')!,
-              base = context.getImageData(0, 0, background.canvas.width, background.canvas.height);
+            const base = background.canvas
+              .getContext('2d')!
+              .getImageData(0, 0, background.canvas.width, background.canvas.height);
+            // Do not inherit a PDF renderer's transforms, clipping or colour
+            // state. Browser rendering can leave state unlike the Node adapter.
+            reference = document.createElement('canvas');
+            reference.width = background.canvas.width;
+            reference.height = background.canvas.height;
+            const context = reference.getContext('2d')!;
+            context.putImageData(base, 0, 0);
             for (const mark of changedText)
               await paintEditorReference(
                 context,
@@ -204,6 +214,7 @@ export async function verifyEditorExport(
           } finally {
             if (background) background.canvas.width = background.canvas.height = 0;
             if (actualImage) actualImage.canvas.width = actualImage.canvas.height = 0;
+            if (reference) reference.width = reference.height = 0;
           }
         }
       } else

@@ -2,6 +2,7 @@
 Physical devices and native Safari are not represented by this test.
 """
 import atexit
+import base64
 import json
 import os
 import re
@@ -113,6 +114,7 @@ def controls(page, name):
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
     page.screenshot(path=str(out / (name + '-controls.png')), full_page=True)
     exported = download(page, name)
+    assert 'Schriftbild weicht' not in (out / (name + '-verification.txt')).read_text(), 'False appearance mismatch in controls export'
     with pymupdf.open(exported) as doc:
         assert 'ORIGINAL' in doc[0].get_text() and 'ORIGINAL' not in doc[1].get_text()
         assert 'NEU' in doc[1].get_text()
@@ -139,6 +141,8 @@ def public_edit(page, name, path, anchor, replacement, scan=False):
         size = page.get_by_role('toolbar', name='Text direkt formatieren').get_by_label('Textgröße in Punkt', exact=True)
         size.fill('6'); size.press('Tab')
     exported = download(page, name)
+    if not scan:
+        assert 'Schriftbild weicht' not in (out / (name + '-verification.txt')).read_text(), 'False appearance mismatch in native export'
     with pymupdf.open(path) as before, pymupdf.open(exported) as after:
         assert len(before) == len(after)
         text = after[0].get_text()
@@ -152,7 +156,9 @@ def public_edit(page, name, path, anchor, replacement, scan=False):
         after[0].get_pixmap(matrix=pymupdf.Matrix(1.5, 1.5)).save(out / (name + '-export.png'))
         if scan:
             # All visible edited characters must have just one searchable span.
-            assert len(after[0].search_for(replacement)) == 1
+            # MuPDF search is case-insensitive and also finds 'editing' in the
+            # brochure. Count exact Unicode tokens, not substring rectangles.
+            assert sum(w[4] == replacement for w in after[0].get_text('words')) == 1
     open_editor(page, exported)
     expect(page.get_by_role('button', name='Text bearbeiten: ' + replacement, exact=True)).to_be_visible(timeout=180000)
     return {'export': str(exported), 'original_target': old_text, 'scope': 'local edit, export, independent readback and reopen'}
@@ -169,6 +175,19 @@ def form_guard(page, name):
 def execute(browser, name, width, callback):
     context = browser.new_context(viewport={'width': width, 'height': 1000}, accept_downloads=True, reduced_motion='reduce')
     page = context.new_page(); page.set_default_timeout(45000)
+    # Keep bounded pixel evidence for failed appearance checks without adding
+    # test hooks or telemetry to the application itself.
+    page.add_init_script("""(() => {
+      const read=CanvasRenderingContext2D.prototype.getImageData;
+      window.__editorTestImages=[];
+      CanvasRenderingContext2D.prototype.getImageData=function(...args){
+        const result=read.apply(this,args),c=this.canvas;
+        if(args[0]===0&&args[1]===0&&Math.max(c.width,c.height)===1600&&args[2]===c.width&&args[3]===c.height){
+          try{window.__editorTestImages.push(c.toDataURL());if(window.__editorTestImages.length>6)window.__editorTestImages.shift();}catch{}
+        }
+        return result;
+      };
+    })();""")
     errors = []; blocked = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     def route(r):
@@ -187,6 +206,8 @@ def execute(browser, name, width, callback):
         result.update(status='failed', error=str(e), traceback=traceback.format_exc(), page_errors=errors, blocked_requests=blocked)
         print(result['traceback'], flush=True)
         try:
+            for index, image in enumerate(page.evaluate('window.__editorTestImages || []')):
+                (out / (name + '-ink-' + str(index) + '.png')).write_bytes(base64.b64decode(image.split(',')[1]))
             page.screenshot(path=str(out / (name + '-failure.png')), full_page=True, timeout=10000)
             (out / (name + '-failure.txt')).write_text(page.locator('body').inner_text(timeout=5000))
         except Exception: pass

@@ -38,6 +38,9 @@ export function richEditorLayout(
   type Line = { pieces: Piece[]; width: number; size: number; baseline: number; descent: number };
   const base = (mark.fontScale || 0.028) * width,
     tracking = (mark.tracking || 0) * base;
+  // PDF widths and reconstructed embedded glyph advances can differ by tiny
+  // fractions of a point. Do not create a new line for rounding noise.
+  const tolerance = 0.05;
   const text = mark.text || '',
     lines: Line[] = [];
   let line: Line = { pieces: [], width: 0, size: base, baseline: 0, descent: 0 };
@@ -82,17 +85,17 @@ export function richEditorLayout(
     }
     const pieces = piecesFor(start, start + token.length),
       length = pieces.reduce((n, p) => n + p.width, 0);
-    if (line.pieces.length && line.width + length - tracking > available + 0.001) {
+    if (line.pieces.length && line.width + length - tracking > available + tolerance) {
       next();
       if (/^\s+$/u.test(token)) continue;
     }
-    if (length - tracking <= available + 0.001) pieces.forEach(add);
+    if (length - tracking <= available + tolerance) pieces.forEach(add);
     else {
       let index = start;
       for (const char of token) {
         const parts = piecesFor(index, index + char.length),
           w = parts.reduce((n, p) => n + p.width, 0);
-        if (line.pieces.length && line.width + w - tracking > available + 0.001) next();
+        if (line.pieces.length && line.width + w - tracking > available + tolerance) next();
         parts.forEach(add);
         index += char.length;
       }
