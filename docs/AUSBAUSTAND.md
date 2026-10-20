@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 20. Oktober 2026, Version 0.17.0.
+Stand: 20. Oktober 2026, Version 0.18.0.
 
 „PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
 
@@ -165,3 +165,17 @@ Prüfstand: 46 lokale Testsammlungen, Produktionsbuild, Typprüfung und Lint; zu
 Gemischte Formatierung wird ausdrücklich angezeigt; Schriftstatus und Formatierungsleiste folgen der ausgewählten Textspanne. Ohne Textmarkierung bleibt das ganze Textfeld der Formatierungsbereich. Die integrierte Suche (Strg/⌘+F oder +H im Textfeld) bearbeitet bewusst nur dieses Feld. Ersetzungen behalten den Stil der jeweiligen Fundstelle und bilden einen gemeinsamen Rückgängig-Schritt. Suchbegriffe werden wörtlich interpretiert; Textfelder bleiben auf 20.000 Zeichen begrenzt.
 
 Der Editor vergrößert die tatsächliche Seite bis 400 Prozent. Bedienelemente bleiben in normaler Größe; die Seite besitzt einen eigenen Scrollbereich. Vorschauen sind auf 3.200 Pixel längste Seite und die bestehenden Rendergrenzen begrenzt. Das ist eine Bildschirmvorschau, keine Aussage über die Exportauflösung. Vollständige Acrobat-Gleichwertigkeit und der Rang als bestes Internetwerkzeug sind nicht nachgewiesen. Für eine solche Bewertung fehlen unter anderem ein unabhängiger Vergleichskorpus und reale Geräteprüfungen.
+
+## Textblöcke, Dokumentprüfung und öffentlicher Korpus 0.18.0
+
+Textblöcke lassen sich explizit verbinden (2 bis 50 waagerechte Felder derselben Seite) und am Cursor trennen. Die Vorschau zeigt die Leserichtung. Unterschiedliche eigene Schriftdateien und Scan-Hintergründe werden nicht stillschweigend vereinheitlicht. Die alte Textentfernung bleibt auf die einzelnen Quellrechtecke begrenzt. Eine Gruppierung allein verändert den PDF-Inhalt nicht. Eine Teilung ist eine ausdrückliche Layoutänderung und behält die Originalentfernung nur im ersten Teil.
+
+„Dokument durchsuchen“ durchsucht alle geladenen Seiten und Änderungen. Nicht durchsuchte Seiten werden ausgewiesen. Lokale OCR ist zuschaltbar; die Suche ist auf fünf Millionen Zeichen und 5.000 Treffer begrenzt, einzelne Felder auf 20.000 Zeichen. Vor einer Sammelersetzung werden Schrift, Überlauf und Überschneidungen geprüft. Wenn ein Treffer nicht passt, wird die gesamte Ersetzung zurückgehalten. Suchtreffer verfallen nach inhaltlichen Dokumentänderungen. Ein gemeinsamer Rückgängig-Schritt umfasst die ganze Ersetzung.
+
+Die Schriftbildprüfung arbeitet innerhalb bearbeiteter Textfelder mit 1.600 Pixeln längster Seite. Sie zeichnet die vorgesehenen Schriftkonturen direkt auf Canvas und vergleicht sie mit dem PDF.js-Bild der gespeicherten Datei. Ein Pixel Positionsspielraum und Farbtoleranzen begrenzen Rasterabweichungen. Abweichungen über zwölf Prozent der erfassten Textpixel führen zu einem Prüfhinweis; sehr kleine/kontrastarme Schrift oder eine fehlgeschlagene Hintergrundtrennung werden als nicht vollständig geprüft ausgewiesen. Das ist keine mathematische Gleichheitsgarantie. Die bisherige Prüfung unveränderter Bereiche arbeitet weiterhin mit 900 Pixeln. OCR-Erkennungsfehler werden dadurch nicht automatisch inhaltlich erkannt.
+
+Regressionen in `tests/editor-rich-smoke.mjs` prüfen interleavte Spalten, Tabellen, Formatierungen beim Verbinden/Trennen, Unicode-Grenzen, Suche und veraltete Treffer sowie gezielt fehlerhafte Schriftart, Schriftgröße, Farbe und Position. `tests/editor-quality-browser.py` ergänzt Desktop- und 390-Pixel-Abläufe für Chromium, Firefox und WebKit. Die CI speichert tatsächliche Ergebnisse, exportierte Dateien, Berichte und Bildschirmaufnahmen als `editor-*`-Artefakte.
+
+Der externe Korpus wird ausschließlich für Tests geladen: `python tests/editor-download-corpus.py`. Quellen, unveränderliche Revisionen, SHA-256, Lizenz und bekannte Einschränkungen stehen in `tests/editor-public-corpus.json`. Die AWS-Rechnung enthält bereits Fehler in ihrer Textzuordnung; die Prüfung unterscheidet diese vom bearbeiteten Inhalt. Die gemischte Datei wird für den Test aus öffentlichen Vorlagen zusammengestellt. Ein kleines AcroForm prüft die ausdrückliche Ablehnung vor verlustreichem Abflachen, nicht die Bearbeitung beliebiger amtlicher Formulare. Der Korpus wird nicht mit der Anwendung ausgeliefert und führt keine externe Dokumentenübertragung ein.
+
+Nicht geprüft bleiben reale iPhone-/Android-Geräte, die vollständige Editorbedienung in nativem Safari und eine breite Sammlung produktiver Kundenunterlagen. Der Browserkorpus ersetzt diese Prüfungen nicht. Kameraaufnahmen, Handschrift, komplexe Schriffformung, beliebige Signaturen und Formulare bleiben weitere Grenzen.

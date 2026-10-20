@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.18.0 – 20. Oktober 2026
+
+- Absatzbildung folgt auch abwechselnd ausgelesenen Spalten. Textstellen lassen sich auf einer Seite mit Vorschau verbinden und am Textcursor trennen; ursprüngliche Entfernungsbereiche bleiben getrennt, Formatierungen erhalten.
+- Unmittelbare Überlauf- und Kollisionswarnungen auf der Seite, auch für neue Textfelder. Eine ausdrückliche Layoutoption passt die Schriftgröße unter Erhalt relativer Größen an; die automatische Verkleinerung unterschreitet sechs Punkt nicht.
+- Dokumentweite Suche mit optionaler lokaler OCR, Seitenvorschau, auswählbaren Treffern, wörtlichen Suchbegriffen und gemeinsamen Rückgängig-Schritten. Platz- und Kollisionsprüfung vor Sammelersetzungen; geänderte Dokumentstände verwerfen veraltete Suchergebnisse.
+- Drei lokal gerenderte Ersatzschriftvorschläge zum Vergleich; markierte Textbereiche bleiben der Formatierungsbereich.
+- Die wieder geöffnete Exportdatei wird auch innerhalb geänderter Textfelder mit unabhängig gezeichneten Schriftkonturen verglichen. Schrift-, Größen-, Farb- und Positionsabweichungen sowie nicht abgeschlossene Prüfungen erscheinen im Ergebnisbericht; begrenzte Auflösung bleibt eine technische Grenze.
+- Öffentlicher Testkorpus mit festgelegten Prüfsummen: zwei Rechnungsbeispiele, historischer Buchscan, mehrspaltige Broschüre, gedrehter Scan und Formular-Schutzfall. Browserprüfungen für die neuen Bedienelemente und reale Scanvorlagen ergänzt. Kein Anspruch auf vollständige Acrobat-Gleichwertigkeit oder beliebige OCR-Genauigkeit.
+
 ## 0.17.0 – 20. Oktober 2026
 
 - „PDF bearbeiten“ zeigt gemischte Schriftarten, Größen und Formatierungen ausdrücklich an. Schriftstatus und Formatierungsleiste beziehen sich auf die tatsächliche Auswahl; Fett/Kursiv kehren direkt zum Text zurück.

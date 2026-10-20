@@ -16,6 +16,7 @@ import {
   ScanLine,
   Eraser,
   Settings2,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ type ToolbarProps = {
   onNewText: () => void;
   onImage: () => void;
   onErase: () => void;
+  onSearch?: () => void;
 };
 export function EditorToolbar({
   tool,
@@ -42,6 +44,7 @@ export function EditorToolbar({
   onNewText,
   onImage,
   onErase,
+  onSearch,
 }: ToolbarProps) {
   useLanguage();
   return (
@@ -70,6 +73,12 @@ export function EditorToolbar({
             <Plus size={16} />
             {ui('Neuer Text')}
           </Button>
+          {onSearch && (
+            <Button variant="ghost" disabled={disabled} onClick={onSearch}>
+              <Search size={16} />
+              {ui('Dokument durchsuchen')}
+            </Button>
+          )}
         </>
       )}
       {tool === 'erase' && (

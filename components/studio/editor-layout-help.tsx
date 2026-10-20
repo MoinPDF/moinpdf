@@ -1,9 +1,10 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Mark, Rect } from '@/lib/studio-engine';
 import type { Source } from '@/lib/pdf-engine';
 import { editorTextGeometry, layoutEditorText } from '@/lib/editor-text-layer';
 import { richEditorLayout } from '@/lib/editor-rich-layout';
+import { editorLayoutPlan, fitEditorLayout } from '@/lib/editor-layout-plan';
 import { editorSegments, replaceEditorRange } from '@/lib/editor-rich-text';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
@@ -55,6 +56,7 @@ export function EditorLayoutHelp({
 }) {
   const [proposal, setProposal] = useState<Partial<Mark> | null>(null),
     candidate = useMemo(() => ({ ...mark, ...proposal }), [mark, proposal]);
+  useEffect(() => setProposal(null), [mark]);
   const typography = useEditorTypography(candidate, source),
     font = typography.resolution?.font;
   const geometry = editorTextGeometry(candidate, width, height, candidate.textRotation);
@@ -75,7 +77,20 @@ export function EditorLayoutHelp({
           font.measureDescent(candidate.text || ''),
         )
     : undefined;
-  const overflow = !!layout && layout.requiredHeight > geometry.height + 0.5;
+  const prepared =
+    typography.runs ||
+    (typography.resolution
+      ? [
+          {
+            start: 0,
+            end: (candidate.text || '').length,
+            style: {},
+            resolution: typography.resolution,
+          },
+        ]
+      : []);
+  const overflow =
+    !!prepared.length && editorLayoutPlan(candidate, width, height, prepared).overflow;
   function reflow() {
     let next = { ...mark };
     const breaks = [...(next.text || '').matchAll(/(?<!\n)\n(?!\n)/gu)].reverse();
@@ -95,6 +110,16 @@ export function EditorLayoutHelp({
         )}
       </p>
       <div className="editor-review-actions">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={
+            !overflow || typography.pending || !fitEditorLayout(candidate, width, height, prepared)
+          }
+          onClick={() => setProposal(fitEditorLayout(candidate, width, height, prepared))}
+        >
+          {ui('Schrift passend verkleinern')}
+        </Button>
         <Button
           size="sm"
           variant="outline"

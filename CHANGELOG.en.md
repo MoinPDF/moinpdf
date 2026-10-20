@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.18.0 – 20 October 2026
+
+- Paragraph grouping follows interleaved column extraction. Join text blocks on a page with a preview, or split at the cursor; original removal areas remain separate and inline formatting is retained.
+- On-page overflow and collision warnings include newly added text. An explicit fit option reduces relative font sizes proportionally, with a six-point lower limit.
+- Whole-document search with optional local OCR, page preview, selectable matches, literal queries and atomic undo. Batch replacements are checked for space and collisions; document changes invalidate stale results.
+- Three locally rendered replacement font suggestions for comparison, preserving selected-range formatting.
+- Reopened exports are also checked inside edited fields against independently painted glyph outlines. Font, size, colour and position differences and unavailable checks appear in the result report; limited resolution remains a constraint.
+- Pinned public test corpus: two invoice examples, historical book scan, multi-column brochure, rotated scan and form-preservation guard. Browser acceptance expanded for new controls and actual scanned source material. No claim of complete Acrobat equivalence or universal OCR accuracy.
+
 ## 0.17.0 – 20 October 2026
 
 - Edit PDF explicitly shows mixed fonts, sizes and formatting. Font status and controls follow the actual selection; bold/italic commands restore writing focus.

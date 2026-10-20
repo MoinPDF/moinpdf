@@ -36,10 +36,12 @@ export function EditorResultReview({
       <p>
         {ui('Text geprüfter Seiten')}: {verification.textPages} ·{' '}
         {ui('Bildvergleich geprüfter Seiten')}: {verification.imagePages}
+        {' · '}
+        {ui('Schriftbild geprüfter Textfelder')}: {verification.editedImageFields || 0}
       </p>
       <p>
         {ui(
-          'Der Bildvergleich prüft die Darstellung außerhalb der Änderungen in begrenzter Auflösung. Schriftbild und Erkennungsfehler innerhalb der bearbeiteten Stellen bitte selbst prüfen.',
+          'Der Bildvergleich prüft unveränderte Bereiche und vergleicht bearbeitete Texte mit den vorgesehenen Schriftkonturen in begrenzter Auflösung. Kleine Abweichungen und OCR-Erkennungsfehler können unentdeckt bleiben. Bitte wichtige Dokumente zusätzlich selbst prüfen.',
         )}
       </p>
       {!!verification.issues.length && (

@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import ts from 'typescript';
 import { JSDOM } from 'jsdom';
 const folder='.cache/editor-ui';await mkdir(folder,{recursive:true});
-for(const file of ['lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/editor-dom.ts','components/studio/editor-text-search.tsx','components/studio/editor-rich-input.tsx','components/studio/editor-layout-help.tsx','components/studio/editor-ocr-review.tsx','lib/local-font-bytes.ts','components/studio/editor-canvas.tsx','components/studio/editor-typography.tsx','lib/editor-font-catalog.ts','lib/editor-model.ts','lib/editor-text-layer.ts','lib/ui-language.ts']) {
+for(const file of ['lib/editor-blocks.ts','lib/editor-layout-plan.ts','components/studio/editor-block-tools.tsx','components/studio/editor-layout-outline.tsx','components/studio/editor-font-alternatives.tsx','lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/editor-dom.ts','components/studio/editor-text-search.tsx','components/studio/editor-rich-input.tsx','components/studio/editor-layout-help.tsx','components/studio/editor-ocr-review.tsx','lib/local-font-bytes.ts','components/studio/editor-canvas.tsx','components/studio/editor-typography.tsx','lib/editor-font-catalog.ts','lib/editor-model.ts','lib/editor-text-layer.ts','lib/ui-language.ts']) {
  const code=ts.transpileModule(await readFile(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/(['"])(@\/[^'"]+|\.\/[^'"]+)\1/g,(_,q,p)=>q+'./'+p.split('/').at(-1)+'.mjs'+q);
  await writeFile(folder+'/'+file.split('/').at(-1).replace(/\.tsx?$/,'.mjs'),code);
 }
