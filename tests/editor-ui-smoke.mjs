@@ -13,11 +13,11 @@ await writeFile(folder+'/pdf-text.mjs','export const readPdfText=async()=>({item
 await writeFile(folder+'/appearance.mjs','export const useLanguage=()=>({});');
 await writeFile(folder+'/button.mjs',`import React from 'react';export function Button({variant,size,...props}){return React.createElement('button',props);}`);
 await writeFile(folder+'/studio-engine.mjs','export const normalizedRect=(a,b)=>({x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:Math.abs(a.x-b.x),h:Math.abs(a.y-b.y)});');
-await writeFile(folder+'/pdf-engine.mjs',`export const uid=()=> 'new-mark';export async function renderPage(){return {canvas:{width:400,height:560,toBlob(fn){fn(new Blob(['pixels']));}},width:400,height:560};}`);
+await writeFile(folder+'/pdf-engine.mjs',`export const uid=()=> 'new-mark';export const renderJobs=[];let delayed=false;export const delayRenders=value=>delayed=value;export const renderedPage=()=>({canvas:{width:400,height:560,toBlob(fn){fn(new Blob(['pixels']));}},width:400,height:560});export async function renderPage(source,page,size){if(delayed)return new Promise(resolve=>renderJobs.push({size,resolve}));return renderedPage();}`);
 await writeFile(folder+'/editor-analysis.mjs',`export const recognizeEditorRegion=async()=>{throw Error('not used')};export const jobs=[];export function analyzeEditorPage(source,page,options){return new Promise((resolve,reject)=>jobs.push({source,page,options,resolve,reject}));}`);
 const dom=new JSDOM('<!doctype html><div id="root"></div>',{url:'https://moinpdf.test'});
 for(const name of ['window','document','HTMLElement','Element','Node','NodeFilter','Range','Event','MouseEvent','KeyboardEvent','InputEvent','CompositionEvent']) globalThis[name]=dom.window[name];
-globalThis.IS_REACT_ACT_ENVIRONMENT=true;globalThis.ResizeObserver=class{observe(){}disconnect(){}};
+const resizeCallbacks=[];globalThis.IS_REACT_ACT_ENVIRONMENT=true;globalThis.ResizeObserver=class{constructor(callback){resizeCallbacks.push(callback)}observe(){}disconnect(){}};
 const React=await import('react'),{createRoot}=await import('react-dom/client');const {act}=React;
 const {applyEditorPatch,editorSegments}=await import('../.cache/editor-ui/editor-rich-text.mjs');
 const {setEditorDomSelection,editorDomSelection}=await import('../.cache/editor-ui/editor-dom.mjs');
@@ -25,6 +25,8 @@ const {EditorInlineText,EditorInlineToolbar}=await import('../.cache/editor-ui/e
 const {EditorTextSearch}=await import('../.cache/editor-ui/editor-text-search.mjs');
 const {EditorLayoutHelp}=await import('../.cache/editor-ui/editor-layout-help.mjs');
 const fontMock=await import('../.cache/editor-ui/editor-fonts.mjs');
+const previewMock=await import('../.cache/editor-ui/pdf-engine.mjs');
+const revoke=URL.revokeObjectURL,revoked=[];URL.revokeObjectURL=url=>{revoked.push(url);revoke(url);};
 const {EditorCanvas}=await import('../.cache/editor-ui/editor-canvas.mjs'),{jobs}=await import('../.cache/editor-ui/editor-analysis.mjs');
 const root=createRoot(document.getElementById('root'));
 const source={id:'source',name:'fixture.pdf'},page={id:'p0',sourceId:'source',index:0,rotation:0,selected:true};
@@ -36,6 +38,10 @@ const click=async(button)=>act(async()=>button.dispatchEvent(new MouseEvent('cli
 try {
  await act(async()=>root.render(React.createElement(EditorCanvas,props)));
  assert.equal(jobs.length,1,'Opening the editor starts analysis without another button');assert(document.querySelector('img'),'Preview is shown before OCR finishes');
+ const oldPreview=document.querySelector('.editor-sheet img').src;
+ previewMock.delayRenders(true);await act(async()=>resizeCallbacks.at(-1)([{contentRect:{width:2000}}]));
+ assert.equal(previewMock.renderJobs.length,1);assert(previewMock.renderJobs[0].size>1400);assert.equal(document.querySelector('.editor-sheet img').src,oldPreview);assert(!revoked.includes(oldPreview),'Zoom keeps the visible image URL valid while its replacement is rendering');
+ previewMock.delayRenders(false);await act(async()=>previewMock.renderJobs[0].resolve(previewMock.renderedPage()));assert.notEqual(document.querySelector('.editor-sheet img').src,oldPreview);assert(revoked.includes(oldPreview),'Only the replaced preview URL is released');
  await act(async()=>jobs[0].options.onNative({...result,targets:[{...target,origin:'pdf',confidence:100}]}));
  assert(document.querySelector('[aria-label="Text bearbeiten: Rechnung"]'),'Existing text can be selected while OCR is running');
  await act(async()=>jobs[0].resolve(result));assert(document.querySelector('.is-uncertain'));assert.match(document.body.textContent,/Orange markierte/);
@@ -94,4 +100,4 @@ try {
  await click([...inlineHost.querySelectorAll('button')].find(b=>b.textContent==='Alle im Textfeld ersetzen'));assert.equal(searched.text,'zwei zwei');assert(editorSegments(searched).find(r=>r.start===5).style.bold,'Bulk search replacement retains the second match font style');
  await act(async()=>searchRoot.unmount());
  console.log('PASS: rich text focus, typing, cursor keys, IME composition, font selection, keyboard formatting, explicit layout adjustment and done shortcut; automatic preparation, preview before OCR, early text selection, confidence styling, scan replacement/rotation, forced retry, page-switch race, stop, disabled controls and unmount cancellation.');
-} finally {dom.window.close();}
+} finally {URL.revokeObjectURL=revoke;dom.window.close();}

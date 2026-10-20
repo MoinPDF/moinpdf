@@ -299,9 +299,16 @@ export function EditorCanvas({
     };
   }, [source, page, targets, removalKey, previewSide]);
   const renderedPage = useRef('');
+  // A zoom render may still be pending while the current page is used by a
+  // newly opened OCR crop. Keep that URL alive until React replaces it.
+  useEffect(
+    () => () => {
+      if (url) URL.revokeObjectURL(url);
+    },
+    [url],
+  );
   useEffect(() => {
-    let live = true,
-      url = '';
+    let live = true;
     const cancel = new AbortController();
     const key = `${source.id}:${page.index}:${page.rotation}`;
     if (renderedPage.current !== key) setUrl('');
@@ -315,8 +322,7 @@ export function EditorCanvas({
         canvas.width = canvas.height = 0;
         if (!blob) throw new Error('Bild konnte nicht erstellt werden.');
         if (live && blob) {
-          url = URL.createObjectURL(blob);
-          setUrl(url);
+          setUrl(URL.createObjectURL(blob));
           setDims({ width, height });
           onDimensions({ width, height });
         }
@@ -327,7 +333,6 @@ export function EditorCanvas({
     return () => {
       live = false;
       cancel.abort();
-      if (url) URL.revokeObjectURL(url);
     };
   }, [source, page.index, page.rotation, onDimensions, renderRetry, previewSide]);
   useEffect(() => {

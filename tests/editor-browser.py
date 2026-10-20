@@ -97,7 +97,7 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         initial_page_width=holder.evaluate('(el) => getComputedStyle(el).width')
         before_width=target.bounding_box()['width']
         zoom.select_option('400')
-        expect(page.locator('.editor-page-scroll .canvas-holder')).to_have_css('width',re.compile(r'\d'))
+        expect(holder).to_have_css('max-width','2880px')
         assert target.bounding_box()['width']>before_width*3.5, '400% zoom must enlarge the actual PDF page'
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'), 'Zoom leaked outside page scroller'
         zoom.select_option('100')

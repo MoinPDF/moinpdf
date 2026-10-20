@@ -8,7 +8,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 - Edit PDF explicitly shows mixed fonts, sizes and formatting. Font status and controls follow the actual selection; bold/italic commands restore writing focus.
 - Find and replace within the selected text box: single/all matches, case sensitivity, whole words, match selection and shared undo/redo. Each replacement inherits its match's style; queries are literal rather than executable regular expressions.
-- Actual page zoom from 50 to 400 percent, fit width, higher-resolution previews and bounded image memory. The previous fixed page width limited enlargement on wide displays.
+- Actual page zoom from 50 to 400 percent, fit width, higher-resolution previews and bounded image memory. The previous fixed page width limited enlargement on wide displays. The current preview and OCR crop remain valid while a replacement image renders.
 - Added regressions for mixed selections, search matches, style preservation, large replacement lists and zoom. Document-wide Word reflow, arbitrary scan quality and full Acrobat equivalence are not promised.
 
 ## 0.16.0 – 20 October 2026
