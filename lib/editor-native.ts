@@ -1,5 +1,5 @@
 import { PDFDocument, degrees } from 'pdf-lib';
-import type { PageItem } from './pdf-engine';
+import { renderPage, type PageItem, type Source } from './pdf-engine';
 import type { Mark } from './studio-engine';
 import { editorRemovalRects, type TextTarget } from './editor-model';
 import { remainingEditorTargets } from './editor-analysis';
@@ -23,6 +23,7 @@ export async function removeEditorContent(
       page: 0,
       rect,
       color: mark.fill || '#ffffff',
+      textOnly: mark.kind === 'text',
     })),
   );
   const { removeRegions } = await import('./native-pdf');
@@ -61,4 +62,38 @@ export async function removeEditorContent(
     await task.destroy();
   }
   return PDFDocument.load(cleaned, { updateMetadata: false });
+}
+
+/** The editor background uses the same physical removal as export. It is keyed
+ * by removal rectangles, not replacement text, so typing does not rerun PDFium. */
+export async function renderEditorBackground(
+  source: Source,
+  item: PageItem,
+  marks: Mark[],
+  targets: TextTarget[],
+  signal: AbortSignal,
+) {
+  const original = await PDFDocument.load(source.bytes.slice(), { updateMetadata: false });
+  const cleaned = await removeEditorContent(original, item, marks, targets, signal);
+  signal.throwIfAborted();
+  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const task = getDocument({
+    data: await cleaned.save(),
+    standardFontDataUrl: '/vendor/pdf/standard_fonts/',
+    cMapUrl: '/vendor/pdf/cmaps/',
+    cMapPacked: true,
+    wasmUrl: '/vendor/pdf/wasm/',
+  });
+  const cancel = () => {
+    void task.destroy();
+  };
+  signal.addEventListener('abort', cancel, { once: true });
+  try {
+    const pdf = await task.promise;
+    signal.throwIfAborted();
+    return await renderPage({ ...source, pdf }, { index: 0, rotation: 0 }, 1400, signal);
+  } finally {
+    signal.removeEventListener('abort', cancel);
+    await task.destroy();
+  }
 }

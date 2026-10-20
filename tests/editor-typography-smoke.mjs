@@ -12,7 +12,7 @@ const { createCanvas, DOMMatrix, Path2D, ImageData, GlobalFonts } = pdfRequire('
 Object.assign(globalThis, { DOMMatrix, Path2D, ImageData, document: { createElement(tag) { assert.equal(tag, 'canvas'); return createCanvas(1, 1); } } });
 const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs'), assets = dirname(require.resolve('pdfjs-dist/package.json'));
 const folder = '.cache/editor-typography'; await mkdir(folder, { recursive: true });
-for (const name of ['local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model','editor-analysis','editor-text-layer','editor-fonts','editor-font-cmap','editor-font-catalog','editor-native','native-pdf-core']) {
+for (const name of ['local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-analysis','editor-text-layer','editor-fonts','editor-font-cmap','editor-font-catalog','editor-native','native-pdf-core']) {
   const code = ts.transpileModule(await readFile(`lib/${name}.ts`, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText.replace(/(['"])\.\/([a-z-]+)\1/g, (_, q, n) => `${q}./${n}.mjs${q}`);
   await writeFile(`${folder}/${name}.mjs`, code);
 }
@@ -99,7 +99,7 @@ try {
   const hiddenSource=await source(await hiddenDoc.save(),'existing-ocr.pdf'), hiddenTarget=(await readTextTargets(hiddenSource,pageOf(hiddenSource))).targets[0];
   assert.equal(hiddenTarget.origin,'pdf','An existing search layer is not exported twice');assert.equal(hiddenTarget.originalFontId,undefined,'An invisible OCR font must not be presented as the scan original font');assert.equal(hiddenTarget.fontName,undefined);
   const line={id:'a',x:.1,y:.1,w:.5,h:.02,text:'First line of a paragraph',fontSize:12,family:'sans',origin:'pdf',bold:false,color:'#000000'};
-  const paragraph=editorParagraphs([line,{...line,id:'b',y:.12,text:'second line'}],500,700);assert.equal(paragraph.length,1);assert.equal(paragraph[0].text,'First line of a paragraph second line');assert.equal(paragraph[0].fragments.length,2);
+  const paragraph=editorParagraphs([line,{...line,id:'b',y:.12,text:'second line'}],500,700);assert.equal(paragraph.length,1);assert.equal(paragraph[0].text,'First line of a paragraph\nsecond line');assert.equal(paragraph[0].fragments.length,2);
   assert.equal(editorParagraphs([line,{...line,id:'b',y:.12,text:'Heading',bold:true}],500,700).length,2);
   assert.equal(editorParagraphs([line,{...line,id:'b',x:.65}],500,700).length,2);
   const enlarged={...markFor(line),text:'Longer',h:.2};assert(editorTextCollision(enlarged,[enlarged],[line,{...line,id:'b',y:.22}]));

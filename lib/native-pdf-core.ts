@@ -35,7 +35,7 @@ export type NativeChange = {
   /** Internal transform in the containing Form's coordinate system. */
   transform?: NativeMatrix;
 };
-export type NativeRemoval = { page: number; rect: NativeRect; color?: string };
+export type NativeRemoval = { page: number; rect: NativeRect; color?: string; textOnly?: boolean };
 export type NativeParagraphStyle = {
   from: number;
   to: number;
@@ -1683,7 +1683,48 @@ export function removeNativeRegions(
   if (!removals.length || removals.length > 2000)
     throw new Error('Bitte 1 bis 2.000 Bereiche auswählen.');
   return open(api, bytes, (ctx) => {
-    for (const removal of removals) {
+    // Text editing must not redact intersecting pictures, rules or backgrounds.
+    // Remove whole text objects only; partial or ambiguous objects fail closed.
+    const textPages = new Map<number, NativeRect[]>();
+    for (const removal of removals.filter((r) => r.textOnly)) {
+      const r = removal.rect;
+      if (!validRemovalRect(r)) throw new Error('Ungültiger Löschbereich.');
+      const rects = textPages.get(removal.page) || [];
+      rects.push(r);
+      textPages.set(removal.page, rects);
+    }
+    for (const [index, rects] of textPages) {
+      const page = pageHandle(ctx, index);
+      try {
+        requireSerializablePage(ctx, page);
+        const selected: number[] = [];
+        for (let i = 0; i < api.FPDFPage_CountObjects(page); i++) {
+          const obj = api.FPDFPage_GetObject(page, i),
+            type = api.FPDFPageObj_GetType(obj),
+            bounds = objectRect(ctx, page, obj);
+          if (!bounds) throw new Error('Die Objektposition ist nicht lesbar.');
+          if (!rects.some((r) => overlapsRemoval(bounds, r))) continue;
+          if (type === 5 || clusterMark(ctx, obj))
+            throw new Error('Der Text ist Teil einer komplexen Objektgruppe.');
+          if (type !== 1) continue;
+          const mode = api.FPDFTextObj_GetTextRenderMode(obj);
+          if (mode < 0 || mode >= 3 || !rects.some((r) => containsRemoval(r, bounds)))
+            throw new Error('Das Textobjekt kann nicht eindeutig und vollständig entfernt werden.');
+          selected.push(obj);
+        }
+        if (!selected.length) throw new Error('Keine eindeutig löschbaren Textobjekte gefunden.');
+        for (const obj of selected) {
+          if (!api.FPDFPage_RemoveObject(page, obj))
+            throw new Error('Das Objekt konnte nicht entfernt werden.');
+          api.FPDFPageObj_Destroy(obj);
+        }
+        if (!api.FPDFPage_GenerateContent(page))
+          throw new Error('Die bereinigte Seite konnte nicht gespeichert werden.');
+      } finally {
+        api.FPDF_ClosePage(page);
+      }
+    }
+    for (const removal of removals.filter((r) => !r.textOnly)) {
       const page = pageHandle(ctx, removal.page),
         r = removal.rect;
       let annotation = 0,
@@ -1748,4 +1789,32 @@ export function removeNativeRegions(
     }
     return saved(ctx);
   });
+}
+
+function validRemovalRect(r: NativeRect) {
+  return (
+    [r.x, r.y, r.w, r.h].every(Number.isFinite) &&
+    r.x >= 0 &&
+    r.y >= 0 &&
+    r.w > 0 &&
+    r.h > 0 &&
+    r.x + r.w <= 1.001 &&
+    r.y + r.h <= 1.001
+  );
+}
+function overlapsRemoval(a: NativeRect, b: NativeRect) {
+  return (
+    Math.min(a.x + a.w, b.x + b.w) > Math.max(a.x, b.x) &&
+    Math.min(a.y + a.h, b.y + b.h) > Math.max(a.y, b.y)
+  );
+}
+function containsRemoval(a: NativeRect, b: NativeRect) {
+  // Only account for PDFium's device coordinate rounding (1 / 100000).
+  const epsilon = 0.00003;
+  return (
+    b.x >= a.x - epsilon &&
+    b.y >= a.y - epsilon &&
+    b.x + b.w <= a.x + a.w + epsilon &&
+    b.y + b.h <= a.y + a.h + epsilon
+  );
 }

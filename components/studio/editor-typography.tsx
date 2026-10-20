@@ -310,6 +310,7 @@ export function EditorInlineText({
       ref={input}
       className="editor-inline-input"
       aria-label={ui('Text direkt in der PDF bearbeiten')}
+      data-editor-history="true"
       disabled={disabled}
       value={mark.text || ''}
       maxLength={20000}
@@ -332,6 +333,7 @@ export function EditorInlineText({
       onChange={(e) => update(e.target.value)}
       onKeyDown={(e) => {
         e.stopPropagation();
+        if (e.nativeEvent.isComposing || composing.current) return;
         if (e.key === 'Escape' || (e.key === 'Enter' && (e.ctrlKey || e.metaKey))) {
           e.preventDefault();
           onDone();

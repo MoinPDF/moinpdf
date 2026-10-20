@@ -12,6 +12,9 @@ export type TextTarget = Rect & {
   fontSize: number;
   family: FontFamily;
   origin?: 'pdf' | 'ocr';
+  /** Search-layer text has no visible glyphs; editing also needs to remove scan pixels. */
+  invisible?: boolean;
+  unsupportedReason?: string;
   confidence?: number;
   rotation?: number;
   fill?: string;
@@ -205,6 +208,14 @@ export async function readTextTargets(
         !invisible && run ? run.color : fontColors?.size === 1 ? [...fontColors][0] : '#000000',
       scaleX = Math.hypot(dx, dy) / fontSize;
     const natural = font?.covers(part.str) ? font.measure(part.str, fontSize) * scaleX : part.width;
+    const vx = v[0] * t[2] + v[2] * t[3],
+      vy = v[1] * t[2] + v[3] * t[3],
+      rotation = (angle * 180) / Math.PI;
+    const unsupported =
+      style?.vertical ||
+      Math.abs(rotation - Math.round(rotation / 90) * 90) > 0.5 ||
+      Math.abs(dx * vx + dy * vy) > Math.hypot(dx, dy) * fontSize * 0.02 ||
+      dx * vy - dy * vx >= 0;
     const spacing =
       part.str.length > 1 ? (part.width - natural) / (part.str.length - 1) / fontSize / scaleX : 0;
     targets.push({
@@ -216,7 +227,14 @@ export async function readTextTargets(
       h: (bottom - top) / viewport.height,
       fontSize,
       origin: 'pdf',
-      rotation: (angle * 180) / Math.PI,
+      invisible: !!invisible,
+      rotation,
+      ...(unsupported
+        ? {
+            unsupportedReason:
+              'Schräger, gespiegelter oder vertikaler Text kann hier nicht zuverlässig bearbeitet werden. Bitte „PDF-Objekte bearbeiten“ verwenden.',
+          }
+        : {}),
       ...(metadata?.name ? { fontName: metadata.name } : {}),
       ...(metadata?.originalId ? { originalFontId: metadata.originalId } : {}),
       bold: metadata?.bold || false,
@@ -249,9 +267,12 @@ export function editorParagraphs(
   const sorted = [...targets].sort((a, b) => a.y - b.y || a.x - b.x),
     groups: TextTarget[][] = [];
   const same = (a: TextTarget, b: TextTarget) =>
+    !a.unsupportedReason &&
+    !b.unsupportedReason &&
     !a.rotation &&
     !b.rotation &&
     a.origin === b.origin &&
+    a.invisible === b.invisible &&
     a.originalFontId === b.originalFontId &&
     a.fontName === b.fontName &&
     a.family === b.family &&
@@ -268,7 +289,7 @@ export function editorParagraphs(
       same(last, target) &&
       Math.abs(last.y - target.y) * height < last.fontSize * 0.3 &&
       target.x >= last.x &&
-      (target.x - last.x - last.w) * width < last.fontSize * 1.6
+      (target.x - last.x - last.w) * width < last.fontSize * 0.6
     )
       previous!.push(target);
     else groups.push([target]);
@@ -284,8 +305,8 @@ export function editorParagraphs(
       y,
       w: Math.max(...parts.map((p) => p.x + p.w)) - x,
       h: Math.max(...parts.map((p) => p.y + p.h)) - y,
-      // Extracted PDF line breaks are layout, not paragraph boundaries.
-      text: parts.map((p) => p.text.trim()).join(' '),
+      // Keep intentional line breaks and interior spacing on first edit.
+      text: parts.map((p) => p.text.trim()).join(separator),
       fragments: parts.flatMap((p) => p.fragments || [p]),
       ...(separator === '\n'
         ? {

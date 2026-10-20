@@ -170,18 +170,21 @@ async function readPage(source: Source, page: PDFPageProxy): Promise<EditorFontP
   const glyphs = new Map<string, PdfGlyph[]>(),
     runs: EditorTextRun[] = [],
     keys = new Set<string>();
-  let state = { font: '', color: '#000000', mode: 0 };
+  let state = { font: '', color: '#000000', mode: 0, opacity: 1 };
   const stack: (typeof state)[] = [];
   for (let i = 0; i < ops.fnArray.length; i++) {
     const op = ops.fnArray[i],
       args = ops.argsArray[i];
-    if (op === OPS.save) stack.push({ ...state });
-    else if (op === OPS.restore) state = stack.pop() || state;
+    if (op === OPS.save || op === OPS.paintFormXObjectBegin) stack.push({ ...state });
+    else if (op === OPS.restore || op === OPS.paintFormXObjectEnd) state = stack.pop() || state;
     else if (op === OPS.setFont) {
       state.font = args[0];
       keys.add(state.font);
     } else if (op === OPS.setFillRGBColor) state.color = validColor(args[0]);
-    else if (op === OPS.setTextRenderingMode) state.mode = args[0];
+    else if (op === OPS.setGState) {
+      for (const [key, value] of args[0] as [string, unknown][])
+        if (key === 'ca' && typeof value === 'number') state.opacity = value;
+    } else if (op === OPS.setTextRenderingMode) state.mode = args[0];
     else if (op === OPS.showText || op === OPS.showSpacedText) {
       const chars = (args[0] as unknown[]).filter(
         (g): g is PdfGlyph => !!g && typeof g === 'object' && 'unicode' in g && 'fontChar' in g,
@@ -193,7 +196,7 @@ async function readPage(source: Source, page: PDFPageProxy): Promise<EditorFontP
         fontKey: state.font,
         text: chars.map((g) => g.unicode).join(''),
         color: state.color,
-        invisible: state.mode === 3 || state.mode === 7,
+        invisible: state.mode === 3 || state.mode === 7 || state.opacity === 0,
       });
     }
   }

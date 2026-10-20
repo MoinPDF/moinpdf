@@ -193,7 +193,9 @@ export function layoutEditorText(
     lineHeight,
     baseline,
     requiredHeight,
-    overflow: requiredHeight > geometry.height + 0.5,
+    overflow:
+      requiredHeight > geometry.height + 0.5 ||
+      lines.some((line) => measured(line) > available + 0.05),
   };
 }
 export async function drawEditorText(
@@ -205,6 +207,10 @@ export async function drawEditorText(
   source?: Source,
   report?: (resolution: EditorFontResolution) => void,
 ) {
+  if (Math.abs((mark.textRotation || 0) - Math.round((mark.textRotation || 0) / 90) * 90) > 0.5)
+    throw new Error(
+      'Schräger, gespiegelter oder vertikaler Text kann hier nicht zuverlässig bearbeitet werden. Bitte „PDF-Objekte bearbeiten“ verwenden.',
+    );
   let descent = 0.2;
   const font = await editorFont(doc, mark.text || '', mark, source, (resolution) => {
     descent = resolution.font.descent;
@@ -219,7 +225,7 @@ export async function drawEditorText(
   );
   if (layout.overflow)
     throw new Error(
-      'Ein Textfeld ist zu klein. Vergrößere seine Höhe oder reduziere die Schriftgröße.',
+      'Ein Textfeld ist zu klein. Vergrößere seine Breite oder Höhe oder reduziere die Schriftgröße.',
     );
   let keys = pageFonts.get(page);
   if (!keys) {
