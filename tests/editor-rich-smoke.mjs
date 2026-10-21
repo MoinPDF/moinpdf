@@ -1,13 +1,14 @@
+import {editorNativeAdapter} from './editor-native-adapter.mjs';
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import ts from 'typescript';
 import {PDFDocument,StandardFonts,rgb} from 'pdf-lib';
 const folder='.cache/editor-rich';await mkdir(folder,{recursive:true});
-for(const name of ['local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','editor-analysis','editor-text-layer','editor-fonts','editor-font-cmap','editor-font-catalog','editor-native','native-pdf-core','editor-project-codec','local-projects','project-archive']){
- const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}.mjs${q}`);await writeFile(`${folder}/${name}.mjs`,code);
+for(const name of ['local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','editor-analysis','editor-text-layer','editor-fonts','editor-font-outline','editor-font-cmap','editor-font-catalog','editor-native','editor-repair','pdf-security','native-pdf-core','nested-native','editor-project-codec','local-projects','project-archive']){
+ const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replaceAll("'/vendor/pdf/standard_fonts/'", "'public/vendor/pdf/standard_fonts/'").replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}.mjs${q}`);await writeFile(`${folder}/${name}.mjs`,code);
 }
-await writeFile(folder+'/native-pdf.mjs',`import {readFile} from 'node:fs/promises';import {createNativeEngine,removeNativeRegions} from './native-pdf-core.mjs';let api;export const removeRegions=async(bytes,removals)=>removeNativeRegions(await(api ||= readFile('public/vendor/pdfium/pdfium.wasm').then(b=>createNativeEngine(new Uint8Array(b)))),bytes,removals);`);
+await writeFile(folder+'/native-pdf.mjs',editorNativeAdapter);
 const require=createRequire(import.meta.url),pdfRequire=createRequire(require.resolve('pdfjs-dist/package.json'));
 const {createCanvas,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement:()=>createCanvas(1,1)}});
@@ -66,6 +67,8 @@ try{
  assert.equal(targets.map(t=>t.text).join('').replace(/\s/g,''),'Netto987,65€brutto');
  assert(targets.some(t=>t.text.includes('987,65') && t.bold && t.color==='#cc0000'));
  assert(targets.some(t=>t.text.includes('Netto') && !t.bold && t.color==='#000000'));
+ const alternating=[...'EDITED'].map((text,i)=>({...targets[0],id:'alternating-'+i,text,x:.1+i*.015,y:(100-(i%2?.9:1.1)*12)/700,w:.015,h:.03,fontSize:12,baselineScale:i%2?.9:1.1,insetScale:0,runs:undefined,fragments:undefined}));
+ const baselineJoined=editorParagraphs(alternating,500,700,'line');assert.equal(baselineJoined.length,1);assert.equal(baselineJoined[0].text,'EDITED','Different ascenders must not reorder alternating original/fallback glyphs');assert(Math.abs(baselineJoined[0].y*700+baselineJoined[0].baselineScale*12-100)<1e-8,'Merged selection retains the shared baseline');
  const mixed=editorParagraphs(targets,500,700);assert.equal(mixed.length,1,'Inline font/color changes stay in one paragraph');assert(mixed[0].runs.some(r=>r.style.bold));
 
  const {editorTargetMark,joinEditorBlocks,splitEditorBlock}=await import('../.cache/editor-rich/editor-blocks.mjs');
@@ -132,6 +135,9 @@ try{
  assert(compareEditorPixels(pixels,changed,10,10,[])>0);assert.equal(compareEditorPixels(pixels,changed,10,10,[{x:0,y:0,w:.1,h:.1}]),0);
  const fontBytes=await readFile('public/vendor/editor-fonts/LiberationSans-Regular.ttf'),custom=await importEditorFont(new File([fontBytes],'My-font.ttf'));
  const customMark={...mark,runs:undefined,fontChoice:'custom',customFont:custom};assert((await resolveEditorFont(customMark)).font.covers(mark.text));
+ const otf=await importEditorFont(new File([await readFile('tests/fixtures/editor-static-cff.otf')],'Synthetic.otf'));
+ const otfMark={...customMark,text:'A Ω',customFont:otf,bold:false,italic:false};
+ assert((await resolveEditorFont(otfMark)).font.covers('A Ω'),'Static OTF import retains Unicode coverage');
  await assert.rejects(()=>importEditorFont(new File([new Uint8Array(12)],'broken.ttf')),/TrueType/);
  await assert.rejects(()=>resolveEditorFont({...customMark,bold:true}),/Schriftschnitt/);
  const customPdf=await PDFDocument.create();await drawEditorText(customPdf,customPdf.addPage([500,700]),customMark,500,700);

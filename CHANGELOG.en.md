@@ -4,6 +4,16 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased – Edit PDF
+
+- Combined selection of text, original images and simple table cells; logical text lines, delayed preflight and bounded preparation of one neighbouring page.
+- Static Type-1/CFF1 source fonts and TTF/OTF import; fallback only for missing characters. Invalid font metrics and stale font responses during undo are handled.
+- Previewed paragraph continuation with following paragraphs and up to 20 new blank pages; atomic undo and preserved original following pages.
+- Real vector tables with rectangular merged cells, repeated row-height changes and inserted multi-line rows; validated original references in project archives.
+- Instance-specific edits of supported nested text/image objects and preserved baselines for slanted text. Simple AcroForm structures are preserved under the documented conditions.
+- Bounded text corrections in supported scans up to 16 megapixels retain original resolution and outside pixels; paper backgrounds and demonstrably continuous rules are considered.
+- Local structural repair compares every page, retains original bytes and displays a repair notice. Extended browser cases are included in editor CI; release requires successful checks.
+
 ## 0.19.0 – 20 October 2026
 
 - Eligible horizontal word edits remove only affected original characters. Unchanged prefixes, and suffixes whose positions still agree, retain native PDF text. Ambiguous mappings, ligatures, style or layout changes continue to use verified whole-field editing.

@@ -1,7 +1,7 @@
 name: Complete Docker installation
 on:
   push:
-    branches: [main]
+    branches: [main, rebuild/editor-adaptive-workspace]
   pull_request:
   workflow_dispatch:
 
@@ -41,7 +41,7 @@ jobs:
           curl --fail --retry 20 --retry-all-errors --retry-delay 1 http://localhost:8080/ -o /dev/null
       - name: Install browser test runtime
         run: |
-          python -m pip install playwright==1.55.0 pymupdf==1.28.2 python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 Pillow==11.3.0
+          python -m pip install playwright==1.64.0 pymupdf==1.28.2 python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 Pillow==11.3.0
           python -m playwright install --with-deps chromium
       - name: Project switch, zero-page backup and immediate reopen
         env:
@@ -149,7 +149,7 @@ jobs:
       - name: Install browser test runtime
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: |
-          python -m pip install playwright==1.55.0 pymupdf==1.28.2
+          python -m pip install playwright==1.64.0 pymupdf==1.28.2
           python -m playwright install --with-deps chromium
       - name: All tool views, desktop and mobile, PDF and audio downloads
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}

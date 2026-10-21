@@ -12,6 +12,7 @@ import {
 import type { WrappedPdfiumModule } from '@embedpdf/pdfium';
 import {
   editNativeObjects,
+  validateNativeImagePatchTargets,
   extractNativeForm,
   markNativeObject,
   scopedNativeChanges,
@@ -173,7 +174,7 @@ async function isolateImages(
   changes: NativeChange[],
 ) {
   let result = bytes;
-  for (const change of changes.filter((c) => c.image)) {
+  for (const change of changes.filter((c) => c.image || c.imagePatches)) {
     const target = await locate(api, result, page, change.index);
     if (target.original.dict.lookup(name('Subtype'), PDFName) !== name('Image'))
       throw new Error('Die Auswahl ist kein Bild.');
@@ -240,6 +241,7 @@ export async function editNativeDocument(
 ) {
   if (!changes.length || changes.length > 10000 || path.length > 16)
     throw new Error('Ungültige Objektauswahl.');
+  validateNativeImagePatchTargets(api, bytes, page, changes, path);
   const prepared = path.length ? scopedNativeChanges(api, bytes, page, path, changes) : changes;
   return editContainer(api, bytes, page, path, prepared);
 }

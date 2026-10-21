@@ -1,7 +1,7 @@
 name: PDF editor preservation
 on:
   push:
-    branches: [main, fix/pdf-editor-preservation]
+    branches: [main, fix/pdf-editor-preservation, rebuild/editor-adaptive-workspace]
     paths:
       - 'app/**'
       - 'components/**'
@@ -23,7 +23,7 @@ jobs:
   browser:
     name: Editor in ${{ matrix.browser }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -45,6 +45,8 @@ jobs:
           node tests/editor-preservation-smoke.mjs
           node tests/editor-rich-smoke.mjs
           node tests/editor-workflow-smoke.mjs
+          node tests/editor-adaptive-smoke.mjs
+          node tests/editor-adaptive-fixtures.mjs
       - name: Independently produced two-column PDF
         run: |
           mkdir -p .cache/editor-corpus
@@ -54,7 +56,7 @@ jobs:
           MOINPDF_EDITOR_CORPUS=.cache/editor-corpus/tracemonkey.pdf node tests/editor-preservation-smoke.mjs
       - name: Prepare browser
         run: |
-          python -m pip install playwright==1.55.0 pymupdf==1.26.6
+          python -m pip install playwright==1.64.0 pymupdf==1.26.6
           python -m playwright install --with-deps ${{ matrix.browser }}
       - name: Edit, undo, export, independently inspect and reopen
         env:
@@ -66,6 +68,7 @@ jobs:
           python tests/editor-browser.py || status=1
           python tests/editor-quality-browser.py || status=1
           python tests/editor-workflow-browser.py || status=1
+          python tests/editor-adaptive-browser.py || status=1
           exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()

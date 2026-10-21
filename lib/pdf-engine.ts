@@ -263,6 +263,63 @@ export async function renderPage(
   }
   return { canvas, width: base.width, height: base.height, scale };
 }
+/** Render a selected region directly; a small correction must not first downsample
+ * a large scan. The working bitmap is capped independently of the page size. */
+export async function renderPageRegion(
+  source: Source,
+  item: Pick<PageItem, 'index' | 'rotation'>,
+  rect: { x: number; y: number; w: number; h: number },
+  signal?: AbortSignal,
+) {
+  signal?.throwIfAborted();
+  if (
+    ![rect.x, rect.y, rect.w, rect.h].every(Number.isFinite) ||
+    rect.x < 0 ||
+    rect.y < 0 ||
+    rect.w <= 0 ||
+    rect.h <= 0 ||
+    rect.x + rect.w > 1.000001 ||
+    rect.y + rect.h > 1.000001
+  )
+    throw new Error('Der ausgewählte Bereich liegt außerhalb der Seite.');
+  const page = await source.pdf.getPage(item.index + 1);
+  signal?.throwIfAborted();
+  if (page.isPureXfa)
+    throw new Error('Dynamische XFA-Seiten unterstützen keine Bereichserkennung.');
+  const rotation = (page.rotate + item.rotation) % 360;
+  const base = page.getViewport({ scale: 1, rotation });
+  const width = rect.w * base.width,
+    height = rect.h * base.height;
+  if (![width, height].every((n) => Number.isFinite(n) && n > 0))
+    throw new Error('Die Seite hat ungültige Abmessungen.');
+  const scale = Math.min(
+    600 / 72,
+    4095 / Math.max(width, height),
+    Math.sqrt(3990000 / (width * height)),
+  );
+  const viewport = page.getViewport({ scale, rotation });
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.ceil(width * scale));
+  canvas.height = Math.max(1, Math.ceil(height * scale));
+  const task = page.render({
+    canvas,
+    viewport,
+    background: 'rgb(255,255,255)',
+    transform: [1, 0, 0, 1, -rect.x * viewport.width, -rect.y * viewport.height],
+  });
+  const cancel = () => task.cancel();
+  signal?.addEventListener('abort', cancel, { once: true });
+  try {
+    await task.promise;
+    signal?.throwIfAborted();
+    return { canvas, width, height, scale };
+  } catch (error) {
+    canvas.width = canvas.height = 0;
+    throw error;
+  } finally {
+    signal?.removeEventListener('abort', cancel);
+  }
+}
 export async function extractPageText(source: Source, item: PageItem) {
   const page = await source.pdf.getPage(item.index + 1);
   const content = await readPdfText(page);

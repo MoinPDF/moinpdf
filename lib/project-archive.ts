@@ -73,6 +73,59 @@ const editorStyleSchema = z
       .optional(),
   })
   .strict();
+const tablePoint = z.number().finite().min(-100000).max(100000);
+const tableRectSchema = z
+  .object({ x: tablePoint, y: tablePoint, w: tablePoint.positive(), h: tablePoint.positive() })
+  .strict();
+const tablePathSchema = z
+  .object({
+    index: z.number().int().min(0).max(9999),
+    segments: z
+      .array(z.object({ x1: tablePoint, y1: tablePoint, x2: tablePoint, y2: tablePoint }).strict())
+      .min(1)
+      .max(4000),
+    color: z.string().regex(/^#[a-f\d]{6}$/i),
+    width: z.number().finite().positive().max(4),
+    opacity: z.literal(1),
+    fill: z.literal(false),
+    dash: z.array(z.number()).length(0),
+    lineCap: z.literal('butt'),
+    root: z.literal(true),
+    clipped: z.literal(false),
+    transparent: z.literal(false),
+  })
+  .strict();
+const tableSchema = z
+  .object({
+    id: identifier,
+    pageWidth: tablePoint.positive(),
+    pageHeight: tablePoint.positive(),
+    columns: z.array(tablePoint).min(3).max(51),
+    rows: z.array(tablePoint).min(3).max(101),
+    cells: z
+      .array(
+        z
+          .object({
+            id: identifier,
+            row: z.number().int().min(0).max(99),
+            column: z.number().int().min(0).max(49),
+            rowSpan: z.number().int().min(1).max(100),
+            columnSpan: z.number().int().min(1).max(50),
+            textIds: z.array(identifier).max(2000),
+          })
+          .strict(),
+      )
+      .min(2)
+      .max(2000),
+    color: z.string().regex(/^#[a-f\d]{6}$/i),
+    width: z.number().finite().positive().max(4),
+    original: z
+      .object({ paths: z.array(tablePathSchema).min(1).max(4000), rect: tableRectSchema })
+      .strict(),
+    nextCellId: z.number().int().min(2).max(100000),
+  })
+  .strict()
+  .refine((t) => t.original.paths.reduce((n, p) => n + p.segments.length, 0) <= 4000);
 const mark = rect.extend({
   id: identifier,
   kind: z.enum(['redact', 'highlight', 'text', 'signature', 'erase', 'image']),
@@ -103,15 +156,19 @@ const mark = rect.extend({
     .strict()
     .optional(),
   fontScale: z.number().finite().min(0).max(10).optional(),
-  textRotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).optional(),
+  textRotation: z.number().finite().min(0).lt(360).optional(),
+  textAspect: z.number().finite().positive().max(10000).optional(),
   image: z
     .string()
     .max(maxManifest)
     .regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/)
     .optional(),
   sourceRect: rect.optional(),
+  nativeTable: tableSchema.optional(),
+  tableCell: z.object({ tableId: identifier, cellId: identifier }).strict().optional(),
   nativeImage: z
     .object({
+      path: z.array(z.number().int().min(0).max(9999)).max(16).optional(),
       index: z.number().int().min(0).max(9999),
       rect,
       crop: rect.optional(),
@@ -124,6 +181,7 @@ const mark = rect.extend({
     .optional(),
   sourceRects: z.array(rect).max(2000).optional(),
   sourceIsScan: z.boolean().optional(),
+  scanBackground: z.enum(['preserve', 'solid']).optional(),
   fontFamily: z.enum(['sans', 'serif', 'mono']).optional(),
   fontChoice: z
     .enum([
@@ -174,6 +232,20 @@ const mark = rect.extend({
 });
 const validMark = mark.superRefine((value, ctx) => {
   if (
+    value.nativeTable &&
+    (value.kind !== 'image' ||
+      value.image ||
+      value.nativeImage ||
+      value.sourceRect ||
+      value.sourceRects?.length ||
+      value.tableCell)
+  )
+    ctx.addIssue({ code: 'custom', message: 'Invalid native table edit' });
+  if (value.tableCell && value.kind !== 'text')
+    ctx.addIssue({ code: 'custom', message: 'Invalid table cell' });
+  if (value.textRotation && value.textRotation % 90 && !value.textAspect)
+    ctx.addIssue({ code: 'custom', message: 'Missing rotated text geometry' });
+  if (
     value.nativeImage &&
     (value.kind !== 'image' || value.sourceRect || value.sourceRects?.length)
   )
@@ -185,6 +257,30 @@ const validMark = mark.superRefine((value, ctx) => {
     end = run.end;
   }
 });
+const pageMarks = z
+  .array(validMark)
+  .max(10000)
+  .superRefine((values, ctx) => {
+    const tables = values.flatMap((m) => (m.nativeTable ? [m.nativeTable] : []));
+    const invalid = () =>
+      ctx.addIssue({ code: 'custom', message: 'Invalid table cell references' });
+    if (new Set(tables.map((t) => t.id)).size !== tables.length) invalid();
+    for (const table of tables)
+      for (const cell of table.cells)
+        if (
+          values.filter((m) => m.tableCell?.tableId === table.id && m.tableCell.cellId === cell.id)
+            .length !== 1
+        )
+          invalid();
+    for (const m of values)
+      if (
+        m.tableCell &&
+        !tables.some(
+          (t) => t.id === m.tableCell!.tableId && t.cells.some((c) => c.id === m.tableCell!.cellId),
+        )
+      )
+        invalid();
+  });
 const snapshot = z
   .object({
     pages: z.array(page).max(200),
@@ -206,7 +302,7 @@ const snapshot = z
       .optional(),
     edits: z
       .object({
-        marks: z.record(identifier, z.array(validMark).max(10000)),
+        marks: z.record(identifier, pageMarks),
         crops: z.record(identifier, rect),
       })
       .strict(),

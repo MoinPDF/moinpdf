@@ -128,3 +128,91 @@ export function preprocessEditorScan(input: HTMLCanvasElement, angle = estimateE
 }
 export const ambiguousEditorNumber = (text: string) =>
   /\d/.test(text) && /[OIlSB]/.test(text) && /^[\dOIlSB.,:/+%€$£()\s-]+$/.test(text);
+
+/** Replace only selected pixels. Reconstruct paper from the outside border;
+ * retain a crossing rule only when BOTH opposite edges independently show it. */
+export function eraseEditorScanRegion(
+  canvas: HTMLCanvasElement,
+  rect: { x: number; y: number; w: number; h: number },
+  mode: 'preserve' | 'solid' = 'preserve',
+  fill = '#ffffff',
+) {
+  const { width, height } = canvas;
+  // Normalized coordinates may round an exact pixel boundary down by a few
+  // ulps after tile translation. Do not erase the adjacent original pixel.
+  const x0 = Math.max(0, Math.floor(rect.x * width + 1e-7)),
+    y0 = Math.max(0, Math.floor(rect.y * height + 1e-7)),
+    x1 = Math.min(width, Math.ceil((rect.x + rect.w) * width - 1e-7)),
+    y1 = Math.min(height, Math.ceil((rect.y + rect.h) * height - 1e-7));
+  if (![x0, y0, x1, y1].every(Number.isFinite) || x1 <= x0 || y1 <= y0)
+    throw new Error('Ungültiger Scanbereich.');
+  const context = canvas.getContext('2d')!,
+    image = context.getImageData(0, 0, width, height),
+    original = new Uint8ClampedArray(image.data);
+  const color = /^#[a-f\d]{6}$/i.test(fill) ? fill : '#ffffff';
+  const solid = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+  const pixel = (x: number, y: number) => {
+    const at = (y * width + x) * 4;
+    return [original[at], original[at + 1], original[at + 2]];
+  };
+  const sample = (x: number, y: number) =>
+    x < 0 || y < 0 || x >= width || y >= height ? solid : pixel(x, y);
+  const line = (a: number[], b: number[]) =>
+    Math.max(...a) < 180 && Math.max(...b) < 180 && a.every((v, i) => Math.abs(v - b[i]) <= 28);
+  const edge = x0 > 0 && y0 > 0 && x1 < width && y1 < height;
+  const paper = (samples: number[][]) => {
+    const clean = samples.filter((p) => Math.min(...p) >= 180);
+    return clean.length
+      ? solid.map((_, c) => clean.reduce((n, p) => n + p[c], 0) / clean.length)
+      : solid;
+  };
+  const horizontal = new Set<number>(),
+    vertical = new Set<number>();
+  if (mode === 'preserve' && edge) {
+    for (let y = y0; y < y1; y++) {
+      const a = pixel(x0 - 1, y),
+        b = pixel(x1, y);
+      if (
+        line(a, b) &&
+        Array.from({ length: x1 - x0 }, (_, n) => pixel(x0 + n, y)).every((p) => line(a, p))
+      )
+        horizontal.add(y);
+    }
+    for (let x = x0; x < x1; x++) {
+      const a = pixel(x, y0 - 1),
+        b = pixel(x, y1);
+      if (
+        line(a, b) &&
+        Array.from({ length: y1 - y0 }, (_, n) => pixel(x, y0 + n)).every((p) => line(a, p))
+      )
+        vertical.add(x);
+    }
+  }
+  for (let y = y0; y < y1; y++)
+    for (let x = x0; x < x1; x++) {
+      let rgb = solid;
+      if (mode === 'preserve' && edge) {
+        const left = sample(x0 - 1, y),
+          right = sample(x1, y),
+          top = sample(x, y0 - 1),
+          bottom = sample(x, y1);
+        const fx = (x - x0 + 1) / (x1 - x0 + 1),
+          fy = (y - y0 + 1) / (y1 - y0 + 1);
+        rgb = horizontal.has(y)
+          ? left.map((v, i) => v * (1 - fx) + right[i] * fx)
+          : vertical.has(x)
+            ? top.map((v, i) => v * (1 - fy) + bottom[i] * fy)
+            : [left, right, top, bottom].some((p) => Math.min(...p) < 180)
+              ? paper([left, right, top, bottom])
+              : left.map(
+                  (v, i) => (v * (1 - fx) + right[i] * fx + top[i] * (1 - fy) + bottom[i] * fy) / 2,
+                );
+      }
+      const at = (y * width + x) * 4;
+      image.data[at] = rgb[0];
+      image.data[at + 1] = rgb[1];
+      image.data[at + 2] = rgb[2];
+      image.data[at + 3] = 255;
+    }
+  context.putImageData(image, 0, 0);
+}

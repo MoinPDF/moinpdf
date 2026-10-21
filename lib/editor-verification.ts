@@ -164,6 +164,7 @@ export async function verifyEditorExport(
             const removals = changedText.map((m) => ({
               ...m,
               nativeTextSlice: undefined,
+              sourceIsScan: false,
               sourceRects: actual.targets
                 .filter((t) => editorRectsOverlap(t, m))
                 .map((t) => ({ x: t.x, y: t.y, w: t.w, h: t.h })),
@@ -300,6 +301,16 @@ export async function verifyEditorExport(
             m,
             ...editorRemovalRects(m),
             ...(m.nativeImage ? [m.nativeImage.rect] : []),
+            ...(m.nativeTable
+              ? [
+                  {
+                    x: m.nativeTable.original.rect.x / m.nativeTable.pageWidth,
+                    y: m.nativeTable.original.rect.y / m.nativeTable.pageHeight,
+                    w: m.nativeTable.original.rect.w / m.nativeTable.pageWidth,
+                    h: m.nativeTable.original.rect.h / m.nativeTable.pageHeight,
+                  },
+                ]
+              : []),
           ]),
         );
         if (ratio > 0.001)

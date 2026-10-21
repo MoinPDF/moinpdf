@@ -1,3 +1,4 @@
+import {editorNativeAdapter} from './editor-native-adapter.mjs';
 import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -12,14 +13,14 @@ const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs'), assets = dirname(
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async input => typeof input === 'string' && input.startsWith('/vendor/') ? new Response(await readFile('public'+input)) : originalFetch(input);
 await mkdir('.cache/editor-auto', {recursive:true});
-for (const name of ['editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-font-catalog','editor-font-cmap','editor-fonts','editor-analysis','editor-text-layer','editor-native','native-pdf-core']) {
- const output=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'), {compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}.mjs${q}`);
+for (const name of ['editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-font-catalog','editor-font-outline','editor-font-cmap','editor-fonts','editor-analysis','editor-text-layer','editor-native','editor-repair','pdf-security','native-pdf-core','nested-native']) {
+ const output=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'), {compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replaceAll("'/vendor/pdf/standard_fonts/'", "'public/vendor/pdf/standard_fonts/'").replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}.mjs${q}`);
  await writeFile(`.cache/editor-auto/${name}.mjs`,output);
 }
-await writeFile('.cache/editor-auto/native-pdf.mjs', `import {readFile} from 'node:fs/promises';import {createNativeEngine,removeNativeRegions,inspectNativeObjects,readNativeImage} from './native-pdf-core.mjs';let api;const engine=()=>api ||= readFile('public/vendor/pdfium/pdfium.wasm').then(b=>createNativeEngine(new Uint8Array(b)));export const removeRegions=async(bytes,removals)=>removeNativeRegions(await engine(),bytes,removals);export const inspectObjects=async(bytes,page)=>inspectNativeObjects(await engine(),bytes,page);export const readImage=async(bytes,page,index)=>readNativeImage(await engine(),bytes,page,index);`);
+await writeFile('.cache/editor-auto/native-pdf.mjs', editorNativeAdapter);
 const {analyzeEditorPage,remainingEditorTargets,mergeEditorTargets,cachedEditorPage} = await import('../.cache/editor-auto/editor-analysis.mjs');
 const {runStudioJob} = await import('../.cache/editor-auto/studio-engine.mjs');
-const {renderPage} = await import('../.cache/editor-auto/pdf-engine.mjs');
+const {renderPage,renderPageRegion} = await import('../.cache/editor-auto/pdf-engine.mjs');
 const {addEditorTextLayer} = await import('../.cache/editor-auto/editor-text-layer.mjs');
 const {readTextTargets} = await import('../.cache/editor-auto/editor-model.mjs');
 const proxies=[];
@@ -45,6 +46,19 @@ try {
  const nativeText=await analyze(native,pageOf(native),{onNative:v=>{nativeReported=true;assert(v.targets.length);}});
  assert(nativeReported);assert.equal(recognitions,0,'Digital text needs no OCR worker');assert(!nativeText.ocr);
  assert.equal(await analyze(native),nativeText,'Completed analysis is reused');
+ const region=await renderPageRegion(native,pageOf(native),{x:.05,y:.05,w:.2,h:.08},signal);
+ assert.equal(region.scale,600/72,'A small selected region renders directly at 600 dpi');
+ assert(region.canvas.width*region.canvas.height<=4000000);
+ assert(region.canvas.width<=4096&&region.canvas.height<=4096);
+ region.canvas.width=region.canvas.height=0;
+ await assert.rejects(()=>renderPageRegion(native,pageOf(native),{x:.9,y:0,w:.2,h:.1},signal),/außerhalb/);
+ const cacheDoc=await PDFDocument.create();for(let i=0;i<18;i++)cacheDoc.addPage([400,560]).drawText('Cache page '+i,{x:30,y:480});
+ const cacheSource=await source(await cacheDoc.save(),'cache');
+ for(let i=0;i<16;i++)await analyze(cacheSource,pageOf(cacheSource,i));
+ assert(cachedEditorPage(cacheSource,pageOf(cacheSource,0)));
+ await analyze(cacheSource,pageOf(cacheSource,16));
+ assert(cachedEditorPage(cacheSource,pageOf(cacheSource,0)),'Recently revisited text remains cached');
+ assert.equal(cachedEditorPage(cacheSource,pageOf(cacheSource,1)),undefined,'Old page analysis is evicted after 16 retained pages');
  const letterhead=await PDFDocument.load(native.bytes),logo=createCanvas(30,30);logo.getContext('2d').fillRect(0,0,30,30);letterhead.getPage(0).drawImage(await letterhead.embedPng(logo.toBuffer('image/png')),{x:350,y:500,width:20,height:20});const letter=await source(await letterhead.save(),'letterhead');await analyze(letter);assert.equal(recognitions,0,'A small letterhead logo does not delay existing editable text with OCR');
  const canvas=createCanvas(1000,1400),ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,1000,1400);ctx.fillStyle='#171717';ctx.font='42px sans-serif';
  ['Rechnung 2026','Betrag 125,50 EUR','Unchanged footer'].forEach((t,i)=>ctx.fillText(t,90,200+i*170));

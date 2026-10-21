@@ -98,7 +98,7 @@ export function EditorRichInput({
       fresh = activeId.current !== mark.id;
     activeId.current = mark.id;
     signature.current = key;
-    const segments = editorSegments(mark);
+    const segments = runs || editorSegments(mark);
     styles.current = segments.map((r) => r.style);
     const nodes = segments.map((run, i) => {
       const span = document.createElement('span'),

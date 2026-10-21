@@ -1,24 +1,65 @@
 import type { Mark, EditorTextRun } from './studio-engine';
 import type { Source } from './pdf-engine';
 import { editorSegments } from './editor-rich-text';
-import { resolveEditorFont, type EditorFontResolution } from './editor-fonts';
+import {
+  resolveEditorFont,
+  originalEditorFont,
+  editorFontPage,
+  type EditorFontResolution,
+} from './editor-fonts';
 
 export type PreparedEditorRun = EditorTextRun & { resolution: EditorFontResolution };
 export async function prepareEditorRuns(mark: Mark, source?: Source): Promise<PreparedEditorRun[]> {
-  return Promise.all(
-    editorSegments(mark).map(async (run) => ({
-      ...run,
-      resolution: await resolveEditorFont(
-        {
-          ...mark,
-          ...run.style,
-          text: (mark.text || '').slice(run.start, run.end),
-          runs: undefined,
-        } as Mark,
-        source,
-      ),
-    })),
-  );
+  const prepared: PreparedEditorRun[] = [];
+  const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+  for (const run of editorSegments(mark)) {
+    const part = {
+      ...mark,
+      ...run.style,
+      text: (mark.text || '').slice(run.start, run.end),
+      runs: undefined,
+    };
+    if (
+      source &&
+      part.originalFontId &&
+      part.originalFontPage !== undefined &&
+      !originalEditorFont(source, part.originalFontId)
+    )
+      await editorFontPage(source, part.originalFontPage);
+    const original =
+      source && (!part.fontChoice || part.fontChoice === 'auto')
+        ? originalEditorFont(source, part.originalFontId)
+        : undefined;
+    if (!original || original.bold !== !!part.bold || original.italic !== !!part.italic) {
+      prepared.push({ ...run, resolution: await resolveEditorFont(part, source) });
+      continue;
+    }
+    const clusters = [...segmenter.segment(part.text)];
+    const missing = clusters
+      .filter((c) => !original.covers(c.segment))
+      .map((c) => c.segment)
+      .join('');
+    const fallback = missing
+      ? await resolveEditorFont({ ...part, text: missing }, source)
+      : undefined;
+    for (const cluster of clusters) {
+      const resolution = original.covers(cluster.segment)
+        ? { font: original, substituted: false }
+        : fallback!;
+      const start = run.start + cluster.index,
+        end = start + cluster.segment.length;
+      const previous = prepared[prepared.length - 1];
+      if (
+        previous &&
+        previous.end === start &&
+        previous.style === run.style &&
+        previous.resolution.font === resolution.font
+      )
+        previous.end = end;
+      else prepared.push({ ...run, start, end, resolution });
+    }
+  }
+  return prepared;
 }
 export function richEditorLayout(
   mark: Mark,
@@ -92,7 +133,9 @@ export function richEditorLayout(
     if (length - tracking <= available + tolerance) pieces.forEach(add);
     else {
       let index = start;
-      for (const char of token) {
+      for (const { segment: char } of new Intl.Segmenter(undefined, {
+        granularity: 'grapheme',
+      }).segment(token)) {
         const parts = piecesFor(index, index + char.length),
           w = parts.reduce((n, p) => n + p.width, 0);
         if (line.pieces.length && line.width + w - tracking > available + tolerance) next();

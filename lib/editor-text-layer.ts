@@ -23,7 +23,7 @@ import { wrapEditorText, hexColor } from './editor-model';
 import { resolveEditorFont, type EditorFontResolution } from './editor-fonts';
 import type { Source } from './pdf-engine';
 import { localFontBytes } from './local-font-bytes';
-import { prepareEditorRuns, richEditorLayout } from './editor-rich-layout';
+import { prepareEditorRuns, richEditorLayout, type PreparedEditorRun } from './editor-rich-layout';
 
 const fonts = new WeakMap<PDFDocument, Map<string, Promise<PDFFont>>>();
 const characterSets = new WeakMap<PDFFont, Set<number>>();
@@ -147,10 +147,41 @@ async function searchFont(doc: PDFDocument, text: string) {
   return font;
 }
 
-export function editorTextGeometry(rect: Rect, width: number, height: number, angle = 0) {
-  const rotation = (((Math.round(angle / 90) * 90) % 360) + 360) % 360;
+export function editorTextGeometry(
+  rect: Rect & { textAspect?: number },
+  width: number,
+  height: number,
+  angle = 0,
+) {
+  const normalized = ((angle % 360) + 360) % 360;
+  const rotation =
+    Math.abs(normalized - Math.round(normalized / 90) * 90) < 1e-6
+      ? (Math.round(normalized / 90) * 90) % 360
+      : normalized;
   const w = rect.w * width,
     h = rect.h * height;
+  if (rotation % 90) {
+    const aspect = rect.textAspect;
+    if (!aspect || !Number.isFinite(aspect) || aspect <= 0)
+      throw new Error(
+        'Die ursprüngliche Geometrie des gedrehten Texts fehlt. Bitte den Text erneut auswählen.',
+      );
+    const radians = (rotation * Math.PI) / 180,
+      c = Math.cos(radians),
+      s = Math.sin(radians);
+    const localHeight = Math.min(
+        w / (Math.abs(c) * aspect + Math.abs(s)),
+        h / (Math.abs(s) * aspect + Math.abs(c)),
+      ),
+      localWidth = localHeight * aspect;
+    return {
+      x: rect.x * width - Math.min(0, c * localWidth) - Math.min(0, -s * localHeight),
+      y: rect.y * height - Math.min(0, s * localWidth) - Math.min(0, c * localHeight),
+      width: localWidth,
+      height: localHeight,
+      rotation,
+    };
+  }
   return {
     x: rect.x * width + (rotation === 90 || rotation === 180 ? w : 0),
     y: rect.y * height + (rotation === 180 || rotation === 270 ? h : 0),
@@ -215,11 +246,9 @@ export async function drawEditorText(
   source?: Source,
   report?: (resolution: EditorFontResolution) => void,
 ) {
-  if (mark.runs?.length) return drawRichEditorText(doc, page, mark, width, height, source, report);
-  if (Math.abs((mark.textRotation || 0) - Math.round((mark.textRotation || 0) / 90) * 90) > 0.5)
-    throw new Error(
-      'Schräger, gespiegelter oder vertikaler Text kann hier nicht zuverlässig bearbeitet werden. Bitte „PDF-Objekte bearbeiten“ verwenden.',
-    );
+  const prepared = await prepareEditorRuns(mark, source);
+  if (mark.runs?.length || prepared.length > 1)
+    return drawRichEditorText(doc, page, mark, width, height, source, report, prepared);
   let descent = 0.2;
   const font = await editorFont(doc, mark.text || '', mark, source, (resolution) => {
     descent = resolution.font.measureDescent(mark.text || '');
@@ -307,12 +336,13 @@ async function drawRichEditorText(
   height: number,
   source?: Source,
   report?: (resolution: EditorFontResolution) => void,
+  prepared?: PreparedEditorRun[],
 ) {
   const geometry = editorTextGeometry(mark, width, height, mark.textRotation),
     scaleX = mark.textScaleX || 1;
   const inset = (mark.insetScale || 0) * (mark.fontScale || 0.028) * width,
     available = geometry.width / scaleX - 2 * inset;
-  const runs = await prepareEditorRuns(mark, source),
+  const runs = prepared || (await prepareEditorRuns(mark, source)),
     layout = richEditorLayout(mark, width, available, runs);
   if (
     layout.requiredHeight > geometry.height + 0.5 ||
@@ -326,12 +356,13 @@ async function drawRichEditorText(
     report?.(run.resolution);
     embedded.set(
       run,
-      await editorFont(
-        doc,
-        (mark.text || '').slice(run.start, run.end),
-        { ...mark, ...run.style },
-        source,
-      ),
+      await cachedFont(doc, run.resolution.font.cssFamily, async () => {
+        doc.registerFontkit((await import('@pdf-lib/fontkit')).default);
+        return doc.embedFont(run.resolution.font.bytes, {
+          subset: true,
+          features: { liga: false, kern: false, clig: false },
+        });
+      }),
     );
   }
   const radians = (geometry.rotation * Math.PI) / 180;

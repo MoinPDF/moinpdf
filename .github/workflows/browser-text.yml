@@ -1,7 +1,7 @@
 name: Browser text compatibility
 on:
   push:
-    branches: [main, fix/safari-pdf-text]
+    branches: [main, fix/safari-pdf-text, rebuild/editor-adaptive-workspace]
     paths:
       - 'app/**'
       - 'components/**'
@@ -63,7 +63,7 @@ jobs:
       - name: Prepare Firefox
         if: matrix.browser == 'firefox'
         run: |
-          python -m pip install playwright pymupdf==1.28.2
+          python -m pip install playwright==1.64.0 pymupdf==1.28.2
           python -m playwright install --with-deps firefox
       - name: Start local production build
         run: |

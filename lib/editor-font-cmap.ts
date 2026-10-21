@@ -17,7 +17,7 @@ export function sfntTables(bytes: Uint8Array) {
     if (offset + length > bytes.length) throw new Error('Unvollständige Schriftdatei.');
     return {
       tag: String.fromCharCode(...bytes.subarray(at, at + 4)),
-      data: bytes.slice(offset, offset + length),
+      data: new Uint8Array(bytes.subarray(offset, offset + length)),
     };
   });
 }
@@ -69,7 +69,7 @@ export function unicodeFont(bytes: Uint8Array, mapping: Map<number, number>) {
   ].sort((a, b) => (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0));
   const head = tables.find((t) => t.tag === 'head');
   if (!head || head.data.length < 12) throw new Error('Der Schriftkopf fehlt.');
-  new DataView(head.data.buffer).setUint32(8, 0);
+  new DataView(head.data.buffer, head.data.byteOffset, head.data.byteLength).setUint32(8, 0);
   const align = (n: number) => (n + 3) & ~3;
   const result = new Uint8Array(
       12 + tables.length * 16 + tables.reduce((n, t) => n + align(t.data.length), 0),

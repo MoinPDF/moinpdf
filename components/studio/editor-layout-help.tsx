@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import type { Mark, Rect } from '@/lib/studio-engine';
-import type { Source } from '@/lib/pdf-engine';
+import type { Source, PageItem } from '@/lib/pdf-engine';
 import { editorTextGeometry, layoutEditorText } from '@/lib/editor-text-layer';
 import { richEditorLayout } from '@/lib/editor-rich-layout';
 import { editorLayoutPlan, fitEditorLayout } from '@/lib/editor-layout-plan';
@@ -47,16 +47,29 @@ export function EditorLayoutHelp({
   width,
   height,
   onPatch,
+  page,
+  marks = [],
 }: {
   mark: Mark;
   source: Source;
   width: number;
   height: number;
   onPatch: EditorPatch;
+  page?: PageItem;
+  marks?: Mark[];
 }) {
+  const [heightError, setHeightError] = useState(''),
+    [heightBusy, setHeightBusy] = useState(false);
   const [proposal, setProposal] = useState<Partial<Mark> | null>(null),
     candidate = useMemo(() => ({ ...mark, ...proposal }), [mark, proposal]);
-  useEffect(() => setProposal(null), [mark]);
+  const heightController = useRef<AbortController | null>(null);
+  useEffect(() => {
+    heightController.current?.abort();
+    setProposal(null);
+    setHeightBusy(false);
+    setHeightError('');
+    return () => heightController.current?.abort();
+  }, [mark, source, page]);
   const typography = useEditorTypography(candidate, source),
     font = typography.resolution?.font;
   const geometry = editorTextGeometry(candidate, width, height, candidate.textRotation);
@@ -123,21 +136,34 @@ export function EditorLayoutHelp({
         <Button
           size="sm"
           variant="outline"
-          disabled={!layout}
-          onClick={() => {
-            if (!layout) return;
-            const rotated = !!((mark.textRotation || 0) % 180);
-            setProposal(
-              rotated
-                ? { w: Math.min(1 - mark.x, Math.max(mark.w, (layout.requiredHeight + 2) / width)) }
-                : {
-                    h: Math.min(1 - mark.y, Math.max(mark.h, (layout.requiredHeight + 2) / height)),
-                  },
-            );
+          disabled={!layout || !!mark.textRotation || !page || heightBusy}
+          onClick={async () => {
+            if (!page) return;
+            heightController.current?.abort();
+            const ctrl = new AbortController();
+            heightController.current = ctrl;
+            setHeightBusy(true);
+            setHeightError('');
+            try {
+              const patch = await (
+                await import('@/lib/editor-preflight')
+              ).safeEditorHeight(source, page, candidate, marks, ctrl.signal);
+              if (!ctrl.signal.aborted) setProposal({ ...proposal, ...patch });
+            } catch (error) {
+              if (!ctrl.signal.aborted)
+                setHeightError(
+                  error instanceof Error
+                    ? error.message
+                    : 'Die Höhenanpassung konnte nicht vorbereitet werden.',
+                );
+            } finally {
+              if (!ctrl.signal.aborted) setHeightBusy(false);
+            }
           }}
         >
           {ui('Textfeld vergrößern')}
         </Button>
+        {heightError && <p role="status">{ui(heightError)}</p>}
         <Button size="sm" variant="outline" onClick={reflow}>
           {ui('Zeilen neu umbrechen')}
         </Button>

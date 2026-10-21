@@ -4,11 +4,12 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import ts from 'typescript';
 import { JSDOM } from 'jsdom';
 const folder='.cache/editor-ui';await mkdir(folder,{recursive:true});
-for(const file of ['lib/editor-workflow.ts','lib/editor-scan.ts','components/studio/editor-image-tools.tsx','lib/editor-blocks.ts','lib/editor-layout-plan.ts','components/studio/editor-block-tools.tsx','components/studio/editor-layout-outline.tsx','components/studio/editor-font-alternatives.tsx','lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/editor-dom.ts','components/studio/editor-text-search.tsx','components/studio/editor-rich-input.tsx','components/studio/editor-layout-help.tsx','components/studio/editor-ocr-review.tsx','lib/local-font-bytes.ts','components/studio/editor-canvas.tsx','components/studio/editor-typography.tsx','lib/editor-font-catalog.ts','lib/editor-model.ts','lib/editor-text-layer.ts','lib/ui-language.ts']) {
+for(const file of ['lib/editor-tables.ts','lib/editor-workflow.ts','lib/editor-scan.ts','components/studio/editor-image-tools.tsx','lib/editor-blocks.ts','lib/editor-layout-plan.ts','components/studio/editor-block-tools.tsx','components/studio/editor-layout-outline.tsx','components/studio/editor-font-alternatives.tsx','lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/editor-dom.ts','components/studio/editor-text-search.tsx','components/studio/editor-rich-input.tsx','components/studio/editor-layout-help.tsx','components/studio/editor-ocr-review.tsx','lib/local-font-bytes.ts','components/studio/editor-canvas.tsx','components/studio/editor-typography.tsx','lib/editor-font-catalog.ts','lib/editor-model.ts','lib/editor-text-layer.ts','lib/ui-language.ts']) {
  const code=ts.transpileModule(await readFile(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/(['"])(@\/[^'"]+|\.\/[^'"]+)\1/g,(_,q,p)=>q+'./'+p.split('/').at(-1)+'.mjs'+q);
  await writeFile(folder+'/'+file.split('/').at(-1).replace(/\.tsx?$/,'.mjs'),code);
 }
-await writeFile(folder+'/editor-fonts.mjs',`export const importEditorFont=async()=>{throw Error('not used')};export const editorFontPage=async()=>({fonts:new Map(),runs:[]});export const originalEditorFont=()=>undefined;export const loadEditorCssFont=async()=>{};export let resolutions=0;export const resolveEditorFont=async(mark)=>(resolutions++,{font:{name:'Liberation Sans',cssFamily:'TestFont',ascent:.9,descent:.2,original:false,measureDescent:()=>.2,measure:(text,size)=>text.length*size*.5},substituted:false});`);
+await writeFile(folder+'/editor-table-panel.mjs','export const EditorTablePanel=()=>null;');
+await writeFile(folder+'/editor-fonts.mjs',`export const importEditorFont=async()=>{throw Error('not used')};export const editorFontPage=async()=>({fonts:new Map(),runs:[]});export const originalEditorFont=()=>undefined;export let deferFonts=false;export const fontJobs=[];export const delayFonts=value=>deferFonts=value;export const loadEditorCssFont=async()=>{if(deferFonts)await new Promise(resolve=>fontJobs.push(resolve));};export let resolutions=0;export const resolveEditorFont=async(mark)=>(resolutions++,{font:{name:'Liberation Sans',cssFamily:'TestFont',ascent:.9,descent:.2,original:false,measureDescent:()=>.2,measure:(text,size)=>text.length*size*.5},substituted:false});`);
 await writeFile(folder+'/pdf-text.mjs','export const readPdfText=async()=>({items:[],styles:{}});');
 await writeFile(folder+'/appearance.mjs','export const useLanguage=()=>({});');
 await writeFile(folder+'/button.mjs',`import React from 'react';export function Button({variant,size,...props}){return React.createElement('button',props);}`);
@@ -84,6 +85,11 @@ try {
  await setText('Ein längerer Absatz mit mehreren Zeilen. '.repeat(6));assert.equal(current.h,.08,'Typing keeps the layout stable until an explicit layout adjustment');
  await act(async()=>field.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true})));assert.equal(done,1);
  await act(async()=>inlineRoot.unmount());
+ const delayedRoot=createRoot(inlineHost),small={id:'delayed',kind:'text',text:'SHORT',x:0,y:0,w:1,h:.2,fontScale:.03};
+ const inline=mark=>React.createElement(EditorInlineText,{mark,source,width:400,height:560,pageWidth:400,pageHeight:560,disabled:false,onPatch:()=>{},onDone:()=>{}});
+ await act(async()=>delayedRoot.render(inline(small)));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,'SHORT');
+ fontMock.delayFonts(true);const longer={...small,text:'ORIGINAL 4815'};await act(async()=>delayedRoot.render(inline(longer)));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,longer.text,'Pending fonts never apply previous shorter run ranges after undo');
+ const newest={...small,text:'CURRENT TEXT RESTORED'};await act(async()=>delayedRoot.render(inline(newest)));await act(async()=>fontMock.fontJobs.splice(0).forEach(resolve=>resolve()));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,newest.text,'Older font completions cannot overwrite the newest text');fontMock.delayFonts(false);await act(async()=>delayedRoot.unmount());
  const layoutRoot=createRoot(inlineHost),beforeResolutions=fontMock.resolutions;
  await act(async()=>layoutRoot.render(React.createElement(EditorLayoutHelp,{mark:current,source,width:400,height:560,onPatch:()=>{}})));
  await act(async()=>new Promise(resolve=>setTimeout(resolve,25)));
@@ -101,5 +107,16 @@ try {
  await click([...inlineHost.querySelectorAll('button')].find(b=>b.textContent==='Nächster Treffer'));assert.deepEqual(range,{id:'search',start:0,end:4});
  await click([...inlineHost.querySelectorAll('button')].find(b=>b.textContent==='Alle im Textfeld ersetzen'));assert.equal(searched.text,'zwei zwei');assert(editorSegments(searched).find(r=>r.start===5).style.bold,'Bulk search replacement retains the second match font style');
  await act(async()=>searchRoot.unmount());
+ const prefetchHost=document.createElement('div');document.body.append(prefetchHost);const prefetchRoot=createRoot(prefetchHost),prefetchSource={...source,id:'prefetch',pdf:{numPages:3}};
+ Object.defineProperty(navigator,'deviceMemory',{value:8,configurable:true});let visibility='visible';Object.defineProperty(document,'visibilityState',{get:()=>visibility,configurable:true});
+ await act(async()=>prefetchRoot.render(React.createElement(EditorCanvas,{...props,source:prefetchSource})));
+ const visibleJob=jobs.at(-1),count=jobs.length;await act(async()=>visibleJob.resolve({...result,kind:'scan'}));
+ assert.match(prefetchHost.textContent,/Scanseite/);
+ await act(async()=>new Promise(resolve=>setTimeout(resolve,1650)));assert.equal(jobs.length,count+1,'Only one neighbour is prepared after the visible page');const neighbour=jobs.at(-1);assert.equal(neighbour.page.index,1);
+ visibility='hidden';await act(async()=>document.dispatchEvent(new Event('visibilitychange')));assert(neighbour.options.signal.aborted,'Backgrounding cancels neighbour preparation');
+ Object.defineProperty(navigator,'deviceMemory',{value:2,configurable:true});visibility='visible';
+ await act(async()=>prefetchRoot.render(React.createElement(EditorCanvas,{...props,source:prefetchSource,page:{...page,id:'prefetch-page2',index:1}})));
+ const lowCount=jobs.length;await act(async()=>jobs.at(-1).resolve({...result,kind:'scan'}));await act(async()=>new Promise(resolve=>setTimeout(resolve,1650)));assert.equal(jobs.length,lowCount,'Low-memory devices skip neighbour preparation');
+ await act(async()=>prefetchRoot.unmount());delete navigator.deviceMemory;
  console.log('PASS: rich text focus, typing, cursor keys, IME composition, font selection, keyboard formatting, explicit layout adjustment and done shortcut; automatic preparation, preview before OCR, early text selection, confidence styling, scan replacement/rotation, forced retry, page-switch race, stop, disabled controls and unmount cancellation.');
 } finally {URL.revokeObjectURL=revoke;dom.window.close();}

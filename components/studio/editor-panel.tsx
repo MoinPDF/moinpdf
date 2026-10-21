@@ -331,17 +331,37 @@ export function EditorPanel({
             </>
           )}
           {(mark.kind === 'erase' || (mark.sourceRect && mark.sourceIsScan !== false)) && (
-            <label className="editor-color">
-              <span>{ui('Füllfarbe des entfernten Bereichs')}</span>
-              <Input
-                aria-label={ui('Füllfarbe')}
-                type="color"
-                value={mark.fill || '#ffffff'}
-                onInput={(e) => patch({ fill: e.currentTarget.value })}
-                onChange={(e) => patch({ fill: e.target.value })}
-                disabled={disabled}
-              />
-            </label>
+            <>
+              {mark.kind === 'text' && (
+                <label className="field">
+                  <span>{ui('Scan-Hintergrund')}</span>
+                  <select
+                    aria-label={ui('Scan-Hintergrund')}
+                    value={mark.scanBackground || 'preserve'}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      patch({ scanBackground: e.target.value as 'preserve' | 'solid' })
+                    }
+                  >
+                    <option value="preserve">
+                      {ui('Papier und durchgehende Linien erhalten')}
+                    </option>
+                    <option value="solid">{ui('Mit Füllfarbe ersetzen')}</option>
+                  </select>
+                </label>
+              )}
+              <label className="editor-color">
+                <span>{ui('Füllfarbe des entfernten Bereichs')}</span>
+                <Input
+                  aria-label={ui('Füllfarbe')}
+                  type="color"
+                  value={mark.fill || '#ffffff'}
+                  onInput={(e) => patch({ fill: e.currentTarget.value, scanBackground: 'solid' })}
+                  onChange={(e) => patch({ fill: e.target.value, scanBackground: 'solid' })}
+                  disabled={disabled}
+                />
+              </label>
+            </>
           )}
           {!mark.nativeImage && (mark.kind === 'image' || mark.kind === 'signature') && (
             <label className="field">
@@ -390,7 +410,7 @@ export function EditorPanel({
                   step={0.1}
                   value={Math.round(mark[key] * measure(key) * 100) / 100}
                   onChange={(e) => geometry(key, e.target.value)}
-                  disabled={disabled}
+                  disabled={disabled || !!mark.tableCell || !!mark.nativeTable}
                 />
               </label>
             ))}
@@ -412,7 +432,7 @@ export function EditorPanel({
                 {ui('Nur Text entfernen')}
               </Button>
             )}
-            {mark.kind !== 'erase' && !mark.nativeImage && (
+            {mark.kind !== 'erase' && !mark.nativeImage && !mark.tableCell && !mark.nativeTable && (
               <Button variant="outline" disabled={disabled} onClick={onDuplicate}>
                 <Copy size={15} />
                 {ui('Duplizieren')}

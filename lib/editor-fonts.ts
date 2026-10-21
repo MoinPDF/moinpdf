@@ -145,11 +145,6 @@ async function originalFont(
     data.length < 4 ||
     raw.isType3Font ||
     raw.missingFile ||
-    // PDF.js converts Type 1/CFF fonts to OpenType for display. Re-subsetting
-    // these converted outlines can produce invalid CIDFontType0C streams in
-    // pdf-lib/fontkit. Keep untouched original objects, but use an explicitly
-    // reported local substitute for edited text until that export is reliable.
-    (data[0] === 0x4f && data[1] === 0x54 && data[2] === 0x54 && data[3] === 0x4f) ||
     data.length > 16 * 1024 * 1024
   )
     return;
@@ -158,7 +153,8 @@ async function originalFont(
     previous = previousFonts.get(id);
   const used = glyphs.map((glyph) => glyph.unicode).join('');
   if (previous?.covers(used)) return previous;
-  const face = await fontFace(data),
+  const normalized = await (await import('./editor-font-outline')).normalizeEditorOutline(data);
+  const face = await fontFace(normalized),
     mapping = new Map(face.characterSet.map((c) => [c, face.glyphForCodePoint(c).id]));
   if (previous) {
     const oldFace = await fontFace(previous.bytes);
@@ -185,9 +181,22 @@ async function originalFont(
       )
         id = blank.id;
     }
-    if (id) mapping.set(glyph.unicode.codePointAt(0)!, id);
+    if (id) {
+      const matrix = raw.fontMatrix as number[] | undefined;
+      const factor = matrix?.[0] ?? 0.001;
+      if (
+        !Number.isFinite(factor) ||
+        factor <= 0 ||
+        // Some PDF producers truncate /W widths to whole thousandths of an em.
+        // Accept that bounded quantisation without rejecting the embedded font.
+        Math.abs(face.getGlyph(id).advanceWidth / face.unitsPerEm - glyph.width * factor) >
+          0.0010001
+      )
+        return;
+      mapping.set(glyph.unicode.codePointAt(0)!, id);
+    }
   }
-  const bytes = unicodeFont(data, mapping);
+  const bytes = unicodeFont(normalized, mapping);
   return makeFont(bytes, {
     ...metadata,
     id,
@@ -257,8 +266,12 @@ async function readPage(source: Source, page: PDFPageProxy): Promise<EditorFontP
         !!raw.black ||
         /bold|black|heavy|demi|nimbusrom(?:no9l|an)[-_]?medi/i.test(name),
       italic: !!raw.italic || /italic|oblique|nimbus.*(?:ital|obli)/i.test(name),
-      ...(typeof raw.ascent === 'number' ? { ascent: raw.ascent } : {}),
-      ...(typeof raw.descent === 'number' ? { descent: Math.abs(raw.descent) } : {}),
+      ...(typeof raw.ascent === 'number' && Number.isFinite(raw.ascent)
+        ? { ascent: raw.ascent }
+        : {}),
+      ...(typeof raw.descent === 'number' && Number.isFinite(raw.descent)
+        ? { descent: Math.abs(raw.descent) }
+        : {}),
     };
     try {
       const font = await originalFont(raw, glyphs.get(key) || [], metadata, sourceState.fonts);
@@ -287,8 +300,13 @@ export function editorFontPage(source: Source, index: number) {
   if (!pending) {
     pending = source.pdf.getPage(index + 1).then((page) => readPage(source, page));
     state.pages.set(index, pending);
-    pending.catch(() => state.pages.delete(index));
+    pending.catch(() => {
+      if (state.pages.get(index) === pending) state.pages.delete(index);
+    });
   }
+  state.pages.delete(index);
+  state.pages.set(index, pending);
+  while (state.pages.size > 32) state.pages.delete(state.pages.keys().next().value!);
   return pending;
 }
 export function originalEditorFont(source: Source, id?: string) {
@@ -335,11 +353,12 @@ const customFonts = new Map<string, Promise<EditorFont>>();
 export async function importEditorFont(file: File): Promise<NonNullable<Mark['customFont']>> {
   if (file.size > 2 * 1024 * 1024)
     throw new Error('Eigene Schriften dürfen höchstens 2 MB groß sein.');
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  if (bytes.length < 12 || new DataView(bytes.buffer).getUint32(0) !== 0x00010000)
-    throw new Error(
-      'Bitte eine statische TrueType-Schrift (TTF oder OpenType mit TrueType-Konturen) auswählen. CFF- und variable Schriften werden hier nicht übernommen.',
-    );
+  let bytes = new Uint8Array(await file.arrayBuffer());
+  if (
+    bytes.length < 12 ||
+    ![0x00010000, 0x4f54544f].includes(new DataView(bytes.buffer).getUint32(0))
+  )
+    throw new Error('Bitte eine statische TrueType- oder OpenType-Schrift (TTF/OTF) auswählen.');
   const view = new DataView(bytes.buffer),
     tables = view.getUint16(4);
   if (tables > 128 || 12 + 16 * tables > bytes.length)
@@ -367,6 +386,11 @@ export async function importEditorFont(file: File): Promise<NonNullable<Mark['cu
       italic = !!(flags & 1);
     }
   }
+  bytes = new Uint8Array(
+    await (await import('./editor-font-outline')).normalizeEditorOutline(bytes),
+  );
+  if (bytes.length > 2 * 1024 * 1024)
+    throw new Error('Die aufbereitete Schrift überschreitet 2 MB.');
   await fontFace(bytes);
   let binary = '';
   for (let i = 0; i < bytes.length; i += 8192)

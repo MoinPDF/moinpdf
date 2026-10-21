@@ -18,6 +18,8 @@ export type TextTarget = Rect & {
   unsupportedReason?: string;
   confidence?: number;
   rotation?: number;
+  /** Width/height of the unrotated text frame; disambiguates 45° bounds. */
+  textAspect?: number;
   fill?: string;
   color?: string;
   bold?: boolean;
@@ -236,26 +238,41 @@ export async function readTextTargets(
       dy = v[1] * t[0] + v[3] * t[1];
     const angle = Math.atan2(dy, dx);
     const fontSize = Math.hypot(v[2] * t[3] + v[0] * t[2], v[3] * t[3] + v[1] * t[2]);
-    if (!fontSize) continue;
+    if (
+      !Number.isFinite(fontSize) ||
+      fontSize <= 0 ||
+      !t.every(Number.isFinite) ||
+      !Number.isFinite(part.width) ||
+      part.width < 0
+    )
+      continue;
     const style = content.styles[part.fontName],
-      ascent = style?.ascent ?? 0.85,
-      descent = Math.abs(style?.descent ?? -0.2),
+      metricFont = originalEditorFont(source, typography?.fonts.get(part.fontName)?.originalId),
+      // Some valid standard Type-1 and CFF fonts expose NaN PDF.js metrics.
+      // Their normalized font program provides finite units-based metrics.
+      ascent =
+        Number.isFinite(style?.ascent) && style.ascent >= 0
+          ? style.ascent
+          : (metricFont?.ascent ?? 0.85),
+      descent = Number.isFinite(style?.descent)
+        ? Math.abs(style.descent)
+        : (metricFont?.descent ?? 0.2),
       pad = Math.max(0.8, fontSize * 0.08);
     const px = v[0] * t[4] + v[2] * t[5] + v[4],
       baseline = v[1] * t[4] + v[3] * t[5] + v[5];
     const points = [
-      [0, -fontSize * ascent],
-      [part.width, -fontSize * ascent],
-      [0, fontSize * descent],
-      [part.width, fontSize * descent],
+      [-pad, -fontSize * ascent - pad],
+      [part.width + pad, -fontSize * ascent - pad],
+      [-pad, fontSize * descent + pad],
+      [part.width + pad, fontSize * descent + pad],
     ].map(([x, y]) => [
       px + x * Math.cos(angle) - y * Math.sin(angle),
       baseline + x * Math.sin(angle) + y * Math.cos(angle),
     ]);
-    const left = Math.max(0, Math.min(...points.map((p) => p[0])) - pad),
-      top = Math.max(0, Math.min(...points.map((p) => p[1])) - pad),
-      right = Math.min(viewport.width, Math.max(...points.map((p) => p[0])) + pad),
-      bottom = Math.min(viewport.height, Math.max(...points.map((p) => p[1])) + pad);
+    const left = Math.max(0, Math.min(...points.map((p) => p[0]))),
+      top = Math.max(0, Math.min(...points.map((p) => p[1]))),
+      right = Math.min(viewport.width, Math.max(...points.map((p) => p[0]))),
+      bottom = Math.min(viewport.height, Math.max(...points.map((p) => p[1])));
     if (right <= left || bottom <= top) continue;
     const styled = readStyles(part.fontName, part.str);
     const run = runsForText.get(part.fontName + ':' + part.str.replace(/\s/gu, ''))?.pop(),
@@ -281,7 +298,6 @@ export async function readTextTargets(
       rotation = (angle * 180) / Math.PI;
     const unsupported =
       style?.vertical ||
-      Math.abs(rotation - Math.round(rotation / 90) * 90) > 0.5 ||
       Math.abs(dx * vx + dy * vy) > Math.hypot(dx, dy) * fontSize * 0.02 ||
       dx * vy - dy * vx >= 0;
     const spacing =
@@ -300,10 +316,11 @@ export async function readTextTargets(
       origin: 'pdf',
       invisible: !!invisible,
       rotation,
+      textAspect: (part.width + 2 * pad) / (fontSize * (ascent + descent) + 2 * pad),
       ...(unsupported
         ? {
             unsupportedReason:
-              'Schräger, gespiegelter oder vertikaler Text kann hier nicht zuverlässig bearbeitet werden. Bitte „PDF-Objekte bearbeiten“ verwenden.',
+              'Gespiegelter, gescherter oder vertikaler Text kann hier nicht zuverlässig bearbeitet werden. Bitte „PDF-Objekte bearbeiten“ verwenden.',
           }
         : {}),
       ...(metadata?.name ? { fontName: metadata.name } : {}),
@@ -334,8 +351,25 @@ export function editorParagraphs(
   targets: TextTarget[],
   width: number,
   height: number,
+  mode: 'paragraph' | 'line' = 'paragraph',
 ): TextTarget[] {
-  const sorted = [...targets].sort((a, b) => a.y - b.y || a.x - b.x),
+  // Different font ascenders give adjacent glyphs different selection tops.
+  // Cluster by their shared baseline first, then read each line left to right.
+  const baseline = (target: TextTarget) =>
+    target.y * height + (target.baselineScale ?? 0.9) * target.fontSize;
+  const rows: TextTarget[][] = [];
+  for (const target of [...targets].sort((a, b) => baseline(a) - baseline(b) || a.x - b.x)) {
+    const row = rows.at(-1),
+      anchor = row?.[0];
+    if (
+      anchor &&
+      Math.abs(baseline(anchor) - baseline(target)) <=
+        Math.min(anchor.fontSize, target.fontSize) * 0.2
+    )
+      row!.push(target);
+    else rows.push([target]);
+  }
+  const sorted = rows.flatMap((row) => row.sort((a, b) => a.x - b.x)),
     groups: TextTarget[][] = [];
   const same = (a: TextTarget, b: TextTarget) =>
     !a.unsupportedReason &&
@@ -352,7 +386,8 @@ export function editorParagraphs(
     if (
       last &&
       same(last, target) &&
-      Math.abs(last.y - target.y) * height < last.fontSize * 0.3 &&
+      Math.abs(baseline(last) - baseline(target)) <=
+        Math.min(last.fontSize, target.fontSize) * 0.2 &&
       target.x >= last.x &&
       (target.x - last.x - last.w) * width < last.fontSize * 0.6
     )
@@ -412,6 +447,7 @@ export function editorParagraphs(
       y,
       w: Math.max(...parts.map((p) => p.x + p.w)) - x,
       h: Math.max(...parts.map((p) => p.y + p.h)) - y,
+      baselineScale: (baseline(parts[0]) - y * height) / parts[0].fontSize,
       // Keep intentional line breaks and interior spacing on first edit.
       text,
       runs,
@@ -429,6 +465,7 @@ export function editorParagraphs(
   };
   const paragraphs: TextTarget[][] = [];
   const lines = groups.map((g) => merge(g, ' '));
+  if (mode === 'line') return lines;
   const tableRow = (line: TextTarget) =>
     line.w * width < line.fontSize * 14 &&
     lines.some(

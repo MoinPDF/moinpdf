@@ -2,7 +2,7 @@ import type { Source } from './pdf-engine';
 import type { Mark } from './studio-engine';
 import { editorTextGeometry, layoutEditorText } from './editor-text-layer';
 import { prepareEditorRuns, richEditorLayout, type PreparedEditorRun } from './editor-rich-layout';
-import { resolveEditorFont, type EditorFont } from './editor-fonts';
+import { type EditorFont } from './editor-fonts';
 
 export type EditorPlannedPiece = {
   text: string;
@@ -28,7 +28,7 @@ export function editorLayoutPlan(
   let requiredHeight = 0,
     overflow = false,
     lineCount = 0;
-  if (mark.runs?.length) {
+  if (mark.runs?.length || runs.length > 1) {
     const layout = richEditorLayout(mark, width, available, runs);
     requiredHeight = layout.requiredHeight;
     lineCount = layout.lines.length;
@@ -90,16 +90,7 @@ export async function prepareEditorLayout(
   height: number,
   source?: Source,
 ) {
-  const runs = mark.runs?.length
-    ? await prepareEditorRuns(mark, source)
-    : [
-        {
-          start: 0,
-          end: (mark.text || '').length,
-          style: {},
-          resolution: await resolveEditorFont(mark, source),
-        },
-      ];
+  const runs = await prepareEditorRuns(mark, source);
   return editorLayoutPlan(mark, width, height, runs);
 }
 

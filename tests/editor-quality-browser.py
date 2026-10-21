@@ -16,7 +16,7 @@ import pymupdf
 from playwright.sync_api import sync_playwright, expect
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://127.0.0.1:8765').rstrip('/')
-out = Path('.cache/editor-browser'); out.mkdir(parents=True, exist_ok=True)
+out = Path(os.environ.get('MOINPDF_BROWSER_OUTPUT','.cache/editor-browser')); out.mkdir(parents=True, exist_ok=True)
 corpus = Path('.cache/editor-corpus')
 if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
     log = open(out / 'quality-http.log', 'w')
@@ -130,9 +130,9 @@ def controls(page, name):
 
 def public_edit(page, name, path, anchor, replacement, scan=False):
     open_editor(page, path)
-    target = page.get_by_role('button', name=re.compile(r'^Text bearbeiten: ' + anchor)).first
+    target = page.get_by_role('button', name=re.compile(r'^(?:Text bearbeiten: |Tabellenzelle \d+, \d+: )' + anchor)).first
     expect(target).to_be_visible(timeout=180000)
-    old_text = target.get_attribute('aria-label').removeprefix('Text bearbeiten: ')
+    old_text = re.sub(r'^(?:Text bearbeiten: |Tabellenzelle \d+, \d+: )','',target.get_attribute('aria-label'))
     target.click()
     field = page.get_by_label('Text direkt in der PDF bearbeiten', exact=True)
     expect(field).to_be_visible()
@@ -166,19 +166,25 @@ def public_edit(page, name, path, anchor, replacement, scan=False):
             # brochure. Count exact Unicode tokens, not substring rectangles.
             assert sum(w[4] == replacement for w in after[0].get_text('words')) == 1
     open_editor(page, exported)
-    expect(page.get_by_role('button', name='Text bearbeiten: ' + replacement, exact=True)).to_be_visible(timeout=180000)
+    expect(page.get_by_role('button', name=re.compile(r'^(?:Text bearbeiten: |Tabellenzelle \d+, \d+: )'+re.escape(replacement)+r'$'))).to_be_visible(timeout=180000)
     return {'export': str(exported), 'original_target': old_text, 'scope': 'local edit, export, independent readback and reopen'}
 
 def form_guard(page, name):
     open_editor(page, corpus / 'acroform.pdf')
     page.get_by_role('button', name='Neuer Text', exact=True).click()
     page.get_by_label('Text direkt in der PDF bearbeiten', exact=True).fill('FORM')
+    with pymupdf.open(corpus / 'acroform.pdf') as original:
+        widget=next(original[0].widgets()).rect
+    for label,value in [('Objekt links',widget.x0*25.4/72),('Objekt oben',widget.y0*25.4/72)]:
+        field=page.get_by_label(label,exact=True);field.fill(str(value));field.press('Tab')
     page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True).click()
-    expect(page.locator('.error-box')).to_contain_text('Formularfelder', timeout=120000)
+    expect(page.locator('.error-box')).to_contain_text('Formular', timeout=120000)
     assert page.get_by_role('link', name='PDF herunterladen', exact=True).count() == 0
-    return {'scope': 'explicit form-preservation refusal, no unapproved flattening'}
+    return {'scope': 'explicit widget-collision refusal, no unapproved flattening'}
 
 def execute(browser, name, width, callback):
+    selected=os.environ.get('MOINPDF_BROWSER_CASES','').split(',')
+    if selected!=[''] and name not in selected:return
     context = browser.new_context(viewport={'width': width, 'height': 1000}, accept_downloads=True, reduced_motion='reduce')
     page = context.new_page(); page.set_default_timeout(45000)
     # Keep bounded pixel evidence for failed appearance checks without adding

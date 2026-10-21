@@ -1,3 +1,4 @@
+import {editorNativeAdapter} from './editor-native-adapter.mjs';
 import { gzipSync } from 'node:zlib';
 import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -12,16 +13,17 @@ const { createCanvas, DOMMatrix, Path2D, ImageData, GlobalFonts } = pdfRequire('
 Object.assign(globalThis, { DOMMatrix, Path2D, ImageData, document: { createElement(tag) { assert.equal(tag, 'canvas'); return createCanvas(1, 1); } } });
 const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs'), assets = dirname(require.resolve('pdfjs-dist/package.json'));
 const folder = '.cache/editor-typography'; await mkdir(folder, { recursive: true });
-for (const name of ['editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-analysis','editor-text-layer','editor-fonts','editor-font-cmap','editor-font-catalog','editor-native','native-pdf-core']) {
-  const code = ts.transpileModule(await readFile(`lib/${name}.ts`, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText.replace(/(['"])\.\/([a-z-]+)\1/g, (_, q, n) => `${q}./${n}.mjs${q}`);
+for (const name of ['editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-analysis','editor-text-layer','editor-fonts','editor-font-outline','editor-font-cmap','editor-font-catalog','editor-native','editor-repair','pdf-security','native-pdf-core','nested-native']) {
+  const code = ts.transpileModule(await readFile(`lib/${name}.ts`, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText.replaceAll("'/vendor/pdf/standard_fonts/'", "'public/vendor/pdf/standard_fonts/'").replace(/(['"])\.\/([a-z-]+)\1/g, (_, q, n) => `${q}./${n}.mjs${q}`);
   await writeFile(`${folder}/${name}.mjs`, code);
 }
-await writeFile(folder + '/native-pdf.mjs', `import {readFile} from 'node:fs/promises';import {createNativeEngine,removeNativeRegions} from './native-pdf-core.mjs';let api;export const removeRegions=async(bytes,removals)=>removeNativeRegions(await(api ||= readFile('public/vendor/pdfium/pdfium.wasm').then(b=>createNativeEngine(new Uint8Array(b)))),bytes,removals);`);
+await writeFile(folder + '/native-pdf.mjs', editorNativeAdapter);
 const { readTextTargets, editorParagraphs, editorMarkSignature, editorMarkChanged, editorTextCollision, wrapEditorText } = await import('../.cache/editor-typography/editor-model.mjs');
 const { resolveEditorFont, originalEditorFont } = await import('../.cache/editor-typography/editor-fonts.mjs');
+const { prepareEditorRuns } = await import('../.cache/editor-typography/editor-rich-layout.mjs');
 const { drawEditorText, layoutEditorText } = await import('../.cache/editor-typography/editor-text-layer.mjs');
 const { editorFontCatalog, matchingEditorFont } = await import('../.cache/editor-typography/editor-font-catalog.mjs');
-const { sfntTables } = await import('../.cache/editor-typography/editor-font-cmap.mjs');
+const { sfntTables, unicodeFont } = await import('../.cache/editor-typography/editor-font-cmap.mjs');
 const { runStudioJob, countEdits } = await import('../.cache/editor-typography/studio-engine.mjs');
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async input => typeof input === 'string' && input.startsWith('/vendor/') ? new Response(process.env.MOINPDF_TEST_COMPRESSED_FONTS ? gzipSync(await readFile('public' + input)) : await readFile('public' + input)) : originalFetch(input);
@@ -57,12 +59,27 @@ try {
     assert.equal(targets[0].fontName,catalogueNames[index],'The actual selected font is embedded in the output');
   }
   assert.throws(()=>sfntTables(new Uint8Array(8)),/Schrift/);
+  const wrapped=Buffer.concat([Buffer.alloc(17,42),Buffer.from(bytes),Buffer.alloc(19,43)]);
+  const immutable=Buffer.from(wrapped), fontView=wrapped.subarray(17,17+bytes.length);
+  const glyph=fontkit.create(fontView).glyphForCodePoint(65).id;
+  const remapped=unicodeFont(fontView,new Map([[65,glyph]]));
+  assert.deepEqual(wrapped,immutable,'Remapping a Buffer view never changes the source font or surrounding bytes');
+  assert.equal(fontkit.create(remapped).glyphForCodePoint(65).id,glyph);
   for (const subset of [false,true]) {
     const doc=await PDFDocument.create();doc.registerFontkit(fontkit);const font=await doc.embedFont(bytes,{subset});
     const page=doc.addPage([500,700]);page.drawText('Original Größe ÄÖÜ 2026',{font,size:13.5,x:45,y:600,color:rgb(.1,.2,.7)});page.drawText('Footer remains vector',{font,size:10,x:45,y:40});page.drawRectangle({x:350,y:300,width:60,height:90,color:rgb(.2,.8,.3)});
     const s=await source(await doc.save(),`fonts-${subset}.pdf`), targets=await readTextTargets(s,pageOf(s)), t=targets.targets.find(t=>t.text.startsWith('Original'));
     assert(t.originalFontId,'Embedded fonts are reusable');assert.equal(t.fontName,'LiberationSans-BoldItalic');assert.equal(t.fontSize,13.5);assert(t.bold && t.italic);assert.equal(t.color,'#1a33b2');
     const mark=markFor(t), resolution=await resolveEditorFont(mark,s); assert(resolution.font.original && !resolution.substituted); assert(resolution.font.covers(t.text),'Spaces and Unicode in a subset are remapped correctly');
+    if(subset){
+      const mixedMark={...mark,text:'Original Ж',w:.8,h:.15};
+      const prepared=await prepareEditorRuns(mixedMark,s);
+      assert(prepared.some(r=>r.resolution.font.original));
+      assert(prepared.some(r=>r.resolution.substituted));
+      assert.equal(prepared.map(r=>mixedMark.text.slice(r.start,r.end)).join(''),mixedMark.text);
+      const mixedDoc=await PDFDocument.create();await drawEditorText(mixedDoc,mixedDoc.addPage([500,700]),mixedMark,500,700,s);
+      const mixedSource=await source(await mixedDoc.save());assert.equal((await contents(mixedSource)).map(t=>t.str).join(''),mixedMark.text,'A plain mark keeps covered original glyphs and exports missing characters with fallback');
+    }
     assert(Math.abs(resolution.font.measure(t.text,t.fontSize)-font.widthOfTextAtSize(t.text,t.fontSize))<.001);
     await writeFile(`${folder}/reused-${subset}.ttf`,resolution.font.bytes);assert(GlobalFonts.register(resolution.font.bytes,resolution.font.cssFamily));
     const reopened=await source(s.bytes,`reopened-${subset}.pdf`); const again=(await readTextTargets(reopened,pageOf(reopened))).targets.find(t=>t.text.startsWith('Original'));assert.equal(again.originalFontId,t.originalFontId,'Original font identity survives reopening a project');

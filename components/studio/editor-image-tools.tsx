@@ -39,7 +39,13 @@ export function EditorImageTools({
     try {
       const url =
         mark.image ||
-        (await editorImagePreview(source, page, mark.nativeImage!.index, ctrl.signal));
+        (await editorImagePreview(
+          source,
+          page,
+          mark.nativeImage!.index,
+          ctrl.signal,
+          mark.nativeImage!.path,
+        ));
       if (!ctrl.signal.aborted) setPreview(url);
     } catch (e) {
       if (!ctrl.signal.aborted)

@@ -16,7 +16,7 @@ import pymupdf
 from playwright.sync_api import sync_playwright, expect
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://127.0.0.1:8765').rstrip('/')
-out = Path('.cache/editor-browser'); out.mkdir(parents=True, exist_ok=True)
+out = Path(os.environ.get('MOINPDF_BROWSER_OUTPUT','.cache/editor-browser')); out.mkdir(parents=True, exist_ok=True)
 corpus = Path('.cache/editor-corpus')
 if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
     log = open(out / 'workflow-http.log', 'w')
@@ -55,6 +55,7 @@ def open_editor(page,path=fixture):
     page.locator('input[type=file]').first.set_input_files(str(path.resolve()))
     page.locator('.chooser-tool').filter(has=page.get_by_text('PDF bearbeiten',exact=True)).click()
     expect(page.locator('.editor-sheet > img')).to_be_visible(timeout=120000)
+    page.get_by_text('Präzision und weitere Optionen',exact=True).click()
 
 def pick(page,text):
     page.get_by_role('button',name='Text bearbeiten: '+text,exact=True).click()
@@ -150,7 +151,7 @@ def flow(page,name):
 
 def images(page,name):
     open_editor(page)
-    page.get_by_role('button',name='Bilder und Logos',exact=True).click()
+    expect(page.get_by_role('button',name='Bilder und Logos',exact=True)).to_have_attribute('aria-pressed','true')
     target=page.get_by_role('button',name=re.compile('^Vorhandenes Bild auswählen '));expect(target).to_have_count(1,timeout=120000);target.click()
     geometry(page,'Objekt links',90)
     page.get_by_role('button',name='Bildinhalt zum Zuschneiden anzeigen',exact=True).click()
@@ -185,6 +186,8 @@ def french(page,name):
     return {'scope':'pinned public French scan, local model, original/processed OCR variants, accent correction and independent Unicode export'}
 
 def execute(browser,name,width,callback):
+    selected=os.environ.get('MOINPDF_BROWSER_CASES','').split(',')
+    if selected!=[''] and name not in selected:return
     context=browser.new_context(viewport={'width':width,'height':1000},accept_downloads=True,reduced_motion='reduce',has_touch=width<600)
     page=context.new_page();page.set_default_timeout(45000);errors=[];blocked=[]
     page.on('pageerror',lambda e:errors.append(str(e)))

@@ -8,6 +8,7 @@ self.onmessage = async ({ data }) => {
       createNativeEngine,
       groupNativeObjects,
       inspectNativeObjects,
+      inspectNativeObjectTree,
       readNativeImage,
       removeNativeRegions,
       replaceNativeParagraph,
@@ -17,20 +18,22 @@ self.onmessage = async ({ data }) => {
     const api = await createNativeEngine(new Uint8Array(await response.arrayBuffer()));
     const value =
       data.action === 'image'
-        ? readNativeImage(api, data.bytes, data.page, data.index)
-        : data.action === 'group'
-          ? groupNativeObjects(api, data.bytes, data.page, data.indices, data.duplicate)
-          : data.action === 'inspect'
-            ? inspectNativeObjects(api, data.bytes, data.page, data.path || [])
-            : data.action === 'edit'
-              ? await (
-                  await import('../lib/nested-native')
-                ).editNativeDocument(api, data.bytes, data.page, data.changes, data.path || [])
-              : data.action === 'redact'
-                ? removeNativeRegions(api, data.bytes, data.removals)
-                : data.action === 'paragraph'
-                  ? await replaceNativeParagraph(api, data.bytes, data.page, data.settings)
-                  : null;
+        ? readNativeImage(api, data.bytes, data.page, data.index, data.path || [], data.region)
+        : data.action === 'tree'
+          ? inspectNativeObjectTree(api, data.bytes, data.page)
+          : data.action === 'group'
+            ? groupNativeObjects(api, data.bytes, data.page, data.indices, data.duplicate)
+            : data.action === 'inspect'
+              ? inspectNativeObjects(api, data.bytes, data.page, data.path || [])
+              : data.action === 'edit'
+                ? await (
+                    await import('../lib/nested-native')
+                  ).editNativeDocument(api, data.bytes, data.page, data.changes, data.path || [])
+                : data.action === 'redact'
+                  ? removeNativeRegions(api, data.bytes, data.removals)
+                  : data.action === 'paragraph'
+                    ? await replaceNativeParagraph(api, data.bytes, data.page, data.settings)
+                    : null;
     if (value === null) throw new Error('Unbekannter Auftrag.');
     if (value instanceof Uint8Array) self.postMessage({ value }, { transfer: [value.buffer] });
     else if (value && typeof value === 'object' && 'bytes' in value)

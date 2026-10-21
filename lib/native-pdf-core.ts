@@ -14,12 +14,25 @@ export type NativeRect = { x: number; y: number; w: number; h: number };
 export type NativeMatrix = [number, number, number, number, number, number];
 export type NativeObject = NativeRect & {
   index: number;
+  path?: number[];
+  textMode?: number;
+  clipped?: boolean;
+  transparent?: boolean;
   type: 'text' | 'image' | 'path' | 'group' | 'other';
   text: string;
   fontSize: number;
   children?: number;
   shaped?: boolean;
   imageCorners?: [number, number][];
+  /** Segments use normalized display coordinates; stroke width uses points. */
+  vector?: Omit<import('./editor-tables').TablePath, 'index' | 'root' | 'clipped' | 'transparent'>;
+};
+export type NativeImagePatch = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rgba: Uint8Array;
 };
 export type NativeChange = {
   index: number;
@@ -34,6 +47,7 @@ export type NativeChange = {
   rotation?: number;
   image?: { width: number; height: number; rgba: Uint8Array };
   imageCrop?: NativeRect;
+  imagePatches?: NativeImagePatch[];
   /** Internal transform in the containing Form's coordinate system. */
   transform?: NativeMatrix;
 };
@@ -378,6 +392,86 @@ function combinedBounds(
     top: Math.max(...rects.map((r) => r.top)),
   };
 }
+function inspectNativeVector(
+  ctx: NativeContext,
+  page: number,
+  object: number,
+): NativeObject['vector'] {
+  const { api } = ctx,
+    p = ctx.alloc(80);
+  try {
+    const count = api.FPDFPath_CountSegments(object),
+      dashCount = api.FPDFPageObj_GetDashCount(object);
+    if (
+      count < 2 ||
+      count > 4000 ||
+      dashCount < 0 ||
+      dashCount > 32 ||
+      !api.FPDFPageObj_GetMatrix(object, p) ||
+      !api.FPDFPageObj_GetStrokeWidth(object, p + 24) ||
+      !api.FPDFPageObj_GetStrokeColor(object, p + 28, p + 32, p + 36, p + 40) ||
+      !api.FPDFPath_GetDrawMode(object, p + 44, p + 48)
+    )
+      return;
+    const matrix = [0, 4, 8, 12, 16, 20].map((n) =>
+      api.pdfium.getValue(p + n, 'float'),
+    ) as NativeMatrix;
+    const [a, b, c, d, e, f] = matrix,
+      sx = Math.hypot(a, b),
+      sy = Math.hypot(c, d);
+    if (
+      !matrix.every(Number.isFinite) ||
+      sx <= 0 ||
+      Math.abs(sx - sy) > 1e-5 ||
+      Math.abs(a * c + b * d) > 1e-5 ||
+      !api.pdfium.getValue(p + 48, 'i32')
+    )
+      return;
+    const segments: NonNullable<NativeObject['vector']>['segments'][number][] = [];
+    let previous: [number, number] | undefined, start: [number, number] | undefined;
+    for (let i = 0; i < count; i++) {
+      const segment = api.FPDFPath_GetPathSegment(object, i),
+        type = api.FPDFPathSegment_GetType(segment);
+      if (![0, 2].includes(type) || !api.FPDFPathSegment_GetPoint(segment, p + 52, p + 56)) return;
+      const x = api.pdfium.getValue(p + 52, 'float'),
+        y = api.pdfium.getValue(p + 56, 'float');
+      const point = toView(ctx, page, a * x + c * y + e, b * x + d * y + f) as [number, number];
+      if (type === 2) {
+        start = point;
+      } else if (previous)
+        segments.push({ x1: previous[0], y1: previous[1], x2: point[0], y2: point[1] });
+      else return;
+      previous = point;
+      if (
+        api.FPDFPathSegment_GetClose(segment) &&
+        start &&
+        (point[0] !== start[0] || point[1] !== start[1])
+      ) {
+        segments.push({ x1: point[0], y1: point[1], x2: start[0], y2: start[1] });
+        previous = start;
+      }
+    }
+    const rgba = [28, 32, 36, 40].map((n) => api.pdfium.getValue(p + n, 'i32')),
+      cap = api.FPDFPageObj_GetLineCap(object);
+    if (![0, 1, 2].includes(cap) || rgba.some((n) => n < 0 || n > 255)) return;
+    return {
+      segments,
+      color:
+        '#' +
+        rgba
+          .slice(0, 3)
+          .map((n) => n.toString(16).padStart(2, '0'))
+          .join(''),
+      width: api.pdfium.getValue(p + 24, 'float') * sx,
+      opacity: rgba[3] / 255,
+      fill: !!api.pdfium.getValue(p + 44, 'i32'),
+      dash: Array(dashCount).fill(1),
+      lineCap: cap === 0 ? 'butt' : cap === 1 ? 'round' : 'square',
+    };
+  } finally {
+    ctx.free(p);
+  }
+}
 export function inspectNativeObjects(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
@@ -429,7 +523,12 @@ export function inspectNativeObjects(
           const ptr = ctx.alloc(24);
           try {
             if (api.FPDFPageObj_GetMatrix(obj, ptr)) {
-              const m = [0, 4, 8, 12, 16, 20].map((n) => api.pdfium.getValue(ptr + n, 'float'));
+              const m = multiply(
+                scope.matrix,
+                [0, 4, 8, 12, 16, 20].map((n) =>
+                  api.pdfium.getValue(ptr + n, 'float'),
+                ) as NativeMatrix,
+              );
               imageCorners = [
                 [0, 1],
                 [1, 1],
@@ -448,6 +547,12 @@ export function inspectNativeObjects(
         }
         objects.push({
           index: i,
+          path: [...path],
+          ...(type === 1 ? { textMode: api.FPDFTextObj_GetTextRenderMode(obj) } : {}),
+          clipped:
+            !!api.FPDFPageObj_GetClipPath(obj) &&
+            api.FPDFClipPath_CountPaths(api.FPDFPageObj_GetClipPath(obj)) >= 0,
+          transparent: !!api.FPDFPageObj_HasTransparency(obj),
           type:
             type === 1
               ? 'text'
@@ -461,6 +566,7 @@ export function inspectNativeObjects(
           text,
           fontSize,
           ...(imageCorners ? { imageCorners } : {}),
+          ...(type === 2 && !path.length ? { vector: inspectNativeVector(ctx, page, obj) } : {}),
           ...(type === 5 ? { children: api.FPDFFormObj_CountObjects(obj) } : {}),
           ...(members.has(i) ? { shaped: true } : {}),
           x: r.x,
@@ -476,6 +582,32 @@ export function inspectNativeObjects(
       api.FPDF_ClosePage(page);
     }
   });
+}
+/** Bounded instance tree. Paths refer to original container indices, never to
+ * shared resource names, so reused Forms remain independently selectable. */
+export function inspectNativeObjectTree(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+) {
+  const result: NativeObject[] = [];
+  let containers = 0;
+  const visit = (path: number[], clipped = false, transparent = false) => {
+    if (++containers > 128 || path.length > 16)
+      throw new Error('Die Seite enthält zu viele verschachtelte Objektgruppen.');
+    for (const object of inspectNativeObjects(api, bytes, index, path)) {
+      const entry = {
+        ...object,
+        clipped: clipped || object.clipped,
+        transparent: transparent || object.transparent,
+      };
+      result.push(entry);
+      if (result.length > 10000) throw new Error('Die Seite enthält mehr als 10.000 Objekte.');
+      if (entry.type === 'group') visit([...path, entry.index], entry.clipped, entry.transparent);
+    }
+  };
+  visit([]);
+  return result;
 }
 function changeMatrix(
   ctx: NativeContext,
@@ -524,64 +656,257 @@ function changeMatrix(
     center[1] - b * center[0] - d * center[1] + offset[1] - origin[1],
   ] as NativeMatrix;
 }
+const maxNativeSourcePixels = 16000000;
+const maxNativeTilePixels = 4000000;
+type NativeBitmap = {
+  bitmap: number;
+  width: number;
+  height: number;
+  format: number;
+  stride: number;
+  buffer: number;
+  channels: number;
+};
+
+/** The full decoded bitmap is bounded in WASM. Only the requested tile leaves it. */
+function withNativeImage<T>(
+  ctx: NativeContext,
+  page: number,
+  object: number,
+  job: (image: NativeBitmap) => T,
+) {
+  const { api } = ctx,
+    metadata = ctx.alloc(40),
+    matrix = ctx.alloc(24);
+  let bitmap = 0;
+  let original: NativeMatrix | undefined;
+  try {
+    if (api.FPDFPageObj_GetType(object) !== 3) throw new Error('Kein einzelnes Bildobjekt.');
+    if (!api.FPDFImageObj_GetImageMetadata(object, page, metadata))
+      throw new Error('Die Bilddaten konnten nicht gelesen werden.');
+    const inputWidth = api.pdfium.getValue(metadata, 'i32'),
+      inputHeight = api.pdfium.getValue(metadata + 4, 'i32');
+    if (
+      !Number.isInteger(inputWidth) ||
+      !Number.isInteger(inputHeight) ||
+      inputWidth < 1 ||
+      inputHeight < 1 ||
+      inputWidth * inputHeight > maxNativeSourcePixels
+    )
+      throw new Error('Das Quellbild darf höchstens 16 Megapixel haben.');
+    if (!api.FPDFPageObj_GetMatrix(object, matrix))
+      throw new Error('Die Bildausrichtung konnte nicht gelesen werden.');
+    original = [0, 4, 8, 12, 16, 20].map((n) =>
+      api.pdfium.getValue(matrix + n, 'float'),
+    ) as NativeMatrix;
+    if (!api.FPDFImageObj_SetMatrix(object, inputWidth, 0, 0, inputHeight, 0, 0))
+      throw new Error('Die Bildausrichtung konnte nicht gelesen werden.');
+    bitmap = api.FPDFImageObj_GetRenderedBitmap(ctx.doc, page, object);
+    if (!bitmap) throw new Error('Das Bild konnte nicht lokal dekodiert werden.');
+    if (!api.FPDFImageObj_SetMatrix(object, ...original))
+      throw new Error('Die Bildausrichtung konnte nicht wiederhergestellt werden.');
+    const width = api.FPDFBitmap_GetWidth(bitmap),
+      height = api.FPDFBitmap_GetHeight(bitmap),
+      format = api.FPDFBitmap_GetFormat(bitmap),
+      stride = api.FPDFBitmap_GetStride(bitmap),
+      buffer = api.FPDFBitmap_GetBuffer(bitmap),
+      channels = format === 1 ? 1 : format === 2 ? 3 : 4;
+    if (
+      width !== inputWidth ||
+      height !== inputHeight ||
+      ![1, 2, 3, 4].includes(format) ||
+      stride < width * channels ||
+      !buffer ||
+      buffer + stride * height > heap(api).length
+    )
+      throw new Error('Das Bildformat ist nicht zum Zuschneiden geeignet.');
+    return job({ bitmap, width, height, format, stride, buffer, channels });
+  } finally {
+    if (original) api.FPDFImageObj_SetMatrix(object, ...original);
+    if (bitmap) api.FPDFBitmap_Destroy(bitmap);
+    ctx.free(matrix);
+    ctx.free(metadata);
+  }
+}
+
 export function readNativeImage(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
   index: number,
   objectIndex: number,
+  path: number[] = [],
+  region?: NativeRect,
 ) {
   return open(api, bytes, (ctx) => {
     const page = pageHandle(ctx, index);
-    let bitmap = 0;
-    const metadata = ctx.alloc(40);
     try {
-      if (
-        !Number.isInteger(objectIndex) ||
-        objectIndex < 0 ||
-        objectIndex >= api.FPDFPage_CountObjects(page)
-      )
+      const scope = formScope(ctx, page, path),
+        count = path.length
+          ? api.FPDFFormObj_CountObjects(scope.container)
+          : api.FPDFPage_CountObjects(page);
+      if (!Number.isInteger(objectIndex) || objectIndex < 0 || objectIndex >= count)
         throw new Error('Ungültiges Bildobjekt.');
-      const object = api.FPDFPage_GetObject(page, objectIndex);
-      if (api.FPDFPageObj_GetType(object) !== 3) throw new Error('Kein einzelnes Bildobjekt.');
-      if (!api.FPDFImageObj_GetImageMetadata(object, page, metadata))
-        throw new Error('Die Bilddaten konnten nicht gelesen werden.');
-      const inputWidth = api.pdfium.getValue(metadata, 'i32'),
-        inputHeight = api.pdfium.getValue(metadata + 4, 'i32');
-      if (inputWidth < 1 || inputHeight < 1 || inputWidth * inputHeight > 4000000)
-        throw new Error('Das Bild darf zum Zuschneiden höchstens 4 Megapixel haben.');
-      if (!api.FPDFImageObj_SetMatrix(object, inputWidth, 0, 0, inputHeight, 0, 0))
-        throw new Error('Die Bildausrichtung konnte nicht gelesen werden.');
-      // A rendered object includes its soft mask and colour conversion. It does
-      // not capture neighbouring page text or backgrounds as a screenshot would.
-      bitmap = api.FPDFImageObj_GetRenderedBitmap(ctx.doc, page, object);
-      if (!bitmap) throw new Error('Das Bild konnte nicht lokal dekodiert werden.');
-      const width = api.FPDFBitmap_GetWidth(bitmap),
-        height = api.FPDFBitmap_GetHeight(bitmap),
-        format = api.FPDFBitmap_GetFormat(bitmap),
-        stride = api.FPDFBitmap_GetStride(bitmap),
-        buffer = api.FPDFBitmap_GetBuffer(bitmap);
-      if (width * height > 4000000 || ![1, 2, 3, 4].includes(format))
-        throw new Error('Das Bildformat ist nicht zum Zuschneiden geeignet.');
-      const rgba = new Uint8Array(width * height * 4),
-        data = heap(api),
-        channels = format === 1 ? 1 : format === 2 ? 3 : 4;
-      for (let y = 0; y < height; y++)
-        for (let x = 0; x < width; x++) {
-          const from = buffer + y * stride + x * channels,
-            to = (y * width + x) * 4;
-          rgba[to] = data[from + (channels === 1 ? 0 : 2)];
-          rgba[to + 1] = data[from + (channels === 1 ? 0 : 1)];
-          rgba[to + 2] = data[from];
-          rgba[to + 3] = format === 4 ? data[from + 3] : 255;
-        }
-      return { width, height, rgba };
+      const object = path.length
+        ? api.FPDFFormObj_GetObject(scope.container, objectIndex)
+        : api.FPDFPage_GetObject(page, objectIndex);
+      return withNativeImage(ctx, page, object, (image) => {
+        const r = region || { x: 0, y: 0, w: 1, h: 1 };
+        if (
+          ![r.x, r.y, r.w, r.h].every(Number.isFinite) ||
+          r.x < 0 ||
+          r.y < 0 ||
+          r.w <= 0 ||
+          r.h <= 0 ||
+          r.x + r.w > 1 ||
+          r.y + r.h > 1
+        )
+          throw new Error('Ungültiger Bildausschnitt.');
+        const stable = (value: number) =>
+          Math.abs(value - Math.round(value)) < 1e-7 ? Math.round(value) : value;
+        const x = Math.floor(stable(r.x * image.width)),
+          y = Math.floor(stable(r.y * image.height)),
+          width = Math.min(image.width, Math.ceil(stable((r.x + r.w) * image.width))) - x,
+          height = Math.min(image.height, Math.ceil(stable((r.y + r.h) * image.height))) - y;
+        if (width * height > maxNativeTilePixels)
+          throw new Error('Der Bildausschnitt darf höchstens 4 Megapixel haben.');
+        const rgba = new Uint8Array(width * height * 4),
+          data = heap(api);
+        for (let row = 0; row < height; row++)
+          for (let col = 0; col < width; col++) {
+            const from = image.buffer + (y + row) * image.stride + (x + col) * image.channels,
+              to = (row * width + col) * 4;
+            rgba[to] = data[from + (image.channels === 1 ? 0 : 2)];
+            rgba[to + 1] = data[from + (image.channels === 1 ? 0 : 1)];
+            rgba[to + 2] = data[from];
+            rgba[to + 3] = image.format === 4 ? data[from + 3] : 255;
+          }
+        return { x, y, width, height, sourceWidth: image.width, sourceHeight: image.height, rgba };
+      });
     } finally {
-      if (bitmap) api.FPDFBitmap_Destroy(bitmap);
-      ctx.free(metadata);
       api.FPDF_ClosePage(page);
     }
   });
 }
+
+function requirePatchableImageState(ctx: NativeContext, object: number) {
+  const { api } = ctx;
+  if (api.FPDFPageObj_HasTransparency(object))
+    throw new Error('Transparente Bilder werden nicht als Scan-Ausschnitt bearbeitet.');
+  const clip = api.FPDFPageObj_GetClipPath(object);
+  // PDFium returns -1 for no clip; zero can still represent text-only clipping.
+  if (clip && api.FPDFClipPath_CountPaths(clip) >= 0)
+    throw new Error('Beschnittene Bilder werden nicht als Scan-Ausschnitt bearbeitet.');
+}
+
+/** Check before any PDFium serialization: generating content can lose text-only clips. */
+export function validateNativeImagePatchTargets(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+  changes: NativeChange[],
+  path: number[] = [],
+) {
+  if (!changes.some((c) => c.imagePatches)) return;
+  return open(api, bytes, (ctx) => {
+    const page = pageHandle(ctx, index);
+    try {
+      for (let depth = 1; depth <= path.length; depth++)
+        requirePatchableImageState(ctx, formScope(ctx, page, path.slice(0, depth)).container);
+      const scope = formScope(ctx, page, path),
+        count = path.length
+          ? api.FPDFFormObj_CountObjects(scope.container)
+          : api.FPDFPage_CountObjects(page);
+      for (const change of changes.filter((c) => c.imagePatches)) {
+        if (!Number.isInteger(change.index) || change.index < 0 || change.index >= count)
+          throw new Error('Ungültiges Bildobjekt.');
+        const object = path.length
+          ? api.FPDFFormObj_GetObject(scope.container, change.index)
+          : api.FPDFPage_GetObject(page, change.index);
+        if (api.FPDFPageObj_GetType(object) !== 3) throw new Error('Kein einzelnes Bildobjekt.');
+        requirePatchableImageState(ctx, object);
+      }
+    } finally {
+      api.FPDF_ClosePage(page);
+    }
+  });
+}
+
+/** Opaque source scans only; application-level geometry/render checks remain required. */
+function patchNativeImage(
+  ctx: NativeContext,
+  page: number,
+  object: number,
+  patches: NativeImagePatch[],
+) {
+  const { api } = ctx;
+  if (
+    !Array.isArray(patches) ||
+    patches.length < 1 ||
+    patches.length > 200 ||
+    patches.reduce((sum, p) => sum + p.width * p.height, 0) > maxNativeTilePixels
+  )
+    throw new Error('Bitte höchstens 200 Bildausschnitte mit zusammen 4 Megapixeln verwenden.');
+  requirePatchableImageState(ctx, object);
+  withNativeImage(ctx, page, object, (image) => {
+    for (const p of patches) {
+      if (
+        ![p.x, p.y, p.width, p.height].every(Number.isInteger) ||
+        p.x < 0 ||
+        p.y < 0 ||
+        p.width < 1 ||
+        p.height < 1 ||
+        p.x + p.width > image.width ||
+        p.y + p.height > image.height ||
+        !(p.rgba instanceof Uint8Array) ||
+        p.rgba.length !== p.width * p.height * 4
+      )
+        throw new Error('Ungültiger Bildausschnitt.');
+      for (let i = 3; i < p.rgba.length; i += 4)
+        if (p.rgba[i] !== 255) throw new Error('Scan-Ausschnitte müssen undurchsichtig sein.');
+    }
+    // PDFium owns this BGRA buffer. Avoid a second full-size JavaScript pixel array.
+    const output = api.FPDFBitmap_Create(image.width, image.height, 1);
+    if (!output) throw new Error('Nicht genügend Arbeitsspeicher für das Scanbild.');
+    try {
+      const buffer = api.FPDFBitmap_GetBuffer(output),
+        stride = api.FPDFBitmap_GetStride(output),
+        data = heap(api);
+      if (
+        api.FPDFBitmap_GetFormat(output) !== 4 ||
+        !buffer ||
+        stride < image.width * 4 ||
+        buffer + stride * image.height > data.length
+      )
+        throw new Error('Das Scanbild konnte nicht aufgebaut werden.');
+      for (let y = 0; y < image.height; y++)
+        for (let x = 0; x < image.width; x++) {
+          const from = image.buffer + y * image.stride + x * image.channels,
+            to = buffer + y * stride + x * 4;
+          if (image.format === 4 && data[from + 3] !== 255)
+            throw new Error('Transparente Bildpixel werden nicht als Scan-Ausschnitt bearbeitet.');
+          data[to] = data[from];
+          data[to + 1] = data[from + (image.channels === 1 ? 0 : 1)];
+          data[to + 2] = data[from + (image.channels === 1 ? 0 : 2)];
+          data[to + 3] = 255;
+        }
+      for (const p of patches)
+        for (let y = 0; y < p.height; y++)
+          for (let x = 0; x < p.width; x++) {
+            const from = (y * p.width + x) * 4,
+              to = buffer + (p.y + y) * stride + (p.x + x) * 4;
+            data[to] = p.rgba[from + 2];
+            data[to + 1] = p.rgba[from + 1];
+            data[to + 2] = p.rgba[from];
+            data[to + 3] = 255;
+          }
+      if (!api.FPDFImageObj_SetBitmap(0, 0, object, output))
+        throw new Error('Die Scan-Ausschnitte konnten nicht übernommen werden.');
+    } finally {
+      api.FPDFBitmap_Destroy(output);
+    }
+  });
+}
+
 export function editNativeObjects(
   api: WrappedPdfiumModule,
   bytes: Uint8Array,
@@ -627,6 +952,14 @@ export function editNativeObjects(
           throw new Error('Doppeltes oder ungültiges Seitenobjekt.');
         seen.add(change.index);
         const obj = handles[change.index];
+        if (
+          change.imagePatches &&
+          (change.image || change.imageCrop || change.remove || change.text !== undefined)
+        )
+          throw new Error(
+            'Bildausschnitte dürfen nicht mit Bildersatz, Zuschnitt oder Löschung kombiniert werden.',
+          );
+        if (change.imagePatches) patchNativeImage(ctx, page, obj, change.imagePatches);
         if (change.remove) {
           if (!api.FPDFPage_RemoveObject(page, obj))
             throw new Error('Das Objekt konnte nicht entfernt werden.');

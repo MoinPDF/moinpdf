@@ -16,7 +16,7 @@ import pymupdf
 from playwright.sync_api import sync_playwright, expect
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://127.0.0.1:8765').rstrip('/')
-out = Path('.cache/editor-browser');out.mkdir(parents=True, exist_ok=True)
+out = Path(os.environ.get('MOINPDF_BROWSER_OUTPUT','.cache/editor-browser'));out.mkdir(parents=True, exist_ok=True)
 if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
     server_log=open(out/'http.log','w')
     server=subprocess.Popen(['python','tests/text-browser-server.py'],stdout=server_log,stderr=subprocess.STDOUT)

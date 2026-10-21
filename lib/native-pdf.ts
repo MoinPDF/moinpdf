@@ -56,12 +56,25 @@ export const inspectObjects = (
   signal?: AbortSignal,
   path: number[] = [],
 ) => nativeJob<NativeObject[]>(bytes, { action: 'inspect', page, path }, signal);
-export const readImage = (bytes: Uint8Array, page: number, index: number, signal?: AbortSignal) =>
-  nativeJob<{ width: number; height: number; rgba: Uint8Array }>(
-    bytes,
-    { action: 'image', page, index },
-    signal,
-  );
+export const inspectObjectTree = (bytes: Uint8Array, page: number, signal?: AbortSignal) =>
+  nativeJob<NativeObject[]>(bytes, { action: 'tree', page }, signal);
+export const readImage = (
+  bytes: Uint8Array,
+  page: number,
+  index: number,
+  signal?: AbortSignal,
+  path: number[] = [],
+  region?: { x: number; y: number; w: number; h: number },
+) =>
+  nativeJob<{
+    x: number;
+    y: number;
+    sourceWidth: number;
+    sourceHeight: number;
+    width: number;
+    height: number;
+    rgba: Uint8Array;
+  }>(bytes, { action: 'image', page, index, path, region }, signal);
 export const editObjects = (
   bytes: Uint8Array,
   page: number,

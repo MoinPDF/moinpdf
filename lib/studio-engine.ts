@@ -80,10 +80,21 @@ export type Mark = Rect & {
   customFont?: { name: string; data: string; bold: boolean; italic: boolean };
   fontScale?: number;
   image?: string;
-  nativeImage?: { index: number; rect: Rect; crop?: Rect; corners?: [number, number][] };
+  nativeImage?: {
+    index: number;
+    path?: number[];
+    rect: Rect;
+    crop?: Rect;
+    corners?: [number, number][];
+  };
+
+  nativeTable?: import('./editor-tables').EditorTable;
+
+  tableCell?: { tableId: string; cellId: string };
   sourceRect?: Rect;
   sourceRects?: Rect[];
   sourceIsScan?: boolean;
+  scanBackground?: 'preserve' | 'solid';
   fontFamily?: FontFamily;
   fontChoice?: EditorFontChoice;
   originalFontId?: string;
@@ -107,6 +118,7 @@ export type Mark = Rect & {
   fill?: string;
   opacity?: number;
   textRotation?: number;
+  textAspect?: number;
 };
 export type Edits = { marks: Record<string, Mark[]>; crops: Record<string, Rect> };
 export type StudioOptions = JobOptions &
@@ -188,10 +200,14 @@ export async function normalizedPage(dest: PDFDocument, source: PDFPage, addedRo
   page.drawPage(embed, { ...position, width: w, height: h, rotate: degrees(-angle) });
   return page;
 }
-function paintErasures(canvas: HTMLCanvasElement, marks: Mark[]) {
+async function paintErasures(canvas: HTMLCanvasElement, marks: Mark[]) {
   const ctx = canvas.getContext('2d')!;
   for (const mark of marks) {
     for (const r of editorRemovalRects(mark)) {
+      if (mark.kind === 'text' && mark.sourceIsScan !== false && mark.scanBackground !== 'solid') {
+        (await import('./editor-scan')).eraseEditorScanRegion(canvas, r, 'preserve', mark.fill);
+        continue;
+      }
       ctx.fillStyle = hexColor(mark.fill, '#ffffff');
       const x = Math.floor(r.x * canvas.width),
         y = Math.floor(r.y * canvas.height);
@@ -213,7 +229,7 @@ async function paintMarks(
   const ctx = canvas.getContext('2d')!,
     w = canvas.width,
     h = canvas.height;
-  paintErasures(canvas, marks);
+  await paintErasures(canvas, marks);
   const ordered = [
     ...marks.filter((m) => m.kind !== 'redact'),
     ...marks.filter((m) => m.kind === 'redact'),
@@ -233,47 +249,42 @@ async function paintMarks(
       ctx.fillRect(x, y, mw, mh);
     }
     if (mark.kind === 'text') {
-      const { layoutEditorText } = await import('./editor-text-layer');
-      const { resolveEditorFont, loadEditorCssFont } = await import('./editor-fonts');
-      const resolution = await resolveEditorFont(mark, source);
-      await loadEditorCssFont(resolution.font, source);
-      if (resolution.substituted)
-        warnings?.push(
-          `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
-        );
-      const layout = layoutEditorText(
-        mark,
-        w,
-        h,
-        resolution.font.measure,
-        resolution.font.measureDescent(mark.text || ''),
-      );
+      const { editorLayoutPlan } = await import('./editor-layout-plan');
+      const { prepareEditorRuns } = await import('./editor-rich-layout');
+      const { loadEditorCssFont } = await import('./editor-fonts');
+      const runs = await prepareEditorRuns(mark, source),
+        layout = editorLayoutPlan(mark, w, h, runs);
+      for (const { resolution } of runs)
+        if (resolution.substituted)
+          warnings?.push(
+            `Schriftersatz: ${mark.originalFontName || 'Originalschrift'} → ${resolution.font.name}. ${resolution.reason || ''}`,
+          );
       if (layout.overflow)
         throw new Error(
           'Ein Textfeld ist zu klein. Vergrößere seine Höhe oder reduziere die Schriftgröße.',
         );
-      const { geometry, size } = layout;
+      await Promise.all(
+        [...new Set(layout.pieces.map((p) => p.font))].map((font) =>
+          loadEditorCssFont(font, source),
+        ),
+      );
+      const { geometry } = layout;
       ctx.translate(geometry.x, geometry.y);
       ctx.rotate((geometry.rotation * Math.PI) / 180);
       ctx.scale(layout.scaleX, 1);
-      ctx.fillStyle = hexColor(mark.color, '#222222');
-      ctx.font = `${mark.italic ? 'italic ' : ''}${mark.bold ? 'bold ' : ''}${size}px "${resolution.font.cssFamily}"`;
       ctx.fontKerning = 'none';
       ctx.textBaseline = 'alphabetic';
-      layout.lines.forEach((line, i) => {
-        const tw = layout.measured(line);
-        let dx =
-          layout.inset +
-          (mark.align === 'center'
-            ? (layout.available - tw) / 2
-            : mark.align === 'right'
-              ? layout.available - tw
-              : 0);
-        for (const character of line) {
-          ctx.fillText(character, dx, layout.baseline + i * layout.lineHeight);
-          dx += resolution.font.measure(character, size) + layout.tracking;
+      for (const piece of layout.pieces) {
+        ctx.fillStyle = hexColor(piece.color, '#222222');
+        ctx.font = `${piece.font.italic ? 'italic ' : ''}${piece.font.bold ? 'bold ' : ''}${piece.size}px "${piece.font.cssFamily}"`;
+        let dx = piece.x;
+        for (const { segment } of new Intl.Segmenter(undefined, {
+          granularity: 'grapheme',
+        }).segment(piece.text)) {
+          ctx.fillText(segment, dx, piece.y);
+          dx += piece.font.measure(segment, piece.size) + [...segment].length * piece.tracking;
         }
-      });
+      }
     }
     if ((mark.kind === 'signature' || mark.kind === 'image') && mark.image) {
       const image = new Image();
@@ -344,12 +355,18 @@ export async function applyPageEdits(
 ) {
   const doc = await PDFDocument.create();
   const loaded = new Map<string, PDFDocument>();
+  let preservedForm: PDFDocument | undefined;
   if (editor) {
     const { rejectSignedPdf } = await import('./pdf-signature-guard');
     for (const source of sources.filter((s) => pages.some((p) => p.sourceId === s.id))) {
       let pdf: PDFDocument;
       try {
-        pdf = await (await import('./editor-native')).loadEditorPdf(source.bytes);
+        const native = await import('./editor-native');
+        pdf = await native.loadEditorPdf(source.bytes, source, signal);
+        if (native.editorSourceWasRepaired(source))
+          editor.warnings.push(
+            'Die PDF-Struktur wurde lokal repariert. Alle Seiten wurden vor der Bearbeitung auf Text, Geometrie und Darstellung geprüft.',
+          );
         if (!pdf.catalog) throw new Error('Ungültige PDF-Struktur.');
       } catch {
         check(signal);
@@ -365,14 +382,21 @@ export async function applyPageEdits(
       rejectSignedPdf(pdf);
       const form = requireAcroForm(pdf);
       if (form.getFields().length) {
-        if (!editor.allowRaster)
-          throw new Error(
-            'Diese PDF enthält Formularfelder. Bitte eine ausgefüllte Druckkopie verwenden oder „Seiten als Bild neu aufbauen“ aktivieren. Interaktive Felder werden dabei in sichtbare Inhalte umgewandelt.',
+        try {
+          if (forceRaster)
+            throw new Error('Formularseiten können nicht als Bild neu aufgebaut werden.');
+          await (
+            await import('./editor-native')
+          ).requireEditorFormLayout(source, pages, edits, signal);
+          preservedForm = pdf;
+        } catch (error) {
+          check(signal);
+          if (!editor.allowRaster) throw error;
+          form.flatten();
+          editor.warnings.push(
+            'Formularfelder wurden in sichtbare Inhalte umgewandelt und sind nicht mehr interaktiv.',
           );
-        form.flatten();
-        editor.warnings.push(
-          'Formularfelder wurden in sichtbare Inhalte umgewandelt und sind nicht mehr interaktiv.',
-        );
+        }
       }
       loaded.set(source.id, pdf);
     }
@@ -401,6 +425,13 @@ export async function applyPageEdits(
       const contentRemoval = marks.some((m) => m.kind === 'erase' || !!m.sourceRect),
         rasterMarks = forceRaster || !!crop || marks.some((m) => m.kind === 'redact');
       const imageEdit = marks.some((m) => m.nativeImage);
+
+      const tableEdit = marks.some((m) => m.nativeTable);
+
+      if (tableEdit && rasterMarks)
+        throw new Error(
+          'Rastertabellen bitte ohne Seitenbeschnitt oder Bild-Neuaufbau bearbeiten.',
+        );
       if (imageEdit && rasterMarks)
         throw new Error(
           'Vorhandene Bilder bitte ohne Seitenbeschnitt oder Raster-Neuaufbau bearbeiten.',
@@ -475,9 +506,9 @@ export async function applyPageEdits(
       if (
         editor &&
         analysis &&
-        (nativeTextRemoval || imageEdit) &&
+        (nativeTextRemoval || imageEdit || tableEdit) &&
         !analysis.replaceTextLayer &&
-        (contentRemoval || imageEdit) &&
+        (contentRemoval || imageEdit || tableEdit) &&
         !rasterMarks &&
         loaded.has(item.sourceId) &&
         marks.every((m) => m.kind === 'text' || m.kind === 'image')
@@ -485,7 +516,10 @@ export async function applyPageEdits(
         try {
           const { removeEditorContent } = await import('./editor-native');
           const { sparseEditorMark } = await import('./editor-sparse');
-          drawMarks = marks.map((mark) => sparseEditorMark(mark, analysis!.width, source));
+
+          drawMarks = marks.map((mark) =>
+            mark.tableCell ? mark : sparseEditorMark(mark, analysis!.width, source),
+          );
           try {
             preserved = await removeEditorContent(
               loaded.get(item.sourceId)!,
@@ -508,6 +542,11 @@ export async function applyPageEdits(
           }
         } catch {
           check(signal);
+
+          if (tableEdit)
+            throw new Error(
+              'Das Tabellenraster konnte nicht sicher als Vektor geändert werden. Die Bearbeitung bleibt geöffnet.',
+            );
           if (!editor.allowRaster)
             throw new Error(
               'Der Originaltext kann auf dieser Seite nicht sicher einzeln entfernt werden. Bitte eine vollständige Textstelle auswählen oder „Seiten als Bild neu aufbauen“ aktivieren.',
@@ -519,9 +558,40 @@ export async function applyPageEdits(
       }
       const scanPage =
         analysis && !analysis.targets.some((t) => t.origin === 'pdf' && !t.invisible);
+      if (
+        editor &&
+        analysis &&
+        !preserved &&
+        !rasterMarks &&
+        contentRemoval &&
+        loaded.has(item.sourceId) &&
+        marks.every((m) => m.kind === 'text')
+      ) {
+        try {
+          preserved = await (
+            await import('./editor-native')
+          ).patchEditorScan(
+            loaded.get(item.sourceId)!,
+            source,
+            item,
+            marks,
+            analysis.targets,
+            analysis.replaceTextLayer,
+            signal,
+          );
+        } catch (error) {
+          check(signal);
+          if (!editor.allowRaster && scanPage) throw error;
+        }
+      }
       if (imageEdit && !preserved)
         throw new Error(
           'Das Bild konnte nicht als Originalobjekt geändert werden. Bitte die Bildänderung zurücknehmen.',
+        );
+
+      if (tableEdit && !preserved)
+        throw new Error(
+          'Das Tabellenraster konnte nicht sicher als Vektor geändert werden. Die Bearbeitung bleibt geöffnet.',
         );
       if (editor && !preserved && !rasterMarks && (contentRemoval || analysis?.replaceTextLayer)) {
         if (!scanPage && !editor.allowRaster)
@@ -549,7 +619,33 @@ export async function applyPageEdits(
         if (preserved) doc.addPage(outputPage);
         const { drawEditorText, editorPointToPdf } = await import('./editor-text-layer');
         for (const mark of drawMarks.filter((m) => !m.nativeImage)) {
-          if (mark.kind === 'text' && mark.text)
+          if (mark.nativeTable) {
+            const table = mark.nativeTable,
+              { editorTableSegments } = await import('./editor-tables');
+
+            const color = hexColor(table.color, '#000000');
+
+            for (const s of editorTableSegments(table)) {
+              const [ax, ay] = editorPointToPdf(outputPage, s.x1, s.y1),
+                [bx, by] = editorPointToPdf(outputPage, s.x2, s.y2);
+
+              outputPage.drawLine({
+                start: { x: ax, y: ay },
+
+                end: { x: bx, y: by },
+
+                thickness: table.width,
+
+                color: rgb(
+                  parseInt(color.slice(1, 3), 16) / 255,
+
+                  parseInt(color.slice(3, 5), 16) / 255,
+
+                  parseInt(color.slice(5, 7), 16) / 255,
+                ),
+              });
+            }
+          } else if (mark.kind === 'text' && mark.text)
             await drawEditorText(
               doc,
               outputPage,
@@ -599,6 +695,10 @@ export async function applyPageEdits(
         analysis?.replaceTextLayer ||
         !loaded.has(item.sourceId)
       ) {
+        if (preservedForm)
+          throw new Error(
+            'Diese Formularseite kann nur durch Änderungen an den Originalobjekten bearbeitet werden. Bitte eine Druckkopie verwenden, wenn ein Bild-Neuaufbau nötig ist.',
+          );
         const original = loaded.get(item.sourceId),
           scan =
             analysis?.ocr && original
@@ -610,7 +710,7 @@ export async function applyPageEdits(
         let canvas = rendered.canvas;
         try {
           if (rasterMarks) await paintMarks(canvas, marks, source, editor?.warnings);
-          else paintErasures(canvas, marks);
+          else await paintErasures(canvas, marks);
           let width = rendered.width,
             height = rendered.height;
           if (crop) {
@@ -623,19 +723,26 @@ export async function applyPageEdits(
             const next = document.createElement('canvas');
             next.width = Math.max(1, Math.round(canvas.width * rect.w));
             next.height = Math.max(1, Math.round(canvas.height * rect.h));
-            next
-              .getContext('2d')!
-              .drawImage(
-                canvas,
-                canvas.width * rect.x,
-                canvas.height * rect.y,
-                canvas.width * rect.w,
-                canvas.height * rect.h,
-                0,
-                0,
-                next.width,
-                next.height,
-              );
+
+            next.getContext('2d')!.drawImage(
+              canvas,
+
+              canvas.width * rect.x,
+
+              canvas.height * rect.y,
+
+              canvas.width * rect.w,
+
+              canvas.height * rect.h,
+
+              0,
+
+              0,
+
+              next.width,
+
+              next.height,
+            );
             canvas.width = canvas.height = 0;
             canvas = next;
             width *= rect.w;
@@ -718,6 +825,8 @@ export async function applyPageEdits(
     await recognizer?.dispose();
   }
   check(signal);
+  if (preservedForm)
+    return (await import('./editor-native')).preserveEditorForm(preservedForm, doc);
   return doc;
 }
 export function removeDocumentMetadata(doc: PDFDocument) {

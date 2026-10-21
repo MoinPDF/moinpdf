@@ -1,7 +1,7 @@
 name: Documentation and footer
 on:
   push:
-    branches: [main]
+    branches: [main, rebuild/editor-adaptive-workspace]
     paths:
       - 'docs/**'
       - 'media/**'
@@ -61,7 +61,7 @@ jobs:
           pnpm run build:selfhost
       - name: Install browser verification dependencies
         run: |
-          python -m pip install playwright==1.55.0 pymupdf==1.28.2
+          python -m pip install playwright==1.64.0 pymupdf==1.28.2
           python -m playwright install --with-deps chromium
       - name: Verify documentation, mobile layout, printing and retained PDF
         run: |

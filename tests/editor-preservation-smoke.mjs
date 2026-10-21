@@ -1,4 +1,6 @@
+import {editorNativeAdapter} from './editor-native-adapter.mjs';
 import assert from 'node:assert/strict';
+import {Worker as NodeWorker} from 'node:worker_threads';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
@@ -41,21 +43,21 @@ for (const name of ['editor-rich-text','editor-rich-layout','editor-verification
   'editor-analysis',
   'editor-text-layer',
   'editor-fonts',
-  'editor-font-cmap',
+  'editor-font-outline','editor-font-cmap',
   'editor-font-catalog',
   'editor-native',
-  'native-pdf-core',
+  'editor-repair','pdf-security','native-pdf-core','nested-native',
 ]) {
   const code = ts
     .transpileModule(await readFile(`lib/${name}.ts`, 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 },
     })
-    .outputText.replace(/(['"])\.\/([a-z-]+)\1/g, (_, q, n) => `${q}./${n}.mjs${q}`);
+    .outputText.replaceAll("'/vendor/pdf/standard_fonts/'", "'public/vendor/pdf/standard_fonts/'").replace(/(['"])\.\/([a-z-]+)\1/g, (_, q, n) => `${q}./${n}.mjs${q}`);
   await writeFile(`${folder}/${name}.mjs`, code);
 }
 await writeFile(
   folder + '/native-pdf.mjs',
-  `import {readFile} from 'node:fs/promises';import {createNativeEngine,removeNativeRegions} from './native-pdf-core.mjs';let api;export const removeRegions=async(bytes,removals)=>removeNativeRegions(await(api ||= readFile('public/vendor/pdfium/pdfium.wasm').then(b=>createNativeEngine(new Uint8Array(b)))),bytes,removals);`,
+  editorNativeAdapter,
 );
 const { readTextTargets } = await import('../.cache/editor-preservation/editor-model.mjs');
 const { drawEditorText, layoutEditorText } =
@@ -89,7 +91,7 @@ const pageOf = (s, rotation = 0) => ({
 });
 const contents = async (s) =>
   (await (await s.pdf.getPage(1)).getTextContent()).items.filter((t) => 'str' in t);
-const text = async (s) => (await contents(s)).map((t) => t.str).join(' ');
+const text = async (s) => (await contents(s)).map((t) => t.str).join(' ').replace(/\s+/g,' ');
 const options = {
   language: 'deu',
   editorLanguage: 'deu+eng',
@@ -136,6 +138,7 @@ const markFor = (t, width = 500) => ({
   tracking: t.tracking,
   textScaleX: t.textScaleX,
   textRotation: t.rotation,
+  textAspect: t.textAspect,
   lineHeight: t.lineHeight,
 });
 async function render(s) {
@@ -191,6 +194,26 @@ try {
     .enumerateIndirectObjects()
     .find(([ref]) => ref.objectNumber === 4)[1];
   assert.deepEqual(new Uint8Array(inflateSync(repairedImage.getContents())), pixels);
+  // Real local qpdf repair, followed by all-page text/geometry/pixel comparison.
+  const repairDoc=await PDFDocument.create();for(let i=0;i<3;i++){const p=repairDoc.addPage([400,560]);p.drawText('Repair page '+i,{x:40,y:450,size:14});p.drawRectangle({x:40,y:60,width:100,height:40,color:rgb(.2,.4,.6)});}
+  const validRepair=await repairDoc.save({useObjectStreams:false}),damagedRepair=Uint8Array.from(Buffer.from(Buffer.from(validRepair).toString('latin1').replace(/\/Length (\d+)/,(_,n)=>'/Length '+(Number(n)+2)),'latin1'));
+  const repairSource=await source(damagedRepair,'damaged-length.pdf'),repairSnapshot=damagedRepair.slice();
+  await assert.rejects(()=>loadEditorPdf(damagedRepair),/Datenstrom/);
+  let repairWorkers=0;
+  const savedWorker=globalThis.Worker;
+  globalThis.Worker=class {constructor(){repairWorkers++;this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
+  try {
+    const {verifyEditorRepair,repairEditorSource}=await import('../.cache/editor-preservation/editor-repair.mjs');
+    const signal=new AbortController().signal;
+    const fixed=await loadEditorPdf(damagedRepair,repairSource,signal);assert.equal(fixed.getPageCount(),3);assert.equal(repairWorkers,2);assert.deepEqual(damagedRepair,repairSnapshot);
+    await loadEditorPdf(damagedRepair,repairSource,signal);assert.equal(repairWorkers,2,'A verified repair is reused, with a fresh mutable document');
+    const visited=new Set(),getPage=repairSource.pdf.getPage.bind(repairSource.pdf);repairSource.pdf.getPage=async(n)=>{visited.add(n);return getPage(n);};
+    await verifyEditorRepair(repairSource,await fixed.save(),signal);assert.deepEqual([...visited].sort(),[1,2,3],'Every page is checked');
+    const changed=await PDFDocument.load(await fixed.save());changed.getPage(2).drawText('Changed last page',{x:30,y:90,size:12});const changedBytes=await changed.save();await assert.rejects(()=>verifyEditorRepair(repairSource,changedBytes,signal),/Text.*Seite 3/);
+    const visual=await PDFDocument.load(await fixed.save());visual.getPage(1).drawRectangle({x:180,y:80,width:10,height:10,color:rgb(1,0,0)});const visualBytes=await visual.save();await assert.rejects(()=>verifyEditorRepair(repairSource,visualBytes,signal),/Darstellung.*Seite 2/);
+    await assert.rejects(()=>verifyEditorRepair(repairSource,changedBytes,AbortSignal.abort()),{name:'AbortError'});
+    const retrySource={...repairSource,id:'retry-repair'};await assert.rejects(()=>repairEditorSource(retrySource,AbortSignal.abort()),{name:'AbortError'});await repairEditorSource(retrySource,signal);assert.equal(repairWorkers,4,'Aborted repair can be retried');
+  } finally {globalThis.Worker=savedWorker;}
 
   const d = await PDFDocument.create(),
     p = d.addPage([500, 700]);
@@ -312,11 +335,24 @@ try {
     .createTextField('Name')
     .addToPage(f.getPage(0), { x: 50, y: 500, width: 100, height: 30 });
   const fs = await source(await f.save(), 'form.pdf');
-  await assert.rejects(
-    () => run(fs, []),
-    /Formularfelder/,
-    'Interactive forms cannot be silently flattened',
-  );
+  const keptForm=await PDFDocument.load(await (await run(fs,[])).blob.arrayBuffer());
+  assert.equal(keptForm.getForm().getTextField('Name').acroField.getWidgets().length,1,'Interactive fields survive unchanged export');
+  await assert.rejects(()=>run(fs,[{id:'overlap',kind:'text',text:'collision',x:.1,y:.24,w:.2,h:.05,fontScale:.02}]),/Formularfeld/);
+  const formDoc=await PDFDocument.create(); formDoc.addPage([500,700]);formDoc.addPage([500,700]);
+  formDoc.getPage(0).drawText('Original heading',{x:50,y:600,size:16});
+  const shared=formDoc.getForm().createTextField('Shared');shared.setText('Denny');
+  for(const page of formDoc.getPages())shared.addToPage(page,{x:50,y:300,width:180,height:24});
+  const checked=formDoc.getForm().createCheckBox('Confirmed');checked.addToPage(formDoc.getPage(1),{x:50,y:200,width:20,height:20});checked.check();
+  const formSource=await source(await formDoc.save(),'multi-form.pdf');
+  const formPages=[pageOf(formSource),{...pageOf(formSource),id:'p1',index:1}];
+  const heading=(await readTextTargets(formSource,formPages[0])).targets.find(t=>t.text==='Original heading');
+  const formResult=await runStudioJob('edit-text',[formSource],formPages,options,{marks:{p0:[{...markFor(heading),text:'Edited heading',w:.7}]},crops:{}},()=>{},new AbortController().signal);
+  const formSaved=await PDFDocument.load(await formResult.blob.arrayBuffer());
+  assert.equal(formSaved.getForm().getTextField('Shared').getText(),'Denny');
+  assert.equal(formSaved.getForm().getTextField('Shared').acroField.getWidgets().length,2);
+  assert(formSaved.getForm().getCheckBox('Confirmed').isChecked());
+  const formReopened=await source(await formResult.blob.arrayBuffer(),'form-edited.pdf');assert.match(await text(formReopened),/Edited heading/);assert.doesNotMatch(await text(formReopened),/Original heading/);
+  await assert.rejects(()=>run(formSource,[]),/Seitenreihenfolge/,'Omitting a form page cannot silently remove its widget');
   const signed = await PDFDocument.create();
   signed.addPage();
   signed.catalog.set(
@@ -329,11 +365,23 @@ try {
   tilted.addPage([500, 700]).drawText('TILTED', { x: 100, y: 300, size: 18, rotate: degrees(20) });
   const tsrc = await source(await tilted.save(), 'tilted.pdf');
   const tiltedTarget = (await readTextTargets(tsrc, pageOf(tsrc))).targets[0];
-  assert(tiltedTarget.unsupportedReason);
+  assert(!tiltedTarget.unsupportedReason);
   await assert.rejects(
-    async () => drawEditorText(await PDFDocument.create(), p, { ...m, textRotation: 20 }, 500, 700),
-    /Schräger/,
+    async () => drawEditorText(await PDFDocument.create(), p, { ...m, textAspect:undefined,textRotation: 20 }, 500, 700),
+    /Geometrie/,
   );
+  for(const angle of [20,45,135,225,315]) for(const rotation of [0,90]) {
+    const d=await PDFDocument.create(),p=d.addPage([500,700]);p.setCropBox(20,20,460,660);p.setRotation(degrees(rotation));
+    p.drawText('SLOPED',{x:220,y:350,size:18,rotate:degrees(angle)});p.drawText('KEEP',{x:30,y:40,size:12});
+    const s=await source(await d.save(),`sloped-${angle}-${rotation}.pdf`),ts=(await readTextTargets(s,pageOf(s))),t=ts.targets.find(t=>t.text==='SLOPED');assert(!t.unsupportedReason);
+    const {editorTargetMark}=await import('../.cache/editor-preservation/editor-blocks.mjs');
+    const mark={...editorTargetMark(t,0,ts.width,'angle'),text:'SLIM'};
+    const changed=await run(s,[mark]),out=await source(await changed.blob.arrayBuffer(),'sloped-output.pdf');
+    assert.doesNotMatch(await text(out),/SLOPED/);assert.match(await text(out),/SLIM/);assert.match(await text(out),/KEEP/);
+    const before=(await contents(s)).find(t=>t.str==='SLOPED'),after=(await contents(out)).find(t=>t.str==='SLIM');
+    for(const k of [4,5])assert(Math.abs(before.transform[k]-after.transform[k])<.05,`Baseline preserved angle ${angle}/${rotation}: ${before.transform} vs ${after.transform}`);
+    for(const k of [0,1,2,3])assert(Math.abs(before.transform[k]-after.transform[k])<.05,`Direction and point size preserved ${angle}/${rotation}`);
+  }
   const opacity = await PDFDocument.create();
   opacity.addPage().drawText('INVISIBLE', { x: 40, y: 500, size: 14, opacity: 0 });
   const os = await source(await opacity.save(), 'invisible.pdf');
@@ -380,7 +428,8 @@ try {
       new AbortController().signal,
     );
     assert.doesNotMatch(result.note || '', /als Bild neu aufgebaut/i);
-    assert.match(result.note || '', /Schriftersatz:.*NimbusRomNo9L-Medi.*Liberation Serif/);
+    assert(heading.originalFontId,'The actual embedded Type1 font is reusable');
+    assert.doesNotMatch(result.note || '', /Schriftersatz/);
     const editedPaper = await source(await result.blob.arrayBuffer(), 'edited-paper.pdf');
     assert.match(await text(editedPaper), /Edited/);
     assert.doesNotMatch(await text(editedPaper), /\bAbstract\b/);
@@ -390,6 +439,15 @@ try {
       const after = await (await editedPaper.pdf.getPage(index)).getTextContent();
       const geometry = (content) => content.items.map(({ fontName, ...item }) => item);
       assert.deepEqual(geometry(after), geometry(before), `Unchanged public paper page ${index}`);
+      const canvases=[];
+      for(const source of [paper,editedPaper]){
+        const page=await source.pdf.getPage(index),viewport=page.getViewport({scale:1.5});
+        const canvas=createCanvas(Math.ceil(viewport.width),Math.ceil(viewport.height));
+        await page.render({canvas,viewport}).promise;canvases.push(canvas);
+      }
+      assert.deepEqual(canvases[0].getContext('2d').getImageData(0,0,canvases[0].width,canvases[0].height).data,
+        canvases[1].getContext('2d').getImageData(0,0,canvases[1].width,canvases[1].height).data,`Unchanged page ${index} pixels`);
+      for(const canvas of canvases)canvas.width=canvas.height=0;
     }
     await writeFile(folder + '/public-paper-edited.pdf', editedPaper.bytes);
     console.log(

@@ -7,6 +7,9 @@ import { uid, type Source, type PageItem } from '@/lib/pdf-engine';
 import type { Edits, Mark } from '@/lib/studio-engine';
 import { editorMarkChanged, editorTextCollision, readTextTargets } from '@/lib/editor-model';
 import { distributeEditorFlow, type EditorFlowFrame } from '@/lib/editor-workflow';
+import { EditorAutoFlowPanel } from './editor-auto-flow-panel';
+import { EditorPreflightPanel } from './editor-preflight-panel';
+import type { AutoFlowPlan } from '@/lib/editor-auto-flow';
 
 export function EditorWorkflowPanel({
   sources,
@@ -15,6 +18,9 @@ export function EditorWorkflowPanel({
   disabled,
   onApply,
   onReveal,
+  activePageId,
+  selectedMarkId,
+  onApplyFlow,
 }: {
   sources: Source[];
   pages: PageItem[];
@@ -22,6 +28,9 @@ export function EditorWorkflowPanel({
   disabled: boolean;
   onApply: (edits: Edits) => void;
   onReveal: (pageId: string, mark: Mark) => void;
+  activePageId: string;
+  selectedMarkId: string;
+  onApplyFlow: (plan: AutoFlowPlan) => Promise<void>;
 }) {
   useLanguage();
   const entries = pages.flatMap((page, index) =>
@@ -109,6 +118,23 @@ export function EditorWorkflowPanel({
   }
   return (
     <div className="editor-workflow-panel">
+      <EditorPreflightPanel
+        sources={sources}
+        pages={pages}
+        edits={edits}
+        disabled={disabled}
+        onApply={onApply}
+        onReveal={onReveal}
+      />
+      <EditorAutoFlowPanel
+        sources={sources}
+        pages={pages}
+        edits={edits}
+        pageId={activePageId}
+        markId={selectedMarkId}
+        disabled={disabled}
+        onApply={onApplyFlow}
+      />
       <details className="editor-workflow-section">
         <summary>{ui('Textfelder verknüpfen')}</summary>
         <p>

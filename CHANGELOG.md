@@ -9,6 +9,16 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Unveröffentlicht – PDF bearbeiten
+
+- Gemeinsame Auswahl von Text, Originalbildern und einfachen Tabellenzellen; logische Textzeilen, verzögerte Vorprüfung und begrenzte Vorbereitung einer Nachbarseite.
+- Statische Type-1/CFF1-Originalschriften und TTF-/OTF-Import; Ersatz nur für fehlende Zeichen. Ungültige Schriftmetriken und veraltete Schriftantworten beim Rückgängigmachen werden abgefangen.
+- Vorschau für Absatzfortsetzung mit nachfolgenden Absätzen und bis zu 20 neuen leeren Seiten; gemeinsame Rücknahme, erhaltene originale Folgeseiten.
+- Echte Vektortabellen mit rechteckig verbundenen Zellen, wiederholten Zeilenhöhenänderungen und eingefügten mehrzeiligen Zeilen; validierte Originalreferenzen im Projektarchiv.
+- Instanzbezogene Bearbeitung geeigneter verschachtelter Text- und Bildobjekte sowie erhaltener Grundlinie bei geneigtem Text. Einfache AcroForm-Strukturen bleiben unter den dokumentierten Bedingungen erhalten.
+- Begrenzte Textkorrekturen in geeigneten Scanbildern bis 16 Megapixel erhalten die Originalauflösung und Außenpixel; Papierhintergrund und nachweisbare durchgehende Linien werden berücksichtigt.
+- Lokale Strukturreparatur mit Vergleich aller Seiten; unveränderte Originaldatei und sichtbarer Reparaturhinweis. Erweiterte Browserfälle sind in der Editor-CI hinterlegt; die Freigabe setzt erfolgreiche Prüfungen voraus.
+
 ## 0.19.0 – 20. Oktober 2026
 
 - Geeignete waagerechte Wortänderungen entfernen nur die betroffenen Originalzeichen. Unveränderte Präfixe und bei gleicher Position auch Suffixe bleiben als PDF-Text erhalten. Mehrdeutige Zeichen, Ligaturen, Schriftschnitt- oder Layoutänderungen verwenden weiterhin die geprüfte Textfeldbearbeitung.

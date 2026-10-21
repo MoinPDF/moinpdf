@@ -5,6 +5,8 @@ import { EditorFontAlternatives } from './editor-font-alternatives';
 import { EditorBlockTools } from './editor-block-tools';
 import { EditorLayoutOutline } from './editor-layout-outline';
 import { EditorImageTools } from './editor-image-tools';
+import { EditorTablePanel } from './editor-table-panel';
+import { editorTableSegments } from '@/lib/editor-tables';
 import type { NativeObject } from '@/lib/native-pdf';
 import { editorTargetMark } from '@/lib/editor-blocks';
 import {
@@ -82,7 +84,7 @@ export function MarkContent({
         className="editor-text-content"
         style={editorTextCss(mark, width, height, typography.resolution)}
       >
-        {editorSegments(mark).map((run, i) => (
+        {(typography.runs || editorSegments(mark)).map((run, i) => (
           <span
             key={i}
             style={{
@@ -198,6 +200,7 @@ export function EditorCanvas({
     [retry, setRetry] = useState(0),
     [renderRetry, setRenderRetry] = useState(0),
     [paragraphMode, setParagraphMode] = useState(false);
+  const [pageKind, setPageKind] = useState('');
   const [initialPoint, setInitialPoint] = useState<EditorStartPoint | null>(null);
   const [textSelection, setTextSelection] = useState<EditorSelection | null>(null);
   const [selectionRequest, setSelectionRequest] = useState<EditorSelection | null>(null);
@@ -208,14 +211,17 @@ export function EditorCanvas({
   const [guides, setGuides] = useState<EditorGuide[]>([]);
   const [format, setFormat] = useState<EditorFormat | null>(null);
   const [touchMode, setTouchMode] = useState(false);
-  const [imageMode, setImageMode] = useState(false),
+  const [imageMode, setImageMode] = useState(true),
     [images, setImages] = useState<NativeObject[]>([]),
-    [imageLoading, setImageLoading] = useState(false);
+    [imageLoading, setImageLoading] = useState(false),
+    [imageError, setImageError] = useState('');
+  const previewReady = !!url;
   useEffect(() => {
     setImages([]);
-    if (!imageMode) return;
+    if (!imageMode || !autoOcr || !previewReady) return;
     const ctrl = new AbortController();
     setImageLoading(true);
+    setImageError('');
     void import('@/lib/editor-native')
       .then((m) => m.readEditorImages(source, page, ctrl.signal))
       .then((value) => {
@@ -223,21 +229,19 @@ export function EditorCanvas({
       })
       .catch((e) => {
         if (!ctrl.signal.aborted)
-          setDetectionError(
-            e instanceof Error ? e.message : 'Bilder konnten nicht gelesen werden.',
-          );
+          setImageError(e instanceof Error ? e.message : 'Bilder konnten nicht gelesen werden.');
       })
       .finally(() => {
         if (!ctrl.signal.aborted) setImageLoading(false);
       });
     return () => ctrl.abort();
-  }, [source, page, imageMode]);
+  }, [source, page, imageMode, autoOcr, previewReady]);
   useEffect(() => {
     const query = window.matchMedia('(pointer: coarse)');
     setTouchMode(query.matches);
   }, []);
   const toggleJoin = (key: string) => {
-    if (!blockChoices.some((choice) => choice.key === key)) {
+    if (!blockChoices.some((choice) => choice.key === key && !choice.mark.tableCell)) {
       setDetectionError('Bitte 2 bis 50 waagerechte Textfelder auf derselben Seite auswählen.');
       return;
     }
@@ -310,11 +314,12 @@ export function EditorCanvas({
     .filter(editorMarkChanged)
     .filter((m) => editorRemovalRects(m).length);
   const imageChanges = marks.filter((m) => m.nativeImage && editorMarkChanged(m));
+  const tableChanges = marks.filter((m) => m.nativeTable);
   const removalKey =
     autoOcr &&
-    (physicalRemovals.length || imageChanges.length) &&
+    (physicalRemovals.length || imageChanges.length || tableChanges.length) &&
     physicalRemovals.every((m) => m.kind === 'text') &&
-    (targets.length || imageChanges.length) &&
+    (targets.length || imageChanges.length || tableChanges.length) &&
     !physicalRemovals.some((m) =>
       targets.some(
         (t) =>
@@ -323,13 +328,21 @@ export function EditorCanvas({
       ),
     )
       ? JSON.stringify([
-          ...physicalRemovals.map((m) => ({
-            id: m.id,
-            kind: m.kind,
-            sourceRect: m.sourceRect,
-            sourceRects: m.sourceRects,
-          })),
+          ...(tableChanges.length ? marks.filter((m) => m.kind === 'text') : physicalRemovals).map(
+            (m) => ({
+              id: m.id,
+              kind: m.kind,
+              x: m.x,
+              y: m.y,
+              w: m.w,
+              h: m.h,
+              tableCell: m.tableCell,
+              sourceRect: m.sourceRect,
+              sourceRects: m.sourceRects,
+            }),
+          ),
           ...imageChanges,
+          ...tableChanges,
         ])
       : '';
   useEffect(() => {
@@ -418,6 +431,7 @@ export function EditorCanvas({
     const controller = new AbortController();
     recognition.current = controller;
     setTargets([]);
+    setPageKind('');
     setUncertain(0);
     setDetectionError('');
     setLoadingText(true);
@@ -441,6 +455,7 @@ export function EditorCanvas({
       .then((value) => {
         if (controller.signal.aborted) return;
         setTargets(value.targets);
+        if ('kind' in value) setPageKind(String(value.kind || ''));
         setUncertain(
           'uncertain' in value && typeof value.uncertain === 'number' ? value.uncertain : 0,
         );
@@ -461,6 +476,41 @@ export function EditorCanvas({
       if (recognition.current === controller) recognition.current = null;
     };
   }, [source, page, language, autoOcr, disabled, retry]);
+  useEffect(() => {
+    const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory || 0;
+    if (
+      !autoOcr ||
+      disabled ||
+      loadingText ||
+      !previewReady ||
+      detectionError ||
+      memory < 4 ||
+      document.visibilityState !== 'visible' ||
+      !(source.pdf?.numPages > page.index + 1)
+    )
+      return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      if (document.visibilityState === 'visible')
+        void analyzeEditorPage(
+          source,
+          { rotation: page.rotation, index: page.index + 1 },
+          { signal: ctrl.signal, language },
+        ).catch(() => {});
+    }, 1500);
+    const visibility = () => {
+      if (document.visibilityState !== 'visible') {
+        clearTimeout(timer);
+        ctrl.abort();
+      }
+    };
+    document.addEventListener('visibilitychange', visibility);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+      document.removeEventListener('visibilitychange', visibility);
+    };
+  }, [source, page, language, autoOcr, disabled, loadingText, previewReady, detectionError]);
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
       if (entries[0]) setDisplayWidth(entries[0].contentRect.width);
@@ -610,8 +660,14 @@ export function EditorCanvas({
   const textTargets =
     paragraphMode && autoOcr && !tableMode
       ? editorParagraphs(targets, dims.width, dims.height)
-      : targets;
-  const cells = detectEditorCells(targets, dims.width, dims.height);
+      : autoOcr
+        ? editorParagraphs(targets, dims.width, dims.height, 'line')
+        : targets;
+  const cells = detectEditorCells(
+    editorParagraphs(targets, dims.width, dims.height, 'line'),
+    dims.width,
+    dims.height,
+  );
   const cellFor = (mark: Mark) =>
     cells.find(
       (c) =>
@@ -620,6 +676,25 @@ export function EditorCanvas({
         Math.abs(c.target.y - mark.sourceRect.y) < 0.000001,
     );
   const nextCell = (backward: boolean) => {
+    const current = marks.find((m) => m.id === selectedId);
+    if (current?.tableCell) {
+      const table = marks.find(
+        (m) => m.nativeTable?.id === current.tableCell!.tableId,
+      )?.nativeTable;
+      const ordered = table
+          ? [...table.cells].sort((a, b) => a.row - b.row || a.column - b.column)
+          : [],
+        at = ordered.findIndex((c) => c.id === current.tableCell!.cellId),
+        next = ordered[at + (backward ? -1 : 1)];
+      const mark =
+        next &&
+        marks.find((m) => m.tableCell?.cellId === next.id && m.tableCell.tableId === table?.id);
+      if (mark) {
+        onSelect(mark.id);
+        return true;
+      }
+      return false;
+    }
     const selected = marks.find((m) => m.id === selectedId),
       cell = selected && cellFor(selected),
       at = cell ? cells.indexOf(cell) : -1;
@@ -653,7 +728,7 @@ export function EditorCanvas({
       className={`editor-canvas-wrap${touchMode ? ' is-touch-mode' : ''}`}
       onKeyDownCapture={(e) => {
         if (
-          tableMode &&
+          (cells.length > 0 || !!marks.find((m) => m.id === selectedId)?.tableCell) &&
           e.key === 'Tab' &&
           e.target instanceof HTMLElement &&
           e.target.closest('.editor-sheet') &&
@@ -667,6 +742,20 @@ export function EditorCanvas({
       {(action === 'pick' || autoOcr) && (
         <div className="editor-preparation">
           <div className="editor-detection" role="status" aria-live="polite">
+            {pageKind && (
+              <span>
+                {ui(
+                  pageKind === 'mixed'
+                    ? 'Gemischte Seite'
+                    : pageKind === 'scan'
+                      ? 'Scanseite'
+                      : pageKind === 'empty'
+                        ? 'Leere Seite'
+                        : 'Digitale Seite',
+                )}{' '}
+                ·{' '}
+              </span>
+            )}
             {loadingText && (
               <>
                 <LoaderCircle size={15} className="spin" /> {ui(progress.label)}{' '}
@@ -778,82 +867,88 @@ export function EditorCanvas({
         </div>
       )}
       {autoOcr && (
-        <div className="editor-precision-tools">
-          <Button
-            size="sm"
-            variant={imageMode ? 'secondary' : 'outline'}
-            aria-pressed={imageMode}
-            disabled={disabled}
-            onClick={() => {
-              setImageMode(!imageMode);
-              onSelect('');
-            }}
-          >
-            {ui('Bilder und Logos')}
-          </Button>
-          {imageMode && (
-            <span role="status">
-              {ui(
-                imageLoading
-                  ? 'Bilder werden gelesen …'
-                  : images.length
-                    ? 'Bildrahmen auf der Seite auswählen.'
-                    : 'Keine einzeln bearbeitbaren Bilder gefunden. Scan-Hintergründe und Objektgruppen bleiben geschützt.',
-              )}
-            </span>
-          )}
-          <label>
-            <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
-            {ui('An Hilfslinien einrasten')}
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={touchMode}
-              onChange={(e) => setTouchMode(e.target.checked)}
-            />
-            {ui('Touch-Modus')}
-          </label>
-          {selectedText && (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={disabled}
-                onPointerDown={(e) => e.preventDefault()}
-                onClick={() =>
-                  setFormat(captureEditorFormat(selectedText, dims.width, source.id, textSelection))
-                }
-              >
-                {ui('Format aufnehmen')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={disabled || !format}
-                onPointerDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  if (format)
-                    onPatch(selectedText.id, applyEditorFormat(format, dims.width, source.id));
-                }}
-              >
-                {ui('Format übertragen')}
-              </Button>
-            </>
-          )}
-          {format && (
-            <span role="status">
-              {ui('Format gespeichert. Zieltext auswählen und übertragen.')}
-            </span>
-          )}
-          {tableMode && (
-            <span>
-              {ui(
-                'Tab: nächste Zelle · Umschalt+Tab: vorherige Zelle. Erkannte Zeilen und Spalten bitte prüfen.',
-              )}
-            </span>
-          )}
-        </div>
+        <details className="editor-workflow-section">
+          <summary>{ui('Präzision und weitere Optionen')}</summary>
+          <div className="editor-precision-tools">
+            <Button
+              size="sm"
+              variant={imageMode ? 'secondary' : 'outline'}
+              aria-pressed={imageMode}
+              disabled={disabled}
+              onClick={() => {
+                setImageMode(!imageMode);
+                onSelect('');
+              }}
+            >
+              {ui('Bilder und Logos')}
+            </Button>
+            {imageMode && (
+              <span role="status">
+                {ui(
+                  imageLoading
+                    ? 'Bilder werden gelesen …'
+                    : images.length
+                      ? 'Bildrahmen auf der Seite auswählen.'
+                      : 'Keine einzeln bearbeitbaren Bilder gefunden. Scan-Hintergründe und Objektgruppen bleiben geschützt.',
+                )}
+              </span>
+            )}
+            {imageError && <span role="status">{ui(imageError)}</span>}
+            <label>
+              <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
+              {ui('An Hilfslinien einrasten')}
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={touchMode}
+                onChange={(e) => setTouchMode(e.target.checked)}
+              />
+              {ui('Touch-Modus')}
+            </label>
+            {selectedText && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onPointerDown={(e) => e.preventDefault()}
+                  onClick={() =>
+                    setFormat(
+                      captureEditorFormat(selectedText, dims.width, source.id, textSelection),
+                    )
+                  }
+                >
+                  {ui('Format aufnehmen')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled || !format}
+                  onPointerDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    if (format)
+                      onPatch(selectedText.id, applyEditorFormat(format, dims.width, source.id));
+                  }}
+                >
+                  {ui('Format übertragen')}
+                </Button>
+              </>
+            )}
+            {format && (
+              <span role="status">
+                {ui('Format gespeichert. Zieltext auswählen und übertragen.')}
+              </span>
+            )}
+            {tableMode && (
+              <span>
+                {ui(
+                  'Tab: nächste Zelle · Umschalt+Tab: vorherige Zelle. Erkannte Zeilen und Spalten bitte prüfen.',
+                )}
+              </span>
+            )}
+          </div>
+        </details>
       )}
       {selectedImage && (
         <EditorImageTools
@@ -863,6 +958,16 @@ export function EditorCanvas({
           page={page}
           disabled={disabled}
           onPatch={onPatch}
+        />
+      )}
+      {autoOcr && onReplaceMarks && (
+        <EditorTablePanel
+          source={source}
+          page={page}
+          marks={marks}
+          disabled={disabled}
+          onReplace={onReplaceMarks}
+          onSelect={onSelect}
         />
       )}
       {autoOcr && onReplaceMarks && (
@@ -995,15 +1100,14 @@ export function EditorCanvas({
               )}
             {url &&
               action === 'pick' &&
-              !imageMode &&
               available.map((t) => (
                 <button
-                  className={`editor-text-target ${tableMode && cells.some((c) => c.target.id === t.id) ? 'is-table-cell' : ''} ${joining && joinedKeys.includes('target:' + t.id) ? 'is-joining' : ''} ${editorOcrNeedsReview(t) ? 'is-uncertain' : ''}`}
+                  className={`editor-text-target ${cells.some((c) => c.target.id === t.id) ? 'is-table-cell' : ''} ${joining && joinedKeys.includes('target:' + t.id) ? 'is-joining' : ''} ${editorOcrNeedsReview(t) ? 'is-uncertain' : ''}`}
                   key={t.id}
                   style={box(t)}
                   disabled={disabled}
                   aria-label={
-                    tableMode && cells.some((c) => c.target.id === t.id)
+                    cells.some((c) => c.target.id === t.id)
                       ? `${ui('Tabellenzelle')} ${cells.find((c) => c.target.id === t.id)!.row + 1}, ${cells.find((c) => c.target.id === t.id)!.column + 1}: ${t.text}`
                       : ui(`Text bearbeiten: ${t.text}`)
                   }
@@ -1028,15 +1132,25 @@ export function EditorCanvas({
                 />
               ))}
             {url &&
+              action === 'pick' &&
+              autoOcr &&
               imageMode &&
               images
-                .filter((image) => !marks.some((m) => m.nativeImage?.index === image.index))
+                .filter(
+                  (image) =>
+                    !marks.some(
+                      (m) =>
+                        m.nativeImage?.index === image.index &&
+                        JSON.stringify(m.nativeImage?.path || []) ===
+                          JSON.stringify(image.path || []),
+                    ),
+                )
                 .map((image) => (
                   <button
                     type="button"
-                    key={'image-' + image.index}
+                    key={'image-' + (image.path || []).join('-') + ':' + image.index}
                     className="editor-image-target"
-                    style={box(image)}
+                    style={{ ...box(image), zIndex: 1 }}
                     aria-label={ui('Vorhandenes Bild auswählen') + ' ' + (image.index + 1)}
                     disabled={disabled}
                     onPointerDown={(e) => e.stopPropagation()}
@@ -1050,7 +1164,12 @@ export function EditorCanvas({
                         y,
                         w,
                         h,
-                        nativeImage: { index, rect: { x, y, w, h }, corners: image.imageCorners },
+                        nativeImage: {
+                          index,
+                          path: image.path,
+                          rect: { x, y, w, h },
+                          corners: image.imageCorners,
+                        },
                       };
                       next.originalState = editorMarkSignature(next);
                       onMark(next);
@@ -1058,7 +1177,7 @@ export function EditorCanvas({
                   />
                 ))}
             {[
-              ...displayed.filter((m) => m.kind !== 'redact'),
+              ...displayed.filter((m) => m.kind !== 'redact' && !m.nativeTable),
               ...displayed.filter((m) => m.kind === 'redact'),
             ].map((m) => (
               <div
@@ -1155,7 +1274,7 @@ export function EditorCanvas({
                     source={source}
                   />
                 )}
-                {selectedId === m.id && m.kind === 'text' && (
+                {selectedId === m.id && m.kind === 'text' && !m.tableCell && (
                   <button
                     type="button"
                     className="editor-move-handle"
@@ -1167,7 +1286,7 @@ export function EditorCanvas({
                     <Move size={16} />
                   </button>
                 )}
-                {selectedId === m.id && (
+                {selectedId === m.id && !m.tableCell && (
                   <span
                     className="editor-resize"
                     title={ui('Größe ändern')}
@@ -1175,6 +1294,33 @@ export function EditorCanvas({
                   />
                 )}
               </div>
+            ))}
+            {tableChanges.map((mark) => (
+              <svg
+                key={mark.id}
+                aria-label={ui('Geändertes Tabellenraster')}
+                viewBox={`0 0 ${dims.width} ${dims.height}`}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  pointerEvents: 'none',
+                  zIndex: 3,
+                }}
+              >
+                {editorTableSegments(mark.nativeTable!).map((s, i) => (
+                  <line
+                    key={i}
+                    x1={s.x1}
+                    y1={s.y1}
+                    x2={s.x2}
+                    y2={s.y2}
+                    stroke={mark.nativeTable!.color}
+                    strokeWidth={mark.nativeTable!.width}
+                  />
+                ))}
+              </svg>
             ))}
             {autoOcr &&
               displayed
@@ -1225,6 +1371,8 @@ export function EditorCanvas({
             key={`layout-${selectedText.id}`}
             mark={selectedText}
             source={source}
+            page={page}
+            marks={marks}
             width={dims.width}
             height={dims.height}
             onPatch={onPatch}

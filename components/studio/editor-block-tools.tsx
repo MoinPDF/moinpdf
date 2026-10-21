@@ -39,7 +39,7 @@ export function EditorBlockTools({
   const [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   const [proposal, setProposal] = useState<{ original: Mark; parts: [Mark, Mark] } | null>(null);
-  const entries = choices.filter((c) => chosen.includes(c.key));
+  const entries = choices.filter((c) => !c.mark.tableCell && chosen.includes(c.key));
   let joined: Mark | undefined,
     joinError = '';
   if (entries.length > 1)
@@ -56,7 +56,7 @@ export function EditorBlockTools({
   const at = selection && selection.id === selected?.id ? selection.start : 0;
   const validProposal = proposal?.original === selected ? proposal : null;
   async function split() {
-    if (!selected) return;
+    if (!selected || selected.tableCell) return;
     setBusy(true);
     setError('');
     try {
@@ -97,7 +97,7 @@ export function EditorBlockTools({
         >
           {ui(joining ? 'Verbinden beenden' : 'Textstellen verbinden')}
         </Button>
-        {selected && !joining && (
+        {selected && !selected.tableCell && !joining && (
           <Button
             size="sm"
             variant="outline"
@@ -127,17 +127,19 @@ export function EditorBlockTools({
               {ui('Textstellen als Liste auswählen')} ({entries.length})
             </summary>
             <div className="editor-block-list">
-              {choices.map((c) => (
-                <label key={c.key}>
-                  <input
-                    type="checkbox"
-                    checked={chosen.includes(c.key)}
-                    disabled={disabled || busy}
-                    onChange={() => onToggle(c.key)}
-                  />
-                  <span>{c.mark.text?.slice(0, 180)}</span>
-                </label>
-              ))}
+              {choices
+                .filter((c) => !c.mark.tableCell)
+                .map((c) => (
+                  <label key={c.key}>
+                    <input
+                      type="checkbox"
+                      checked={chosen.includes(c.key)}
+                      disabled={disabled || busy}
+                      onChange={() => onToggle(c.key)}
+                    />
+                    <span>{c.mark.text?.slice(0, 180)}</span>
+                  </label>
+                ))}
             </div>
           </details>
           {joined && (

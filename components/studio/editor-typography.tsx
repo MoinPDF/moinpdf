@@ -22,6 +22,8 @@ import { EditorRichInput, type EditorStartPoint } from './editor-rich-input';
 export type EditorPatch = (id: string, patch: Partial<Mark>, mode?: 'typing') => void;
 export function useEditorTypography(mark?: Mark, source?: Source) {
   const [value, setValue] = useState<{
+    preparedMark?: Mark;
+    preparedSource?: Source;
     resolution?: EditorFontResolution;
     runs?: PreparedEditorRun[];
     pending: boolean;
@@ -35,17 +37,27 @@ export function useEditorTypography(mark?: Mark, source?: Source) {
     }
     setValue((old) => ({ ...old, pending: true, error: '' }));
     (async () => {
-      const runs = mark.runs?.length ? await prepareEditorRuns(mark, source) : undefined;
+      const runs = await prepareEditorRuns(mark, source);
       const resolution = runs?.[0]?.resolution || (await resolveEditorFont(mark, source));
       await Promise.all(
         [resolution.font, ...(runs || []).map((r) => r.resolution.font)].map((font) =>
           loadEditorCssFont(font, source),
         ),
       );
-      if (active) setValue({ resolution, runs, pending: false, error: '' });
+      if (active)
+        setValue({
+          preparedMark: mark,
+          preparedSource: source,
+          resolution,
+          runs,
+          pending: false,
+          error: '',
+        });
     })().catch((error) => {
       if (active)
         setValue({
+          preparedMark: mark,
+          preparedSource: source,
           pending: false,
           error:
             error instanceof Error ? error.message : 'Die Schrift konnte nicht vorbereitet werden.',
@@ -55,7 +67,11 @@ export function useEditorTypography(mark?: Mark, source?: Source) {
       active = false;
     };
   }, [source, mark]);
-  return value;
+  // Resolved run offsets belong to one exact text/style revision. Applying a
+  // shorter previous revision while fonts load would truncate undo/redo text.
+  return mark?.kind === 'text' && (value.preparedMark !== mark || value.preparedSource !== source)
+    ? { pending: true, error: '', resolution: undefined, runs: undefined }
+    : value;
 }
 export function editorTextCss(
   mark: Mark,

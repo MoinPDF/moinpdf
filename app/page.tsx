@@ -172,11 +172,17 @@ import { isAdvancedTool, isServerTool, type ServerTool } from '@/lib/advanced-ty
 import { conversionToolForFile, documentAccept } from '@/lib/import-routing';
 import { isDocumentTool, type DocumentSessions } from '@/lib/document-tools';
 import { ToolChooser } from '@/components/studio/tool-chooser';
-import { EditorCanvas } from '@/components/studio/editor-canvas';
+const EditorCanvas = lazy(() =>
+  import('@/components/studio/editor-canvas').then((m) => ({ default: m.EditorCanvas })),
+);
 import { EditorDocumentSearch } from '@/components/studio/editor-document-search';
 import { editorDocumentFingerprint } from '@/lib/editor-document-search';
 import { EditorPanel, EditorToolbar } from '@/components/studio/editor-panel';
-import { EditorWorkflowPanel } from '@/components/studio/editor-workflow-panel';
+const EditorWorkflowPanel = lazy(() =>
+  import('@/components/studio/editor-workflow-panel').then((m) => ({
+    default: m.EditorWorkflowPanel,
+  })),
+);
 import { editorTools, fitRect, type EditorAction } from '@/lib/editor-model';
 import { ExtraSettings } from '@/components/studio/extra-settings';
 import { ReportView } from '@/components/studio/report-view';
@@ -1013,6 +1019,21 @@ function Studio() {
     if (!activePage || locked) return;
     const old = pageMarks.find((m) => m.id === id);
     if (!old) return;
+    if (old.nativeTable) return;
+    if (old.tableCell) {
+      patch = { ...patch };
+      for (const key of [
+        'x',
+        'y',
+        'w',
+        'h',
+        'textRotation',
+        'sourceRect',
+        'sourceRects',
+        'tableCell',
+      ] as const)
+        delete patch[key];
+    }
     patch = applyEditorPatch(old, patch, textSelection.current);
     const next = { ...old, ...patch };
     if (JSON.stringify(old) === JSON.stringify(next)) return;
@@ -2532,31 +2553,35 @@ function Studio() {
                             style={{ width: `${isEditor ? 100 : zoom}%` }}
                           >
                             {isEditor ? (
-                              <EditorCanvas
-                                zoom={zoom}
-                                autoOcr={toolId === 'edit-text'}
-                                language={options.editorLanguage || 'deu+eng'}
-                                source={activeSource}
-                                page={activePage}
-                                marks={pageMarks}
-                                crop={edits.crops[activePage.id]}
-                                action={editorAction}
-                                selectedId={selectedMarkId}
-                                disabled={locked}
-                                onMark={mark}
-                                onPatch={patchMark}
-                                onReplaceMarks={replacePageMarks}
-                                searchHighlight={
-                                  editorSearchHighlight?.pageId === activePage.id
-                                    ? editorSearchHighlight.rect
-                                    : undefined
-                                }
-                                onSelect={setSelectedMarkId}
-                                onTextSelection={(selection) => {
-                                  textSelection.current = selection;
-                                }}
-                                onDimensions={setEditorDims}
-                              />
+                              <Suspense
+                                fallback={<p role="status">{ui('Editor wird geladen …')}</p>}
+                              >
+                                <EditorCanvas
+                                  zoom={zoom}
+                                  autoOcr={toolId === 'edit-text'}
+                                  language={options.editorLanguage || 'deu+eng'}
+                                  source={activeSource}
+                                  page={activePage}
+                                  marks={pageMarks}
+                                  crop={edits.crops[activePage.id]}
+                                  action={editorAction}
+                                  selectedId={selectedMarkId}
+                                  disabled={locked}
+                                  onMark={mark}
+                                  onPatch={patchMark}
+                                  onReplaceMarks={replacePageMarks}
+                                  searchHighlight={
+                                    editorSearchHighlight?.pageId === activePage.id
+                                      ? editorSearchHighlight.rect
+                                      : undefined
+                                  }
+                                  onSelect={setSelectedMarkId}
+                                  onTextSelection={(selection) => {
+                                    textSelection.current = selection;
+                                  }}
+                                  onDimensions={setEditorDims}
+                                />
+                              </Suspense>
                             ) : (
                               <PageCanvas
                                 source={activeSource}
@@ -2842,25 +2867,107 @@ function Studio() {
                 />
               )}
               {toolId === 'edit-text' && (
-                <EditorWorkflowPanel
-                  sources={sources}
-                  pages={pages}
-                  edits={edits}
-                  disabled={locked}
-                  onApply={(next) => {
-                    if (locked) return;
-                    typingHistory.current = null;
-                    textSelection.current = null;
-                    setSelectedMarkId('');
-                    commit({ pages, edits: next });
-                  }}
-                  onReveal={(pageId, mark) => {
-                    setActiveId(pageId);
-                    setSelectedMarkId(mark.id);
-                    setEditorSearchHighlight({ pageId, rect: mark });
-                    setView('document');
-                  }}
-                />
+                <Suspense fallback={<p role="status">{ui('Editor wird geladen …')}</p>}>
+                  <EditorWorkflowPanel
+                    sources={sources}
+                    pages={pages}
+                    edits={edits}
+                    disabled={locked}
+                    activePageId={activePage?.id || ''}
+                    selectedMarkId={selectedMarkId}
+                    onApplyFlow={async (plan) => {
+                      if (locked || refs.current.busy)
+                        throw new Error('Bitte die laufende Verarbeitung abwarten.');
+                      const initial = refs.current,
+                        page = initial.pages.find((p) => p.id === plan.originalPageId),
+                        source = initial.sources.find((s) => s.id === plan.sourceId);
+                      if (!page || !source)
+                        throw new Error(
+                          'Die Absatzvorschau gehört nicht mehr zum aktuellen Dokument.',
+                        );
+                      refs.current = { ...initial, busy: true };
+                      setDocumentBusy(true);
+                      const ctrl = new AbortController();
+                      job.current = ctrl;
+                      let prepared:
+                        | Awaited<
+                            ReturnType<
+                              typeof import('@/lib/editor-auto-workspace').materializeEditorAutoFlow
+                            >
+                          >
+                        | undefined;
+                      let adopted = false;
+                      try {
+                        prepared = await (
+                          await import('@/lib/editor-auto-workspace')
+                        ).materializeEditorAutoFlow(
+                          plan,
+                          source,
+                          page,
+                          initial.pages,
+                          initial.edits,
+                          ctrl.signal,
+                        );
+                        ctrl.signal.throwIfAborted();
+                        if (
+                          refs.current.pages !== initial.pages ||
+                          refs.current.edits !== initial.edits ||
+                          refs.current.sources !== initial.sources
+                        )
+                          throw new Error(
+                            'Das Dokument hat sich geändert. Bitte eine neue Absatzvorschau erstellen.',
+                          );
+                        const nextSources = prepared.addedSource
+                          ? [...initial.sources, prepared.addedSource]
+                          : initial.sources;
+                        if (nextSources.reduce((sum, s) => sum + s.size, 0) > 80 * 1024 * 1024)
+                          throw new Error('Die Fortsetzung überschreitet die Grenze von 80 MB.');
+                        typingHistory.current = null;
+                        textSelection.current = null;
+                        dismissUndoNotice();
+                        setHistory((old) =>
+                          boundedHistory([...old, snapshot()], nextSources, [
+                            ...projectSources,
+                            ...(prepared!.addedSource ? [prepared!.addedSource] : []),
+                          ]),
+                        );
+                        setFuture([]);
+                        if (prepared.addedSource)
+                          sourcePool.current.set(prepared.addedSource.id, prepared.addedSource);
+                        setSources(nextSources);
+                        setPages(prepared.pages);
+                        setEdits(prepared.edits);
+                        setSelectedMarkId('');
+                        invalidate();
+                        adopted = true;
+                        toast.success(
+                          ui(
+                            'Absatzfluss übernommen. Die gesamte Änderung lässt sich gemeinsam rückgängig machen.',
+                          ),
+                        );
+                      } finally {
+                        if (!adopted && prepared?.addedSource)
+                          await prepared.addedSource.pdf.loadingTask.destroy();
+                        refs.current = { ...refs.current, busy: false };
+                        setDocumentBusy(false);
+                        if (job.current === ctrl) job.current = null;
+                      }
+                    }}
+                    onApply={(next) => {
+                      if (locked) return;
+                      typingHistory.current = null;
+                      textSelection.current = null;
+                      setSelectedMarkId('');
+                      commit({ pages, edits: next });
+                    }}
+                    onReveal={(pageId, mark) => {
+                      setActiveId(pageId);
+                      setSelectedMarkId(mark.id);
+                      setEditorSearchHighlight({ pageId, rect: mark });
+                      setView('document');
+                    }}
+                  />
+                </Suspense>
               )}
               {toolId === 'edit-text' && (
                 <label className="switch-field">

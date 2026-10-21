@@ -5,7 +5,7 @@ import ts from 'typescript';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import 'fake-indexeddb/auto';
 await mkdir('.cache', {recursive:true});
-for (const name of ['editor-project-codec','project-archive','project-bundle','content-digest','local-projects','ocr-languages','editor-font-catalog']) {
+for (const name of ['editor-tables','editor-project-codec','project-archive','project-bundle','content-digest','local-projects','ocr-languages','editor-font-catalog']) {
   const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-archive-test.mjs${q}`);
   await writeFile(`.cache/${name}-archive-test.mjs`,code);
 }
@@ -23,7 +23,12 @@ const edits={marks:{one:[{id:'redact',kind:'redact',...rect},{id:'text',kind:'te
 edits.marks.two=editorFontCatalog.map(font=>({id:font.id,kind:'text',...rect,text:'ÄÖÜ ß €',fontChoice:font.id,fontFamily:font.family}));
 const draft={fields:[{id:'field',name:'Name',kind:'text',value:'Denny',initialValue:'',options:[],widgets:[{page:1,rect}],existing:true,required:true,readOnly:false,multiline:false,fontSize:12}],bookmarks:[{id:'bookmark',title:'Kapitel',page:1,depth:0,open:true}],signed:false,xfa:false,originalBookmarkCount:0,originalBookmarks:'[]'};
 edits.marks.one[1].flow={id:'linked-frames',order:0};edits.marks.one[1].changeGroup='linked-change';
-edits.marks.one.push({id:'native-logo',kind:'image',...rect,nativeImage:{index:7,rect:{...rect},crop:{x:0,y:0,w:.5,h:1},corners:[[.1,.1],[.4,.1],[.1,.2]]}});
+edits.marks.one[1].textRotation=45;edits.marks.one[1].textAspect=4.25;edits.marks.one[1].scanBackground='preserve';
+edits.marks.one.push({id:'native-logo',kind:'image',...rect,nativeImage:{index:7,path:[2,4],rect:{...rect},crop:{x:0,y:0,w:.5,h:1},corners:[[.1,.1],[.4,.1],[.1,.2]]}});
+const {recognizeEditorTable,editorTableCellRect}=await import('../.cache/editor-tables-archive-test.mjs');
+const segments=[... [50,100,150].map(y=>({x1:30,y1:y,x2:230,y2:y})),...[30,130,230].map(x=>({x1:x,y1:50,x2:x,y2:150}))];
+const grid=recognizeEditorTable({id:'archive-grid',pageWidth:400,pageHeight:500,paths:segments.map((s,index)=>({index,segments:[s],color:'#111111',width:.7,opacity:1,fill:false,dash:[],lineCap:'butt',root:true,clipped:false,transparent:false})),texts:[]});
+edits.marks.two.push({id:'table-grid',kind:'image',x:.075,y:.1,w:.5,h:.2,nativeTable:grid},...grid.cells.map(c=>{const r=editorTableCellRect(grid,c);return {id:c.id,kind:'text',text:'',x:r.x/400,y:r.y/500,w:r.w/400,h:r.h/500,tableCell:{tableId:grid.id,cellId:c.id}}}));
 const state={pages,edits,options:{editorLanguage:'deu+eng',language:'deu+fra+spa',ocrLayout:'6',compareMode:'content'},history:[{pages:[...pages].reverse(),edits:{marks:{},crops:{}}}],future:[],documentSessions:{original:{current:draft,past:[],future:[]}},activeId:'one',toolId:'edit-text'};
 const archive=await encodeProjectFile('Übertragbares Projekt',[source],state);
 await writeFile('.cache/project-transfer.moinpdf',new Uint8Array(await archive.arrayBuffer()));
@@ -61,7 +66,13 @@ async function edited(change){
 }
 await assert.rejects(()=>edited(m=>m.state.history[0].pages[0].sourceId='missing').then(decodeProjectFile),/Seitenverweise/);
 await assert.rejects(()=>edited(m=>m.sources.push(m.sources[0])).then(decodeProjectFile),/Dokumentdaten/);
+await assert.rejects(()=>edited(m=>m.state.edits.marks.two.find(v=>v.nativeTable).nativeTable.original.paths[0].index=-1).then(decodeProjectFile),/ungültige/);
+await assert.rejects(()=>edited(m=>m.state.edits.marks.two.find(v=>v.tableCell).tableCell.cellId='missing').then(decodeProjectFile),/ungültige/);
+await assert.rejects(()=>edited(m=>m.state.edits.marks.two=m.state.edits.marks.two.filter(v=>!v.nativeTable)).then(decodeProjectFile),/ungültige/);
 await assert.rejects(()=>edited(m=>m.state.options.language='../remote').then(decodeProjectFile),/ungültige/);
+await assert.rejects(()=>edited(m=>delete m.state.edits.marks.one[1].textAspect).then(decodeProjectFile),/ungültige/);
+await assert.rejects(()=>edited(m=>m.state.edits.marks.one[2].nativeImage.path=[-1]).then(decodeProjectFile),/ungültige/);
+await assert.rejects(()=>edited(m=>m.state.edits.marks.one[2].nativeImage.path=Array(17).fill(0)).then(decodeProjectFile),/ungültige/);
 await assert.rejects(()=>edited(m=>m.state.edits.marks.one[0].image='https://example.com/tracker.png').then(decodeProjectFile),/ungültige/);
 await assert.rejects(()=>edited(m=>m.state.options.constructor={polluted:true}).then(decodeProjectFile),/Projektbeschreibung/);
 await assert.rejects(()=>edited(m=>m.sources[0].pdf.length=1).then(decodeProjectFile),/keine PDF/);

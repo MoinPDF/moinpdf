@@ -1,5 +1,5 @@
 import type { Page as OcrPage } from 'tesseract.js';
-import { abortable, renderPage, type Source, type PageItem } from './pdf-engine';
+import { abortable, renderPage, renderPageRegion, type Source, type PageItem } from './pdf-engine';
 import { readTextTargets, type TextTarget } from './editor-model';
 import { parseOcrLanguages } from './ocr-languages';
 import type { Rect } from './studio-engine';
@@ -13,6 +13,7 @@ export type EditorPageText = {
   width: number;
   height: number;
   ocr: boolean;
+  kind?: 'digital' | 'scan' | 'mixed' | 'empty';
   replaceTextLayer: boolean;
   uncertain: number;
 };
@@ -26,6 +27,19 @@ export type EditorRecognizer = {
   dispose: () => Promise<void>;
 };
 const cache = new WeakMap<Source, Map<string, EditorPageText>>();
+const cacheBytes = (page: EditorPageText) => JSON.stringify(page).length * 2;
+function retainPage(source: Source, key: string, value: EditorPageText) {
+  const entries = cache.get(source) || new Map<string, EditorPageText>();
+  entries.delete(key);
+  entries.set(key, value);
+  let size = [...entries.values()].reduce((total, entry) => total + cacheBytes(entry), 0);
+  while (entries.size > 16 || size > 8 * 1024 * 1024) {
+    const oldest = entries.keys().next().value!;
+    size -= cacheBytes(entries.get(oldest)!);
+    entries.delete(oldest);
+  }
+  cache.set(source, entries);
+}
 const keyFor = (page: Pick<PageItem, 'index' | 'rotation'>, language: string) =>
   `${page.index}:${page.rotation}:${language}`;
 export function cachedEditorPage(
@@ -33,7 +47,14 @@ export function cachedEditorPage(
   page: Pick<PageItem, 'index' | 'rotation'>,
   language = 'deu+eng',
 ) {
-  return cache.get(source)?.get(keyFor(page, language));
+  const entries = cache.get(source),
+    key = keyFor(page, language),
+    value = entries?.get(key);
+  if (value) {
+    entries!.delete(key);
+    entries!.set(key, value);
+  }
+  return value;
 }
 export function readableEditorText(text: string) {
   const visible = text.replace(/\s/g, '');
@@ -107,30 +128,19 @@ export async function recognizeEditorRegion(
   signal: AbortSignal,
   report: (p: EditorProgress) => void,
 ) {
-  const rendered = await renderPage(source, page, 2800, signal),
-    canvas = document.createElement('canvas'),
+  const pad = 0.006,
+    x = Math.max(0, rect.x - pad),
+    y = Math.max(0, rect.y - pad),
+    region = {
+      x,
+      y,
+      w: Math.min(1, rect.x + rect.w + pad) - x,
+      h: Math.min(1, rect.y + rect.h + pad) - y,
+    };
+  const rendered = await renderPageRegion(source, page, region, signal),
+    canvas = rendered.canvas,
     recognizer = createEditorRecognizer(signal);
   try {
-    const pad = 0.006,
-      x = Math.max(0, rect.x - pad),
-      y = Math.max(0, rect.y - pad),
-      w = Math.min(1 - x, rect.w + 2 * pad),
-      h = Math.min(1 - y, rect.h + 2 * pad);
-    canvas.width = Math.max(1, Math.round(w * rendered.canvas.width));
-    canvas.height = Math.max(1, Math.round(h * rendered.canvas.height));
-    canvas
-      .getContext('2d')!
-      .drawImage(
-        rendered.canvas,
-        x * rendered.canvas.width,
-        y * rendered.canvas.height,
-        w * rendered.canvas.width,
-        h * rendered.canvas.height,
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-      );
     const original = await recognizer.recognize(canvas, language, report);
     const prepared = preprocessEditorScan(canvas);
     let processed: OcrPage;
@@ -385,7 +395,7 @@ export async function analyzeEditorPage(
   signal.throwIfAborted();
   parseOcrLanguages(language);
   const key = keyFor(page, language),
-    existing = cache.get(source)?.get(key);
+    existing = cachedEditorPage(source, page, language);
   if (existing && !options.forceOcr) {
     options.onNative?.(existing);
     return existing;
@@ -408,6 +418,7 @@ export async function analyzeEditorPage(
     ...extracted,
     targets: valid,
     ocr: false,
+    kind: valid.some((t) => !t.invisible) ? 'digital' : 'scan',
     replaceTextLayer: valid.length !== extracted.targets.length,
     uncertain: 0,
   };
@@ -426,9 +437,7 @@ export async function analyzeEditorPage(
     }
   }
   if (valid.length && !hasImage && !base.replaceTextLayer && !options.forceOcr) {
-    const entries = cache.get(source) || new Map();
-    entries.set(key, base);
-    cache.set(source, entries);
+    retainPage(source, key, base);
     return base;
   }
   const rendered = await renderPage(source, page, 2400, signal);
@@ -507,13 +516,18 @@ export async function analyzeEditorPage(
       width: rendered.width,
       height: rendered.height,
       ocr: true,
+      kind: valid.some((t) => !t.invisible)
+        ? hasImage
+          ? 'mixed'
+          : 'digital'
+        : targets.length
+          ? 'scan'
+          : 'empty',
       replaceTextLayer: base.replaceTextLayer || (replaceSearch && valid.some((t) => t.invisible)),
       uncertain: targets.filter(editorOcrNeedsReview).length,
     };
-    const entries = cache.get(source) || new Map();
     // Only text/coordinates are retained, never canvases or document copies.
-    entries.set(key, result);
-    cache.set(source, entries);
+    retainPage(source, key, result);
     report({
       percent: 100,
       label: targets.length
