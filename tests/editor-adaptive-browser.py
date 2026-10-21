@@ -100,6 +100,17 @@ def table_rows(page,name):
         });
     }""",timeout=120000)
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2');page.screenshot(path=str(out/(name+'-page.png')),full_page=True)
+    objects=page.locator('.editor-object-list')
+    expect(objects.get_by_role('button',name=re.compile('Leere Tabellenzelle'))).to_have_count(1)
+    objects.get_by_role('button',name=re.compile('Geändertes Tabellenraster')).click()
+    expect(page.locator('.editor-selection-label')).to_have_text('Geändertes Tabellenraster')
+    expect(page.get_by_label('Bilddeckkraft',exact=True)).to_have_count(0)
+    page.get_by_role('button',name='Tabellenänderung verwerfen',exact=True).click()
+    expect(objects).to_have_count(0)
+    expect(page.get_by_label('Geändertes Tabellenraster',exact=True)).to_have_count(0)
+    page.get_by_role('button',name='Rückgängig',exact=True).click()
+    expect(page.get_by_label('Geändertes Tabellenraster',exact=True)).to_have_count(1)
+    expect(objects.get_by_role('button',name=re.compile('New line Second line'))).to_have_count(1)
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'table.pdf') as before:
         content=after[0].get_text()

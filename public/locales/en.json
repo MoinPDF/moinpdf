@@ -5089,6 +5089,8 @@
   "Die größere Textfläche würde ein Bild oder eine Linie berühren.": "The larger text frame would touch an image or a line.",
   "Scan-Korrekturen werden beim Export anhand der Bildpixel geprüft.": "Scan corrections are checked against the image pixels during export.",
   "Geändertes Tabellenraster": "Updated table grid",
+  "Tabellenänderung verwerfen": "Discard table change",
+  "Leere Tabellenzelle": "Empty table cell",
   "Tabellenzeilen anpassen": "Adjust table rows",
   "Einfache Tabellen mit geraden Linien: Zeilenhöhe ändern oder eine leere Zeile einfügen. Verbundene Zellen und mehrzeiliger Text bleiben erhalten.": "Simple tables with straight lines: change row heights or insert an empty row. Merged cells and multi-line text are preserved.",
   "Tabellenraster prüfen": "Check table grid",

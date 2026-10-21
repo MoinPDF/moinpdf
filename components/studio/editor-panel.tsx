@@ -209,15 +209,17 @@ export function EditorPanel({
       {mark && (
         <>
           <div className="editor-selection-label">
-            {mark.kind === 'text'
-              ? mark.sourceRect
-                ? ui('TEXT ERSETZEN')
-                : ui('TEXTFELD')
-              : mark.kind === 'erase'
-                ? ui('INHALT ENTFERNEN')
-                : mark.kind === 'image'
-                  ? ui('EINGEFÜGTES BILD')
-                  : ui('AUSGEWÄHLTE MARKIERUNG')}
+            {mark.nativeTable
+              ? ui('Geändertes Tabellenraster')
+              : mark.kind === 'text'
+                ? mark.sourceRect
+                  ? ui('TEXT ERSETZEN')
+                  : ui('TEXTFELD')
+                : mark.kind === 'erase'
+                  ? ui('INHALT ENTFERNEN')
+                  : mark.kind === 'image'
+                    ? ui('EINGEFÜGTES BILD')
+                    : ui('AUSGEWÄHLTE MARKIERUNG')}
           </div>
           {mark.kind === 'text' && (
             <>
@@ -363,24 +365,26 @@ export function EditorPanel({
               </label>
             </>
           )}
-          {!mark.nativeImage && (mark.kind === 'image' || mark.kind === 'signature') && (
-            <label className="field">
-              <span>
-                {ui('Deckkraft · ')}
-                {Math.round((mark.opacity ?? 1) * 100)} %
-              </span>
-              <Input
-                aria-label={ui('Bilddeckkraft')}
-                type="range"
-                min={10}
-                max={100}
-                step={5}
-                value={(mark.opacity ?? 1) * 100}
-                onChange={(e) => patch({ opacity: Number(e.target.value) / 100 })}
-                disabled={disabled}
-              />
-            </label>
-          )}
+          {!mark.nativeImage &&
+            !mark.nativeTable &&
+            (mark.kind === 'image' || mark.kind === 'signature') && (
+              <label className="field">
+                <span>
+                  {ui('Deckkraft · ')}
+                  {Math.round((mark.opacity ?? 1) * 100)} %
+                </span>
+                <Input
+                  aria-label={ui('Bilddeckkraft')}
+                  type="range"
+                  min={10}
+                  max={100}
+                  step={5}
+                  value={(mark.opacity ?? 1) * 100}
+                  onChange={(e) => patch({ opacity: Number(e.target.value) / 100 })}
+                  disabled={disabled}
+                />
+              </label>
+            )}
           <label className="field">
             <span>{ui('Maßeinheit')}</span>
             <select
@@ -440,9 +444,11 @@ export function EditorPanel({
             )}
             <Button variant="ghost" disabled={disabled} onClick={() => onRemove(mark.id)}>
               <Undo2 size={15} />
-              {mark.sourceRect || mark.nativeImage || mark.kind === 'erase'
-                ? ui('Änderung verwerfen')
-                : ui('Objekt entfernen')}
+              {mark.nativeTable || mark.tableCell
+                ? ui('Tabellenänderung verwerfen')
+                : mark.sourceRect || mark.nativeImage || mark.kind === 'erase'
+                  ? ui('Änderung verwerfen')
+                  : ui('Objekt entfernen')}
             </Button>
           </div>
         </>
@@ -458,17 +464,20 @@ export function EditorPanel({
               onClick={() => onSelect(m.id)}
             >
               {String(i + 1).padStart(2, '0')} ·{' '}
-              {m.kind === 'text'
-                ? m.text?.slice(0, 38) || ui('Text entfernt')
-                : ui(
-                    {
-                      erase: 'Entfernter Bereich',
-                      image: 'Bild',
-                      signature: 'Unterschrift',
-                      redact: 'Schwärzung',
-                      highlight: 'Markierung',
-                    }[m.kind],
-                  )}
+              {m.nativeTable
+                ? ui('Geändertes Tabellenraster')
+                : m.kind === 'text'
+                  ? m.text?.slice(0, 38) ||
+                    ui(m.tableCell ? 'Leere Tabellenzelle' : 'Text entfernt')
+                  : ui(
+                      {
+                        erase: 'Entfernter Bereich',
+                        image: 'Bild',
+                        signature: 'Unterschrift',
+                        redact: 'Schwärzung',
+                        highlight: 'Markierung',
+                      }[m.kind],
+                    )}
             </button>
           ))}
         </div>

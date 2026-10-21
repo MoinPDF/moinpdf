@@ -13,6 +13,7 @@ on:
       - 'public/impressum.html'
       - 'public/datenschutz.html'
       - 'public/legal/**'
+      - 'public/locales/**'
       - 'components/studio/legal-footer*'
       - 'scripts/build-documentation.mjs'
       - 'lib/tool-catalog.ts'
