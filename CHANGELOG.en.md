@@ -6,6 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased – Edit PDF
 
+- Updated the document server's image processing to Pillow 13.0.0 to address the vulnerabilities reported in 12.3.0.
 - Combined selection of text, original images and simple table cells; logical text lines, delayed preflight and bounded preparation of one neighbouring page.
 - Static Type-1/CFF1 source fonts and TTF/OTF import; fallback only for missing characters. Invalid font metrics and stale font responses during undo are handled.
 - Previewed paragraph continuation with following paragraphs and up to 20 new blank pages; atomic undo and preserved original following pages.
@@ -79,7 +80,6 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Bundled local workers and their WASM assets reliably and verified the generated output.
 - Added Edit PDF, Office to PDF and Page numbers to quick access; included Results under More and the latest typography and alignment fixes.
 
-
 ## 0.15.2 – 18 October 2026
 
 - Version links no longer show an underline on hover or after tapping. Keyboard focus remains visible.
@@ -90,7 +90,6 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Added English messages for OCR/Word results, project limits, original-object editing and background jobs. Results-tray errors, dates and file sizes follow the app language.
 - Updated the German and English handbook for the shared workspace, extended undo history and resuming background jobs.
 - Clearing or deleting results remains effective when an earlier local save finishes later. Older saves no longer hide newer results.
-
 
 ## 0.15.0 – 18 October 2026
 

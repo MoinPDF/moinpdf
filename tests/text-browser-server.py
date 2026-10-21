@@ -15,4 +15,10 @@ class Handler(SimpleHTTPRequestHandler):
         super().end_headers()
 
 
-ThreadingHTTPServer(('127.0.0.1', 8765), partial(Handler, directory='dist/selfhost')).serve_forever()
+class Server(ThreadingHTTPServer):
+    # A fresh browser preloads dozens of application modules at once. The
+    # default queue of five can reject connections before any handler runs.
+    request_queue_size = 128
+
+
+Server(('127.0.0.1', 8765), partial(Handler, directory='dist/selfhost')).serve_forever()

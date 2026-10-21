@@ -11,6 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Unveröffentlicht – PDF bearbeiten
 
+- Bildverarbeitung des Dokumentservers auf Pillow 13.0.0 aktualisiert, um die in 12.3.0 gemeldeten Sicherheitslücken zu schließen.
 - Gemeinsame Auswahl von Text, Originalbildern und einfachen Tabellenzellen; logische Textzeilen, verzögerte Vorprüfung und begrenzte Vorbereitung einer Nachbarseite.
 - Statische Type-1/CFF1-Originalschriften und TTF-/OTF-Import; Ersatz nur für fehlende Zeichen. Ungültige Schriftmetriken und veraltete Schriftantworten beim Rückgängigmachen werden abgefangen.
 - Vorschau für Absatzfortsetzung mit nachfolgenden Absätzen und bis zu 20 neuen leeren Seiten; gemeinsame Rücknahme, erhaltene originale Folgeseiten.
@@ -84,7 +85,6 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Lokale Hintergrundprozesse einschließlich ihrer WASM-Dateien zuverlässig gebündelt und anhand der erzeugten Ausgaben geprüft.
 - Schnellzugriff um PDF bearbeiten, Office zu PDF und Seitennummern ergänzt; Ergebnisse unter „Mehr“ sowie die aktuellen Schrift- und Ausrichtungskorrekturen übernommen.
 
-
 ## 0.15.2 – 18. Oktober 2026
 
 - Versionslinks bleiben auch beim Darüberfahren und nach dem Antippen ohne Unterstreichung. Der sichtbare Tastaturfokus bleibt erhalten.
@@ -95,7 +95,6 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Englische Hinweise für OCR-/Word-Ergebnisse, Projektgrenzen, Originalobjekt-Bearbeitung und Hintergrundaufträge ergänzt. Fehlermeldungen und Datums-/Größenangaben in der Ergebnisablage folgen der App-Sprache.
 - Handbuch auf den gemeinsamen Arbeitsplatz, den erweiterten Rückgängig-Verlauf und das Fortsetzen von Hintergrundaufträgen abgestimmt; deutsche und englische Anleitungen gemeinsam aktualisiert.
 - Gelöschte Ergebnisse bleiben auch dann aus der Ablage entfernt, wenn ein vorheriger lokaler Speichervorgang erst danach fertig wird. Neue Ergebnisse werden nicht durch ältere Speichervorgänge ausgeblendet.
-
 
 ## 0.15.0 – 18. Oktober 2026
 

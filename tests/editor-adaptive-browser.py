@@ -1,13 +1,29 @@
 """Adaptive editor acceptance on the production build. Synthetic fixtures only.
 Run editor-adaptive-fixtures.mjs first. No external requests or document uploads.
 """
-import json,os,re,traceback
+import atexit,json,os,re,subprocess,sys,time,traceback
 from pathlib import Path
 from urllib.parse import urlsplit
+from urllib.request import urlopen
 import pymupdf
 from playwright.sync_api import sync_playwright,expect
 origin=os.environ.get('MOINPDF_TEST_URL','http://127.0.0.1:8765').rstrip('/')
 out=Path(os.environ.get('MOINPDF_BROWSER_OUTPUT','.cache/editor-browser'));out.mkdir(parents=True,exist_ok=True);fixtures=Path('.cache/editor-browser/adaptive')
+if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
+    server_log=open(out/'adaptive-http.log','w')
+    server=subprocess.Popen([sys.executable,'tests/text-browser-server.py'],stdout=server_log,stderr=subprocess.STDOUT)
+    def stop_server():
+        server.terminate()
+        server.wait(timeout=10)
+        server_log.close()
+    atexit.register(stop_server)
+    for _ in range(50):
+        if server.poll() is not None:raise RuntimeError('Production test server exited before readiness')
+        try:
+            with urlopen(origin,timeout=1) as response:
+                if response.status == 200:break
+        except OSError:time.sleep(.1)
+    else:raise RuntimeError('Production test server unavailable')
 report={'results':[],'limits':['Desktop engines and touch emulation, not physical devices or native Safari.']}
 def panel(page,title):
     # Only the direct summary identifies this panel; never select an ancestor.
@@ -70,6 +86,19 @@ def table_rows(page,name):
     for text in ['A1','B1','']:
         field.press('Tab');expect(field).to_have_text(text)
     field.fill('New line\nSecond line');field.press('Tab');expect(field).to_have_text('');field.press('Shift+Tab');expect(field).to_have_text('New line\nSecond line')
+    # Inspect the asynchronously cleaned background itself, not just the new
+    # SVG rules above it. The old row rules must actually disappear on screen.
+    page.wait_for_function("""() => {
+        const image=document.querySelector('.editor-sheet > img');
+        if (!image?.complete || !image.naturalWidth) return false;
+        const canvas=document.createElement('canvas');
+        canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+        const context=canvas.getContext('2d');context.drawImage(image,0,0);
+        return [140,180].every(y => {
+            const pixels=context.getImageData(Math.floor(250/400*canvas.width)-1,Math.floor(y/500*canvas.height)-1,3,3).data;
+            return [...pixels].every((value,index) => index%4===3 || value>=250);
+        });
+    }""",timeout=120000)
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2');page.screenshot(path=str(out/(name+'-page.png')),full_page=True)
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'table.pdf') as before:

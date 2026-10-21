@@ -38,6 +38,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
     try:
         page.goto(origin)
         footer = page.locator('.moinpdf-legal-footer')
+        expect(footer.locator('nav a')).to_have_count(4)
         assert [text.strip().split(' (')[0] for text in footer.locator('nav a').all_text_contents()] == ['Dokumentation', 'Medienbereich', 'Impressum', 'Datenschutzerklärung']
         pdf = Path(temp) / 'dokumentation-test.pdf'
         with pymupdf.open() as document:
