@@ -70,6 +70,7 @@ jobs:
           python tests/editor-quality-browser.py || status=1
           python tests/editor-workflow-browser.py || status=1
           python tests/editor-adaptive-browser.py || status=1
+          python tests/editor-browser-report-check.py || status=1
           exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()

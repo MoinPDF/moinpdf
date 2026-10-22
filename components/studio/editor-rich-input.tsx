@@ -77,7 +77,7 @@ export function EditorRichInput({
   latest.current = { mark, onPatch, onSelection };
   const remember = () => {
     const root = input.current;
-    if (!root) return;
+    if (!root || document.activeElement !== root) return;
     const s = editorDomSelection(root);
     if (s) latest.current.onSelection?.({ id: latest.current.mark.id, start: s.start, end: s.end });
   };
@@ -94,7 +94,10 @@ export function EditorRichInput({
       runs?.map((r) => r.resolution.font.cssFamily),
     ]);
     if (signature.current === key) return;
-    const selection = editorDomSelection(root),
+    // WebKit focuses a contenteditable when its DOM selection is restored.
+    // A late font/layout result must not take focus back from another control.
+    const hadFocus = document.activeElement === root,
+      selection = hadFocus ? editorDomSelection(root) : null,
       fresh = activeId.current !== mark.id;
     activeId.current = mark.id;
     signature.current = key;
@@ -161,7 +164,7 @@ export function EditorRichInput({
       setEditorDomSelection(root, caret ?? 0);
       if (p?.pointerType === 'mouse') dragAnchor.current = caret ?? 0;
     } else if (pendingCaret.current !== null) {
-      setEditorDomSelection(root, pendingCaret.current);
+      if (hadFocus) setEditorDomSelection(root, pendingCaret.current);
       pendingCaret.current = null;
     } else if (selection) setEditorDomSelection(root, selection.anchor, selection.focus);
     remember();

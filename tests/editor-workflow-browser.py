@@ -185,10 +185,49 @@ def french(page,name):
         assert before[2:4]==after[2:4],(before,after)
     return {'scope':'pinned public French scan, local model, original/processed OCR variants, accent correction and independent Unicode export'}
 
+def ocr_focus(page,name):
+    # Delay actual font preparation until focus has left the PDF text. WebKit
+    # used to focus the contenteditable again while restoring its DOM range.
+    page.add_init_script("""(() => {
+      const load = FontFace.prototype.load;
+      window.editorPendingFonts = [];
+      FontFace.prototype.load = function() {
+        return load.call(this).then(face => new Promise(resolve =>
+          window.editorPendingFonts.push(() => resolve(face))));
+      };
+      window.releaseEditorFonts = () => {
+        FontFace.prototype.load = load;
+        window.editorPendingFonts.splice(0).forEach(resolve => resolve());
+      };
+    })();""")
+    open_editor(page,corpus/'francais.pdf')
+    page.get_by_label('Sprache gescannter Texte',exact=True).click()
+    page.get_by_role('option',name='Französisch',exact=True).click()
+    target=page.get_by_role('button',name=re.compile('^Text bearbeiten: Portez')).first
+    expect(target).to_be_visible(timeout=180000);target.click()
+    field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True)
+    expect(field).to_be_focused()
+    page.wait_for_function('window.editorPendingFonts.length > 0')
+    review=page.locator('.editor-ocr-review');summary=review.locator(':scope > summary')
+    summary.focus();expect(summary).to_be_focused()
+    page.evaluate('window.releaseEditorFonts()')
+    expect(page.locator('.editor-inline-toolbar .editor-font-status')).to_contain_text('Verwendete Schrift')
+    expect(summary).to_be_focused()
+    expect(field).to_have_text('Portez')
+    summary.press('Enter');expect(summary).to_have_attribute('aria-expanded','true')
+    correction=page.get_by_label('OCR-Korrektur',exact=True)
+    expect(correction).to_be_visible()
+    summary.press('Space');expect(summary).to_have_attribute('aria-expanded','false')
+    summary.click();expect(summary).to_have_attribute('aria-expanded','true')
+    correction.fill('Été');expect(correction).to_be_focused();expect(field).to_have_text('Été')
+    page.screenshot(path=str(out/(name+'-page.png')),full_page=True)
+    return {'scope':'delayed real font preparation retains OCR-control focus, keyboard and pointer disclosure, unchanged source selection and correction typing'}
+
 def execute(browser,name,width,callback):
     selected=os.environ.get('MOINPDF_BROWSER_CASES','').split(',')
     if selected!=[''] and name not in selected:return
     context=browser.new_context(viewport={'width':width,'height':1000},accept_downloads=True,reduced_motion='reduce',has_touch=width<600)
+    context.tracing.start(screenshots=True,snapshots=True,sources=True)
     page=context.new_page();page.set_default_timeout(45000);errors=[];blocked=[]
     page.on('pageerror',lambda e:errors.append(str(e)))
     def route(r):
@@ -202,6 +241,7 @@ def execute(browser,name,width,callback):
         try:page.screenshot(path=str(out/(name+'-failure.png')),full_page=True,timeout=10000);(out/(name+'-failure.txt')).write_text(page.locator('body').inner_text(timeout=5000))
         except Exception:pass
     finally:
+        context.tracing.stop(path=str(out/(name+'-trace.zip')) if result.get('status')=='failed' else None)
         report['results'].append(result);(out/'workflow-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));context.close();print(result['status'].upper()+': '+name,flush=True)
 
 with sync_playwright() as api:
@@ -212,5 +252,7 @@ with sync_playwright() as api:
         execute(browser,engine+'-workflow-flow',1440,flow)
         execute(browser,engine+'-workflow-images',1440,images)
         execute(browser,engine+'-workflow-french',1440,french)
+        execute(browser,engine+'-workflow-ocr-focus',1440,ocr_focus)
+        execute(browser,engine+'-workflow-ocr-focus-touch',390,ocr_focus)
         browser.close()
-raise SystemExit(0 if all(r['status']=='passed'for r in report['results'])else 1)
+raise SystemExit(0 if report['results'] and all(r['status']=='passed'for r in report['results'])else 1)

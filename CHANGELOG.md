@@ -11,6 +11,8 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Unveröffentlicht – PDF bearbeiten
 
+- Verspätete Schriftvorbereitung übernimmt den Fokus nicht mehr aus der OCR-Korrektur oder anderen Bedienelementen zurück in den PDF-Text. Regressionstests prüfen Desktop und schmale Touch-Ansichten einschließlich Tastaturbedienung.
+- Die Editor-CI verlangt vollständige Ergebnisberichte für alle 29 Fälle je Browser; fehlende, doppelte oder fehlgeschlagene Fälle verhindern einen erfolgreichen Abschluss. Fehlgeschlagene Workflow-Fälle behalten zusätzlich eine Playwright-Ablaufaufzeichnung.
 - Bildverarbeitung des Dokumentservers auf Pillow 13.0.0 aktualisiert, um die in 12.3.0 gemeldeten Sicherheitslücken zu schließen.
 - Gemeinsame Auswahl von Text, Originalbildern und einfachen Tabellenzellen; logische Textzeilen, verzögerte Vorprüfung und begrenzte Vorbereitung einer Nachbarseite.
 - Statische Type-1/CFF1-Originalschriften und TTF-/OTF-Import; Ersatz nur für fehlende Zeichen. Ungültige Schriftmetriken und veraltete Schriftantworten beim Rückgängigmachen werden abgefangen.
