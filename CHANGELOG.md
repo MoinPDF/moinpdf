@@ -11,6 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Unveröffentlicht – PDF bearbeiten
 
+- Browser-Vorbereitung in Editor- und Docker-CI verwendet offizielle HTTPS-Paketarchive und begrenzte Netzwerkwartezeiten; hängende Ubuntu-Spiegeldownloads verbrauchen nicht mehr die gesamte Testlaufzeit.
 - Verspätete Schriftvorbereitung übernimmt den Fokus nicht mehr aus der OCR-Korrektur oder anderen Bedienelementen zurück in den PDF-Text. Regressionstests prüfen Desktop und schmale Touch-Ansichten einschließlich Tastaturbedienung.
 - Die Editor-CI verlangt vollständige Ergebnisberichte für alle 29 Fälle je Browser; fehlende, doppelte oder fehlgeschlagene Fälle verhindern einen erfolgreichen Abschluss. Fehlgeschlagene Workflow-Fälle behalten zusätzlich eine Playwright-Ablaufaufzeichnung.
 - Bildverarbeitung des Dokumentservers auf Pillow 13.0.0 aktualisiert, um die in 12.3.0 gemeldeten Sicherheitslücken zu schließen.

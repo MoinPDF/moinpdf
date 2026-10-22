@@ -6,6 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased – Edit PDF
 
+- Browser preparation in editor and Docker CI uses official HTTPS package archives and bounded network waits, preventing stalled Ubuntu mirror downloads from consuming the entire test runtime.
 - Late font preparation no longer takes focus back from OCR correction or another control into the PDF text. Regression cases cover desktop and narrow touch views, including keyboard operation.
 - Editor CI requires complete result reports for all 29 cases per browser; missing, duplicate or unsuccessful cases prevent a successful finish. Failed workflow cases also retain a Playwright trace.
 - Updated the document server's image processing to Pillow 13.0.0 to address the vulnerabilities reported in 12.3.0.
