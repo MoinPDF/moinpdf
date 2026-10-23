@@ -40,7 +40,14 @@ export function EditorOcrReview({
   const [variants, setVariants] = useState<{ label: string; text: string; confidence: number }[]>(
     [],
   );
-  useEffect(() => () => task.current?.abort(), []);
+  useEffect(() => {
+    task.current?.abort();
+    setBusy(false);
+    setSuggestion('');
+    setVariants([]);
+    setNotice('');
+    return () => task.current?.abort();
+  }, [mark.id, source.id, page.index, page.rotation]);
   const uncertain = targets.filter(editorOcrNeedsReview);
   async function recognize() {
     if (!mark.sourceRect) return;

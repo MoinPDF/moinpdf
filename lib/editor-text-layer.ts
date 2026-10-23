@@ -15,6 +15,8 @@ import {
   showText,
   setCharacterSpacing,
   setFillingRgbColor,
+  rgb,
+  degrees,
 } from 'pdf-lib';
 import type { TextTarget } from './editor-model';
 import type { Mark, Rect } from './studio-engine';
@@ -23,7 +25,12 @@ import { wrapEditorText, hexColor } from './editor-model';
 import { resolveEditorFont, type EditorFontResolution } from './editor-fonts';
 import type { Source } from './pdf-engine';
 import { localFontBytes } from './local-font-bytes';
-import { prepareEditorRuns, richEditorLayout, type PreparedEditorRun } from './editor-rich-layout';
+import { editorScanBlur } from './editor-scan';
+import {
+  prepareEditorRuns,
+  hasRichEditorLayout,
+  type PreparedEditorRun,
+} from './editor-rich-layout';
 
 const fonts = new WeakMap<PDFDocument, Map<string, Promise<PDFFont>>>();
 const characterSets = new WeakMap<PDFFont, Set<number>>();
@@ -246,9 +253,47 @@ export async function drawEditorText(
   source?: Source,
   report?: (resolution: EditorFontResolution) => void,
 ) {
+  const blur = editorScanBlur(mark, width);
+  if (blur) {
+    const { prepareEditorLayout } = await import('./editor-layout-plan');
+    const { renderEditorScanText } = await import('./editor-ink-verification');
+    const plan = await prepareEditorLayout(mark, width, height, source);
+    if (plan.overflow)
+      throw new Error(
+        'Ein Textfeld ist zu klein. Vergrößere seine Breite oder Höhe oder reduziere die Schriftgröße.',
+      );
+    const image = await renderEditorScanText(plan, blur, new AbortController().signal);
+    try {
+      const png = await doc.embedPng(image.canvas.toDataURL('image/png'));
+      const [x, y] = editorPointToPdf(page, image.x, image.y + image.height);
+      const [ex, ey] = editorPointToPdf(page, image.x + 1, image.y + image.height);
+      page.drawImage(png, {
+        x,
+        y,
+        width: image.width,
+        height: image.height,
+        rotate: degrees((Math.atan2(ey - y, ex - x) * 180) / Math.PI),
+      });
+    } finally {
+      image.canvas.width = image.canvas.height = 0;
+    }
+  }
+  return drawEditorTextContent(doc, page, mark, width, height, source, report, !!blur);
+}
+
+async function drawEditorTextContent(
+  doc: PDFDocument,
+  page: PDFPage,
+  mark: Mark,
+  width: number,
+  height: number,
+  source?: Source,
+  report?: (resolution: EditorFontResolution) => void,
+  invisible = false,
+) {
   const prepared = await prepareEditorRuns(mark, source);
-  if (mark.runs?.length || prepared.length > 1)
-    return drawRichEditorText(doc, page, mark, width, height, source, report, prepared);
+  if (hasRichEditorLayout(mark, prepared))
+    return drawRichEditorText(doc, page, mark, width, height, source, report, prepared, invisible);
   let descent = 0.2;
   const font = await editorFont(doc, mark.text || '', mark, source, (resolution) => {
     descent = resolution.font.measureDescent(mark.text || '');
@@ -279,7 +324,7 @@ export async function drawEditorText(
     radians = (layout.geometry.rotation * Math.PI) / 180;
   page.pushOperators(
     pushGraphicsState(),
-    setTextRenderingMode(TextRenderingMode.Fill),
+    setTextRenderingMode(invisible ? TextRenderingMode.Invisible : TextRenderingMode.Fill),
     setFillingRgbColor(
       parseInt(color.slice(1, 3), 16) / 255,
       parseInt(color.slice(3, 5), 16) / 255,
@@ -337,86 +382,83 @@ async function drawRichEditorText(
   source?: Source,
   report?: (resolution: EditorFontResolution) => void,
   prepared?: PreparedEditorRun[],
+  invisible = false,
 ) {
-  const geometry = editorTextGeometry(mark, width, height, mark.textRotation),
-    scaleX = mark.textScaleX || 1;
-  const inset = (mark.insetScale || 0) * (mark.fontScale || 0.028) * width,
-    available = geometry.width / scaleX - 2 * inset;
-  const runs = prepared || (await prepareEditorRuns(mark, source)),
-    layout = richEditorLayout(mark, width, available, runs);
-  if (
-    layout.requiredHeight > geometry.height + 0.5 ||
-    layout.lines.some((line) => line.width > available + 0.5)
-  )
+  const runs = prepared || (await prepareEditorRuns(mark, source));
+  for (const run of runs) report?.(run.resolution);
+  const { editorLayoutPlan } = await import('./editor-layout-plan');
+  const plan = editorLayoutPlan(mark, width, height, runs);
+  if (plan.overflow)
     throw new Error(
       'Ein Textfeld ist zu klein. Vergrößere seine Breite oder Höhe oder reduziere die Schriftgröße.',
     );
-  const embedded = new Map<(typeof runs)[number], PDFFont>();
-  for (const run of runs) {
-    report?.(run.resolution);
-    embedded.set(
-      run,
-      await cachedFont(doc, run.resolution.font.cssFamily, async () => {
+  const radians = (plan.geometry.rotation * Math.PI) / 180;
+  const point = (x: number, y: number) =>
+    editorPointToPdf(
+      page,
+      plan.geometry.x + Math.cos(radians) * x * plan.scaleX - Math.sin(radians) * y,
+      plan.geometry.y + Math.sin(radians) * x * plan.scaleX + Math.cos(radians) * y,
+    );
+  page.pushOperators(
+    pushGraphicsState(),
+    setTextRenderingMode(invisible ? TextRenderingMode.Invisible : TextRenderingMode.Fill),
+  );
+  try {
+    for (const piece of plan.pieces) {
+      const font = await cachedFont(doc, piece.font.cssFamily, async () => {
         doc.registerFontkit((await import('@pdf-lib/fontkit')).default);
-        return doc.embedFont(run.resolution.font.bytes, {
+        return doc.embedFont(piece.font.bytes, {
           subset: true,
           features: { liga: false, kern: false, clig: false },
         });
-      }),
-    );
-  }
-  const radians = (geometry.rotation * Math.PI) / 180;
-  page.pushOperators(pushGraphicsState(), setTextRenderingMode(TextRenderingMode.Fill));
-  try {
-    for (const line of layout.lines)
-      for (const piece of line.pieces) {
-        const font = embedded.get(piece.run)!,
-          key = page.node.newFontDictionary(font.name, font.ref);
-        const align =
-          mark.align === 'center'
-            ? (available - line.width) / 2
-            : mark.align === 'right'
-              ? available - line.width
-              : 0;
-        const x = (inset + align + piece.x) * scaleX,
-          y = line.baseline;
-        const [px, py] = editorPointToPdf(
-          page,
-          geometry.x + Math.cos(radians) * x - Math.sin(radians) * y,
-          geometry.y + Math.sin(radians) * x + Math.cos(radians) * y,
-        );
-        const [ex, ey] = editorPointToPdf(
-          page,
-          geometry.x + Math.cos(radians) * (x + 1) - Math.sin(radians) * y,
-          geometry.y + Math.sin(radians) * (x + 1) + Math.cos(radians) * y,
-        );
-        const angle = Math.atan2(ey - py, ex - px),
-          color = hexColor(piece.run.style.color, mark.color || '#222222');
-        page.pushOperators(
-          setFillingRgbColor(
-            parseInt(color.slice(1, 3), 16) / 255,
-            parseInt(color.slice(3, 5), 16) / 255,
-            parseInt(color.slice(5, 7), 16) / 255,
-          ),
-          beginText(),
-          setFontAndSize(key, piece.size),
-          setCharacterSpacing(layout.tracking),
-          setTextMatrix(
-            Math.cos(angle) * scaleX,
-            Math.sin(angle) * scaleX,
-            -Math.sin(angle),
-            Math.cos(angle),
-            px,
-            py,
-          ),
-          showText(font.encodeText(piece.text)),
-          endText(),
-        );
+      });
+      let keys = pageFonts.get(page);
+      if (!keys) {
+        keys = new Map();
+        pageFonts.set(page, keys);
       }
+      let key = keys.get(font);
+      if (!key) {
+        key = page.node.newFontDictionary(font.name, font.ref);
+        keys.set(font, key);
+      }
+      const [px, py] = point(piece.x, piece.y),
+        [ex, ey] = point(piece.x + 1 / plan.scaleX, piece.y);
+      const angle = Math.atan2(ey - py, ex - px),
+        color = hexColor(piece.color, '#222222');
+      const channels = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16) / 255);
+      page.pushOperators(
+        setFillingRgbColor(channels[0], channels[1], channels[2]),
+        beginText(),
+        setFontAndSize(key, piece.size),
+        setCharacterSpacing(piece.tracking),
+        setTextMatrix(
+          Math.cos(angle) * plan.scaleX,
+          Math.sin(angle) * plan.scaleX,
+          -Math.sin(angle),
+          Math.cos(angle),
+          px,
+          py,
+        ),
+        showText(font.encodeText(piece.text)),
+        endText(),
+      );
+      if (!invisible && piece.underline && piece.advance && piece.text) {
+        const [x1, y1] = point(piece.x, piece.y + piece.size * 0.12),
+          [x2, y2] = point(piece.x + piece.advance, piece.y + piece.size * 0.12);
+        page.drawLine({
+          start: { x: x1, y: y1 },
+          end: { x: x2, y: y2 },
+          thickness: Math.max(0.35, piece.size * 0.055),
+          color: rgb(channels[0], channels[1], channels[2]),
+        });
+      }
+    }
   } finally {
     page.pushOperators(popGraphicsState());
   }
 }
+
 export async function addEditorTextLayer(
   doc: PDFDocument,
   page: PDFPage,

@@ -2,6 +2,7 @@ import type { Source } from './pdf-engine';
 import type { Mark, Rect } from './studio-engine';
 import type { EditorFont } from './editor-fonts';
 import { prepareEditorLayout } from './editor-layout-plan';
+import { editorScanBlur, softenEditorScanText } from './editor-scan';
 
 type Command = { command: string; args: number[] };
 type OutlineFace = {
@@ -24,26 +25,29 @@ function outlineFace(font: EditorFont) {
   }
   return promise;
 }
-/** Independent reference: paint font outlines directly to Canvas, without PDF
- * text operators, embedding, or PDF.js's font conversion/rendering pipeline. */
-export async function paintEditorReference(
+/** Paint font outlines in page units, independent of PDF text operators. */
+export async function paintEditorPlan(
   ctx: CanvasRenderingContext2D,
-  mark: Mark,
-  width: number,
-  height: number,
-  source: Source,
+  plan: Awaited<ReturnType<typeof prepareEditorLayout>>,
   signal: AbortSignal,
 ) {
-  const plan = await prepareEditorLayout(mark, width, height, source);
-  if (plan.overflow) throw new Error('Textfeld zu klein');
   ctx.save();
   try {
-    ctx.scale(ctx.canvas.width / width, ctx.canvas.height / height);
     ctx.translate(plan.geometry.x, plan.geometry.y);
     ctx.rotate((plan.geometry.rotation * Math.PI) / 180);
     ctx.scale(plan.scaleX, 1);
     for (const piece of plan.pieces) {
       signal.throwIfAborted();
+      if (piece.underline && piece.advance) {
+        ctx.fillStyle = piece.color;
+        const thickness = Math.max(0.35, piece.size * 0.055);
+        ctx.fillRect(
+          piece.x,
+          piece.y + piece.size * 0.12 - thickness / 2,
+          piece.advance,
+          thickness,
+        );
+      }
       const face = await outlineFace(piece.font);
       if (!Number.isFinite(face.unitsPerEm) || face.unitsPerEm <= 0)
         throw new Error('Schrift prüfen');
@@ -86,6 +90,69 @@ export async function paintEditorReference(
         x += (glyph.advanceWidth * piece.size) / face.unitsPerEm + piece.tracking;
       }
     }
+  } finally {
+    ctx.restore();
+  }
+}
+
+/** Rasterize only the new scan text, retaining alpha and measured edge softness.
+ * The accompanying PDF text objects remain searchable and editable. */
+export async function renderEditorScanText(
+  plan: Awaited<ReturnType<typeof prepareEditorLayout>>,
+  blur: number,
+  signal: AbortSignal,
+) {
+  const padding = Math.max(0.5, blur * 3 + 0.25);
+  const width = plan.geometry.width + padding * 2,
+    height = Math.max(plan.geometry.height, plan.requiredHeight) + padding * 2,
+    x = plan.geometry.x - padding,
+    y = plan.geometry.y - padding;
+  const scale = Math.min(
+    600 / 72,
+    20 / Math.max(0.01, blur),
+    4095 / Math.max(width, height),
+    Math.sqrt(980000 / (width * height)),
+  );
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.ceil(width * scale));
+  canvas.height = Math.max(1, Math.ceil(height * scale));
+  try {
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(scale, scale);
+    ctx.translate(-x, -y);
+    await paintEditorPlan(ctx, plan, signal);
+    signal.throwIfAborted();
+    softenEditorScanText(canvas, blur * scale);
+    return { canvas, x, y, width: canvas.width / scale, height: canvas.height / scale };
+  } catch (error) {
+    canvas.width = canvas.height = 0;
+    throw error;
+  }
+}
+
+/** Independent reference for export verification, including the scan appearance. */
+export async function paintEditorReference(
+  ctx: CanvasRenderingContext2D,
+  mark: Mark,
+  width: number,
+  height: number,
+  source: Source,
+  signal: AbortSignal,
+) {
+  const plan = await prepareEditorLayout(mark, width, height, source);
+  if (plan.overflow) throw new Error('Textfeld zu klein');
+  ctx.save();
+  try {
+    ctx.scale(ctx.canvas.width / width, ctx.canvas.height / height);
+    const blur = editorScanBlur(mark, width);
+    if (blur) {
+      const image = await renderEditorScanText(plan, blur, signal);
+      try {
+        ctx.drawImage(image.canvas, image.x, image.y, image.width, image.height);
+      } finally {
+        image.canvas.width = image.canvas.height = 0;
+      }
+    } else await paintEditorPlan(ctx, plan, signal);
   } finally {
     ctx.restore();
   }

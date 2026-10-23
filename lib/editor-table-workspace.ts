@@ -12,8 +12,8 @@ import {
   validateEditorTable,
   validateEditorTableOriginal,
   editorTableCellRect,
-  setEditorTableRowHeight,
-  insertEditorTableRow,
+  changeEditorTableModel,
+  type EditorTableOperation,
   type EditorTable,
   type TablePath,
   type TableRect,
@@ -73,7 +73,7 @@ function obstacles(
   targets: TextTarget[],
   marks: Mark[],
 ) {
-  const ids = new Set(table.cells.flatMap((c) => c.textIds)),
+  const ids = new Set([...table.cells.flatMap((c) => c.textIds), ...(table.removedTextIds || [])]),
     paths = new Set(table.original.paths.map((p) => p.index));
   return [
     ...objects
@@ -179,16 +179,13 @@ export async function changeEditorTable(
   page: PageItem,
   marks: Mark[],
   table: EditorTable,
-  operation: { kind: 'height' | 'insert'; row: number; height: number },
+  operation: EditorTableOperation,
   signal: AbortSignal,
 ) {
   const state = await context(source, page, signal);
   validateEditorTableOriginal(table, state.paths);
   const guarded = obstacles(table, state.objects, state.targets, marks),
-    next =
-      operation.kind === 'height'
-        ? setEditorTableRowHeight(table, operation.row, operation.height, { obstacles: guarded })
-        : insertEditorTableRow(table, operation.row, operation.height, { obstacles: guarded });
+    next = changeEditorTableModel(table, operation, { obstacles: guarded });
   const removed = new Set<string>(
       marks
         .filter((m) => m.nativeTable?.id === table.id || m.tableCell?.tableId === table.id)
@@ -200,45 +197,68 @@ export async function changeEditorTable(
     const oldCell = table.cells.find((c) => c.id === cell.id),
       oldRect = oldCell && editorTableCellRect(table, oldCell),
       rect = editorTableCellRect(next, cell);
-    let mark = marks.find(
-      (m) => m.tableCell?.tableId === table.id && m.tableCell.cellId === cell.id,
-    );
-    if (!mark) {
-      const fragments: Mark[] = [],
-        seen = new Set<string>();
-      for (const id of cell.textIds) {
-        const target = state.targets.find((t) => t.id === id);
-        if (!target) throw new Error('Der ursprüngliche Zellentext wurde nicht wiedergefunden.');
-        const matching = marks.filter(
-          (m) => m.kind === 'text' && editorRemovalRects(m).some((r) => same(r, target)),
-        );
-        if (matching.length > 1)
-          throw new Error('Mehrere Änderungen betreffen dieselbe Tabellenzelle.');
-        const fragment =
-          matching[0] ||
-          editorTargetMark(target, page.index, state.width, `${table.id}:${target.id}`);
-        if (matching[0]) removed.add(matching[0].id);
-        if (!seen.has(fragment.id)) {
-          fragments.push(fragment);
-          seen.add(fragment.id);
-        }
+    const contributors =
+      operation.kind === 'merge' && cell.row === operation.row && cell.column === operation.column
+        ? table.cells.filter(
+            (c) =>
+              c.row >= operation.row &&
+              c.column >= operation.column &&
+              c.row + c.rowSpan <= operation.rowEnd + 1 &&
+              c.column + c.columnSpan <= operation.columnEnd + 1,
+          )
+        : oldCell
+          ? [oldCell]
+          : [];
+    const fragments: Mark[] = [],
+      seen = new Set<string>();
+    const collect = (fragment: Mark) => {
+      if (!seen.has(fragment.id)) {
+        fragments.push(fragment);
+        seen.add(fragment.id);
       }
-      mark =
-        fragments.length > 1
-          ? joinEditorBlocks(fragments, state.width, state.height, cell.id)
-          : fragments.length
-            ? { ...fragments[0], id: cell.id }
-            : {
-                id: cell.id,
-                kind: 'text',
-                ...normalized(rect, state.width, state.height),
-                text: '',
-                fontScale: 11 / state.width,
-                fontChoice: 'dejavu-sans',
-                fontFamily: 'sans',
-                color: '#222222',
-              };
+    };
+    for (const contributor of contributors) {
+      const existing = marks.find(
+        (m) =>
+          m.tableCell?.tableId === table.id &&
+          m.tableCell.cellId === contributor.id &&
+          !m.tableCell.deleted,
+      );
+      if (existing) collect(existing);
     }
+    for (const id of cell.textIds) {
+      const target = state.targets.find((t) => t.id === id);
+      if (!target) throw new Error('Der ursprüngliche Zellentext wurde nicht wiedergefunden.');
+      if (fragments.some((m) => editorRemovalRects(m).some((r) => same(r, target)))) continue;
+      const matching = marks.filter(
+        (m) =>
+          m.kind === 'text' &&
+          !m.tableCell?.deleted &&
+          editorRemovalRects(m).some((r) => same(r, target)),
+      );
+      if (matching.length > 1)
+        throw new Error('Mehrere Änderungen betreffen dieselbe Tabellenzelle.');
+      if (matching[0]) removed.add(matching[0].id);
+      collect(
+        matching[0] ||
+          editorTargetMark(target, page.index, state.width, `${table.id}:${target.id}`),
+      );
+    }
+    const mark: Mark =
+      fragments.length > 1
+        ? joinEditorBlocks(fragments, state.width, state.height, cell.id)
+        : fragments.length
+          ? { ...fragments[0], id: cell.id }
+          : {
+              id: cell.id,
+              kind: 'text',
+              ...normalized(rect, state.width, state.height),
+              text: '',
+              fontScale: 11 / state.width,
+              fontChoice: 'dejavu-sans',
+              fontFamily: 'sans',
+              color: '#222222',
+            };
     const left = oldRect ? Math.max(2, mark.x * state.width - oldRect.x) : 3,
       top = oldRect ? Math.max(2, mark.y * state.height - oldRect.y) : 3;
     const positioned: Mark = {
@@ -249,16 +269,36 @@ export async function changeEditorTable(
       w: (rect.w - left - 3) / state.width,
       h: (rect.h - top - 3) / state.height,
       originalState: undefined,
-      nativeTextSlice: undefined,
       flow: undefined,
       changeGroup: table.id,
       tableCell: { tableId: table.id, cellId: cell.id },
     };
+    delete positioned.nativeTextSlice; // Transient export plans are never persisted.
     if (positioned.w <= 0 || positioned.h <= 0) throw new Error('Die Tabellenzeile ist zu klein.');
     const layout = await prepareEditorLayout(positioned, state.width, state.height, source);
-    if (layout.overflow) throw new Error('Der Zellentext passt nicht in die gewählte Zeilenhöhe.');
+    if (layout.overflow) throw new Error('Der Zellentext passt nicht in die gewählte Zellengröße.');
     requiredHeights[cell.id] = top + layout.requiredHeight + 3;
     cellMarks.push(positioned);
+  }
+  if (next.removedTextIds?.length) {
+    const targets = next.removedTextIds.map((id) => state.targets.find((t) => t.id === id));
+    if (targets.some((t) => !t))
+      throw new Error('Der ursprüngliche Zellentext wurde nicht wiedergefunden.');
+    const deleted = targets.map((t) => ({ x: t!.x, y: t!.y, w: t!.w, h: t!.h }));
+    for (const mark of marks)
+      if (editorRemovalRects(mark).some((r) => deleted.some((t) => same(r, t))))
+        removed.add(mark.id);
+    cellMarks.push({
+      id: table.id + ':deleted',
+      kind: 'text',
+      ...normalized(table.original.rect, state.width, state.height),
+      text: '',
+      sourceRects: deleted,
+      sourceRect: deleted[0],
+      sourceIsScan: false,
+      changeGroup: table.id,
+      tableCell: { tableId: table.id, cellId: table.id + ':deleted', deleted: true },
+    });
   }
   validateEditorTable(next, { obstacles: guarded, requiredHeights });
   signal.throwIfAborted();
@@ -303,23 +343,48 @@ export async function removeEditorTablePaths(
       paths: table.original.paths,
       texts: texts(targets, table.pageWidth, table.pageHeight),
     });
-    for (const cell of table.cells) {
-      const old = original.cells.find((c) => c.id === cell.id),
-        expected = old?.textIds || [];
-      if (JSON.stringify([...cell.textIds].sort()) !== JSON.stringify([...expected].sort()))
-        throw new Error(
-          'Die ursprünglichen Zellinhalte stimmen nicht mit dem Tabellenraster überein.',
-        );
-      const candidates = marks.filter(
-        (m) => m.tableCell?.tableId === table.id && m.tableCell.cellId === cell.id,
+    const originalIds = original.cells.flatMap((c) => c.textIds).sort();
+    const ownedIds = [
+      ...table.cells.flatMap((c) => c.textIds),
+      ...(table.removedTextIds || []),
+    ].sort();
+    if (JSON.stringify(originalIds) !== JSON.stringify(ownedIds))
+      throw new Error(
+        'Die ursprünglichen Zellinhalte stimmen nicht mit dem Tabellenraster überein.',
       );
+    const expectedCells = [
+      ...table.cells.map((cell) => ({
+        id: cell.id,
+        textIds: cell.textIds,
+        rect: normalized(editorTableCellRect(table, cell), table.pageWidth, table.pageHeight),
+        deleted: false,
+      })),
+      ...(table.removedTextIds?.length
+        ? [
+            {
+              id: table.id + ':deleted',
+              textIds: table.removedTextIds,
+              rect: normalized(table.original.rect, table.pageWidth, table.pageHeight),
+              deleted: true,
+            },
+          ]
+        : []),
+    ];
+    const tableMarks = marks.filter((m) => m.tableCell?.tableId === table.id);
+    if (tableMarks.length !== expectedCells.length)
+      throw new Error('Eine Tabellenzelle fehlt oder ist doppelt vorhanden.');
+    for (const cell of expectedCells) {
+      const candidates = tableMarks.filter((m) => m.tableCell!.cellId === cell.id);
       if (candidates.length !== 1)
         throw new Error('Eine Tabellenzelle fehlt oder ist doppelt vorhanden.');
       const mark = candidates[0],
-        rect = normalized(editorTableCellRect(table, cell), table.pageWidth, table.pageHeight),
-        removals = editorRemovalRects(mark);
+        rect = cell.rect,
+        removals = editorRemovalRects(mark),
+        expected = cell.textIds;
       if (
         mark.kind !== 'text' ||
+        !!mark.tableCell!.deleted !== cell.deleted ||
+        (cell.deleted && (mark.text || mark.runs?.length || mark.sourceIsScan !== false)) ||
         mark.x < rect.x ||
         mark.y < rect.y ||
         mark.x + mark.w > rect.x + rect.w + 0.00001 ||
@@ -337,8 +402,6 @@ export async function removeEditorTablePaths(
       )
         throw new Error('Die Zellgeometrie oder die ursprünglichen Textbereiche wurden verändert.');
     }
-    if (original.cells.some((c) => !table.cells.some((n) => n.id === c.id)))
-      throw new Error('Eine ursprüngliche Tabellenzelle fehlt.');
     validateEditorTable(table, { obstacles: obstacles(table, objects, targets, marks) });
     for (const path of table.original.paths) {
       if (indices.has(path.index)) throw new Error('Mehrere Tabellen beanspruchen dieselbe Linie.');

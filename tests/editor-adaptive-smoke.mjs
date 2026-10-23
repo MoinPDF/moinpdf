@@ -105,7 +105,7 @@ async function validate(input, label, text) {
 const synthetic = fixture(); await writeFile(join(root, 'synthetic-cff.otf'), synthetic);
 await validate(Buffer.concat([Buffer.alloc(7), Buffer.from(synthetic), Buffer.alloc(11)]).subarray(7, 7 + synthetic.length), 'Synthetic', 'A AΩ');
 await assert.rejects(() => normalizeEditorOutline(new Uint8Array(8)), /Dateigröße/);
-for (const tag of ['fvar','CFF2','gvar']) await assert.rejects(() => normalizeEditorOutline(writeOutlineSfnt([...readOutlineTables(synthetic),{tag,data:new Uint8Array(4)}],0x4f54544f)),/variable/);
+for (const tag of ['fvar','CFF2','gvar']) await assert.rejects(() => normalizeEditorOutline(writeOutlineSfnt([...readOutlineTables(synthetic),{tag,data:new Uint8Array(4)}],0x4f54544f)),/variable|Konturformate/);
 const duplicate=Buffer.from(synthetic); duplicate.copy(duplicate,28,12,16); await assert.rejects(()=>normalizeEditorOutline(duplicate),/Tabelle/);
 const corrupted=Buffer.from(synthetic); view(corrupted).setUint32(20,corrupted.length+4); await assert.rejects(()=>normalizeEditorOutline(corrupted),/Tabelle/);
 const enormous = new Uint8Array(16*1024*1024+1); await assert.rejects(()=>normalizeEditorOutline(enormous),/Dateigröße/);
@@ -114,6 +114,31 @@ const tooManyGlyphs = readOutlineTables(synthetic);view(tooManyGlyphs.find(t=>t.
 
 assert.deepEqual(synthetic,Uint8Array.from(await readFile('tests/fixtures/editor-static-cff.otf')),'Committed CC0 fixture matches generator');
 console.log('PASS: static CFF normalization, immutable input, glyph metrics, independent raster comparison, searchable export and invalid-font guards.');
+
+// Independently constructed masters have advances 600/750 and known weight interpolation.
+for(const extension of ['ttf','otf']) {
+  const bytes=Uint8Array.from(await readFile(`tests/fixtures/editor-variable.${extension}`));
+  for(const [weight,advance] of [[400,600],[550,675],[700,750]]) {
+    const original=Buffer.from(bytes),frozen=await normalizeEditorOutline(bytes,{wght:weight}),face=fontkit.create(frozen);
+    assert.deepEqual(Buffer.from(bytes),original,'Variable source remains immutable');
+    assert.equal(face.glyphForCodePoint(65).advanceWidth,advance,`${extension} HVAR advance at ${weight}`);
+    const tables=new Map(readOutlineTables(frozen).map(t=>[t.tag,t.data]));
+    for(const tag of ['fvar','gvar','CFF2','HVAR','MVAR','VVAR'])assert(!tables.has(tag),`${tag} must be frozen`);
+    assert.equal(view(tables.get('OS/2')).getUint16(4),weight);
+    assert.equal(!!(view(tables.get('OS/2')).getUint16(62)&32),weight>=600);
+    assert.equal(outlineChecksum(frozen),0xb1b0afba);
+    const bounds=exactBounds(face.glyphForCodePoint(65).path.commands);
+    assert(Math.abs(bounds[0]-50)<=1 && Math.abs(bounds[2]-(advance-50))<=1,'Instance contour width follows the selected master');
+    const pdf=await PDFDocument.create();pdf.registerFontkit(fontkit);const font=await pdf.embedFont(frozen,{subset:true});
+    pdf.addPage([300,150]).drawText('A A',{font,size:30,x:20,y:60});
+    const doc=await pdfjs.getDocument({data:await pdf.save()}).promise;
+    try{const page=await doc.getPage(1),text=await page.getTextContent();assert.equal(text.items.filter(t=>'str'in t).map(t=>t.str).join(''),'A A');const canvas=createCanvas(600,300);await page.render({canvasContext:canvas.getContext('2d'),viewport:page.getViewport({scale:2})}).promise;assert(canvas.getContext('2d').getImageData(0,0,600,300).data.some((v,i)=>i%4!==3&&v<50));}finally{await doc.loadingTask.destroy();}
+  }
+  await assert.rejects(()=>normalizeEditorOutline(bytes,{wght:701}),/Achsenwert/);
+  await assert.rejects(()=>normalizeEditorOutline(bytes,{xxxx:400}),/unbekannte/);
+  await assert.rejects(()=>normalizeEditorOutline(bytes,{wght:NaN}),/Achsenwert/);
+}
+console.log('PASS: variable TTF and CFF2, default/intermediate/bold instances, exact advances, static output, Unicode and native PDF rendering.');
 
 await import('./editor-image-patches-smoke.mjs');
 

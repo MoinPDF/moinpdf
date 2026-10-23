@@ -4134,6 +4134,9 @@ html:has(.editor-canvas-wrap) {
 .editor-inline-buttons {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
   gap: 3px;
 }
 .editor-inline-buttons [aria-pressed='true'] {
@@ -7019,6 +7022,22 @@ html:has(.editor-canvas-wrap) {
   flex-wrap: wrap;
   justify-content: center;
 }
+.workspace-recovery {
+  min-width: 0;
+  max-width: 100%;
+  gap: 8px;
+}
+.workspace-recovery > button {
+  max-width: 100%;
+  height: auto;
+  min-height: 32px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.workspace-recovery-menu {
+  max-width: calc(100vw - 24px);
+  overflow-wrap: anywhere;
+}
 
 .editor-preparation {
   display: flex;
@@ -7078,6 +7097,45 @@ html:has(.editor-canvas-wrap) {
   align-items: center;
   gap: 8px;
   margin: 10px 0;
+}
+.editor-fidelity-review {
+  border-block: 1px solid var(--ui-line);
+  padding: 10px 0;
+  margin: 10px 0;
+}
+.editor-fidelity-review select {
+  max-width: 100%;
+  min-height: 36px;
+}
+.editor-fidelity-status {
+  font-weight: 600;
+}
+.editor-detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.editor-detail-grid > div {
+  min-width: 0;
+}
+.editor-detail-scroll {
+  overflow: auto;
+  max-height: 280px;
+  background: white;
+  border: 1px solid var(--ui-line);
+  overscroll-behavior: contain;
+}
+.editor-detail-scroll:focus-visible {
+  outline: 2px solid var(--ui-ink);
+  outline-offset: 2px;
+}
+.editor-detail-scroll img {
+  display: block;
+}
+@media (max-width: 600px) {
+  .editor-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .editor-review-grid,
 .editor-export-compare.is-both {
@@ -7547,4 +7605,216 @@ html:has(.editor-canvas-wrap) {
   border: 1px solid var(--border);
   border-radius: 0.6rem;
   overflow-wrap: anywhere;
+}
+
+/* Contextual text tools stay small until more formatting is requested. */
+.editor-format-more {
+  position: relative;
+}
+.editor-format-more > summary {
+  cursor: pointer;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  list-style: none;
+}
+.editor-format-more[open] > summary {
+  background: var(--muted, #edf4f0);
+}
+.editor-format-popover {
+  position: absolute;
+  z-index: 80;
+  top: 100%;
+  right: 0;
+  display: grid;
+  gap: 0.6rem;
+  min-width: 230px;
+  max-width: min(310px, 85vw);
+  padding: 1rem;
+  border: 1px solid var(--border, #cedbd6);
+  border-radius: 12px;
+  background: var(--background, #fff);
+  box-shadow: 0 12px 32px #0002;
+}
+.editor-format-popover label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.editor-format-popover input[type='number'] {
+  width: 65px;
+}
+.editor-format-popover select {
+  max-width: 135px;
+}
+.editor-rich-paragraph {
+  position: relative;
+  min-height: 1em;
+}
+.editor-rich-paragraph[data-list-marker]::before {
+  content: attr(data-list-marker);
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 1em;
+  font-weight: inherit;
+  white-space: nowrap;
+}
+.editor-paste-choice {
+  position: fixed;
+  z-index: 100;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border, #cedbd6);
+  border-radius: 8px;
+  background: var(--background, #fff);
+  box-shadow: 0 8px 32px #0003;
+}
+.editor-paste-choice > strong {
+  flex-basis: 100%;
+}
+.editor-paste-choice button {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.editor-paste-choice button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.editor-alternative-sample {
+  position: relative;
+}
+.editor-selection-options {
+  position: relative;
+}
+.editor-selection-options > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0.5rem;
+}
+.editor-selection-options[open] > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+.editor-variable-font {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: end;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+.editor-variable-font > strong {
+  flex-basis: 100%;
+}
+.editor-variable-font label {
+  display: grid;
+  gap: 0.3rem;
+}
+.editor-variable-font input {
+  max-width: 7rem;
+  padding: 0.4rem;
+}
+.editor-flow-preview > div {
+  margin-block: 1rem;
+}
+.editor-flow-page {
+  max-width: 340px;
+  margin: 0.6rem auto;
+  overflow: hidden;
+}
+@media (max-width: 600px) {
+  .editor-format-popover {
+    position: fixed;
+    top: auto;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+    max-width: none;
+    max-height: 65vh;
+    overflow: auto;
+  }
+  .editor-inline-toolbar .editor-format-more {
+    display: block;
+  }
+  .editor-paste-choice {
+    font-size: 0.85rem;
+  }
+}
+
+.editor-selection-actions {
+  position: sticky;
+  top: 12px;
+  z-index: 12;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px;
+  margin: 12px 0;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  box-shadow: 0 4px 16px #0000000d;
+}
+.editor-selection-actions strong {
+  margin-right: 6px;
+  font-size: 12px;
+}
+.editor-live-flow {
+  padding: 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+.editor-live-flow details {
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+.editor-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+.editor-table-grid-handles {
+  padding: 8px;
+  margin: 8px 0;
+}
+.editor-table-grid-handles [role='separator'] {
+  border: 0;
+  border-right: 3px solid var(--ui-muted);
+  background: transparent;
+}
+.editor-table-grid-handles [role='separator']:focus-visible {
+  outline: 2px solid var(--accent);
+}
+@media (max-width: 600px) {
+  .editor-selection-actions {
+    position: static;
+  }
+  .editor-selection-actions button {
+    min-height: 40px;
+  }
+  .editor-table-grid-handles [role='separator'] {
+    min-width: 24px;
+  }
 }

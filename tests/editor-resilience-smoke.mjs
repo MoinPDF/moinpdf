@@ -6,7 +6,7 @@ import { JSDOM } from 'jsdom';
 
 const folder = '.cache/editor-resilience';
 await mkdir(folder, { recursive: true });
-for (const file of ['lib/recovery-writer.ts', 'components/studio/workspace-recovery.tsx']) {
+for (const file of ['lib/recovery-writer.ts', 'components/studio/workspace-recovery.tsx', 'components/ui/dropdown-menu.tsx', 'lib/utils.ts', 'components/studio/editor-live-flow-panel.tsx', 'components/studio/editor-table-panel.tsx', 'lib/editor-tables.ts']) {
   const code = ts.transpileModule(await readFile(file, 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText.replace(/(['"])(@\/[^'"]+|\.\/[^'"]+)\1/g, (_, q, p) => q + './' + p.split('/').at(-1) + '.mjs' + q);
@@ -43,9 +43,18 @@ await writer.cancel();
 
 await writeFile(folder + '/button.mjs', `import React from 'react';export const Button=({variant,size,...p})=>React.createElement('button',p);`);
 await writeFile(folder + '/appearance.mjs', `export const useLanguage=()=>({t:de=>de});`);
-await writeFile(folder + '/pdf-engine.mjs', `export const openSource=async()=>{throw Error('Unexpected restore')};`);
+await writeFile(folder + '/pdf-engine.mjs', `export const uid=()=>crypto.randomUUID();export const openSource=async()=>{throw Error('Unexpected restore')};`);
 await writeFile(folder + '/local-projects.mjs', `export const cleanProjectState=s=>s;export const validateProject=()=>{};`);
-await writeFile(folder + '/workspace-storage.mjs', `export const writes=[],jobs=[],events=[];export const loadRecovery=async()=>undefined;export const storeRecovery=value=>new Promise(resolve=>{writes.push(value);events.push('write');jobs.push(resolve)});export const clearRecovery=async()=>events.push('clear');`);
+await writeFile(folder + '/workspace-storage.mjs', `export const writes=[],jobs=[],events=[],keys=[],cleared=[];export const loadRecovery=async()=>{throw Error('Unexpected restore')};export const listRecoveries=async()=>[{id:'other-tab',updated:1,sources:[{name:'Other document.pdf'}]}];export const storeRecovery=(value,key)=>new Promise(resolve=>{keys.push(key);writes.push(value);events.push('write');jobs.push(resolve)});export const clearRecovery=async key=>{cleared.push(key);events.push('clear')};`);
+await writeFile(folder + '/editor-live-flow.mjs', `export const jobs=[];export const prepareLinkedEditorFlow=(sources,pages,edits,group,signal)=>new Promise((resolve,reject)=>jobs.push({edits,signal,resolve,reject}));`);
+await writeFile(folder + '/ui-language.mjs', `export const ui=s=>s;`);
+await writeFile(folder + '/editor-table-workspace.mjs', `
+import {recognizeEditorTable,changeEditorTableModel} from './editor-tables.mjs';
+const segments=[...[20,80,140].map(y=>({x1:20,y1:y,x2:220,y2:y})),...[20,120,220].map(x=>({x1:x,y1:20,x2:x,y2:140}))];
+export const table=recognizeEditorTable({id:'table-ui',pageWidth:400,pageHeight:500,paths:segments.map((segment,index)=>({index,segments:[segment],color:'#000000',width:1,opacity:1,fill:false,dash:[],lineCap:'butt',root:true,clipped:false,transparent:false}))});
+export const operations=[];export const readEditorTables=async()=>[table];
+export const changeEditorTable=async(source,page,marks,model,operation)=>{operations.push(operation);const next=changeEditorTableModel(model,operation);return{remove:[],add:[{id:'grid',kind:'image',nativeTable:next}]}};
+`);
 const dom = new JSDOM('<div id="root"></div><div id="moinpdf-recovery"></div>', { url: 'https://moinpdf.test' });
 for (const name of ['window', 'document', 'HTMLElement', 'Element', 'Node', 'Event']) globalThis[name] = dom.window[name];
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -59,7 +68,7 @@ const props = { sources, state, locked: false, onRestore: () => {}, onStatus: va
 Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
 try {
   await act(async () => root.render(React.createElement(WorkspaceRecovery, props)));
-  assert.equal(statuses.at(-1).phase, 'pending');
+  assert.equal(statuses.at(-1).phase, 'pending','Existing snapshots from another tab never prevent saving a newly opened document');
   await act(async () => document.dispatchEvent(new Event('visibilitychange')));
   assert.equal(storage.writes.length, 1, 'App switching flushes the pending snapshot without waiting for debounce');
   assert(!('pdf' in storage.writes[0].sources[0]), 'PDF worker handles are never persisted');
@@ -83,8 +92,58 @@ try {
   assert.equal(storage.events.at(-1), 'clear', 'A late write cannot resurrect a discarded workspace');
   await act(async () => window.dispatchEvent(new Event('pagehide')));
   assert.equal(storage.writes.length, 3);
+  assert.equal(storage.cleared[0],storage.keys[2],'Clearing removes only the active document key');
+  await act(async()=>root.render(React.createElement(WorkspaceRecovery,props)));
+  const otherSources=[{...sources[0],id:'other-document'}];
+  await act(async()=>root.render(React.createElement(WorkspaceRecovery,{...props,sources:otherSources})));
+  await act(async()=>window.dispatchEvent(new Event('pagehide')));
+  assert.notEqual(storage.keys[3],storage.keys[4],'Rapid document switches flush separate snapshots');
+  assert.equal(storage.writes[3].sources[0].id,'source');assert.equal(storage.writes[4].sources[0].id,'other-document');
+  const otherNode=document.createElement('div');document.body.append(otherNode);const otherRoot=createRoot(otherNode);
+  await act(async()=>otherRoot.render(React.createElement(WorkspaceRecovery,props)));
+  await act(async()=>window.dispatchEvent(new Event('pagehide')));
+  assert.notEqual(storage.keys[3],storage.keys[5],'Duplicate tabs with identical sources have separate session identities');
+  await act(async()=>storage.jobs.slice(3).forEach(resolve=>resolve()));
+  await act(async()=>otherRoot.unmount());
+  const {EditorLiveFlowPanel}=await import('../.cache/editor-resilience/editor-live-flow-panel.mjs');
+  const flowJobs=(await import('../.cache/editor-resilience/editor-live-flow.mjs')).jobs;
+  const flowMark={id:'flow-a',kind:'text',text:'first',flow:{id:'group',order:0}};
+  const flowEdits={marks:{p0:[flowMark]},crops:{}},flowPages=[{id:'p0'}],applied=[];
+  const liveProps={sources,pages:flowPages,edits:flowEdits,selectedMarkId:'flow-a',disabled:false,onApply:e=>applied.push(e)};
+  await act(async()=>root.render(React.createElement(EditorLiveFlowPanel,liveProps)));
+  await act(async()=>new Promise(resolve=>setTimeout(resolve,500)));
+  assert.equal(flowJobs.length,1,'Linked text starts a debounced preview');
+  const updatedEdits={...flowEdits,marks:{p0:[{...flowMark,text:'newest'}]}};
+  await act(async()=>root.render(React.createElement(EditorLiveFlowPanel,{...liveProps,edits:updatedEdits})));
+  assert(flowJobs[0].signal.aborted,'Typing invalidates previous asynchronous work');
+  await act(async()=>flowJobs[0].resolve({edits:flowEdits,marks:[{pageId:'p0',mark:flowMark}],changed:true}));
+  assert(!document.getElementById('root').textContent.includes('Textfluss übernehmen'),'A stale result cannot be applied');
+  await act(async()=>new Promise(resolve=>setTimeout(resolve,500)));
+  await act(async()=>flowJobs[1].resolve({edits:updatedEdits,marks:[{pageId:'p0',mark:updatedEdits.marks.p0[0]}],changed:true}));
+  assert.equal(applied.length,0,'Preparing a preview never moves the current text or caret');
+  const apply=[...document.getElementById('root').querySelectorAll('button')].find(b=>b.textContent==='Textfluss übernehmen');assert(apply);
+  await act(async()=>apply.click());assert.equal(applied[0],updatedEdits,'Only explicit acceptance applies the complete preview');
+  await act(async()=>document.getElementById('root').querySelector('input[type=checkbox]').click());
+  await act(async()=>new Promise(resolve=>setTimeout(resolve,500)));
+  assert.equal(flowJobs.length,2,'Live preview can be disabled without new work');
+  const {EditorTablePanel}=await import('../.cache/editor-resilience/editor-table-panel.mjs');
+  const tableEngine=await import('../.cache/editor-resilience/editor-table-workspace.mjs'),tableChanges=[];
+  await act(async()=>root.render(React.createElement(EditorTablePanel,{source:sources[0],page:{id:'p0',index:0,rotation:0},marks:[],disabled:false,onReplace:(remove,add)=>tableChanges.push({remove,add}),onSelect:()=>{}})));
+  const press=async(label)=>{const button=[...document.getElementById('root').querySelectorAll('button')].find(b=>b.textContent===label);assert(button,label);await act(async()=>button.click());};
+  await press('Tabellenraster prüfen');
+  const handle=document.getElementById('root').querySelector('[role=separator]');assert(handle);
+  await act(async()=>handle.dispatchEvent(new window.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true})));
+  assert.equal(document.querySelector('[aria-label="Spaltenbreite in Punkt"]').value,'101','Column handle supports one-point keyboard changes');
+  await press('Spaltenbreite vorschauen');
+  assert.deepEqual(tableEngine.operations.at(-1),{kind:'width',column:0,width:101});assert.equal(tableChanges.length,0,'A table proposal is never applied implicitly');
+  await press('Tabellenänderung übernehmen');assert.equal(tableChanges[0].add[0].nativeTable.columns[1],121);
+  await press('Spalte rechts einfügen');assert.equal(tableEngine.operations.at(-1).kind,'insert-column');
+  await press('Zeile löschen vorschauen');assert.equal(tableEngine.operations.at(-1).kind,'delete-row');
+  await press('Spalte löschen vorschauen');assert.equal(tableEngine.operations.at(-1).kind,'delete-column');
+  await press('Zellen verbinden vorschauen');assert.equal(tableEngine.operations.at(-1).kind,'merge');
+  assert(document.querySelector('.editor-table-proposal td[colspan="2"]'),'Merge preview exposes the actual rectangular span');
 } finally {
   await act(async () => root.unmount());
   dom.window.close();
 }
-console.log('PASS: coalesced recovery, newest-revision status, failure/retry, visibility/pagehide flush and ordered workspace clearing.');
+console.log('PASS: coalesced recovery, newest-revision status, failure/retry, visibility/pagehide flush and ordered workspace clearing, document/tab isolation and live-flow cancellation/explicit acceptance.');

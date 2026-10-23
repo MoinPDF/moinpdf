@@ -52,8 +52,15 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     request.onerror = () => resolve(false);
                     request.onsuccess = () => {
                         const db = request.result;
-                        const get = db.transaction('recovery').objectStore('recovery').get('current');
-                        get.onsuccess = () => { const value = get.result; db.close(); resolve(value?.state.history.length >= 2 && value?.state.pages.length === 1 && value?.sources.length === 2); };
+                        const get = db.transaction('recovery').objectStore('recovery').getAll();
+                        get.onsuccess = () => {
+                            const values = get.result.sort((a,b) => b.updated-a.updated);
+                            const value = values[0];
+                            db.close();
+                            resolve(values.length >= 2 && new Set(values.map(v => v.id)).size === values.length
+                                && value?.id !== 'current' && value?.state.history.length >= 2
+                                && value?.state.pages.length === 1 && value?.sources.length === 2);
+                        };
                     };
                 })'''):
                     assert time.monotonic() < deadline, 'The edited workspace was not saved for recovery'

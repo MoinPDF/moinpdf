@@ -67,6 +67,8 @@ export type EditorTextStyle = Pick<
   | 'originalFontPage'
   | 'bold'
   | 'italic'
+  | 'underline'
+  | 'script'
   | 'color'
 >;
 export type EditorTextRun = { start: number; end: number; style: EditorTextStyle };
@@ -90,11 +92,21 @@ export type Mark = Rect & {
 
   nativeTable?: import('./editor-tables').EditorTable;
 
-  tableCell?: { tableId: string; cellId: string };
+  tableCell?: { tableId: string; cellId: string; deleted?: boolean };
   sourceRect?: Rect;
   sourceRects?: Rect[];
   sourceIsScan?: boolean;
   scanBackground?: 'preserve' | 'solid';
+  /** Measured scan edge softness, in em. Only applies to scanned source text. */
+  scanBlur?: number;
+  /** Evidence from unchanged source pixels, never a font-identity guarantee. */
+  scanMatch?: {
+    score: number;
+    margin: number;
+    samples: number;
+    candidates: number;
+    styleKey: string;
+  };
   fontFamily?: FontFamily;
   fontChoice?: EditorFontChoice;
   originalFontId?: string;
@@ -113,7 +125,15 @@ export type Mark = Rect & {
   textScaleX?: number;
   bold?: boolean;
   italic?: boolean;
-  align?: 'left' | 'center' | 'right';
+  underline?: boolean;
+  script?: 'normal' | 'super' | 'sub';
+  align?: 'left' | 'center' | 'right' | 'justify';
+  /** Paragraphs are separated by newlines; list markers are generated, never baked into text. */
+  listStyle?: 'none' | 'bullet' | 'numbered';
+  listStart?: number;
+  listContinuation?: boolean;
+  paragraphSpacing?: number;
+  spellcheck?: boolean;
   color?: string;
   fill?: string;
   opacity?: number;
@@ -200,10 +220,18 @@ export async function normalizedPage(dest: PDFDocument, source: PDFPage, addedRo
   page.drawPage(embed, { ...position, width: w, height: h, rotate: degrees(-angle) });
   return page;
 }
-async function paintErasures(canvas: HTMLCanvasElement, marks: Mark[]) {
+async function paintErasures(canvas: HTMLCanvasElement, marks: Mark[], placement?: Rect) {
   const ctx = canvas.getContext('2d')!;
   for (const mark of marks) {
-    for (const r of editorRemovalRects(mark)) {
+    for (const sourceRect of editorRemovalRects(mark)) {
+      const r = placement
+        ? {
+            x: (sourceRect.x - placement.x) / placement.w,
+            y: (sourceRect.y - placement.y) / placement.h,
+            w: sourceRect.w / placement.w,
+            h: sourceRect.h / placement.h,
+          }
+        : sourceRect;
       if (mark.kind === 'text' && mark.sourceIsScan !== false && mark.scanBackground !== 'solid') {
         (await import('./editor-scan')).eraseEditorScanRegion(canvas, r, 'preserve', mark.fill);
         continue;
@@ -704,13 +732,23 @@ export async function applyPageEdits(
             analysis?.ocr && original
               ? await (
                   await import('./editor-native')
-                ).readEditorScanPixels(original, source, item, signal)
+                ).readEditorScanPixels(
+                  original,
+                  source,
+                  item,
+                  signal,
+                  !rasterMarks &&
+                    !crop &&
+                    !grayscale &&
+                    !transform &&
+                    marks.every((m) => m.kind === 'text'),
+                )
               : undefined,
           rendered = scan || (await renderPage(source, item, 2800, signal));
         let canvas = rendered.canvas;
         try {
           if (rasterMarks) await paintMarks(canvas, marks, source, editor?.warnings);
-          else await paintErasures(canvas, marks);
+          else await paintErasures(canvas, marks, scan?.placement);
           let width = rendered.width,
             height = rendered.height;
           if (crop) {
@@ -769,7 +807,14 @@ export async function applyPageEdits(
           // Embed only the already modified pixels. No original objects or text layer are copied.
           const image = await doc.embedPng(canvas.toDataURL('image/png'));
           const outputPage = doc.addPage([width, height]);
-          outputPage.drawImage(image, { x: 0, y: 0, width, height });
+          if (scan?.imageTransforms) {
+            (await import('./editor-scan-pixels')).drawEditorScanImage(
+              outputPage,
+              image,
+              scan.imageTransforms,
+              scan.formClips,
+            );
+          } else outputPage.drawImage(image, { x: 0, y: 0, width, height });
           if (!rasterMarks) {
             if (analysis && editorTools) {
               const removals = marks

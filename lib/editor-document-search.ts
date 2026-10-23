@@ -7,6 +7,7 @@ import {
   editorRemovalRects,
   editorRectsOverlap,
   readTextTargets,
+  editorSelectionTargets,
   type TextTarget,
 } from './editor-model';
 import { analyzeEditorPage, cachedEditorPage, remainingEditorTargets } from './editor-analysis';
@@ -70,7 +71,10 @@ export async function indexEditorDocument(
       index.pageTargets[page.id] = analysis.targets;
       if (!analysis.targets.length) index.skipped.push(i + 1);
       const marks = edits.marks[page.id] || [];
-      const available = remainingEditorTargets(analysis.targets, marks.flatMap(editorRemovalRects));
+      const available = remainingEditorTargets(
+        editorSelectionTargets(analysis.targets, analysis.width, analysis.height),
+        marks.flatMap(editorRemovalRects),
+      );
       const targets = editorParagraphs(available, analysis.width, analysis.height);
       for (const target of targets) {
         if (target.unsupportedReason) {

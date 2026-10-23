@@ -9,6 +9,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  AlignJustify,
   Copy,
   Undo2,
   ImagePlus,
@@ -326,6 +327,7 @@ export function EditorPanel({
                     ['left', AlignLeft, 'Linksbündig'],
                     ['center', AlignCenter, 'Zentriert'],
                     ['right', AlignRight, 'Rechtsbündig'],
+                    ['justify', AlignJustify, 'Blocksatz'],
                   ] as const
                 ).map(([value, Icon, label]) => (
                   <Button

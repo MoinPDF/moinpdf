@@ -67,6 +67,8 @@ const editorStyleSchema = z
     originalFontPage: z.number().int().min(0).max(199).optional(),
     bold: z.boolean().optional(),
     italic: z.boolean().optional(),
+    underline: z.boolean().optional(),
+    script: z.enum(['normal', 'super', 'sub']).optional(),
     color: z
       .string()
       .regex(/^#[a-f\d]{6}$/i)
@@ -100,8 +102,8 @@ const tableSchema = z
     id: identifier,
     pageWidth: tablePoint.positive(),
     pageHeight: tablePoint.positive(),
-    columns: z.array(tablePoint).min(3).max(51),
-    rows: z.array(tablePoint).min(3).max(101),
+    columns: z.array(tablePoint).min(2).max(51),
+    rows: z.array(tablePoint).min(2).max(101),
     cells: z
       .array(
         z
@@ -115,13 +117,14 @@ const tableSchema = z
           })
           .strict(),
       )
-      .min(2)
+      .min(1)
       .max(2000),
     color: z.string().regex(/^#[a-f\d]{6}$/i),
     width: z.number().finite().positive().max(4),
     original: z
       .object({ paths: z.array(tablePathSchema).min(1).max(4000), rect: tableRectSchema })
       .strict(),
+    removedTextIds: z.array(identifier).max(2000).optional(),
     nextCellId: z.number().int().min(2).max(100000),
   })
   .strict()
@@ -165,7 +168,10 @@ const mark = rect.extend({
     .optional(),
   sourceRect: rect.optional(),
   nativeTable: tableSchema.optional(),
-  tableCell: z.object({ tableId: identifier, cellId: identifier }).strict().optional(),
+  tableCell: z
+    .object({ tableId: identifier, cellId: identifier, deleted: z.boolean().optional() })
+    .strict()
+    .optional(),
   nativeImage: z
     .object({
       path: z.array(z.number().int().min(0).max(9999)).max(16).optional(),
@@ -182,6 +188,17 @@ const mark = rect.extend({
   sourceRects: z.array(rect).max(2000).optional(),
   sourceIsScan: z.boolean().optional(),
   scanBackground: z.enum(['preserve', 'solid']).optional(),
+  scanBlur: z.number().finite().min(0).max(0.06).optional(),
+  scanMatch: z
+    .object({
+      score: z.number().finite().min(0).max(10),
+      margin: z.number().finite().min(0).max(10),
+      samples: z.number().int().min(1).max(4),
+      candidates: z.number().int().min(1).max(56),
+      styleKey: z.string().max(16000),
+    })
+    .strict()
+    .optional(),
   fontFamily: z.enum(['sans', 'serif', 'mono']).optional(),
   fontChoice: z
     .enum([
@@ -219,7 +236,14 @@ const mark = rect.extend({
   textScaleX: z.number().finite().min(0.1).max(10).optional(),
   bold: z.boolean().optional(),
   italic: z.boolean().optional(),
-  align: z.enum(['left', 'center', 'right']).optional(),
+  underline: z.boolean().optional(),
+  script: z.enum(['normal', 'super', 'sub']).optional(),
+  align: z.enum(['left', 'center', 'right', 'justify']).optional(),
+  listStyle: z.enum(['none', 'bullet', 'numbered']).optional(),
+  listStart: z.number().int().min(1).max(9999).optional(),
+  listContinuation: z.boolean().optional(),
+  paragraphSpacing: z.number().finite().min(0).max(5).optional(),
+  spellcheck: z.boolean().optional(),
   color: z
     .string()
     .regex(/^#[a-f\d]{6}$/i)
@@ -272,11 +296,21 @@ const pageMarks = z
             .length !== 1
         )
           invalid();
+    for (const table of tables) {
+      const deleted = values.filter(
+        (m) => m.tableCell?.tableId === table.id && m.tableCell.deleted,
+      );
+      if (deleted.length !== (table.removedTextIds?.length ? 1 : 0)) invalid();
+    }
     for (const m of values)
       if (
         m.tableCell &&
         !tables.some(
-          (t) => t.id === m.tableCell!.tableId && t.cells.some((c) => c.id === m.tableCell!.cellId),
+          (t) =>
+            t.id === m.tableCell!.tableId &&
+            (m.tableCell!.deleted
+              ? !!t.removedTextIds?.length && m.tableCell!.cellId === t.id + ':deleted' && !m.text
+              : t.cells.some((c) => c.id === m.tableCell!.cellId)),
         )
       )
         invalid();

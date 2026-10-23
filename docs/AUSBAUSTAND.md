@@ -2,7 +2,9 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 23. Oktober 2026. Version 0.19.0.
+Stand: 23. Oktober 2026. Unveröffentlichte Editor-Fortsetzung auf Basis von Version 0.19.0.
+
+Der automatische Scan-Schriftvergleich prüft 56 Schnitte aus 14 Familien und bis zu drei benachbarte Originalstellen. Kurze Zahlen werden nur bei mehreren übereinstimmenden Referenzen angepasst; geeignete rechtwinklig gedrehte Ausschnitte sind unterstützt. Gemischte Stile und beliebige Schräglagen bleiben eingeschränkt. Die Exportansicht trennt technische Prüfung und Schriftähnlichkeit und zeigt automatische Detailpaare mit gemeinsamem Zoom. [Physische Gerätetests](quality/editor-device-checklist.md) sind separat dokumentiert und noch offen.
 
 „PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
 
@@ -203,10 +205,15 @@ Die Änderungen und Grenzen stehen im unveröffentlichten [Änderungsprotokoll](
 
 Die weitere Fortsetzung ergänzt einen direkten Originalvergleich bei gleichem Zoom, typografische Suche mit vollständigen Originalzeichen und einen sichtbaren Status der lokalen Wiederherstellung. Die Sicherung bündelt schnelle Änderungen und startet ausstehende Schreibvorgänge beim App-Wechsel; sie ersetzt keine heruntergeladene Projektsicherung. Einzelne Seitenfehler bleiben in der Vorprüfung sichtbar, während weitere Seiten geprüft werden. Tastenkombinationen und laufende Zeicheneingabe lösen keinen ungewollten Tabellenwechsel aus. Die Regressionstests wurden für diese Fälle erweitert; maßgeblich sind die Ergebnisse des jeweiligen Commits, nicht ältere Prüfstände.
 
-## Abschlussprüfung für 0.19.0 – 23. Oktober 2026
+## Erweiterte PDF-Bearbeitung – 23. Oktober 2026
 
-Der Anwendungsstand `c53d589efaecf12abfef3bd649d057f12725146e` hat die [Editor-Prüfung #31](https://github.com/MoinPDF/moinpdf/actions/runs/39928669366) mit allen 29 vorgeschriebenen Fällen je Browser in Chromium, Firefox und WebKit bestanden (87 von 87). Der [Docker-Gesamttest #315](https://github.com/MoinPDF/moinpdf/actions/runs/39928669417) einschließlich aller Dienste, Downloads, Anmeldung, Website-Isolierung und lokalem Modell sowie die [Browser-Textprüfung #76](https://github.com/MoinPDF/moinpdf/actions/runs/39928669470) sind erfolgreich abgeschlossen.
+- Getrennte automatische Sicherungen für Tabs und Dokumente, auswählbare Wiederherstellung und gezieltes Verwerfen einzelner Arbeitsstände.
+- Automatisch aktualisierte Vorschau für ausdrücklich verknüpfte Textfelder; gemeinsame Übernahme nach Prüfung, ohne Schriftverkleinerung oder verschobene Rahmen.
+- Ersatzschriftvergleich auch für markierte Wörter mit verfügbarer Originalschrift; stabile Rangfolge nach Passform, Konturen und Breite.
+- Spaltenbreiten mit Ziehgriffen und Tastatur, Zeilen-/Spalteneinfügung und -löschung sowie rechteckiges Verbinden und Teilen geeigneter Vektortabellen. Originalreferenzen, gelöschte Zellinhalte und Rückgängig-Verlauf bleiben nachvollziehbar.
+- Kontextaktionen für ausgewählten Text, Bilder und Tabellenzellen.
+- Zusätzliche Exportprüfung kleiner unveränderter Textbereiche, unveränderter Textreihenfolge und vorhandener Tags. Auffälligkeiten erscheinen als Prüfhinweise; keine Zusicherung vollständiger PDF/UA-Konformität.
 
-Die 49 lokalen Testgruppen, Typprüfungen, Lint, Formatprüfung und der Produktions-Build wurden erfolgreich ausgeführt. Nach der abschließenden Korrektur überlappender Suchtreffer an Ligaturen wurde die betroffene PDF-/Rich-Text-Prüfung erneut erfolgreich ausgeführt. Die Release-Vorbereitung ändert anschließend nur die deutschen und englischen Änderungs- und Statusdokumente. Die Veröffentlichung verlangt zusätzlich die erfolgreiche Docker-Prüfung des endgültigen `main`-Commits und vier dazu passende Images für amd64 und arm64; deren unveränderliche Referenzen werden dem Release beigefügt.
+Die Detailprüfung untersucht höchstens zwölf unveränderte Textstellen je bearbeiteter Seite, bevorzugt kleine Schrift und Zahlen, mit bis zu 600 dpi und vier Megapixeln je Ausschnitt. Sie prüft eindeutige Textzuordnungen und die vorhandene Struktur, rekonstruiert aber keine vollständige semantische Lesereihenfolge. Tabellen benötigen weiterhin ein sicher erkanntes gerades Vektorraster; komplexe oder kollidierende Änderungen werden vor der Übernahme abgewiesen. Reale Geräte und native virtuelle Tastaturen bleiben gesondert zu prüfen.
 
-OCR-Genauigkeit, beliebige Kundendokumente, physische Mobilgeräte und natives Safari sind dadurch nicht vollständig abgesichert. Automatische lokale Wiederherstellung kann bei gelöschten Browserdaten, Speicherfehlern oder abruptem Prozessende ausfallen; heruntergeladene Projektdateien bleiben die übertragbare Sicherung. Die oben dokumentierten Schrift-, Formular-, Layout- und Auflösungsgrenzen gelten weiterhin.
+Prüfstand dieser Fortsetzung: 49 Testgruppen erfolgreich, ergänzt durch gezielte Nachprüfungen für getrennte Sicherungen, veraltete Textflussvorschauen, Tabellenbedienung und Struktur-Tags. Typprüfung, Linter, Formatprüfung und Produktionsbuild wurden geprüft. Die betreute Browser-Vorschau war in dieser Umgebung nicht erreichbar; visuelle Browser- und Gerätetests dieses Standes sind deshalb nicht bestätigt. Es wurde kein neuer Docker- oder Release-Lauf gestartet.

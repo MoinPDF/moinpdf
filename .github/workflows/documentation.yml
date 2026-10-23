@@ -61,7 +61,9 @@ jobs:
           pnpm run typecheck:selfhost
           pnpm run build:selfhost
       - name: Install browser verification dependencies
+        timeout-minutes: 8
         run: |
+          bash scripts/ci-prepare-apt.sh
           python -m pip install playwright==1.64.0 pymupdf==1.28.2
           python -m playwright install --with-deps chromium
       - name: Verify documentation, mobile layout, printing and retained PDF

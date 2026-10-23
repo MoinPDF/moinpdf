@@ -101,7 +101,16 @@ async function makeFont(
 ): Promise<EditorFont> {
   const face = await fontFace(bytes);
   const coverage = new Set(face.characterSet.filter((code) => face.glyphForCodePoint(code).id > 0));
-  const descents = new Map<number, number>();
+  const descents = new Map<number, number>(),
+    advances = new Map<number, number>();
+  const advance = (code: number) => {
+    let value = advances.get(code);
+    if (value === undefined) {
+      value = face.glyphForCodePoint(code).advanceWidth;
+      if (advances.size < 8192) advances.set(code, value);
+    }
+    return value;
+  };
   return {
     ...metadata,
     bytes,
@@ -125,11 +134,7 @@ async function makeFont(
       }, 0),
     covers: (text) => significant(text).every((ch) => coverage.has(ch.codePointAt(0)!)),
     measure: (text, size) =>
-      (significant(text).reduce(
-        (w, ch) => w + face.glyphForCodePoint(ch.codePointAt(0)!).advanceWidth,
-        0,
-      ) /
-        face.unitsPerEm) *
+      (significant(text).reduce((w, ch) => w + advance(ch.codePointAt(0)!), 0) / face.unitsPerEm) *
       size,
   };
 }
@@ -350,7 +355,10 @@ export type EditorFontResolution = {
   widthDeviation?: number;
 };
 const customFonts = new Map<string, Promise<EditorFont>>();
-export async function importEditorFont(file: File): Promise<NonNullable<Mark['customFont']>> {
+export async function importEditorFont(
+  file: File,
+  coordinates: Record<string, number> = {},
+): Promise<NonNullable<Mark['customFont']>> {
   if (file.size > 2 * 1024 * 1024)
     throw new Error('Eigene Schriften dürfen höchstens 2 MB groß sein.');
   let bytes = new Uint8Array(await file.arrayBuffer());
@@ -358,7 +366,7 @@ export async function importEditorFont(file: File): Promise<NonNullable<Mark['cu
     bytes.length < 12 ||
     ![0x00010000, 0x4f54544f].includes(new DataView(bytes.buffer).getUint32(0))
   )
-    throw new Error('Bitte eine statische TrueType- oder OpenType-Schrift (TTF/OTF) auswählen.');
+    throw new Error('Bitte eine TrueType- oder OpenType-Schrift (TTF/OTF) auswählen.');
   const view = new DataView(bytes.buffer),
     tables = view.getUint16(4);
   if (tables > 128 || 12 + 16 * tables > bytes.length)
@@ -371,10 +379,6 @@ export async function importEditorFont(file: File): Promise<NonNullable<Mark['cu
       offset = view.getUint32(pos + 8),
       length = view.getUint32(pos + 12);
     if (offset + length > bytes.length) throw new Error('Die Schriftdatei ist beschädigt.');
-    if (tag === 'fvar')
-      throw new Error(
-        'Variable Schriften werden hier noch nicht unterstützt. Bitte einen statischen Schriftschnitt verwenden.',
-      );
     if (tag === 'OS/2' && length >= 64) {
       const rights = view.getUint16(offset + 8),
         flags = view.getUint16(offset + 62);
@@ -387,16 +391,28 @@ export async function importEditorFont(file: File): Promise<NonNullable<Mark['cu
     }
   }
   bytes = new Uint8Array(
-    await (await import('./editor-font-outline')).normalizeEditorOutline(bytes),
+    await (await import('./editor-font-outline')).normalizeEditorOutline(bytes, coordinates),
   );
   if (bytes.length > 2 * 1024 * 1024)
     throw new Error('Die aufbereitete Schrift überschreitet 2 MB.');
   await fontFace(bytes);
+  const normalizedTables = (await import('./editor-font-outline')).readOutlineTables(bytes);
+  const os = normalizedTables.find((t) => t.tag === 'OS/2')?.data;
+  if (os && os.length >= 64) {
+    const flags = new DataView(os.buffer, os.byteOffset, os.byteLength).getUint16(62);
+    bold = !!(flags & 32);
+    italic = !!(flags & 1);
+  }
   let binary = '';
   for (let i = 0; i < bytes.length; i += 8192)
     binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
   return {
-    name: file.name.replace(/\.(ttf|otf)$/i, '').slice(0, 120),
+    name: (
+      file.name.replace(/\.(ttf|otf)$/i, '') +
+      Object.entries(coordinates)
+        .map(([k, v]) => ` ${k} ${v}`)
+        .join('')
+    ).slice(0, 120),
     data: btoa(binary),
     bold,
     italic,
@@ -404,9 +420,7 @@ export async function importEditorFont(file: File): Promise<NonNullable<Mark['cu
 }
 async function customEditorFont(data: NonNullable<Mark['customFont']>, family: FontFamily) {
   const bytes = Uint8Array.from(atob(data.data), (c) => c.charCodeAt(0));
-  const id = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), (v) =>
-    v.toString(16).padStart(2, '0'),
-  ).join('');
+  const id = await (await import('./content-digest')).contentDigest(bytes);
   let pending = customFonts.get(id);
   if (!pending) {
     pending = makeFont(bytes, {

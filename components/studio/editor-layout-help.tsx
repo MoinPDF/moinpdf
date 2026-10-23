@@ -2,13 +2,12 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import type { Mark, Rect } from '@/lib/studio-engine';
 import type { Source, PageItem } from '@/lib/pdf-engine';
-import { editorTextGeometry, layoutEditorText } from '@/lib/editor-text-layer';
-import { richEditorLayout } from '@/lib/editor-rich-layout';
+import { editorTextGeometry } from '@/lib/editor-text-layer';
 import { editorLayoutPlan, fitEditorLayout } from '@/lib/editor-layout-plan';
-import { editorSegments, replaceEditorRange } from '@/lib/editor-rich-text';
+import { replaceEditorRange } from '@/lib/editor-rich-text';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
-import { editorTextCss, useEditorTypography, type EditorPatch } from './editor-typography';
+import { EditorTextPreview, useEditorTypography, type EditorPatch } from './editor-typography';
 
 export function EditorOriginalSnippet({
   url,
@@ -75,23 +74,6 @@ export function EditorLayoutHelp({
   const typography = useEditorTypography(candidate, source),
     font = typography.resolution?.font;
   const geometry = editorTextGeometry(candidate, width, height, candidate.textRotation);
-  const layout = font
-    ? candidate.runs?.length && typography.runs
-      ? richEditorLayout(
-          candidate,
-          width,
-          geometry.width / (candidate.textScaleX || 1) -
-            2 * (candidate.insetScale || 0) * (candidate.fontScale || 0.028) * width,
-          typography.runs,
-        )
-      : layoutEditorText(
-          candidate,
-          width,
-          height,
-          font.measure,
-          font.measureDescent(candidate.text || ''),
-        )
-    : undefined;
   const prepared =
     typography.runs ||
     (typography.resolution
@@ -138,7 +120,9 @@ export function EditorLayoutHelp({
         <Button
           size="sm"
           variant="outline"
-          disabled={!layout || !!mark.textRotation || !page || heightBusy}
+          disabled={
+            !prepared.length || typography.pending || !!mark.textRotation || !page || heightBusy
+          }
           onClick={async () => {
             if (!page) return;
             heightController.current?.abort();
@@ -201,35 +185,15 @@ export function EditorLayoutHelp({
               overflow: 'auto',
             }}
           >
-            <span
-              className="editor-text-content"
-              style={{
-                ...editorTextCss(candidate, width, height, typography.resolution),
-                position: 'relative',
-                left: 0,
-                top: 0,
-                transform: 'none',
-                display: 'block',
-                width: geometry.width / (candidate.textScaleX || 1),
-              }}
-            >
-              {editorSegments(candidate).map((run, i) => (
-                <span
-                  key={i}
-                  style={{
-                    fontWeight: run.style.bold ? 700 : 400,
-                    fontStyle: run.style.italic ? 'italic' : 'normal',
-                    color: run.style.color,
-                    fontSize: (run.style.fontScale || candidate.fontScale || 0.028) * width,
-                    fontFamily: typography.runs?.[i]
-                      ? `"${typography.runs[i].resolution.font.cssFamily}"`
-                      : undefined,
-                  }}
-                >
-                  {(candidate.text || '').slice(run.start, run.end)}
-                </span>
-              ))}
-            </span>
+            {typography.runs && (
+              <EditorTextPreview
+                mark={candidate}
+                width={width}
+                height={height}
+                pageWidth={width}
+                runs={typography.runs}
+              />
+            )}
           </div>
           <p role="status">
             {ui(

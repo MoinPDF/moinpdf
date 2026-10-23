@@ -26,7 +26,7 @@ const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs'),
   assets = dirname(require.resolve('pdfjs-dist/package.json'));
 const folder = '.cache/editor-preservation';
 await mkdir(folder, { recursive: true });
-for (const name of ['editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search',
+for (const name of ['editor-rich-text','editor-rich-layout','editor-verification','editor-detail-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search',
   'local-font-bytes',
   'pdf-text',
   'ocr-languages',
@@ -45,7 +45,7 @@ for (const name of ['editor-rich-text','editor-rich-layout','editor-verification
   'editor-fonts',
   'editor-font-outline','editor-font-cmap',
   'editor-font-catalog',
-  'editor-native',
+  'editor-native','editor-scan-pixels',
   'editor-repair','pdf-security','native-pdf-core','nested-native',
 ]) {
   const code = ts

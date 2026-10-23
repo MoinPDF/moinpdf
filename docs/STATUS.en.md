@@ -2,7 +2,9 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 23 October 2026. Version 0.19.0.
+As of 23 October 2026. Unreleased editor continuation based on version 0.19.0.
+
+Automatic scan matching checks 56 faces across 14 families and up to three nearby original samples. Short numbers require multiple agreeing references; suitable right-angle crops are supported. Mixed styles and arbitrary angles remain limited. Export review separates output verification from original-font similarity and provides automatic detail pairs with shared zoom. [Physical-device checks](quality/editor-device-checklist.md) are documented separately and remain pending.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
@@ -135,10 +137,15 @@ The current changes and limitations are described in the unreleased [changelog](
 
 This continuation adds original-page comparison at the same zoom, typographic search mapped to complete original characters, and visible local-recovery status. Recovery coalesces rapid edits and flushes pending writes when switching apps; it does not replace a downloaded project backup. Preflight reports page-specific failures while checking the remaining pages. Shortcut modifiers and ongoing composition do not accidentally navigate table cells. Regression coverage has been extended for these cases; results must be checked for the corresponding commit rather than inferred from an earlier test run.
 
-## Final verification for 0.19.0 – 23 October 2026
+## Extended PDF editing – 23 October 2026
 
-Application revision `c53d589efaecf12abfef3bd649d057f12725146e` passed [editor verification #31](https://github.com/MoinPDF/moinpdf/actions/runs/39928669366) with all 29 required cases in each of Chromium, Firefox and WebKit (87 of 87). [Complete Docker installation #315](https://github.com/MoinPDF/moinpdf/actions/runs/39928669417), covering all services, downloads, login, website isolation and the local model, and [browser text verification #76](https://github.com/MoinPDF/moinpdf/actions/runs/39928669470) completed successfully.
+- Separate automatic recovery snapshots for tabs and documents, selectable restoration and individual snapshot deletion.
+- Automatically refreshed previews for explicitly linked text fields; apply together after review, without shrinking fonts or moving frames.
+- Substitute font comparison for selected words with available original font outlines; stable ranking by fit, contours and width.
+- Draggable and keyboard-adjustable column widths, row/column insertion and deletion, and rectangular merging and splitting of supported vector tables. Original references, deleted cell content and undo remain traceable.
+- Context actions for selected text, images and table cells.
+- Additional export checks for small unchanged text regions, unchanged text order and existing tags. Findings are reported for review; this does not certify complete PDF/UA compliance.
 
-All 49 local test suites, type checks, lint, formatting checks and the production build passed. The affected PDF/rich-text suite passed again after the final correction for overlapping search matches at ligatures. Release preparation then changes only the German and English changelog and status documents. Publication additionally requires successful Docker verification of the final `main` commit and four matching images for amd64 and arm64; immutable image references are attached to the release.
+Detail verification samples up to twelve unchanged text regions per edited page, prioritising small fonts and numbers, at up to 600 dpi and four megapixels per crop. It checks unique text matches and existing structure, but does not reconstruct complete semantic reading order. Tables still require a reliably recognised straight vector grid; complex or colliding changes are rejected before application. Physical devices and native virtual keyboards require separate verification.
 
-These checks do not fully verify OCR accuracy, arbitrary customer documents, physical mobile devices or native Safari. Automatic local recovery can fail after browser-data deletion, storage errors or abrupt process termination; downloaded project files remain the portable backup. The documented font, form, layout and resolution limits still apply.
+Verification for this continuation: 49 test groups passed, followed by targeted checks for isolated recovery, stale flow previews, table controls and structure tags. Type checking, linting, formatting and the production build were checked. The managed browser preview was unreachable in this environment, so visual browser and device checks for this revision are not confirmed. No new Docker or release workflow was started.

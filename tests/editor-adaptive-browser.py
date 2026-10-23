@@ -65,7 +65,7 @@ def auto_flow(page,name):
     assert re.search(r'Neue Fortsetzungsseiten:\s*[1-9]',flow.inner_text()),flow.inner_text()
     flow.get_by_role('button',name='Absatzfluss übernehmen',exact=True).click()
     expect(page.get_by_role('button',name='Rückgängig',exact=True)).to_be_enabled(timeout=120000)
-    page.get_by_role('button',name='Rückgängig',exact=True).click();expect(page.locator('.editor-object.text .editor-text-content')).to_have_text(text)
+    page.get_by_role('button',name='Rückgängig',exact=True).click();expect(page.locator('.editor-object.text .editor-text-content')).to_have_attribute('aria-label',text)
     page.get_by_role('button',name='Wiederholen',exact=True).click()
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'flow.pdf') as before:
@@ -76,7 +76,7 @@ def auto_flow(page,name):
     return {'scope':'360 tokens once, preserved following paragraph/footer/sidebar, new pages, atomic undo/redo, untouched original next page'}
 
 def table_rows(page,name):
-    open_editor(page,'table');grid=panel(page,'Tabellenzeilen anpassen');grid.get_by_role('button',name='Tabellenraster prüfen',exact=True).click();expect(grid.get_by_label('Tabelle',exact=True)).to_be_visible(timeout=120000)
+    open_editor(page,'table');grid=panel(page,'Tabelle bearbeiten');grid.get_by_role('button',name='Tabellenraster prüfen',exact=True).click();expect(grid.get_by_label('Tabelle',exact=True)).to_be_visible(timeout=120000)
     def apply(row,height,button):
         grid.get_by_label('Tabellenzeile',exact=True).fill(str(row));grid.get_by_label('Zeilenhöhe in Punkt',exact=True).fill(str(height));grid.get_by_role('button',name=button,exact=True).click();expect(grid.locator('.editor-table-proposal')).to_be_visible(timeout=120000);grid.get_by_role('button',name='Tabellenänderung übernehmen',exact=True).click();expect(grid.locator('.editor-table-proposal')).to_have_count(0)
     apply(2,60,'Zeilenhöhe vorschauen');apply(2,55,'Zeilenhöhe vorschauen');apply(2,45,'Zeile darunter vorschauen')
@@ -135,7 +135,7 @@ def angle(page,name):
     return {'scope':'20-degree original baseline/direction preserved, CropBox and native replacement'}
 
 def nested(page,name):
-    open_editor(page,'nested');pick(page,'NESTED ORIGINAL',True).fill('NESTED EDIT');page.get_by_role('button',name='Fertig',exact=True).click()
+    open_editor(page,'nested');pick(page,'NESTED ORIGINAL',True).fill('NESTED EDIT');page.get_by_role('toolbar',name='Text direkt formatieren',exact=True).get_by_role('button',name='Fertig',exact=True).click()
     image=page.get_by_role('button',name=re.compile('^Vorhandenes Bild auswählen '));expect(image).to_have_count(2,timeout=120000);image.first.click();page.get_by_role('button',name='Bildinhalt zum Zuschneiden anzeigen',exact=True).click();expect(page.get_by_alt_text('Bildinhalt vor dem Zuschneiden',exact=True)).to_be_visible(timeout=90000);page.get_by_label('Bildzuschnitt w',exact=True).fill('50');page.get_by_role('button',name='Bildzuschnitt übernehmen',exact=True).click()
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'nested.pdf') as before:
@@ -185,6 +185,42 @@ def preflight(page,name):
     with pymupdf.open(saved) as d:assert 'First paragraph.'not in d[0].get_text() and 'A longer replacement'in d[0].get_text()
     return {'scope':'delayed preflight, explicit safe height adjustment and physical original-text removal check'}
 
+def payroll(page,name):
+    open_editor(page,'payroll-scan')
+    selection=panel(page,'Auswahl anpassen')
+    selection.get_by_role('button',name='Einzelne Textstellen',exact=True).click()
+    # No manual font, point-size or geometry adjustment is permitted here.
+    pick(page,'September').fill('August')
+    page.get_by_role('toolbar',name='Text direkt formatieren',exact=True).get_by_role('button',name='Fertig',exact=True).click()
+    pick(page,'12').fill('18')
+    file=save(page,name)
+    review=page.get_by_role('region',name='Originaltreue vergleichen',exact=True)
+    expect(review).to_contain_text('ein Scan bleibt eine Annäherung')
+    expect(review.locator('.editor-detail-grid img')).to_have_count(2,timeout=120000)
+    review.get_by_label('Gemeinsamer Zoom',exact=True).select_option('400')
+    expect(review.locator('.editor-detail-grid img').first).to_have_attribute('data-zoom','400')
+    review.get_by_label('Änderung auswählen',exact=True).select_option('1')
+    expect(review.locator('.editor-detail-grid img')).to_have_count(2,timeout=120000)
+    expect(review.locator('.editor-detail-grid img').last).to_have_attribute('data-zoom','400')
+    assert 'Originalschrift verwendet' not in review.inner_text()
+    panes=review.locator('.editor-detail-scroll');assert panes.count()==2
+    assert panes.first.get_attribute('tabindex')=='0'
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2')
+    page.screenshot(path=str(out/(name+'-comparison.png')),full_page=True)
+    with pymupdf.open(file) as after,pymupdf.open(fixtures/'payroll-scan.pdf') as before:
+        spans=[s for b in after[0].get_text('dict')['blocks'] if 'lines' in b for l in b['lines'] for s in l['spans']]
+        for text,baseline in [('August',85),('18',110)]:
+            matches=[s for s in spans if s['text'].strip()==text];assert len(matches)==1,(text,matches)
+            s=matches[0];assert abs(s['size']-14)<1,(text,s['size'])
+            assert abs(s['origin'][0]-300)<1 and abs(s['origin'][1]-baseline)<1,(text,s['origin'])
+        assert 'September' not in after[0].get_text()
+        same_page(before,1,after,1)
+        # Independent MuPDF render checks labels, amounts and footer outside edits.
+        for rect in [(0,0,280,700),(280,145,500,700),(280,0,500,60)]:
+            a=before[0].get_pixmap(clip=pymupdf.Rect(rect));b=after[0].get_pixmap(clip=pymupdf.Rect(rect))
+            assert (a.width,a.height,a.samples)==(b.width,b.height,b.samples),rect
+    return {'scope':'fictional payroll, automatic month and short-number typography, original scale/baseline, two synchronized detail crops, persistent zoom, local download and unchanged attachment/neighbor regions'}
+
 def execute(browser,name,width,callback):
     selected=os.environ.get('MOINPDF_BROWSER_CASES','').split(',')
     if selected!=[''] and name not in selected:return
@@ -203,7 +239,7 @@ def execute(browser,name,width,callback):
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
         browser=getattr(api,engine).launch();report[engine]=browser.version
-        cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight)]
+        cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight),('payroll',1440,payroll),('payroll-touch',390,payroll)]
         selected=os.environ.get('MOINPDF_ADAPTIVE_CASES','').split(',')
         for suffix,width,callback in cases:
             if selected!=[''] and suffix not in selected:continue

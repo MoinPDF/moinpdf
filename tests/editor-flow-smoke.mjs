@@ -13,7 +13,7 @@ const folder = new URL('../.cache/editor-flow/', import.meta.url);
 await mkdir(folder, { recursive: true });
 const modules = ['editor-auto-flow', 'editor-workflow', 'editor-layout-plan', 'editor-rich-layout',
   'editor-rich-text', 'editor-model', 'editor-fonts', 'editor-font-catalog',
-  'editor-font-cmap', 'editor-font-outline', 'editor-text-layer', 'local-font-bytes', 'pdf-text'];
+  'editor-font-cmap', 'editor-font-outline', 'editor-text-layer', 'editor-scan', 'local-font-bytes', 'pdf-text'];
 const moduleHashes = {};
 for (const name of modules) {
   const source = await readFile(new URL(`../lib/${name}.ts`, import.meta.url), 'utf8');
@@ -27,10 +27,10 @@ for (const name of modules) {
         `${prefix}${quote}${pathToFileURL(require.resolve(specifier)).href}${quote}`);
   await writeFile(new URL(`${name}.mjs`, folder), rewritten);
 }
-const {prepareEditorAutoFlow}=await import('../.cache/editor-flow/editor-auto-flow.mjs');
+const {prepareEditorAutoFlow,suggestEditorFlowBottom}=await import('../.cache/editor-flow/editor-auto-flow.mjs');
 const { prepareEditorLayout } = await import('../.cache/editor-flow/editor-layout-plan.mjs');
 const { distributeEditorFlow } = await import('../.cache/editor-flow/editor-workflow.mjs');
-const { editorSegments } = await import('../.cache/editor-flow/editor-rich-text.mjs');
+const { editorSegments,editorExportText } = await import('../.cache/editor-flow/editor-rich-text.mjs');
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (input, options) =>
   typeof input === 'string' && input.startsWith('/vendor/')
@@ -88,6 +88,20 @@ try {
     assert.equal(new Set(actual).size, 360);
     for (const page of plan.pages) for (const c of page.chunks) if (!c.deletionOnly)
       assert.equal((await prepareEditorLayout(c.mark, 400, 500, source)).overflow, false);
+  });
+  await test('automatic body suggestion respects footer and crossing rules',async()=>{
+    const selected={x:.1,y:.1,w:.6,h:.1};
+    assert.equal(suggestEditorFlowBottom(selected,[{x:.1,y:.9,w:.6,h:.03}],[{x:.1,y:.7,w:.6,h:.002}],500),.7-6/500);
+    assert.equal(suggestEditorFlowBottom(selected,[],[{x:.8,y:.5,w:.1,h:.1}],500),1-36/500,'Another column does not shorten the text region');
+    assert.throws(()=>suggestEditorFlowBottom(selected,[],[{x:.1,y:.2,w:.6,h:.01}],500),/kein sicherer/);
+  });
+  await test('real numbered list continues across pages without duplicate labels',async()=>{
+    const text=Array.from({length:32},(_,i)=>`Punkt ${i+1}: ${'Langer Listeninhalt '.repeat(8)}`).join('\n');
+    const p=paragraph('list',text,{x:.1,y:.1,w:.6,h:.03},{listStyle:'numbered',listStart:4});
+    const plan=await prepareEditorAutoFlow(input([p]),measurement);assert(plan.pages.length>1);
+    assert.equal(joined(plan,'list'),text);
+    const exported=chunksFor(plan,'list').map(c=>editorExportText(c.mark)).join('');
+    for(let i=4;i<36;i++)assert.equal((exported.match(new RegExp(`(?:^|\\n)${i}\\. `,'g'))||[]).length,1,`List marker ${i} appears exactly once`);
   });
   await test('rich style UTF-16 ranges and point sizes survive page boundaries', async () => {
     const text = `${longText} Ende äöü 😀`;

@@ -26,7 +26,7 @@ const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs'),
   assets = dirname(require.resolve('pdfjs-dist/package.json'));
 const folder = '.cache/editor-workflow';
 await mkdir(folder, { recursive: true });
-for (const name of ['editor-tables','editor-table-workspace','editor-preflight','editor-auto-flow','editor-auto-workspace','editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search',
+for (const name of ['content-digest','local-projects','project-archive','editor-project-codec','editor-live-flow','editor-tables','editor-table-workspace','editor-preflight','editor-auto-flow','editor-auto-workspace','editor-rich-text','editor-rich-layout','editor-verification','editor-detail-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search',
   'local-font-bytes',
   'pdf-text',
   'ocr-languages',
@@ -45,7 +45,7 @@ for (const name of ['editor-tables','editor-table-workspace','editor-preflight',
   'editor-fonts',
   'editor-font-outline','editor-font-cmap',
   'editor-font-catalog',
-  'editor-native',
+  'editor-native','editor-scan-pixels',
   'editor-repair','pdf-security','native-pdf-core','nested-native',
 ]) {
   const code = ts
@@ -146,6 +146,19 @@ try {
  const flowB={...flowA,id:'flow-b',y:.3,text:'',fontScale:12/600,w:.7,h:.45};
  const frames=[{mark:flowA,pageId:'p0',source:input,width:400,height:500},{mark:flowB,pageId:'p1',source:input,width:600,height:400}];
  const distributed=await distributeEditorFlow(frames,signal);assert.equal(distributed.map(x=>x.mark.text).join(''),flowA.text+'\n');assert(distributed[1].mark.text.trim());assert.equal(distributed[1].mark.runs[0].style.fontScale*600,12);
+ const {prepareLinkedEditorFlow}=await import('../.cache/editor-workflow/editor-live-flow.mjs');
+ const linked=distributed.map((entry,i)=>({...entry.mark,flow:{id:'linked',order:i}}));
+ linked[0]={...linked[0],text:'Additional words to redistribute. '+linked[0].text,runs:undefined};
+ const linkedEdits={marks:{p0:[linked[0]],p1:[linked[1]]},crops:{}},beforeLinked=JSON.stringify(linkedEdits);
+ const live=await prepareLinkedEditorFlow([input],pages,linkedEdits,'linked',signal);
+ assert(live.changed);assert.equal(live.marks.map(x=>x.mark.text).join(''),linked.map(m=>m.text).join(''));
+ assert.equal(JSON.stringify(linkedEdits),beforeLinked,'Live preparation never mutates the current workspace');
+ assert(live.marks.every((entry,i)=>entry.mark.w===linked[i].w&&entry.mark.h===linked[i].h&&entry.mark.flow.id==='linked'));
+ const again=await prepareLinkedEditorFlow([input],pages,live.edits,'linked',signal);assert.equal(again.changed,false,'An applied preview is stable');
+ await assert.rejects(()=>prepareLinkedEditorFlow([input],[pages[0]],linkedEdits,'linked',signal),/unvollständig/);
+ await assert.rejects(()=>prepareLinkedEditorFlow([input],pages,{...linkedEdits,crops:{p0:{x:0,y:0,w:1,h:.9}}},'linked',signal),/unvollständig/);
+ await assert.rejects(()=>prepareLinkedEditorFlow([input],pages,{...linkedEdits,marks:{...linkedEdits.marks,p1:[linked[1],{...linked[1],id:'obstacle',flow:undefined,text:'Obstacle'}]}},'linked',signal),/überlappen/);
+ const abortLive=new AbortController();abortLive.abort();await assert.rejects(()=>prepareLinkedEditorFlow([input],pages,linkedEdits,'linked',abortLive.signal),{name:'AbortError'});
  await assert.rejects(()=>distributeEditorFlow(frames.map(f=>({...f,mark:{...f.mark,h:.0001}})),signal),/passt noch nicht/);
  const flowResult=await runStudioJob('edit-text',[input],pages,options,{marks:{p0:[distributed[0].mark],p1:[distributed[1].mark]},crops:{}},()=>{},signal);assert.equal(flowResult.editorVerification.textPages,2);
  const native=inspectNativeObjects(api,input.bytes,0).find(o=>o.type==='image');assert(native);
@@ -272,6 +285,11 @@ try {
  const tsrc=await source(await td.save(),'vector-table.pdf'),tpage=pageOf(tsrc),tpages=[tpage,{...tpage,id:'table-next',index:1}];
  await writeFile(folder+'/table-original.pdf',tsrc.bytes);
  const tables=await readEditorTables(tsrc,tpage,[],signal);assert.equal(tables.length,1,'Native vector grid is recognized');let table=tables[0];assert.equal(table.cells[0].columnSpan,2);
+ const columnDeletion=await changeEditorTable(tsrc,tpage,[],table,{kind:'delete-column',column:1},signal);
+ const deletedColumnResult=await runStudioJob('edit-text',[tsrc],tpages,options,{marks:{p0:columnDeletion.add},crops:{}},()=>{},signal);
+ const deletedColumnText=await text(await source(await deletedColumnResult.blob.arrayBuffer()));
+ assert(!deletedColumnText.includes('B1')&&!deletedColumnText.includes('B2'),'Deleting a populated column physically removes all of its original text');
+ assert(deletedColumnText.includes('A1')&&deletedColumnText.includes('A2')&&deletedColumnText.includes('MERGED HEADING'));
  const provenance=JSON.stringify(table.original);let tm=[];
  for(const operation of [{kind:'height',row:1,height:60},{kind:'height',row:1,height:55},{kind:'insert',row:2,height:45},{kind:'height',row:2,height:50}]){
    const change=await changeEditorTable(tsrc,tpage,tm,table,operation,signal);tm=[...tm.filter(m=>!change.remove.includes(m.id)),...change.add];table=tm.find(m=>m.nativeTable).nativeTable;assert.equal(JSON.stringify(table.original),provenance,'Repeated edits retain original path identities');
@@ -289,8 +307,45 @@ try {
  const tampered=structuredClone(tm);tampered.find(m=>m.nativeTable).nativeTable.original.paths[0].index=999;
  await assert.rejects(()=>runStudioJob('edit-text',[tsrc],tpages,options,{marks:{p0:tampered},crops:{}},()=>{},signal),/exist|Tabelle|raster|Raster/);
  await assert.rejects(()=>changeEditorTable(tsrc,tpage,tm,table,{kind:'height',row:3,height:280},signal),/collid|outside|berühren/);
+ // Real export after each structural operation, including previously edited cells.
+ for (const operation of [
+   {kind:'width',column:0,width:140},
+   {kind:'insert-column',column:2,width:35},
+   {kind:'merge',row:1,column:0,rowEnd:1,columnEnd:1},
+   {kind:'split',cellId:table.cells.find(c=>c.row===1&&c.column===0).id},
+   {kind:'delete-row',row:3},
+   {kind:'delete-column',column:2},
+ ]) {
+   const change=await changeEditorTable(tsrc,tpage,tm,table,operation,signal);
+   tm=[...tm.filter(m=>!change.remove.includes(m.id)),...change.add];table=tm.find(m=>m.nativeTable).nativeTable;
+   const result=await runStudioJob('edit-text',[tsrc],tpages,options,{marks:{p0:tm},crops:{}},()=>{},signal);
+   const exported=await source(await result.blob.arrayBuffer());const value=await text(exported);
+   assert.equal(result.editorVerification.status,'passed',operation.kind+': '+JSON.stringify(result.editorVerification));
+   assert(value.includes('TABLE FOOTER'));assert(value.includes('New line'));assert(value.includes('Second line'));
+   if(operation.kind==='delete-row'||operation.kind==='delete-column'){assert(!value.includes('A2'));assert(!value.includes('B2'));}
+   assert.equal(JSON.stringify(table.original),provenance);
+ }
+ const {encodeProjectFile,decodeProjectFile,projectStateSchema}=await import('../.cache/editor-workflow/project-archive.mjs');
+ const tableState={pages:tpages,edits:{marks:{p0:tm},crops:{}},options:{...options,forceOcr:false},history:[],future:[],documentSessions:{},activeId:'p0',toolId:'edit-text'};
+ const tableArchive=await encodeProjectFile('Table operations',[tsrc],tableState),restoredTable=await decodeProjectFile(tableArchive);
+ const restoredMarks=restoredTable.state.edits.marks.p0;
+ assert.deepEqual(restoredMarks.find(m=>m.nativeTable).nativeTable.removedTextIds,table.removedTextIds);
+ assert(restoredMarks.some(m=>m.tableCell?.deleted&&m.text===''),'Explicit deletions survive project round-trip');
+ const importedResult=await runStudioJob('edit-text',[tsrc],tpages,options,{marks:{p0:restoredMarks},crops:{}},()=>{},signal);
+ assert.equal(importedResult.editorVerification.status,'passed');
+ const badDeletion=structuredClone(tableState);badDeletion.edits.marks.p0.find(m=>m.tableCell?.deleted).text='Injected';
+ assert.throws(()=>projectStateSchema.parse(badDeletion),'Nonempty deletion markers cannot be imported');
+ const forged=structuredClone(tm);forged.find(m=>m.nativeTable).nativeTable.removedTextIds.push('foreign-text');
+ await assert.rejects(()=>runStudioJob('edit-text',[tsrc],tpages,options,{marks:{p0:forged},crops:{}},()=>{},signal),/Zellinhalte|Tabellen/);
  await writeFile(folder+'/table-edited.pdf',tout.bytes);
  console.log('PASS: real merged vector table, repeated height changes, inserted multi-line row, immutable provenance, vector-only export, exact outside/unchanged-page pixels and tamper/collision rejection.');
+ // High-resolution edits read only their bounded patch, including sampling border.
+ const memoryCanvas=createCanvas(2000,2000),memoryCtx=memoryCanvas.getContext('2d');memoryCtx.fillStyle='#eee';memoryCtx.fillRect(0,0,2000,2000);
+ const readPixels=memoryCtx.getImageData.bind(memoryCtx),reads=[];memoryCtx.getImageData=(...args)=>{reads.push(args);return readPixels(...args);};
+ eraseEditorScanRegion(memoryCanvas,{x:.1,y:.1,w:.05,h:.025});
+ assert.deepEqual(reads,[[199,199,102,52]],'A 4 MP page correction reads only 5,304 pixels');
+ console.log('PATCH_MEMORY',JSON.stringify({pagePixels:4000000,readPixels:5304,rgbaCopyBytes:5304*8,previousWholePageCopyBytes:4000000*8}));
+ memoryCanvas.width=memoryCanvas.height=0;
  const angle=estimateEditorSkew(scan);assert(Math.abs(angle+2)<=.5,`Deskew ${angle}`);const prepared=preprocessEditorScan(scan,angle);const point=prepared.restore(prepared.canvas.width/2,prepared.canvas.height/2);assert.deepEqual(point,[400,450]);assert(Math.abs(estimateEditorSkew(prepared.canvas))<=.5);prepared.canvas.width=prepared.canvas.height=0;
  assert(ambiguousEditorNumber('10O,50'));assert(ambiguousEditorNumber('l234'));assert(!ambiguousEditorNumber('IBAN DE12'));assert(!ambiguousEditorNumber('100,50'));
  await writeFile('.cache/editor-workflow/word-result.pdf',new Uint8Array(await result.blob.arrayBuffer()));

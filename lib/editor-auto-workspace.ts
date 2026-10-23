@@ -8,7 +8,12 @@ import { rejectSignedPdf } from './pdf-signature-guard';
 import { prepareEditorLayout } from './editor-layout-plan';
 import { prepareEditorRuns } from './editor-rich-layout';
 import { distributeEditorFlow } from './editor-workflow';
-import { prepareEditorAutoFlow, type AutoFlowPlan, type FlowParagraph } from './editor-auto-flow';
+import {
+  prepareEditorAutoFlow,
+  suggestEditorFlowBottom,
+  type AutoFlowPlan,
+  type FlowParagraph,
+} from './editor-auto-flow';
 
 const same = (a: Rect, b: Rect) =>
   (['x', 'y', 'w', 'h'] as const).every((key) => Math.abs(a[key] - b[key]) < 0.00001);
@@ -41,8 +46,6 @@ export async function prepareEditorAutoWorkspace(
   const selectedRect = originalRect(selected);
   if (!paragraphs.some((p) => same(p, selectedRect)))
     throw new Error('Bitte zuerst den Absatzmodus wählen und den vollständigen Absatz anklicken.');
-  if (!Number.isFinite(bottom) || bottom <= selectedRect.y + selectedRect.h || bottom > 0.95)
-    throw new Error('Die untere Textgrenze muss unter dem ausgewählten Absatz liegen.');
   const used = new Set<string>(),
     inputs: FlowParagraph[] = paragraphs.map((target, i) => {
       const existing = marks.filter(
@@ -65,7 +68,7 @@ export async function prepareEditorAutoWorkspace(
         mark,
         original: { x: target.x, y: target.y, w: target.w, h: target.h },
         unsupportedReason: target.unsupportedReason,
-        fixed: target.y >= bottom,
+        fixed: false,
       };
     });
   const { inspectObjectTree } = await import('./native-pdf');
@@ -94,6 +97,16 @@ export async function prepareEditorAutoWorkspace(
       .filter((o) => o.w > 0 && o.h > 0),
     ...marks.filter((m) => !used.has(m.id)),
   ];
+  if (bottom === 0)
+    bottom = suggestEditorFlowBottom(
+      { ...selectedRect, w: Math.max(selected.w, selectedRect.w) },
+      paragraphs,
+      obstacles,
+      height,
+    );
+  if (!Number.isFinite(bottom) || bottom <= selectedRect.y + selectedRect.h || bottom > 0.95)
+    throw new Error('Die untere Textgrenze muss unter dem ausgewählten Absatz liegen.');
+  for (const input of inputs) input.fixed = input.original.y >= bottom;
   const region = {
     x: selectedRect.x,
     y: selectedRect.y,

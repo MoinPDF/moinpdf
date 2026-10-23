@@ -48,7 +48,33 @@ export function editorMarkSignature(mark: Mark) {
   delete appearance.id;
   delete appearance.flow;
   delete appearance.changeGroup;
+  delete appearance.spellcheck;
+  delete appearance.scanMatch;
   return JSON.stringify(appearance);
+}
+/** Changing the text is expected; changing typography invalidates its old evidence. */
+export function editorScanStyleKey(mark: Mark) {
+  return JSON.stringify([
+    mark.fontChoice,
+    mark.customFont?.name,
+    mark.fontScale,
+    mark.bold,
+    mark.italic,
+    mark.color,
+    mark.textScaleX,
+    mark.tracking,
+    mark.baselineScale,
+    mark.scanBlur,
+    [...new Set((mark.runs || []).map((r) => JSON.stringify(r.style)))],
+  ]);
+}
+export function editorScanMatchStatus(mark: Mark) {
+  const match = mark.scanMatch;
+  if (!match) return 'unavailable';
+  if (match.styleKey !== editorScanStyleKey(mark)) return 'changed';
+  return match.score <= 0.3 && (match.margin >= 0.01 || match.samples >= 3)
+    ? 'matched'
+    : 'uncertain';
 }
 export const editorMarkChanged = (mark: Mark) =>
   !mark.originalState || mark.originalState !== editorMarkSignature(mark);
@@ -170,6 +196,58 @@ export function fitRect(rect: Rect): Rect {
     w: Math.max(0.01, Math.min(1 - x, rect.w)),
     h: Math.max(0.01, Math.min(1 - y, rect.h)),
   };
+}
+
+/** Repeated OCR passes can leave the same invisible word in several fonts with
+ * different bounds. Keep one selection covering all of them: the narrower
+ * search box may clip visible glyphs and cannot be used for scan matching.
+ * Raw extraction stays intact for export preservation and text verification. */
+export function editorSelectionTargets(targets: TextTarget[], width: number, height: number) {
+  const result: TextTarget[] = [];
+  const words = new Map<string, number[]>();
+  for (const target of targets) {
+    if (!target.invisible || target.rotation || target.unsupportedReason) {
+      result.push(target);
+      continue;
+    }
+    const key = target.text.trim(),
+      indices = words.get(key) || [];
+    const index = indices.find((i) => {
+      const prior = result[i];
+      const overlap =
+        Math.max(
+          0,
+          Math.min(prior.x + prior.w, target.x + target.w) - Math.max(prior.x, target.x),
+        ) *
+        Math.max(0, Math.min(prior.y + prior.h, target.y + target.h) - Math.max(prior.y, target.y));
+      return overlap / Math.min(prior.w * prior.h, target.w * target.h) >= 0.8;
+    });
+    if (index === undefined) {
+      indices.push(result.length);
+      words.set(key, indices);
+      result.push(target);
+      continue;
+    }
+    const prior = result[index],
+      base = prior.w * prior.h >= target.w * target.h ? prior : target,
+      x = Math.min(prior.x, target.x),
+      y = Math.min(prior.y, target.y),
+      w = Math.max(prior.x + prior.w, target.x + target.w) - x,
+      h = Math.max(prior.y + prior.h, target.y + target.h) - y;
+    result[index] = {
+      ...base,
+      id: prior.id,
+      x,
+      y,
+      w,
+      h,
+      textAspect: (w * width) / (h * height),
+      baselineScale: (base.baselineScale ?? 0.9) + ((base.y - y) * height) / base.fontSize,
+      insetScale:
+        (base.insetScale || 0) + ((base.x - x) * width) / (base.fontSize * (base.textScaleX || 1)),
+    };
+  }
+  return result;
 }
 export async function readTextTargets(
   source: Source,

@@ -1024,7 +1024,7 @@ function Studio() {
     if (!activePage || locked) return;
     const old = pageMarks.find((m) => m.id === id);
     if (!old) return;
-    if (old.nativeTable) return;
+    if (old.nativeTable || old.tableCell?.deleted) return;
     if (old.tableCell) {
       patch = { ...patch };
       for (const key of [
@@ -2577,6 +2577,7 @@ function Studio() {
                                   onMark={mark}
                                   onPatch={patchMark}
                                   onReplaceMarks={replacePageMarks}
+                                  onOpenObjects={() => chooseTool('native-objects')}
                                   searchHighlight={
                                     editorSearchHighlight?.pageId === activePage.id
                                       ? editorSearchHighlight.rect
@@ -3504,7 +3505,7 @@ function Studio() {
               <h3>{ui('Sitzung und gespeicherte Projekte')}</h3>
               <p>
                 {ui(
-                  'Der Arbeitsstand wird automatisch unverschlüsselt in diesem Browser gespeichert. Zusätzlich bleiben die letzten zehn Ergebnisse mit insgesamt höchstens 160 MB in der lokalen Ergebnisablage. Über „Projekte“ kannst du zusätzlich bis zu fünf Arbeitsstände speichern und als Projektdatei herunterladen. Diese enthält Originale und den Bearbeitungsverlauf unverschlüsselt, auch zuvor entsperrte PDFs. „Arbeitsbereich leeren“ entfernt die automatische Sicherung und Ergebnisablage. Projekte lassen sich separat in der App löschen; auch das Löschen der Browserdaten entfernt lokale Daten. Browser können gespeicherte Daten bei Speichermangel entfernen. Wichtige Ergebnisse zusätzlich herunterladen. Die Website und Sprachpakete werden vom Hostinganbieter geladen; dabei entstehen übliche Zugriffsdaten. Es gibt keine eigenen Analyse- oder Werbetracker.',
+                  'Der Arbeitsstand wird automatisch unverschlüsselt in diesem Browser gespeichert. Zusätzlich bleiben die letzten zehn Ergebnisse mit insgesamt höchstens 160 MB in der lokalen Ergebnisablage. Über „Projekte“ kannst du zusätzlich bis zu fünf Arbeitsstände speichern und als Projektdatei herunterladen. Diese enthält Originale und den Bearbeitungsverlauf unverschlüsselt, auch zuvor entsperrte PDFs. „Arbeitsbereich leeren“ entfernt die Sicherung des aktuellen Arbeitsstands und die Ergebnisablage. Sicherungen anderer Tabs und Dokumente bleiben erhalten und lassen sich beim Wiederherstellen einzeln verwerfen. Projekte lassen sich separat in der App löschen; auch das Löschen der Browserdaten entfernt lokale Daten. Browser können gespeicherte Daten bei Speichermangel entfernen. Wichtige Ergebnisse zusätzlich herunterladen. Die Website und Sprachpakete werden vom Hostinganbieter geladen; dabei entstehen übliche Zugriffsdaten. Es gibt keine eigenen Analyse- oder Werbetracker.',
                 )}
               </p>
               <h3>{ui('Vorlagen und Einstellungen')}</h3>

@@ -1,4 +1,4 @@
-/** Local OCR working images only. Never writes processed pixels into the PDF. */
+/** Local scan analysis. OCR preprocessing never replaces original PDF pixels. */
 export function estimateEditorSkew(canvas: HTMLCanvasElement) {
   const small = document.createElement('canvas'),
     scale = Math.min(1, 800 / canvas.width);
@@ -129,6 +129,147 @@ export function preprocessEditorScan(input: HTMLCanvasElement, angle = estimateE
 export const ambiguousEditorNumber = (text: string) =>
   /\d/.test(text) && /[OIlSB]/.test(text) && /^[\dOIlSB.,:/+%€$£()\s-]+$/.test(text);
 
+/** Bounded separable Gaussian used for measured scan edges, never whole pages. */
+export function blurEditorScanChannel(
+  input: Float32Array,
+  width: number,
+  height: number,
+  sigma: number,
+) {
+  if (!Number.isFinite(sigma) || sigma <= 0) return input;
+  if (input.length !== width * height || input.length > 4000000 || sigma > 24)
+    throw new Error('Ungültiger Scanbereich.');
+  const radius = Math.ceil(sigma * 3),
+    kernel = Array.from({ length: radius * 2 + 1 }, (_, i) =>
+      Math.exp(-((i - radius) ** 2) / (2 * sigma * sigma)),
+    ),
+    sum = kernel.reduce((a, b) => a + b, 0),
+    temp = new Float32Array(input.length),
+    output = new Float32Array(input.length);
+  for (let i = 0; i < kernel.length; i++) kernel[i] /= sum;
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      let value = 0;
+      for (let d = -radius; d <= radius; d++)
+        if (x + d >= 0 && x + d < width) value += input[y * width + x + d] * kernel[d + radius];
+      temp[y * width + x] = value;
+    }
+  for (let y = 0; y < height; y++)
+    for (let x = 0; x < width; x++) {
+      let value = 0;
+      for (let d = -radius; d <= radius; d++)
+        if (y + d >= 0 && y + d < height) value += temp[(y + d) * width + x] * kernel[d + radius];
+      output[y * width + x] = value;
+    }
+  return output;
+}
+
+export function editorScanBlur(
+  mark: { sourceIsScan?: boolean; scanBlur?: number; fontScale?: number; textRotation?: number },
+  width: number,
+) {
+  const value = mark.scanBlur;
+  return mark.sourceIsScan &&
+    !mark.textRotation &&
+    Number.isFinite(value) &&
+    value! > 0 &&
+    value! <= 0.06
+    ? value! * (mark.fontScale || 0.028) * width
+    : 0;
+}
+
+/** Compare the original scan with the same unedited word. A soft edge is
+ * accepted only when it measurably improves a close match over sharp text. */
+export function matchEditorScanEdges(
+  original: ImageData,
+  candidate: ImageData,
+  fontPixels: number,
+  signal: AbortSignal,
+) {
+  const { width, height } = original;
+  if (width !== candidate.width || height !== candidate.height || width * height > 140000)
+    return null;
+  const gray = (data: Uint8ClampedArray, at: number) =>
+    data[at] * 0.2126 + data[at + 1] * 0.7152 + data[at + 2] * 0.0722;
+  const edge: number[] = [],
+    dark: number[] = [];
+  for (let x = 0; x < width; x++)
+    for (const y of [0, height - 1]) edge.push(gray(original.data, (y * width + x) * 4));
+  edge.sort((a, b) => a - b);
+  const paper = edge[Math.floor(edge.length / 2)];
+  for (let at = 0; at < width * height; at++) {
+    const v = gray(original.data, at * 4);
+    if (paper - v > 40) dark.push(v);
+  }
+  dark.sort((a, b) => a - b);
+  const contrast = paper - dark[Math.floor(dark.length * 0.1)];
+  if (!Number.isFinite(contrast) || contrast < 60) return null;
+  const reference = new Float32Array(width * height),
+    sharp = new Float32Array(reference.length);
+  let energy = 0;
+  for (let at = 0; at < reference.length; at++) {
+    reference[at] = Math.max(0, Math.min(1, (paper - gray(original.data, at * 4)) / contrast));
+    sharp[at] = candidate.data[at * 4 + 3] / 255;
+    energy += reference[at] ** 2;
+  }
+  if (energy < 20) return null;
+  const score = (pixels: Float32Array, dx: number, dy: number) => {
+    let error = 0;
+    for (let y = 0; y < height; y++)
+      for (let x = 0; x < width; x++) {
+        const xx = x - dx,
+          yy = y - dy;
+        const value = xx >= 0 && xx < width && yy >= 0 && yy < height ? pixels[yy * width + xx] : 0;
+        error += (reference[y * width + x] - value) ** 2;
+      }
+    return error / energy;
+  };
+  let best = { score: Infinity, sigma: 0, dx: 0, dy: 0 },
+    sharpScore = Infinity;
+  const maximum = Math.min(6, fontPixels * 0.055);
+  const evaluate = (sigma: number) => {
+    signal.throwIfAborted();
+    const pixels = blurEditorScanChannel(sharp, width, height, sigma);
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -2; dx <= 2; dx++) {
+        const value = score(pixels, dx, dy);
+        if (sigma === 0) sharpScore = Math.min(sharpScore, value);
+        if (value < best.score) best = { score: value, sigma, dx, dy };
+      }
+  };
+  for (const sigma of [0, ...[0.2, 0.4, 0.6, 0.8, 1].map((n) => n * maximum)]) evaluate(sigma);
+  if (best.sigma > 0) {
+    for (const step of [0.1, 0.05]) {
+      const center = best.sigma;
+      for (const sigma of [center - maximum * step, center + maximum * step])
+        if (sigma > 0 && sigma <= maximum) evaluate(sigma);
+    }
+  }
+  return best.sigma >= 0.6 && best.score < 0.2 && best.score < sharpScore * 0.82 ? best : null;
+}
+
+/** Premultiplied colour prevents dark fringes on coloured or transparent paper. */
+export function softenEditorScanText(canvas: HTMLCanvasElement, sigma: number) {
+  const ctx = canvas.getContext('2d')!;
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height),
+    n = canvas.width * canvas.height;
+  const channels = Array.from({ length: 4 }, () => new Float32Array(n));
+  for (let i = 0; i < n; i++) {
+    const alpha = pixels.data[i * 4 + 3] / 255;
+    channels[3][i] = alpha;
+    for (let c = 0; c < 3; c++) channels[c][i] = pixels.data[i * 4 + c] * alpha;
+  }
+  const blurred = channels.map((channel) =>
+    blurEditorScanChannel(channel, canvas.width, canvas.height, sigma),
+  );
+  for (let i = 0; i < n; i++) {
+    const alpha = blurred[3][i];
+    pixels.data[i * 4 + 3] = Math.round(alpha * 255);
+    for (let c = 0; c < 3; c++) pixels.data[i * 4 + c] = alpha > 0.001 ? blurred[c][i] / alpha : 0;
+  }
+  ctx.putImageData(pixels, 0, 0);
+}
+
 /** Replace only selected pixels. Reconstruct paper from the outside border;
  * retain a crossing rule only when BOTH opposite edges independently show it. */
 export function eraseEditorScanRegion(
@@ -146,13 +287,19 @@ export function eraseEditorScanRegion(
     y1 = Math.min(height, Math.ceil((rect.y + rect.h) * height - 1e-7));
   if (![x0, y0, x1, y1].every(Number.isFinite) || x1 <= x0 || y1 <= y0)
     throw new Error('Ungültiger Scanbereich.');
+  // A small correction only reads its own pixels plus a one-pixel border.
+  // This avoids two whole-page RGBA copies on a high-resolution scan.
+  const readX = Math.max(0, x0 - 1),
+    readY = Math.max(0, y0 - 1),
+    readWidth = Math.min(width, x1 + 1) - readX,
+    readHeight = Math.min(height, y1 + 1) - readY;
   const context = canvas.getContext('2d')!,
-    image = context.getImageData(0, 0, width, height),
+    image = context.getImageData(readX, readY, readWidth, readHeight),
     original = new Uint8ClampedArray(image.data);
   const color = /^#[a-f\d]{6}$/i.test(fill) ? fill : '#ffffff';
   const solid = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
   const pixel = (x: number, y: number) => {
-    const at = (y * width + x) * 4;
+    const at = ((y - readY) * readWidth + x - readX) * 4;
     return [original[at], original[at + 1], original[at + 2]];
   };
   const sample = (x: number, y: number) =>
@@ -174,7 +321,10 @@ export function eraseEditorScanRegion(
         b = pixel(x1, y);
       if (
         line(a, b) &&
-        Array.from({ length: x1 - x0 }, (_, n) => pixel(x0 + n, y)).every((p) => line(a, p))
+        (() => {
+          for (let x = x0; x < x1; x++) if (!line(a, pixel(x, y))) return false;
+          return true;
+        })()
       )
         horizontal.add(y);
     }
@@ -183,7 +333,10 @@ export function eraseEditorScanRegion(
         b = pixel(x, y1);
       if (
         line(a, b) &&
-        Array.from({ length: y1 - y0 }, (_, n) => pixel(x, y0 + n)).every((p) => line(a, p))
+        (() => {
+          for (let y = y0; y < y1; y++) if (!line(a, pixel(x, y))) return false;
+          return true;
+        })()
       )
         vertical.add(x);
     }
@@ -208,11 +361,11 @@ export function eraseEditorScanRegion(
                   (v, i) => (v * (1 - fx) + right[i] * fx + top[i] * (1 - fy) + bottom[i] * fy) / 2,
                 );
       }
-      const at = (y * width + x) * 4;
+      const at = ((y - readY) * readWidth + x - readX) * 4;
       image.data[at] = rgb[0];
       image.data[at + 1] = rgb[1];
       image.data[at + 2] = rgb[2];
       image.data[at + 3] = 255;
     }
-  context.putImageData(image, 0, 0);
+  context.putImageData(image, readX, readY, x0 - readX, y0 - readY, x1 - x0, y1 - y0);
 }

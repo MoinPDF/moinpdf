@@ -23,6 +23,8 @@ const edits={marks:{one:[{id:'redact',kind:'redact',...rect},{id:'text',kind:'te
 edits.marks.two=editorFontCatalog.map(font=>({id:font.id,kind:'text',...rect,text:'ÄÖÜ ß €',fontChoice:font.id,fontFamily:font.family}));
 const draft={fields:[{id:'field',name:'Name',kind:'text',value:'Denny',initialValue:'',options:[],widgets:[{page:1,rect}],existing:true,required:true,readOnly:false,multiline:false,fontSize:12}],bookmarks:[{id:'bookmark',title:'Kapitel',page:1,depth:0,open:true}],signed:false,xfa:false,originalBookmarkCount:0,originalBookmarks:'[]'};
 edits.marks.one[1].flow={id:'linked-frames',order:0};edits.marks.one[1].changeGroup='linked-change';
+edits.marks.one[1].scanBlur=.025;
+edits.marks.one[1].scanMatch={score:.18,margin:.03,samples:3,candidates:56,styleKey:'fixture-style'};
 edits.marks.one[1].textRotation=45;edits.marks.one[1].textAspect=4.25;edits.marks.one[1].scanBackground='preserve';
 edits.marks.one.push({id:'native-logo',kind:'image',...rect,nativeImage:{index:7,path:[2,4],rect:{...rect},crop:{x:0,y:0,w:.5,h:1},corners:[[.1,.1],[.4,.1],[.1,.2]]}});
 const {recognizeEditorTable,editorTableCellRect}=await import('../.cache/editor-tables-archive-test.mjs');
@@ -70,6 +72,8 @@ await assert.rejects(()=>edited(m=>m.state.edits.marks.two.find(v=>v.nativeTable
 await assert.rejects(()=>edited(m=>m.state.edits.marks.two.find(v=>v.tableCell).tableCell.cellId='missing').then(decodeProjectFile),/ungültige/);
 await assert.rejects(()=>edited(m=>m.state.edits.marks.two=m.state.edits.marks.two.filter(v=>!v.nativeTable)).then(decodeProjectFile),/ungültige/);
 await assert.rejects(()=>edited(m=>m.state.options.language='../remote').then(decodeProjectFile),/ungültige/);
+await assert.rejects(()=>edited(m=>m.state.edits.marks.one[1].scanBlur=.5).then(decodeProjectFile),/ungültige/);
+await assert.rejects(()=>edited(m=>m.state.edits.marks.one[1].scanMatch.samples=5).then(decodeProjectFile),/ungültige/);
 await assert.rejects(()=>edited(m=>delete m.state.edits.marks.one[1].textAspect).then(decodeProjectFile),/ungültige/);
 await assert.rejects(()=>edited(m=>m.state.edits.marks.one[2].nativeImage.path=[-1]).then(decodeProjectFile),/ungültige/);
 await assert.rejects(()=>edited(m=>m.state.edits.marks.one[2].nativeImage.path=Array(17).fill(0)).then(decodeProjectFile),/ungültige/);
