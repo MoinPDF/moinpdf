@@ -201,6 +201,9 @@ export function EditorCanvas({
     [renderRetry, setRenderRetry] = useState(0),
     [paragraphMode, setParagraphMode] = useState(false);
   const [pageKind, setPageKind] = useState('');
+  const [originalPage, setOriginalPage] = useState('');
+  const comparisonPage = `${source.id}:${page.id}:${page.index}:${page.rotation}`;
+  const showOriginal = originalPage === comparisonPage;
   const [initialPoint, setInitialPoint] = useState<EditorStartPoint | null>(null);
   const [textSelection, setTextSelection] = useState<EditorSelection | null>(null);
   const [selectionRequest, setSelectionRequest] = useState<EditorSelection | null>(null);
@@ -532,7 +535,7 @@ export function EditorCanvas({
     };
   };
   function down(e: PointerEvent<HTMLDivElement>) {
-    if (disabled || !url || e.button !== 0) return;
+    if (disabled || showOriginal || !url || e.button !== 0) return;
     const p = position(e);
     onSelect('');
     if (action !== 'replace-area' && action !== 'erase') return;
@@ -728,10 +731,16 @@ export function EditorCanvas({
       className={`editor-canvas-wrap${touchMode ? ' is-touch-mode' : ''}`}
       onKeyDownCapture={(e) => {
         if (
+          !disabled &&
+          !showOriginal &&
+          !e.nativeEvent.isComposing &&
+          !e.ctrlKey &&
+          !e.metaKey &&
+          !e.altKey &&
           (cells.length > 0 || !!marks.find((m) => m.id === selectedId)?.tableCell) &&
           e.key === 'Tab' &&
           e.target instanceof HTMLElement &&
-          e.target.closest('.editor-sheet') &&
+          e.target.closest('[contenteditable="true"]') &&
           nextCell(e.shiftKey)
         ) {
           e.preventDefault();
@@ -990,7 +999,7 @@ export function EditorCanvas({
           onApply={onReplaceMarks}
         />
       )}
-      {selectedText && autoOcr && !joining && (
+      {selectedText && autoOcr && !joining && !showOriginal && (
         <EditorInlineToolbar
           mark={selectedText}
           selection={textSelection}
@@ -1041,6 +1050,36 @@ export function EditorCanvas({
           )}
         </p>
       )}
+      <div className="editor-comparison-bar" role="group" aria-label={ui('Seitenvergleich')}>
+        <Button
+          size="sm"
+          variant={showOriginal ? 'outline' : 'secondary'}
+          aria-pressed={!showOriginal}
+          disabled={!url}
+          onClick={() => setOriginalPage('')}
+        >
+          {ui('Bearbeitete Ansicht')}
+        </Button>
+        <Button
+          size="sm"
+          variant={showOriginal ? 'secondary' : 'outline'}
+          aria-pressed={showOriginal}
+          disabled={!url || disabled}
+          onClick={() => {
+            start.current = null;
+            drag.current = null;
+            setDraft(null);
+            setMoving(null);
+            setGuides([]);
+            setOriginalPage(comparisonPage);
+          }}
+        >
+          {ui('Original anzeigen')}
+        </Button>
+        <span role="status">
+          {showOriginal && ui('Originalansicht – deine Änderungen bleiben erhalten.')}
+        </span>
+      </div>
       <div className="editor-page-scroll" ref={pageScroll}>
         <div
           className="canvas-holder"
@@ -1068,7 +1107,11 @@ export function EditorCanvas({
           >
             {url ? (
               <img
-                src={background.key === removalKey && background.url ? background.url : url}
+                src={
+                  !showOriginal && background.key === removalKey && background.url
+                    ? background.url
+                    : url
+                }
                 alt={ui(`${source.name}, Seite ${page.index + 1}`)}
                 draggable={false}
               />
@@ -1086,282 +1129,289 @@ export function EditorCanvas({
                 )}
               </div>
             )}
-            {removals
-              .filter(() => !(background.key === removalKey && background.url))
-              .filter(editorMarkChanged)
-              .flatMap((m) =>
-                editorRemovalRects(m).map((rect, i) => (
+            {!showOriginal && (
+              <>
+                {removals
+                  .filter(() => !(background.key === removalKey && background.url))
+                  .filter(editorMarkChanged)
+                  .flatMap((m) =>
+                    editorRemovalRects(m).map((rect, i) => (
+                      <div
+                        key={`erase-${m.id}-${i}`}
+                        className="editor-erasure"
+                        style={{ ...box(rect), background: m.fill || '#ffffff' }}
+                      />
+                    )),
+                  )}
+                {url &&
+                  action === 'pick' &&
+                  available.map((t) => (
+                    <button
+                      className={`editor-text-target ${cells.some((c) => c.target.id === t.id) ? 'is-table-cell' : ''} ${joining && joinedKeys.includes('target:' + t.id) ? 'is-joining' : ''} ${editorOcrNeedsReview(t) ? 'is-uncertain' : ''}`}
+                      key={t.id}
+                      style={box(t)}
+                      disabled={disabled}
+                      aria-label={
+                        cells.some((c) => c.target.id === t.id)
+                          ? `${ui('Tabellenzelle')} ${cells.find((c) => c.target.id === t.id)!.row + 1}, ${cells.find((c) => c.target.id === t.id)!.column + 1}: ${t.text}`
+                          : ui(`Text bearbeiten: ${t.text}`)
+                      }
+                      aria-pressed={joining ? joinedKeys.includes('target:' + t.id) : undefined}
+                      title={
+                        t.unsupportedReason
+                          ? ui(t.unsupportedReason)
+                          : t.origin === 'ocr'
+                            ? `${t.text} · ${ui('Erkennungssicherheit')}: ${Math.round(t.confidence || 0)}%`
+                            : t.text
+                      }
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        if (e.button === 0 && !disabled) {
+                          e.preventDefault();
+                          flushSync(() => pick(t, startPoint(e)));
+                        }
+                      }}
+                      onClick={(e) => {
+                        if (e.detail === 0) pick(t);
+                      }}
+                    />
+                  ))}
+                {url &&
+                  action === 'pick' &&
+                  autoOcr &&
+                  imageMode &&
+                  images
+                    .filter(
+                      (image) =>
+                        !marks.some(
+                          (m) =>
+                            m.nativeImage?.index === image.index &&
+                            JSON.stringify(m.nativeImage?.path || []) ===
+                              JSON.stringify(image.path || []),
+                        ),
+                    )
+                    .map((image) => (
+                      <button
+                        type="button"
+                        key={'image-' + (image.path || []).join('-') + ':' + image.index}
+                        className="editor-image-target"
+                        style={{ ...box(image), zIndex: 1 }}
+                        aria-label={ui('Vorhandenes Bild auswählen') + ' ' + (image.index + 1)}
+                        disabled={disabled}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const { x, y, w, h, index } = image;
+                          const next: Mark = {
+                            id: uid(),
+                            kind: 'image',
+                            x,
+                            y,
+                            w,
+                            h,
+                            nativeImage: {
+                              index,
+                              path: image.path,
+                              rect: { x, y, w, h },
+                              corners: image.imageCorners,
+                            },
+                          };
+                          next.originalState = editorMarkSignature(next);
+                          onMark(next);
+                        }}
+                      />
+                    ))}
+                {[
+                  ...displayed.filter((m) => m.kind !== 'redact' && !m.nativeTable),
+                  ...displayed.filter((m) => m.kind === 'redact'),
+                ].map((m) => (
                   <div
-                    key={`erase-${m.id}-${i}`}
-                    className="editor-erasure"
-                    style={{ ...box(rect), background: m.fill || '#ffffff' }}
-                  />
-                )),
-              )}
-            {url &&
-              action === 'pick' &&
-              available.map((t) => (
-                <button
-                  className={`editor-text-target ${cells.some((c) => c.target.id === t.id) ? 'is-table-cell' : ''} ${joining && joinedKeys.includes('target:' + t.id) ? 'is-joining' : ''} ${editorOcrNeedsReview(t) ? 'is-uncertain' : ''}`}
-                  key={t.id}
-                  style={box(t)}
-                  disabled={disabled}
-                  aria-label={
-                    cells.some((c) => c.target.id === t.id)
-                      ? `${ui('Tabellenzelle')} ${cells.find((c) => c.target.id === t.id)!.row + 1}, ${cells.find((c) => c.target.id === t.id)!.column + 1}: ${t.text}`
-                      : ui(`Text bearbeiten: ${t.text}`)
-                  }
-                  aria-pressed={joining ? joinedKeys.includes('target:' + t.id) : undefined}
-                  title={
-                    t.unsupportedReason
-                      ? ui(t.unsupportedReason)
-                      : t.origin === 'ocr'
-                        ? `${t.text} · ${ui('Erkennungssicherheit')}: ${Math.round(t.confidence || 0)}%`
-                        : t.text
-                  }
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    if (e.button === 0 && !disabled) {
-                      e.preventDefault();
-                      flushSync(() => pick(t, startPoint(e)));
+                    key={m.id}
+                    className={`page-mark editor-object ${m.kind} ${joining && joinedKeys.includes('mark:' + m.id) ? 'is-joining' : ''} ${selectedId === m.id ? 'is-selected' : ''}`}
+                    style={{
+                      ...box(m),
+                      touchAction: m.kind === 'text' ? 'pan-y' : 'none',
+                      background: m.kind === 'erase' ? m.fill || '#ffffff' : undefined,
+                    }}
+                    tabIndex={disabled ? -1 : 0}
+                    role="button"
+                    aria-label={ui(
+                      `${m.kind === 'text' ? 'Textfeld' : m.kind === 'erase' ? 'Entfernter Bereich' : m.kind === 'image' ? 'Bild' : 'Markierung'} auswählen${m.kind === 'text' && m.text ? `: ${m.text.slice(0, 60)}` : ''}`,
+                    )}
+                    aria-pressed={
+                      joining ? joinedKeys.includes('mark:' + m.id) : selectedId === m.id
                     }
-                  }}
-                  onClick={(e) => {
-                    if (e.detail === 0) pick(t);
-                  }}
-                />
-              ))}
-            {url &&
-              action === 'pick' &&
-              autoOcr &&
-              imageMode &&
-              images
-                .filter(
-                  (image) =>
-                    !marks.some(
-                      (m) =>
-                        m.nativeImage?.index === image.index &&
-                        JSON.stringify(m.nativeImage?.path || []) ===
-                          JSON.stringify(image.path || []),
-                    ),
-                )
-                .map((image) => (
-                  <button
-                    type="button"
-                    key={'image-' + (image.path || []).join('-') + ':' + image.index}
-                    className="editor-image-target"
-                    style={{ ...box(image), zIndex: 1 }}
-                    aria-label={ui('Vorhandenes Bild auswählen') + ' ' + (image.index + 1)}
-                    disabled={disabled}
-                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();
-                      const { x, y, w, h, index } = image;
-                      const next: Mark = {
-                        id: uid(),
-                        kind: 'image',
-                        x,
-                        y,
-                        w,
-                        h,
-                        nativeImage: {
-                          index,
-                          path: image.path,
-                          rect: { x, y, w, h },
-                          corners: image.imageCorners,
-                        },
-                      };
-                      next.originalState = editorMarkSignature(next);
-                      onMark(next);
+                      if (disabled) return;
+                      if (joining && m.kind === 'text') {
+                        toggleJoin('mark:' + m.id);
+                        return;
+                      }
+                      onSelect(m.id);
                     }}
-                  />
-                ))}
-            {[
-              ...displayed.filter((m) => m.kind !== 'redact' && !m.nativeTable),
-              ...displayed.filter((m) => m.kind === 'redact'),
-            ].map((m) => (
-              <div
-                key={m.id}
-                className={`page-mark editor-object ${m.kind} ${joining && joinedKeys.includes('mark:' + m.id) ? 'is-joining' : ''} ${selectedId === m.id ? 'is-selected' : ''}`}
-                style={{
-                  ...box(m),
-                  touchAction: m.kind === 'text' ? 'pan-y' : 'none',
-                  background: m.kind === 'erase' ? m.fill || '#ffffff' : undefined,
-                }}
-                tabIndex={disabled ? -1 : 0}
-                role="button"
-                aria-label={ui(
-                  `${m.kind === 'text' ? 'Textfeld' : m.kind === 'erase' ? 'Entfernter Bereich' : m.kind === 'image' ? 'Bild' : 'Markierung'} auswählen${m.kind === 'text' && m.text ? `: ${m.text.slice(0, 60)}` : ''}`,
-                )}
-                aria-pressed={joining ? joinedKeys.includes('mark:' + m.id) : selectedId === m.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (disabled) return;
-                  if (joining && m.kind === 'text') {
-                    toggleJoin('mark:' + m.id);
-                    return;
-                  }
-                  onSelect(m.id);
-                }}
-                onPointerDown={(e) => {
-                  if (disabled) return;
-                  if (m.kind === 'text') {
-                    e.stopPropagation();
-                    if (joining) {
-                      e.preventDefault();
-                      return;
-                    }
-                    if (selectedId !== m.id)
-                      setInitialPoint({
-                        id: m.id,
-                        ...startPoint(e),
-                      });
-                    onSelect(m.id);
-                  } else begin(e, m);
-                }}
-                onKeyDown={(e) => {
-                  if (disabled) return;
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    if (joining && m.kind === 'text') {
-                      toggleJoin('mark:' + m.id);
-                      return;
-                    }
-                    onSelect(m.id);
-                  }
-                  const shifts: Record<string, [number, number]> = {
-                    ArrowLeft: [-1, 0],
-                    ArrowRight: [1, 0],
-                    ArrowUp: [0, -1],
-                    ArrowDown: [0, 1],
-                  };
-                  const s = shifts[e.key];
-                  if (s && !joining) {
-                    e.preventDefault();
-                    const step = e.shiftKey ? 10 : 1;
-                    onPatch(
-                      m.id,
-                      fitRect({
-                        ...m,
-                        x: Math.min(1 - m.w, m.x + (s[0] * step) / dims.width),
-                        y: Math.min(1 - m.h, m.y + (s[1] * step) / dims.height),
-                      }),
-                    );
-                  }
-                }}
-              >
-                {selectedId === m.id && m.kind === 'text' && autoOcr && !joining ? (
-                  <EditorInlineText
-                    mark={m}
-                    source={source}
-                    width={displayWidth}
-                    height={(displayWidth * dims.height) / dims.width}
-                    pageWidth={dims.width}
-                    pageHeight={dims.height}
-                    disabled={disabled}
-                    onPatch={onPatch}
-                    onSelection={selectionChanged}
-                    initialPoint={initialPoint}
-                    selectionRequest={selectionRequest}
-                    onSearch={() => openSearch(m.id)}
-                    onDone={() => onSelect('')}
-                  />
-                ) : (
-                  <MarkContent
-                    mark={m}
-                    width={displayWidth}
-                    height={(displayWidth * dims.height) / dims.width}
-                    source={source}
-                  />
-                )}
-                {selectedId === m.id && m.kind === 'text' && !m.tableCell && (
-                  <button
-                    type="button"
-                    className="editor-move-handle"
-                    aria-label={ui('Textfeld verschieben')}
-                    title={ui('Textfeld verschieben')}
-                    onPointerDown={(e) => begin(e, m)}
-                    disabled={disabled}
+                    onPointerDown={(e) => {
+                      if (disabled) return;
+                      if (m.kind === 'text') {
+                        e.stopPropagation();
+                        if (joining) {
+                          e.preventDefault();
+                          return;
+                        }
+                        if (selectedId !== m.id)
+                          setInitialPoint({
+                            id: m.id,
+                            ...startPoint(e),
+                          });
+                        onSelect(m.id);
+                      } else begin(e, m);
+                    }}
+                    onKeyDown={(e) => {
+                      if (disabled || e.nativeEvent.isComposing || e.target !== e.currentTarget)
+                        return;
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (joining && m.kind === 'text') {
+                          toggleJoin('mark:' + m.id);
+                          return;
+                        }
+                        onSelect(m.id);
+                      }
+                      const shifts: Record<string, [number, number]> = {
+                        ArrowLeft: [-1, 0],
+                        ArrowRight: [1, 0],
+                        ArrowUp: [0, -1],
+                        ArrowDown: [0, 1],
+                      };
+                      const s = shifts[e.key];
+                      if (s && !joining) {
+                        e.preventDefault();
+                        const step = e.shiftKey ? 10 : 1;
+                        onPatch(
+                          m.id,
+                          fitRect({
+                            ...m,
+                            x: Math.min(1 - m.w, m.x + (s[0] * step) / dims.width),
+                            y: Math.min(1 - m.h, m.y + (s[1] * step) / dims.height),
+                          }),
+                        );
+                      }
+                    }}
                   >
-                    <Move size={16} />
-                  </button>
-                )}
-                {selectedId === m.id && !m.tableCell && (
-                  <span
-                    className="editor-resize"
-                    title={ui('Größe ändern')}
-                    onPointerDown={(e) => begin(e, m, true)}
+                    {selectedId === m.id && m.kind === 'text' && autoOcr && !joining ? (
+                      <EditorInlineText
+                        mark={m}
+                        source={source}
+                        width={displayWidth}
+                        height={(displayWidth * dims.height) / dims.width}
+                        pageWidth={dims.width}
+                        pageHeight={dims.height}
+                        disabled={disabled}
+                        onPatch={onPatch}
+                        onSelection={selectionChanged}
+                        initialPoint={initialPoint}
+                        selectionRequest={selectionRequest}
+                        onSearch={() => openSearch(m.id)}
+                        onDone={() => onSelect('')}
+                      />
+                    ) : (
+                      <MarkContent
+                        mark={m}
+                        width={displayWidth}
+                        height={(displayWidth * dims.height) / dims.width}
+                        source={source}
+                      />
+                    )}
+                    {selectedId === m.id && m.kind === 'text' && !m.tableCell && (
+                      <button
+                        type="button"
+                        className="editor-move-handle"
+                        aria-label={ui('Textfeld verschieben')}
+                        title={ui('Textfeld verschieben')}
+                        onPointerDown={(e) => begin(e, m)}
+                        disabled={disabled}
+                      >
+                        <Move size={16} />
+                      </button>
+                    )}
+                    {selectedId === m.id && !m.tableCell && (
+                      <span
+                        className="editor-resize"
+                        title={ui('Größe ändern')}
+                        onPointerDown={(e) => begin(e, m, true)}
+                      />
+                    )}
+                  </div>
+                ))}
+                {tableChanges.map((mark) => (
+                  <svg
+                    key={mark.id}
+                    aria-label={ui('Geändertes Tabellenraster')}
+                    viewBox={`0 0 ${dims.width} ${dims.height}`}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      pointerEvents: 'none',
+                      zIndex: 3,
+                    }}
+                  >
+                    {editorTableSegments(mark.nativeTable!).map((s, i) => (
+                      <line
+                        key={i}
+                        x1={s.x1}
+                        y1={s.y1}
+                        x2={s.x2}
+                        y2={s.y2}
+                        stroke={mark.nativeTable!.color}
+                        strokeWidth={mark.nativeTable!.width}
+                      />
+                    ))}
+                  </svg>
+                ))}
+                {autoOcr &&
+                  displayed
+                    .filter((m) => m.kind === 'text' && editorMarkChanged(m))
+                    .map((m) => (
+                      <EditorLayoutOutline
+                        key={'layout-' + m.id}
+                        mark={m}
+                        marks={displayed}
+                        targets={targets}
+                        source={source}
+                        width={dims.width}
+                        height={dims.height}
+                      />
+                    ))}
+                {searchHighlight && (
+                  <div
+                    ref={searchHighlightRef}
+                    className="editor-search-highlight"
+                    style={box(searchHighlight)}
+                    aria-label={ui('Suchtreffer auf der Seite')}
                   />
                 )}
-              </div>
-            ))}
-            {tableChanges.map((mark) => (
-              <svg
-                key={mark.id}
-                aria-label={ui('Geändertes Tabellenraster')}
-                viewBox={`0 0 ${dims.width} ${dims.height}`}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  pointerEvents: 'none',
-                  zIndex: 3,
-                }}
-              >
-                {editorTableSegments(mark.nativeTable!).map((s, i) => (
-                  <line
+                {guides.map((guide, i) => (
+                  <div
                     key={i}
-                    x1={s.x1}
-                    y1={s.y1}
-                    x2={s.x2}
-                    y2={s.y2}
-                    stroke={mark.nativeTable!.color}
-                    strokeWidth={mark.nativeTable!.width}
+                    className={`editor-snap-guide ${guide.axis}${guide.baseline ? ' baseline' : ''}`}
+                    style={
+                      guide.axis === 'x'
+                        ? { left: `${guide.value * 100}%` }
+                        : { top: `${guide.value * 100}%` }
+                    }
+                    aria-hidden="true"
                   />
                 ))}
-              </svg>
-            ))}
-            {autoOcr &&
-              displayed
-                .filter((m) => m.kind === 'text' && editorMarkChanged(m))
-                .map((m) => (
-                  <EditorLayoutOutline
-                    key={'layout-' + m.id}
-                    mark={m}
-                    marks={displayed}
-                    targets={targets}
-                    source={source}
-                    width={dims.width}
-                    height={dims.height}
-                  />
-                ))}
-            {searchHighlight && (
-              <div
-                ref={searchHighlightRef}
-                className="editor-search-highlight"
-                style={box(searchHighlight)}
-                aria-label={ui('Suchtreffer auf der Seite')}
-              />
+                {crop && (
+                  <div className="crop-selection" style={box(crop)}>
+                    <span>{ui('AUSSCHNITT')}</span>
+                  </div>
+                )}
+                {draft && <div className="editor-area-draft" style={box(draft)} />}
+              </>
             )}
-            {guides.map((guide, i) => (
-              <div
-                key={i}
-                className={`editor-snap-guide ${guide.axis}${guide.baseline ? ' baseline' : ''}`}
-                style={
-                  guide.axis === 'x'
-                    ? { left: `${guide.value * 100}%` }
-                    : { top: `${guide.value * 100}%` }
-                }
-                aria-hidden="true"
-              />
-            ))}
-            {crop && (
-              <div className="crop-selection" style={box(crop)}>
-                <span>{ui('AUSSCHNITT')}</span>
-              </div>
-            )}
-            {draft && <div className="editor-area-draft" style={box(draft)} />}
           </div>
         </div>
       </div>

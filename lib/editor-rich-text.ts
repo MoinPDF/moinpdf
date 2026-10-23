@@ -26,22 +26,62 @@ export function editorSelectionStyle(mark: Mark, selection?: EditorSelection | n
   return { start, end, selected: !!selected, style, mixed };
 }
 export type EditorTextMatch = { start: number; end: number };
+const searchLigatures: Record<string, string> = {
+  ﬀ: 'ff',
+  ﬁ: 'fi',
+  ﬂ: 'fl',
+  ﬃ: 'ffi',
+  ﬄ: 'ffl',
+  ﬅ: 'st',
+  ﬆ: 'st',
+};
+/** Keep original UTF-16 offsets for edits and rich-text runs. A search must
+ * never replace only half a ligature or part of a combining character. */
+function editorSearchProjection(text: string) {
+  let value = '';
+  const starts = new Map<number, number>(),
+    ends = new Map<number, number>();
+  for (const part of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text)) {
+    const normalized = part.segment
+      .normalize('NFC')
+      .replace(/[ﬀ-ﬆ]/gu, (c) => searchLigatures[c])
+      .replace(/[\u00ad\u200b]/gu, '');
+    if (!normalized) continue;
+    const whitespace = /^\s+$/u.test(normalized);
+    if (whitespace && value.endsWith(' ')) {
+      ends.set(value.length, part.index + part.segment.length);
+      continue;
+    }
+    starts.set(value.length, part.index);
+    value += whitespace ? ' ' : normalized;
+    ends.set(value.length, part.index + part.segment.length);
+  }
+  return { value, starts, ends };
+}
 export function findEditorText(
   text: string,
   query: string,
   matchCase = false,
   wholeWord = false,
+  typography = false,
 ): EditorTextMatch[] {
   if (!query || query.length > 256) return [];
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const projected = typography ? editorSearchProjection(text) : undefined;
+  const searched = projected?.value ?? text;
+  const needle = typography ? editorSearchProjection(query).value : query;
+  if (!needle) return [];
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const matches: EditorTextMatch[] = [];
-  for (const match of text.matchAll(new RegExp(escaped, matchCase ? 'gu' : 'giu'))) {
-    const start = match.index!,
-      end = start + match[0].length;
+  for (const match of searched.matchAll(new RegExp(escaped, matchCase ? 'gu' : 'giu'))) {
+    const at = match.index!,
+      limit = at + match[0].length;
+    const start = projected ? projected.starts.get(at) : at,
+      end = projected ? projected.ends.get(limit) : limit;
+    if (start === undefined || end === undefined) continue;
     if (
       wholeWord &&
-      (/[\p{L}\p{N}\p{M}_]$/u.test(text.slice(Math.max(0, start - 2), start)) ||
-        /^[\p{L}\p{N}\p{M}_]/u.test(text.slice(end, end + 2)))
+      (/[\p{L}\p{N}\p{M}_]$/u.test(searched.slice(Math.max(0, at - 2), at)) ||
+        /^[\p{L}\p{N}\p{M}_]/u.test(searched.slice(limit, limit + 2)))
     )
       continue;
     matches.push({ start, end });

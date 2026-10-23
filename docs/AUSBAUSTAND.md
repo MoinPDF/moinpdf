@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 22. Oktober 2026. Unveröffentlichte Editor-Fortsetzung auf Basis von Version 0.19.0.
+Stand: 23. Oktober 2026. Unveröffentlichte Editor-Fortsetzung auf Basis von Version 0.19.0.
 
 „PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
 
@@ -198,3 +198,7 @@ Die Zeichenreihenfolge in PDF-Objekten kann sich beim Ersetzen ändern. Eine geo
 ## Unveröffentlichte Editor-Fortsetzung – 22. Oktober 2026
 
 Die Änderungen und Grenzen stehen im unveröffentlichten [Änderungsprotokoll](../CHANGELOG.md) und in der aktualisierten Bedienungsanleitung. Die 48 lokalen Testgruppen wurden bei der Fortsetzung erneut erfolgreich ausgeführt. Die Editor-CI umfasst jetzt je 29 Fälle in Chromium, Firefox und WebKit, einschließlich 390-Pixel-Ansichten, unabhängiger Exportprüfung und echter Entfernung alter Tabellenlinien in der Vorschau. Zwei zusätzliche Fälle verzögern die echte Schriftvorbereitung und prüfen, dass der Fokus auf der OCR-Bedienung bleibt; dieser Fokusfehler wurde unter WebKit vor der Korrektur reproduziert. Fehlende, doppelte oder fehlgeschlagene Browserfälle werden ausdrücklich abgewiesen; fehlgeschlagene Workflow-Fälle erhalten eine Ablaufaufzeichnung. Maßgeblich sind die Ergebnisse und Artefakte des jeweiligen Quellstands in der [Editor-CI](https://github.com/MoinPDF/moinpdf/actions/workflows/editor.yml). Der freigegebene Testzweig ist öffentlich; Hauptversion, Website, Container und Releases werden durch diese Prüfungen nicht veröffentlicht. Historische Prüfstände in den vorstehenden Abschnitten bleiben als solche erhalten.
+
+## Editor-Bedienung und Sicherung – 23. Oktober 2026
+
+Die weitere Fortsetzung ergänzt einen direkten Originalvergleich bei gleichem Zoom, typografische Suche mit vollständigen Originalzeichen und einen sichtbaren Status der lokalen Wiederherstellung. Die Sicherung bündelt schnelle Änderungen und startet ausstehende Schreibvorgänge beim App-Wechsel; sie ersetzt keine heruntergeladene Projektsicherung. Einzelne Seitenfehler bleiben in der Vorprüfung sichtbar, während weitere Seiten geprüft werden. Tastenkombinationen und laufende Zeicheneingabe lösen keinen ungewollten Tabellenwechsel aus. Die Regressionstests wurden für diese Fälle erweitert; maßgeblich sind die Ergebnisse des jeweiligen Commits, nicht ältere Prüfstände.

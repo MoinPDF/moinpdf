@@ -11,6 +11,11 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Unveröffentlicht – PDF bearbeiten
 
+- Direkter Originalvergleich bei unverändertem Zoom; Bearbeitungsmarkierungen sind in der Originalansicht ausgeblendet und nicht bedienbar.
+- Typografische Suche findet PDF-Ligaturen, kombinierte Akzente und variierende Leerzeichen mit sicheren Originalpositionen; Teilzeichen werden nicht ersetzt. Exakte Suche bleibt wählbar.
+- Automatische lokale Sicherung bündelt schnelle Änderungen, zeigt nur den tatsächlich gesicherten neuesten Stand und stößt ausstehende Schreibvorgänge beim App-Wechsel an. Verwerfen wartet auf laufende Schreibvorgänge; Speicherfehler bleiben sichtbar.
+- Seitenfehler brechen die Vorprüfung der übrigen Seiten nicht mehr ab. Fortschritt, ungeprüfter Zustand und Hinweise werden getrennt angezeigt. Tabellennavigation respektiert Tastenkombinationen, Texteingabe und die normale Fokusreihenfolge; Bedienelemente verschieben Textfelder nicht versehentlich.
+
 - Browser-Vorbereitung in Editor- und Docker-CI verwendet offizielle HTTPS-Paketarchive und begrenzte Netzwerkwartezeiten; hängende Ubuntu-Spiegeldownloads verbrauchen nicht mehr die gesamte Testlaufzeit.
 - Verspätete Schriftvorbereitung übernimmt den Fokus nicht mehr aus der OCR-Korrektur oder anderen Bedienelementen zurück in den PDF-Text. Regressionstests prüfen Desktop und schmale Touch-Ansichten einschließlich Tastaturbedienung.
 - Die Editor-CI verlangt vollständige Ergebnisberichte für alle 29 Fälle je Browser; fehlende, doppelte oder fehlgeschlagene Fälle verhindern einen erfolgreichen Abschluss. Fehlgeschlagene Workflow-Fälle behalten zusätzlich eine Playwright-Ablaufaufzeichnung.

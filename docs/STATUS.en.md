@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 22 October 2026. Unreleased editor continuation based on version 0.19.0.
+As of 23 October 2026. Unreleased editor continuation based on version 0.19.0.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
@@ -130,3 +130,7 @@ PDF object character order may change during replacement. Geometrically sorted t
 ## Unreleased editor continuation – 22 October 2026
 
 The current changes and limitations are described in the unreleased [changelog](../CHANGELOG.en.md) and updated user guide. All 48 local test suites passed again when work resumed. Editor CI now covers 29 cases each in Chromium, Firefox and WebKit, including 390-pixel views, independent export inspection and actual removal of old table rules in the preview. Two additional cases delay real font preparation and verify that focus stays on the OCR controls; this focus failure was reproduced in WebKit before the correction. Missing, duplicate or unsuccessful browser cases are explicitly rejected, and failed workflow cases retain a trace. The results and artifacts for each source revision in [editor CI](https://github.com/MoinPDF/moinpdf/actions/workflows/editor.yml) are authoritative. The approved test branch is public; these checks do not publish the main version, website, containers or releases. Earlier test snapshots in this document remain historical records.
+
+## Editor interaction and recovery – 23 October 2026
+
+This continuation adds original-page comparison at the same zoom, typographic search mapped to complete original characters, and visible local-recovery status. Recovery coalesces rapid edits and flushes pending writes when switching apps; it does not replace a downloaded project backup. Preflight reports page-specific failures while checking the remaining pages. Shortcut modifiers and ongoing composition do not accidentally navigate table cells. Regression coverage has been extended for these cases; results must be checked for the corresponding commit rather than inferred from an earlier test run.

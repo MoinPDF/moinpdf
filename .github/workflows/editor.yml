@@ -46,6 +46,8 @@ jobs:
           pnpm run build:selfhost
           node tests/editor-preservation-smoke.mjs
           node tests/editor-rich-smoke.mjs
+          node tests/editor-resilience-smoke.mjs
+          node tests/editor-ui-smoke.mjs
           node tests/editor-workflow-smoke.mjs
           node tests/editor-adaptive-smoke.mjs
           node tests/editor-adaptive-fixtures.mjs

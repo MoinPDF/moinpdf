@@ -10,6 +10,7 @@ import {
 } from '@/lib/editor-preflight';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
+import { editorMarkChanged } from '@/lib/editor-model';
 export function EditorPreflightPanel({
   sources,
   pages,
@@ -29,6 +30,12 @@ export function EditorPreflightPanel({
     [pending, setPending] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState('');
+  const [completedKey, setCompletedKey] = useState(''),
+    [progress, setProgress] = useState({ completed: 0, total: 0 });
+  const changedCount = pages.reduce(
+    (total, page) => total + (edits.marks[page.id] || []).filter(editorMarkChanged).length,
+    0,
+  );
   const key = JSON.stringify([pages, edits]),
     current = useRef(key),
     controller = useRef<AbortController | null>(null);
@@ -38,6 +45,8 @@ export function EditorPreflightPanel({
     setBusy(false);
     setMessage('');
     setIssues([]);
+    setCompletedKey('');
+    setProgress({ completed: 0, total: 0 });
     if (disabled) {
       setPending(false);
       return;
@@ -45,9 +54,14 @@ export function EditorPreflightPanel({
     const ctrl = new AbortController();
     setPending(true);
     const timer = setTimeout(() => {
-      void preflightEditor(sources, pages, edits, ctrl.signal)
+      void preflightEditor(sources, pages, edits, ctrl.signal, (completed, total) => {
+        if (!ctrl.signal.aborted) setProgress({ completed, total });
+      })
         .then((value) => {
-          if (!ctrl.signal.aborted) setIssues(value);
+          if (!ctrl.signal.aborted) {
+            setIssues(value);
+            setCompletedKey(key);
+          }
         })
         .catch((error) => {
           if (!ctrl.signal.aborted)
@@ -66,7 +80,7 @@ export function EditorPreflightPanel({
       ctrl.abort();
       controller.current?.abort();
     };
-  }, [sources, pages, edits, disabled]);
+  }, [sources, pages, edits, disabled, key]);
   async function fix(issue: EditorPreflightIssue) {
     const page = pages.find((p) => p.id === issue.pageId),
       mark = edits.marks[issue.pageId]?.find((m) => m.id === issue.markId),
@@ -127,15 +141,23 @@ export function EditorPreflightPanel({
   return (
     <details className="editor-workflow-section">
       <summary>
-        {ui('Änderungen vorprüfen')} · {pending ? ui('Prüfung läuft …') : issues.length}
+        {ui('Änderungen vorprüfen')} ·{' '}
+        {pending
+          ? ui('Prüfung läuft …') +
+            (progress.total ? ` ${progress.completed}/${progress.total}` : '')
+          : disabled || completedKey !== key
+            ? ui('Noch nicht geprüft')
+            : issues.length}
       </summary>
       <p>
         {ui(
           'Text, Schrift, Platzbedarf und Formularfelder werden geprüft. Die vollständige Prüfung erfolgt beim Export.',
         )}
       </p>
-      {!pending && !issues.length && !message && (
-        <p role="status">{ui('Keine Auffälligkeiten in der Vorprüfung.')}</p>
+      {!disabled && completedKey === key && !pending && !issues.length && !message && (
+        <p role="status">
+          {ui(changedCount ? 'Keine Auffälligkeiten in der Vorprüfung.' : 'Noch keine Änderungen.')}
+        </p>
       )}
       {issues.map((issue, i) => {
         const mark = edits.marks[issue.pageId]?.find((m) => m.id === issue.markId);
@@ -167,10 +189,10 @@ export function EditorPreflightPanel({
       })}
       <Button
         variant="outline"
-        disabled={disabled || busy || pending}
+        disabled={disabled || busy || pending || !changedCount || completedKey !== key}
         onClick={() => void physical()}
       >
-        {ui(busy ? 'Entfernung wird geprüft …' : 'Originaltextentfernung testen')}
+        {ui(busy ? 'Änderung wird geprüft …' : 'Originaltextentfernung testen')}
       </Button>
       {message && <p role="status">{ui(message)}</p>}
     </details>

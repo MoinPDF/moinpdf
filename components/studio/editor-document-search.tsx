@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PageItem, Source } from '@/lib/pdf-engine';
 import type { Edits, Rect } from '@/lib/studio-engine';
 import {
@@ -38,7 +38,8 @@ export function EditorDocumentSearch({
     [replacement, setReplacement] = useState(''),
     [scans, setScans] = useState(false),
     [matchCase, setMatchCase] = useState(false),
-    [wholeWord, setWholeWord] = useState(false);
+    [wholeWord, setWholeWord] = useState(false),
+    [typography, setTypography] = useState(true);
   const [index, setIndex] = useState<EditorDocumentIndex | null>(null),
     [chosen, setChosen] = useState<string[]>([]),
     [busy, setBusy] = useState(false),
@@ -49,12 +50,15 @@ export function EditorDocumentSearch({
     version = useRef(0),
     latest = useRef({ sources, pages, edits, onApply, disabled });
   latest.current = { sources, pages, edits, onApply, disabled };
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => input.current?.focus({ preventScroll: true }), []);
   const fingerprint = editorDocumentFingerprint(sources, pages, edits);
   useEffect(() => {
     version.current++;
     controller.current?.abort();
     setIndex(null);
     setChosen([]);
+    setOffset(0);
     setBusy(false);
     setProgress('');
     setError('');
@@ -69,15 +73,17 @@ export function EditorDocumentSearch({
   useEffect(() => {
     setChosen([]);
     setOffset(0);
-  }, [query, matchCase, wholeWord]);
-  let hits: EditorDocumentMatch[] = [],
-    searchError = '';
-  if (index)
+  }, [query, matchCase, wholeWord, typography]);
+  const { hits, searchError } = useMemo(() => {
     try {
-      hits = findEditorDocument(index, query, matchCase, wholeWord);
+      return {
+        hits: index ? findEditorDocument(index, query, matchCase, wholeWord, typography) : [],
+        searchError: '',
+      };
     } catch (e) {
-      searchError = (e as Error).message;
+      return { hits: [] as EditorDocumentMatch[], searchError: (e as Error).message };
     }
+  }, [index, query, matchCase, wholeWord, typography]);
   async function scan() {
     controller.current?.abort();
     const c = new AbortController();
@@ -160,6 +166,23 @@ export function EditorDocumentSearch({
     <section
       className="editor-document-search"
       aria-label={ui('Dokument durchsuchen und ersetzen')}
+      onKeyDown={(e) => {
+        if (e.nativeEvent.isComposing) return;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        } else if (
+          e.key === 'Enter' &&
+          e.target === input.current &&
+          !busy &&
+          !disabled &&
+          !index
+        ) {
+          e.preventDefault();
+          void scan();
+        }
+      }}
     >
       <div className="editor-review-actions">
         <strong>{ui('Suchen im gesamten Dokument')}</strong>
@@ -176,6 +199,7 @@ export function EditorDocumentSearch({
         <label>
           {ui('Suchtext')}
           <input
+            ref={input}
             aria-label={ui('Suchtext im Dokument')}
             value={query}
             maxLength={256}
@@ -216,6 +240,15 @@ export function EditorDocumentSearch({
         <label>
           <input
             type="checkbox"
+            checked={typography}
+            disabled={busy || disabled}
+            onChange={(e) => setTypography(e.target.checked)}
+          />
+          {ui('PDF-Schreibweisen ausgleichen')}
+        </label>
+        <label>
+          <input
+            type="checkbox"
             checked={scans}
             disabled={busy}
             onChange={(e) => setScans(e.target.checked)}
@@ -223,6 +256,13 @@ export function EditorDocumentSearch({
           {ui('Scans lokal erkennen (langsamer)')}
         </label>
       </div>
+      {typography && (
+        <p className="fine-note">
+          {ui(
+            'Findet auch Ligaturen, kombinierte Akzente und abweichende Leerzeichen. Ersetzt werden immer vollständige Zeichen.',
+          )}
+        </p>
+      )}
       <div className="editor-review-actions">
         <Button size="sm" variant="outline" disabled={disabled || busy} onClick={() => void scan()}>
           {ui('Alle Seiten durchsuchen')}

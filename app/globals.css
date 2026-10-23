@@ -7344,6 +7344,31 @@ html:has(.editor-canvas-wrap) {
 .editor-workflow-panel {
   margin-block: 1rem;
 }
+.editor-comparison-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block: 0.65rem;
+  font-size: 0.8rem;
+}
+.editor-comparison-bar > span {
+  flex: 1 1 12rem;
+  overflow-wrap: anywhere;
+  color: var(--muted-foreground);
+}
+.editor-toolbar .editor-save-status {
+  flex-basis: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.editor-save-status.saved {
+  color: var(--foreground);
+}
+.editor-save-status.error {
+  color: var(--destructive);
+  font-weight: 600;
+}
 .editor-workflow-section {
   border-top: 1px solid var(--border);
   padding: 0.8rem 0;

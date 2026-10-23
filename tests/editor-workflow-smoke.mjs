@@ -249,6 +249,12 @@ try {
  const {preflightEditor,safeEditorHeight,editorDocumentState,testEditorRemoval}=await import('../.cache/editor-workflow/editor-preflight.mjs');
  const tooSmall={...editorTargetMark(ft,0,400,'fit'),text:'A longer replacement line that needs several lines in this narrow frame.',w:.4,h:.01};
  const issues=await preflightEditor([fsrc],fpages,{marks:{p0:[tooSmall]},crops:{}},signal);assert(issues.some(i=>i.kind==='layout'));
+ const brokenPage={...fpage,id:'broken',sourceId:'missing-source'},progress=[];
+ const partial=await preflightEditor([fsrc],[brokenPage,...fpages],{marks:{broken:[{...tooSmall,id:'broken-mark'}],p0:[tooSmall]},crops:{}},signal,(completed,total)=>progress.push([completed,total]));
+ assert(partial.some(i=>i.pageId==='broken'&&i.kind==='error'),'Unreadable pages produce an explicit page issue');
+ assert(partial.some(i=>i.pageId==='p0'&&i.kind==='layout'),'One failed page does not suppress issues on later pages');
+ assert.deepEqual(progress,[[0,2],[1,2],[2,2]],'Progress counts changed pages, including failed checks');
+ await assert.rejects(()=>preflightEditor([fsrc],fpages,{marks:{p0:[tooSmall]},crops:{}},AbortSignal.abort()),{name:'AbortError'});
  const fix=await safeEditorHeight(fsrc,fpage,tooSmall,[tooSmall],signal);assert(fix.h>tooSmall.h);assert(fix.h<.2);
  const nearFooter={...tooSmall,y:.86};await assert.rejects(()=>safeEditorHeight(fsrc,fpage,nearFooter,[nearFooter],signal),/berühren|Seitengrenzen/);
  const conflict={id:'other',kind:'text',text:'Obstacle',x:.1,y:tooSmall.y+.03,w:.4,h:.04,fontScale:.03};await assert.rejects(()=>safeEditorHeight(fsrc,fpage,tooSmall,[tooSmall,conflict],signal),/berühren/);

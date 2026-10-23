@@ -120,10 +120,17 @@ export function findEditorDocument(
   query: string,
   matchCase = false,
   wholeWord = false,
+  typography = false,
 ): EditorDocumentMatch[] {
   const hits: EditorDocumentMatch[] = [];
   for (const block of index.blocks)
-    for (const match of findEditorText(block.mark.text || '', query, matchCase, wholeWord)) {
+    for (const match of findEditorText(
+      block.mark.text || '',
+      query,
+      matchCase,
+      wholeWord,
+      typography,
+    )) {
       hits.push({ ...match, id: `${block.id}:${match.start}:${match.end}`, block });
       if (hits.length > 5000)
         throw new Error('Mehr als 5.000 Treffer. Bitte den Suchtext genauer eingeben.');

@@ -46,6 +46,23 @@ try{
  assert.equal(rich.findEditorText(matchMark.text,'Äpfel',true,true).length,1);
  assert.equal(rich.findEditorText(matchMark.text,'Apfel',false,true).length,1,'Whole-word search excludes Apfelmus');
  assert.equal(rich.findEditorText(matchMark.text,'a.b').length,1,'Search is literal, never a user-supplied regular expression');
+ const typographyText='🧾 Oﬃce Cafe\u0301 Netto\u00a0 \nBetrag Rech\u00adnung';
+ const normalized=(query,whole=false)=>rich.findEditorText(typographyText,query,false,whole,true);
+ for(const [query,original] of [['Office','Oﬃce'],['Café','Cafe\u0301'],['Netto Betrag','Netto\u00a0 \nBetrag'],['Rechnung','Rech\u00adnung']]){
+  const found=normalized(query);assert.equal(found.length,1,query);assert.equal(typographyText.slice(found[0].start,found[0].end),original,'Original UTF-16 range includes complete graphemes');
+ }
+ assert.equal(rich.findEditorText(typographyText,'Office').length,0,'Exact matching remains available');
+ assert.equal(normalized('fi').length,0,'A partial ffi ligature is never replaced as fi');
+ assert.equal(normalized('f').length,1,'The plain f in Café matches, never part of the ffi ligature');
+ assert.equal(normalized('Rech',true).length,0,'Invisible hyphens do not create a false word boundary');
+ assert.equal(rich.findEditorText('क्व','क',false,false,true).length,0,'Partial Indic grapheme is excluded');
+ assert.equal(rich.findEditorText('👩‍👩‍👧','👩',false,false,true).length,0,'An emoji sequence cannot be cut apart');
+ assert.deepEqual(rich.findEditorText('  \t A',' ',false,false,true),[{start:0,end:4}]);
+ assert.deepEqual(rich.findEditorText('x','\u00ad',false,false,true),[],'An all-ignorable query produces no empty matches');
+ const typographicMark={...matchMark,text:typographyText,runs:[{start:3,end:7,style:{bold:true}}]};
+ const typographicReplacement={...typographicMark,...rich.replaceEditorMatches(typographicMark,normalized('Office'),'Büro')};
+ assert.equal(typographicReplacement.text,'🧾 Büro Cafe\u0301 Netto\u00a0 \nBetrag Rech\u00adnung');
+ assert(rich.editorSegments(typographicReplacement).find(r=>r.start===3).style.bold,'Replacement retains the original match style');
  const searched={...matchMark,...rich.replaceEditorMatches(matchMark,rich.findEditorText(matchMark.text,'äpfel',false,true),'Birne')};
  assert.equal(searched.text,'Birne Birne Apfelmus 🧾 Apfel a.b');
  assert.equal(rich.editorSegments(searched)[0].style.bold,true);assert(rich.editorSegments(searched).find(r=>r.start===6).style.italic,'Each replacement inherits its own match style');

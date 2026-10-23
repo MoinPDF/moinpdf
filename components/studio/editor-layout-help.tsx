@@ -26,18 +26,20 @@ export function EditorOriginalSnippet({
       className="editor-original-snippet"
       style={{ aspectRatio: `${rect.w * width} / ${rect.h * height}` }}
     >
-      <img
-        alt={ui('Originalausschnitt')}
-        src={url}
-        style={{
-          position: 'absolute',
-          width: `${100 / rect.w}%`,
-          maxWidth: 'none',
-          height: 'auto',
-          left: `${(-100 * rect.x) / rect.w}%`,
-          top: `${(-100 * rect.y) / rect.h}%`,
-        }}
-      />
+      {url && (
+        <img
+          alt={ui('Originalausschnitt')}
+          src={url}
+          style={{
+            position: 'absolute',
+            width: `${100 / rect.w}%`,
+            maxWidth: 'none',
+            height: 'auto',
+            left: `${(-100 * rect.x) / rect.w}%`,
+            top: `${(-100 * rect.y) / rect.h}%`,
+          }}
+        />
+      )}
     </div>
   );
 }

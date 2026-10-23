@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
 import type { Mark } from '@/lib/studio-engine';
@@ -24,12 +24,16 @@ export function EditorTextSearch({
   const [query, setQuery] = useState(''),
     [replacement, setReplacement] = useState('');
   const [matchCase, setMatchCase] = useState(false),
-    [wholeWord, setWholeWord] = useState(false);
+    [wholeWord, setWholeWord] = useState(false),
+    [typography, setTypography] = useState(true);
   const [cursor, setCursor] = useState(-1),
     [error, setError] = useState(''),
     [message, setMessage] = useState('');
   const input = useRef<HTMLInputElement>(null);
-  const matches = findEditorText(mark.text || '', query, matchCase, wholeWord);
+  const matches = useMemo(
+    () => findEditorText(mark.text || '', query, matchCase, wholeWord, typography),
+    [mark.text, query, matchCase, wholeWord, typography],
+  );
   const active = cursor >= 0 && cursor < matches.length ? cursor : -1;
   useEffect(() => {
     input.current?.focus({ preventScroll: true });
@@ -76,6 +80,7 @@ export function EditorTextSearch({
       className="editor-text-search"
       aria-label={ui('Suchen und ersetzen im Textfeld')}
       onKeyDown={(e) => {
+        if (e.nativeEvent.isComposing || disabled) return;
         if (e.key === 'Escape') {
           e.preventDefault();
           e.stopPropagation();
@@ -148,12 +153,31 @@ export function EditorTextSearch({
           />
           {ui('Nur ganze Wörter')}
         </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={typography}
+            disabled={disabled}
+            onChange={(e) => {
+              setTypography(e.target.checked);
+              setCursor(-1);
+            }}
+          />
+          {ui('PDF-Schreibweisen ausgleichen')}
+        </label>
         <span role="status">
           {ui('Treffer im Textfeld')}:{' '}
           {active < 0 ? matches.length : `${active + 1} / ${matches.length}`}
           {message ? ` · ${message}` : ''}
         </span>
       </div>
+      {typography && (
+        <p className="fine-note">
+          {ui(
+            'Findet auch Ligaturen, kombinierte Akzente und abweichende Leerzeichen. Ersetzt werden immer vollständige Zeichen.',
+          )}
+        </p>
+      )}
       <div className="editor-search-actions">
         <Button
           size="sm"

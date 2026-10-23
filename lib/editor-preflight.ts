@@ -70,17 +70,35 @@ export async function preflightEditor(
   pages: PageItem[],
   edits: Edits,
   signal: AbortSignal,
+  onProgress?: (completed: number, total: number) => void,
 ) {
   const issues: EditorPreflightIssue[] = [];
-  for (const page of pages) {
-    const marks = (edits.marks[page.id] || []).filter(editorMarkChanged);
-    if (!marks.length) continue;
+  const changed = pages
+    .map((page) => ({ page, marks: (edits.marks[page.id] || []).filter(editorMarkChanged) }))
+    .filter(({ marks }) => marks.length);
+  onProgress?.(0, changed.length);
+  for (const [index, { page, marks }] of changed.entries()) {
     signal.throwIfAborted();
     const source = sources.find((s) => s.id === page.sourceId);
-    if (!source) throw new Error('Das Quelldokument fehlt.');
-    const state = await editorDocumentState(source, page);
+    let state: Awaited<ReturnType<typeof editorDocumentState>>;
+    try {
+      if (!source) throw new Error('Das Quelldokument fehlt.');
+      state = await editorDocumentState(source, page);
+    } catch (error) {
+      signal.throwIfAborted();
+      issues.push({
+        pageId: page.id,
+        markId: marks[0].id,
+        kind: 'error',
+        message:
+          error instanceof Error ? error.message : 'Die Seite konnte nicht vorgeprüft werden.',
+      });
+      onProgress?.(index + 1, changed.length);
+      continue;
+    }
     signal.throwIfAborted();
     for (const mark of marks) {
+      signal.throwIfAborted();
       const add = (kind: EditorPreflightIssue['kind'], message: string) =>
         issues.push({ pageId: page.id, markId: mark.id, kind, message });
       if (
@@ -107,6 +125,7 @@ export async function preflightEditor(
         );
       }
     }
+    onProgress?.(index + 1, changed.length);
   }
   return issues;
 }

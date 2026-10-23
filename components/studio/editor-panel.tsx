@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Mark } from '@/lib/studio-engine';
 import { fitRect, type EditorAction } from '@/lib/editor-model';
 import type { Source } from '@/lib/pdf-engine';
+import type { RecoveryStatus } from '@/lib/recovery-writer';
 import { EditorFontPicker, EditorFontStatus, type EditorPatch } from './editor-typography';
 
 type ToolbarProps = {
@@ -36,6 +37,7 @@ type ToolbarProps = {
   onImage: () => void;
   onErase: () => void;
   onSearch?: () => void;
+  recoveryStatus?: RecoveryStatus;
 };
 export function EditorToolbar({
   tool,
@@ -46,6 +48,7 @@ export function EditorToolbar({
   onImage,
   onErase,
   onSearch,
+  recoveryStatus,
 }: ToolbarProps) {
   useLanguage();
   return (
@@ -118,6 +121,25 @@ export function EditorToolbar({
         {ui('Einstellungen')}
       </Button>
       <span>{ui('Direkt schreiben · Verschieben am Griff · Größe am Eckpunkt ändern')}</span>
+      {recoveryStatus && recoveryStatus.phase !== 'idle' && (
+        <span
+          className={`editor-save-status ${recoveryStatus.phase}`}
+          role="status"
+          aria-live="polite"
+        >
+          {ui(
+            recoveryStatus.phase === 'saved'
+              ? 'Arbeitsstand lokal gesichert'
+              : recoveryStatus.phase === 'saving'
+                ? 'Arbeitsstand wird gesichert …'
+                : recoveryStatus.phase === 'error'
+                  ? 'Sicherung fehlgeschlagen – Projekt herunterladen'
+                  : recoveryStatus.phase === 'restore'
+                    ? 'Vorherigen Arbeitsstand wiederherstellen oder verwerfen'
+                    : 'Änderungen noch nicht gesichert',
+          )}
+        </span>
+      )}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
   useWorkspaceResults,
 } from '@/components/studio/workspace-results';
 import { WorkspaceRecovery } from '@/components/studio/workspace-recovery';
+import type { RecoveryStatus } from '@/lib/recovery-writer';
 import { ProjectManager } from '@/components/studio/project-manager';
 import { createPortal } from 'react-dom';
 import { emptyWriterDocument, type WriterDocument } from '@/lib/writer-model';
@@ -310,6 +311,7 @@ function Studio() {
   });
   const [projectCheckpoint, setProjectCheckpoint] = useState<ProjectCheckpoint | null>(null);
   const [projectBusy, setProjectBusy] = useState(false);
+  const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus>({ phase: 'idle' });
   const [projectsOpen, setProjectsOpen] = useState(false);
   const [writerOpen, setWriterOpen] = useState(false);
   const [writerDocument, setWriterDocument] = useState<WriterDocument | null>(null);
@@ -382,17 +384,20 @@ function Studio() {
       setTimeout(() => void previous.pdf.loadingTask.destroy(), 100);
     sourcePool.current.set(source.id, source);
   }
-  const projectState: ProjectState = {
-    pages,
-    edits,
-    options,
-    history,
-    future,
-    documentSessions,
-    activeId,
-    toolId,
-    sourceIds: sources.map((s) => s.id),
-  };
+  const projectState = useMemo<ProjectState>(
+    () => ({
+      pages,
+      edits,
+      options,
+      history,
+      future,
+      documentSessions,
+      activeId,
+      toolId,
+      sourceIds: sources.map((s) => s.id),
+    }),
+    [pages, edits, options, history, future, documentSessions, activeId, toolId, sources],
+  );
   useEffect(() => {
     const needed = new Set(projectSources.map((s) => s.id));
     for (const [id, source] of sourcePool.current)
@@ -1630,6 +1635,7 @@ function Studio() {
         sources={projectSources}
         state={projectState}
         locked={locked}
+        onStatus={setRecoveryStatus}
         onRestore={(loaded, state) => {
           setArchivedSources(loaded);
           setSources(loaded.filter((s) => !state.sourceIds || state.sourceIds.includes(s.id)));
@@ -2480,6 +2486,7 @@ function Studio() {
                             tool={toolId}
                             action={editorAction}
                             disabled={locked}
+                            recoveryStatus={recoveryStatus}
                             onAction={setEditorAction}
                             onNewText={newText}
                             onImage={() => imagePicker.current?.click()}
