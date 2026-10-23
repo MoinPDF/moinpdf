@@ -72,12 +72,18 @@ export function findEditorText(
   if (!needle) return [];
   const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const matches: EditorTextMatch[] = [];
-  for (const match of searched.matchAll(new RegExp(escaped, matchCase ? 'gu' : 'giu'))) {
+  const pattern = new RegExp(escaped, matchCase ? 'gu' : 'giu');
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(searched))) {
     const at = match.index!,
       limit = at + match[0].length;
     const start = projected ? projected.starts.get(at) : at,
       end = projected ? projected.ends.get(limit) : limit;
-    if (start === undefined || end === undefined) continue;
+    if (start === undefined || end === undefined) {
+      // A rejected partial grapheme must not consume a later valid match.
+      pattern.lastIndex = at + (searched.codePointAt(at)! > 0xffff ? 2 : 1);
+      continue;
+    }
     if (
       wholeWord &&
       (/[\p{L}\p{N}\p{M}_]$/u.test(searched.slice(Math.max(0, at - 2), at)) ||

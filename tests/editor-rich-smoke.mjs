@@ -57,6 +57,7 @@ try{
  assert.equal(normalized('Rech',true).length,0,'Invisible hyphens do not create a false word boundary');
  assert.equal(rich.findEditorText('क्व','क',false,false,true).length,0,'Partial Indic grapheme is excluded');
  assert.equal(rich.findEditorText('👩‍👩‍👧','👩',false,false,true).length,0,'An emoji sequence cannot be cut apart');
+ assert.deepEqual(rich.findEditorText('ﬃfififi','ififi',false,false,true),[{start:2,end:7}],'Rejected partial ligature must not hide a later complete match');
  assert.deepEqual(rich.findEditorText('  \t A',' ',false,false,true),[{start:0,end:4}]);
  assert.deepEqual(rich.findEditorText('x','\u00ad',false,false,true),[],'An all-ignorable query produces no empty matches');
  const typographicMark={...matchMark,text:typographyText,runs:[{start:3,end:7,style:{bold:true}}]};
