@@ -87,7 +87,17 @@ await writeFile(
 );
 await writeFile(
   `${folder}/pdf-engine.mjs`,
-  `export const openSource=()=>{},filenameStem=x=>x,downloadBlob=()=>{};`,
+  `export const openSource=()=>{},filenameStem=x=>x;
+export let downloads=0;
+let onDownload=()=>{};
+export const setOnDownload=callback=>{onDownload=callback;};
+export const downloadBlob=()=>{downloads++;onDownload();};`,
+);
+await writeFile(
+  `${folder}/project-archive.mjs`,
+  `let complete;
+export const encodeProjectFile=()=>new Promise(resolve=>{complete=resolve;});
+export const finishDownload=()=>complete(new Blob(['synthetic project']));`,
 );
 
 const dom = new JSDOM(
@@ -149,10 +159,12 @@ const { ToolBrowserMemory } = await import('../.cache/mobile-navigation/tool-bro
 const appearance = await import('../.cache/mobile-navigation/appearance.mjs');
 appearance.installEnglishCatalog(JSON.parse(await readFile('public/locales/en.json', 'utf8')));
 const storage = await import('../.cache/mobile-navigation/local-projects.mjs');
+const archive = await import('../.cache/mobile-navigation/project-archive.mjs');
+const downloads = await import('../.cache/mobile-navigation/pdf-engine.mjs');
 const chosen = [];
 let allTools = 0,
   home = 0;
-function Harness({ locked = false }) {
+function Harness({ locked = false, hasSources = false }) {
   const [open, setOpen] = useState(false);
   const onTools = () => {
     allTools++;
@@ -176,7 +188,7 @@ function Harness({ locked = false }) {
     h(ProjectManager, {
       open,
       onOpenChange: setOpen,
-      sources: [],
+      sources: hasSources ? [{ id: 'fixture', name: 'fixture.pdf' }] : [],
       state: { pages: [], edits: {}, options: {}, documentSessions: {} },
       identity: { name: 'Session name' },
       setIdentity() {},
@@ -197,8 +209,8 @@ const flush = () =>
   act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 25));
   });
-const render = async (locked) => {
-  await act(async () => root.render(h(Harness, { locked })));
+const render = async (locked, hasSources = false) => {
+  await act(async () => root.render(h(Harness, { locked, hasSources })));
   await flush();
 };
 const click = async (target) => {
@@ -397,6 +409,34 @@ try {
   assert.match(dialog().textContent, /Storage unavailable/);
   await key(document.activeElement, 'Escape');
   storage.setFailure(false);
+  await render(false, true);
+  await click(nav().querySelector('.harbor-project-toggle'));
+  const downloadButton = [...dialog().querySelectorAll('button')].find(
+    (button) => button.textContent === 'Projektdatei herunterladen',
+  );
+  let lockedAtDownload;
+  downloads.setOnDownload(() => {
+    // Deliver Escape exactly when the browser download would start, before
+    // job() can commit its idle state. This deterministically exposes the
+    // invalid assumption that download completion means the modal can close.
+    lockedAtDownload = downloadButton.disabled;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  });
+  await click(downloadButton);
+  assert.equal(downloads.downloads, 0, 'Encoding is still pending');
+  assert(downloadButton.disabled, 'Actions stay locked during archive encoding');
+  await key(document.activeElement, 'Escape');
+  assert(dialog(), 'Escape cannot dismiss a project operation in progress');
+  await act(async () => archive.finishDownload());
+  await flush();
+  assert.equal(downloads.downloads, 1, 'Exactly one project download starts');
+  assert.equal(lockedAtDownload, true, 'Download starts before the idle React commit');
+  assert(dialog(), 'An Escape delivered at download start is still ignored');
+  assert.equal(downloadButton.disabled, false, 'The completed operation re-enables actions');
+  await key(document.activeElement, 'Escape');
+  assert.equal(Boolean(dialog()), false, 'One Escape closes the idle project dialog');
+  assert.equal(document.activeElement, nav().querySelector('.harbor-project-toggle'));
+  downloads.setOnDownload(() => {});
   await render(true);
   assert(search().disabled);
   assert(nav().querySelector('.harbor-project-toggle').disabled);
@@ -418,7 +458,7 @@ try {
   assert.deepEqual(chosen, ['compress', 'compress']);
   assert.deepEqual(errors, []);
   console.log(
-    'PASS: mobile and desktop navigation, DE/EN intent search, real Radix/cmdk focus and selection, clear/empty/close/reopen, simulated keyboard viewport, resize, locked actions and shared project dialog refresh/error handling.',
+    'PASS: mobile and desktop navigation, DE/EN intent search, real Radix/cmdk focus and selection, clear/empty/close/reopen, simulated keyboard viewport, resize, locked actions, project dialog refresh/error handling and deterministic download/Escape timing.',
   );
   if (productionCss)
     console.log(

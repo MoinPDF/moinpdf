@@ -32,6 +32,14 @@ def back(page):
     page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
     chooser(page)
 
+def close_project_dialog(page):
+    dialog = page.get_by_role('dialog', name='Lokale PDF-Projekte', exact=True)
+    # A download event or status notice can precede the React idle commit.
+    # ProjectManager intentionally ignores dismissal while processing a job.
+    expect(dialog.get_by_role('button', name='Projektdatei öffnen', exact=True)).to_be_enabled()
+    page.keyboard.press('Escape')
+    expect(dialog).to_have_count(0)
+
 def no_overflow(page, context):
     dimensions = page.evaluate('({width:innerWidth, content:document.documentElement.scrollWidth})')
     assert dimensions['content'] <= dimensions['width'] + 2, f'Horizontal overflow in {context}: {dimensions}'
@@ -80,6 +88,7 @@ def all_views(page, messages, context, empty=False):
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
     page = browser.new_page(viewport={'width': 1440, 'height': 1000}, accept_downloads=True)
+    observed_pages = {'desktop': page}
     page.set_default_timeout(30000)
     console, errors = [], []
     page.on('console', lambda message: console.append(f'{message.type}: {message.text}'))
@@ -291,6 +300,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         completed.append('IndexedDB project survives reload and restores the complete PDF session')
 
         transfer = browser.new_page(viewport={'width': 1440, 'height': 1000}, accept_downloads=True)
+        observed_pages['project-transfer'] = transfer
         transfer.set_default_timeout(30000)
         transfer.on('pageerror', lambda error: errors.append('Project transfer: ' + str(error)))
         transfer.goto(origin)
@@ -318,11 +328,12 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         transfer.locator('.project-toggle:visible, .harbor-project-toggle:visible').click()
         transfer.get_by_label('MoinPDF-Projektdatei', exact=True).set_input_files(str(corrupt_file))
         expect(transfer.get_by_role('dialog', name='Lokale PDF-Projekte').get_by_role('status').filter(has_text='Die Projektdatei ist beschädigt oder unvollständig.')).to_be_visible()
-        transfer.keyboard.press('Escape')
+        close_project_dialog(transfer)
         expect(transfer.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
         completed.append('Portable project downloads, imports into a fresh browser context, independently exports identical PDF content; damaged import keeps current session')
 
         lifecycle = browser.new_page(viewport={'width': 390, 'height': 844}, accept_downloads=True)
+        observed_pages['mobile-project-lifecycle'] = lifecycle
         lifecycle.set_default_timeout(30000)
         lifecycle.on('pageerror', lambda error: errors.append('Project lifecycle: ' + str(error)))
         lifecycle.goto(origin)
@@ -353,7 +364,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         size = int.from_bytes(cleaned_bytes[20:24], 'big')
         cleaned_state = json.loads(cleaned_bytes[32:32+size])['state']
         assert cleaned_state['edits'] == {'marks': {}, 'crops': {}}
-        lifecycle.keyboard.press('Escape')
+        close_project_dialog(lifecycle)
         lifecycle.get_by_role('button', name='Seiten organisieren', exact=True).click()
         lifecycle.get_by_role('button', name='Seite 1 entfernen', exact=True).click()
         lifecycle.locator('.project-toggle:visible, .harbor-project-toggle:visible').click()
@@ -407,6 +418,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 image_pdf.new_page(width=1500,height=250).insert_image(pymupdf.Rect(0,0,1500,250),stream=scan)
                 image_pdf.save(scan_path)
         automatic=browser.new_page(viewport={'width':1440,'height':1000},accept_downloads=True)
+        observed_pages['automatic-ocr'] = automatic
         automatic.on('pageerror',lambda error:errors.append('Automatic OCR: '+str(error)))
         automatic.goto(origin)
         automatic.locator('input[type="file"]').first.set_input_files(str(scan_path))
@@ -539,7 +551,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.get_by_role('button', name='Projektdatei herunterladen', exact=True)).to_be_visible()
         no_overflow(page, 'mobile project transfer')
         page.screenshot(path=str(evidence / 'mobile-projects.png'), full_page=True)
-        page.keyboard.press('Escape')
+        close_project_dialog(page)
         page.get_by_role('button', name='OCR & Text', exact=True).click()
         page.get_by_role('button', name='Sprachen kombinieren', exact=True).click()
         no_overflow(page, 'mobile OCR languages')
@@ -561,9 +573,28 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         assert not errors, errors
         print('PASS: ' + '; '.join(completed), flush=True)
     finally:
-        page.screenshot(path=str(evidence / 'last-state.png'), full_page=True)
+        # Include every still-open context: the failing mobile lifecycle used
+        # to leave only an unrelated desktop chooser screenshot and DOM text.
+        states = {}
+        for name, observed in observed_pages.items():
+            if observed.is_closed():
+                continue
+            try:
+                observed.screenshot(path=str(evidence / ('last-state.png' if name == 'desktop' else f'last-state-{name}.png')), full_page=True, timeout=10000)
+                states[name] = {
+                    'text': observed.locator('body').inner_text(timeout=5000),
+                    'url': observed.url,
+                    'viewport': observed.viewport_size,
+                    'dialogs': observed.locator('[role=dialog]').evaluate_all('''dialogs => dialogs.map(dialog => ({
+                        state: dialog.dataset.state,
+                        buttons: [...dialog.querySelectorAll('button')].map(button => ({text: button.textContent, disabled: button.disabled}))
+                    }))'''),
+                }
+            except Exception as error:
+                states[name] = {'evidence_error': str(error)}
         details = {'completed': completed, 'errors': errors, 'console': console,
-                   'text': page.locator('body').inner_text(), 'url': page.url}
+                   'text': states.get('desktop', {}).get('text', ''), 'url': page.url,
+                   'pages': states}
         (evidence / 'browser.json').write_text(json.dumps(details, ensure_ascii=False, indent=2))
         print(json.dumps(details, ensure_ascii=False), flush=True)
         browser.close()
