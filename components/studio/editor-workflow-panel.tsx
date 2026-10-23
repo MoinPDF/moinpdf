@@ -7,6 +7,7 @@ import { uid, type Source, type PageItem } from '@/lib/pdf-engine';
 import type { Edits, Mark } from '@/lib/studio-engine';
 import { editorMarkChanged, editorTextCollision, readTextTargets } from '@/lib/editor-model';
 import { distributeEditorFlow, type EditorFlowFrame } from '@/lib/editor-workflow';
+import { EditorLiveFlowPanel } from './editor-live-flow-panel';
 import { EditorAutoFlowPanel } from './editor-auto-flow-panel';
 import { EditorPreflightPanel } from './editor-preflight-panel';
 import type { AutoFlowPlan } from '@/lib/editor-auto-flow';
@@ -118,6 +119,14 @@ export function EditorWorkflowPanel({
   }
   return (
     <div className="editor-workflow-panel">
+      <EditorLiveFlowPanel
+        sources={sources}
+        pages={pages}
+        edits={edits}
+        selectedMarkId={selectedMarkId}
+        disabled={disabled}
+        onApply={onApply}
+      />
       <EditorPreflightPanel
         sources={sources}
         pages={pages}
@@ -235,7 +244,7 @@ export function EditorWorkflowPanel({
         )}
         <p className="fine-note">
           {ui(
-            'Nach weiteren Textänderungen den Textfluss erneut vorschauen. Rahmen, Seiten und Tabellen werden nicht automatisch umgebaut.',
+            'Verknüpften Text auswählen: Die Textflussvorschau aktualisiert sich beim Schreiben. Änderungen nach Prüfung gemeinsam übernehmen. Rahmen, Seiten und Tabellen bleiben fest.',
           )}
         </p>
       </details>

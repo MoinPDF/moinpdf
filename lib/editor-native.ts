@@ -120,7 +120,15 @@ export async function readEditorScanPixels(
   source: Source,
   item: PageItem,
   signal: AbortSignal,
-): Promise<Awaited<ReturnType<typeof renderPage>> | undefined> {
+  preserveGeometry = false,
+): Promise<
+  | (Awaited<ReturnType<typeof renderPage>> & {
+      placement?: import('./studio-engine').Rect;
+      imageTransforms?: number[][];
+      formClips?: number[][];
+    })
+  | undefined
+> {
   let canvas: HTMLCanvasElement | undefined,
     reference: HTMLCanvasElement | undefined,
     pixelsCanvas: HTMLCanvasElement | undefined;
@@ -129,6 +137,12 @@ export async function readEditorScanPixels(
     if (original.catalog.has(PDFName.of('OCProperties'))) return;
     const pdfPage = await source.pdf.getPage(item.index + 1);
     if ((await pdfPage.getAnnotations()).length) return;
+    if (preserveGeometry) {
+      const preserved = await (
+        await import('./editor-scan-pixels')
+      ).readEditorScanGeometry(original, source, item, signal);
+      if (preserved) return preserved;
+    }
     const single = await editorSinglePage(original, item),
       bytes = await single.save();
     const { inspectObjects, readImage } = await import('./native-pdf');

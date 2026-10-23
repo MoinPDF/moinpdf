@@ -4,7 +4,7 @@ import ts from 'typescript';
 const folder='.cache/editor-tables';await mkdir(folder,{recursive:true});
 await writeFile(folder+'/editor-tables.mjs',ts.transpileModule(await readFile('lib/editor-tables.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
 const {
-  recognizeEditorTable, editorTableCellRect, setEditorTableRowHeight,
+  changeEditorTableModel, recognizeEditorTable, editorTableCellRect, setEditorTableRowHeight,
   insertEditorTableRow, editorTableSegments, validateEditorTable,
   validateEditorTableOriginal,
 }=await import('../.cache/editor-tables/editor-tables.mjs');
@@ -196,12 +196,12 @@ test('imported model validation rejects overlapping cells and duplicate text own
   duplicatedText.cells[2].textIds.push('heading');
   assert.throws(() => validateEditorTable(duplicatedText), /multiple cells/);
 });
-test('native revalidation rejects manufactured provenance and shifted columns', () => {
+test('native revalidation rejects manufactured provenance and moved table origins', () => {
   const badBounds = JSON.parse(JSON.stringify(prototype));
   badBounds.original.rect.h += 5;
   assert.throws(() => validateEditorTableOriginal(badBounds, headers), /provenance/);
   const badColumns = JSON.parse(JSON.stringify(prototype));
-  badColumns.columns[1] += 10;
+  badColumns.columns[0] += 10;
   assert.throws(() => validateEditorTableOriginal(badColumns, headers), /provenance/);
   const notAGrid = JSON.parse(JSON.stringify(prototype));
   notAGrid.original.paths = [notAGrid.original.paths[0]];
@@ -217,3 +217,20 @@ test('mutators reject invalid indices, nonfinite sizes and invalid requirement v
 });
 
 console.log(`PASS ${cases} standalone table algorithm checks.`);
+
+test('column insertion, resize, row/column deletion, merge and split preserve explicit ownership', () => {
+ let t=inspect(grid(),{texts:[{id:'a',rect:{x:25,y:35,w:30,h:10}},{id:'b',rect:{x:105,y:35,w:30,h:10}}]});
+ const original=t.original;
+ t=changeEditorTableModel(t,{kind:'width',column:1,width:90});
+ assert.equal(t.columns[2]-t.columns[1],90);validateEditorTableOriginal(t,original.paths);
+ t=changeEditorTableModel(t,{kind:'insert-column',column:3,width:30});assert.equal(t.columns.length,5);
+ t=changeEditorTableModel(t,{kind:'merge',row:0,column:0,rowEnd:0,columnEnd:1});
+ assert.deepEqual(t.cells[0].textIds,['a','b']);assert.equal(t.cells[0].columnSpan,2);
+ t=changeEditorTableModel(t,{kind:'split',cellId:t.cells[0].id});assert.deepEqual(t.cells[0].textIds,['a','b']);
+ t=changeEditorTableModel(t,{kind:'delete-row',row:0});assert.deepEqual(t.removedTextIds,['a','b']);
+ t=changeEditorTableModel(t,{kind:'delete-column',column:0});assert.equal(t.columns.length,4);
+ assert.equal(t.original,original);validateEditorTable(t);validateEditorTableOriginal(t,original.paths);
+ assert.throws(()=>changeEditorTableModel(t,{kind:'merge',row:0,column:0,rowEnd:100,columnEnd:1}));
+ assert.throws(()=>changeEditorTableModel(t,{kind:'width',column:0,width:400}),/outside/);
+ const forged=structuredClone(t);forged.cells[0].textIds=['a'];assert.throws(()=>validateEditorTable(forged),/Duplicate removed/);
+});

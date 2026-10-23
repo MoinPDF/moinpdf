@@ -9,9 +9,52 @@ export const editorStyleKeys = [
   'originalFontPage',
   'bold',
   'italic',
+  'underline',
+  'script',
   'color',
 ] as const;
 export type EditorSelection = { id: string; start: number; end: number };
+/** Logical PDF text, including generated list labels, used by independent export checks. */
+export function editorExportText(mark: Mark) {
+  let number = mark.listStart || 1;
+  return (mark.text || '')
+    .split('\n')
+    .map((line, index) => {
+      if (index === 0 && mark.listContinuation) {
+        if (mark.listStyle === 'numbered') number++;
+        return line;
+      }
+      if (!line.trim() || !mark.listStyle || mark.listStyle === 'none') return line;
+      const marker = mark.listStyle === 'numbered' ? `${number++}. ` : '• ';
+      return index === 0 && mark.listContinuation ? line : marker + line;
+    })
+    .join('\n');
+}
+/** Keep one list identity when a paragraph crosses a linked frame or page. */
+export function editorListSlice(mark: Mark, offset: number): Partial<Mark> {
+  if (!mark.listStyle || mark.listStyle === 'none') return {};
+  const before = (mark.text || '').slice(0, offset).split('\n');
+  before.pop();
+  const text = mark.text || '',
+    lineStart = text.lastIndexOf('\n', Math.max(0, offset - 1)) + 1,
+    nextBreak = text.indexOf('\n', offset);
+  const continued =
+    offset > 0 &&
+    text[offset - 1] !== '\n' &&
+    !!text.slice(lineStart, nextBreak < 0 ? text.length : nextBreak).trim();
+  return {
+    listStyle: mark.listStyle,
+    listStart: (mark.listStart || 1) + before.filter((line) => line.trim()).length,
+    listContinuation: offset === 0 ? mark.listContinuation : continued,
+  };
+}
+export function editorScriptMetrics(style: EditorTextStyle, base: number) {
+  const script = style.script || 'normal';
+  return {
+    size: base * (script === 'normal' ? 1 : 0.65),
+    shift: script === 'super' ? -base * 0.35 : script === 'sub' ? base * 0.2 : 0,
+  };
+}
 /** The toolbar describes the range it will actually format, or the whole box. */
 export function editorSelectionStyle(mark: Mark, selection?: EditorSelection | null) {
   const length = (mark.text || '').length;
@@ -290,4 +333,41 @@ export function applyEditorPatch(
     };
   }
   return patch;
+}
+
+export function insertEditorFragment(
+  mark: Mark,
+  start: number,
+  end: number,
+  fragment: { text: string; runs: EditorTextRun[]; listStyle?: Mark['listStyle'] },
+  keepFormatting: boolean,
+): Partial<Mark> {
+  const base = { ...mark, runs: editorSegments(mark) };
+  const patch = replaceEditorRange(base, start, end, fragment.text);
+  if (!keepFormatting) return patch;
+  const inherited =
+    editorSegments({ ...base, ...patch }).find((r) => r.start <= start && r.end > start)?.style ||
+    editorStyle(mark);
+  const applied: EditorTextRun[] = [];
+  for (const r of patch.runs || []) {
+    if (r.start < start) applied.push({ ...r, end: Math.min(start, r.end) });
+    if (r.end > start + fragment.text.length)
+      applied.push({ ...r, start: Math.max(r.start, start + fragment.text.length) });
+  }
+  applied.push(
+    ...fragment.runs.map((r) => ({
+      ...r,
+      start: r.start + start,
+      end: r.end + start,
+      style: { ...inherited, ...r.style },
+    })),
+  );
+  applied.sort((a, b) => a.start - b.start);
+  return {
+    ...patch,
+    runs: editorSegments({ ...mark, ...patch, runs: applied }),
+    ...(keepFormatting && start === 0 && end === (mark.text || '').length && fragment.listStyle
+      ? { listStyle: fragment.listStyle }
+      : {}),
+  };
 }

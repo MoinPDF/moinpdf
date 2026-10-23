@@ -1,19 +1,19 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import type { Mark } from '@/lib/studio-engine';
-import type { Source } from '@/lib/pdf-engine';
+import type { Source, PageItem } from '@/lib/pdf-engine';
 import { editorFontCatalog } from '@/lib/editor-font-catalog';
 import {
   applyEditorPatch,
-  editorSegments,
   editorSelectionStyle,
   type EditorSelection,
 } from '@/lib/editor-rich-text';
 import { prepareEditorLayout } from '@/lib/editor-layout-plan';
-import { loadEditorCssFont } from '@/lib/editor-fonts';
-import { editorTextCss, useEditorTypography, type EditorPatch } from './editor-typography';
+import { loadEditorCssFont, resolveEditorFont } from '@/lib/editor-fonts';
+import { EditorTextPreview, useEditorTypography, type EditorPatch } from './editor-typography';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
+import { editorFontMatchScore } from '@/lib/editor-font-match';
 
 type Alternative = {
   name: string;
@@ -22,6 +22,7 @@ type Alternative = {
   lines: number;
   overflow: boolean;
   difference: number;
+  shape?: number;
 };
 function Sample({
   mark,
@@ -41,34 +42,21 @@ function Sample({
       className="editor-alternative-sample"
       style={{ height: Math.min(150, Math.max(45, mark.h * height * scale)) }}
     >
-      <div
-        style={{
-          ...editorTextCss({ ...mark, x: 0, y: 0 }, width * scale, height * scale, t.resolution),
-          position: 'relative',
-          left: 0,
-          top: 0,
-        }}
-      >
-        {editorSegments(mark).map((r, i) => (
-          <span
-            key={i}
-            style={{
-              fontFamily: t.runs?.[i] ? `"${t.runs[i].resolution.font.cssFamily}"` : undefined,
-              fontSize: (r.style.fontScale || mark.fontScale || 0.028) * width * scale,
-              fontWeight: r.style.bold ? 700 : 400,
-              fontStyle: r.style.italic ? 'italic' : 'normal',
-              color: r.style.color,
-            }}
-          >
-            {(mark.text || '').slice(r.start, r.end)}
-          </span>
-        ))}
-      </div>
+      {t.runs && (
+        <EditorTextPreview
+          mark={mark}
+          width={width * scale}
+          height={height * scale}
+          pageWidth={width}
+          runs={t.runs}
+        />
+      )}
     </div>
   );
 }
 export function EditorFontAlternatives({
   mark,
+  page,
   source,
   width,
   height,
@@ -80,6 +68,7 @@ export function EditorFontAlternatives({
   source: Source;
   width: number;
   height: number;
+  page?: Pick<PageItem, 'index' | 'rotation'>;
   selection?: EditorSelection | null;
   disabled: boolean;
   onPatch: EditorPatch;
@@ -87,9 +76,11 @@ export function EditorFontAlternatives({
   const [alternatives, setAlternatives] = useState<Alternative[]>([]),
     [pending, setPending] = useState(false),
     [error, setError] = useState('');
-  const generation = useRef(0);
+  const generation = useRef(0),
+    controller = useRef<AbortController | null>(null);
   useEffect(() => {
     generation.current++;
+    controller.current?.abort();
     setAlternatives([]);
     setPending(false);
     setError('');
@@ -97,16 +88,39 @@ export function EditorFontAlternatives({
   useEffect(
     () => () => {
       generation.current++;
+      controller.current?.abort();
     },
     [],
   );
   async function compare() {
     const token = ++generation.current;
+    controller.current?.abort();
+    const ctrl = new AbortController();
+    controller.current = ctrl;
     setPending(true);
     setError('');
     try {
       const context = editorSelectionStyle(mark, selection);
       const base = await prepareEditorLayout(mark, width, height, source);
+      const shapeMatch = page
+        ? await (
+            await import('@/lib/editor-font-match')
+          )
+            .prepareEditorFontMatch(
+              mark,
+              source,
+              page,
+              ctrl.signal,
+              context.selected && selection
+                ? {
+                    text: (mark.text || '').slice(selection.start, selection.end),
+                    originalFontId: context.style.originalFontId,
+                    originalFontPage: context.style.originalFontPage,
+                  }
+                : undefined,
+            )
+            .catch(() => null)
+        : null;
       const baseWidth = Math.max(
         0.001,
         ...base.pieces.map((p) => p.x + p.font.measure(p.text, p.size)),
@@ -123,6 +137,7 @@ export function EditorFontAlternatives({
                 textScaleX: 1,
               };
               const candidate = { ...mark, ...applyEditorPatch(mark, patch, selection) };
+              ctrl.signal.throwIfAborted();
               const layout = await prepareEditorLayout(candidate, width, height, source);
               for (const piece of layout.pieces) await loadEditorCssFont(piece.font, source);
               const inkWidth = Math.max(
@@ -136,6 +151,25 @@ export function EditorFontAlternatives({
                 lines: layout.lineCount,
                 overflow: layout.overflow,
                 difference: Math.abs(inkWidth / baseWidth - 1),
+                shape:
+                  shapeMatch && layout.pieces[0]
+                    ? await shapeMatch(
+                        (
+                          await resolveEditorFont(
+                            {
+                              ...mark,
+                              ...context.style,
+                              ...patch,
+                              text:
+                                context.selected && selection
+                                  ? (mark.text || '').slice(selection.start, selection.end)
+                                  : mark.text || '',
+                            },
+                            source,
+                          )
+                        ).font,
+                      )
+                    : undefined,
               };
             } catch {
               return null;
@@ -145,7 +179,10 @@ export function EditorFontAlternatives({
       if (token === generation.current) {
         const valid = results
           .filter((r): r is Alternative => !!r)
-          .sort((a, b) => Number(a.overflow) - Number(b.overflow) || a.difference - b.difference)
+          .sort(
+            (a, b) =>
+              editorFontMatchScore(a) - editorFontMatchScore(b) || a.name.localeCompare(b.name),
+          )
           .slice(0, 3);
         setAlternatives(valid);
         if (!valid.length)
@@ -179,11 +216,15 @@ export function EditorFontAlternatives({
             )}
           </p>
           <div className="editor-font-alternative-grid">
-            {alternatives.map((a) => (
+            {alternatives.map((a, index) => (
               <article key={a.name}>
                 <strong>{a.name}</strong>
+                {index === 0 && !a.overflow && (
+                  <span>{ui('Beste Übereinstimmung der geprüften Schriften')}</span>
+                )}
                 <Sample mark={a.mark} source={source} width={width} height={height} />
                 <small>
+                  {a.shape !== undefined && <>{ui('Mit Originalschriftbild verglichen')} · </>}
                   {ui('Zeilen')}: {a.lines} ·{' '}
                   {ui(a.overflow ? 'Textfeld zu klein' : 'Passt in das Textfeld')}
                 </small>

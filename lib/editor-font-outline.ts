@@ -1,6 +1,6 @@
-/** Static CFF1 OpenType to unhinted quadratic TrueType.
- * All source tables are copied. Glyph IDs and advance widths are retained.
- * Unsupported input fails rather than guessing at outlines or variable instances.
+/** Freeze CFF1, CFF2 and variable SFNT contours to unhinted quadratic TrueType.
+ * Glyph IDs are retained and advance widths come from the chosen instance.
+ * Unsupported metric variations fail rather than silently changing layout.
  */
 type Table = { tag: string; data: Uint8Array };
 type Point = { x: number; y: number; on: boolean };
@@ -14,7 +14,9 @@ type CffDictionary = {
 type OutlineFace = {
   numGlyphs: number;
   unitsPerEm: number;
-  'CFF ': { topDict: CffDictionary };
+  'CFF '?: { topDict: CffDictionary };
+  CFF2?: { topDict: CffDictionary };
+  getVariation: (coordinates: Record<string, number>) => OutlineFace;
   getGlyph: (id: number) => { advanceWidth: number; path: { commands: Command[] } };
 };
 const MAX_BYTES = 16 * 1024 * 1024;
@@ -218,24 +220,87 @@ function glyphData(commands: Command[]) {
   return { bytes, count: points.length, contours: ends.length, bounds };
 }
 
-export async function normalizeEditorOutline(bytes: Uint8Array): Promise<Uint8Array> {
+export type EditorFontAxis = { tag: string; min: number; default: number; max: number };
+export function editorFontAxes(bytes: Uint8Array): EditorFontAxis[] {
+  const table = readOutlineTables(bytes).find((t) => t.tag === 'fvar')?.data;
+  if (!table) return [];
+  if (table.length < 16) fail('ungültige variable Schrift');
+  const v = view(table),
+    start = v.getUint16(4),
+    count = v.getUint16(8),
+    size = v.getUint16(10);
+  if (
+    v.getUint32(0) !== 0x10000 ||
+    !count ||
+    count > 16 ||
+    size < 20 ||
+    start < 16 ||
+    start + count * size > table.length
+  )
+    fail('ungültige variable Achsen');
+  const axes: EditorFontAxis[] = [];
+  for (let i = 0; i < count; i++) {
+    const offset = start + i * size,
+      tag = String.fromCharCode(...table.subarray(offset, offset + 4));
+    const axis = {
+      tag,
+      min: v.getInt32(offset + 4) / 65536,
+      default: v.getInt32(offset + 8) / 65536,
+      max: v.getInt32(offset + 12) / 65536,
+    };
+    if (
+      !/^[\x20-\x7e]{4}$/.test(tag) ||
+      axes.some((a) => a.tag === tag) ||
+      axis.min > axis.default ||
+      axis.default > axis.max
+    )
+      fail('ungültige variable Achse');
+    axes.push(axis);
+  }
+  return axes;
+}
+
+export async function normalizeEditorOutline(
+  bytes: Uint8Array,
+  coordinates: Record<string, number> = {},
+): Promise<Uint8Array> {
   const tables = readOutlineTables(bytes),
     byTag = new Map(tables.map((t) => [t.tag, t]));
-  if (byTag.has('fvar') || byTag.has('CFF2') || byTag.has('gvar'))
-    fail('variable Schriften werden nicht unterstützt');
-  if (!byTag.has('CFF ')) {
+  const axes = editorFontAxes(bytes),
+    variable = axes.length > 0;
+  const instance: Record<string, number> = {};
+  for (const key of Object.keys(coordinates))
+    if (!axes.some((a) => a.tag === key)) fail('unbekannte variable Achse');
+  for (const axis of axes) {
+    const value = coordinates[axis.tag] ?? axis.default;
+    if (!Number.isFinite(value) || value < axis.min || value > axis.max)
+      fail('Achsenwert außerhalb des Schriftschnitts');
+    instance[axis.tag] = value;
+  }
+  if (byTag.has('gvar') && !variable) fail('variable Konturen ohne Achsen');
+  if (axes.some((a) => instance[a.tag] !== a.default) && (byTag.has('MVAR') || byTag.has('VVAR')))
+    fail(
+      'dieser variable Schriftschnitt verändert nicht unterstützte globale oder vertikale Metriken',
+    );
+  if (!byTag.has('CFF ') && !byTag.has('CFF2') && !variable) {
     if (!byTag.has('glyf') || !byTag.has('loca')) fail('keine unterstützten Konturen');
     return Uint8Array.from(bytes);
   }
-  if (byTag.has('glyf') || byTag.has('loca')) fail('gemischte Konturformate');
+  if (
+    ((byTag.has('CFF ') || byTag.has('CFF2')) && (byTag.has('glyf') || byTag.has('loca'))) ||
+    (byTag.has('CFF ') && byTag.has('CFF2'))
+  )
+    fail('gemischte Konturformate');
   for (const tag of ['head', 'hhea', 'hmtx', 'maxp', 'cmap', 'name', 'OS/2', 'post'])
     if (!byTag.has(tag)) fail(`${tag} fehlt`);
-  if (byTag.get('CFF ')!.data[0] !== 1) fail('kein CFF1');
+  if (byTag.has('CFF ') && byTag.get('CFF ')!.data[0] !== 1) fail('kein CFF1');
+  if (byTag.has('CFF2') && byTag.get('CFF2')!.data[0] !== 2) fail('kein CFF2');
   const head = byTag.get('head')!.data,
     hhea = byTag.get('hhea')!.data;
   if (head.length < 54 || hhea.length < 36) fail('unvollständige Metriken');
   const { default: fontkit } = await import('@pdf-lib/fontkit');
-  const face = fontkit.create(Uint8Array.from(bytes)) as unknown as OutlineFace;
+  const original = fontkit.create(Uint8Array.from(bytes)) as unknown as OutlineFace;
+  const face = variable ? original.getVariation(instance) : original;
   const count = face.numGlyphs,
     units = face.unitsPerEm;
   if (
@@ -247,20 +312,23 @@ export async function normalizeEditorOutline(bytes: Uint8Array): Promise<Uint8Ar
     units > 16384
   )
     fail('ungültige Schriftgröße');
-  const cff = face['CFF '],
-    matrix = cff?.topDict?.FontMatrix;
+  const cff = face['CFF '] || face.CFF2,
+    matrix =
+      cff?.topDict?.FontMatrix ||
+      (byTag.has('CFF2') ? [1 / units, 0, 0, 1 / units, 0, 0] : undefined);
   if (
-    !matrix ||
-    matrix.length !== 6 ||
-    matrix.some(
-      (n: number, i: number) =>
-        !Number.isFinite(n) || Math.abs(n - (i === 0 || i === 3 ? 1 / units : 0)) > 1e-8,
-    )
+    cff &&
+    (!matrix ||
+      matrix.length !== 6 ||
+      matrix.some(
+        (n: number, i: number) =>
+          !Number.isFinite(n) || Math.abs(n - (i === 0 || i === 3 ? 1 / units : 0)) > 1e-8,
+      ))
   )
     fail('nicht unterstützte Schriftmatrix');
   // A zero-sized Private DICT at offset 0 is valid CFF1, but fontkit 1.1.1
   // treats the zero pointer as null. Defaults apply only to that empty dict.
-  const dicts = cff.topDict.FDArray || [cff.topDict];
+  const dicts = face['CFF '] ? face['CFF '].topDict.FDArray || [face['CFF '].topDict] : [];
   for (const dict of dicts)
     if (dict.Private == null) {
       if (dict.length !== 0) fail('fehlendes Private DICT');
@@ -274,6 +342,7 @@ export async function normalizeEditorOutline(bytes: Uint8Array): Promise<Uint8Ar
   )
     fail('ungültige Glyphenbreiten');
   const glyphs: ReturnType<typeof glyphData>[] = [];
+  const advances: number[] = [];
   let totalPoints = 0,
     glyfSize = 0,
     maxPoints = 0,
@@ -289,6 +358,7 @@ export async function normalizeEditorOutline(bytes: Uint8Array): Promise<Uint8Ar
     )
       fail('ungültige Glyphe');
     const converted = glyphData(glyph.path.commands);
+    advances.push(Math.round(glyph.advanceWidth));
     totalPoints += converted.count;
     glyfSize += converted.bytes.length;
     if (totalPoints > MAX_TOTAL_POINTS || glyfSize > MAX_BYTES) fail('Konturgröße überschritten');
@@ -319,20 +389,23 @@ export async function normalizeEditorOutline(bytes: Uint8Array): Promise<Uint8Ar
   mv.setUint16(14, 1);
   // CFF origin is absolute; TrueType uses hmtx.lsb - glyf.xMin to locate it.
   // Set lsb to the new control-point xMin so this format change never shifts ink.
-  const hmtxView = view(byTag.get('hmtx')!.data);
+  const hmtx = new Uint8Array(count * 4),
+    hmtxView = view(hmtx);
   let minLsb = 32767,
     minRsb = 32767,
     maxExtent = -32768;
   glyphs.forEach((g, id) => {
-    const advance = hmtxView.getUint16(Math.min(id, metrics - 1) * 4);
-    const lsbOffset = id < metrics ? id * 4 + 2 : metrics * 4 + (id - metrics) * 2;
-    hmtxView.setInt16(lsbOffset, g.bounds[0]);
+    const advance = advances[id];
+    hmtxView.setUint16(id * 4, advance);
+    hmtxView.setInt16(id * 4 + 2, g.bounds[0]);
     minLsb = Math.min(minLsb, g.bounds[0]);
     minRsb = Math.min(minRsb, advance - g.bounds[2]);
     maxExtent = Math.max(maxExtent, g.bounds[2]);
   });
   if (minRsb < -32768 || minRsb > 32767) fail('Seitenabstand außerhalb TrueType-Bereich');
   const hh = view(hhea);
+  hh.setUint16(10, Math.max(...advances));
+  hh.setUint16(34, count);
   hh.setInt16(12, minLsb);
   hh.setInt16(14, minRsb);
   hh.setInt16(16, maxExtent);
@@ -341,9 +414,40 @@ export async function normalizeEditorOutline(bytes: Uint8Array): Promise<Uint8Ar
   bounds.forEach((n, i) => hv.setInt16(36 + i * 2, n));
   hv.setInt16(50, 1);
   hv.setInt16(52, 0);
+  if (variable) {
+    const os = byTag.get('OS/2')!.data,
+      post = byTag.get('post')!.data;
+    if (os.length < 64 || post.length < 16) fail('unvollständige Stilmetriken');
+    const ov = view(os);
+    if (instance.wght !== undefined)
+      ov.setUint16(4, Math.max(1, Math.min(1000, Math.round(instance.wght))));
+    const bold = instance.wght !== undefined ? instance.wght >= 600 : !!(ov.getUint16(62) & 32);
+    const italic =
+      instance.ital !== undefined
+        ? instance.ital >= 0.5
+        : instance.slnt !== undefined
+          ? instance.slnt !== 0
+          : !!(ov.getUint16(62) & 1);
+    ov.setUint16(
+      62,
+      (ov.getUint16(62) & ~97) | (bold ? 32 : 0) | (italic ? 1 : 0) | (!bold && !italic ? 64 : 0),
+    );
+    hv.setUint16(44, (hv.getUint16(44) & ~3) | (bold ? 1 : 0) | (italic ? 2 : 0));
+    if (instance.slnt !== undefined) view(post).setInt32(4, Math.round(instance.slnt * 65536));
+  }
   const removed = new Set([
     'CFF ',
     'CFF2',
+    'hmtx',
+    'fvar',
+    'gvar',
+    'avar',
+    'HVAR',
+    'VVAR',
+    'MVAR',
+    'cvar',
+    'STAT',
+    ...(variable ? ['GDEF', 'GPOS', 'GSUB'] : []),
     'DSIG',
     'VORG',
     'maxp',
@@ -358,6 +462,7 @@ export async function normalizeEditorOutline(bytes: Uint8Array): Promise<Uint8Ar
   ]);
   return writeOutlineSfnt([
     ...tables.filter((t) => !removed.has(t.tag)),
+    { tag: 'hmtx', data: hmtx },
     { tag: 'maxp', data: maxp },
     { tag: 'glyf', data: glyf },
     { tag: 'loca', data: loca },

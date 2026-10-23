@@ -4,7 +4,7 @@ import {PDFDocument,rgb,degrees} from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 const out='.cache/editor-browser/adaptive';await mkdir(out,{recursive:true});
 const require=createRequire(import.meta.url),pdfRequire=createRequire(require.resolve('pdfjs-dist/package.json'));
-const {createCanvas}=pdfRequire('@napi-rs/canvas');
+const {createCanvas,GlobalFonts}=pdfRequire('@napi-rs/canvas');
 const bytes=await readFile('public/vendor/editor-fonts/DejaVuSans.ttf');
 async function doc(){const d=await PDFDocument.create();d.registerFontkit(fontkit);return [d,await d.embedFont(bytes,{subset:false})];}
 const save=(name,d)=>d.save({useObjectStreams:false}).then(b=>writeFile(out+'/'+name+'.pdf',b));
@@ -38,4 +38,15 @@ const save=(name,d)=>d.save({useObjectStreams:false}).then(b=>writeFile(out+'/'+
  const d=await PDFDocument.create();d.registerFontkit({...fontkit,create(...args){const f=fontkit.create(...args),c=f['CFF '];if(c)for(const dict of c.topDict.FDArray||[c.topDict])if(dict.Private==null&&dict.length===0)dict.Private={Subrs:[],nominalWidthX:0,defaultWidthX:0};return f;}});
  const f=await d.embedFont(await readFile('tests/fixtures/editor-static-cff.otf'),{subset:false});d.addPage([400,500]).drawText('A AΩ',{font:f,x:40,y:400,size:24});await save('cff',d);
 }
-console.log('Prepared eight synthetic adaptive-browser PDF fixtures.');
+{
+ // Fictional payroll; native canvas is independent of the editor's text layout.
+ GlobalFonts.registerFromPath('public/vendor/editor-fonts/DejaVuSans.ttf','Payroll Fixture');
+ const c=createCanvas(2000,2800),x=c.getContext('2d');x.scale(4,4);x.fillStyle='#fff';x.fillRect(0,0,500,700);x.fillStyle='#111';
+ x.font='18px "Payroll Fixture"';x.fillText('Fiktive Gehaltsabrechnung',40,40);
+ x.font='14px "Payroll Fixture"';
+ for(const [text,left,baseline] of [['Abrechnungsmonat',40,85],['September',300,85],['Personalnummer',40,110],['12',300,110],['Arbeitstage',40,135],['20',300,135],['Auszahlungsbetrag',40,210],['1.234,56 €',300,210]])x.fillText(text,left,baseline);
+ x.font='9px "Payroll Fixture"';x.fillText('Synthetische Testdaten – keine echte Abrechnung',40,650);
+ const [d,f]=await doc();d.addPage([500,700]).drawImage(await d.embedPng(c.toBuffer('image/png')),{x:0,y:0,width:500,height:700});
+ d.addPage([500,700]).drawText('UNCHANGED PAYROLL ATTACHMENT',{font:f,x:40,y:600,size:12});await save('payroll-scan',d);
+}
+console.log('Prepared nine synthetic adaptive-browser PDF fixtures.');

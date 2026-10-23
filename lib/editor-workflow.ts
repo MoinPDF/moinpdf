@@ -1,7 +1,12 @@
 import type { Mark, Rect, EditorTextRun } from './studio-engine';
 import type { Source } from './pdf-engine';
 import type { TextTarget } from './editor-model';
-import { editorSegments, editorSelectionStyle, type EditorSelection } from './editor-rich-text';
+import {
+  editorSegments,
+  editorListSlice,
+  editorSelectionStyle,
+  type EditorSelection,
+} from './editor-rich-text';
 import { prepareEditorRuns } from './editor-rich-layout';
 import { editorLayoutPlan } from './editor-layout-plan';
 
@@ -22,6 +27,8 @@ export function captureEditorFormat(
       lineHeight: mark.lineHeight,
       tracking: mark.tracking,
       align: mark.align,
+      listStyle: mark.listStyle,
+      paragraphSpacing: mark.paragraphSpacing,
     },
   };
 }
@@ -212,6 +219,8 @@ export async function distributeEditorFlow(frames: EditorFlowFrame[], signal: Ab
     new Set(frames.map((f) => f.mark.customFont?.data || '')).size > 1
   )
     throw new Error('Textfluss bitte innerhalb einer PDF mit derselben eigenen Schrift verwenden.');
+  if (frames.some((f) => (f.mark.listStyle || 'none') !== (frames[0].mark.listStyle || 'none')))
+    throw new Error('Bitte nur Textfelder mit derselben Listenart verknüpfen.');
   const combined: { text: string; runs: EditorTextRun[] } = { text: '', runs: [] };
   const baseWidth = frames[0].width;
   for (const [i, frame] of frames.entries()) {
@@ -249,6 +258,7 @@ export async function distributeEditorFlow(frames: EditorFlowFrame[], signal: Ab
     signal.throwIfAborted();
     const make = (end: number): Mark => ({
       ...frame.mark,
+      ...editorListSlice(base, offset),
       text: combined.text.slice(offset, end),
       runs: combined.runs
         .filter((r) => r.start < end && r.end > offset)
@@ -279,8 +289,10 @@ export async function distributeEditorFlow(frames: EditorFlowFrame[], signal: Ab
     };
     const boundaries = [offset];
     let at = offset;
-    for (const char of combined.text.slice(offset, offset + 20000)) {
-      at += char.length;
+    for (const { segment } of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(
+      combined.text.slice(offset, offset + 20000),
+    )) {
+      at += segment.length;
       boundaries.push(at);
     }
     let low = 0,

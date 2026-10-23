@@ -9,16 +9,31 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## 0.19.0 – 23. Oktober 2026
+## Unveröffentlicht – PDF bearbeiten
+
+- Der Scan-Schriftvergleich berücksichtigt alle 14 lokalen Familien und bis zu drei unabhängig übereinstimmende Referenzstellen. Geeignete rechtwinklig gedrehte Ausschnitte werden unterstützt; kurze Zahlen benötigen mindestens zwei passende Referenzen. Gemischte oder mehrdeutige Ausschnitte behalten die sichere Rückfalloption.
+- Die Ergebnisansicht trennt Exportprüfung und Schriftähnlichkeit zum Original. Automatische Detailausschnitte zeigen Original und Ergebnis mit gemeinsamem Zoom und synchronem Scrollen; manuelle Formatänderungen machen frühere Ähnlichkeitswerte ungültig.
+- Neue Desktop-/Touch-Abnahme mit einer fiktiven Abrechnung ohne manuelle Schrift- oder Größenkorrektur sowie Tests für Abbruch und Speicherfreigabe des Detailvergleichs. Prüfungen auf physischen Geräten bleiben in einer eigenen Checkliste offen.
+
+- Doppelte unsichtbare OCR-Wörter mit stark überlappenden, unterschiedlich großen Rahmen ergeben jetzt eine gemeinsame Auswahl. Dadurch schneidet ein zu enger Suchtextrahmen den Bildausschnitt für den Schriftvergleich nicht mehr ab; die Ersetzung entfernt beide alten Suchtexte. Sichtbarer Text und getrennte Wortvorkommen bleiben erhalten.
+- Beim Auswählen geeigneter waagerechter Scan-Texte vergleicht der Editor das ursprüngliche Wort lokal mit 56 Schriftschnitten aus 14 Familien. Bei ausreichend deutlichem Treffer übernimmt er Fett/Kursiv, eine passende Ersatzschrift, Textfarbe, Größe, Seitenabstand und Grundlinie für Vorschau und Export; bloßes Auswählen verändert die PDF weiterhin nicht. Mehrdeutige, gemischt formatierte oder ungeeignete Ausschnitte bleiben manuell korrigierbar. Scan-Schriften sind als Annäherung gekennzeichnet.
+- Regressionstests prüfen „September“ → „August“ mit echter OCR in elf Schriftvarianten, den exportierten PDF-Text und seine Position sowie den Abbruch verspäteter Schrifterkennung beim Seiten- oder Auswahlwechsel.
+
+- Getrennte automatische Sicherungen für Tabs und Dokumente, auswählbare Wiederherstellung und gezieltes Verwerfen einzelner Arbeitsstände.
+- Automatisch aktualisierte Vorschau für ausdrücklich verknüpfte Textfelder; gemeinsame Übernahme nach Prüfung, ohne Schriftverkleinerung oder verschobene Rahmen.
+- Ersatzschriftvergleich auch für markierte Wörter mit verfügbarer Originalschrift; stabile Rangfolge nach Passform, Konturen und Breite.
+- Spaltenbreiten mit Ziehgriffen und Tastatur, Zeilen-/Spalteneinfügung und -löschung sowie rechteckiges Verbinden und Teilen geeigneter Vektortabellen. Originalreferenzen, gelöschte Zellinhalte und Rückgängig-Verlauf bleiben nachvollziehbar.
+- Kontextaktionen für ausgewählten Text, Bilder und Tabellenzellen.
+- Zusätzliche Exportprüfung kleiner unveränderter Textbereiche, unveränderter Textreihenfolge und vorhandener Tags. Auffälligkeiten erscheinen als Prüfhinweise; keine Zusicherung vollständiger PDF/UA-Konformität.
 
 - Direkter Originalvergleich bei unverändertem Zoom; Bearbeitungsmarkierungen sind in der Originalansicht ausgeblendet und nicht bedienbar.
-- Typografische Suche findet PDF-Ligaturen, kombinierte Akzente und variierende Leerzeichen mit sicheren Originalpositionen; Teilzeichen werden nicht ersetzt, gültige Folgetreffer nach Ligaturen bleiben erhalten. Exakte Suche bleibt wählbar.
+- Typografische Suche findet PDF-Ligaturen, kombinierte Akzente und variierende Leerzeichen mit sicheren Originalpositionen; Teilzeichen werden nicht ersetzt. Exakte Suche bleibt wählbar.
 - Automatische lokale Sicherung bündelt schnelle Änderungen, zeigt nur den tatsächlich gesicherten neuesten Stand und stößt ausstehende Schreibvorgänge beim App-Wechsel an. Verwerfen wartet auf laufende Schreibvorgänge; Speicherfehler bleiben sichtbar.
 - Seitenfehler brechen die Vorprüfung der übrigen Seiten nicht mehr ab. Fortschritt, ungeprüfter Zustand und Hinweise werden getrennt angezeigt. Tabellennavigation respektiert Tastenkombinationen, Texteingabe und die normale Fokusreihenfolge; Bedienelemente verschieben Textfelder nicht versehentlich.
 
 - Browser-Vorbereitung in Editor- und Docker-CI verwendet offizielle HTTPS-Paketarchive und begrenzte Netzwerkwartezeiten; hängende Ubuntu-Spiegeldownloads verbrauchen nicht mehr die gesamte Testlaufzeit.
 - Verspätete Schriftvorbereitung übernimmt den Fokus nicht mehr aus der OCR-Korrektur oder anderen Bedienelementen zurück in den PDF-Text. Regressionstests prüfen Desktop und schmale Touch-Ansichten einschließlich Tastaturbedienung.
-- Die Editor-CI verlangt vollständige Ergebnisberichte für alle 29 Fälle je Browser; fehlende, doppelte oder fehlgeschlagene Fälle verhindern einen erfolgreichen Abschluss. Fehlgeschlagene Workflow-Fälle behalten zusätzlich eine Playwright-Ablaufaufzeichnung.
+- Die Editor-CI verlangt vollständige Ergebnisberichte für alle 31 Fälle je Browser; fehlende, doppelte oder fehlgeschlagene Fälle verhindern einen erfolgreichen Abschluss. Fehlgeschlagene Workflow-Fälle behalten zusätzlich eine Playwright-Ablaufaufzeichnung.
 - Bildverarbeitung des Dokumentservers auf Pillow 13.0.0 aktualisiert, um die in 12.3.0 gemeldeten Sicherheitslücken zu schließen.
 - Gemeinsame Auswahl von Text, Originalbildern und einfachen Tabellenzellen; logische Textzeilen, verzögerte Vorprüfung und begrenzte Vorbereitung einer Nachbarseite.
 - Statische Type-1/CFF1-Originalschriften und TTF-/OTF-Import; Ersatz nur für fehlende Zeichen. Ungültige Schriftmetriken und veraltete Schriftantworten beim Rückgängigmachen werden abgefangen.
@@ -27,6 +42,8 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Instanzbezogene Bearbeitung geeigneter verschachtelter Text- und Bildobjekte sowie erhaltener Grundlinie bei geneigtem Text. Einfache AcroForm-Strukturen bleiben unter den dokumentierten Bedingungen erhalten.
 - Begrenzte Textkorrekturen in geeigneten Scanbildern bis 16 Megapixel erhalten die Originalauflösung und Außenpixel; Papierhintergrund und nachweisbare durchgehende Linien werden berücksichtigt.
 - Lokale Strukturreparatur mit Vergleich aller Seiten; unveränderte Originaldatei und sichtbarer Reparaturhinweis. Erweiterte Browserfälle sind in der Editor-CI hinterlegt; die Freigabe setzt erfolgreiche Prüfungen voraus.
+
+## 0.19.0 – 20. Oktober 2026
 
 - Geeignete waagerechte Wortänderungen entfernen nur die betroffenen Originalzeichen. Unveränderte Präfixe und bei gleicher Position auch Suffixe bleiben als PDF-Text erhalten. Mehrdeutige Zeichen, Ligaturen, Schriftschnitt- oder Layoutänderungen verwenden weiterhin die geprüfte Textfeldbearbeitung.
 - Textfelder lassen sich in frei gewählter Reihenfolge über bestehende Seiten verknüpfen. Eine Vorschau verteilt Text und Formatierung ohne automatische Verkleinerung; Überlauf und Kollisionen verhindern die Übernahme. Weitere Änderungen erfordern eine erneute Textfluss-Vorschau.

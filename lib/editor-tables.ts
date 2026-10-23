@@ -48,6 +48,8 @@ export type EditorTable = Readonly<{
   width: number;
   original: TableOriginal;
   nextCellId: number;
+  /** Original text explicitly removed by row/column deletion. */
+  removedTextIds?: readonly string[];
 }>;
 export type TableGuard = {
   /** Other original/proposed text, image, widget and unsupported path bounds. */
@@ -113,6 +115,7 @@ function immutable(table: EditorTable): EditorTable {
   return Object.freeze({
     ...table,
     original,
+    ...(table.removedTextIds ? { removedTextIds: Object.freeze([...table.removedTextIds]) } : {}),
     columns: Object.freeze([...table.columns]),
     rows: Object.freeze([...table.rows]),
     cells: Object.freeze(
@@ -347,8 +350,8 @@ export function validateEditorTable(table: EditorTable, guard: TableGuard = {}) 
   const nr = table.rows.length - 1,
     nc = table.columns.length - 1;
   if (
-    nr < 2 ||
-    nc < 2 ||
+    nr < 1 ||
+    nc < 1 ||
     nr > MAX_ROWS ||
     nc > MAX_COLUMNS ||
     nr * nc > MAX_CELLS ||
@@ -404,6 +407,11 @@ export function validateEditorTable(table: EditorTable, guard: TableGuard = {}) 
     )
       fail('The cell content does not fit the proposed row height.');
   }
+  for (const id of table.removedTextIds || []) {
+    if (!id || textIds.has(id)) fail('Duplicate removed table text.');
+    textIds.add(id);
+  }
+  if ((table.removedTextIds?.length || 0) > 2000) fail('Excessive removed table text.');
   if (occupied.some((row) => row.some((v) => !v)))
     fail('Table cells leave an uncovered grid area.');
   for (const obstacle of guard.obstacles || []) {
@@ -556,8 +564,7 @@ export function validateEditorTableOriginal(table: EditorTable, actual: readonly
     (['x', 'y', 'w', 'h'] as const).some(
       (key) => Math.abs(original.original.rect[key] - table.original.rect[key]) > EXACT_TOLERANCE,
     ) ||
-    original.columns.length !== table.columns.length ||
-    original.columns.some((x, i) => Math.abs(x - table.columns[i]) > EXACT_TOLERANCE) ||
+    Math.abs(original.columns[0] - table.columns[0]) > EXACT_TOLERANCE ||
     Math.abs(original.rows[0] - table.rows[0]) > EXACT_TOLERANCE
   )
     fail('Original table provenance disagrees with its claimed bounds or columns.');
@@ -582,4 +589,154 @@ export function validateEditorTableOriginal(table: EditorTable, actual: readonly
     )
       fail('Original table path geometry or style no longer matches.');
   }
+}
+
+export type EditorTableOperation =
+  | { kind: 'height' | 'insert'; row: number; height: number }
+  | { kind: 'width' | 'insert-column'; column: number; width: number }
+  | { kind: 'delete-row'; row: number }
+  | { kind: 'delete-column'; column: number }
+  | { kind: 'merge'; row: number; column: number; rowEnd: number; columnEnd: number }
+  | { kind: 'split'; cellId: string };
+
+export function changeEditorTableModel(
+  table: EditorTable,
+  op: EditorTableOperation,
+  guard: TableGuard = {},
+): EditorTable {
+  validateEditorTable(table);
+  if (op.kind === 'height') return setEditorTableRowHeight(table, op.row, op.height, guard);
+  if (op.kind === 'insert') return insertEditorTableRow(table, op.row, op.height, guard);
+  let next: EditorTable = table;
+  if (op.kind === 'width' || op.kind === 'insert-column') {
+    const before = op.column,
+      nc = table.columns.length - 1;
+    if (
+      !Number.isInteger(before) ||
+      before < 0 ||
+      before > nc ||
+      (op.kind === 'width' && before === nc) ||
+      !Number.isFinite(op.width) ||
+      op.width < MIN_TRACK
+    )
+      fail('Invalid column width.');
+    if (op.kind === 'width') {
+      const delta = op.width - (table.columns[before + 1] - table.columns[before]);
+      next = { ...table, columns: table.columns.map((x, i) => (i > before ? x + delta : x)) };
+    } else {
+      if (table.cells.some((c) => c.column < before && c.column + c.columnSpan > before))
+        fail('Cannot insert through a merged cell.');
+      let nextCellId = table.nextCellId;
+      next = {
+        ...table,
+        nextCellId: nextCellId + table.rows.length - 1,
+        columns: [
+          ...table.columns.slice(0, before + 1),
+          ...table.columns.slice(before).map((x) => x + op.width),
+        ],
+        cells: [
+          ...table.cells.map((c) => (c.column >= before ? { ...c, column: c.column + 1 } : c)),
+          ...table.rows.slice(0, -1).map((_, row) => ({
+            id: `${table.id}:cell:${nextCellId++}`,
+            row,
+            column: before,
+            rowSpan: 1,
+            columnSpan: 1,
+            textIds: [],
+          })),
+        ],
+      };
+    }
+  } else if (op.kind === 'delete-row' || op.kind === 'delete-column') {
+    const axis = op.kind === 'delete-row' ? 'row' : 'column',
+      span = axis === 'row' ? 'rowSpan' : 'columnSpan';
+    const tracks = axis === 'row' ? table.rows : table.columns;
+    const at = op.kind === 'delete-row' ? op.row : op.column;
+    if (!Number.isInteger(at) || at < 0 || at >= tracks.length - 1 || tracks.length <= 2)
+      fail('The last table track cannot be deleted.');
+    const removedTextIds = [...(table.removedTextIds || [])],
+      cells: TableCell[] = [];
+    for (const c of table.cells) {
+      if (c[axis] === at && c[span] === 1) {
+        removedTextIds.push(...c.textIds);
+        continue;
+      }
+      cells.push({
+        ...c,
+        [axis]: c[axis] > at ? c[axis] - 1 : c[axis],
+        [span]: c[axis] <= at && c[axis] + c[span] > at ? c[span] - 1 : c[span],
+      });
+    }
+    const size = tracks[at + 1] - tracks[at];
+    const updated = tracks.filter((_, i) => i !== at + 1).map((v, i) => (i > at ? v - size : v));
+    next = { ...table, [axis === 'row' ? 'rows' : 'columns']: updated, cells, removedTextIds };
+  } else if (op.kind === 'merge') {
+    const { row, column, rowEnd, columnEnd } = op;
+    if (
+      ![row, column, rowEnd, columnEnd].every(Number.isInteger) ||
+      row < 0 ||
+      column < 0 ||
+      rowEnd < row ||
+      columnEnd < column ||
+      rowEnd >= table.rows.length - 1 ||
+      columnEnd >= table.columns.length - 1
+    )
+      fail('Invalid merge range.');
+    const selected = table.cells
+      .filter(
+        (c) =>
+          c.row <= rowEnd &&
+          c.row + c.rowSpan > row &&
+          c.column <= columnEnd &&
+          c.column + c.columnSpan > column,
+      )
+      .sort((a, b) => a.row - b.row || a.column - b.column);
+    if (
+      selected.length < 2 ||
+      selected.some(
+        (c) =>
+          c.row < row ||
+          c.column < column ||
+          c.row + c.rowSpan > rowEnd + 1 ||
+          c.column + c.columnSpan > columnEnd + 1,
+      )
+    )
+      fail('Select complete rectangular cells to merge.');
+    const ids = new Set(selected.map((c) => c.id));
+    next = {
+      ...table,
+      cells: [
+        ...table.cells.filter((c) => !ids.has(c.id)),
+        {
+          ...selected[0],
+          row,
+          column,
+          rowSpan: rowEnd - row + 1,
+          columnSpan: columnEnd - column + 1,
+          textIds: selected.flatMap((c) => c.textIds),
+        },
+      ],
+    };
+  } else if (op.kind === 'split') {
+    const cell = table.cells.find((c) => c.id === op.cellId);
+    if (!cell || cell.rowSpan * cell.columnSpan < 2) fail('Select a merged cell to split.');
+    let nextCellId = table.nextCellId;
+    const cells = table.cells.filter((c) => c.id !== cell.id);
+    for (let r = cell.row; r < cell.row + cell.rowSpan; r++)
+      for (let c = cell.column; c < cell.column + cell.columnSpan; c++) {
+        const first = r === cell.row && c === cell.column;
+        cells.push({
+          id: first ? cell.id : `${table.id}:cell:${nextCellId++}`,
+          row: r,
+          column: c,
+          rowSpan: 1,
+          columnSpan: 1,
+          textIds: first ? cell.textIds : [],
+        });
+      }
+    next = { ...table, cells, nextCellId };
+  }
+  next = { ...next, cells: [...next.cells].sort((a, b) => a.row - b.row || a.column - b.column) };
+  validateEditorTable(next, guard);
+  return immutable(next);
 }

@@ -1,7 +1,7 @@
 import type { Mark, Rect, EditorTextRun } from './studio-engine';
 import type { TextTarget } from './editor-model';
 import { editorMarkChanged, editorMarkSignature, editorRemovalRects } from './editor-model';
-import { editorSegments, replaceEditorRange } from './editor-rich-text';
+import { editorListSlice, editorSegments, replaceEditorRange } from './editor-rich-text';
 
 export function editorTargetMark(
   target: TextTarget,
@@ -172,7 +172,8 @@ export function splitEditorBlock(
     at >= text.length ||
     !text.slice(0, at).trim() ||
     !text.slice(at).trim() ||
-    /[\uD800-\uDBFF]/.test(text[at - 1])
+    new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(text).containing(at)
+      ?.index !== at
   )
     throw new Error(
       'Bitte den Textcursor zwischen zwei Textteilen im waagerechten Textfeld setzen.',
@@ -188,6 +189,7 @@ export function splitEditorBlock(
     ...mark,
     changeGroup: mark.changeGroup || id,
     ...replaceEditorRange(mark, 0, at, ''),
+    ...editorListSlice(mark, at),
     id,
     originalState: undefined,
     originalText: undefined,

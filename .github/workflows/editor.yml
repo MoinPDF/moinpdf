@@ -44,6 +44,8 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm run typecheck:selfhost
           pnpm run build:selfhost
+          node tests/editor-scan-typography-smoke.mjs
+          node tests/editor-comparison-smoke.mjs
           node tests/editor-preservation-smoke.mjs
           node tests/editor-rich-smoke.mjs
           node tests/editor-resilience-smoke.mjs

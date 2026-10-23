@@ -36,5 +36,12 @@ const stored=await storage.storedResults();assert.equal(stored.length,10);assert
 await storage.storeRecovery({updated:123,sources:[original,current],state:{...previous,history:[],future:[]}});
 assert.equal((await storage.loadRecovery()).sources[0].bytes[0],1);
 await storage.clearRecovery();assert.equal(await storage.loadRecovery(),undefined);
+const recovery = {updated:124,sources:[original],state:{...previous,history:[],future:[]}};
+await Promise.all([storage.storeRecovery(recovery,'tab-a:doc-a'),storage.storeRecovery({...recovery,updated:125},'tab-b:doc-a'),storage.storeRecovery({...recovery,updated:126},'tab-a:doc-b')]);
+const recoveryList=await storage.listRecoveries();assert.equal(recoveryList.length,3,'Tabs and documents have independent snapshots');assert(!('state' in recoveryList[0])&&!('bytes' in recoveryList[0].sources[0]),'The recovery chooser retains summaries, not all original files and histories');
+await storage.clearRecovery('tab-a:doc-a');
+assert.equal((await storage.listRecoveries()).length,2,'Discard removes only its selected snapshot');
+assert.equal((await storage.loadRecovery('tab-b:doc-a')).updated,125);
+await storage.clearRecovery('tab-b:doc-a');await storage.clearRecovery('tab-a:doc-b');
 await storage.clearResults();assert.equal((await storage.storedResults()).length,0);
 console.log('PASS: typed XLSX, identifier/formula safety, repeated multi-page headers, retained source history, bounded result persistence and workspace recovery.');

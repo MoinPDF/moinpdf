@@ -4,16 +4,31 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## 0.19.0 – 23 October 2026
+## Unreleased – Edit PDF
+
+- Scan font matching now checks all 14 local families, uses up to three independently agreeing nearby source samples and supports suitable right-angle crops. Short numbers require at least two agreeing references; mixed-format or ambiguous regions retain the safe fallback.
+- Export review separates saved-output verification from original-font similarity and shows matching before/after detail crops with shared zoom and synchronized scrolling. Manual style changes invalidate the previous similarity evidence.
+- Added fictional payroll acceptance on desktop/touch without manual font or size corrections, plus cancellation/resource-cleanup tests for the detail comparison. Physical-device results remain separately pending in the device checklist.
+
+- Duplicate invisible OCR words with strongly overlapping, differently sized bounds now form one selection. A narrow search-text box no longer clips the scan crop used for font matching, and replacement removes both old search texts. Visible text and separate occurrences remain intact.
+- Selecting eligible horizontal scan text locally compares the unchanged word with 56 font faces across 14 families. A sufficiently clear match supplies weight, slope, a suitable substitute font, colour, size, side bearing and baseline to both preview and export; selection alone still leaves the PDF unchanged. Ambiguous, mixed-style or unsuitable regions remain manually editable. Scan fonts are explicitly described as approximations.
+- Regression tests cover “September” → “August” with real OCR in eleven font variants, exported PDF text and positioning, and cancellation of stale font matching when switching pages or selections.
+
+- Separate automatic recovery snapshots for tabs and documents, selectable restoration and individual snapshot deletion.
+- Automatically refreshed previews for explicitly linked text fields; apply together after review, without shrinking fonts or moving frames.
+- Substitute font comparison for selected words with available original font outlines; stable ranking by fit, contours and width.
+- Draggable and keyboard-adjustable column widths, row/column insertion and deletion, and rectangular merging and splitting of supported vector tables. Original references, deleted cell content and undo remain traceable.
+- Context actions for selected text, images and table cells.
+- Additional export checks for small unchanged text regions, unchanged text order and existing tags. Findings are reported for review; this does not certify complete PDF/UA compliance.
 
 - Original page comparison retains zoom and edits; editing overlays are absent and non-interactive in the original view.
-- Typographic search matches PDF ligatures, combining accents and varying whitespace using safe original text offsets; partial characters are never replaced and valid subsequent matches after ligatures are retained. Exact matching remains available.
+- Typographic search matches PDF ligatures, combining accents and varying whitespace using safe original text offsets; partial characters are never replaced. Exact matching remains available.
 - Local recovery coalesces rapid changes, reports only the latest successfully saved revision and flushes pending writes when switching apps. Discard waits for active writes; storage errors remain visible.
 - A page failure no longer stops preflight checks on later pages. Progress and unchecked states are explicit. Table navigation respects shortcut modifiers, composition and normal focus order; nested controls cannot accidentally move a text box.
 
 - Browser preparation in editor and Docker CI uses official HTTPS package archives and bounded network waits, preventing stalled Ubuntu mirror downloads from consuming the entire test runtime.
 - Late font preparation no longer takes focus back from OCR correction or another control into the PDF text. Regression cases cover desktop and narrow touch views, including keyboard operation.
-- Editor CI requires complete result reports for all 29 cases per browser; missing, duplicate or unsuccessful cases prevent a successful finish. Failed workflow cases also retain a Playwright trace.
+- Editor CI requires complete result reports for all 31 cases per browser; missing, duplicate or unsuccessful cases prevent a successful finish. Failed workflow cases also retain a Playwright trace.
 - Updated the document server's image processing to Pillow 13.0.0 to address the vulnerabilities reported in 12.3.0.
 - Combined selection of text, original images and simple table cells; logical text lines, delayed preflight and bounded preparation of one neighbouring page.
 - Static Type-1/CFF1 source fonts and TTF/OTF import; fallback only for missing characters. Invalid font metrics and stale font responses during undo are handled.
@@ -22,6 +37,8 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Instance-specific edits of supported nested text/image objects and preserved baselines for slanted text. Simple AcroForm structures are preserved under the documented conditions.
 - Bounded text corrections in supported scans up to 16 megapixels retain original resolution and outside pixels; paper backgrounds and demonstrably continuous rules are considered.
 - Local structural repair compares every page, retains original bytes and displays a repair notice. Extended browser cases are included in editor CI; release requires successful checks.
+
+## 0.19.0 – 20 October 2026
 
 - Eligible horizontal word edits remove only affected original characters. Unchanged prefixes, and suffixes whose positions still agree, retain native PDF text. Ambiguous mappings, ligatures, style or layout changes continue to use verified whole-field editing.
 - Link text fields in a chosen order across existing pages. Preview text and style distribution without automatic shrinking; overflow and collisions prevent application. Preview the flow again after further edits.

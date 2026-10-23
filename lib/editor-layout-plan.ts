@@ -1,7 +1,12 @@
 import type { Source } from './pdf-engine';
 import type { Mark } from './studio-engine';
 import { editorTextGeometry, layoutEditorText } from './editor-text-layer';
-import { prepareEditorRuns, richEditorLayout, type PreparedEditorRun } from './editor-rich-layout';
+import {
+  prepareEditorRuns,
+  richEditorLayout,
+  hasRichEditorLayout,
+  type PreparedEditorRun,
+} from './editor-rich-layout';
 import { type EditorFont } from './editor-fonts';
 
 export type EditorPlannedPiece = {
@@ -12,6 +17,8 @@ export type EditorPlannedPiece = {
   font: EditorFont;
   color: string;
   tracking: number;
+  underline?: boolean;
+  advance?: number;
 };
 export function editorLayoutPlan(
   mark: Mark,
@@ -28,28 +35,24 @@ export function editorLayoutPlan(
   let requiredHeight = 0,
     overflow = false,
     lineCount = 0;
-  if (mark.runs?.length || runs.length > 1) {
+  if (hasRichEditorLayout(mark, runs)) {
     const layout = richEditorLayout(mark, width, available, runs);
     requiredHeight = layout.requiredHeight;
     lineCount = layout.lines.length;
     overflow =
       requiredHeight > geometry.height + 0.5 || layout.lines.some((l) => l.width > available + 0.5);
     for (const line of layout.lines) {
-      const align =
-        mark.align === 'center'
-          ? (available - line.width) / 2
-          : mark.align === 'right'
-            ? available - line.width
-            : 0;
       for (const p of line.pieces)
         pieces.push({
           text: p.text,
-          x: inset + align + p.x,
-          y: line.baseline,
+          x: inset + p.x,
+          y: line.baseline + p.shift,
           size: p.size,
           font: p.run.resolution.font,
           color: p.run.style.color || mark.color || '#222222',
-          tracking: layout.tracking,
+          tracking: p.marker ? 0 : layout.tracking,
+          underline: p.run.style.underline,
+          advance: p.width - (p.marker ? 0 : layout.tracking),
         });
     }
   } else if (runs[0]) {

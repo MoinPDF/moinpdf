@@ -10,7 +10,7 @@ Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(nam
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs');
 const assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['editor-rich-text','editor-rich-layout','editor-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model','editor-font-catalog','editor-font-outline','editor-font-cmap','editor-fonts','editor-analysis','editor-text-layer']){
+for(const name of ['editor-rich-text','editor-rich-layout','editor-verification','editor-detail-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','editor-model','editor-font-catalog','editor-font-outline','editor-font-cmap','editor-fonts','editor-analysis','editor-text-layer']){
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,name)=>`${q}./${name}-studio-test.mjs${q}`);
  await writeFile(`.cache/${name}-studio-test.mjs`,code);
 }

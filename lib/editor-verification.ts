@@ -11,11 +11,15 @@ import {
   editorRemovalRects,
   editorRectsOverlap,
   readTextTargets,
+  editorScanMatchStatus,
 } from './editor-model';
+import { prepareEditorLayout } from './editor-layout-plan';
 import { cachedEditorPage, remainingEditorTargets } from './editor-analysis';
 import { renderEditorBackground } from './editor-native';
 import { paintEditorReference, compareEditorInk } from './editor-ink-verification';
 import { editorBounds } from './editor-blocks';
+import { verifyEditorDetails, verifyEditorStructure } from './editor-detail-verification';
+import { editorExportText } from './editor-rich-text';
 export type EditorVerification = {
   status: 'passed' | 'review';
   textPages: number;
@@ -25,6 +29,13 @@ export type EditorVerification = {
   changedPages: number[];
   issues: { page: number; message: string; rect?: Rect }[];
   sourcePages: Pick<PageItem, 'sourceId' | 'index' | 'rotation'>[];
+  fidelity?: {
+    page: number;
+    rect: Rect;
+    text: string;
+    status: 'original' | 'matched' | 'uncertain' | 'changed' | 'unavailable' | 'substituted';
+    samples?: number;
+  }[];
 };
 const normalized = (text: string) => text.normalize('NFKC').replace(/\s/gu, '');
 const characters = (texts: string[]) => {
@@ -88,6 +99,7 @@ export async function verifyEditorExport(
     sparseFields: 0,
     changedPages: [],
     issues: [],
+    fidelity: [],
     sourcePages: pages.map(({ sourceId, index, rotation }) => ({ sourceId, index, rotation })),
   };
   try {
@@ -107,6 +119,40 @@ export async function verifyEditorExport(
       if (marks.length || crop) result.changedPages.push(i);
       const outPage = { ...page, sourceId: output.id, index: i, rotation: 0 };
       const analysis = cachedEditorPage(source, page, language);
+      if (!crop) {
+        const pdfPage = await source.pdf.getPage(page.index + 1);
+        const viewport = pdfPage.getViewport({
+          scale: 1,
+          rotation: (pdfPage.rotate + page.rotation) % 360,
+        });
+        for (const mark of marks.filter((m) => m.kind === 'text' && m.sourceRect && m.text)) {
+          let status: NonNullable<EditorVerification['fidelity']>[number]['status'] = 'unavailable';
+          if (mark.sourceIsScan) status = editorScanMatchStatus(mark);
+          else {
+            try {
+              const layout = await prepareEditorLayout(
+                mark,
+                viewport.width,
+                viewport.height,
+                source,
+              );
+              status =
+                layout.pieces.length && layout.pieces.every((p) => p.font.original)
+                  ? 'original'
+                  : 'substituted';
+            } catch {
+              signal.throwIfAborted();
+            }
+          }
+          result.fidelity!.push({
+            page: i,
+            rect: editorBounds([mark, ...editorRemovalRects(mark)]),
+            text: mark.text!.slice(0, 80),
+            status,
+            samples: mark.scanMatch?.samples,
+          });
+        }
+      }
       const incompatible = !!crop || marks.some((m) => !['text', 'image'].includes(m.kind));
       if (!incompatible) {
         let original =
@@ -126,7 +172,7 @@ export async function verifyEditorExport(
           ...remainingEditorTargets(original.targets, marks.flatMap(editorRemovalRects)).map(
             (t) => t.text,
           ),
-          ...marks.filter((m) => m.kind === 'text').map((m) => m.text || ''),
+          ...marks.filter((m) => m.kind === 'text').map(editorExportText),
         ];
         if (characters(expected) !== characters(actual.targets.map((t) => t.text)))
           throw new Error(
@@ -144,10 +190,50 @@ export async function verifyEditorExport(
               .map((t) => t.text)
               .join(''),
           );
-          if (!local.includes(normalized(mark.text || '')))
+          const scripted =
+            (mark.script && mark.script !== 'normal') ||
+            mark.runs?.some((r) => r.style.script && r.style.script !== 'normal');
+          if (
+            scripted
+              ? characters([local]) !== characters([editorExportText(mark)])
+              : !local.includes(normalized(editorExportText(mark)))
+          )
             throw new Error(
               `Exportprüfung fehlgeschlagen auf Seite ${i + 1}: Ein Text wurde nicht vollständig an seiner vorgesehenen Position gefunden. Die Bearbeitung bleibt geöffnet.`,
             );
+        }
+        if (marks.length) {
+          const details = await verifyEditorDetails(
+            source,
+            page,
+            output,
+            outPage,
+            original.targets,
+            actual.targets,
+            marks,
+            original.width,
+            original.height,
+            signal,
+          );
+          result.issues.push(...details.map((issue) => ({ ...issue, page: i })));
+          try {
+            const structure = await verifyEditorStructure(
+              source,
+              page,
+              output,
+              outPage,
+              marks,
+              signal,
+            );
+            result.issues.push(...structure.map((message) => ({ page: i, message })));
+          } catch {
+            signal.throwIfAborted();
+            result.issues.push({
+              page: i,
+              message:
+                'Die Prüfung vorhandener Strukturinformationen konnte nicht abgeschlossen werden.',
+            });
+          }
         }
         result.textPages++;
         const changedText = (painted[page.id] || marks).filter(

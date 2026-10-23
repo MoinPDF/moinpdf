@@ -9,6 +9,7 @@ import { EditorTablePanel } from './editor-table-panel';
 import { editorTableSegments } from '@/lib/editor-tables';
 import type { NativeObject } from '@/lib/native-pdf';
 import { editorTargetMark } from '@/lib/editor-blocks';
+import { refineEditorScanTypography } from '@/lib/editor-scan-typography';
 import {
   captureEditorFormat,
   applyEditorFormat,
@@ -26,6 +27,7 @@ import { useLanguage } from '@/components/studio/appearance';
 
 import {
   useEffect,
+  useMemo,
   useLayoutEffect,
   useRef,
   useState,
@@ -37,6 +39,7 @@ import { Button } from '@/components/ui/button';
 import { analyzeEditorPage, editorOcrNeedsReview } from '@/lib/editor-analysis';
 import {
   EditorInlineText,
+  EditorTextPreview,
   EditorInlineToolbar,
   editorTextCss,
   useEditorTypography,
@@ -53,6 +56,7 @@ import {
   editorRectsOverlap,
   editorTextCollision,
   readTextTargets,
+  editorSelectionTargets,
   type EditorAction,
   type TextTarget,
 } from '@/lib/editor-model';
@@ -67,17 +71,29 @@ export function MarkContent({
   mark,
   width,
   height = (width * 841.89) / 595.28,
+  pageWidth,
   source,
 }: {
   mark: Mark;
   width: number;
   height?: number;
+  pageWidth?: number;
   source?: Source;
 }) {
   useLanguage();
   const typography = useEditorTypography(mark, source);
   if (mark.nativeImage) return null;
   if (!editorMarkChanged(mark)) return null;
+  if (mark.kind === 'text' && typography.runs)
+    return (
+      <EditorTextPreview
+        mark={mark}
+        width={width}
+        height={height}
+        pageWidth={pageWidth}
+        runs={typography.runs}
+      />
+    );
   if (mark.kind === 'text')
     return (
       <span
@@ -118,11 +134,13 @@ export function MarkLayers({
   marks,
   width,
   height,
+  pageWidth,
   source,
 }: {
   marks: Mark[];
   width: number;
   height?: number;
+  pageWidth?: number;
   source?: Source;
 }) {
   useLanguage();
@@ -144,7 +162,13 @@ export function MarkLayers({
         ...marks.filter((m) => m.kind === 'redact'),
       ].map((m) => (
         <div key={m.id} className={`page-mark ${m.kind}`} style={box(m)}>
-          <MarkContent mark={m} width={width} height={height} source={source} />
+          <MarkContent
+            mark={m}
+            width={width}
+            height={height}
+            pageWidth={pageWidth}
+            source={source}
+          />
         </div>
       ))}
     </>
@@ -163,6 +187,7 @@ export function EditorCanvas({
   onSelect,
   onDimensions,
   onTextSelection,
+  onOpenObjects,
   onReplaceMarks,
   searchHighlight,
   autoOcr = false,
@@ -180,6 +205,7 @@ export function EditorCanvas({
   onPatch: EditorPatch;
   onSelect: (id: string) => void;
   onTextSelection?: (selection: EditorSelection) => void;
+  onOpenObjects?: () => void;
   onReplaceMarks?: (remove: string[], add: Mark[]) => void;
   searchHighlight?: Rect;
   onDimensions: (dims: { width: number; height: number }) => void;
@@ -188,6 +214,16 @@ export function EditorCanvas({
   zoom?: number;
 }) {
   useLanguage();
+  const controlsRoot = useRef<HTMLDivElement | null>(null);
+  function revealControls(selector: string) {
+    const element = controlsRoot.current?.querySelector<HTMLElement>(selector);
+    if (!element) return;
+    if (element instanceof HTMLDetailsElement) element.open = true;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    element
+      .querySelector<HTMLElement>('button, summary, input, select')
+      ?.focus({ preventScroll: true });
+  }
   const [url, setUrl] = useState(''),
     [dims, setDims] = useState({ width: 595.28, height: 841.89 }),
     [displayWidth, setDisplayWidth] = useState(595),
@@ -204,11 +240,29 @@ export function EditorCanvas({
   const [originalPage, setOriginalPage] = useState('');
   const comparisonPage = `${source.id}:${page.id}:${page.index}:${page.rotation}`;
   const showOriginal = originalPage === comparisonPage;
+  const [matchingScan, setMatchingScan] = useState(false);
+  const scanSelection = useRef<AbortController | null>(null);
+  useEffect(() => {
+    scanSelection.current?.abort();
+    setMatchingScan(false);
+    return () => scanSelection.current?.abort();
+  }, [
+    source,
+    page.id,
+    page.index,
+    page.rotation,
+    disabled,
+    action,
+    showOriginal,
+    selectedId,
+    retry,
+  ]);
   const [initialPoint, setInitialPoint] = useState<EditorStartPoint | null>(null);
   const [textSelection, setTextSelection] = useState<EditorSelection | null>(null);
   const [selectionRequest, setSelectionRequest] = useState<EditorSelection | null>(null);
   const [joining, setJoining] = useState(false);
   const [joinedKeys, setJoinedKeys] = useState<string[]>([]);
+  const [smartMode, setSmartMode] = useState(true);
   const [tableMode, setTableMode] = useState(false);
   const [snap, setSnap] = useState(true);
   const [guides, setGuides] = useState<EditorGuide[]>([]);
@@ -253,7 +307,7 @@ export function EditorCanvas({
   useEffect(() => {
     setJoining(false);
     setJoinedKeys([]);
-  }, [page.id, paragraphMode]);
+  }, [page.id, paragraphMode, smartMode, tableMode]);
   const searchHighlightRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     searchHighlightRef.current?.scrollIntoView({
@@ -450,14 +504,15 @@ export function EditorCanvas({
             if (!controller.signal.aborted) setProgress(value);
           },
           onNative: (value) => {
-            if (!controller.signal.aborted) setTargets(value.targets);
+            if (!controller.signal.aborted)
+              setTargets(editorSelectionTargets(value.targets, value.width, value.height));
           },
         })
       : readTextTargets(source, page);
     void prepare
       .then((value) => {
         if (controller.signal.aborted) return;
-        setTargets(value.targets);
+        setTargets(editorSelectionTargets(value.targets, value.width, value.height));
         if ('kind' in value) setPageKind(String(value.kind || ''));
         setUncertain(
           'uncertain' in value && typeof value.uncertain === 'number' ? value.uncertain : 0,
@@ -628,6 +683,8 @@ export function EditorCanvas({
   }
   function pick(target: TextTarget, point?: Omit<EditorStartPoint, 'id'>) {
     if (disabled) return;
+    scanSelection.current?.abort();
+    setMatchingScan(false);
     if (joining) {
       toggleJoin('target:' + target.id);
       return;
@@ -650,27 +707,82 @@ export function EditorCanvas({
       return;
     }
     const next = editorTargetMark(target, page.index, dims.width, uid());
-    const cell = tableMode ? cells.find((c) => c.target.id === target.id) : undefined;
+    const cell =
+      tableMode || smartMode
+        ? cells.find(
+            (c) =>
+              c.target.id === target.id ||
+              (Math.abs(c.target.x - target.x) < 0.00001 &&
+                Math.abs(c.target.y - target.y) < 0.00001 &&
+                Math.abs(c.target.h - target.h) < 0.00001),
+          )
+        : undefined;
     if (cell) {
       next.w = cell.rect.w;
       next.originalState = editorMarkSignature(next);
     }
-    setInitialPoint(point ? { id: next.id, ...point } : null);
-    onMark(next);
+    const select = (mark: Mark) => {
+      setInitialPoint(point ? { id: mark.id, ...point } : null);
+      onMark(mark);
+    };
+    if (!next.sourceIsScan) {
+      select(next);
+      return;
+    }
+    const ctrl = new AbortController();
+    scanSelection.current = ctrl;
+    setMatchingScan(true);
+    const references = lines
+      .filter(
+        (t) =>
+          !t.unsupportedReason &&
+          t.id !== target.id &&
+          Math.abs(t.y - target.y) * dims.height < 60 &&
+          (t.origin === 'ocr' || t.invisible),
+      )
+      .slice(0, 16)
+      .map((t) => editorTargetMark(t, page.index, dims.width, t.id));
+    void refineEditorScanTypography(
+      next,
+      source,
+      page,
+      dims.width,
+      dims.height,
+      ctrl.signal,
+      references,
+    )
+      .then((refined) => {
+        if (!ctrl.signal.aborted) select(refined);
+      })
+      .catch(() => {
+        // Missing font assets or an unsuitable scan must not block manual edits.
+        if (!ctrl.signal.aborted) select(next);
+      })
+      .finally(() => {
+        if (scanSelection.current === ctrl) setMatchingScan(false);
+      });
   }
-  const displayed = marks.map((m) => (moving?.id === m.id ? moving : m)),
+  const displayed = marks
+      .filter((m) => !m.tableCell?.deleted)
+      .map((m) => (moving?.id === m.id ? moving : m)),
     removals = displayed.filter((m) => m.kind === 'erase' || m.sourceRect);
-  const textTargets =
-    paragraphMode && autoOcr && !tableMode
-      ? editorParagraphs(targets, dims.width, dims.height)
-      : autoOcr
-        ? editorParagraphs(targets, dims.width, dims.height, 'line')
-        : targets;
-  const cells = detectEditorCells(
-    editorParagraphs(targets, dims.width, dims.height, 'line'),
-    dims.width,
-    dims.height,
+  const lines = useMemo(
+    () => editorParagraphs(targets, dims.width, dims.height, 'line'),
+    [targets, dims.width, dims.height],
   );
+  const cells = useMemo(
+    () => detectEditorCells(lines, dims.width, dims.height),
+    [lines, dims.width, dims.height],
+  );
+  const paragraphs = useMemo(
+    () => editorParagraphs(targets, dims.width, dims.height),
+    [targets, dims.width, dims.height],
+  );
+  const textTargets = !autoOcr
+    ? targets
+    : (smartMode || paragraphMode) && !tableMode
+      ? paragraphs
+      : lines;
   const cellFor = (mark: Mark) =>
     cells.find(
       (c) =>
@@ -728,6 +840,7 @@ export function EditorCanvas({
   ];
   return (
     <div
+      ref={controlsRoot}
       className={`editor-canvas-wrap${touchMode ? ' is-touch-mode' : ''}`}
       onKeyDownCapture={(e) => {
         if (
@@ -771,12 +884,20 @@ export function EditorCanvas({
                 {Math.round(progress.percent)}%<br />
               </>
             )}
+            {matchingScan && (
+              <p role="status">
+                <LoaderCircle size={15} className="spin" />{' '}
+                {ui('Schrift wird mit dem Scan verglichen …')}
+              </p>
+            )}
             {available.length > 0
               ? ui(`${available.length} Textstellen · anklicken und bearbeiten`)
-              : !loadingText &&
-                ui(
-                  'Kein lesbarer Text erkannt. Du kannst einen Bereich ersetzen oder neuen Text hinzufügen.',
-                )}
+              : textTargets.length > 0
+                ? ui('Alle erkannten Textstellen sind zur Bearbeitung ausgewählt.')
+                : !loadingText &&
+                  ui(
+                    'Kein lesbarer Text erkannt. Du kannst einen Bereich ersetzen oder neuen Text hinzufügen.',
+                  )}
             {uncertain > 0 && (
               <p className="editor-ocr-warning">
                 {ui(
@@ -784,7 +905,16 @@ export function EditorCanvas({
                 )}
               </p>
             )}
-            {detectionError && <p role="alert">{ui(detectionError)}</p>}
+            {detectionError && (
+              <div>
+                <p role="alert">{ui(detectionError)}</p>
+                {onOpenObjects && (
+                  <Button size="sm" variant="outline" disabled={disabled} onClick={onOpenObjects}>
+                    {ui('Komplexe Objekte bearbeiten')}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
           {autoOcr && (
             <div className="editor-detection-actions">
@@ -836,35 +966,59 @@ export function EditorCanvas({
         <div className="editor-text-mode" role="group" aria-label={ui('Textauswahl')}>
           <Button
             size="sm"
-            variant={tableMode ? 'secondary' : 'ghost'}
-            aria-pressed={tableMode}
-            disabled={!cells.length || disabled}
-            onClick={() => setTableMode(!tableMode)}
-          >
-            {ui('Tabellenzellen')}
-          </Button>
-          <Button
-            size="sm"
-            variant={paragraphMode ? 'secondary' : 'ghost'}
-            aria-pressed={paragraphMode}
+            variant={smartMode ? 'secondary' : 'ghost'}
+            aria-pressed={smartMode}
+            disabled={disabled}
             onClick={() => {
-              setParagraphMode(true);
-              setTableMode(false);
-            }}
-          >
-            {ui('Absätze')}
-          </Button>
-          <Button
-            size="sm"
-            variant={!paragraphMode ? 'secondary' : 'ghost'}
-            aria-pressed={!paragraphMode}
-            onClick={() => {
+              setSmartMode(true);
               setParagraphMode(false);
               setTableMode(false);
             }}
           >
-            {ui('Einzelne Textstellen')}
+            {ui('Automatische Auswahl')}
           </Button>
+          <details className="editor-selection-options">
+            <summary>{ui('Auswahl anpassen')}</summary>
+            <div>
+              <Button
+                size="sm"
+                variant={tableMode ? 'secondary' : 'ghost'}
+                aria-pressed={tableMode}
+                disabled={!cells.length || disabled}
+                onClick={() => {
+                  setSmartMode(false);
+                  setParagraphMode(false);
+                  setTableMode(true);
+                }}
+              >
+                {ui('Tabellenzellen')}
+              </Button>
+              <Button
+                size="sm"
+                variant={paragraphMode ? 'secondary' : 'ghost'}
+                aria-pressed={paragraphMode}
+                onClick={() => {
+                  setSmartMode(false);
+                  setParagraphMode(true);
+                  setTableMode(false);
+                }}
+              >
+                {ui('Absätze')}
+              </Button>
+              <Button
+                size="sm"
+                variant={!smartMode && !paragraphMode && !tableMode ? 'secondary' : 'ghost'}
+                aria-pressed={!smartMode && !paragraphMode && !tableMode}
+                onClick={() => {
+                  setSmartMode(false);
+                  setParagraphMode(false);
+                  setTableMode(false);
+                }}
+              >
+                {ui('Einzelne Textstellen')}
+              </Button>
+            </div>
+          </details>
           <span>{ui('Anklicken und direkt auf der Seite schreiben. Verschieben am Griff.')}</span>
           {paragraphMode && (
             <span>
@@ -879,6 +1033,11 @@ export function EditorCanvas({
         <details className="editor-workflow-section">
           <summary>{ui('Präzision und weitere Optionen')}</summary>
           <div className="editor-precision-tools">
+            {onOpenObjects && (
+              <Button size="sm" variant="outline" disabled={disabled} onClick={onOpenObjects}>
+                {ui('Komplexe Objekte bearbeiten')}
+              </Button>
+            )}
             <Button
               size="sm"
               variant={imageMode ? 'secondary' : 'outline'}
@@ -971,6 +1130,7 @@ export function EditorCanvas({
       )}
       {autoOcr && onReplaceMarks && (
         <EditorTablePanel
+          selectedMarkId={selectedId}
           source={source}
           page={page}
           marks={marks}
@@ -1080,6 +1240,110 @@ export function EditorCanvas({
           {showOriginal && ui('Originalansicht – deine Änderungen bleiben erhalten.')}
         </span>
       </div>
+      {autoOcr && !showOriginal && !joining && (selectedText || selectedImage) && (
+        <div
+          className="editor-selection-actions"
+          role="toolbar"
+          aria-label={ui('Aktionen für die Auswahl')}
+        >
+          <strong>
+            {ui(selectedText?.tableCell ? 'Tabellenzelle' : selectedText ? 'Textfeld' : 'Bild')}
+          </strong>
+          {selectedText && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled}
+                onClick={() => revealControls('.editor-inline-toolbar')}
+              >
+                {ui('Formatierung')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled}
+                onClick={() => revealControls('.editor-layout-help')}
+              >
+                {ui('Layout anpassen')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled}
+                onClick={() => revealControls('.editor-font-alternatives')}
+              >
+                {ui('Schrift vergleichen')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled}
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() =>
+                  setFormat(captureEditorFormat(selectedText, dims.width, source.id, textSelection))
+                }
+              >
+                {ui('Format aufnehmen')}
+              </Button>
+              {format && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onPointerDown={(e) => e.preventDefault()}
+                  onClick={() =>
+                    onPatch(selectedText.id, applyEditorFormat(format, dims.width, source.id))
+                  }
+                >
+                  {ui('Format übertragen')}
+                </Button>
+              )}
+              {selectedText.tableCell && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onClick={() => revealControls('[data-editor-table]')}
+                >
+                  {ui('Tabelle bearbeiten')}
+                </Button>
+              )}
+              {selectedText.sourceIsScan && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onClick={() => revealControls('.editor-ocr-review')}
+                >
+                  {ui('OCR-Korrektur')}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={disabled || !selectedText.text}
+                onClick={() => onPatch(selectedText.id, { text: '', runs: [] })}
+              >
+                {ui('Textinhalt leeren')}
+              </Button>
+            </>
+          )}
+          {selectedImage && (
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => revealControls('.editor-image-tools')}
+            >
+              {ui('Bild ersetzen oder zuschneiden')}
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={() => onSelect('')}>
+            {ui('Fertig')}
+          </Button>
+        </div>
+      )}
       <div className="editor-page-scroll" ref={pageScroll}>
         <div
           className="canvas-holder"
@@ -1319,6 +1583,7 @@ export function EditorCanvas({
                         mark={m}
                         width={displayWidth}
                         height={(displayWidth * dims.height) / dims.width}
+                        pageWidth={dims.width}
                         source={source}
                       />
                     )}
@@ -1428,6 +1693,7 @@ export function EditorCanvas({
             onPatch={onPatch}
           />
           <EditorFontAlternatives
+            page={page}
             mark={selectedText}
             source={source}
             width={dims.width}
@@ -1461,6 +1727,7 @@ export function EditorCanvas({
                       source={source}
                       width={displayWidth}
                       height={(displayWidth * dims.height) / dims.width}
+                      pageWidth={dims.width}
                     />
                   </div>
                 </div>

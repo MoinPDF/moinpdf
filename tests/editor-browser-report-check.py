@@ -18,6 +18,7 @@ EXPECTED = {
         'adaptive-flow', 'adaptive-table', 'adaptive-table-touch', 'adaptive-form',
         'adaptive-angle', 'adaptive-nested', 'adaptive-repair', 'adaptive-cff',
         'adaptive-high-scan', 'adaptive-preflight',
+        'adaptive-payroll', 'adaptive-payroll-touch',
     ],
 }
 

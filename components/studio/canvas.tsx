@@ -239,6 +239,7 @@ export function PageCanvas({
           marks={marks}
           width={displayWidth}
           height={(displayWidth * dims.height) / dims.width}
+          pageWidth={dims.width}
         />
         {crop && (
           <div

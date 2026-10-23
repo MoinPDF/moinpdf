@@ -8,6 +8,9 @@ export type Recovery = {
   sources: ProjectSource[];
   state: ProjectState;
 };
+export type RecoverySummary = Pick<Recovery, 'id' | 'updated'> & {
+  sources: Pick<ProjectSource, 'name'>[];
+};
 function database(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('moinpdf.workspace.v1', 1);
@@ -57,8 +60,38 @@ export async function storeResult(result: SavedResult) {
 export const removeResult = (id: string) =>
   transaction('results', 'readwrite', (s) => s.delete(id));
 export const clearResults = () => transaction('results', 'readwrite', (s) => s.clear());
-export const loadRecovery = (): Promise<Recovery | undefined> =>
-  transaction('recovery', 'readonly', (s) => s.get('current'));
-export const storeRecovery = (value: Omit<Recovery, 'id'>) =>
-  transaction('recovery', 'readwrite', (s) => s.put({ ...value, id: 'current' }));
-export const clearRecovery = () => transaction('recovery', 'readwrite', (s) => s.delete('current'));
+// The legacy key remains readable. New workspaces always supply their own key.
+export const loadRecovery = (id = 'current'): Promise<Recovery | undefined> =>
+  transaction('recovery', 'readonly', (s) => s.get(id));
+export const storeRecovery = (value: Omit<Recovery, 'id'>, id = 'current') =>
+  transaction('recovery', 'readwrite', (s) => s.put({ ...value, id }));
+export const clearRecovery = (id = 'current') =>
+  transaction('recovery', 'readwrite', (s) => s.delete(id));
+export async function listRecoveries(): Promise<RecoverySummary[]> {
+  const db = await database();
+  try {
+    return await new Promise<RecoverySummary[]>((resolve, reject) => {
+      const summaries: RecoverySummary[] = [];
+      const tx = db.transaction('recovery', 'readonly');
+      // Avoid retaining every document's bytes and undo history just to display
+      // the chooser. Only the selected snapshot is loaded for restoration.
+      const request = tx.objectStore('recovery').openCursor();
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        const value = cursor.value as Recovery;
+        summaries.push({
+          id: value.id,
+          updated: value.updated,
+          sources: value.sources.map((s) => ({ name: s.name })),
+        });
+        cursor.continue();
+      };
+      tx.oncomplete = () => resolve(summaries.sort((a, b) => b.updated - a.updated));
+      tx.onabort = tx.onerror = () =>
+        reject(tx.error || new Error('Lokales Speichern fehlgeschlagen.'));
+    });
+  } finally {
+    db.close();
+  }
+}

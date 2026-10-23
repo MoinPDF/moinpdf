@@ -73,7 +73,32 @@ export type AutoFlowPlan = {
   pages: AutoFlowPagePlan[];
   /** Root must rebind continuation marks AND run styles after creating its font-reference source. */
   continuationFontReference: 'original-source';
+  region?: Rect;
+  continuationRegion?: Rect;
 };
+
+/** A conservative automatic body boundary. The complete flow plan still checks
+ * every obstacle; this suggestion never relaxes the export safety conditions. */
+export function suggestEditorFlowBottom(
+  selected: Rect,
+  paragraphs: readonly Rect[],
+  obstacles: readonly Rect[],
+  height: number,
+) {
+  if (!Number.isFinite(height) || height <= 0) throw new Error('Ungültige Seitenhöhe.');
+  const gap = 6 / height,
+    end = selected.y + selected.h;
+  const inColumn = (r: Rect) => r.x < selected.x + selected.w && r.x + r.w > selected.x;
+  let bottom = Math.min(0.95, 1 - 36 / height);
+  for (const r of [...obstacles, ...paragraphs.filter((p) => p.y >= 0.85)]) {
+    if (inColumn(r) && r.y >= end - gap) bottom = Math.min(bottom, r.y - gap);
+  }
+  if (bottom <= end + 2 / height)
+    throw new Error(
+      'Unter diesem Absatz ist kein sicherer Textbereich frei. Bitte die Textgrenze manuell prüfen.',
+    );
+  return bottom;
+}
 
 const PAD_PT = 2;
 const FIT_TOLERANCE_PT = 0.5;
@@ -453,6 +478,8 @@ export async function prepareEditorAutoFlow(
   for (const [i, page] of result.entries())
     if (page.slot !== i) fail('The plan contains an unexplained blank page.');
   return {
+    region: { ...region },
+    continuationRegion: { ...continuation },
     sourceId: source.id,
     originalPageId: input.originalPageId,
     groupId: input.groupId,

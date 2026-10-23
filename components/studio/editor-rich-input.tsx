@@ -7,11 +7,14 @@ import {
   type CSSProperties,
   type FormEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import type { Mark, EditorTextStyle } from '@/lib/studio-engine';
 import type { PreparedEditorRun } from '@/lib/editor-rich-layout';
 import {
   editorSegments,
   editorStyle,
+  editorScriptMetrics,
+  insertEditorFragment,
   editorSelectionStyle,
   replaceEditorRange,
   type EditorSelection,
@@ -20,6 +23,7 @@ import {
   editorCaretAtPoint,
   editorDomSelection,
   readEditorDom,
+  parseEditorClipboard,
   setEditorDomSelection,
 } from '@/lib/editor-dom';
 import { ui } from '@/lib/ui-language';
@@ -36,6 +40,7 @@ export type EditorStartPoint = {
 export function EditorRichInput({
   mark,
   width,
+  pageWidth = width,
   style,
   runs,
   disabled,
@@ -48,6 +53,7 @@ export function EditorRichInput({
 }: {
   mark: Mark;
   width: number;
+  pageWidth?: number;
   style: CSSProperties;
   runs?: PreparedEditorRun[];
   disabled: boolean;
@@ -59,6 +65,29 @@ export function EditorRichInput({
   onSearch?: () => void;
 }) {
   const [repair, setRepair] = useState(0);
+  const [paste, setPaste] = useState<{
+    fragment: NonNullable<ReturnType<typeof parseEditorClipboard>>;
+    start: number;
+    end: number;
+    revision: Mark;
+  } | null>(null);
+  const [pasteError, setPasteError] = useState('');
+  useEffect(() => {
+    setPaste(null);
+    setPasteError('');
+  }, [mark]);
+  const applyPaste = (formatted: boolean) => {
+    if (!paste || paste.revision !== mark) return;
+    const { fragment, start, end } = paste;
+    if ((mark.text || '').length + fragment.text.length - (end - start) > 20000) {
+      setPasteError('Der eingefügte Text ist zu lang. Bitte kleinere Abschnitte einfügen.');
+      return;
+    }
+    pendingCaret.current = start + fragment.text.length;
+    input.current?.focus({ preventScroll: true });
+    onPatch(mark.id, insertEditorFragment(mark, start, end, fragment, formatted), 'typing');
+    setPaste(null);
+  };
   const [magnifier, setMagnifier] = useState<{
     x: number;
     y: number;
@@ -91,6 +120,10 @@ export function EditorRichInput({
       width,
       repair,
       style.color,
+      mark.listStyle,
+      mark.listStart,
+      mark.listContinuation,
+      mark.paragraphSpacing,
       runs?.map((r) => r.resolution.font.cssFamily),
     ]);
     if (signature.current === key) return;
@@ -115,12 +148,64 @@ export function EditorRichInput({
           style.color === 'transparent'
             ? 'transparent'
             : run.style.color || mark.color || '#222222',
-        fontSize: `${(run.style.fontScale || mark.fontScale || 0.028) * width}px`,
+        fontSize: `${editorScriptMetrics(run.style, (run.style.fontScale || mark.fontScale || 0.028) * width).size}px`,
+        position: run.style.script && run.style.script !== 'normal' ? 'relative' : undefined,
+        top: `${editorScriptMetrics(run.style, (run.style.fontScale || mark.fontScale || 0.028) * width).shift}px`,
+        textDecorationLine: run.style.underline ? 'underline' : 'none',
+        textUnderlineOffset: '0.12em',
+        textDecorationThickness: '0.055em',
         ...(font ? { fontFamily: `"${font.cssFamily}"` } : {}),
       });
       return span;
     });
-    root.replaceChildren(...nodes);
+    if ((mark.listStyle && mark.listStyle !== 'none') || mark.paragraphSpacing) {
+      const fragment = document.createDocumentFragment();
+      let offset = 0,
+        number = mark.listStart || 1;
+      for (const [index, paragraph] of (mark.text || '').split('\n').entries()) {
+        if (
+          index === 0 &&
+          mark.listContinuation &&
+          !paragraph.trim() &&
+          mark.listStyle === 'numbered'
+        )
+          number++;
+        const block = document.createElement('div');
+        block.className = 'editor-rich-paragraph';
+        block.style.marginTop = index
+          ? `${(mark.paragraphSpacing || 0) * (mark.fontScale || 0.028) * width}px`
+          : '0';
+        if (paragraph.trim() && mark.listStyle && mark.listStyle !== 'none') {
+          const label = mark.listStyle === 'numbered' ? `${number++}.` : '•';
+          block.dataset.listMarker = index === 0 && mark.listContinuation ? '' : label;
+          const indent = Math.max(1.5, label.length * 0.65 + 0.5);
+          block.style.paddingLeft = `${indent}em`;
+        }
+        for (const [i, run] of segments.entries()) {
+          const start = Math.max(offset, run.start),
+            end = Math.min(offset + paragraph.length, run.end);
+          if (start < end) {
+            const node = nodes[i].cloneNode(false) as HTMLElement;
+            node.textContent = (mark.text || '').slice(start, end);
+            block.append(node);
+          }
+        }
+        if (!paragraph) {
+          const br = document.createElement('br');
+          br.dataset.editorTail = 'true';
+          block.append(br);
+        }
+        if (offset + paragraph.length < (mark.text || '').length) {
+          const br = document.createElement('span');
+          br.textContent = '\n';
+          br.style.display = 'none';
+          block.append(br);
+        }
+        fragment.append(block);
+        offset += paragraph.length + 1;
+      }
+      root.replaceChildren(fragment);
+    } else root.replaceChildren(...nodes);
     if (!mark.text || mark.text.endsWith('\n')) {
       const br = document.createElement('br');
       br.dataset.editorTail = 'true';
@@ -385,6 +470,49 @@ export function EditorRichInput({
   }
   return (
     <>
+      {(paste || pasteError) &&
+        createPortal(
+          <div
+            className="editor-paste-choice"
+            role="group"
+            aria-label={ui('Text einfügen')}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                setPaste(null);
+                setPasteError('');
+                input.current?.focus({ preventScroll: true });
+              }
+            }}
+          >
+            <strong>{ui('Text einfügen')}</strong>
+            {paste && (
+              <>
+                <button type="button" autoFocus onClick={() => applyPaste(false)}>
+                  {ui('An PDF anpassen')}
+                </button>
+                <button type="button" onClick={() => applyPaste(true)}>
+                  {ui('Formatierung übernehmen')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPaste(null);
+                    setPasteError('');
+                    input.current?.focus({ preventScroll: true });
+                  }}
+                >
+                  {ui('Abbrechen')}
+                </button>
+              </>
+            )}
+            {pasteError && <p role="alert">{ui(pasteError)}</p>}
+          </div>,
+          document.body,
+        )}
       {magnifier && (
         <div
           className="editor-selection-magnifier"
@@ -405,7 +533,7 @@ export function EditorRichInput({
         data-editor-history="true"
         contentEditable={!disabled}
         suppressContentEditableWarning
-        spellCheck={false}
+        spellCheck={!!mark.spellcheck}
         style={style}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
@@ -418,7 +546,22 @@ export function EditorRichInput({
         }}
         onPaste={(e) => {
           e.preventDefault();
-          insert(e.clipboardData.getData('text/plain'));
+          const plain = e.clipboardData.getData('text/plain'),
+            html = e.clipboardData.getData('text/html');
+          const range = input.current ? editorDomSelection(input.current) : null;
+          setPasteError('');
+          if (html && range) {
+            try {
+              const fragment = parseEditorClipboard(html, plain, mark, pageWidth);
+              if (fragment) {
+                setPaste({ fragment, start: range.start, end: range.end, revision: mark });
+                return;
+              }
+            } catch (error) {
+              setPasteError((error as Error).message);
+            }
+          }
+          insert(plain);
         }}
         onDrop={(e) => e.preventDefault()}
         onCompositionStart={() => {
@@ -446,7 +589,7 @@ export function EditorRichInput({
             e.preventDefault();
             remember();
             onSearch();
-          } else if ((e.ctrlKey || e.metaKey) && ['b', 'i'].includes(e.key.toLowerCase())) {
+          } else if ((e.ctrlKey || e.metaKey) && ['b', 'i', 'u'].includes(e.key.toLowerCase())) {
             e.preventDefault();
             remember();
             const selection = input.current ? editorDomSelection(input.current) : null;
@@ -458,7 +601,9 @@ export function EditorRichInput({
               mark.id,
               e.key.toLowerCase() === 'b'
                 ? { bold: active.mixed.has('bold') || !active.style.bold }
-                : { italic: active.mixed.has('italic') || !active.style.italic },
+                : e.key.toLowerCase() === 'i'
+                  ? { italic: active.mixed.has('italic') || !active.style.italic }
+                  : { underline: active.mixed.has('underline') || !active.style.underline },
             );
           }
         }}
