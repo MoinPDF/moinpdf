@@ -9,6 +9,7 @@ on:
       - 'tests/*text*'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'scripts/ci-prepare-apt.sh'
       - '.github/workflows/browser-text.yml'
   workflow_dispatch:
   pull_request:
@@ -19,6 +20,7 @@ on:
       - 'tests/*text*'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'scripts/ci-prepare-apt.sh'
       - '.github/workflows/browser-text.yml'
 permissions:
   contents: read
@@ -62,7 +64,9 @@ jobs:
           defaults write com.apple.Safari AutoOpenSafeDownloads -bool false
       - name: Prepare Firefox
         if: matrix.browser == 'firefox'
+        timeout-minutes: 8
         run: |
+          bash scripts/ci-prepare-apt.sh
           python -m pip install playwright==1.64.0 pymupdf==1.28.2
           python -m playwright install --with-deps firefox
       - name: Start local production build
