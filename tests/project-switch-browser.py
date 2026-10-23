@@ -46,8 +46,22 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         # The save notice precedes the asynchronous list refresh. Escape is
         # intentionally ignored while that operation still locks the dialog.
         expect(page.get_by_role('button', name='Neuen Arbeitsstand speichern', exact=True)).to_be_enabled()
-        page.keyboard.press('Escape')
-        expect(page.get_by_role('dialog')).to_have_count(0)
+        # Repeat the download -> idle -> Escape transition that previously
+        # raced in the complete Docker smoke test. File completion alone does
+        # not prove that React has cleared the dialog's processing lock.
+        for attempt in range(3):
+            if attempt:
+                projects.click()
+            download_button = page.get_by_role('button', name='Projektdatei herunterladen', exact=True)
+            with page.expect_download() as download:
+                download_button.click()
+            saved = Path(temporary) / f'project-{attempt}.moinpdf'
+            download.value.save_as(saved)
+            assert saved.read_bytes().startswith(b'MOINPDF-PROJECT\n')
+            expect(download_button).to_be_enabled()
+            page.keyboard.press('Escape')
+            expect(page.get_by_role('dialog')).to_have_count(0)
+            expect(page.get_by_role('heading', name='Was möchtest du tun?', exact=True)).to_be_visible()
         page.get_by_role('button', name='Seiten organisieren', exact=True).click()
         page.get_by_role('button', name='Seite 1 entfernen', exact=True).click()
         projects.click()
@@ -62,7 +76,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Seiten organisieren', exact=True).click()
         page.get_by_role('button', name='Rückgängig', exact=True).click()
         expect(page.get_by_role('button', name='Seite 1 entfernen', exact=True)).to_be_visible()
-        print('PASS: immediate mobile project reopen, zero-page backup and restored undo')
+        print('PASS: three mobile project downloads followed by Escape, immediate reopen, zero-page backup and restored undo')
     except Exception:
         page.screenshot(path=str(out/'project-switch-failure.png'), full_page=True)
         print('PROJECT_FINAL '+page.locator('body').inner_text(), flush=True)

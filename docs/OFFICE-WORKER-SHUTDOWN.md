@@ -54,6 +54,25 @@ cancellation when synchronous WASM cannot receive the destroy message.
 The runtime is regenerated from the unchanged, checksum-pinned upstream archive.
 Its new manifest and the component-notice checksum identify the exact patch.
 
+## Complete converter teardown
+
+The Docker acceptance run on 2026-10-23 exposed a second child-termination path:
+the destroy handler calls `LibreOfficeConverter.destroy()`, which also terminated
+the pool and each running/unused child. Patch 11 had removed only the handler's
+direct call. The last cached DOCX conversion produced a correct PDF and received
+its destroy acknowledgment, but an Office target and native threads survived.
+
+Runtime patch `moinpdf-conversion-worker-12` removes that converter block as well.
+Session and cached-document cleanup, LibreOfficeKit destruction, cleared runtime
+references and the destroy acknowledgment remain. The page-side owner termination
+and one-second cancellation fallback are unchanged.
+
+`tests/browser-office-smoke.mjs` executes the actual generated worker in a Node VM,
+covering both the converter and fallback paths, including native cleanup errors.
+It verifies document cleanup and acknowledgment while rejecting any child-pool or
+individual-child termination. The test fails against patch 11 and passes against
+patch 12; it supplements the real-browser thread and PDF checks below.
+
 ## Acceptance checks
 
 `tests/browser-office-browser.py` continues to enforce the ten-second cleanup

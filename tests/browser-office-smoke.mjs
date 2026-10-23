@@ -2,7 +2,54 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import { createHash } from 'node:crypto';
+import vm from 'node:vm';
 import ts from 'typescript';
+
+// Exercise the shipped worker's complete destroy path, including the bundled
+// converter. Stubbing only the page-side Worker misses nested pthread teardown.
+const runtime = await readFile('public/vendor/office/browser.worker.global.js', 'utf8');
+const loaded = 'self.postMessage({type:"loaded"});';
+assert.equal(runtime.split(loaded).length, 2, 'Pinned worker has one initialization hook');
+const setup = `self.prepareShutdownTest = (module, bindings, converter) => {
+  E=module;c=bindings;b=true;W=converter?new Z():null;
+  if(W){W.module=E;W.lokBindings=c;W.initialized=true;}
+  self.testConverter=W;
+  N.set('session',{docPtr:11,filePath:'/tmp/session.docx'});
+  v={docPtr:22,filePath:'/tmp/cached.docx'};
+  return ()=>({module:E,bindings:c,converter:W,initialized:b,sessions:N.size,cached:v});
+};`;
+for (const converter of [true, false]) {
+  for (const throws of [false, true]) {
+    const events = [], timers = [], self = {
+      postMessage: data => events.push(['message', data.type, data.id]),
+      close: () => events.push(['close']),
+    };
+    const context = vm.createContext({self,TextEncoder,TextDecoder,console:{log(){}},setTimeout:fn=>timers.push(fn)});
+    vm.runInContext(runtime.replace(loaded, setup + loaded), context);
+    events.length = 0;
+    const child = {terminate:()=>events.push(['child-terminated'])};
+    const pool = {terminateAllThreads:()=>events.push(['pool-terminated']),runningWorkers:[child],unusedWorkers:[child]};
+    const bindings = {
+      unregisterCallback: ptr => events.push(['unregister',ptr]),
+      documentDestroy: ptr => events.push(['document-destroyed',ptr]),
+      destroy: () => {events.push(['bindings-destroyed']);if(throws)throw new Error('Native cleanup failed');},
+    };
+    const state = self.prepareShutdownTest({PThread:pool,FS:{unlink:path=>events.push(['unlink',path])}},bindings,converter);
+    const instance = self.testConverter;
+    await self.onmessage({data:{type:'destroy',id:3}});
+    assert.deepEqual(events,[
+      ['unregister',11],['document-destroyed',11],['unlink','/tmp/session.docx'],
+      ['document-destroyed',22],['unlink','/tmp/cached.docx'],
+      ['bindings-destroyed'],['message','ready',3],
+    ],'Document cleanup must acknowledge without terminating pthread children before their owner');
+    assert.deepEqual(JSON.parse(JSON.stringify(state())),{module:null,bindings:null,converter:null,initialized:false,sessions:0,cached:null});
+    if(instance){assert.equal(instance.getModule(),null);assert.equal(instance.getLokBindings(),null);assert.equal(instance.isReady(),false);}
+    assert.equal(pool.runningWorkers.length,1,'The owner still owns its running children');
+    assert.equal(pool.unusedWorkers.length,1,'The owner still owns its idle children');
+    for(const timer of timers)timer();
+    assert.deepEqual(events.at(-1),['close']);
+  }
+}
 
 await mkdir('.cache', { recursive: true });
 const code = ts.transpileModule(await readFile('lib/browser-office.ts', 'utf8'), {
