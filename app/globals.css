@@ -4134,6 +4134,9 @@ html:has(.editor-canvas-wrap) {
 .editor-inline-buttons {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
   gap: 3px;
 }
 .editor-inline-buttons [aria-pressed='true'] {

@@ -218,6 +218,9 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         rp.locator('.chooser-tool').filter(has=rp.get_by_text('PDF bearbeiten',exact=True)).click()
         if not scan_case:
             # Font changes split PDF text objects; paragraph mode must recover one selectable line.
+            selection_options=rp.locator('.editor-selection-options > summary')
+            expect(selection_options).to_be_visible(timeout=120000)
+            selection_options.click()
             paragraph_mode=rp.get_by_role('button',name='Absätze',exact=True)
             # The fresh context must finish local page/font analysis before
             # paragraph selection is available, just as on the initial import.
