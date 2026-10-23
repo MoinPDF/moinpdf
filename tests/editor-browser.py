@@ -166,14 +166,14 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
             field.press('Control+Shift+z');expect(field).to_have_text('ALT ÄÖÜ €')
             field.press('Control+z');expect(field).to_have_text(replacement)
             # An explicit layout proposal changes nothing before acceptance.
-            page.get_by_text('Adjust layout' if english else 'Layout anpassen',exact=True).click()
+            page.locator('.editor-layout-help > summary').click()
             size=toolbar.get_by_label('Font size in points' if english else 'Textgröße in Punkt',exact=True)
             old_size=size.input_value()
             page.get_by_role('button',name='Reduce font size slightly' if english else 'Schrift etwas verkleinern',exact=True).click()
             expect(page.get_by_label('Adjustment preview' if english else 'Anpassungsvorschau',exact=True)).to_be_visible()
             assert size.input_value()==old_size
             page.get_by_role('button',name='Discard' if english else 'Verwerfen',exact=True).click()
-            page.get_by_text('Adjust layout' if english else 'Layout anpassen',exact=True).click()
+            page.locator('.editor-layout-help > summary').click()
         if not scan_case:
             # Wait for physical-removal preview rather than white rectangle overlay.
             expect(page.locator('.editor-sheet .editor-erasure')).to_have_count(0,timeout=120000)

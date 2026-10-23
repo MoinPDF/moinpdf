@@ -65,7 +65,7 @@ def auto_flow(page,name):
     assert re.search(r'Neue Fortsetzungsseiten:\s*[1-9]',flow.inner_text()),flow.inner_text()
     flow.get_by_role('button',name='Absatzfluss übernehmen',exact=True).click()
     expect(page.get_by_role('button',name='Rückgängig',exact=True)).to_be_enabled(timeout=120000)
-    page.get_by_role('button',name='Rückgängig',exact=True).click();expect(page.locator('.editor-object.text .editor-text-content')).to_have_text(text)
+    page.get_by_role('button',name='Rückgängig',exact=True).click();expect(page.locator('.editor-object.text .editor-text-content')).to_have_attribute('aria-label',text)
     page.get_by_role('button',name='Wiederholen',exact=True).click()
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'flow.pdf') as before:
@@ -76,7 +76,7 @@ def auto_flow(page,name):
     return {'scope':'360 tokens once, preserved following paragraph/footer/sidebar, new pages, atomic undo/redo, untouched original next page'}
 
 def table_rows(page,name):
-    open_editor(page,'table');grid=panel(page,'Tabellenzeilen anpassen');grid.get_by_role('button',name='Tabellenraster prüfen',exact=True).click();expect(grid.get_by_label('Tabelle',exact=True)).to_be_visible(timeout=120000)
+    open_editor(page,'table');grid=panel(page,'Tabelle bearbeiten');grid.get_by_role('button',name='Tabellenraster prüfen',exact=True).click();expect(grid.get_by_label('Tabelle',exact=True)).to_be_visible(timeout=120000)
     def apply(row,height,button):
         grid.get_by_label('Tabellenzeile',exact=True).fill(str(row));grid.get_by_label('Zeilenhöhe in Punkt',exact=True).fill(str(height));grid.get_by_role('button',name=button,exact=True).click();expect(grid.locator('.editor-table-proposal')).to_be_visible(timeout=120000);grid.get_by_role('button',name='Tabellenänderung übernehmen',exact=True).click();expect(grid.locator('.editor-table-proposal')).to_have_count(0)
     apply(2,60,'Zeilenhöhe vorschauen');apply(2,55,'Zeilenhöhe vorschauen');apply(2,45,'Zeile darunter vorschauen')
@@ -135,7 +135,7 @@ def angle(page,name):
     return {'scope':'20-degree original baseline/direction preserved, CropBox and native replacement'}
 
 def nested(page,name):
-    open_editor(page,'nested');pick(page,'NESTED ORIGINAL',True).fill('NESTED EDIT');page.get_by_role('button',name='Fertig',exact=True).click()
+    open_editor(page,'nested');pick(page,'NESTED ORIGINAL',True).fill('NESTED EDIT');page.get_by_role('toolbar',name='Text direkt formatieren',exact=True).get_by_role('button',name='Fertig',exact=True).click()
     image=page.get_by_role('button',name=re.compile('^Vorhandenes Bild auswählen '));expect(image).to_have_count(2,timeout=120000);image.first.click();page.get_by_role('button',name='Bildinhalt zum Zuschneiden anzeigen',exact=True).click();expect(page.get_by_alt_text('Bildinhalt vor dem Zuschneiden',exact=True)).to_be_visible(timeout=90000);page.get_by_label('Bildzuschnitt w',exact=True).fill('50');page.get_by_role('button',name='Bildzuschnitt übernehmen',exact=True).click()
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'nested.pdf') as before:
@@ -191,7 +191,7 @@ def payroll(page,name):
     selection.get_by_role('button',name='Einzelne Textstellen',exact=True).click()
     # No manual font, point-size or geometry adjustment is permitted here.
     pick(page,'September').fill('August')
-    page.get_by_role('button',name='Fertig',exact=True).click()
+    page.get_by_role('toolbar',name='Text direkt formatieren',exact=True).get_by_role('button',name='Fertig',exact=True).click()
     pick(page,'12').fill('18')
     file=save(page,name)
     review=page.get_by_role('region',name='Originaltreue vergleichen',exact=True)
