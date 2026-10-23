@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 23 October 2026. Unreleased editor continuation based on version 0.19.0.
+As of 23 October 2026. Version 0.19.0.
 
 “Edit PDF” displays pages immediately and automatically prepares existing text and scans. OCR runs locally, one page at a time; German and English are selected by default. Rotated lines, existing OCR layers and larger image regions on mixed pages are considered. Low-confidence words are marked. Export retains recognised search text outside removed text runs; adding OCR alone does not change the page image. Rebuilt pages may lose vectors, links and forms. Limits remain 80 MB and 200 pages; dynamic XFA forms must first be saved as regular PDFs.
 
@@ -134,3 +134,11 @@ The current changes and limitations are described in the unreleased [changelog](
 ## Editor interaction and recovery – 23 October 2026
 
 This continuation adds original-page comparison at the same zoom, typographic search mapped to complete original characters, and visible local-recovery status. Recovery coalesces rapid edits and flushes pending writes when switching apps; it does not replace a downloaded project backup. Preflight reports page-specific failures while checking the remaining pages. Shortcut modifiers and ongoing composition do not accidentally navigate table cells. Regression coverage has been extended for these cases; results must be checked for the corresponding commit rather than inferred from an earlier test run.
+
+## Final verification for 0.19.0 – 23 October 2026
+
+Application revision `c53d589efaecf12abfef3bd649d057f12725146e` passed [editor verification #31](https://github.com/MoinPDF/moinpdf/actions/runs/39928669366) with all 29 required cases in each of Chromium, Firefox and WebKit (87 of 87). [Complete Docker installation #315](https://github.com/MoinPDF/moinpdf/actions/runs/39928669417), covering all services, downloads, login, website isolation and the local model, and [browser text verification #76](https://github.com/MoinPDF/moinpdf/actions/runs/39928669470) completed successfully.
+
+All 49 local test suites, type checks, lint, formatting checks and the production build passed. The affected PDF/rich-text suite passed again after the final correction for overlapping search matches at ligatures. Release preparation then changes only the German and English changelog and status documents. Publication additionally requires successful Docker verification of the final `main` commit and four matching images for amd64 and arm64; immutable image references are attached to the release.
+
+These checks do not fully verify OCR accuracy, arbitrary customer documents, physical mobile devices or native Safari. Automatic local recovery can fail after browser-data deletion, storage errors or abrupt process termination; downloaded project files remain the portable backup. The documented font, form, layout and resolution limits still apply.

@@ -4,10 +4,10 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## Unreleased – Edit PDF
+## 0.19.0 – 23 October 2026
 
 - Original page comparison retains zoom and edits; editing overlays are absent and non-interactive in the original view.
-- Typographic search matches PDF ligatures, combining accents and varying whitespace using safe original text offsets; partial characters are never replaced. Exact matching remains available.
+- Typographic search matches PDF ligatures, combining accents and varying whitespace using safe original text offsets; partial characters are never replaced and valid subsequent matches after ligatures are retained. Exact matching remains available.
 - Local recovery coalesces rapid changes, reports only the latest successfully saved revision and flushes pending writes when switching apps. Discard waits for active writes; storage errors remain visible.
 - A page failure no longer stops preflight checks on later pages. Progress and unchecked states are explicit. Table navigation respects shortcut modifiers, composition and normal focus order; nested controls cannot accidentally move a text box.
 
@@ -22,8 +22,6 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Instance-specific edits of supported nested text/image objects and preserved baselines for slanted text. Simple AcroForm structures are preserved under the documented conditions.
 - Bounded text corrections in supported scans up to 16 megapixels retain original resolution and outside pixels; paper backgrounds and demonstrably continuous rules are considered.
 - Local structural repair compares every page, retains original bytes and displays a repair notice. Extended browser cases are included in editor CI; release requires successful checks.
-
-## 0.19.0 – 20 October 2026
 
 - Eligible horizontal word edits remove only affected original characters. Unchanged prefixes, and suffixes whose positions still agree, retain native PDF text. Ambiguous mappings, ligatures, style or layout changes continue to use verified whole-field editing.
 - Link text fields in a chosen order across existing pages. Preview text and style distribution without automatic shrinking; overflow and collisions prevent application. Preview the flow again after further edits.

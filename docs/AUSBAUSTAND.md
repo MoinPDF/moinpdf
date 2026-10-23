@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 23. Oktober 2026. Unveröffentlichte Editor-Fortsetzung auf Basis von Version 0.19.0.
+Stand: 23. Oktober 2026. Version 0.19.0.
 
 „PDF bearbeiten“ zeigt Seiten direkt an und bereitet vorhandenen Text sowie Scans automatisch vor. OCR läuft seitenweise lokal; Deutsch und Englisch sind vorausgewählt. Gedrehte Zeilen, vorhandene OCR-Ebenen und größere Bildbereiche in gemischten Seiten werden berücksichtigt. Unsichere Wörter sind markiert. Beim Export bleibt erkannter Suchtext außerhalb entfernter Textstellen erhalten; reine OCR-Ergänzungen ändern das Seitenbild nicht. Auf neu aufgebauten Seiten können Vektoren, Links und Formulare entfallen. Die Grenzen von 80 MB und 200 Seiten bleiben bestehen; dynamische XFA-Formulare müssen vorher als gewöhnliche PDF gespeichert werden.
 
@@ -202,3 +202,11 @@ Die Änderungen und Grenzen stehen im unveröffentlichten [Änderungsprotokoll](
 ## Editor-Bedienung und Sicherung – 23. Oktober 2026
 
 Die weitere Fortsetzung ergänzt einen direkten Originalvergleich bei gleichem Zoom, typografische Suche mit vollständigen Originalzeichen und einen sichtbaren Status der lokalen Wiederherstellung. Die Sicherung bündelt schnelle Änderungen und startet ausstehende Schreibvorgänge beim App-Wechsel; sie ersetzt keine heruntergeladene Projektsicherung. Einzelne Seitenfehler bleiben in der Vorprüfung sichtbar, während weitere Seiten geprüft werden. Tastenkombinationen und laufende Zeicheneingabe lösen keinen ungewollten Tabellenwechsel aus. Die Regressionstests wurden für diese Fälle erweitert; maßgeblich sind die Ergebnisse des jeweiligen Commits, nicht ältere Prüfstände.
+
+## Abschlussprüfung für 0.19.0 – 23. Oktober 2026
+
+Der Anwendungsstand `c53d589efaecf12abfef3bd649d057f12725146e` hat die [Editor-Prüfung #31](https://github.com/MoinPDF/moinpdf/actions/runs/39928669366) mit allen 29 vorgeschriebenen Fällen je Browser in Chromium, Firefox und WebKit bestanden (87 von 87). Der [Docker-Gesamttest #315](https://github.com/MoinPDF/moinpdf/actions/runs/39928669417) einschließlich aller Dienste, Downloads, Anmeldung, Website-Isolierung und lokalem Modell sowie die [Browser-Textprüfung #76](https://github.com/MoinPDF/moinpdf/actions/runs/39928669470) sind erfolgreich abgeschlossen.
+
+Die 49 lokalen Testgruppen, Typprüfungen, Lint, Formatprüfung und der Produktions-Build wurden erfolgreich ausgeführt. Nach der abschließenden Korrektur überlappender Suchtreffer an Ligaturen wurde die betroffene PDF-/Rich-Text-Prüfung erneut erfolgreich ausgeführt. Die Release-Vorbereitung ändert anschließend nur die deutschen und englischen Änderungs- und Statusdokumente. Die Veröffentlichung verlangt zusätzlich die erfolgreiche Docker-Prüfung des endgültigen `main`-Commits und vier dazu passende Images für amd64 und arm64; deren unveränderliche Referenzen werden dem Release beigefügt.
+
+OCR-Genauigkeit, beliebige Kundendokumente, physische Mobilgeräte und natives Safari sind dadurch nicht vollständig abgesichert. Automatische lokale Wiederherstellung kann bei gelöschten Browserdaten, Speicherfehlern oder abruptem Prozessende ausfallen; heruntergeladene Projektdateien bleiben die übertragbare Sicherung. Die oben dokumentierten Schrift-, Formular-, Layout- und Auflösungsgrenzen gelten weiterhin.

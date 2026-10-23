@@ -9,10 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Unveröffentlicht – PDF bearbeiten
+## 0.19.0 – 23. Oktober 2026
 
 - Direkter Originalvergleich bei unverändertem Zoom; Bearbeitungsmarkierungen sind in der Originalansicht ausgeblendet und nicht bedienbar.
-- Typografische Suche findet PDF-Ligaturen, kombinierte Akzente und variierende Leerzeichen mit sicheren Originalpositionen; Teilzeichen werden nicht ersetzt. Exakte Suche bleibt wählbar.
+- Typografische Suche findet PDF-Ligaturen, kombinierte Akzente und variierende Leerzeichen mit sicheren Originalpositionen; Teilzeichen werden nicht ersetzt, gültige Folgetreffer nach Ligaturen bleiben erhalten. Exakte Suche bleibt wählbar.
 - Automatische lokale Sicherung bündelt schnelle Änderungen, zeigt nur den tatsächlich gesicherten neuesten Stand und stößt ausstehende Schreibvorgänge beim App-Wechsel an. Verwerfen wartet auf laufende Schreibvorgänge; Speicherfehler bleiben sichtbar.
 - Seitenfehler brechen die Vorprüfung der übrigen Seiten nicht mehr ab. Fortschritt, ungeprüfter Zustand und Hinweise werden getrennt angezeigt. Tabellennavigation respektiert Tastenkombinationen, Texteingabe und die normale Fokusreihenfolge; Bedienelemente verschieben Textfelder nicht versehentlich.
 
@@ -27,8 +27,6 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Instanzbezogene Bearbeitung geeigneter verschachtelter Text- und Bildobjekte sowie erhaltener Grundlinie bei geneigtem Text. Einfache AcroForm-Strukturen bleiben unter den dokumentierten Bedingungen erhalten.
 - Begrenzte Textkorrekturen in geeigneten Scanbildern bis 16 Megapixel erhalten die Originalauflösung und Außenpixel; Papierhintergrund und nachweisbare durchgehende Linien werden berücksichtigt.
 - Lokale Strukturreparatur mit Vergleich aller Seiten; unveränderte Originaldatei und sichtbarer Reparaturhinweis. Erweiterte Browserfälle sind in der Editor-CI hinterlegt; die Freigabe setzt erfolgreiche Prüfungen voraus.
-
-## 0.19.0 – 20. Oktober 2026
 
 - Geeignete waagerechte Wortänderungen entfernen nur die betroffenen Originalzeichen. Unveränderte Präfixe und bei gleicher Position auch Suffixe bleiben als PDF-Text erhalten. Mehrdeutige Zeichen, Ligaturen, Schriftschnitt- oder Layoutänderungen verwenden weiterhin die geprüfte Textfeldbearbeitung.
 - Textfelder lassen sich in frei gewählter Reihenfolge über bestehende Seiten verknüpfen. Eine Vorschau verteilt Text und Formatierung ohne automatische Verkleinerung; Überlauf und Kollisionen verhindern die Übernahme. Weitere Änderungen erfordern eine erneute Textfluss-Vorschau.
