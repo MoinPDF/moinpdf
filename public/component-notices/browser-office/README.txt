@@ -23,6 +23,13 @@ the upstream Node conversion path does. The build
 checks each replacement and records the patch ID and modified worker hash
 in the runtime manifest. The WASM, data and original sources are unchanged.
 
+SHUTDOWN PATCH (2026-10-23)
+Patch moinpdf-conversion-worker-12 removes child-thread termination both from
+the worker destroy handler and the bundled converter's delegated destroy path.
+Document and LibreOfficeKit cleanup remain; the page-side owner terminates the
+complete worker tree after acknowledgment. MOINPDF-PATCHES.json records both
+exact replacements and NOTICES.sha256 covers this notice and the patch file.
+
 LIBREOFFICE AND COMPONENTS
 The embedded versionrc identifies core commit:
 https://github.com/LibreOffice/core/tree/d1c9e0e4e1ddeb24fe8f93e56860b3765043f8b1

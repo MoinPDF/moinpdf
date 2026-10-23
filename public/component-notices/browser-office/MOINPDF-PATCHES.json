@@ -1,5 +1,5 @@
 {
-  "id": "moinpdf-conversion-worker-11",
+  "id": "moinpdf-conversion-worker-12",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
   "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
@@ -32,6 +32,11 @@
     {
       "description": "Let the outer browser Worker.terminate() stop the complete worker tree after document cleanup. Explicitly terminating pthread children immediately before their owner can strand native DedicatedWorker threads in Chromium; this also reproduces with a standalone nested-worker control on Chromium 140 and 156.",
       "before": "if(E&&E.PThread?.terminateAllThreads)try{E.PThread.terminateAllThreads();}catch{}",
+      "after": ""
+    },
+    {
+      "description": "The destroy handler also delegates to the bundled LibreOfficeConverter.destroy(). Remove its separate pool and individual-child termination paths too, while preserving LibreOfficeKit cleanup and clearing the converter references. Only the outer owner terminates the worker tree after acknowledgment.",
+      "before": "if(this.module)try{let e=this.module;if(e.PThread?.terminateAllThreads&&e.PThread.terminateAllThreads(),e.PThread?.runningWorkers){for(let t of e.PThread.runningWorkers)t?.terminate&&t.terminate();e.PThread.runningWorkers=[];}if(e.PThread?.unusedWorkers){for(let t of e.PThread.unusedWorkers)t?.terminate&&t.terminate();e.PThread.unusedWorkers=[];}}catch{}",
       "after": ""
     },
     {
