@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import ts from 'typescript';
-import {PDFDocument, pushGraphicsState, popGraphicsState, beginText, endText, setFontAndSize, setTextMatrix, setTextRenderingMode, TextRenderingMode, showText, degrees} from 'pdf-lib';
+import {PDFDocument, PDFName, PDFRawStream, pushGraphicsState, popGraphicsState, beginText, endText, setFontAndSize, setTextMatrix, setTextRenderingMode, TextRenderingMode, showText, degrees} from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import {createWorker, PSM} from 'tesseract.js';
 import {resolve} from 'node:path';
@@ -165,6 +165,9 @@ try {
  await analyzeEditorPage(scan,pageOf(scan),{signal,language:'eng',recognizer:{recognize:async canvas=>(await worker.recognize(canvas.toBuffer('image/png'),{},{text:true,blocks:true})).data,dispose:async()=>{}}});
  const result=await runStudioJob('edit-text',[scan],[pageOf(scan)],{language:'eng',editorLanguage:'eng',forceOcr:false,imageFormat:'png',quality:'balanced',watermark:'TEST',numberStart:1,pageSize:'a4',orientation:'portrait',perSheet:'2'},{marks:{p0:[changed]},crops:{}},()=>{},signal);
  const exported=await source(await result.blob.arrayBuffer());
+ const exportedDocument=await PDFDocument.load(exported.bytes);
+ const scanImages=exportedDocument.context.enumerateIndirectObjects().map(([,object])=>object).filter(object=>object instanceof PDFRawStream&&object.dict.get(PDFName.of('Subtype'))===PDFName.of('Image'));
+ assert(scanImages.length>0);assert(scanImages.every(image=>!image.dict.has(PDFName.of('SMask'))),'Opaque scan patches must not introduce a soft mask that changes neighboring text interpolation');
  const text=(await readTextTargets(exported,pageOf(exported))).targets.map(t=>t.text).join(' ');
  assert.match(text,/August/);assert.doesNotMatch(text,/September/);
  await writeFile(folder+'/scan-original.pdf',scan.bytes);await writeFile(folder+'/scan-edited.pdf',exported.bytes);

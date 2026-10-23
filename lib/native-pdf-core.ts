@@ -864,15 +864,17 @@ function patchNativeImage(
       for (let i = 3; i < p.rgba.length; i += 4)
         if (p.rgba[i] !== 255) throw new Error('Scan-Ausschnitte müssen undurchsichtig sein.');
     }
-    // PDFium owns this BGRA buffer. Avoid a second full-size JavaScript pixel array.
-    const output = api.FPDFBitmap_Create(image.width, image.height, 1);
+    // Patches and source pixels must be opaque. BGRx avoids adding a redundant
+    // soft mask, which changes image interpolation in independent PDF viewers.
+    // PDFium owns this buffer; no second full-size JavaScript array is needed.
+    const output = api.FPDFBitmap_Create(image.width, image.height, 0);
     if (!output) throw new Error('Nicht genügend Arbeitsspeicher für das Scanbild.');
     try {
       const buffer = api.FPDFBitmap_GetBuffer(output),
         stride = api.FPDFBitmap_GetStride(output),
         data = heap(api);
       if (
-        api.FPDFBitmap_GetFormat(output) !== 4 ||
+        api.FPDFBitmap_GetFormat(output) !== 3 ||
         !buffer ||
         stride < image.width * 4 ||
         buffer + stride * image.height > data.length

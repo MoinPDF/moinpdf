@@ -6,6 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased – Edit PDF
 
+- Opaque scan patches retain an opaque image instead of adding a redundant soft mask. This preserves the rendering of unchanged text in independent PDF viewers. The payroll browser test checks the neighboring regions pixel for pixel.
 - Scan font matching now checks all 14 local families, uses up to three independently agreeing nearby source samples and supports suitable right-angle crops. Short numbers require at least two agreeing references; mixed-format or ambiguous regions retain the safe fallback.
 - Export review separates saved-output verification from original-font similarity and shows matching before/after detail crops with shared zoom and synchronized scrolling. Manual style changes invalidate the previous similarity evidence.
 - Added fictional payroll acceptance on desktop/touch without manual font or size corrections, plus cancellation/resource-cleanup tests for the detail comparison. Physical-device results remain separately pending in the device checklist.

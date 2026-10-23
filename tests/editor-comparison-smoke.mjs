@@ -39,7 +39,9 @@ try {
  const verification={status:'passed',textPages:1,imagePages:1,editedImageFields:1,changedPages:[0],issues:[],sourcePages:[{sourceId:source.id,index:0,rotation:0}],fidelity:[{page:0,rect:props.rect,text:'18',status:'uncertain',samples:3},{page:0,rect:props.rect,text:'August',status:'matched',samples:1}]};
  await act(async()=>root.render(React.createElement(EditorResultReview,{verification,sources:[source],output})));
  assert.match(document.body.textContent,/Exportprüfung abgeschlossen/);assert.match(document.querySelector('.editor-fidelity-status').textContent,/unsicher/,'Export success cannot imply original-font identity');
+ const shared=document.querySelector('[aria-label="Gemeinsamer Zoom"]');await act(async()=>{shared.value='400';shared.dispatchEvent(new Event('change',{bubbles:true}));});
  const choose=document.querySelector('[aria-label="Änderung auswählen"]');await act(async()=>{choose.value='1';choose.dispatchEvent(new Event('change',{bubbles:true}));});
+ assert.equal(document.querySelector('[aria-label="Gemeinsamer Zoom"]').value,'400','Changing the reviewed edit retains the chosen shared zoom');
  assert.match(document.querySelector('.editor-fidelity-status').textContent,/gute Annäherung/);assert.doesNotMatch(document.querySelector('.editor-fidelity-status').textContent,/Originalschrift verwendet/);
  console.log('PASS: identical detail regions and shared 100/200/400% scale, synchronized scroll, cancellation/stale-result and failure cleanup, accessible controls, independent export/fidelity status and edit selection.');
 } finally {await act(async()=>root.unmount());dom.window.close();}

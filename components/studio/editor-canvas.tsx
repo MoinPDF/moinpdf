@@ -740,6 +740,13 @@ export function EditorCanvas({
           Math.abs(t.y - target.y) * dims.height < 60 &&
           (t.origin === 'ocr' || t.invisible),
       )
+      .sort(
+        (a, b) =>
+          Math.abs(a.y - target.y) * dims.height +
+          Math.abs(a.x - target.x) * dims.width * 0.15 -
+          Math.abs(b.y - target.y) * dims.height -
+          Math.abs(b.x - target.x) * dims.width * 0.15,
+      )
       .slice(0, 16)
       .map((t) => editorTargetMark(t, page.index, dims.width, t.id));
     void refineEditorScanTypography(

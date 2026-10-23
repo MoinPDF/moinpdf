@@ -5247,5 +5247,6 @@
   "Original im Detail": "Original detail",
   "Originaltreue vergleichen": "Compare fidelity to the original",
   "Eine erfolgreiche Exportprüfung bestätigt die gespeicherte Darstellung. Die Schriftähnlichkeit zum Original wird getrennt bewertet; ein Scan bleibt eine Annäherung.": "A successful export check confirms the saved appearance. Font similarity to the original is assessed separately; a scan remains an approximation.",
-  "Änderung auswählen": "Select change"
+  "Änderung auswählen": "Select change",
+  "Vergleiche nach dem Export unter „Originaltreue vergleichen“ die automatisch gewählten Detailausschnitte. Wähle eine Änderung und 100, 200 oder 400 Prozent gemeinsamen Zoom; beide Ausschnitte scrollen synchron. Die Schriftähnlichkeit wird getrennt von der Exportprüfung angezeigt. Bei Scans bleibt sie eine Annäherung; manuelle Formatänderungen machen die frühere Bewertung ungültig.": "After export, compare the automatically selected detail crops under “Compare fidelity to the original”. Select a change and shared zoom of 100, 200 or 400 percent; both crops scroll together. Font similarity is shown separately from export verification. Scans remain an approximation; manual formatting changes invalidate the previous assessment."
 }

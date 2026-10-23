@@ -11,6 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Unveröffentlicht – PDF bearbeiten
 
+- Undurchsichtige Scan-Ausschnitte bleiben ohne zusätzliche Transparenzmaske. Dadurch behalten unveränderte Texte auch in unabhängigen PDF-Lesern ihre Darstellung. Der Abrechnungs-Browsertest prüft die benachbarten Bereiche pixelgenau.
 - Der Scan-Schriftvergleich berücksichtigt alle 14 lokalen Familien und bis zu drei unabhängig übereinstimmende Referenzstellen. Geeignete rechtwinklig gedrehte Ausschnitte werden unterstützt; kurze Zahlen benötigen mindestens zwei passende Referenzen. Gemischte oder mehrdeutige Ausschnitte behalten die sichere Rückfalloption.
 - Die Ergebnisansicht trennt Exportprüfung und Schriftähnlichkeit zum Original. Automatische Detailausschnitte zeigen Original und Ergebnis mit gemeinsamem Zoom und synchronem Scrollen; manuelle Formatänderungen machen frühere Ähnlichkeitswerte ungültig.
 - Neue Desktop-/Touch-Abnahme mit einer fiktiven Abrechnung ohne manuelle Schrift- oder Größenkorrektur sowie Tests für Abbruch und Speicherfreigabe des Detailvergleichs. Prüfungen auf physischen Geräten bleiben in einer eigenen Checkliste offen.
