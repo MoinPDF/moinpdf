@@ -12,6 +12,7 @@ on:
       - 'scripts/ci-prepare-apt.sh'
       - 'public/locales/**'
       - 'tests/editor*'
+      - 'tests/word*'
       - 'tests/text-browser-server.py'
       - '.github/workflows/editor.yml'
   pull_request:
@@ -77,6 +78,7 @@ jobs:
           python tests/editor-quality-browser.py || status=1
           python tests/editor-workflow-browser.py || status=1
           python tests/editor-adaptive-browser.py || status=1
+          python tests/word-export-browser.py || status=1
           python tests/editor-browser-report-check.py || status=1
           exit "$status"
       - uses: actions/upload-artifact@v4

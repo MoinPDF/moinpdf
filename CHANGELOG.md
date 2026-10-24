@@ -9,6 +9,14 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.20.1 – 2026-10-24
+
+- „PDF zu Word“ bietet im Browser standardmäßig „Seitenlayout mit Bildern“. Originale Seitenformate, Bildpositionen, Spalten und Tabellenlinien bleiben erhalten; Text wird in bearbeitbaren Textfeldern angeordnet. Der einfache Absatzexport und der Dokumentenserver bleiben verfügbar.
+- Scan-Seiten werden lokal per OCR erkannt. Erkannte Buchstaben werden aus dem Hintergrund entfernt, bevor bearbeitbarer Text eingesetzt wird. Nicht zuverlässig rekonstruierbare Seiten und gedrehte Textbereiche bleiben sichtbar als Grafik; die Ergebnisansicht nennt diese Einschränkungen. Tabellenlinien sind ein Seitenhintergrund, keine Word-Tabellen.
+- Deutsche und englische Werkzeuganleitung aktualisiert; mehrteilige Ergebnishinweise werden einzeln übersetzt.
+- Unbenutzten Callback im Word-Werkzeug entfernt, der die strenge Docker-Codeprüfung blockierte.
+- Zusätzliche Browsertests laden tatsächliche DOCX-Ausgaben herunter und prüfen Bilder, Text, Seitenformate, Scan-Erkennung und den Wechsel zum Absatzexport auf Desktop und schmalen Touch-Ansichten. Die Veröffentlichung der Images verlangt außerdem erfolgreiche Editor-, Browser- und Dokumentationsprüfungen desselben Quellstands.
+
 ## 0.20.0 – 2026-10-24
 
 - Persönlicher Schnellzugriff mit bis zu sechs sortierbaren Favoriten, zuletzt verwendeten Werkzeugen und direktem Zugang zu gespeicherten Arbeitsabläufen.

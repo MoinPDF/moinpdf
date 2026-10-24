@@ -124,8 +124,12 @@ Die zentrale Versionsnummer steht in [package.json](../package.json) und wird im
 ## Eine Version veröffentlichen
 
 1. Versionsnummer und Changelog aktualisieren und die Änderungen auf `main` prüfen lassen.
-2. Der vollständige Docker-Lauf muss erfolgreich sein. Erst danach startet
-   **Publish Docker images** für genau diesen Quellstand.
+2. Der vollständige Docker-Lauf muss erfolgreich sein. **Publish Docker images**
+   prüft zusätzlich die erfolgreichen Editor-, Browser-Kompatibilitäts- und
+   Dokumentationsläufe für genau denselben `main`-Quellstand. Solange einer dieser
+   Läufe fehlt, läuft oder fehlschlägt, werden keine Images veröffentlicht.
+   Nach Abschluss eines noch laufenden Tests kann die fehlgeschlagene
+   Freigabeprüfung erneut gestartet werden.
 3. Den erfolgreichen Abschluss aller vier Images für amd64 und arm64 abwarten.
    Die Artefakte `docker-image-web`, `docker-image-documents` und
    `docker-image-translation` sowie `docker-image-website` enthalten Tags, Digests, Quellstand und Plattformen.

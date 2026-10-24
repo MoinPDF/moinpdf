@@ -70,7 +70,6 @@ function StandardServerWorkbench({
   onAdd,
   onBusy,
   onUse,
-  onChoose,
 }: Props) {
   const { t } = useLanguage();
   const { tools } = useTools();
