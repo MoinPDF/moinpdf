@@ -57,6 +57,12 @@
       radial-gradient(ellipse 38vw 42vh at 0% 104%, #148b8c60, transparent 100%);
   }
 }
+/* A slightly deeper mint canvas separates desktop panels without changing the palette. */
+@media (min-width: 1101px) {
+  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
+    background-color: #e8f2ee;
+  }
+}
 .moinpdf-shell .app-toolbar {
   border-bottom-color: var(--ui-line);
   box-shadow: 0 1px 0 var(--harbor-edge-highlight);

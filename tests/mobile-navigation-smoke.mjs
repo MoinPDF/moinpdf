@@ -104,7 +104,7 @@ export const finishDownload=()=>complete(new Blob(['synthetic project']));`,
 );
 
 const dom = new JSDOM(
-  `<!doctype html><html><body><div id="moinpdf-brand"></div><div id="moinpdf-navigation"></div><div id="moinpdf-project-bar"></div><div id="moinpdf-mobile-navigation"></div><main id="moinpdf-content" tabindex="-1"><div id="root"></div></main></body></html>`,
+  `<!doctype html><html><body><div id="moinpdf-brand"></div><div id="moinpdf-navigation"></div><div id="moinpdf-desktop-search"></div><div id="moinpdf-project-bar"></div><div id="moinpdf-mobile-navigation"></div><main id="moinpdf-content" tabindex="-1"><div id="root"></div></main></body></html>`,
   { url: 'http://moinpdf.test', pretendToBeVisual: true },
 );
 for (const key of [
@@ -299,7 +299,7 @@ try {
     [...nav().querySelectorAll('button')].map((el) => el.textContent),
     ['Start', 'Werkzeuge', 'Suche', 'Projekte', 'Mehr'],
   );
-  assert.equal(document.querySelectorAll('.harbor-desktop-nav button').length, 4);
+  assert.equal(document.querySelectorAll('.harbor-desktop-nav button').length, 3);
   await click(document.querySelector('.home-all-tools'));
   assert.equal(allTools, 1, 'Desktop All tools navigates');
   await click(nav().querySelector('button'));

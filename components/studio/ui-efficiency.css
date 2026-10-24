@@ -165,20 +165,38 @@
   color: var(--harbor-action-ink);
   font-weight: 700;
 }
-.moinpdf-shell .desktop-command-trigger {
-  min-width: 155px;
+.desktop-search-row {
+  display: none;
+}
+.moinpdf-shell .desktop-search-row .desktop-command-trigger {
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 12px 18px;
   border: 1px solid var(--ui-control-line);
   background: var(--ui-surface);
-  border-radius: 10px;
+  border-radius: 12px;
+  box-shadow: var(--harbor-shadow);
+  font-size: 14px;
+}
+.desktop-command-trigger > svg {
+  flex-shrink: 0;
+  color: var(--ui-teal);
 }
 .desktop-command-trigger kbd {
-  margin-left: 5px;
+  margin-left: auto;
   border: 1px solid var(--ui-line);
   background: var(--ui-soft);
   border-radius: 4px;
   padding: 2px 4px;
   font-size: 10px;
   white-space: nowrap;
+}
+.desktop-command-trigger:focus-visible {
+  outline: 2px solid var(--ui-teal);
+  outline-offset: 3px;
 }
 .desktop-tool-search {
   width: min(650px, calc(100vw - 40px));
@@ -412,6 +430,12 @@
   accent-color: var(--ui-green);
 }
 @media (min-width: 1101px) {
+  .moinpdf-shell .desktop-search-row {
+    display: block;
+    width: var(--harbor-content-width);
+    min-width: 0;
+    margin: 16px auto 8px;
+  }
   .moinpdf-shell .editor-workspace .inspector {
     top: calc(var(--project-bar-height) + 12px);
     max-height: calc(100dvh - var(--project-bar-height) - 24px);
@@ -698,15 +722,6 @@ dialog.editor-settings-sheet::backdrop {
   }
   .results-shortcut {
     flex-wrap: nowrap;
-  }
-  .moinpdf-shell .desktop-command-trigger {
-    min-width: 40px;
-    width: 40px;
-    padding: 8px;
-  }
-  .moinpdf-shell .desktop-command-trigger span,
-  .moinpdf-shell .desktop-command-trigger kbd {
-    display: none;
   }
 }
 

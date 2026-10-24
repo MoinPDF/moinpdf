@@ -125,12 +125,14 @@ export function HarborNavigation({
 }) {
   const { t } = useLanguage();
   const [host, setHost] = useState<HTMLElement | null>(null);
+  const [searchHost, setSearchHost] = useState<HTMLElement | null>(null);
   const [brandHost, setBrandHost] = useState<HTMLElement | null>(null);
   const [mobileHost, setMobileHost] = useState<HTMLElement | null>(null);
   const mobileNav = useRef<HTMLElement>(null);
   const [contentUnderneath, setContentUnderneath] = useState(false);
   useEffect(() => {
     setHost(document.getElementById('moinpdf-navigation'));
+    setSearchHost(document.getElementById('moinpdf-desktop-search'));
     setBrandHost(document.getElementById('moinpdf-brand'));
     setMobileHost(document.getElementById('moinpdf-mobile-navigation'));
   }, []);
@@ -198,16 +200,20 @@ export function HarborNavigation({
         createPortal(
           <nav className="harbor-desktop-nav" aria-label={t('Hauptnavigation', 'Main navigation')}>
             {items}
-            <MobileToolSearch
-              desktop
-              locked={locked}
-              onChoose={onChoose}
-              onTools={onTools}
-              onProjects={onProjects}
-            />
             <MoreMenu />
           </nav>,
           host,
+        )}
+      {searchHost &&
+        createPortal(
+          <MobileToolSearch
+            desktop
+            locked={locked}
+            onChoose={onChoose}
+            onTools={onTools}
+            onProjects={onProjects}
+          />,
+          searchHost,
         )}
       {mobileHost &&
         createPortal(

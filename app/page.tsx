@@ -285,6 +285,7 @@ function WorkspaceShell() {
           <AppearanceControls />
         </div>
       </header>
+      <div id="moinpdf-desktop-search" className="desktop-search-row" />
       <div id="moinpdf-mobile-navigation" />
       <div id="moinpdf-recovery" />
       <SidebarProvider
