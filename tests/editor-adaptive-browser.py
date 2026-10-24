@@ -238,7 +238,12 @@ def payroll(page,name):
 def execute(browser,name,width,callback):
     selected=os.environ.get('MOINPDF_BROWSER_CASES','').split(',')
     if selected!=[''] and name not in selected:return
-    context=browser.new_context(viewport={'width':width,'height':1000},has_touch=width<600,accept_downloads=True,reduced_motion='reduce');page=context.new_page();page.set_default_timeout(45000);errors=[];blocked=[]
+    context=browser.new_context(viewport={'width':width,'height':1000},has_touch=width<600,accept_downloads=True,reduced_motion='reduce')
+    context.tracing.start(screenshots=True,snapshots=True,sources=True)
+    page=context.new_page();page.set_default_timeout(45000);errors=[];blocked=[];diagnostics=[]
+    page.on('console',lambda message:diagnostics.append({'event':'console','type':message.type,'text':message.text}))
+    page.on('requestfailed',lambda request:diagnostics.append({'event':'requestfailed','url':request.url,'failure':request.failure}))
+    page.on('worker',lambda worker:(diagnostics.append({'event':'worker-created','url':worker.url}),worker.on('close',lambda *_:diagnostics.append({'event':'worker-closed','url':worker.url}))))
     page.on('pageerror',lambda e:errors.append(str(e)))
     def route(r):
         if r.request.method not in ('GET','HEAD') or (urlsplit(r.request.url).netloc!=urlsplit(origin).netloc and not r.request.url.startswith(('blob:','data:'))):blocked.append(r.request.url);r.abort()
@@ -246,10 +251,13 @@ def execute(browser,name,width,callback):
     page.route('**/*',route);result={'case':name,'viewport':width};print('START: '+name,flush=True)
     try:result.update(**callback(page,name));assert not errors,errors;assert not blocked,blocked;result['status']='passed'
     except Exception as e:
-        result.update(status='failed',error=str(e),traceback=traceback.format_exc(),page_errors=errors,blocked_requests=blocked);print(result['traceback'],flush=True)
+        result.update(status='failed',error=str(e),traceback=traceback.format_exc(),page_errors=errors,blocked_requests=blocked,diagnostics=diagnostics);print(result['traceback'],flush=True)
         try:page.screenshot(path=str(out/(name+'-failure.png')),full_page=True,timeout=10000);(out/(name+'-failure.txt')).write_text(page.locator('body').inner_text(timeout=5000),encoding='utf8')
         except Exception:pass
-    finally:report['results'].append(result);(out/'adaptive-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8');context.close();print(result['status'].upper()+': '+name,flush=True)
+    finally:
+        if result.get('status')=='failed':context.tracing.stop(path=str(out/(name+'-trace.zip')))
+        else:context.tracing.stop()
+        report['results'].append(result);(out/'adaptive-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8');context.close();print(result['status'].upper()+': '+name,flush=True)
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
         browser=getattr(api,engine).launch();report[engine]=browser.version

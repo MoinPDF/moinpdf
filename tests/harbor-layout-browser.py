@@ -238,7 +238,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.get_by_text('Paperwork. Sorted.', exact=True)).to_be_visible()
         # Home now preserves the category selected by the earlier tool checks.
         page.locator('.harbor-categories').get_by_role('button', name='Quick access', exact=True).click()
-        expect(page.get_by_role('heading', name='Quick access', exact=True)).to_be_visible()
+        expect(page.get_by_role('heading', name='Your quick access', exact=True)).to_be_visible()
         page.locator('.harbor-mobile-nav').get_by_role('button', name='Search', exact=True).click()
         page.locator('.mobile-tool-search input').fill('merge')
         expect(page.locator('.mobile-search-result').first).to_contain_text('Merge')

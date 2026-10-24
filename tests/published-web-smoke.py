@@ -31,7 +31,11 @@ def chooser(page):
     expect(page.locator('.chooser-tool')).to_have_count(112)
 
 def back(page):
-    page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
+    mobile_tools = page.locator('.harbor-mobile-nav').get_by_role('button', name='Werkzeuge', exact=True)
+    if mobile_tools.is_visible():
+        mobile_tools.click()
+    else:
+        page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
     chooser(page)
 
 def close_project_dialog(page):
