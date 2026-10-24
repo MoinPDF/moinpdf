@@ -634,11 +634,20 @@
 .moinpdf-shell .harbor-photo img {
   object-fit: contain;
 }
-/* Keep the complete header photo compact on desktop; retain mobile sizing. */
+/* Keep the complete header photo compact on larger tablets. */
 @media (min-width: 1001px) {
   .moinpdf-shell .harbor-home .harbor-photo {
     max-width: 640px;
     margin-inline: auto;
+  }
+}
+/* Match the desktop navigation breakpoint; keep the photo on mobile. */
+@media (min-width: 1101px) {
+  .moinpdf-shell .harbor-home .harbor-photo {
+    display: none;
+  }
+  .moinpdf-shell .harbor-home .harbor-upload {
+    margin-top: 0;
   }
 }
 .moinpdf-shell .workspace-add-file:focus-visible,

@@ -1,7 +1,8 @@
 /* Kachelmosaik and its home category selection. Shared category tones, brand
    and upload colors stay in their existing stylesheets. */
 .moinpdf-shell.moinpdf-shell .mosaic-discovery {
-  padding: 0 18px 6px;
+  /* Use the upload panel's outer edges for search, categories and cards. */
+  padding: 0 0 6px;
   gap: 14px;
   border: 0;
   border-radius: 0;
@@ -289,7 +290,7 @@
 }
 @media (max-width: 600px) {
   .moinpdf-shell.moinpdf-shell .mosaic-discovery {
-    padding: 0 10px 4px;
+    padding: 0 0 4px;
     gap: 12px;
   }
   .moinpdf-shell.moinpdf-shell .mosaic-categories {
