@@ -16,6 +16,13 @@ def within_viewport(page, name):
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), name
     assert page.locator('.app-toolbar').bounding_box()['height'] <= 90, name
 
+def category_order(page, name):
+    assert page.evaluate('''() => {
+        const categories = document.querySelector('.harbor-discovery-toolbar').getBoundingClientRect();
+        const tools = document.querySelector('#home-tool-grid').getBoundingClientRect();
+        return categories.bottom <= tools.top + 1;
+    }'''), f'Categories must precede their tool cards: {name}'
+
 def framed(locator):
     assert locator.count() > 0
     for el in locator.all():
@@ -73,6 +80,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 page.set_viewport_size({'width':width, 'height':1000 if width > 1000 else 844})
                 geometry = home_geometry(page, width)
                 within_viewport(page, f'home {theme} {width}')
+                category_order(page, f'home {theme} {width}')
                 image, upload, search = (geometry[key] for key in ('image', 'upload', 'search'))
                 assert image['y'] + image['height'] <= upload['y'], (theme, width, 'photo order')
                 if width > 1100:
@@ -125,6 +133,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             categories = page.locator('.harbor-categories button').all_text_contents()
             for category in categories:
                 page.locator('.harbor-categories').get_by_role('button', name=category, exact=True).click()
+                category_order(page, f'{width}px {category}')
                 tool_ids = page.locator('.tool-mosaic-card').evaluate_all('(cards) => cards.map(card => card.dataset.toolId)')
                 for tool_id in tool_ids:
                     title = tool_titles[tool_id]
