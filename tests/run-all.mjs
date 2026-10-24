@@ -33,6 +33,7 @@ const suites = [
   'size-split',
   'document-server',
   'conversion',
+  'word-layout',
   'recovery',
   'evidence',
   'century',

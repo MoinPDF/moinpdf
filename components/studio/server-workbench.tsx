@@ -74,7 +74,10 @@ function StandardServerWorkbench({
 }: Props) {
   const { t } = useLanguage();
   const { tools } = useTools();
-  const [processing, setProcessing] = useState('local');
+  const [processing, setProcessing] = useState(
+    tool === 'pdf-word' && integratedDocumentServer ? 'server' : 'local',
+  );
+  const [wordOutput, setWordOutput] = useState('layout');
   const [mode, setMode] = useState(tool === 'certificate-sign' ? 'validate' : 'create');
   const [progress, setProgress] = useState('');
   const [backgroundAvailable, setBackgroundAvailable] = useState(false);
@@ -85,7 +88,7 @@ function StandardServerWorkbench({
   const serverBase = websiteMode ? integratedWebsiteServer : integratedDocumentServer;
   const localOffice = tool === 'office-pdf' && processing === 'local';
   const localCertificate = tool === 'certificate-sign' && mode === 'sign' && processing === 'local';
-  const localWord = !integratedDocumentServer && tool === 'pdf-word';
+  const localWord = tool === 'pdf-word' && (!integratedDocumentServer || processing === 'local');
   const localOptimize = processing === 'local' && tool === 'optimize-pdf',
     localMode = localWord || localOptimize || localOffice || localCertificate;
   const [capabilities, setCapabilities] = useState<ServerCapabilities | null>(null);
@@ -222,6 +225,7 @@ function StandardServerWorkbench({
     mode,
     profile,
     processing,
+    wordOutput,
     attachments,
     extra,
     spreadsheet,
@@ -372,8 +376,12 @@ function StandardServerWorkbench({
     }
     if (localWord) {
       if (!source) throw new Error('Bitte zuerst eine PDF auswählen.');
-      const { createTextWordFile } = await import('@/lib/word-export');
-      const out = await createTextWordFile(source, signal, { report: setProgress });
+      const { createTextWordFile, createLayoutWordFile } = await import('@/lib/word-export');
+      const out = await (wordOutput === 'text' ? createTextWordFile : createLayoutWordFile)(
+        source,
+        signal,
+        { report: setProgress },
+      );
       if (!signal.aborted) setResult(out);
       return;
     }
@@ -530,6 +538,7 @@ function StandardServerWorkbench({
       <section className="advanced-card conversion-card" aria-label={ui(info.title)}>
         <fieldset disabled={busy} className="advanced-fields conversion-fields">
           {(['office-pdf', 'optimize-pdf'].includes(tool) ||
+            (tool === 'pdf-word' && integratedDocumentServer) ||
             (tool === 'certificate-sign' && mode === 'sign')) && (
             <Choice
               label={ui('Verarbeitung')}
@@ -746,20 +755,35 @@ function StandardServerWorkbench({
             </p>
           )}
           {tool === 'pdf-word' && (
-            <p className="fine-note">
-              {localWord
-                ? ui(
-                    'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.',
-                  )
-                : ui(
-                    'Text, Tabellen und Bilder werden für Word übernommen. Bei komplexen Layouts kann die Anordnung abweichen.',
-                  )}{' '}
-              {ui('Reine Scans zuerst mit')}{' '}
-              <button className="conversion-text-link" onClick={() => onChoose('ocr')}>
-                {ui('OCR & Text')}
-              </button>{' '}
-              {ui('auslesen.')}
-            </p>
+            <>
+              {localWord && (
+                <Choice
+                  label={ui('Word-Ausgabe')}
+                  value={wordOutput}
+                  onChange={setWordOutput}
+                  items={[
+                    ['layout', 'Seitenlayout mit Bildern'],
+                    ['text', 'Nur Text als Absätze'],
+                  ]}
+                />
+              )}
+              <p className="fine-note">
+                {localWord
+                  ? wordOutput === 'layout'
+                    ? ui(
+                        'Seitenformat und Bilder bleiben erhalten. Text wird in bearbeitbaren Textfeldern angeordnet. Grafiken und Tabellenlinien bilden den Seitenhintergrund. Schriften und komplexe Layouts können abweichen.',
+                      )
+                    : ui(
+                        'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.',
+                      )
+                  : ui(
+                      'Text, Tabellen und Bilder werden für Word übernommen. Bei komplexen Layouts kann die Anordnung abweichen.',
+                    )}{' '}
+                {ui(
+                  'Scan-Seiten werden automatisch per OCR erkannt. Erkannte Texte bitte kontrollieren.',
+                )}
+              </p>
+            </>
           )}
           {tool === 'email-pdf' && (
             <>
@@ -1030,7 +1054,9 @@ function StandardServerWorkbench({
               result={{ ...result, inputSize: source?.size || file?.size || 0 }}
               compareSize={tool === 'optimize-pdf' && source?.kind === 'pdf'}
             />
-            {result.note && <p>{ui(result.note)}</p>}
+            {result.note?.split('\n').map((note, index) => (
+              <p key={index}>{ui(note)}</p>
+            ))}
             <ResultActions
               result={result}
               url={url}

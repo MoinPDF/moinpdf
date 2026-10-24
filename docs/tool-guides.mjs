@@ -252,9 +252,9 @@ export const guides = {
   ], 'ZIP mit aufeinanderfolgenden PDF-Teilen innerhalb des erreichbaren Limits.', 'Die Reihenfolge bleibt erhalten, Seiten werden nicht als Bilder neu komprimiert. Lesezeichen, Signaturen und interaktive Formularfunktionen werden nicht übernommen.'),
   'pdf-word': guide('Eine PDF mit Text oder gut lesbaren Scan-Seiten.', [
     'Wähle die Datei. Seiten ohne auslesbaren Text werden beim Word-Export automatisch per OCR erkannt.',
-    'Starte die Word-Erstellung. In der vollständigen Installation verarbeitet der Dokumentenserver Text, Tabellen und Bilder; die Browser-Ausgabe bietet einen reinen Textexport.',
+    'Im Browser ist „Seitenlayout mit Bildern“ voreingestellt: Seitenformat, Bilder und Grafiken bleiben erhalten, Text wird in bearbeitbaren Textfeldern angeordnet. „Nur Text als Absätze“ bietet einen einfachen Textexport. Die vollständige Installation bietet zusätzlich den Dokumentenserver.',
     'Öffne die DOCX-Datei in Word und kontrolliere insbesondere Tabellen, Schriften, Absätze und Seitenumbrüche.'
-  ], 'Bearbeitbare DOCX-Datei.', 'Ein PDF speichert kein vollständiges Word-Layout. Auch die Server-Konvertierung kann Nacharbeit erfordern; die lokale Textausgabe rekonstruiert das Layout nicht.'),
+  ], 'Bearbeitbare DOCX-Datei.', 'Im Layoutmodus bilden Grafiken und Tabellenlinien den Seitenhintergrund; Textfelder bleiben bearbeitbar, Tabellen sind keine Word-Tabellen. Nicht installierte Schriften können ersetzt werden. Scans und komplexe Layouts bitte kontrollieren. Nicht rekonstruierbare Seiten bleiben als gekennzeichnete Bildseiten erhalten.'),
   'email-pdf': guide('Eine gespeicherte EML-Datei oder eine Outlook-MSG-Datei.', [
     'Wähle die E-Mail-Datei. MoinPDF übernimmt Kopfzeilen wie Absender und Betreff sowie den Nachrichteninhalt.',
     'Aktiviere bei Bedarf die zusätzliche Ausgabe der Anlagen als ZIP.',

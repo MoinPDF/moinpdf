@@ -3,6 +3,65 @@ import { Document, Packer, Paragraph, TextRun } from 'docx';
 import type { Source } from './pdf-engine';
 import type { ExportFile } from './advanced-types';
 
+export async function createLayoutWordFile(
+  source: Source,
+  signal: AbortSignal,
+  options: { report?: (message: string) => void } = {},
+): Promise<ExportFile> {
+  signal.throwIfAborted();
+  if (!source.pdf.numPages || source.pdf.numPages > 200)
+    throw new Error('Bitte eine PDF mit höchstens 200 Seiten verwenden.');
+  const { wordLayoutSection, packWordLayout } = await import('./word-layout');
+  const { readWordLayoutPage, createEditorRecognizer } = await import('./word-layout-source');
+  const recognizer = createEditorRecognizer(signal);
+  const sections = [];
+  let bytes = 0,
+    ocrPages = 0,
+    imagePages = 0,
+    preservedText = 0,
+    textCount = 0;
+  try {
+    for (let index = 0; index < source.pdf.numPages; index++) {
+      signal.throwIfAborted();
+      options.report?.(`Seite ${index + 1} von ${source.pdf.numPages} für Word vorbereiten …`);
+      const page = await readWordLayoutPage(source, index, signal, { ...options, recognizer });
+      bytes += page.background.byteLength;
+      textCount += page.text.length;
+      if (bytes > 64 * 1024 * 1024 || textCount > 100000)
+        throw new Error(
+          'Die Word-Ausgabe wird zu groß. Bitte die PDF zuerst in kleinere Teile aufteilen.',
+        );
+      if (page.ocr) ocrPages++;
+      if (page.imageOnly) imagePages++;
+      else preservedText += page.preservedText;
+      sections.push(wordLayoutSection(page));
+    }
+    return {
+      blob: await packWordLayout(sections, signal),
+      filename: source.name.replace(/\.pdf$/i, '') + '.docx',
+      kind: 'data',
+      pages: source.pdf.numPages,
+      note: [
+        'Seitenformat, Bilder und Grafiken übernommen. Text bleibt in positionierten Textfeldern bearbeitbar. Grafiken und Tabellenlinien bilden den Seitenhintergrund; Tabellen werden nicht zu Word-Tabellen.',
+        'Bitte Schriften und Textpositionen in Word kontrollieren. Nicht installierte Schriften können ersetzt werden.',
+        ocrPages
+          ? `${ocrPages} Seiten per OCR für Word aufbereitet. Erkannte Texte und Bildbereiche bitte kontrollieren.`
+          : '',
+        imagePages
+          ? `${imagePages} Seiten wurden zur Erhaltung der Darstellung als Bild übernommen; ihr Text ist nicht bearbeitbar.`
+          : '',
+        preservedText
+          ? `${preservedText} gedrehte oder überlappende Textbereiche bleiben als Grafik erhalten und sind nicht bearbeitbar.`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    };
+  } finally {
+    await recognizer.dispose();
+  }
+}
+
 // Browser-only editions can still create a real DOCX without an external service.
 export async function createTextWordFile(
   source: Source,
