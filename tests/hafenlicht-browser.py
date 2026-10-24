@@ -132,9 +132,12 @@ with sync_playwright() as api:
                 mobile.screenshot(path=str(out/f'hafenlicht-mobile-{width}-{theme}.png'), full_page=True)
                 category = mobile.locator('.harbor-categories').get_by_role('button', name='Umwandeln', exact=True)
                 assert category.bounding_box()['height'] >= 44
+                # Press feedback is checked before category layout changes can scroll it away.
+                category.scroll_into_view_if_needed()
+                category.dispatch_event('pointerdown', {'button':0, 'isPrimary':True, 'pointerType':'touch'})
+                expect(mobile.locator('.harbor-light-echo')).to_have_count(1)
                 category.tap()
                 expect(category).to_have_attribute('aria-pressed', 'true')
-                expect(mobile.locator('.harbor-light-echo')).to_have_count(1)
                 no_overflow(mobile)
                 expect(mobile.locator('.harbor-light-echo')).to_have_count(0, timeout=1800)
                 tile = mobile.locator('.tool-mosaic-card[data-tool-id=pdf-word]')

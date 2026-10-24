@@ -216,6 +216,9 @@
 .results-shortcut small {
   color: var(--ui-teal);
 }
+.results-shortcut-count {
+  display: none;
+}
 #moinpdf-results-bar:empty {
   display: none;
 }
@@ -409,6 +412,24 @@
   accent-color: var(--ui-green);
 }
 @media (min-width: 1101px) {
+  .moinpdf-shell .editor-workspace .inspector {
+    top: calc(var(--project-bar-height) + 12px);
+    max-height: calc(100dvh - var(--project-bar-height) - 24px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    align-self: start;
+  }
+  .moinpdf-shell .editor-workspace .inspector-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .moinpdf-shell .editor-workspace .inspector-heading,
+  .moinpdf-shell .editor-workspace .workspace-action-notices,
+  .moinpdf-shell .editor-workspace .inspector-apply {
+    flex-shrink: 0;
+  }
   .moinpdf-shell .app-toolbar {
     flex-wrap: wrap;
     gap: 10px;
@@ -663,4 +684,42 @@ dialog.editor-settings-sheet::backdrop {
 }
 .editor-canvas-options[hidden] {
   display: none;
+}
+
+@media (min-width: 1101px) and (max-width: 1279px) {
+  .moinpdf-shell .harbor-header-actions {
+    gap: 6px;
+  }
+  .moinpdf-shell .document-create-toggle {
+    min-width: 40px;
+    width: 40px;
+    padding: 8px;
+  }
+  .moinpdf-shell .document-create-toggle > span,
+  .results-shortcut > span,
+  .results-shortcut > small {
+    display: none;
+  }
+  .results-shortcut-count {
+    display: inline;
+  }
+  .results-shortcut {
+    flex-wrap: nowrap;
+  }
+  .moinpdf-shell .desktop-command-trigger {
+    min-width: 40px;
+    width: 40px;
+    padding: 8px;
+  }
+  .moinpdf-shell .desktop-command-trigger span,
+  .moinpdf-shell .desktop-command-trigger kbd {
+    display: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .moinpdf-shell [data-sonner-toaster] {
+    --offset-bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+    --mobile-offset-bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+  }
 }

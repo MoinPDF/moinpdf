@@ -1392,8 +1392,16 @@ function Studio() {
   useEffect(() => {
     const continueFromResult = (event: Event) => {
       const detail = (event as CustomEvent).detail;
-      if (locked || continuingResult.current || !detail?.result?.blob?.type?.includes('pdf'))
+      if (!detail?.result?.blob?.type?.includes('pdf') || continuingResult.current) return;
+      if (locked) {
+        toast.info(
+          t(
+            'Bitte warte, bis die aktuelle Verarbeitung abgeschlossen ist.',
+            'Please wait for the current operation to finish.',
+          ),
+        );
         return;
+      }
       if (detail.tool !== 'project' && !tools.some((tool) => tool.id === detail.tool)) return;
       continuingResult.current = true;
       void (async () => {
@@ -1592,6 +1600,7 @@ function Studio() {
             className="document-create-toggle"
             disabled={locked}
             aria-pressed={writerOpen}
+            aria-label={t('Neues Dokument')}
             title={t('Neues Dokument')}
             onClick={() => {
               if (!writerDocument)
@@ -2751,6 +2760,7 @@ function Studio() {
                             filename={resultName}
                             onRename={renameResult}
                             fresh={resultFresh}
+                            nextDisabled={locked}
                             label={
                               result.kind === 'zip'
                                 ? t('ZIP herunterladen')

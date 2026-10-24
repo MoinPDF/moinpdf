@@ -101,6 +101,7 @@ export function ResultActions({
   fresh = false,
   label,
   disabled = false,
+  nextDisabled = disabled,
 }: {
   result: DownloadResult;
   url: string;
@@ -109,6 +110,7 @@ export function ResultActions({
   fresh?: boolean;
   label?: string;
   disabled?: boolean;
+  nextDisabled?: boolean;
 }) {
   const { t } = useLanguage();
   const [editing, setEditing] = useState(false);
@@ -200,7 +202,7 @@ export function ResultActions({
           disabled={disabled}
         />
       </div>
-      <ResultNextSteps result={{ ...result, filename }} disabled={disabled} />
+      <ResultNextSteps result={{ ...result, filename }} disabled={nextDisabled} />
     </div>
   );
 }

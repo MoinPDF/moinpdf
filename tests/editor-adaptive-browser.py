@@ -28,7 +28,7 @@ if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
     else:raise RuntimeError('Production test server unavailable')
 report={'results':[],'limits':['Desktop engines and touch emulation, not physical devices or native Safari.']}
 def panel(page,title):
-    if page.locator('.editor-advanced-workflows').get_by_text(title, exact=True).count(): controls_ui.settings(page, advanced=True)
+    if page.locator('.editor-advanced-workflows').get_by_text(title).count(): controls_ui.settings(page, advanced=True)
     options=page.locator('.editor-canvas-options')
     if options.get_by_text(title, exact=True).count() and options.get_attribute('open') is None: options.locator(':scope > summary').click()
     # Only the direct summary identifies this panel; never select an ancestor.
@@ -123,6 +123,7 @@ def table_rows(page,name):
     page.get_by_role('button',name='Rückgängig',exact=True).click()
     expect(page.get_by_label('Geändertes Tabellenraster',exact=True)).to_have_count(1)
     controls_ui.settings(page)
+    if objects.get_attribute('open') is None: objects.locator(':scope > summary').click()
     expect(objects.get_by_role('button',name=re.compile('New line Second line'))).to_have_count(1)
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'table.pdf') as before:

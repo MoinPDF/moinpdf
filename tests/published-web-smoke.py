@@ -11,6 +11,8 @@ import zipfile
 
 import pymupdf
 from playwright.sync_api import expect, sync_playwright
+from importlib import import_module
+controls_ui = import_module('editor-ui-controls')
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://localhost:8785')
 nonlocal_http = os.environ.get('MOINPDF_TEST_NONLOCAL_HTTP') == '1'
@@ -341,7 +343,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         chooser(lifecycle)
         lifecycle.get_by_role('button', name='PDF bearbeiten', exact=True).click()
         lifecycle.get_by_role('button', name='Neuer Text', exact=True).click()
+        controls_ui.settings(lifecycle)
         lifecycle.get_by_label('Textinhalt', exact=True).fill('REMOVED-FILE-PRIVATE-NOTE')
+        controls_ui.canvas(lifecycle)
         back(lifecycle)
         survivor = Path(temporary) / 'behalten.pdf'
         with pymupdf.open() as document:

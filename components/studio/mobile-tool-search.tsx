@@ -124,6 +124,7 @@ export function MobileToolSearch({
           type="button"
           className={`harbor-nav-item harbor-search-toggle${desktop ? ' desktop-command-trigger' : ''}`}
           disabled={locked}
+          aria-label={desktop ? t('Werkzeug suchen', 'Search tools') : undefined}
           aria-keyshortcuts="Control+k Meta+k"
         >
           <Search size={21} aria-hidden="true" />

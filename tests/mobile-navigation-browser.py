@@ -152,6 +152,10 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 page.locator('.results-shortcut').click()
                 on_screen(page.locator('.workspace-tray'))
                 page.keyboard.press('Escape')
+                result_name=page.locator('.export-name-button').inner_text()
+                page.locator('.result-next-steps').get_by_role('button',name='Text bearbeiten',exact=True).click()
+                expect(page.get_by_role('button',name=result_name+' schließen',exact=True)).to_be_visible(timeout=120000)
+                expect(nav.get_by_role('button',name='Rückgängig',exact=True)).to_be_enabled()
                 checks.append('390px editor: task navigation, native settings/menu layering, focus return, no overflow, PDF export, next steps and results drawer')
             context.close()
         assert not errors, errors

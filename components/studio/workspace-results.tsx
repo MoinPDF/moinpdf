@@ -170,9 +170,13 @@ export function WorkspaceTray({
             className="results-shortcut"
             aria-haspopup="dialog"
             aria-expanded={open}
+            aria-label={`${results.length ? `${results.length} ${t('Ergebnisse', 'results')}` : t('Aufträge', 'Jobs')}${running ? ` · ${running} ${t('läuft', 'running')}` : ''}`}
             onClick={() => setOpen(true)}
           >
             {running ? <LoaderCircle size={18} className="spin" /> : <Archive size={18} />}
+            <b className="results-shortcut-count" aria-hidden="true">
+              {results.length || running || jobs.length}
+            </b>
             <span>
               {results.length
                 ? `${results.length} ${t('Ergebnisse', 'results')}`
