@@ -446,9 +446,6 @@
   .moinpdf-shell .mosaic-discovery {
     gap: 16px;
   }
-  .moinpdf-shell .harbor-discovery-toolbar {
-    order: 5;
-  }
   .moinpdf-shell .mosaic-categories {
     gap: 8px;
   }
@@ -614,10 +611,6 @@ dialog.editor-settings-sheet::backdrop {
   .editor-workspace .history-tools > button:first-child {
     display: none;
   }
-}
-
-.moinpdf-shell .harbor-discovery-toolbar {
-  order: 5;
 }
 
 @media (max-width: 1100px) {
