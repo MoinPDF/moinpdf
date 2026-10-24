@@ -35,8 +35,8 @@ pcodedmp==1.2.6
 pdf2docx==0.5.13
 pillow==13.0.0
 pycparser==3.1
-pydantic==2.13.5
-pydantic_core==2.46.5
+pydantic==2.14.1
+pydantic_core==2.50.1
 pyHanko==0.35.0
 pyhanko-certvalidator==0.31.4
 pymupdf==1.28.2
