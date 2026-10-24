@@ -36,9 +36,15 @@ export function LegalFooter() {
           href={language === 'en' ? '/en/privacy.html' : '/datenschutz.html'}
           target="_blank"
           rel="noopener noreferrer"
+          aria-label={`${t('Datenschutzerklärung')}${t(' (neuer Tab)')}`}
+          title={t('Datenschutzerklärung')}
         >
-          {t('Datenschutzerklärung')}
-          <span className="sr-only">{t(' (neuer Tab)')}</span>
+          <span className="moinpdf-footer-label-full" aria-hidden="true">
+            {t('Datenschutzerklärung')}
+          </span>
+          <span className="moinpdf-footer-label-compact" aria-hidden="true">
+            {t('Datenschutz', 'Privacy')}
+          </span>
         </a>
       </nav>
       <div className="moinpdf-footer-brand">

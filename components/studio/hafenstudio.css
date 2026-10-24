@@ -1074,11 +1074,22 @@
     padding: 22px 16px;
   }
   .moinpdf-shell .moinpdf-legal-footer {
-    padding: 10px 14px 16px;
+    padding: 10px 0 16px;
   }
   .moinpdf-shell .moinpdf-legal-footer nav {
-    gap: 0 16px;
-    font-size: 11px;
+    flex-wrap: nowrap;
+    justify-content: safe center;
+    gap: 0 clamp(2px, calc((100vw - 320px) / 8), 12px);
+    padding: 4px;
+    overflow-x: auto;
+    font-size: clamp(0.625rem, 3.1vw, 0.6875rem);
+  }
+  .moinpdf-shell .moinpdf-legal-footer nav a {
+    flex: 0 0 auto;
+    max-width: none;
+    padding-inline: 0;
+    white-space: nowrap;
+    overflow-wrap: normal;
   }
 }
 @media (max-width: 359px) {

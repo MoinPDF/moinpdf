@@ -125,7 +125,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+.moinpdf-footer-label-compact {
+  display: none;
+}
+
 @media (max-width: 600px) {
+  .moinpdf-footer-label-full {
+    display: none;
+  }
+  .moinpdf-footer-label-compact {
+    display: inline;
+  }
   .moinpdf-legal-footer {
     padding-top: 6px;
   }
