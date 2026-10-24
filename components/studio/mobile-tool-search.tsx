@@ -52,7 +52,8 @@ export function MobileToolSearch({
       )
         return;
       if (desktop !== window.matchMedia('(min-width: 1101px)').matches) return;
-      if (document.querySelector('[role="dialog"][data-state="open"]') && !open) return;
+      if (document.querySelector('dialog[open], [role="dialog"][data-state="open"]') && !open)
+        return;
       event.preventDefault();
       if (!locked) {
         setQuery('');
@@ -129,7 +130,7 @@ export function MobileToolSearch({
         >
           <Search size={21} aria-hidden="true" />
           <span>{desktop ? t('Werkzeug suchen', 'Search tools') : t('Suche', 'Search')}</span>
-          {desktop && <kbd>Strg K</kbd>}
+          {desktop && <kbd>{t('Strg K', 'Ctrl K')}</kbd>}
         </button>
       </DialogTrigger>
       <DialogContent

@@ -686,7 +686,7 @@ dialog.editor-settings-sheet::backdrop {
   display: none;
 }
 
-@media (min-width: 1101px) and (max-width: 1279px) {
+@media (min-width: 1101px) and (max-width: 1439px) {
   .moinpdf-shell .harbor-header-actions {
     gap: 6px;
   }

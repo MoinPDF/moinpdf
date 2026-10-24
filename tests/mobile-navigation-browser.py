@@ -139,6 +139,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 nav.get_by_role('button',name='Format',exact=True).click()
                 inspector=page.locator('dialog.editor-settings-sheet[open]')
                 on_screen(inspector)
+                page.keyboard.press('Control+k')
+                expect(page.locator('.mobile-tool-search')).to_have_count(0)
                 inspector.get_by_label('Sprache gescannter Texte',exact=True).click()
                 # The popup must live inside the native dialog's top layer.
                 expect(inspector.get_by_role('option',name='Französisch',exact=True)).to_be_visible()

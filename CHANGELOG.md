@@ -16,6 +16,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Ruhigere Bearbeitung mit einklappbaren Zusatzoptionen. Mobil stehen Werkzeuge, Rückgängig, Format und PDF-Ausgabe unten bereit; Einstellungen öffnen sich als Dialog von unten. Der Seemann auf der mobilen Startseite bleibt erhalten.
 - Drei verständliche Komprimierungsprofile mit optional gespeicherter Auswahl; klarere Unterscheidung zwischen Browser-Sicherung, Projekt und fertiger PDF.
 - Gezielte Sicherheitsupdates für `fast-uri` und `undici`; die Mindestalter-Ausnahmen sind auf die geprüften Korrekturversionen beschränkt.
+- Die lokale Office-Konvertierung lässt den bestätigten Worker-Abschluss vor dem harten Abbruch auslaufen; der begrenzte Abbruch für nicht reagierende Worker bleibt bestehen.
 
 Bereits seit 0.19.0 integrierte Verbesserungen am PDF-Editor:
 

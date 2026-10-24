@@ -69,7 +69,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             if theme == 'dark':
                 page.locator('.theme-toggle').click()
                 expect(page.locator('html')).to_have_class('dark')
-            for width in (320, 390, 600, 768, 1000, 1024, 1100, 1101, 1440, 1920):
+            for width in (320, 390, 600, 768, 1000, 1024, 1100, 1101, 1280, 1366, 1440, 1920):
                 page.set_viewport_size({'width':width, 'height':1000 if width > 1000 else 844})
                 geometry = home_geometry(page, width)
                 within_viewport(page, f'home {theme} {width}')
@@ -178,6 +178,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             test.goto(origin + ('?lang=en' if language == 'en' else ''))
             if language == 'en':
                 expect(test.get_by_text('Paperwork. Sorted.', exact=True)).to_be_visible()
+            if tool_id == 'organize':
+                test.locator('.harbor-categories').get_by_role('button', name='Seiten', exact=True).click()
             card = test.locator(f'.tool-mosaic-card[data-tool-id="{tool_id}"]')
             title = 'Merge PDFs' if language == 'en' else tool_titles[tool_id]
             card.click()
