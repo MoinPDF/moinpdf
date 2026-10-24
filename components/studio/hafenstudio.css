@@ -31,6 +31,7 @@
 .moinpdf-shell.moinpdf-shell {
   --project-bar-height: 88px;
   --legal-footer-height: 90px;
+  --harbor-content-width: min(1180px, calc(100% - 60px));
   background-color: var(--harbor-page);
   background-image:
     radial-gradient(ellipse at 0 0, #7ccab210, transparent 48%),
@@ -43,7 +44,7 @@
 .moinpdf-shell .app-toolbar {
   display: grid;
   grid-template-columns: minmax(150px, 1fr) auto minmax(210px, 1fr);
-  width: min(1240px, 100%);
+  width: var(--harbor-content-width);
   min-height: var(--project-bar-height);
   height: var(--project-bar-height);
   margin-inline: auto;
@@ -230,7 +231,7 @@
   justify-content: flex-start;
   align-items: stretch;
   gap: 18px;
-  width: min(1180px, calc(100% - 60px));
+  width: var(--harbor-content-width);
   min-height: 0;
   margin: 10px auto 36px;
   padding: 0;
@@ -685,10 +686,16 @@
   font-weight: 400;
 }
 .moinpdf-shell .moinpdf-legal-footer {
+  width: var(--harbor-content-width);
+  margin-inline: auto;
   gap: 2px;
   border-top: 1px solid var(--ui-line);
   padding: 12px 20px 18px;
   color: var(--ui-copy);
+}
+.moinpdf-shell #moinpdf-recovery {
+  width: var(--harbor-content-width);
+  margin-inline: auto;
 }
 /* One visual system for the catalogue, workbenches and dialogs. */
 .moinpdf-shell .chooser-content {
@@ -874,11 +881,12 @@
 @media (max-width: 600px) {
   .moinpdf-shell.moinpdf-shell {
     --project-bar-height: 76px;
+    --harbor-content-width: calc(100% - 24px);
   }
   .moinpdf-shell .app-toolbar {
     padding: 9px max(12px, env(safe-area-inset-right)) 9px max(12px, env(safe-area-inset-left));
     gap: 8px;
-    border-radius: 0;
+    border-radius: 0 0 17px 17px;
   }
   .harbor-brand {
     width: 168px;
@@ -924,7 +932,6 @@
     padding: 5px;
   }
   .moinpdf-shell .upload-entry.harbor-home {
-    width: calc(100% - 24px);
     margin: 4px auto 24px;
     gap: 16px;
   }
