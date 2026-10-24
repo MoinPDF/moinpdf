@@ -4,6 +4,14 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.20.1 – 2026-10-24
+
+- Browser PDF-to-Word conversion now defaults to “Page layout with images”. Original page sizes, image positions, columns and table lines are retained; text is placed in editable text boxes. The plain paragraph export and document server remain available.
+- Scanned pages use local OCR. Recognised letters are removed from the background before editable text is inserted. Pages that cannot be reliably reconstructed and rotated text regions remain visible as graphics, with explicit result notices. Table lines form a page background rather than editable Word tables.
+- Updated German and English tool guidance; multi-part result notices are translated individually.
+- Removed an unused Word-tool callback that blocked strict Docker code checks.
+- Added browser acceptance that downloads actual DOCX files and checks images, text, page dimensions, OCR and switching to paragraph output on desktop and narrow touch views. Image publication additionally requires successful editor, browser compatibility and documentation checks for the same source revision.
+
 ## 0.20.0 – 2026-10-24
 
 - Personal quick access with up to six reorderable favorites, recently used tools and a shortcut to saved workflows.

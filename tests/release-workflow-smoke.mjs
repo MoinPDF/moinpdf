@@ -148,19 +148,25 @@ const publishScript = publishWorkflow.match(/          script: \|\n([\s\S]*?)\n 
   .split('\n').map(line => line.replace(/^            /, '')).join('\n');
 assert.ok(publishScript);
 const publishVerify = new AsyncFunction('github', 'context', 'core', 'process', publishScript);
-async function publish(patch = {}, eventName = 'workflow_run') {
+async function publish(patch = {}, eventName = 'workflow_run', checkPatch = {}) {
   const outputs = {}, calls = [];
   const run = { id: 456, path: '.github/workflows/docker.yml', status: 'completed', conclusion: 'success', head_sha: source, head_branch: 'main', event: 'push', repository: { full_name: 'MoinPDF/moinpdf' }, head_repository: { full_name: 'MoinPDF/moinpdf' }, ...patch };
   const github = { rest: { actions: {
     getWorkflowRun: async ({ run_id }) => { calls.push('get'); assert.equal(run_id, 456); return { data: run }; },
     // Reproduce the production incident: the list index has not caught up yet.
-    listWorkflowRuns: async () => { calls.push('list'); return { data: { workflow_runs: eventName === 'workflow_run' ? [] : [run] } }; },
+    listWorkflowRuns: async ({workflow_id}) => {
+      if (workflow_id !== 'docker.yml') {
+        calls.push(workflow_id);
+        return { data: {workflow_runs: checkPatch.missing ? [] : [{...run,id:789,path:`.github/workflows/${workflow_id}`,...checkPatch}]} };
+      }
+      calls.push('list'); return { data: { workflow_runs: eventName === 'workflow_run' ? [] : [run] } };
+    },
   } } };
   await publishVerify(github, { repo: { owner: 'MoinPDF', repo: 'moinpdf' }, eventName, payload: { workflow_run: { id: 456 } } }, { setOutput: (key, value) => { outputs[key] = value; } }, { env: { SOURCE_SHA: source } });
   return { outputs, calls };
 }
 const published = await publish();
-assert.deepEqual(published, { outputs: { source, run_id: 456 }, calls: ['get'] });
+assert.deepEqual(published, { outputs: { source, run_id: 456 }, calls: ['get', 'editor.yml', 'browser-text.yml', 'documentation.yml'] });
 assert.equal((await publish({}, 'workflow_dispatch')).outputs.source, source);
 for (const patch of [
   { conclusion: 'failure' }, { status: 'in_progress' }, { head_sha: 'c'.repeat(40) },
@@ -171,3 +177,9 @@ for (const patch of [
   await assert.rejects(() => publish(patch, 'workflow_dispatch'), /successful complete Docker/);
 }
 console.log('PASS: image publication uses the completed run directly despite a stale list index and rejects unverified sources; releases retain the same verification run.');
+for (const check of [
+  {missing:true}, {conclusion:'failure'}, {status:'in_progress'}, {status:'queued'},
+  {head_sha:'c'.repeat(40)}, {head_branch:'feature'}, {event:'pull_request'},
+  {repository:{full_name:'Other/fork'}}, {head_repository:{full_name:'Other/fork'}},
+]) await assert.rejects(() => publish({}, 'workflow_run', check), /verification of this exact source/);
+console.log('PASS: image publication also requires successful editor, browser compatibility and documentation checks on the exact main source.');

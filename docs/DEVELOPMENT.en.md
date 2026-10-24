@@ -121,7 +121,7 @@ The central version number is in [package.json](../package.json) and appears in 
 ## Publishing a version
 
 1. Update the version and changelog, and have the changes checked on `main`.
-2. The complete Docker run must succeed. Only then does **Publish Docker images** start for that exact source commit.
+2. The complete Docker run must succeed. **Publish Docker images** also requires successful editor, browser compatibility and documentation runs for that exact `main` source commit. Missing, unfinished or failed checks prevent image publication. If a check was still running, retry the failed publication gate after it completes.
 3. Wait for all four images to succeed for amd64 and arm64. Artifacts `docker-image-web`, `docker-image-documents`, `docker-image-translation` and `docker-image-website` contain tags, digests, source commit and platforms.
 4. **Publish verified release** runs after successful image publication. It can also be started manually under Actions on `main`, with the successful image run ID as `image_run_id`. It requires matching source commits, successful Docker checks, complete image references and a changelog for the current version. It then creates the tag and release with image evidence. Existing releases are not overwritten.
 

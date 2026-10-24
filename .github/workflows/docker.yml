@@ -67,6 +67,12 @@ jobs:
           MOINPDF_TEST_URL: http://localhost:8080
           MOINPDF_TEST_NONLOCAL_HTTP: "1"
         run: python tests/native-editor-browser.py
+      - name: Word layout, scans, images and actual DOCX downloads
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+          MOINPDF_TEST_BROWSERS: chromium
+          MOINPDF_BROWSER_OUTPUT: web-evidence
+        run: python tests/word-export-browser.py
       - name: XFA data editing and packet preservation
         env:
           MOINPDF_TEST_URL: http://localhost:8080

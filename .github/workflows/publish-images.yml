@@ -57,6 +57,21 @@ jobs:
             if (!run || !verified(run)) {
               throw new Error('A successful complete Docker verification on main is required');
             }
+            // A Docker success alone must not publish while another release
+            // check is incomplete or failed. An unfinished check can be retried
+            // after it finishes; older commits never satisfy this gate.
+            for (const workflow of ['editor.yml', 'browser-text.yml', 'documentation.yml']) {
+              const {data} = await github.rest.actions.listWorkflowRuns({
+                ...context.repo, workflow_id: workflow, head_sha: sha,
+                branch: 'main', event: 'push', per_page: 100,
+              });
+              const checks = data.workflow_runs.filter(check => check.path === `.github/workflows/${workflow}`
+                && check.head_sha === sha && check.head_branch === 'main' && check.event === 'push'
+                && check.repository?.full_name === repository && check.head_repository?.full_name === repository);
+              const check = checks.sort((a, b) => b.id - a.id)[0];
+              if (!check || check.status !== 'completed' || check.conclusion !== 'success')
+                throw new Error(`Successful ${workflow} verification of this exact source is required before image publication`);
+            }
             core.setOutput('source', sha);
             core.setOutput('run_id', run.id);
   image:
