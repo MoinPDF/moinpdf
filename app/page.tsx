@@ -1,4 +1,10 @@
 'use client';
+import { useToolPreferences } from '@/components/studio/use-tool-preferences';
+import { ResponsiveInspector } from '@/components/studio/responsive-inspector';
+import {
+  CompressionPresets,
+  savedCompressionQuality,
+} from '@/components/studio/compression-presets';
 import { reportText } from '@/lib/pdf-report';
 import { ui, uiLocale } from '@/lib/ui-language';
 import { EditorResultReview } from '@/components/studio/editor-result-review';
@@ -82,6 +88,7 @@ import {
   MoveVertical,
   CheckCheck,
   FileSearch,
+  Settings2,
 } from 'lucide-react';
 import {
   SidebarProvider,
@@ -272,6 +279,7 @@ function WorkspaceShell() {
         <div id="moinpdf-brand" className="min-w-0" />
         <div id="moinpdf-navigation" />
         <div className="harbor-header-actions">
+          <div id="moinpdf-results-bar" />
           <div id="moinpdf-document-bar" />
           <div id="moinpdf-project-bar" className="project-bar" />
           <AppearanceControls />
@@ -302,6 +310,13 @@ function WorkspaceShell() {
   );
 }
 function Studio() {
+  const toolPreferences = useToolPreferences();
+  const [editorSettingsOpen, setEditorSettingsOpen] = useState(false);
+  const continuingResult = useRef(false);
+  useEffect(() => {
+    const quality = savedCompressionQuality();
+    if (quality) setOptions((old) => ({ ...old, quality }));
+  }, []);
   const toolNavigation = useToolNavigation();
   const { t, language } = useLanguage();
   const { tools, groups } = useTools();
@@ -905,6 +920,8 @@ function Studio() {
     }
   }
   function showTool(id: WorkspaceTool) {
+    toolPreferences.record(id);
+    setEditorSettingsOpen(false);
     if (choosingTool) toolNavigation.capture(homeVisible ? 'home' : 'all', id);
     setWriterOpen(false);
     setHomeRequested(false);
@@ -1372,6 +1389,33 @@ function Studio() {
       toast.error(ui((error as Error).message));
     }
   }
+  useEffect(() => {
+    const continueFromResult = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (locked || continuingResult.current || !detail?.result?.blob?.type?.includes('pdf'))
+        return;
+      if (detail.tool !== 'project' && !tools.some((tool) => tool.id === detail.tool)) return;
+      continuingResult.current = true;
+      void (async () => {
+        try {
+          await adoptDocumentResult({
+            ...detail.result,
+            kind: 'pdf',
+            pages: detail.result.pages || 0,
+            inputSize: detail.result.inputSize || detail.result.blob.size,
+          });
+          if (detail.tool === 'project') setProjectsOpen(true);
+          else showTool(detail.tool);
+        } catch (error) {
+          toast.error(ui((error as Error).message));
+        } finally {
+          continuingResult.current = false;
+        }
+      })();
+    };
+    window.addEventListener('moinpdf-continue-result', continueFromResult);
+    return () => window.removeEventListener('moinpdf-continue-result', continueFromResult);
+  });
   async function word() {
     setWordBusy(true);
     try {
@@ -1580,6 +1624,67 @@ function Studio() {
         }}
         onTools={showTools}
         onChoose={chooseTool}
+        editorActions={
+          isEditor && !choosingTool && sources.length > 0 ? (
+            <>
+              <button
+                type="button"
+                className="harbor-nav-item"
+                disabled={locked}
+                onClick={showTools}
+              >
+                <LayoutGrid size={21} />
+                <span>{t('Werkzeuge', 'Tools')}</span>
+              </button>
+              <button
+                type="button"
+                className="harbor-nav-item"
+                disabled={locked || !history.length}
+                onClick={undo}
+              >
+                <Undo2 size={21} />
+                <span>{t('Rückgängig', 'Undo')}</span>
+              </button>
+              <button
+                id="mobile-editor-format"
+                type="button"
+                className="harbor-nav-item"
+                disabled={locked}
+                aria-haspopup="dialog"
+                aria-expanded={editorSettingsOpen}
+                onClick={() => setEditorSettingsOpen(true)}
+              >
+                <Settings2 size={21} />
+                <span>{t('Format', 'Format')}</span>
+              </button>
+              {view === 'result' && resultUrl ? (
+                <a
+                  className="harbor-nav-item editor-mobile-primary"
+                  href={resultUrl}
+                  download={resultName}
+                >
+                  <Download size={21} />
+                  <span>{t('PDF herunterladen', 'Download PDF')}</span>
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  className="harbor-nav-item editor-mobile-primary"
+                  aria-label={
+                    busy ? t('Abbrechen') : t('Bearbeitete PDF erstellen', 'Create edited PDF')
+                  }
+                  disabled={
+                    !busy && (locked || !selected.length || !hasNeededEdit || documentIndex.ocrBusy)
+                  }
+                  onClick={() => (busy ? job.current?.abort() : void process())}
+                >
+                  {busy ? <X size={21} /> : <Check size={21} />}
+                  <span>{busy ? t('Abbrechen', 'Cancel') : t('PDF erstellen', 'Create PDF')}</span>
+                </button>
+              )}
+            </>
+          ) : undefined
+        }
         projectsOpen={projectsOpen}
         onProjects={() => {
           if (!locked) setProjectsOpen(true);
@@ -1630,7 +1735,11 @@ function Studio() {
           </div>
         </DialogContent>
       </Dialog>
-      <WorkspaceTray locked={locked} onUse={adoptDocumentResult} />
+      <WorkspaceTray
+        locked={locked}
+        onUse={adoptDocumentResult}
+        activeJob={busy ? progress : undefined}
+      />
       <WorkspaceRecovery
         sources={projectSources}
         state={projectState}
@@ -1952,7 +2061,9 @@ function Studio() {
           </button>
         </SidebarFooter>
       </Sidebar>
-      <main className={`studio-main ${toolId === 'compress' ? 'compression-workspace' : ''}`}>
+      <main
+        className={`studio-main ${toolId === 'compress' ? 'compression-workspace' : ''} ${isEditor ? 'editor-workspace' : ''}`}
+      >
         <WorkspaceContext
           sources={sources}
           pageCount={pages.length}
@@ -2487,6 +2598,14 @@ function Studio() {
                             action={editorAction}
                             disabled={locked}
                             recoveryStatus={recoveryStatus}
+                            onSettings={() => {
+                              if (window.matchMedia('(max-width: 1100px)').matches)
+                                setEditorSettingsOpen(true);
+                              else
+                                document
+                                  .getElementById('editor-settings')
+                                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
                             onAction={setEditorAction}
                             onNewText={newText}
                             onImage={() => imagePicker.current?.click()}
@@ -2843,619 +2962,640 @@ function Studio() {
               </span>
             </div>
           </section>
-          <aside className="inspector">
-            <div className="inspector-heading">
-              <span>{t('EINSTELLUNGEN')}</span>
-              <span className="inspector-number">
-                {String(tools.findIndex((t) => t.id === toolId) + 1).padStart(2, '0')}/
-                {tools.length}
-              </span>
-            </div>
-            <div className="inspector-body">
-              <div className="inspector-tool-icon">
-                <tool.icon size={30} strokeWidth={1.35} />
+          <ResponsiveInspector
+            editor={isEditor}
+            open={editorSettingsOpen}
+            onOpenChange={setEditorSettingsOpen}
+          >
+            <aside className={`inspector${isEditor ? ' editor-inspector' : ''}`}>
+              <div className="inspector-heading">
+                <span>{t('EINSTELLUNGEN')}</span>
+                <span className="inspector-number">
+                  {String(tools.findIndex((t) => t.id === toolId) + 1).padStart(2, '0')}/
+                  {tools.length}
+                </span>
               </div>
-              <h2>{ui(tool.title)}</h2>
-              <p className="tool-description">{ui(tool.description)}</p>
-              {isEditor && (
-                <EditorPanel
-                  tool={toolId}
-                  source={activeSource}
-                  mark={selectedMark}
-                  marks={pageMarks}
-                  width={editorDims.width}
-                  height={editorDims.height}
-                  disabled={locked}
-                  onPatch={patchMark}
-                  onRemove={removeMark}
-                  onSelect={setSelectedMarkId}
-                  onDuplicate={duplicateMark}
-                  onNewText={newText}
-                  onImage={() => imagePicker.current?.click()}
-                />
-              )}
-              {toolId === 'edit-text' && (
-                <Suspense fallback={<p role="status">{ui('Editor wird geladen …')}</p>}>
-                  <EditorWorkflowPanel
+              <div className="inspector-body">
+                <div className="inspector-tool-icon">
+                  <tool.icon size={30} strokeWidth={1.35} />
+                </div>
+                <h2>{ui(tool.title)}</h2>
+                <p className="tool-description">{ui(tool.description)}</p>
+                {isEditor && (
+                  <EditorPanel
+                    tool={toolId}
+                    source={activeSource}
+                    mark={selectedMark}
+                    marks={pageMarks}
+                    width={editorDims.width}
+                    height={editorDims.height}
+                    disabled={locked}
+                    onPatch={patchMark}
+                    onRemove={removeMark}
+                    onSelect={setSelectedMarkId}
+                    onDuplicate={duplicateMark}
+                    onNewText={newText}
+                    onImage={() => imagePicker.current?.click()}
+                  />
+                )}
+                <details className="editor-advanced-workflows" hidden={toolId !== 'edit-text'}>
+                  <summary>{t('Weitere Bearbeitungsoptionen', 'More editing options')}</summary>
+                  {toolId === 'edit-text' && (
+                    <Suspense fallback={<p role="status">{ui('Editor wird geladen …')}</p>}>
+                      <EditorWorkflowPanel
+                        sources={sources}
+                        pages={pages}
+                        edits={edits}
+                        disabled={locked}
+                        activePageId={activePage?.id || ''}
+                        selectedMarkId={selectedMarkId}
+                        onApplyFlow={async (plan) => {
+                          if (locked || refs.current.busy)
+                            throw new Error('Bitte die laufende Verarbeitung abwarten.');
+                          const initial = refs.current,
+                            page = initial.pages.find((p) => p.id === plan.originalPageId),
+                            source = initial.sources.find((s) => s.id === plan.sourceId);
+                          if (!page || !source)
+                            throw new Error(
+                              'Die Absatzvorschau gehört nicht mehr zum aktuellen Dokument.',
+                            );
+                          refs.current = { ...initial, busy: true };
+                          setDocumentBusy(true);
+                          const ctrl = new AbortController();
+                          job.current = ctrl;
+                          let prepared:
+                            | Awaited<
+                                ReturnType<
+                                  typeof import('@/lib/editor-auto-workspace').materializeEditorAutoFlow
+                                >
+                              >
+                            | undefined;
+                          let adopted = false;
+                          try {
+                            prepared = await (
+                              await import('@/lib/editor-auto-workspace')
+                            ).materializeEditorAutoFlow(
+                              plan,
+                              source,
+                              page,
+                              initial.pages,
+                              initial.edits,
+                              ctrl.signal,
+                            );
+                            ctrl.signal.throwIfAborted();
+                            if (
+                              refs.current.pages !== initial.pages ||
+                              refs.current.edits !== initial.edits ||
+                              refs.current.sources !== initial.sources
+                            )
+                              throw new Error(
+                                'Das Dokument hat sich geändert. Bitte eine neue Absatzvorschau erstellen.',
+                              );
+                            const nextSources = prepared.addedSource
+                              ? [...initial.sources, prepared.addedSource]
+                              : initial.sources;
+                            if (nextSources.reduce((sum, s) => sum + s.size, 0) > 80 * 1024 * 1024)
+                              throw new Error(
+                                'Die Fortsetzung überschreitet die Grenze von 80 MB.',
+                              );
+                            typingHistory.current = null;
+                            textSelection.current = null;
+                            dismissUndoNotice();
+                            setHistory((old) =>
+                              boundedHistory([...old, snapshot()], nextSources, [
+                                ...projectSources,
+                                ...(prepared!.addedSource ? [prepared!.addedSource] : []),
+                              ]),
+                            );
+                            setFuture([]);
+                            if (prepared.addedSource)
+                              sourcePool.current.set(prepared.addedSource.id, prepared.addedSource);
+                            setSources(nextSources);
+                            setPages(prepared.pages);
+                            setEdits(prepared.edits);
+                            setSelectedMarkId('');
+                            invalidate();
+                            adopted = true;
+                            toast.success(
+                              ui(
+                                'Absatzfluss übernommen. Die gesamte Änderung lässt sich gemeinsam rückgängig machen.',
+                              ),
+                            );
+                          } finally {
+                            if (!adopted && prepared?.addedSource)
+                              await prepared.addedSource.pdf.loadingTask.destroy();
+                            refs.current = { ...refs.current, busy: false };
+                            setDocumentBusy(false);
+                            if (job.current === ctrl) job.current = null;
+                          }
+                        }}
+                        onApply={(next) => {
+                          if (locked) return;
+                          typingHistory.current = null;
+                          textSelection.current = null;
+                          setSelectedMarkId('');
+                          commit({ pages, edits: next });
+                        }}
+                        onReveal={(pageId, mark) => {
+                          setActiveId(pageId);
+                          setSelectedMarkId(mark.id);
+                          setEditorSearchHighlight({ pageId, rect: mark });
+                          setView('document');
+                        }}
+                      />
+                    </Suspense>
+                  )}
+                  {toolId === 'edit-text' && (
+                    <label className="switch-field">
+                      <span>
+                        {ui('Seiten als Bild neu aufbauen')}
+                        <small>
+                          {ui(
+                            'Nur für nicht direkt bearbeitbare Seiten. Vektoren, Links und Formularfelder können entfallen. Ergebnis sorgfältig prüfen.',
+                          )}
+                        </small>
+                      </span>
+                      <Switch
+                        aria-label={ui('Seiten als Bild neu aufbauen')}
+                        checked={!!options.editorAllowRaster}
+                        disabled={locked}
+                        onCheckedChange={(value) =>
+                          setOptions((old) => ({ ...old, editorAllowRaster: value }))
+                        }
+                      />
+                    </label>
+                  )}
+                </details>
+                {isExtraTool(toolId) && (
+                  <ExtraSettings
+                    tool={toolId}
                     sources={sources}
-                    pages={pages}
-                    edits={edits}
-                    disabled={locked}
-                    activePageId={activePage?.id || ''}
-                    selectedMarkId={selectedMarkId}
-                    onApplyFlow={async (plan) => {
-                      if (locked || refs.current.busy)
-                        throw new Error('Bitte die laufende Verarbeitung abwarten.');
-                      const initial = refs.current,
-                        page = initial.pages.find((p) => p.id === plan.originalPageId),
-                        source = initial.sources.find((s) => s.id === plan.sourceId);
-                      if (!page || !source)
-                        throw new Error(
-                          'Die Absatzvorschau gehört nicht mehr zum aktuellen Dokument.',
-                        );
-                      refs.current = { ...initial, busy: true };
-                      setDocumentBusy(true);
-                      const ctrl = new AbortController();
-                      job.current = ctrl;
-                      let prepared:
-                        | Awaited<
-                            ReturnType<
-                              typeof import('@/lib/editor-auto-workspace').materializeEditorAutoFlow
-                            >
-                          >
-                        | undefined;
-                      let adopted = false;
-                      try {
-                        prepared = await (
-                          await import('@/lib/editor-auto-workspace')
-                        ).materializeEditorAutoFlow(
-                          plan,
-                          source,
-                          page,
-                          initial.pages,
-                          initial.edits,
-                          ctrl.signal,
-                        );
-                        ctrl.signal.throwIfAborted();
-                        if (
-                          refs.current.pages !== initial.pages ||
-                          refs.current.edits !== initial.edits ||
-                          refs.current.sources !== initial.sources
-                        )
-                          throw new Error(
-                            'Das Dokument hat sich geändert. Bitte eine neue Absatzvorschau erstellen.',
-                          );
-                        const nextSources = prepared.addedSource
-                          ? [...initial.sources, prepared.addedSource]
-                          : initial.sources;
-                        if (nextSources.reduce((sum, s) => sum + s.size, 0) > 80 * 1024 * 1024)
-                          throw new Error('Die Fortsetzung überschreitet die Grenze von 80 MB.');
-                        typingHistory.current = null;
-                        textSelection.current = null;
-                        dismissUndoNotice();
-                        setHistory((old) =>
-                          boundedHistory([...old, snapshot()], nextSources, [
-                            ...projectSources,
-                            ...(prepared!.addedSource ? [prepared!.addedSource] : []),
-                          ]),
-                        );
-                        setFuture([]);
-                        if (prepared.addedSource)
-                          sourcePool.current.set(prepared.addedSource.id, prepared.addedSource);
-                        setSources(nextSources);
-                        setPages(prepared.pages);
-                        setEdits(prepared.edits);
-                        setSelectedMarkId('');
-                        invalidate();
-                        adopted = true;
-                        toast.success(
-                          ui(
-                            'Absatzfluss übernommen. Die gesamte Änderung lässt sich gemeinsam rückgängig machen.',
-                          ),
-                        );
-                      } finally {
-                        if (!adopted && prepared?.addedSource)
-                          await prepared.addedSource.pdf.loadingTask.destroy();
-                        refs.current = { ...refs.current, busy: false };
-                        setDocumentBusy(false);
-                        if (job.current === ctrl) job.current = null;
-                      }
-                    }}
-                    onApply={(next) => {
-                      if (locked) return;
-                      typingHistory.current = null;
-                      textSelection.current = null;
-                      setSelectedMarkId('');
-                      commit({ pages, edits: next });
-                    }}
-                    onReveal={(pageId, mark) => {
-                      setActiveId(pageId);
-                      setSelectedMarkId(mark.id);
-                      setEditorSearchHighlight({ pageId, rect: mark });
-                      setView('document');
-                    }}
+                    selectedCount={selected.length}
+                    options={options}
+                    locked={locked}
+                    onChange={(patch) => setOptions((old) => ({ ...old, ...patch }))}
                   />
-                </Suspense>
-              )}
-              {toolId === 'edit-text' && (
-                <label className="switch-field">
-                  <span>
-                    {ui('Seiten als Bild neu aufbauen')}
-                    <small>
-                      {ui(
-                        'Nur für nicht direkt bearbeitbare Seiten. Vektoren, Links und Formularfelder können entfallen. Ergebnis sorgfältig prüfen.',
-                      )}
-                    </small>
-                  </span>
-                  <Switch
-                    aria-label={ui('Seiten als Bild neu aufbauen')}
-                    checked={!!options.editorAllowRaster}
-                    disabled={locked}
-                    onCheckedChange={(value) =>
-                      setOptions((old) => ({ ...old, editorAllowRaster: value }))
-                    }
-                  />
-                </label>
-              )}
-              {isExtraTool(toolId) && (
-                <ExtraSettings
-                  tool={toolId}
-                  sources={sources}
-                  selectedCount={selected.length}
-                  options={options}
-                  locked={locked}
-                  onChange={(patch) => setOptions((old) => ({ ...old, ...patch }))}
-                />
-              )}
-              {toolId === 'inspect' && (
-                <>
-                  <OcrLanguagePicker
-                    label={ui('Sprache für Scan-Suche')}
-                    value={options.language}
-                    disabled={locked}
-                    onChange={(language) => setOptions((old) => ({ ...old, language }))}
-                  />
-                  <div className="check-howto">
-                    <span>01</span>
-                    <p>{t('Begriff eingeben und über alle geöffneten Dateien suchen.')}</p>
-                    <span>02</span>
-                    <p>{t('Scan-Seiten bei Bedarf lokal erkennen lassen.')}</p>
-                    <span>03</span>
-                    <p>{t('Treffer prüfen und als neue PDF sammeln.')}</p>
-                  </div>
-                  <p className="fine-note">
-                    {t(
-                      'Vermutete Leerseiten und doppelte Vorschauen werden angezeigt. Die Auswahl bleibt bei dir.',
-                    )}
-                  </p>
-                </>
-              )}
-              {toolId === 'edit-text' && (
-                <OcrLanguagePicker
-                  label={ui('Sprache gescannter Texte')}
-                  value={options.editorLanguage || 'deu+eng'}
-                  disabled={locked}
-                  onChange={(editorLanguage) => setOptions((old) => ({ ...old, editorLanguage }))}
-                />
-              )}
-              {toolId === 'ocr' && (
-                <>
-                  <label className="switch-field">
-                    <span>
-                      {t('Sprachen automatisch ermitteln')}
-                      <small>
-                        {t('Pro Scan-Seite; benötigt zusätzlich etwa 600 MB Arbeitsspeicher')}
-                      </small>
-                    </span>
-                    <Switch
-                      aria-label={t('Sprachen automatisch ermitteln')}
-                      checked={!!options.autoLanguage}
+                )}
+                {toolId === 'inspect' && (
+                  <>
+                    <OcrLanguagePicker
+                      label={ui('Sprache für Scan-Suche')}
+                      value={options.language}
                       disabled={locked}
-                      onCheckedChange={(v) => setOptions((old) => ({ ...old, autoLanguage: v }))}
+                      onChange={(language) => setOptions((old) => ({ ...old, language }))}
                     />
-                  </label>
-                  {options.autoLanguage && (
+                    <div className="check-howto">
+                      <span>01</span>
+                      <p>{t('Begriff eingeben und über alle geöffneten Dateien suchen.')}</p>
+                      <span>02</span>
+                      <p>{t('Scan-Seiten bei Bedarf lokal erkennen lassen.')}</p>
+                      <span>03</span>
+                      <p>{t('Treffer prüfen und als neue PDF sammeln.')}</p>
+                    </div>
                     <p className="fine-note">
                       {t(
-                        'Eine mehrsprachige OCR-Probe und ein lokaler statistischer Sprachvergleich wählen bis zu acht Modelle. Kurze, verrauschte oder mehrdeutige Texte werden zur manuellen Auswahl zurückgewiesen.',
+                        'Vermutete Leerseiten und doppelte Vorschauen werden angezeigt. Die Auswahl bleibt bei dir.',
                       )}
                     </p>
-                  )}
+                  </>
+                )}
+                {toolId === 'edit-text' && (
                   <OcrLanguagePicker
-                    label={ui('Erkennungssprache')}
-                    value={options.language}
-                    disabled={locked || !!options.autoLanguage}
-                    onChange={(language) => setOptions((old) => ({ ...old, language }))}
-                  />
-                  {renderChoice('ocrLayout', 'Seitenaufbau', ocrLayouts)}
-                  <label className="switch-field">
-                    <span>
-                      {t('Alle Seiten neu erkennen')}
-                      <small>{t('Auch vorhandenen Text')}</small>
-                    </span>
-                    <Switch
-                      checked={options.forceOcr}
-                      disabled={locked}
-                      onCheckedChange={(v) => setOptions({ ...options, forceOcr: v })}
-                    />
-                  </label>
-                  <p className="fine-note">
-                    {t(
-                      'Bildseiten werden automatisch erkannt. Bei gemischten Text- und Scanbereichen „Alle Seiten neu erkennen“ aktivieren.',
-                    )}
-                  </p>
-                </>
-              )}
-              {toolId === 'to-images' &&
-                renderChoice('imageFormat', 'Bildformat', [
-                  ['png', 'PNG · scharfe Schrift'],
-                  ['jpg', 'JPG · kleinere Dateien'],
-                  ['webp', 'WebP · moderne Komprimierung'],
-                  ['tiff', 'TIFF · verlustfrei'],
-                  ['bmp', 'BMP · unkomprimiert'],
-                ])}
-              {toolId === 'compress' && (
-                <>
-                  {renderChoice('quality', 'Komprimierung', [
-                    ['gentle', 'Sanft'],
-                    ['balanced', 'Ausgewogen'],
-                    ['small', 'Möglichst klein'],
-                  ])}
-                  <div className="notice">
-                    {t(
-                      'Erstellt eine Bild-PDF. Kopierbare Texte, Links und Formularfunktionen gehen verloren. Eine kleinere Datei ist nicht garantiert.',
-                    )}
-                  </div>
-                </>
-              )}
-              {toolId === 'numbers' && (
-                <label className="field">
-                  <span>{t('Beginnen bei')}</span>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={99999}
-                    value={Number.isNaN(options.numberStart) ? '' : options.numberStart}
-                    onChange={(e) =>
-                      setOptions({ ...options, numberStart: parseInt(e.target.value, 10) })
-                    }
+                    label={ui('Sprache gescannter Texte')}
+                    value={options.editorLanguage || 'deu+eng'}
                     disabled={locked}
+                    onChange={(editorLanguage) => setOptions((old) => ({ ...old, editorLanguage }))}
                   />
-                </label>
-              )}
-              {toolId === 'watermark' && (
-                <>
-                  <label className="field">
-                    <span>{t('Wasserzeichen')}</span>
-                    <Input
-                      value={options.watermark}
-                      maxLength={70}
-                      onChange={(e) => setOptions({ ...options, watermark: e.target.value })}
+                )}
+                {toolId === 'ocr' && (
+                  <>
+                    <label className="switch-field">
+                      <span>
+                        {t('Sprachen automatisch ermitteln')}
+                        <small>
+                          {t('Pro Scan-Seite; benötigt zusätzlich etwa 600 MB Arbeitsspeicher')}
+                        </small>
+                      </span>
+                      <Switch
+                        aria-label={t('Sprachen automatisch ermitteln')}
+                        checked={!!options.autoLanguage}
+                        disabled={locked}
+                        onCheckedChange={(v) => setOptions((old) => ({ ...old, autoLanguage: v }))}
+                      />
+                    </label>
+                    {options.autoLanguage && (
+                      <p className="fine-note">
+                        {t(
+                          'Eine mehrsprachige OCR-Probe und ein lokaler statistischer Sprachvergleich wählen bis zu acht Modelle. Kurze, verrauschte oder mehrdeutige Texte werden zur manuellen Auswahl zurückgewiesen.',
+                        )}
+                      </p>
+                    )}
+                    <OcrLanguagePicker
+                      label={ui('Erkennungssprache')}
+                      value={options.language}
+                      disabled={locked || !!options.autoLanguage}
+                      onChange={(language) => setOptions((old) => ({ ...old, language }))}
+                    />
+                    {renderChoice('ocrLayout', 'Seitenaufbau', ocrLayouts)}
+                    <label className="switch-field">
+                      <span>
+                        {t('Alle Seiten neu erkennen')}
+                        <small>{t('Auch vorhandenen Text')}</small>
+                      </span>
+                      <Switch
+                        checked={options.forceOcr}
+                        disabled={locked}
+                        onCheckedChange={(v) => setOptions({ ...options, forceOcr: v })}
+                      />
+                    </label>
+                    <p className="fine-note">
+                      {t(
+                        'Bildseiten werden automatisch erkannt. Bei gemischten Text- und Scanbereichen „Alle Seiten neu erkennen“ aktivieren.',
+                      )}
+                    </p>
+                  </>
+                )}
+                {toolId === 'to-images' &&
+                  renderChoice('imageFormat', 'Bildformat', [
+                    ['png', 'PNG · scharfe Schrift'],
+                    ['jpg', 'JPG · kleinere Dateien'],
+                    ['webp', 'WebP · moderne Komprimierung'],
+                    ['tiff', 'TIFF · verlustfrei'],
+                    ['bmp', 'BMP · unkomprimiert'],
+                  ])}
+                {toolId === 'compress' && (
+                  <>
+                    <CompressionPresets
+                      value={options.quality}
+                      onChange={(quality) => setOptions((old) => ({ ...old, quality }))}
                       disabled={locked}
                     />
-                  </label>
-                  <div className="watermark-sample">{options.watermark || ui('DEIN TEXT')}</div>
-                  <p className="fine-note">
-                    {t('Transparentes Türkis, mittig auf jeder ausgewählten Seite.')}
-                  </p>
-                </>
-              )}
-              {(toolId === 'resize' || toolId === 'nup') && (
-                <>
-                  {toolId === 'nup' &&
-                    renderChoice('perSheet', 'Seiten pro Blatt', [
-                      ['2', '2 Seiten'],
-                      ['4', '4 Seiten'],
-                    ])}
-                  {renderChoice('pageSize', 'Papierformat', [
-                    ['a4', 'DIN A4'],
-                    ['letter', 'US Letter'],
-                  ])}
-                  {renderChoice('orientation', 'Ausrichtung', [
-                    ['portrait', 'Hochformat'],
-                    ['landscape', 'Querformat'],
-                  ])}
-                  <p className="fine-note">
-                    {t(
-                      'Inhalte werden proportional verkleinert oder vergrößert. Text bleibt kopierbar, soweit er im Original vorhanden ist.',
-                    )}
-                  </p>
-                </>
-              )}
-              {toolId === 'redact' && (
-                <div className="notice strong">
-                  {t(
-                    'Schwärzungen werden in die Seitenbilder eingerechnet. Die betroffenen Seiten enthalten danach keine ursprüngliche Textebene. Prüfe die Ergebnisvorschau vor dem Download.',
-                  )}
-                </div>
-              )}
-              {toolId === 'crop' && (
-                <>
-                  <p className="fine-note">
-                    {t(
-                      'Zugeschnittene Seiten werden als neue Seitenbilder exportiert. Inhalte außerhalb des Ausschnitts werden entfernt; die Textebene entfällt.',
-                    )}
-                  </p>
-                  {activePage && edits.crops[activePage.id] && (
-                    <Button variant="outline" onClick={clearCrop} disabled={locked}>
-                      <X size={15} />
-                      {t('Ausschnitt zurücksetzen')}
-                    </Button>
-                  )}
-                </>
-              )}
-              {toolId === 'annotate' && (
-                <>
-                  <Tabs
-                    value={noteMode}
-                    onValueChange={(v) => setNoteMode(v as 'text' | 'highlight')}
-                  >
-                    <TabsList className="annotation-tabs">
-                      <TabsTrigger value="text">
-                        <Type size={15} />
-                        {ui('Text')}
-                      </TabsTrigger>
-                      <TabsTrigger value="highlight">
-                        <Highlighter size={15} />
-                        {t('Marker')}
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="text">
-                      <label className="field">
-                        <span>{t('Deine Notiz')}</span>
-                        <Textarea
-                          value={noteText}
-                          maxLength={600}
-                          onChange={(e) => setNoteText(e.target.value)}
-                          disabled={locked}
-                        />
-                      </label>
-                      <label className="field">
-                        <span>
-                          {t('Schriftgröße')}
-                          <b>
-                            {fontSize} {ui(' pt')}
-                          </b>
-                        </span>
-                        <Slider
-                          value={[fontSize]}
-                          min={9}
-                          max={42}
-                          step={1}
-                          onValueChange={(v) => setFontSize(v[0])}
-                          aria-label={t('Schriftgröße')}
-                          disabled={locked}
-                        />
-                      </label>
-                    </TabsContent>
-                    <TabsContent value="highlight">
-                      <div className="marker-sample">{t('Wichtiges hervorheben.')}</div>
-                    </TabsContent>
-                  </Tabs>
-                </>
-              )}
-              {toolId === 'sign' && (
-                <>
-                  <Button
-                    className="signature-create"
-                    variant="outline"
-                    onClick={() => setSignatureOpen(true)}
-                    disabled={locked}
-                  >
-                    <PenLine size={16} />
-                    {signature ? ui('Unterschrift ändern') : ui('Unterschrift zeichnen')}
-                  </Button>
-                  {signature && (
-                    <div className="signature-sample">
-                      <img src={signature.image} alt={ui('Deine gezeichnete Unterschrift')} />
-                    </div>
-                  )}
-                  <p className="fine-note">
-                    {t('Wird als Bild eingefügt. Keine digitale Zertifikatssignatur.')}
-                  </p>
-                </>
-              )}
-              {(toolId === 'grayscale' || toolId === 'flatten') && (
-                <div className="notice">
-                  {t(
-                    'Die Ausgabe enthält neue Seitenbilder. Textebenen, Links und interaktive Formularfelder werden nicht übernommen.',
-                  )}
-                </div>
-              )}
-              {toolId === 'metadata' && (
-                <>
-                  {activeSource && (
-                    <div className="metadata-list">
-                      <span>{t('DOKUMENTINFOS DER AKTUELLEN DATEI')}</span>
-                      {(['Title', 'Author', 'Creator', 'Producer', 'CreationDate'] as const).map(
-                        (key) => (
-                          <div key={key}>
-                            <b>
-                              {ui(
-                                {
-                                  Title: 'Titel',
-                                  Author: 'Autor',
-                                  Creator: 'Ersteller',
-                                  Producer: 'PDF-Software',
-                                  CreationDate: 'Erstellt',
-                                }[key],
-                              )}
-                            </b>
-                            <span>{String(metadata[key] || '—')}</span>
-                          </div>
-                        ),
+                    <div className="notice">
+                      {t(
+                        'Erstellt eine Bild-PDF. Kopierbare Texte, Links und Formularfunktionen gehen verloren. Eine kleinere Datei ist nicht garantiert.',
                       )}
                     </div>
-                  )}
-                  <p className="fine-note">
+                  </>
+                )}
+                {toolId === 'numbers' && (
+                  <label className="field">
+                    <span>{t('Beginnen bei')}</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={99999}
+                      value={Number.isNaN(options.numberStart) ? '' : options.numberStart}
+                      onChange={(e) =>
+                        setOptions({ ...options, numberStart: parseInt(e.target.value, 10) })
+                      }
+                      disabled={locked}
+                    />
+                  </label>
+                )}
+                {toolId === 'watermark' && (
+                  <>
+                    <label className="field">
+                      <span>{t('Wasserzeichen')}</span>
+                      <Input
+                        value={options.watermark}
+                        maxLength={70}
+                        onChange={(e) => setOptions({ ...options, watermark: e.target.value })}
+                        disabled={locked}
+                      />
+                    </label>
+                    <div className="watermark-sample">{options.watermark || ui('DEIN TEXT')}</div>
+                    <p className="fine-note">
+                      {t('Transparentes Türkis, mittig auf jeder ausgewählten Seite.')}
+                    </p>
+                  </>
+                )}
+                {(toolId === 'resize' || toolId === 'nup') && (
+                  <>
+                    {toolId === 'nup' &&
+                      renderChoice('perSheet', 'Seiten pro Blatt', [
+                        ['2', '2 Seiten'],
+                        ['4', '4 Seiten'],
+                      ])}
+                    {renderChoice('pageSize', 'Papierformat', [
+                      ['a4', 'DIN A4'],
+                      ['letter', 'US Letter'],
+                    ])}
+                    {renderChoice('orientation', 'Ausrichtung', [
+                      ['portrait', 'Hochformat'],
+                      ['landscape', 'Querformat'],
+                    ])}
+                    <p className="fine-note">
+                      {t(
+                        'Inhalte werden proportional verkleinert oder vergrößert. Text bleibt kopierbar, soweit er im Original vorhanden ist.',
+                      )}
+                    </p>
+                  </>
+                )}
+                {toolId === 'redact' && (
+                  <div className="notice strong">
                     {t(
-                      'Inhalte im Dokument, Kommentare, Bilder und eingebettete Objektdaten werden damit nicht anonymisiert.',
+                      'Schwärzungen werden in die Seitenbilder eingerechnet. Die betroffenen Seiten enthalten danach keine ursprüngliche Textebene. Prüfe die Ergebnisvorschau vor dem Download.',
                     )}
-                  </p>
-                </>
-              )}
-              {(toolId === 'merge' ||
-                toolId === 'split' ||
-                toolId === 'organize' ||
-                toolId === 'images') && (
-                <div className="mini-workflow">
-                  <div>
-                    <span>01</span>
-                    {t('Dateien hinzufügen')}
                   </div>
-                  <div>
-                    <span>02</span>
-                    {t('Seiten auswählen & sortieren')}
-                  </div>
-                  <div>
-                    <span>03</span>
-                    {t('Ergebnis herunterladen')}
-                  </div>
-                </div>
-              )}
-              {visualTools.includes(toolId) && !isEditor && activePage && (
-                <>
-                  <details className="manual-placement">
-                    <summary>{t('Bereich per Eingabe setzen')}</summary>
-                    <div className="position-inputs">
-                      {(['x', 'y', 'w', 'h'] as const).map((key) => (
-                        <label key={key}>
-                          {ui({ x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key])}
-                          <Input
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={Math.round(manualRect[key] * 100)}
-                            onChange={(e) =>
-                              setManualRect({
-                                ...manualRect,
-                                [key]: Math.max(0, Math.min(100, Number(e.target.value))) / 100,
-                              })
-                            }
+                )}
+                {toolId === 'crop' && (
+                  <>
+                    <p className="fine-note">
+                      {t(
+                        'Zugeschnittene Seiten werden als neue Seitenbilder exportiert. Inhalte außerhalb des Ausschnitts werden entfernt; die Textebene entfällt.',
+                      )}
+                    </p>
+                    {activePage && edits.crops[activePage.id] && (
+                      <Button variant="outline" onClick={clearCrop} disabled={locked}>
+                        <X size={15} />
+                        {t('Ausschnitt zurücksetzen')}
+                      </Button>
+                    )}
+                  </>
+                )}
+                {toolId === 'annotate' && (
+                  <>
+                    <Tabs
+                      value={noteMode}
+                      onValueChange={(v) => setNoteMode(v as 'text' | 'highlight')}
+                    >
+                      <TabsList className="annotation-tabs">
+                        <TabsTrigger value="text">
+                          <Type size={15} />
+                          {ui('Text')}
+                        </TabsTrigger>
+                        <TabsTrigger value="highlight">
+                          <Highlighter size={15} />
+                          {t('Marker')}
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="text">
+                        <label className="field">
+                          <span>{t('Deine Notiz')}</span>
+                          <Textarea
+                            value={noteText}
+                            maxLength={600}
+                            onChange={(e) => setNoteText(e.target.value)}
                             disabled={locked}
                           />
                         </label>
-                      ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={placeManual}
-                      disabled={
-                        locked ||
-                        (editMode === 'signature' && !signature) ||
-                        (editMode === 'text' && !noteText.trim())
-                      }
-                    >
-                      {t('Bereich hinzufügen')}
-                    </Button>
-                  </details>
-                  {pageMarks.length > 0 && (
-                    <div className="mark-list">
-                      <span>
-                        {t('AUF DIESER SEITE ·')}
-                        {pageMarks.length}
-                      </span>
-                      {pageMarks.map((m, i) => (
-                        <div key={m.id}>
+                        <label className="field">
                           <span>
-                            {String(i + 1).padStart(2, '0')} ·{' '}
-                            {
-                              {
-                                redact: 'Schwärzung',
-                                text: 'Textnotiz',
-                                highlight: 'Markierung',
-                                signature: 'Unterschrift',
-                                erase: 'Entfernter Bereich',
-                                image: 'Bild',
-                              }[m.kind]
-                            }
+                            {t('Schriftgröße')}
+                            <b>
+                              {fontSize} {ui(' pt')}
+                            </b>
                           </span>
-                          <button
-                            aria-label={ui(`Änderung ${i + 1} entfernen`)}
+                          <Slider
+                            value={[fontSize]}
+                            min={9}
+                            max={42}
+                            step={1}
+                            onValueChange={(v) => setFontSize(v[0])}
+                            aria-label={t('Schriftgröße')}
                             disabled={locked}
-                            onClick={() => removeMark(m.id)}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-            <div className="workspace-action-notices">
-              {editCount > 0 && (
-                <p className="pending-note">
-                  {sourceOnlyTools.includes(toolId)
-                    ? ui('Visuelle Änderungen sind noch nicht im Original gespeichert.')
-                    : ui(`${editCount} visuelle Änderungen werden mit übernommen.`)}
-                </p>
-              )}
-              {error && (
-                <p className="error-box" role="alert">
-                  {ui(error)}
-                </p>
-              )}
-            </div>
-            <div className="inspector-apply" aria-label={t('Dokumentaktionen', 'Document actions')}>
-              <Button
-                variant="outline"
-                className="workspace-action-back"
-                onClick={returnToTools}
-                disabled={locked}
-              >
-                <ChevronLeft size={18} aria-hidden="true" />
-                {t('Zurück', 'Back')}
-              </Button>
-              {busy ? (
-                <div className="job-progress" aria-live="polite">
-                  <div>
-                    <JobStatusIcon working size={17} />
-                    <strong>{Math.round(progress.percent)} %</strong>
+                          />
+                        </label>
+                      </TabsContent>
+                      <TabsContent value="highlight">
+                        <div className="marker-sample">{t('Wichtiges hervorheben.')}</div>
+                      </TabsContent>
+                    </Tabs>
+                  </>
+                )}
+                {toolId === 'sign' && (
+                  <>
+                    <Button
+                      className="signature-create"
+                      variant="outline"
+                      onClick={() => setSignatureOpen(true)}
+                      disabled={locked}
+                    >
+                      <PenLine size={16} />
+                      {signature ? ui('Unterschrift ändern') : ui('Unterschrift zeichnen')}
+                    </Button>
+                    {signature && (
+                      <div className="signature-sample">
+                        <img src={signature.image} alt={ui('Deine gezeichnete Unterschrift')} />
+                      </div>
+                    )}
+                    <p className="fine-note">
+                      {t('Wird als Bild eingefügt. Keine digitale Zertifikatssignatur.')}
+                    </p>
+                  </>
+                )}
+                {(toolId === 'grayscale' || toolId === 'flatten') && (
+                  <div className="notice">
+                    {t(
+                      'Die Ausgabe enthält neue Seitenbilder. Textebenen, Links und interaktive Formularfelder werden nicht übernommen.',
+                    )}
                   </div>
-                  <Progress value={progress.percent} aria-label={ui('Verarbeitungsfortschritt')} />
-                  <p>{ui(progress.label)}</p>
-                  <Button variant="outline" onClick={() => job.current?.abort()}>
-                    {t('Abbrechen')}
-                  </Button>
-                </div>
-              ) : view === 'result' && result && resultUrl ? (
-                <Button
-                  asChild
-                  className="apply-button workspace-download result-download"
-                  data-fresh={resultFresh}
-                >
-                  <a href={resultUrl} download={resultName}>
-                    <Download size={18} aria-hidden="true" />
-                    {result.kind === 'pdf'
-                      ? t('PDF herunterladen', 'Download PDF')
-                      : t('Herunterladen', 'Download')}
-                  </a>
-                </Button>
-              ) : (
-                <Button
-                  className="apply-button"
-                  onClick={process}
-                  disabled={
-                    !selected.length ||
-                    !hasNeededEdit ||
-                    loading ||
-                    imageBusy ||
-                    documentIndex.ocrBusy
-                  }
-                >
-                  {loading ? <LoaderCircle className="spin" size={17} /> : <tool.icon size={17} />}
-                  <span>{tool.action}</span>
-                </Button>
-              )}
-              <div className="apply-detail">
-                {pages.length
-                  ? ui(`${selected.length} von ${pages.length} Seiten ausgewählt`)
-                  : ui('Öffne zuerst ein Dokument')}
+                )}
+                {toolId === 'metadata' && (
+                  <>
+                    {activeSource && (
+                      <div className="metadata-list">
+                        <span>{t('DOKUMENTINFOS DER AKTUELLEN DATEI')}</span>
+                        {(['Title', 'Author', 'Creator', 'Producer', 'CreationDate'] as const).map(
+                          (key) => (
+                            <div key={key}>
+                              <b>
+                                {ui(
+                                  {
+                                    Title: 'Titel',
+                                    Author: 'Autor',
+                                    Creator: 'Ersteller',
+                                    Producer: 'PDF-Software',
+                                    CreationDate: 'Erstellt',
+                                  }[key],
+                                )}
+                              </b>
+                              <span>{String(metadata[key] || '—')}</span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    )}
+                    <p className="fine-note">
+                      {t(
+                        'Inhalte im Dokument, Kommentare, Bilder und eingebettete Objektdaten werden damit nicht anonymisiert.',
+                      )}
+                    </p>
+                  </>
+                )}
+                {(toolId === 'merge' ||
+                  toolId === 'split' ||
+                  toolId === 'organize' ||
+                  toolId === 'images') && (
+                  <div className="mini-workflow">
+                    <div>
+                      <span>01</span>
+                      {t('Dateien hinzufügen')}
+                    </div>
+                    <div>
+                      <span>02</span>
+                      {t('Seiten auswählen & sortieren')}
+                    </div>
+                    <div>
+                      <span>03</span>
+                      {t('Ergebnis herunterladen')}
+                    </div>
+                  </div>
+                )}
+                {visualTools.includes(toolId) && !isEditor && activePage && (
+                  <>
+                    <details className="manual-placement">
+                      <summary>{t('Bereich per Eingabe setzen')}</summary>
+                      <div className="position-inputs">
+                        {(['x', 'y', 'w', 'h'] as const).map((key) => (
+                          <label key={key}>
+                            {ui({ x: 'Links %', y: 'Oben %', w: 'Breite %', h: 'Höhe %' }[key])}
+                            <Input
+                              type="number"
+                              min={0}
+                              max={100}
+                              value={Math.round(manualRect[key] * 100)}
+                              onChange={(e) =>
+                                setManualRect({
+                                  ...manualRect,
+                                  [key]: Math.max(0, Math.min(100, Number(e.target.value))) / 100,
+                                })
+                              }
+                              disabled={locked}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={placeManual}
+                        disabled={
+                          locked ||
+                          (editMode === 'signature' && !signature) ||
+                          (editMode === 'text' && !noteText.trim())
+                        }
+                      >
+                        {t('Bereich hinzufügen')}
+                      </Button>
+                    </details>
+                    {pageMarks.length > 0 && (
+                      <div className="mark-list">
+                        <span>
+                          {t('AUF DIESER SEITE ·')}
+                          {pageMarks.length}
+                        </span>
+                        {pageMarks.map((m, i) => (
+                          <div key={m.id}>
+                            <span>
+                              {String(i + 1).padStart(2, '0')} ·{' '}
+                              {
+                                {
+                                  redact: 'Schwärzung',
+                                  text: 'Textnotiz',
+                                  highlight: 'Markierung',
+                                  signature: 'Unterschrift',
+                                  erase: 'Entfernter Bereich',
+                                  image: 'Bild',
+                                }[m.kind]
+                              }
+                            </span>
+                            <button
+                              aria-label={ui(`Änderung ${i + 1} entfernen`)}
+                              disabled={locked}
+                              onClick={() => removeMark(m.id)}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-            </div>
-          </aside>
+              <div className="workspace-action-notices">
+                {editCount > 0 && (
+                  <p className="pending-note">
+                    {sourceOnlyTools.includes(toolId)
+                      ? ui('Visuelle Änderungen sind noch nicht im Original gespeichert.')
+                      : ui(`${editCount} visuelle Änderungen werden mit übernommen.`)}
+                  </p>
+                )}
+                {error && (
+                  <p className="error-box" role="alert">
+                    {ui(error)}
+                  </p>
+                )}
+              </div>
+              <div
+                className="inspector-apply"
+                aria-label={t('Dokumentaktionen', 'Document actions')}
+              >
+                <Button
+                  variant="outline"
+                  className="workspace-action-back"
+                  onClick={returnToTools}
+                  disabled={locked}
+                >
+                  <ChevronLeft size={18} aria-hidden="true" />
+                  {t('Zurück', 'Back')}
+                </Button>
+                {busy ? (
+                  <div className="job-progress" aria-live="polite">
+                    <div>
+                      <JobStatusIcon working size={17} />
+                      <strong>{Math.round(progress.percent)} %</strong>
+                    </div>
+                    <Progress
+                      value={progress.percent}
+                      aria-label={ui('Verarbeitungsfortschritt')}
+                    />
+                    <p>{ui(progress.label)}</p>
+                    <Button variant="outline" onClick={() => job.current?.abort()}>
+                      {t('Abbrechen')}
+                    </Button>
+                  </div>
+                ) : view === 'result' && result && resultUrl ? (
+                  <Button
+                    asChild
+                    className="apply-button workspace-download result-download"
+                    data-fresh={resultFresh}
+                  >
+                    <a href={resultUrl} download={resultName}>
+                      <Download size={18} aria-hidden="true" />
+                      {result.kind === 'pdf'
+                        ? t('PDF herunterladen', 'Download PDF')
+                        : t('Herunterladen', 'Download')}
+                    </a>
+                  </Button>
+                ) : (
+                  <Button
+                    className="apply-button"
+                    onClick={process}
+                    disabled={
+                      !selected.length ||
+                      !hasNeededEdit ||
+                      loading ||
+                      imageBusy ||
+                      documentIndex.ocrBusy
+                    }
+                  >
+                    {loading ? (
+                      <LoaderCircle className="spin" size={17} />
+                    ) : (
+                      <tool.icon size={17} />
+                    )}
+                    <span>{tool.action}</span>
+                  </Button>
+                )}
+                <div className="apply-detail">
+                  {pages.length
+                    ? ui(`${selected.length} von ${pages.length} Seiten ausgewählt`)
+                    : ui('Öffne zuerst ein Dokument')}
+                </div>
+              </div>
+            </aside>
+          </ResponsiveInspector>
         </div>
       </main>
       <Dialog open={signatureOpen} onOpenChange={setSignatureOpen}>

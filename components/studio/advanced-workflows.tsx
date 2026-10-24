@@ -104,6 +104,26 @@ export function WorkflowPanel({
             }}
           />
         )}
+        {!batch && saved.length > 0 && (
+          <Choice
+            label={ui('Gespeicherten Ablauf laden')}
+            value=""
+            items={[
+              ['', ui('Ablauf auswählen')],
+              ...saved.map((v, i): [string, string] => [String(i), v.name]),
+            ]}
+            onChange={(value) => {
+              if (value === '') return;
+              const selected = saved[Number(value)];
+              if (selected) {
+                setName(selected.name);
+                setSteps(structuredClone(selected.steps));
+                setGraph(null);
+                setPassword('');
+              }
+            }}
+          />
+        )}
         <ol className="workflow-steps">
           {steps.map((step, i) => (
             <li key={i}>

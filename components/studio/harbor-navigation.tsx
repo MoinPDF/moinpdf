@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { contentUnderNavigation } from '@/lib/ui-feedback';
 import { createPortal } from 'react-dom';
 import {
@@ -111,6 +111,7 @@ export function HarborNavigation({
   onChoose,
   onProjects,
   projectsOpen,
+  editorActions,
 }: {
   home: boolean;
   creating?: boolean;
@@ -120,6 +121,7 @@ export function HarborNavigation({
   onChoose: (id: WorkspaceTool) => void;
   onProjects: () => void;
   projectsOpen: boolean;
+  editorActions?: ReactNode;
 }) {
   const { t } = useLanguage();
   const [host, setHost] = useState<HTMLElement | null>(null);
@@ -196,6 +198,13 @@ export function HarborNavigation({
         createPortal(
           <nav className="harbor-desktop-nav" aria-label={t('Hauptnavigation', 'Main navigation')}>
             {items}
+            <MobileToolSearch
+              desktop
+              locked={locked}
+              onChoose={onChoose}
+              onTools={onTools}
+              onProjects={onProjects}
+            />
             <MoreMenu />
           </nav>,
           host,
@@ -208,20 +217,29 @@ export function HarborNavigation({
             data-content-underneath={contentUnderneath}
             aria-label={t('Hauptnavigation', 'Main navigation')}
           >
-            {items}
-            <MobileToolSearch locked={locked} onChoose={onChoose} onTools={onTools} />
-            <button
-              type="button"
-              className="harbor-nav-item harbor-project-toggle"
-              aria-haspopup="dialog"
-              aria-expanded={projectsOpen}
-              disabled={locked}
-              onClick={onProjects}
-            >
-              <FolderOpen size={21} aria-hidden="true" />
-              <span>{t('Projekte', 'Projects')}</span>
-            </button>
-            <MoreMenu />
+            {editorActions || (
+              <>
+                {items}
+                <MobileToolSearch
+                  locked={locked}
+                  onChoose={onChoose}
+                  onTools={onTools}
+                  onProjects={onProjects}
+                />
+                <button
+                  type="button"
+                  className="harbor-nav-item harbor-project-toggle"
+                  aria-haspopup="dialog"
+                  aria-expanded={projectsOpen}
+                  disabled={locked}
+                  onClick={onProjects}
+                >
+                  <FolderOpen size={21} aria-hidden="true" />
+                  <span>{t('Projekte', 'Projects')}</span>
+                </button>
+                <MoreMenu />
+              </>
+            )}
           </nav>,
           mobileHost,
         )}

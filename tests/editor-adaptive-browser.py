@@ -7,6 +7,8 @@ from urllib.parse import urlsplit
 from urllib.request import urlopen
 import pymupdf
 from playwright.sync_api import sync_playwright,expect
+from importlib import import_module
+controls_ui = import_module('editor-ui-controls')
 origin=os.environ.get('MOINPDF_TEST_URL','http://127.0.0.1:8765').rstrip('/')
 out=Path(os.environ.get('MOINPDF_BROWSER_OUTPUT','.cache/editor-browser'));out.mkdir(parents=True,exist_ok=True);fixtures=Path('.cache/editor-browser/adaptive')
 if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
@@ -26,6 +28,7 @@ if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
     else:raise RuntimeError('Production test server unavailable')
 report={'results':[],'limits':['Desktop engines and touch emulation, not physical devices or native Safari.']}
 def panel(page,title):
+    if page.locator('.editor-advanced-workflows').get_by_text(title, exact=True).count(): controls_ui.settings(page, advanced=True)
     # Only the direct summary identifies this panel; never select an ancestor.
     box=page.locator('details').filter(has=page.locator(':scope > summary',has_text=title))
     if box.get_attribute('open') is None:box.locator(':scope > summary').click()
@@ -37,15 +40,17 @@ def open_editor(page,name):
     expect(page.locator('.editor-sheet > img')).to_be_visible(timeout=120000)
 
 def pick(page,text,first=False):
+    controls_ui.canvas(page)
     target=page.get_by_role('button',name=re.compile(r'^(?:Text bearbeiten: |Tabellenzelle \d+, \d+: )'+re.escape(text)+r'$'))
     if first:target=target.first
     expect(target).to_be_visible(timeout=120000);target.click()
     field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True);expect(field).to_be_visible();return field
 
 def geometry(page,label,value):
-    f=page.get_by_label(label,exact=True);f.fill(str(value));f.press('Tab')
+    controls_ui.geometry(page,label,value)
 
 def save(page,name):
+    controls_ui.canvas(page)
     page.get_by_role('button',name='Bearbeitete PDF erstellen',exact=True).click()
     link=page.get_by_role('link',name='PDF herunterladen',exact=True).first
     expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=240000)
@@ -65,6 +70,7 @@ def auto_flow(page,name):
     assert re.search(r'Neue Fortsetzungsseiten:\s*[1-9]',flow.inner_text()),flow.inner_text()
     flow.get_by_role('button',name='Absatzfluss übernehmen',exact=True).click()
     expect(page.get_by_role('button',name='Rückgängig',exact=True)).to_be_enabled(timeout=120000)
+    controls_ui.canvas(page)
     page.get_by_role('button',name='Rückgängig',exact=True).click();expect(page.locator('.editor-object.text .editor-text-content')).to_have_attribute('aria-label',text)
     page.get_by_role('button',name='Wiederholen',exact=True).click()
     file=save(page,name)
@@ -81,6 +87,7 @@ def table_rows(page,name):
         grid.get_by_label('Tabellenzeile',exact=True).fill(str(row));grid.get_by_label('Zeilenhöhe in Punkt',exact=True).fill(str(height));grid.get_by_role('button',name=button,exact=True).click();expect(grid.locator('.editor-table-proposal')).to_be_visible(timeout=120000);grid.get_by_role('button',name='Tabellenänderung übernehmen',exact=True).click();expect(grid.locator('.editor-table-proposal')).to_have_count(0)
     apply(2,60,'Zeilenhöhe vorschauen');apply(2,55,'Zeilenhöhe vorschauen');apply(2,45,'Zeile darunter vorschauen')
     expect(grid.get_by_label('Tabelle',exact=True).locator('option')).to_contain_text('4 × 2')
+    controls_ui.canvas(page)
     page.get_by_role('button',name='Rückgängig',exact=True).click();expect(grid.get_by_label('Tabelle',exact=True).locator('option')).to_contain_text('3 × 2');page.get_by_role('button',name='Wiederholen',exact=True).click();expect(grid.get_by_label('Tabelle',exact=True).locator('option')).to_contain_text('4 × 2')
     field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True);expect(field).to_have_text('MERGED HEADING')
     for text in ['A1','B1','']:
@@ -100,7 +107,9 @@ def table_rows(page,name):
         });
     }""",timeout=120000)
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+2');page.screenshot(path=str(out/(name+'-page.png')),full_page=True)
+    controls_ui.settings(page)
     objects=page.locator('.editor-object-list')
+    objects.locator(':scope > summary').click()
     expect(objects.get_by_role('button',name=re.compile('Leere Tabellenzelle'))).to_have_count(1)
     objects.get_by_role('button',name=re.compile('Geändertes Tabellenraster')).click()
     expect(page.locator('.editor-selection-label')).to_have_text('Geändertes Tabellenraster')
@@ -108,8 +117,10 @@ def table_rows(page,name):
     page.get_by_role('button',name='Tabellenänderung verwerfen',exact=True).click()
     expect(objects).to_have_count(0)
     expect(page.get_by_label('Geändertes Tabellenraster',exact=True)).to_have_count(0)
+    controls_ui.canvas(page)
     page.get_by_role('button',name='Rückgängig',exact=True).click()
     expect(page.get_by_label('Geändertes Tabellenraster',exact=True)).to_have_count(1)
+    controls_ui.settings(page)
     expect(objects.get_by_role('button',name=re.compile('New line Second line'))).to_have_count(1)
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'table.pdf') as before:

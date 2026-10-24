@@ -14,6 +14,7 @@ const modules = {
   'components/ui/dialog.tsx': 'dialog',
   'components/studio/workspace-result-context.tsx': 'workspace-result-context',
   'components/studio/result-actions.tsx': 'result-actions',
+  'components/studio/result-next-steps.tsx': 'result-next-steps',
   'components/studio/document-writer.tsx': 'document-writer',
 };
 await mkdir('.cache/writer-ui', { recursive: true });
@@ -28,6 +29,7 @@ for (const [source, name] of Object.entries(modules)) {
     '@/lib/utils': './utils.mjs', '@/components/ui/button': './button.mjs',
     '@/components/ui/dialog': './dialog.mjs', './result-actions': './result-actions.mjs',
     './workspace-result-context': './workspace-result-context.mjs',
+    './result-next-steps': './result-next-steps.mjs',
     './appearance': './appearance.mjs', sonner: './toast.mjs', '@/lib/pdf-engine': './pdf-engine.mjs',
   })) code = code.replaceAll(`'${from}'`, `'${to}'`).replaceAll(`"${from}"`, `"${to}"`);
   await writeFile(`.cache/writer-ui/${name}.mjs`, code);

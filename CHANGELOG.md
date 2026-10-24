@@ -9,7 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Unveröffentlicht – PDF bearbeiten
+## 0.20.0 – 2026-10-24
+
+- Persönlicher Schnellzugriff mit bis zu sechs sortierbaren Favoriten, zuletzt verwendeten Werkzeugen und direktem Zugang zu gespeicherten Arbeitsabläufen.
+- Globale Werkzeugsuche mit Strg/Cmd+K, direkte Ergebnis- und Auftragsanzeige sowie passende nächste Schritte nach einer PDF-Ausgabe.
+- Ruhigere Bearbeitung mit einklappbaren Zusatzoptionen. Mobil stehen Werkzeuge, Rückgängig, Format und PDF-Ausgabe unten bereit; Einstellungen öffnen sich als Dialog von unten. Der Seemann auf der mobilen Startseite bleibt erhalten.
+- Drei verständliche Komprimierungsprofile mit optional gespeicherter Auswahl; klarere Unterscheidung zwischen Browser-Sicherung, Projekt und fertiger PDF.
+
+Bereits seit 0.19.0 integrierte Verbesserungen am PDF-Editor:
+
 
 - Undurchsichtige Scan-Ausschnitte bleiben ohne zusätzliche Transparenzmaske. Dadurch behalten unveränderte Texte auch in unabhängigen PDF-Lesern ihre Darstellung. Der Abrechnungs-Browsertest prüft die benachbarten Bereiche pixelgenau.
 - Der Scan-Schriftvergleich berücksichtigt alle 14 lokalen Familien und bis zu drei unabhängig übereinstimmende Referenzstellen. Geeignete rechtwinklig gedrehte Ausschnitte werden unterstützt; kurze Zahlen benötigen mindestens zwei passende Referenzen. Gemischte oder mehrdeutige Ausschnitte behalten die sichere Rückfalloption.

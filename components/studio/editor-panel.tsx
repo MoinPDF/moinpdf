@@ -39,6 +39,7 @@ type ToolbarProps = {
   onErase: () => void;
   onSearch?: () => void;
   recoveryStatus?: RecoveryStatus;
+  onSettings?: () => void;
 };
 export function EditorToolbar({
   tool,
@@ -50,6 +51,7 @@ export function EditorToolbar({
   onErase,
   onSearch,
   recoveryStatus,
+  onSettings,
 }: ToolbarProps) {
   useLanguage();
   return (
@@ -113,9 +115,11 @@ export function EditorToolbar({
         className="editor-settings-jump"
         variant="outline"
         onClick={() =>
-          document
-            .getElementById('editor-settings')
-            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          onSettings
+            ? onSettings()
+            : document
+                .getElementById('editor-settings')
+                ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
       >
         <Settings2 size={16} />
@@ -130,7 +134,7 @@ export function EditorToolbar({
         >
           {ui(
             recoveryStatus.phase === 'saved'
-              ? 'Arbeitsstand lokal gesichert'
+              ? 'Arbeitsstand im Browser gesichert'
               : recoveryStatus.phase === 'saving'
                 ? 'Arbeitsstand wird gesichert …'
                 : recoveryStatus.phase === 'error'
@@ -409,40 +413,43 @@ export function EditorPanel({
                 />
               </label>
             )}
-          <label className="field">
-            <span>{ui('Maßeinheit')}</span>
-            <select
-              aria-label={ui('Maßeinheit')}
-              value={unit}
-              onChange={(e) => setUnit(e.target.value as 'mm' | '%')}
-            >
-              <option value="mm">mm</option>
-              <option value="%">%</option>
-            </select>
-          </label>
-          <div className="editor-geometry">
-            {(['x', 'y', 'w', 'h'] as const).map((key) => (
-              <label className="field" key={key}>
-                <span>
-                  {ui({ x: 'Links', y: 'Oben', w: 'Breite', h: 'Höhe' }[key])} · {unit}
-                </span>
-                <Input
-                  aria-label={ui(
-                    { x: 'Objekt links', y: 'Objekt oben', w: 'Objektbreite', h: 'Objekthöhe' }[
-                      key
-                    ],
-                  )}
-                  type="number"
-                  min={key === 'x' || key === 'y' ? 0 : 0.1}
-                  max={Math.round(measure(key) * 100) / 100}
-                  step={0.1}
-                  value={Math.round(mark[key] * measure(key) * 100) / 100}
-                  onChange={(e) => geometry(key, e.target.value)}
-                  disabled={disabled || !!mark.tableCell || !!mark.nativeTable}
-                />
-              </label>
-            ))}
-          </div>
+          <details className="editor-secondary-options">
+            <summary>{ui('Position und Größe')}</summary>
+            <label className="field">
+              <span>{ui('Maßeinheit')}</span>
+              <select
+                aria-label={ui('Maßeinheit')}
+                value={unit}
+                onChange={(e) => setUnit(e.target.value as 'mm' | '%')}
+              >
+                <option value="mm">mm</option>
+                <option value="%">%</option>
+              </select>
+            </label>
+            <div className="editor-geometry">
+              {(['x', 'y', 'w', 'h'] as const).map((key) => (
+                <label className="field" key={key}>
+                  <span>
+                    {ui({ x: 'Links', y: 'Oben', w: 'Breite', h: 'Höhe' }[key])} · {unit}
+                  </span>
+                  <Input
+                    aria-label={ui(
+                      { x: 'Objekt links', y: 'Objekt oben', w: 'Objektbreite', h: 'Objekthöhe' }[
+                        key
+                      ],
+                    )}
+                    type="number"
+                    min={key === 'x' || key === 'y' ? 0 : 0.1}
+                    max={Math.round(measure(key) * 100) / 100}
+                    step={0.1}
+                    value={Math.round(mark[key] * measure(key) * 100) / 100}
+                    onChange={(e) => geometry(key, e.target.value)}
+                    disabled={disabled || !!mark.tableCell || !!mark.nativeTable}
+                  />
+                </label>
+              ))}
+            </div>
+          </details>
           {mark.sourceRect && (
             <p className="fine-note">
               {ui(
@@ -478,8 +485,10 @@ export function EditorPanel({
         </>
       )}
       {marks.length > 0 && (
-        <div className="editor-object-list">
-          <span>{ui('OBJEKTE AUF DIESER SEITE')}</span>
+        <details className="editor-object-list">
+          <summary>
+            {ui('OBJEKTE AUF DIESER SEITE')} ({marks.length})
+          </summary>
           {marks.map((m, i) => (
             <button
               key={m.id}
@@ -504,16 +513,17 @@ export function EditorPanel({
                     )}
             </button>
           ))}
-        </div>
+        </details>
       )}
       {(tool === 'edit-text' || tool === 'erase') && (
-        <div className="notice editor-export-note">
+        <details className="notice editor-export-note">
+          <summary>{ui('Hinweise zum Export')}</summary>
           {ui(
             tool === 'edit-text'
               ? 'Scans werden lokal erkannt. Originaltext wird beim Export tatsächlich entfernt. Wenn die direkte Bearbeitung nicht sicher möglich ist, wird der Export angehalten. Scan-Seiten werden aus bearbeiteten Bilddaten neu aufgebaut. OCR, Ersatzschriften und Hintergründe bitte prüfen.'
               : 'Entfernte Inhalte werden aus neuen Seitenbildern gelöscht. Auf betroffenen Seiten entfallen ursprünglicher kopierbarer Text, Links und Formularfelder. Neuer Text bleibt kopierbar, sofern du die Seite nicht zusätzlich schwärzt, zuschneidest oder als Bild exportierst. Ersatzschriften und farbige Hintergründe bitte in der Vorschau prüfen.',
           )}
-        </div>
+        </details>
       )}
       {tool === 'insert-image' && (
         <p className="fine-note">

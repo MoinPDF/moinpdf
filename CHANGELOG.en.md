@@ -4,7 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## Unreleased – Edit PDF
+## 0.20.0 – 2026-10-24
+
+- Personal quick access with up to six reorderable favorites, recently used tools and a shortcut to saved workflows.
+- Global Ctrl/Cmd+K tool search, direct results and job status, and next-step actions for generated PDFs.
+- Calmer editing with collapsible secondary controls. Mobile editing provides tools, undo, formatting and PDF output along the bottom; settings open in a bottom dialog. The sailor remains on the mobile home screen.
+- Three understandable compression presets with optional persistence and clearer browser recovery, project and finished-PDF wording.
+
+PDF editor improvements already integrated since 0.19.0:
+
 
 - Opaque scan patches retain an opaque image instead of adding a redundant soft mask. This preserves the rendering of unchanged text in independent PDF viewers. The payroll browser test checks the neighboring regions pixel for pixel.
 - Scan font matching now checks all 14 local families, uses up to three independently agreeing nearby source samples and supports suitable right-angle crops. Short numbers require at least two agreeing references; mixed-format or ambiguous regions retain the safe fallback.

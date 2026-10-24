@@ -15,20 +15,24 @@ import { searchTools } from '@/lib/localized-search';
 import type { WorkspaceTool } from '@/lib/tool-catalog';
 import { useLanguage, useTools } from './appearance';
 import { SearchHighlight } from './search-highlight';
-
-const quickTools: WorkspaceTool[] = ['merge', 'split', 'compress', 'pdf-word', 'ocr'];
+import { useToolPreferences } from './use-tool-preferences';
 
 export function MobileToolSearch({
   locked,
   onChoose,
   onTools,
+  desktop = false,
+  onProjects,
 }: {
   locked: boolean;
   onChoose: (id: WorkspaceTool) => void;
   onTools: () => void;
+  desktop?: boolean;
+  onProjects?: () => void;
 }) {
   const { t } = useLanguage();
   const { tools } = useTools();
+  const { favorites, recent } = useToolPreferences();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [viewport, setViewport] = useState({ bottom: 0, height: 0 });
@@ -36,7 +40,28 @@ export function MobileToolSearch({
   const navigating = useRef(false);
   const matches = query.trim()
     ? searchTools(query, tools)
-    : quickTools.flatMap((id) => tools.filter((tool) => tool.id === id));
+    : (recent.length ? recent : favorites).flatMap((id) => tools.filter((tool) => tool.id === id));
+
+  useEffect(() => {
+    const shortcut = (event: KeyboardEvent) => {
+      if (
+        event.key.toLowerCase() !== 'k' ||
+        !(event.ctrlKey || event.metaKey) ||
+        event.altKey ||
+        event.shiftKey
+      )
+        return;
+      if (desktop !== window.matchMedia('(min-width: 1101px)').matches) return;
+      if (document.querySelector('[role="dialog"][data-state="open"]') && !open) return;
+      event.preventDefault();
+      if (!locked) {
+        setQuery('');
+        setOpen((value) => !value);
+      }
+    };
+    window.addEventListener('keydown', shortcut);
+    return () => window.removeEventListener('keydown', shortcut);
+  }, [desktop, locked, open]);
 
   // The visual viewport shrinks when the native keyboard opens. Keep the input
   // and scrollable results above it, including on browsers that pan the page.
@@ -64,17 +89,17 @@ export function MobileToolSearch({
 
   useEffect(() => {
     if (!open) return;
-    const desktop = window.matchMedia('(min-width: 1101px)');
+    const media = window.matchMedia('(min-width: 1101px)');
     const closeOnDesktop = () => {
-      if (!desktop.matches) return;
+      if (media.matches === desktop) return;
       navigating.current = true;
       setOpen(false);
       document.getElementById('moinpdf-content')?.focus({ preventScroll: true });
     };
-    desktop.addEventListener('change', closeOnDesktop);
+    media.addEventListener('change', closeOnDesktop);
     closeOnDesktop();
-    return () => desktop.removeEventListener('change', closeOnDesktop);
-  }, [open]);
+    return () => media.removeEventListener('change', closeOnDesktop);
+  }, [open, desktop]);
 
   const navigate = (action: () => void) => {
     if (locked) return;
@@ -95,14 +120,20 @@ export function MobileToolSearch({
       }}
     >
       <DialogTrigger asChild>
-        <button type="button" className="harbor-nav-item harbor-search-toggle" disabled={locked}>
+        <button
+          type="button"
+          className={`harbor-nav-item harbor-search-toggle${desktop ? ' desktop-command-trigger' : ''}`}
+          disabled={locked}
+          aria-keyshortcuts="Control+k Meta+k"
+        >
           <Search size={21} aria-hidden="true" />
-          <span>{t('Suche', 'Search')}</span>
+          <span>{desktop ? t('Werkzeug suchen', 'Search tools') : t('Suche', 'Search')}</span>
+          {desktop && <kbd>Strg K</kbd>}
         </button>
       </DialogTrigger>
       <DialogContent
-        className="mobile-tool-search"
-        placement="bottom"
+        className={desktop ? 'desktop-tool-search' : 'mobile-tool-search'}
+        placement={desktop ? 'center' : 'bottom'}
         aria-modal="true"
         showCloseButton={false}
         style={
@@ -172,7 +203,9 @@ export function MobileToolSearch({
           </div>
           <p className="mobile-search-status" role="status" aria-live="polite">
             {!query.trim()
-              ? t('Häufig verwendet', 'Frequently used')
+              ? recent.length
+                ? t('Zuletzt verwendet', 'Recently used')
+                : t('Schnellzugriff', 'Quick access')
               : matches.length
                 ? t('Passende Werkzeuge', 'Matching tools')
                 : t('Kein passendes Werkzeug gefunden.', 'No matching tools found.')}
@@ -201,6 +234,11 @@ export function MobileToolSearch({
                 <ChevronRight size={18} aria-hidden="true" />
               </CommandItem>
             ))}
+            {!query.trim() && onProjects && (
+              <CommandItem value="action-projects" onSelect={() => navigate(onProjects)}>
+                {t('Projekte öffnen', 'Open projects')}
+              </CommandItem>
+            )}
           </CommandList>
         </Command>
         <button

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useLanguage } from './appearance';
 import { useWorkspaceResults } from './workspace-result-context';
 import { Button } from '@/components/ui/button';
+import { ResultNextSteps } from './result-next-steps';
 import {
   canShareResult,
   filenameParts,
@@ -187,7 +188,10 @@ export function ResultActions({
             }}
           >
             <Download size={17} aria-hidden="true" />
-            {label || t('Herunterladen', 'Download')}
+            {label ||
+              (result.blob.type.includes('pdf')
+                ? t('PDF herunterladen', 'Download PDF')
+                : t('Herunterladen', 'Download'))}
           </a>
         </Button>
         <ResultShare
@@ -196,6 +200,7 @@ export function ResultActions({
           disabled={disabled}
         />
       </div>
+      <ResultNextSteps result={{ ...result, filename }} disabled={disabled} />
     </div>
   );
 }

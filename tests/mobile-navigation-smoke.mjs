@@ -8,6 +8,9 @@ import { JSDOM } from 'jsdom';
 
 const sources = [
   'lib/utils.ts',
+  'lib/tool-preferences.ts',
+  'components/studio/use-tool-preferences.tsx',
+  'components/studio/quick-access-settings.tsx',
   'lib/ui-language.ts',
   'lib/ui-feedback.ts',
   'lib/interaction-feedback.ts',
@@ -231,7 +234,9 @@ let productionCss;
 if (process.argv.includes('--production-css')) {
   const require = createRequire(import.meta.url);
   const postcss = createRequire(require.resolve('@tailwindcss/postcss'))('postcss');
-  const directory = process.argv.includes('--selfhost') ? 'dist/selfhost/assets' : 'dist/client/_next/static/css';
+  const directory = process.argv.includes('--selfhost')
+    ? 'dist/selfhost/assets'
+    : 'dist/client/_next/static/css';
   const file = (await readdir(directory)).find((name) => /^index[.-].+\.css$/.test(name));
   assert(file, 'Production app stylesheet exists');
   productionCss = postcss.parse(await readFile(`${directory}/${file}`, 'utf8'));
@@ -279,7 +284,10 @@ try {
   assert.equal(homeList().hidden, true);
   for (const value of ['zusammenfügen', '']) {
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(homeInput, value);
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(
+        homeInput,
+        value,
+      );
       homeInput.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await flush();
@@ -291,7 +299,7 @@ try {
     [...nav().querySelectorAll('button')].map((el) => el.textContent),
     ['Start', 'Werkzeuge', 'Suche', 'Projekte', 'Mehr'],
   );
-  assert.equal(document.querySelectorAll('.harbor-desktop-nav button').length, 3);
+  assert.equal(document.querySelectorAll('.harbor-desktop-nav button').length, 4);
   await click(document.querySelector('.home-all-tools'));
   assert.equal(allTools, 1, 'Desktop All tools navigates');
   await click(nav().querySelector('button'));
@@ -308,15 +316,15 @@ try {
   assert.equal(document.activeElement === input(), true, 'Search input receives focus');
   assert.equal(
     dialog().querySelectorAll('[cmdk-item]').length,
-    5,
-    'Popular tools available before typing',
+    7,
+    'Six pinned tools and projects available before typing',
   );
   await act(async () => document.querySelector('.home-all-tools').focus());
   assert.equal(document.activeElement === input(), true, 'Focus stays inside the open modal');
   await key(input(), 'ArrowDown');
   assert.equal(
     dialog().querySelector('[cmdk-item][aria-selected="true"]').dataset.toolId,
-    'split',
+    'merge',
     'Arrow keys navigate the actual results',
   );
   await type('PDF kleiner machen');
@@ -389,13 +397,19 @@ try {
   // Radix defers outside-pointer dismissal until click. The closing content can
   // outlive its overlay, allowing a trigger click to reopen it in that window.
   // A deferred event from the same trigger must not dismiss the reopened dialog.
-  for (const trigger of [nav().querySelector('.harbor-project-toggle'), document.querySelector('.project-toggle')]) {
+  for (const trigger of [
+    nav().querySelector('.harbor-project-toggle'),
+    document.querySelector('.project-toggle'),
+  ]) {
     await act(async () => {
       trigger.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, button: 0 }));
       trigger.click();
     });
     await flush();
-    assert(dialog(), 'A deferred outside event from either project trigger must keep the dialog open');
+    assert(
+      dialog(),
+      'A deferred outside event from either project trigger must keep the dialog open',
+    );
   }
   await key(document.activeElement, 'Escape');
   assert.equal(Boolean(dialog()), false);
