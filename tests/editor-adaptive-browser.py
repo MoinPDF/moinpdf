@@ -29,6 +29,8 @@ if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
 report={'results':[],'limits':['Desktop engines and touch emulation, not physical devices or native Safari.']}
 def panel(page,title):
     if page.locator('.editor-advanced-workflows').get_by_text(title, exact=True).count(): controls_ui.settings(page, advanced=True)
+    options=page.locator('.editor-canvas-options')
+    if options.get_by_text(title, exact=True).count() and options.get_attribute('open') is None: options.locator(':scope > summary').click()
     # Only the direct summary identifies this panel; never select an ancestor.
     box=page.locator('details').filter(has=page.locator(':scope > summary',has_text=title))
     if box.get_attribute('open') is None:box.locator(':scope > summary').click()

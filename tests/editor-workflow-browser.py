@@ -57,6 +57,7 @@ def open_editor(page,path=fixture):
     page.locator('input[type=file]').first.set_input_files(str(path.resolve()))
     page.locator('.chooser-tool').filter(has=page.get_by_text('PDF bearbeiten',exact=True)).click()
     expect(page.locator('.editor-sheet > img')).to_be_visible(timeout=120000)
+    page.get_by_text('Auswahl und weitere Optionen',exact=True).click()
     page.get_by_text('Präzision und weitere Optionen',exact=True).click()
 
 def pick(page,text):

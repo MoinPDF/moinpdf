@@ -92,6 +92,7 @@ def controls(page, name):
     page.get_by_role('button', name='Rückgängig', exact=True).click()
     page.get_by_role('button', name='Wiederholen', exact=True).click()
     search.get_by_role('button', name='Schließen', exact=True).click()
+    page.get_by_text('Auswahl und weitere Optionen',exact=True).click()
     page.get_by_role('button', name='Textstellen verbinden', exact=True).click()
     page.get_by_role('button', name='Text bearbeiten: Absatz eins', exact=True).click()
     page.get_by_role('button', name='Text bearbeiten: Absatz zwei', exact=True).click()

@@ -646,3 +646,21 @@ dialog.editor-settings-sheet::backdrop {
     font-size: 11px;
   }
 }
+
+.editor-canvas-options {
+  border: 1px solid var(--ui-line);
+  border-radius: 9px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.editor-canvas-options > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ui-heading);
+}
+.editor-canvas-options[open] > summary {
+  margin-bottom: 12px;
+}
+.editor-canvas-options[hidden] {
+  display: none;
+}
