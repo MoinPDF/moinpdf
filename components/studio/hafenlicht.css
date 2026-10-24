@@ -2,41 +2,53 @@
 .moinpdf-shell.moinpdf-shell {
   --harbor-category-shadow: 0 2px 6px #163c310a, 0 5px 12px -8px #163c311f;
 }
-/* Light surfaces carry the MoinPDF green; the page and PDF paper remain white. */
-:root:root:not(.dark) {
-  --harbor-page: #ffffff;
-  --harbor-panel: #f2f8ed;
-  --harbor-glass: #ffffff;
-  --harbor-shadow: 0 3px 12px -8px #30552520;
-  --harbor-light: var(--brand-green, #9bd447);
-  --harbor-light-ink: #3b6e31;
-  --harbor-light-soft: #e4f0da;
-  --harbor-light-line: #bdd4aa;
-  --harbor-light-aura: #9bd44724;
-  --harbor-upload-well: #eaf4e4;
-  --harbor-tile-end: #eaf4e4;
-  --ui-soft: #eef5e8;
-  --ui-well: #eef4e9;
-  --ui-control: #edf5e7;
-  --ui-control-line: #ccddc1;
-  --ui-line: #dbe6d4;
-  --ui-line-strong: #c1d3b6;
-  --ui-green-soft: #e4f0da;
-}
+/* Give the banner soft green margins while keeping the central workspace light. */
 :root:not(.dark) .moinpdf-shell.moinpdf-shell {
-  background-color: #ffffff;
-  background-image: none;
-  --tool-check-soft: #edf5e1;
-  --tool-convert-soft: #e6f2e5;
-  --tool-pages-soft: #eaf3e8;
-  --tool-edit-soft: #e2f0d8;
-  --tool-batch-soft: #e6f2e8;
+  --harbor-side-strength: 18%;
+  --harbor-side-wash: 5%;
+  background-image:
+    radial-gradient(
+      ellipse clamp(280px, 44vw, 900px) 680px at 0 360px,
+      color-mix(in srgb, var(--harbor-light) var(--harbor-side-strength), transparent),
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse clamp(280px, 44vw, 900px) 720px at 100% 420px,
+      color-mix(in srgb, var(--harbor-action-end) var(--harbor-side-strength), transparent),
+      transparent 100%
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--harbor-light) var(--harbor-side-wash), transparent),
+      transparent 35% 65%,
+      color-mix(in srgb, var(--harbor-action-end) var(--harbor-side-wash), transparent)
+    );
 }
 .dark .moinpdf-shell.moinpdf-shell {
   --harbor-category-shadow: 0 2px 6px #0003, 0 5px 12px -8px #0006;
   background-image: radial-gradient(ellipse at 50% 12%, #29d98008, transparent 52%);
 }
+/* Desktop-only mint and petrol light pools, with a calm center behind the banner. */
 @media (min-width: 1001px) {
+  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
+    background-color: #f8fdfb;
+    background-image:
+      radial-gradient(
+        ellipse 44vw 60vh at 0% 10%,
+        color-mix(in srgb, var(--brand-teal) 45%, transparent),
+        transparent 100%
+      ),
+      radial-gradient(
+        ellipse 44vw 62vh at 100% 70%,
+        color-mix(in srgb, var(--harbor-action-end) 38%, transparent),
+        transparent 100%
+      ),
+      radial-gradient(
+        ellipse 38vw 42vh at 0% 104%,
+        color-mix(in srgb, var(--brand-green) 30%, transparent),
+        transparent 100%
+      );
+  }
   :root.dark .moinpdf-shell.moinpdf-shell {
     background-color: #191f22;
     background-image:
@@ -45,110 +57,10 @@
       radial-gradient(ellipse 38vw 42vh at 0% 104%, #148b8c60, transparent 100%);
   }
 }
-:root:not(.dark) .moinpdf-shell .app-toolbar {
-  background: #ffffff;
-  box-shadow: none;
-}
-:root:not(.dark)
-  .moinpdf-shell
-  :is(
-    .project-toggle,
-    .appearance-button,
-    .document-create-toggle,
-    .quick-access-settings,
-    .desktop-command-trigger,
-    .results-shortcut,
-    .workspace-recovery > button:first-child,
-    .recent-tools button
-  ) {
-  background: var(--ui-control);
-  border-color: var(--ui-control-line);
-  color: var(--ui-heading);
-  box-shadow: none;
-}
-:root:not(.dark) .moinpdf-shell .harbor-nav-item {
-  background: var(--ui-soft);
-}
-:root:not(.dark) .moinpdf-shell .harbor-nav-item[aria-current] {
-  background: #deedcf;
-  color: var(--harbor-light-ink);
-  box-shadow: inset 0 0 0 1px var(--harbor-light-line);
-}
-:root:not(.dark) .moinpdf-shell .harbor-welcome {
-  background: var(--harbor-panel);
-  border-color: var(--ui-control-line);
-  box-shadow: none;
-}
-:root:not(.dark) .moinpdf-shell .harbor-upload {
-  background: linear-gradient(110deg, #e7f2df, #edf5e6);
-  border-color: var(--ui-control-line);
-  box-shadow: none;
-}
-:root:not(.dark) .moinpdf-shell .harbor-upload::before {
-  border-color: #b4cda2;
-}
-/* Keep the approved upload button's mint/aqua treatment independent of green surfaces. */
-:root:not(.dark) .moinpdf-shell .harbor-upload-cta {
-  background: linear-gradient(105deg, #c5e8e1, #c8e7ed);
-  border-color: #aed3d0;
-  color: #154c54;
-  box-shadow: none;
-}
-:root:not(.dark)
-  .moinpdf-shell.moinpdf-shell
-  .tool-mosaic-grid[data-mosaic-kind='quick']
-  > .tool-mosaic-card {
-  background: linear-gradient(120deg, #edf6e7, #eaf4e4);
-  border-color: var(--ui-control-line);
-}
-:root:not(.dark)
-  .moinpdf-shell.moinpdf-shell
-  .tool-mosaic-grid[data-mosaic-kind='quick']
-  > .tool-mosaic-card[data-tool-id='edit-text'] {
-  background: linear-gradient(120deg, #e0eed3, #e7f2de);
-  border-color: #b4cea0;
-}
-:root:not(.dark) .moinpdf-shell .harbor-mobile-nav {
-  background: #f4f9ef;
-  border-color: var(--ui-line);
-  box-shadow: 0 -4px 14px #30552508;
-}
-:root:not(.dark) .moinpdf-shell .harbor-search [data-slot='command-input-wrapper'] {
-  background: var(--ui-control);
-}
-:root:not(.dark) .moinpdf-shell .harbor-upload.is-drag {
-  background: var(--harbor-light-soft);
-}
-:root:not(.dark) .moinpdf-shell .harbor-upload.is-drag::before {
-  border-color: var(--harbor-light-ink);
-}
-:root:not(.dark) .moinpdf-shell :is(.project-toggle, .harbor-nav-item)[aria-expanded='true'] {
-  background: var(--harbor-light-soft);
-  border-color: var(--harbor-light-line);
-}
-@media (hover: hover) and (pointer: fine) {
-  :root:not(.dark)
-    .moinpdf-shell
-    :is(
-      .project-toggle,
-      .appearance-button,
-      .document-create-toggle,
-      .quick-access-settings,
-      .desktop-command-trigger,
-      .recent-tools button,
-      .harbor-nav-item
-    ):hover:not(:disabled) {
-    background: #e3efd9;
-    border-color: #afc99d;
-  }
-  :root:not(.dark) .moinpdf-shell .harbor-upload:hover:not(:disabled)::before {
-    border-color: var(--harbor-light-ink);
-  }
-  :root:not(.dark)
-    .moinpdf-shell.moinpdf-shell
-    .tool-mosaic-grid[data-mosaic-kind='quick']
-    > .tool-mosaic-card:hover:not(:disabled) {
-    border-color: var(--harbor-light-ink);
+/* A slightly deeper mint canvas separates desktop panels without changing the palette. */
+@media (min-width: 1101px) {
+  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
+    background-color: #e8f2ee;
   }
 }
 .moinpdf-shell .app-toolbar {
@@ -401,6 +313,10 @@
   }
 }
 @media (max-width: 1000px) {
+  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
+    --harbor-side-strength: 10%;
+    --harbor-side-wash: 3%;
+  }
   .harbor-tool-card {
     flex-direction: column;
     justify-content: center;
