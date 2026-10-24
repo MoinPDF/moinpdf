@@ -218,7 +218,11 @@ export function EditorCanvas({
   function revealControls(selector: string) {
     const element = controlsRoot.current?.querySelector<HTMLElement>(selector);
     if (!element) return;
-    if (element instanceof HTMLDetailsElement) element.open = true;
+    let parent: HTMLElement | null = element;
+    while (parent && parent !== controlsRoot.current) {
+      if (parent instanceof HTMLDetailsElement) parent.open = true;
+      parent = parent.parentElement;
+    }
     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     element
       .querySelector<HTMLElement>('button, summary, input, select')
@@ -969,162 +973,196 @@ export function EditorCanvas({
           )}
         </div>
       )}
-      {autoOcr && (
-        <div className="editor-text-mode" role="group" aria-label={ui('Textauswahl')}>
-          <Button
-            size="sm"
-            variant={smartMode ? 'secondary' : 'ghost'}
-            aria-pressed={smartMode}
-            disabled={disabled}
-            onClick={() => {
-              setSmartMode(true);
-              setParagraphMode(false);
-              setTableMode(false);
-            }}
-          >
-            {ui('Automatische Auswahl')}
-          </Button>
-          <details className="editor-selection-options">
-            <summary>{ui('Auswahl anpassen')}</summary>
-            <div>
-              <Button
-                size="sm"
-                variant={tableMode ? 'secondary' : 'ghost'}
-                aria-pressed={tableMode}
-                disabled={!cells.length || disabled}
-                onClick={() => {
-                  setSmartMode(false);
-                  setParagraphMode(false);
-                  setTableMode(true);
-                }}
-              >
-                {ui('Tabellenzellen')}
-              </Button>
-              <Button
-                size="sm"
-                variant={paragraphMode ? 'secondary' : 'ghost'}
-                aria-pressed={paragraphMode}
-                onClick={() => {
-                  setSmartMode(false);
-                  setParagraphMode(true);
-                  setTableMode(false);
-                }}
-              >
-                {ui('Absätze')}
-              </Button>
-              <Button
-                size="sm"
-                variant={!smartMode && !paragraphMode && !tableMode ? 'secondary' : 'ghost'}
-                aria-pressed={!smartMode && !paragraphMode && !tableMode}
-                onClick={() => {
-                  setSmartMode(false);
-                  setParagraphMode(false);
-                  setTableMode(false);
-                }}
-              >
-                {ui('Einzelne Textstellen')}
-              </Button>
-            </div>
-          </details>
-          <span>{ui('Anklicken und direkt auf der Seite schreiben. Verschieben am Griff.')}</span>
-          {paragraphMode && (
-            <span>
-              {ui(
-                'Absätze bitte prüfen: Tabellenzellen und Spalten bei Bedarf einzeln bearbeiten.',
-              )}
-            </span>
-          )}
-        </div>
-      )}
-      {autoOcr && (
-        <details className="editor-workflow-section">
-          <summary>{ui('Präzision und weitere Optionen')}</summary>
-          <div className="editor-precision-tools">
-            {onOpenObjects && (
-              <Button size="sm" variant="outline" disabled={disabled} onClick={onOpenObjects}>
-                {ui('Komplexe Objekte bearbeiten')}
-              </Button>
-            )}
+      <details className="editor-canvas-options" hidden={!autoOcr}>
+        <summary>{ui('Auswahl und weitere Optionen')}</summary>
+        {autoOcr && (
+          <div className="editor-text-mode" role="group" aria-label={ui('Textauswahl')}>
             <Button
               size="sm"
-              variant={imageMode ? 'secondary' : 'outline'}
-              aria-pressed={imageMode}
+              variant={smartMode ? 'secondary' : 'ghost'}
+              aria-pressed={smartMode}
               disabled={disabled}
               onClick={() => {
-                setImageMode(!imageMode);
-                onSelect('');
+                setSmartMode(true);
+                setParagraphMode(false);
+                setTableMode(false);
               }}
             >
-              {ui('Bilder und Logos')}
+              {ui('Automatische Auswahl')}
             </Button>
-            {imageMode && (
-              <span role="status">
-                {ui(
-                  imageLoading
-                    ? 'Bilder werden gelesen …'
-                    : images.length
-                      ? 'Bildrahmen auf der Seite auswählen.'
-                      : 'Keine einzeln bearbeitbaren Bilder gefunden. Scan-Hintergründe und Objektgruppen bleiben geschützt.',
-                )}
-              </span>
-            )}
-            {imageError && <span role="status">{ui(imageError)}</span>}
-            <label>
-              <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
-              {ui('An Hilfslinien einrasten')}
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={touchMode}
-                onChange={(e) => setTouchMode(e.target.checked)}
-              />
-              {ui('Touch-Modus')}
-            </label>
-            {selectedText && (
-              <>
+            <details className="editor-selection-options">
+              <summary>{ui('Auswahl anpassen')}</summary>
+              <div>
                 <Button
                   size="sm"
-                  variant="outline"
-                  disabled={disabled}
-                  onPointerDown={(e) => e.preventDefault()}
-                  onClick={() =>
-                    setFormat(
-                      captureEditorFormat(selectedText, dims.width, source.id, textSelection),
-                    )
-                  }
-                >
-                  {ui('Format aufnehmen')}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={disabled || !format}
-                  onPointerDown={(e) => e.preventDefault()}
+                  variant={tableMode ? 'secondary' : 'ghost'}
+                  aria-pressed={tableMode}
+                  disabled={!cells.length || disabled}
                   onClick={() => {
-                    if (format)
-                      onPatch(selectedText.id, applyEditorFormat(format, dims.width, source.id));
+                    setSmartMode(false);
+                    setParagraphMode(false);
+                    setTableMode(true);
                   }}
                 >
-                  {ui('Format übertragen')}
+                  {ui('Tabellenzellen')}
                 </Button>
-              </>
-            )}
-            {format && (
-              <span role="status">
-                {ui('Format gespeichert. Zieltext auswählen und übertragen.')}
-              </span>
-            )}
-            {tableMode && (
+                <Button
+                  size="sm"
+                  variant={paragraphMode ? 'secondary' : 'ghost'}
+                  aria-pressed={paragraphMode}
+                  onClick={() => {
+                    setSmartMode(false);
+                    setParagraphMode(true);
+                    setTableMode(false);
+                  }}
+                >
+                  {ui('Absätze')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={!smartMode && !paragraphMode && !tableMode ? 'secondary' : 'ghost'}
+                  aria-pressed={!smartMode && !paragraphMode && !tableMode}
+                  onClick={() => {
+                    setSmartMode(false);
+                    setParagraphMode(false);
+                    setTableMode(false);
+                  }}
+                >
+                  {ui('Einzelne Textstellen')}
+                </Button>
+              </div>
+            </details>
+            <span>{ui('Anklicken und direkt auf der Seite schreiben. Verschieben am Griff.')}</span>
+            {paragraphMode && (
               <span>
                 {ui(
-                  'Tab: nächste Zelle · Umschalt+Tab: vorherige Zelle. Erkannte Zeilen und Spalten bitte prüfen.',
+                  'Absätze bitte prüfen: Tabellenzellen und Spalten bei Bedarf einzeln bearbeiten.',
                 )}
               </span>
             )}
           </div>
-        </details>
-      )}
+        )}
+        {autoOcr && (
+          <details className="editor-workflow-section">
+            <summary>{ui('Präzision und weitere Optionen')}</summary>
+            <div className="editor-precision-tools">
+              {onOpenObjects && (
+                <Button size="sm" variant="outline" disabled={disabled} onClick={onOpenObjects}>
+                  {ui('Komplexe Objekte bearbeiten')}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant={imageMode ? 'secondary' : 'outline'}
+                aria-pressed={imageMode}
+                disabled={disabled}
+                onClick={() => {
+                  setImageMode(!imageMode);
+                  onSelect('');
+                }}
+              >
+                {ui('Bilder und Logos')}
+              </Button>
+              {imageMode && (
+                <span role="status">
+                  {ui(
+                    imageLoading
+                      ? 'Bilder werden gelesen …'
+                      : images.length
+                        ? 'Bildrahmen auf der Seite auswählen.'
+                        : 'Keine einzeln bearbeitbaren Bilder gefunden. Scan-Hintergründe und Objektgruppen bleiben geschützt.',
+                  )}
+                </span>
+              )}
+              {imageError && <span role="status">{ui(imageError)}</span>}
+              <label>
+                <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />
+                {ui('An Hilfslinien einrasten')}
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={touchMode}
+                  onChange={(e) => setTouchMode(e.target.checked)}
+                />
+                {ui('Touch-Modus')}
+              </label>
+              {selectedText && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={disabled}
+                    onPointerDown={(e) => e.preventDefault()}
+                    onClick={() =>
+                      setFormat(
+                        captureEditorFormat(selectedText, dims.width, source.id, textSelection),
+                      )
+                    }
+                  >
+                    {ui('Format aufnehmen')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={disabled || !format}
+                    onPointerDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      if (format)
+                        onPatch(selectedText.id, applyEditorFormat(format, dims.width, source.id));
+                    }}
+                  >
+                    {ui('Format übertragen')}
+                  </Button>
+                </>
+              )}
+              {format && (
+                <span role="status">
+                  {ui('Format gespeichert. Zieltext auswählen und übertragen.')}
+                </span>
+              )}
+              {tableMode && (
+                <span>
+                  {ui(
+                    'Tab: nächste Zelle · Umschalt+Tab: vorherige Zelle. Erkannte Zeilen und Spalten bitte prüfen.',
+                  )}
+                </span>
+              )}
+            </div>
+          </details>
+        )}
+        {autoOcr && onReplaceMarks && (
+          <EditorTablePanel
+            selectedMarkId={selectedId}
+            source={source}
+            page={page}
+            marks={marks}
+            disabled={disabled}
+            onReplace={onReplaceMarks}
+            onSelect={onSelect}
+          />
+        )}
+        {autoOcr && onReplaceMarks && (
+          <EditorBlockTools
+            source={source}
+            width={dims.width}
+            height={dims.height}
+            choices={blockChoices}
+            chosen={joinedKeys}
+            joining={joining}
+            selected={selectedText}
+            selection={textSelection}
+            disabled={disabled}
+            onJoining={(value) => {
+              setJoining(value);
+              setJoinedKeys([]);
+              if (value) onSelect('');
+            }}
+            onToggle={toggleJoin}
+            onApply={onReplaceMarks}
+          />
+        )}
+      </details>
       {selectedImage && (
         <EditorImageTools
           key={selectedImage.id}
@@ -1133,37 +1171,6 @@ export function EditorCanvas({
           page={page}
           disabled={disabled}
           onPatch={onPatch}
-        />
-      )}
-      {autoOcr && onReplaceMarks && (
-        <EditorTablePanel
-          selectedMarkId={selectedId}
-          source={source}
-          page={page}
-          marks={marks}
-          disabled={disabled}
-          onReplace={onReplaceMarks}
-          onSelect={onSelect}
-        />
-      )}
-      {autoOcr && onReplaceMarks && (
-        <EditorBlockTools
-          source={source}
-          width={dims.width}
-          height={dims.height}
-          choices={blockChoices}
-          chosen={joinedKeys}
-          joining={joining}
-          selected={selectedText}
-          selection={textSelection}
-          disabled={disabled}
-          onJoining={(value) => {
-            setJoining(value);
-            setJoinedKeys([]);
-            if (value) onSelect('');
-          }}
-          onToggle={toggleJoin}
-          onApply={onReplaceMarks}
         />
       )}
       {selectedText && autoOcr && !joining && !showOriginal && (

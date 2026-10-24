@@ -11,6 +11,8 @@ import zipfile
 
 import pymupdf
 from playwright.sync_api import expect, sync_playwright
+from importlib import import_module
+controls_ui = import_module('editor-ui-controls')
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://localhost:8785')
 nonlocal_http = os.environ.get('MOINPDF_TEST_NONLOCAL_HTTP') == '1'
@@ -29,7 +31,11 @@ def chooser(page):
     expect(page.locator('.chooser-tool')).to_have_count(112)
 
 def back(page):
-    page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
+    mobile_tools = page.locator('.harbor-mobile-nav').get_by_role('button', name='Werkzeuge', exact=True)
+    if mobile_tools.is_visible():
+        mobile_tools.click()
+    else:
+        page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
     chooser(page)
 
 def close_project_dialog(page):
@@ -341,7 +347,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         chooser(lifecycle)
         lifecycle.get_by_role('button', name='PDF bearbeiten', exact=True).click()
         lifecycle.get_by_role('button', name='Neuer Text', exact=True).click()
+        controls_ui.settings(lifecycle)
         lifecycle.get_by_label('Textinhalt', exact=True).fill('REMOVED-FILE-PRIVATE-NOTE')
+        controls_ui.canvas(lifecycle)
         back(lifecycle)
         survivor = Path(temporary) / 'behalten.pdf'
         with pymupdf.open() as document:

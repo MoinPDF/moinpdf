@@ -37,7 +37,7 @@ def home_geometry(page, width):
         const image = rect('.harbor-photo');
         const available = welcome.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
         const expected = width > 1000 ? Math.min(640, available) : available;
-        if (Math.abs(image.width - expected) > 1) return false;
+        if (width <= 1100 && Math.abs(image.width - expected) > 1) return false;
         return {image, available, upload: rect('.harbor-upload'), search: rect('.harbor-search'),
             documentWidth: document.documentElement.clientWidth};
     }''', arg=width)
@@ -69,27 +69,27 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             if theme == 'dark':
                 page.locator('.theme-toggle').click()
                 expect(page.locator('html')).to_have_class('dark')
-            for width in (320, 390, 600, 768, 1000, 1024, 1100, 1101, 1440, 1920):
+            for width in (320, 390, 600, 768, 1000, 1024, 1100, 1101, 1280, 1366, 1440, 1920):
                 page.set_viewport_size({'width':width, 'height':1000 if width > 1000 else 844})
                 geometry = home_geometry(page, width)
                 within_viewport(page, f'home {theme} {width}')
                 image, upload, search = (geometry[key] for key in ('image', 'upload', 'search'))
                 assert image['y'] + image['height'] <= upload['y'], (theme, width, 'photo order')
                 if width > 1100:
-                    assert upload['y'] + upload['height'] < search['y'], (theme, width, 'upload order')
-                    expect(page.locator('.home-all-tools')).to_be_visible()
+                    expect(page.locator('.harbor-photo')).to_be_hidden()
+                    expect(page.locator('.desktop-command-trigger')).to_be_visible()
                 else:
                     expect(page.locator('.harbor-search')).to_be_hidden()
                     expect(page.locator('.harbor-mobile-nav button')).to_have_count(5)
                 assert page.locator('.harbor-upload-cta').bounding_box()['height'] >= 44
                 assert page.get_by_text('Papierkram. Läuft.', exact=True).count() == 1
-                assert page.locator('.tool-mosaic-card').evaluate_all('(cards) => cards.map(card => card.dataset.toolId)') == ['merge', 'pdf-word', 'ocr', 'organize', 'sign', 'batch', 'numbers', 'office-pdf', 'edit-text']
+                assert page.locator('.tool-mosaic-card').evaluate_all('(cards) => cards.map(card => card.dataset.toolId)') == ['edit-text', 'merge', 'compress', 'ocr', 'sign', 'pdf-word']
                 assert page.locator('.tool-mosaic-card').first.evaluate('(el) => parseFloat(getComputedStyle(el).borderRadius)') >= 16
-                assert abs(image['width'] / image['height'] - 16 / 9) < 0.02
-                if width > 1000:
+                if width <= 1100: assert abs(image['width'] / image['height'] - 16 / 9) < 0.02
+                if 1000 < width <= 1100:
                     assert image['width'] <= 640.5
                     assert abs(image['x'] + image['width']/2 - geometry['documentWidth']/2) <= 1
-                else:
+                elif width <= 1000:
                     available = geometry['available']
                     assert abs(image['width'] - available) <= 1, (theme, width, image, available)
                 assert page.locator('.harbor-photo img').evaluate('(img) => getComputedStyle(img).objectFit') == 'contain'
@@ -106,7 +106,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     expect(page.locator('.tool-mosaic-art').first).to_be_visible()
                     page.locator('.harbor-discovery').screenshot(path=str(out/f'harbor-convert-{width}-{theme}.png'))
                     page.locator('.harbor-categories').get_by_role('button', name='Schnellzugriff', exact=True).click()
-                    page.locator('.tool-mosaic-card[data-tool-id=organize]').click()
+                    page.locator('.tool-mosaic-card[data-tool-id=merge]').click()
                     expect(page.locator('.tool-file-entry')).to_be_visible()
                     expect(page.locator('.conversion-steps li')).to_have_count(3)
                     framed(page.locator('.tool-file-card'))
@@ -178,6 +178,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             test.goto(origin + ('?lang=en' if language == 'en' else ''))
             if language == 'en':
                 expect(test.get_by_text('Paperwork. Sorted.', exact=True)).to_be_visible()
+            if tool_id == 'organize':
+                test.locator('.harbor-categories').get_by_role('button', name='Seiten', exact=True).click()
             card = test.locator(f'.tool-mosaic-card[data-tool-id="{tool_id}"]')
             title = 'Merge PDFs' if language == 'en' else tool_titles[tool_id]
             card.click()
@@ -236,7 +238,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.get_by_text('Paperwork. Sorted.', exact=True)).to_be_visible()
         # Home now preserves the category selected by the earlier tool checks.
         page.locator('.harbor-categories').get_by_role('button', name='Quick access', exact=True).click()
-        expect(page.get_by_role('heading', name='Quick access', exact=True)).to_be_visible()
+        expect(page.get_by_role('heading', name='Your quick access', exact=True)).to_be_visible()
         page.locator('.harbor-mobile-nav').get_by_role('button', name='Search', exact=True).click()
         page.locator('.mobile-tool-search input').fill('merge')
         expect(page.locator('.mobile-search-result').first).to_contain_text('Merge')

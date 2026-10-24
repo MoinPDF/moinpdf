@@ -218,6 +218,7 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
         rp.locator('.chooser-tool').filter(has=rp.get_by_text('PDF bearbeiten',exact=True)).click()
         if not scan_case:
             # Font changes split PDF text objects; paragraph mode must recover one selectable line.
+            rp.locator('.editor-canvas-options > summary').click()
             selection_options=rp.locator('.editor-selection-options > summary')
             expect(selection_options).to_be_visible(timeout=120000)
             selection_options.click()

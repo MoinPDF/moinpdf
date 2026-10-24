@@ -14,6 +14,8 @@ from urllib.parse import urlsplit
 from urllib.request import urlopen
 import pymupdf
 from playwright.sync_api import sync_playwright, expect
+from importlib import import_module
+controls_ui = import_module('editor-ui-controls')
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://127.0.0.1:8765').rstrip('/')
 out = Path(os.environ.get('MOINPDF_BROWSER_OUTPUT','.cache/editor-browser')); out.mkdir(parents=True, exist_ok=True)
@@ -54,6 +56,7 @@ def open_editor(page, path):
     expect(page.locator('.editor-sheet img')).to_be_visible(timeout=120000)
 
 def download(page, name):
+    controls_ui.canvas(page)
     button = page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True)
     # Scrolling away from a focused edit must stay where the user put it, even
     # if selection/layout callbacks still have a pending caret-reveal frame.
@@ -89,6 +92,7 @@ def controls(page, name):
     page.get_by_role('button', name='Rückgängig', exact=True).click()
     page.get_by_role('button', name='Wiederholen', exact=True).click()
     search.get_by_role('button', name='Schließen', exact=True).click()
+    page.get_by_text('Auswahl und weitere Optionen',exact=True).click()
     page.get_by_role('button', name='Textstellen verbinden', exact=True).click()
     page.get_by_role('button', name='Text bearbeiten: Absatz eins', exact=True).click()
     page.get_by_role('button', name='Text bearbeiten: Absatz zwei', exact=True).click()
@@ -176,7 +180,7 @@ def form_guard(page, name):
     with pymupdf.open(corpus / 'acroform.pdf') as original:
         widget=next(original[0].widgets()).rect
     for label,value in [('Objekt links',widget.x0*25.4/72),('Objekt oben',widget.y0*25.4/72)]:
-        field=page.get_by_label(label,exact=True);field.fill(str(value));field.press('Tab')
+        controls_ui.geometry(page,label,value)
     page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True).click()
     expect(page.locator('.error-box')).to_contain_text('Formular', timeout=120000)
     assert page.get_by_role('link', name='PDF herunterladen', exact=True).count() == 0

@@ -50,6 +50,9 @@ function SelectTrigger({
   )
 }
 
+// Keep menus inside a native modal's top layer when an inspector supplies a host.
+export const SelectPortalContainer = React.createContext<HTMLElement | null>(null)
+
 function SelectContent({
   className,
   children,
@@ -57,8 +60,9 @@ function SelectContent({
   align = "center",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const container = React.useContext(SelectPortalContainer)
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={container}>
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(

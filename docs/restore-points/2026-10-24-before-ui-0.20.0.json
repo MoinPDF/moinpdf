@@ -1,0 +1,9 @@
+{
+  "version": "0.19.0",
+  "purpose": "Restore point before UI 0.20.0",
+  "repository": "MoinPDF/moinpdf",
+  "branch": "backup/v0.19.0-before-ui-0.20.0-20261024",
+  "commit": "9f60b1d026897aa9b2f0eb4a709a3040b1d10815",
+  "release": "v0.19.0",
+  "releaseCommit": "886a32757dc7c5507f7bfbaa7f6b3c58aaf72f0d"
+}

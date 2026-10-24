@@ -14,6 +14,8 @@ from urllib.parse import urlsplit
 from urllib.request import urlopen
 import pymupdf
 from playwright.sync_api import sync_playwright, expect
+from importlib import import_module
+controls_ui = import_module('editor-ui-controls')
 
 origin = os.environ.get('MOINPDF_TEST_URL', 'http://127.0.0.1:8765').rstrip('/')
 out = Path(os.environ.get('MOINPDF_BROWSER_OUTPUT','.cache/editor-browser')); out.mkdir(parents=True, exist_ok=True)
@@ -55,17 +57,20 @@ def open_editor(page,path=fixture):
     page.locator('input[type=file]').first.set_input_files(str(path.resolve()))
     page.locator('.chooser-tool').filter(has=page.get_by_text('PDF bearbeiten',exact=True)).click()
     expect(page.locator('.editor-sheet > img')).to_be_visible(timeout=120000)
+    page.get_by_text('Auswahl und weitere Optionen',exact=True).click()
     page.get_by_text('Präzision und weitere Optionen',exact=True).click()
 
 def pick(page,text):
+    controls_ui.canvas(page)
     page.get_by_role('button',name='Text bearbeiten: '+text,exact=True).click()
     field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True)
     expect(field).to_be_visible();return field
 
 def geometry(page,label,value):
-    field=page.get_by_label(label,exact=True);field.fill(str(value));field.press('Tab')
+    controls_ui.geometry(page,label,value)
 
 def export(page,name):
+    controls_ui.canvas(page)
     page.get_by_role('button',name='Bearbeitete PDF erstellen',exact=True).click()
     link=page.get_by_role('link',name='PDF herunterladen',exact=True).first
     expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=240000)
@@ -96,11 +101,13 @@ def text_table(page,name):
     page.get_by_role('toolbar',name='Aktionen für die Auswahl',exact=True).get_by_role('button',name='Format übertragen',exact=True).click()
     expect(page.get_by_role('toolbar',name='Text direkt formatieren').get_by_role('button',name='Fett',exact=True)).to_have_attribute('aria-pressed','true')
     field.press('Shift+Tab');expect(field).to_have_text('EDIT')
+    controls_ui.settings(page, advanced=True)
     changes=page.locator('.editor-workflow-section').filter(has=page.locator('summary').filter(has_text='Änderungen im Dokument'))
     changes.locator('summary').click()
     entry=changes.locator('.editor-change-entry').filter(has_text='Nachher: EDIT')
     entry.get_by_role('button',name='Diese Änderung zurücknehmen',exact=True).click()
     expect(page.get_by_role('button',name='Tabellenzelle 1, 1: R1C1',exact=True)).to_be_visible()
+    controls_ui.canvas(page)
     page.get_by_role('button',name='Rückgängig',exact=True).click()
     expect(changes.locator('.editor-change-entry').filter(has_text='Nachher: EDIT')).to_have_count(1)
     page.get_by_role('button',name='Wiederholen',exact=True).click()
@@ -134,6 +141,7 @@ def flow(page,name):
     page.get_by_role('button',name='Nächste Seite',exact=True).click()
     pick(page,'FLOW END')
     geometry(page,'Objektbreite',100);geometry(page,'Objekthöhe',50)
+    controls_ui.settings(page, advanced=True)
     panel=page.locator('.editor-workflow-section').filter(has=page.locator('summary').filter(has_text='Textfelder verknüpfen'))
     panel.locator('summary').click()
     expect(panel.locator('.editor-flow-fields input[type=checkbox]')).to_have_count(2)
@@ -142,6 +150,7 @@ def flow(page,name):
     expect(panel.locator('.editor-flow-preview')).to_be_visible(timeout=90000)
     assert 'Linked text' in panel.locator('.editor-flow-preview p').nth(1).inner_text()
     panel.get_by_role('button',name='Textfluss übernehmen',exact=True).click()
+    controls_ui.canvas(page)
     page.get_by_role('button',name='Rückgängig',exact=True).click()
     page.get_by_role('button',name='Wiederholen',exact=True).click()
     saved=export(page,name)
@@ -175,8 +184,10 @@ def images(page,name):
 
 def french(page,name):
     open_editor(page,corpus/'francais.pdf')
+    controls_ui.settings(page)
     page.get_by_label('Sprache gescannter Texte',exact=True).click()
     page.get_by_role('option',name='Französisch',exact=True).click()
+    controls_ui.canvas(page)
     target=page.get_by_role('button',name=re.compile('^Text bearbeiten: Portez')).first;expect(target).to_be_visible(timeout=180000);target.click()
     page.get_by_text('Scantext prüfen und korrigieren',exact=True).click()
     page.get_by_role('button',name='Diesen Bereich erneut erkennen',exact=True).click()
@@ -207,8 +218,10 @@ def ocr_focus(page,name):
       };
     })();""")
     open_editor(page,corpus/'francais.pdf')
+    controls_ui.settings(page)
     page.get_by_label('Sprache gescannter Texte',exact=True).click()
     page.get_by_role('option',name='Französisch',exact=True).click()
+    controls_ui.canvas(page)
     target=page.get_by_role('button',name=re.compile('^Text bearbeiten: Portez')).first
     expect(target).to_be_visible(timeout=180000);target.click()
     field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True)

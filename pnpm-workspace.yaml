@@ -1,5 +1,9 @@
 minimumReleaseAge: 10080
 minimumReleaseAgeIgnoreMissingTime: false
+# Exact security fixes verified against the upstream advisories.
+minimumReleaseAgeExclude:
+  - fast-uri@3.1.9
+  - undici@8.12.2
 trustLockfile: false
 strictDepBuilds: true
 allowBuilds:
@@ -11,4 +15,7 @@ allowBuilds:
 # Security floors for optional transitive peers retained by pnpm's resolver.
 overrides:
   'esbuild@>=0.27.3 <0.28.1': 0.28.1
-  'fast-uri@>=3.0.0 <3.1.8': 3.1.8
+  'fast-uri@>=3.0.0 <3.1.9': 3.1.9
+
+  'undici@>=8.0.0 <8.12.2': 8.12.2
+

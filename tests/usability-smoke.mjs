@@ -17,6 +17,7 @@ const modules = {
   'components/ui/dialog.tsx': 'dialog',
   'components/studio/workspace-result-context.tsx': 'workspace-result-context',
   'components/studio/result-actions.tsx': 'actions',
+  'components/studio/result-next-steps.tsx': 'result-next-steps',
   'components/studio/tool-browser-memory.tsx': 'navigation',
   'components/studio/duplicate-prompt.tsx': 'prompt',
 };
@@ -35,6 +36,7 @@ for (const [source, name] of Object.entries(modules)) {
     '@/components/ui/button': './button.mjs',
     '@/components/ui/dialog': './dialog.mjs',
     './workspace-result-context': './workspace-result-context.mjs',
+    './result-next-steps': './result-next-steps.mjs',
     './appearance': './appearance.mjs',
     './content-digest': './content-digest.mjs',
     './tool-search': './tool-search.mjs',
@@ -331,7 +333,7 @@ assert.equal(
   'Next.pdf',
   'new output resets only its name',
 );
-assert.equal(document.querySelector('a[download]').textContent, 'Download');
+assert.equal(document.querySelector('a[download]').textContent, 'Download PDF');
 assert.ok(document.querySelector('[aria-label="Share result"]'));
 navigator.canShare = () => false;
 await act(async () =>

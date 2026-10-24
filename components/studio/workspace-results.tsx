@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Download, LoaderCircle, Trash2 } from 'lucide-react';
+import { Archive, Download, LoaderCircle, Trash2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -99,9 +100,11 @@ export function WorkspaceResultsProvider({ children }: { children: ReactNode }) 
 export function WorkspaceTray({
   locked,
   onUse,
+  activeJob,
 }: {
   locked: boolean;
   onUse: (result: JobResult) => Promise<void>;
+  activeJob?: { percent: number; label: string };
 }) {
   const { t } = useLanguage();
   const { results, remember, remove } = useWorkspaceResults();
@@ -109,6 +112,13 @@ export function WorkspaceTray({
     [jobs, setJobs] = useState<BackgroundJob[]>([]),
     [working, setWorking] = useState('');
   const controller = useRef<AbortController | null>(null);
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setHost(document.getElementById('moinpdf-results-bar'));
+  }, []);
+  const running =
+    jobs.filter((job) => ['uploading', 'queued', 'running'].includes(job.status)).length +
+    (activeJob ? 1 : 0);
   useEffect(() => {
     const refresh = () => setJobs([...storedServerJobs()]);
     refresh();
@@ -152,8 +162,36 @@ export function WorkspaceTray({
   };
   return (
     <>
+      {host &&
+        (results.length > 0 || jobs.length > 0 || activeJob) &&
+        createPortal(
+          <button
+            type="button"
+            className="results-shortcut"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-label={`${results.length ? `${results.length} ${t('Ergebnisse', 'results')}` : t('Aufträge', 'Jobs')}${running ? ` · ${running} ${t('läuft', 'running')}` : ''}`}
+            onClick={() => setOpen(true)}
+          >
+            {running ? <LoaderCircle size={18} className="spin" /> : <Archive size={18} />}
+            <b className="results-shortcut-count" aria-hidden="true">
+              {results.length || running || jobs.length}
+            </b>
+            <span>
+              {results.length
+                ? `${results.length} ${t('Ergebnisse', 'results')}`
+                : t('Aufträge', 'Jobs')}
+            </span>
+            {running > 0 && (
+              <small>
+                {running} {t('läuft', 'running')}
+              </small>
+            )}
+          </button>,
+          host,
+        )}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="workspace-tray">
+        <DialogContent placement="bottom" className="workspace-tray">
           <DialogHeader>
             <DialogTitle>{t('Ergebnisse und Aufträge', 'Results and jobs')}</DialogTitle>
             <DialogDescription>
@@ -164,7 +202,22 @@ export function WorkspaceTray({
             </DialogDescription>
           </DialogHeader>
           <div className="workspace-tray-list">
-            {!results.length && !jobs.length && (
+            {activeJob && (
+              <section
+                className="advanced-card"
+                aria-label={t('Aktuelle Verarbeitung', 'Current processing')}
+              >
+                <strong>{t('In Arbeit', 'In progress')}</strong>
+                <p>{ui(activeJob.label)}</p>
+                <progress
+                  value={activeJob.percent}
+                  max={100}
+                  aria-label={t('Verarbeitungsfortschritt', 'Processing progress')}
+                />
+                <span>{Math.round(activeJob.percent)} %</span>
+              </section>
+            )}
+            {!results.length && !jobs.length && !activeJob && (
               <p className="text-center">
                 {t(
                   'Hier findest du deine nächsten Ergebnisse.',

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useToolBrowserState } from './tool-browser-memory';
 import { ArrowRight, ChevronRight, Files, LayoutGrid, X } from 'lucide-react';
 import { useLanguage, useTools } from './appearance';
@@ -7,6 +8,8 @@ import { Command, CommandInput, CommandItem, CommandList } from '@/components/ui
 import { searchTools } from '@/lib/localized-search';
 import type { WorkspaceTool } from '@/lib/tool-catalog';
 import { SearchHighlight } from './search-highlight';
+import { useToolPreferences } from './use-tool-preferences';
+import { QuickAccessSettings } from './quick-access-settings';
 import {
   MosaicHomeIcon,
   mosaicCategoryIcons,
@@ -24,6 +27,18 @@ export function HomeTools({
 }) {
   const { t } = useLanguage();
   const { tools, groups } = useTools();
+  const { favorites, recent, setFavorites } = useToolPreferences();
+  const [hasWorkflows, setHasWorkflows] = useState(false);
+  useEffect(() => {
+    try {
+      setHasWorkflows(
+        ['moinpdf.workflows.v1', 'moinpdf.workflows.graphs.v2'].some((key) => {
+          const value = JSON.parse(localStorage.getItem(key) || '[]');
+          return Array.isArray(value) && value.length > 0;
+        }),
+      );
+    } catch {}
+  }, []);
   const { query, setQuery, category, setCategory } = useToolBrowserState('home');
   const categoryNames = ['Prüfen', 'Umwandeln', 'Seiten', 'Bearbeiten', 'Stapel'];
   const categories = [
@@ -39,7 +54,7 @@ export function HomeTools({
   const suggestions = searchTools(query, tools).filter(inCategory).slice(0, 5);
   const cards =
     category === 'quick'
-      ? mosaicShortcuts.flatMap(({ id }) => tools.filter((tool) => tool.id === id))
+      ? favorites.flatMap((id) => tools.filter((tool) => tool.id === id))
       : tools.filter(inCategory);
   return (
     <section
@@ -153,7 +168,16 @@ export function HomeTools({
           ))}
         </div>
       </div>
-      <h2 className="sr-only">{categories.find((item) => item.value === category)?.label}</h2>
+      <div className="quick-access-heading">
+        <h2>
+          {category === 'quick'
+            ? t('Dein Schnellzugriff', 'Your quick access')
+            : categories.find((item) => item.value === category)?.label}
+        </h2>
+        {category === 'quick' && (
+          <QuickAccessSettings favorites={favorites} onChange={setFavorites} disabled={locked} />
+        )}
+      </div>
       <div
         className="tool-mosaic-grid"
         data-mosaic-kind={category === 'quick' ? 'quick' : 'category'}
@@ -173,7 +197,7 @@ export function HomeTools({
               onChoose={onChoose}
               layout={
                 category === 'quick'
-                  ? (shortcut?.layout ?? 'tile')
+                  ? 'tile'
                   : index === 0
                     ? 'feature'
                     : index % 3 === 0
@@ -184,6 +208,36 @@ export function HomeTools({
           );
         })}
       </div>
+      {recent.length > 0 && category === 'quick' && (
+        <section className="recent-tools" aria-label={t('Zuletzt verwendet', 'Recently used')}>
+          <h3>{t('Zuletzt verwendet', 'Recently used')}</h3>
+          <div>
+            {recent
+              .flatMap((id) => tools.filter((tool) => tool.id === id))
+              .map((tool) => (
+                <button
+                  type="button"
+                  key={tool.id}
+                  disabled={locked}
+                  onClick={() => onChoose(tool.id)}
+                >
+                  <tool.icon size={17} />
+                  {tool.title}
+                </button>
+              ))}
+          </div>
+        </section>
+      )}
+      {hasWorkflows && category === 'quick' && (
+        <div className="recent-tools">
+          <div>
+            <button type="button" disabled={locked} onClick={() => onChoose('workflows')}>
+              <Files size={17} />
+              {t('Meine Arbeitsabläufe', 'My workflows')}
+            </button>
+          </div>
+        </div>
+      )}
       <button
         className="harbor-text-button mosaic-all-tools"
         type="button"
