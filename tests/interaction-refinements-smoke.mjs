@@ -165,6 +165,11 @@ const state = {
   toolDrafts: { 'CoverPanel.title:source': 'Saved title' },
 };
 const signature = (value = state, name = 'Test') => projectContentSignature(name, value);
+assert.equal(
+  signature({ ...state, toolDrafts: undefined }),
+  signature({ ...state, toolDrafts: {} }),
+  'Legacy projects without tool drafts match the empty defaults used after opening',
+);
 assert.equal(matchesProjectCheckpoint(null, undefined, [source], signature()), false);
 const id = await saveProject('Test', undefined, [source], state);
 const checkpoint = captureProjectCheckpoint(id, 'Test', [source], state);

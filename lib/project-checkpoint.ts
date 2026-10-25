@@ -15,7 +15,7 @@ export function projectContentSignature(
     pages: state.pages,
     edits: retainPageEdits(state.edits, state.pages),
     options: state.options,
-    toolDrafts: state.toolDrafts,
+    toolDrafts: state.toolDrafts ?? {},
     documents: Object.fromEntries(
       Object.entries(state.documentSessions)
         .sort(([a], [b]) => a.localeCompare(b))
