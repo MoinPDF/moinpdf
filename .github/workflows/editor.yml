@@ -2,22 +2,7 @@ name: PDF editor preservation
 on:
   push:
     branches: [main, fix/pdf-editor-preservation, rebuild/editor-adaptive-workspace]
-    paths:
-      - 'app/**'
-      - 'components/**'
-      - 'lib/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'scripts/prepare-pdf-assets.mjs'
-      - 'scripts/ci-prepare-apt.sh'
-      - 'public/locales/**'
-      - 'tests/editor*'
-      - 'tests/word*'
-      - 'tests/release-021*'
-      - 'scripts/build-offline.mjs'
-      - 'scripts/offline-worker.js'
-      - 'tests/text-browser-server.py'
-      - '.github/workflows/editor.yml'
+    # Every main commit needs this check for exact-source release verification.
   pull_request:
   workflow_dispatch:
 permissions:

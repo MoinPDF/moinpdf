@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 25 October 2026 · Version 0.21.1. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 25 October 2026 · Version 0.21.2. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 - Export verification has bounded waits, remains cancellable and restarts the complete check at most once after a timeout. Unverified output stays blocked; the edit remains open for another attempt.
 

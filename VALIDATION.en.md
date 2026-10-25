@@ -4,7 +4,7 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
-## Verification scope for 0.21.1
+## Verification scope for 0.21.2
 
 - 59 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
   passwords, tampered/truncated project files and cancellation.

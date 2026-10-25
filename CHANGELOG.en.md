@@ -4,6 +4,13 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.21.2 – 25 October 2026
+
+- Docker, editor, native-browser and documentation checks run for every commit on `main`, including dependency-only and CI-only changes.
+- Image publication waits up to 45 minutes for unfinished or late-indexed checks of the same source. Failed checks, a superseded main branch and failed Docker reruns remain blocked.
+- Document server updated to the matching Pydantic 2.14.1 / pydantic-core 2.50.1 pair and PyMuPDF 2.0; updated GitHub Actions for Python setup and test artifacts.
+- Additional release-gate regressions and updated German and English development and validation documentation. Published versions remain protected against overwriting.
+
 ## 0.21.1 – 2026-10-25
 
 - Stalled editor export verification can be cancelled even when the PDF worker stops replying. Temporary verification sessions terminate their workers after a bounded cleanup period.

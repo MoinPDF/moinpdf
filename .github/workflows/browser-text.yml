@@ -2,15 +2,7 @@ name: Browser text compatibility
 on:
   push:
     branches: [main, fix/safari-pdf-text, rebuild/editor-adaptive-workspace]
-    paths:
-      - 'app/**'
-      - 'components/**'
-      - 'lib/**'
-      - 'tests/*text*'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'scripts/ci-prepare-apt.sh'
-      - '.github/workflows/browser-text.yml'
+    # Every main commit needs this check for exact-source release verification.
   workflow_dispatch:
   pull_request:
     paths:

@@ -6,7 +6,7 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
-## Prüfplan für 0.21.1
+## Prüfplan für 0.21.2
 
 - 59 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,
   falscher Passwörter, manipulierten/abgeschnittenen Projektdateien und Abbruch.

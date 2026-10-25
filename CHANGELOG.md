@@ -9,6 +9,13 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.21.2 – 25. Oktober 2026
+
+- Docker-, Editor-, native Browser- und Dokumentationsprüfungen starten für jeden Commit auf `main`, auch bei reinen Abhängigkeits- oder CI-Änderungen.
+- Die Image-Veröffentlichung wartet bis zu 45 Minuten auf noch laufende oder verzögert sichtbare Prüfungen desselben Quellstands. Fehlgeschlagene Prüfungen, ein neuerer Hauptzweig und erfolglose Docker-Wiederholungen bleiben gesperrt.
+- Dokumentenserver mit gemeinsam aktualisiertem Pydantic 2.14.1 / pydantic-core 2.50.1 sowie PyMuPDF 2.0; aktualisierte GitHub-Actions für Python und Testartefakte.
+- Zusätzliche Regressionen für die Release-Freigabe und aktualisierte deutsche und englische Entwicklungs- und Prüfungsdokumentation. Bereits veröffentlichte Versionen werden weiterhin nicht überschrieben.
+
 ## 0.21.1 – 2026-10-25
 
 - Hängende PDF-Exportprüfungen lassen sich abbrechen, auch wenn der PDF-Worker nicht mehr antwortet. Temporäre Prüfsitzungen beenden ihre Worker spätestens nach einer begrenzten Aufräumphase.
