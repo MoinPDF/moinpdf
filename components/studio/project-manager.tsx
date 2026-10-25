@@ -95,10 +95,10 @@ export function ProjectManager({
     current = identity.id,
     setName = (name: string) => setIdentity((old) => ({ ...old, name })),
     setCurrent = (id: string | undefined) => setIdentity((old) => ({ ...old, id }));
-  const { pages, edits, options, documentSessions } = state;
+  const { pages, edits, options, documentSessions, toolDrafts } = state;
   const content = useMemo(
-    () => projectContentSignature(name, { pages, edits, options, documentSessions }),
-    [name, pages, edits, options, documentSessions],
+    () => projectContentSignature(name, { pages, edits, options, documentSessions, toolDrafts }),
+    [name, pages, edits, options, documentSessions, toolDrafts],
   );
   const saved = matchesProjectCheckpoint(checkpoint, current, sources, content);
   const saveStatus = !sources.length ? 'empty' : saved ? 'saved' : 'dirty';

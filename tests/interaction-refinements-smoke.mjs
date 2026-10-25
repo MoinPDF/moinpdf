@@ -162,6 +162,7 @@ const state = {
   activeId: 'page',
   toolId: 'organize',
   documentSessions: {},
+  toolDrafts: { 'CoverPanel.title:source': 'Saved title' },
 };
 const signature = (value = state, name = 'Test') => projectContentSignature(name, value);
 assert.equal(matchesProjectCheckpoint(null, undefined, [source], signature()), false);
@@ -181,6 +182,8 @@ for (const changed of [
     edits: { marks: { page: [{ id: 'mark', kind: 'text', text: 'Change' }] }, crops: {} },
   },
   { ...state, options: { language: 'eng' } },
+  { ...state, toolDrafts: { 'CoverPanel.title:source': 'Changed title' } },
+  { ...state, toolDrafts: {} },
   { ...state, documentSessions: { source: { current: { fields: [{ value: 'Name' }] } } } },
 ])
   assert.equal(matchesProjectCheckpoint(checkpoint, id, [source], signature(changed)), false);
