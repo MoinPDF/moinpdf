@@ -2,7 +2,9 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 25. Oktober 2026 · Version 0.21.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 25. Oktober 2026 · Version 0.21.1. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+
+- Exportprüfungen haben begrenzte Wartezeiten, bleiben abbrechbar und starten nach einer Zeitüberschreitung höchstens einmal vollständig neu. Ungeprüfte Ausgaben bleiben gesperrt; die Bearbeitung bleibt für einen erneuten Versuch geöffnet.
 
 - Komprimierung erhält standardmäßig Text, Vektoren, Links und Formularfelder. Geeignete RGB-JPEGs werden einzeln verkleinert; zusätzlich sind verlustfreie Optimierung und ausdrücklich gewählter Bildneuaufbau verfügbar. Der Originalvergleich verwendet gleichen Zoom und gekoppelte Ausschnitte. Dokumentweite Strukturen erfordern eine vollständige einzelne PDF; signierte Dokumente werden abgewiesen.
 - „OCR & Text“ erkennt gemischte Seiten. „Korrekturen übernehmen“ schreibt korrigierte Zeilen in die PDF-Suchebene; sichtbarer Originaltext bleibt gesperrt und das Seitenbild unverändert. Vorhandene Suchtexte werden vor dem erneuten Schreiben entfernt. Kleine Schräglagen bleiben bei der Zuordnung und beim Schriftvergleich erhalten.
@@ -89,7 +91,7 @@ Physische iPhone-/iPad-/Android-/Windows-Touch-Geräte und echte Microsoft-Word-
 
 ## Prüfung und Freigabe
 
-58 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
+59 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
 Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
 Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
 Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche

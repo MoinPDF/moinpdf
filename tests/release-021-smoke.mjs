@@ -4,7 +4,7 @@ import { pbkdf2Sync, createDecipheriv } from 'node:crypto';
 import ts from 'typescript';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 await mkdir('.cache', {recursive:true});
-for (const name of ['project-encryption','storage-health','resource-budget','pdf-text','export-audit']) {
+for (const name of ['project-encryption','storage-health','resource-budget','pdf-text','pdf-engine','export-audit']) {
   let code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
   code=code.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-021-test.mjs${q}`)
     .replaceAll("'/vendor/pdf/pdf.worker.min.mjs'", "new URL('../node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',import.meta.url).href");

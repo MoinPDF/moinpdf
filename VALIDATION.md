@@ -6,9 +6,9 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
-## Prüfplan für 0.21.0
+## Prüfplan für 0.21.1
 
-- 58 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,
+- 59 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,
   falscher Passwörter, manipulierten/abgeschnittenen Projektdateien und Abbruch.
 - Vorschau-Regressionen prüfen den sofortigen Abbruch unsichtbarer Arbeit, das
   Freigeben der Warteschlange sowie begrenzte Bildablage und erneutes Laden.
@@ -28,6 +28,23 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
   trennt diese Fälle ausdrücklich von Desktop-Engines und Touch-Emulation.
 - Maßgeblich ist der erfolgreiche Actions-Lauf des jeweiligen Commits. Neue
   Prüffälle und lokale Vorprüfungen sind kein Ersatz für diesen Release-Nachweis.
+
+## Nachprüfung des WebKit-Hängers
+
+Der [unveränderte Ausgangsstand](https://github.com/MoinPDF/moinpdf/actions/runs/40216810705)
+bestand 25 aufeinanderfolgende Formular-Exporte. Ein gezielt zurückgehaltener
+`GetOperatorList`-Auftrag belegte dagegen, dass „Abbrechen“ auf eine Worker-Antwort
+wartete. Das belegt die Abbruchschwachstelle, nicht den internen Auslöser des
+ursprünglichen einmaligen WebKit-Hängers.
+
+`tests/pdf-session-smoke.mjs` prüft elf Lebenszyklus- und Exportprüfungsfälle mit kontrollierter Uhr.
+`tests/editor-verification-browser.py` ergänzt je Engine fünf echte Formular-Exporte
+und vier ausdrücklich injizierte Fehlerfälle: Abbruch, automatische Wiederholung,
+zweimalige Zeitüberschreitung und blockierte Schriftladung. Heruntergeladene PDFs
+werden unabhängig auf Text, drei Formularfelder und unveränderte Seitenpixel geprüft.
+Native macOS-Safari-Prüfungen kontrollieren zusätzlich echten Download sowie Abbruch
+und erneuten Export. Maßgeblich bleibt der erfolgreiche Lauf des jeweiligen Commits.
+
 
 ## Bedienungsverbesserungen in 0.14.2
 
@@ -50,7 +67,7 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| PDF-Engines und DOM | 58 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| PDF-Engines und DOM | 59 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
 | Dokumentenserver | 65 Tests: native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |

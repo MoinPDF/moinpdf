@@ -61,3 +61,12 @@ stays pending. Device checks complement the independent PDF/raster checks in CI.
     the 80 MB / 200-page limits on the basis of desktop emulation.
 16. Compare an export with retained text, links and forms; deliberately flattened
     output must show differences. Replacing the output resets the acknowledgement.
+
+## 0.21.1 verification recovery
+
+Automated tests distinguish ordinary repeated exports from injected worker/font
+stalls. Native macOS Safari adds a real form download and cancellation/re-export
+case. These are not physical iOS checks. On each physical device, also cancel an
+ongoing editor export, verify that the edit remains available, and export it again.
+Record any verification retry or timeout and confirm that no unverified download
+is offered. Native Microsoft Word open/edit/save/reopen remains pending.

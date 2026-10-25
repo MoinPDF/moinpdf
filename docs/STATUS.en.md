@@ -2,7 +2,9 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 25 October 2026 · Version 0.21.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 25 October 2026 · Version 0.21.1. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+
+- Export verification has bounded waits, remains cancellable and restarts the complete check at most once after a timeout. Unverified output stays blocked; the edit remains open for another attempt.
 
 - Compression preserves text, vectors, links and form fields by default, selectively reducing compatible RGB JPEGs. Lossless optimization and an explicit page-image mode are also available. The comparison uses shared zoom and synchronized scrolling. Document-level structures require one complete PDF; signed documents are rejected.
 - OCR handles mixed pages. “Apply corrections” writes edited lines into the PDF search layer without changing visible pixels or native text. Existing search text is removed before replacement. Small scan skew is retained in text geometry and font matching.
@@ -73,7 +75,7 @@ Physical iPhone/iPad/Android/Windows touch devices and native Microsoft Word rou
 
 ## Verification and release
 
-58 engine and interface test suites check processing, navigation and display settings. PDF outputs are read back independently, covering text, glyphs, image pixels, links, forms, font sizes, page order, project archives, real HEIC/PSD decoding and actual OCR with the shipped language models. Dense two-column pages are ordered without quadratic full comparisons and checked for complete text preservation.
+59 engine and interface test suites check processing, navigation and display settings. PDF outputs are read back independently, covering text, glyphs, image pixels, links, forms, font sizes, page order, project archives, real HEIC/PSD decoding and actual OCR with the shipped language models. Dense two-column pages are ordered without quadratic full comparisons and checked for complete text preservation.
 
 Server checks cover real LibreOffice inputs, SVG/vectors, editable slides, translation overflow, veraPDF and synthetic CA/TSA/CRL evidence for long-term signatures. Passing a synthetic test does not replace production configuration of the timestamp service.
 

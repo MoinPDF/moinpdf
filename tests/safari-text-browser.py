@@ -44,9 +44,14 @@ def click(element):
     element.click()
 
 
-def button(name):
-    return WebDriverWait(driver, 40).until(EC.element_to_be_clickable(
-        (By.XPATH, '//button[normalize-space(.)=' + xp(name) + ' or @aria-label=' + xp(name) + ']')))
+def button(name, timeout=40):
+    # Desktop and mobile actions share accessible names. Selenium's first-match
+    # helper can wait forever on the hidden mobile action; select the visible one.
+    def ready(_):
+        for element in driver.find_elements(By.XPATH, '//button[normalize-space(.)=' + xp(name) + ' or @aria-label=' + xp(name) + ']'):
+            if element.is_displayed() and element.is_enabled(): return element
+        return False
+    return WebDriverWait(driver, timeout).until(ready)
 
 
 def label(name):
@@ -194,13 +199,14 @@ def output_bytes(selector, name, actual_download=False, timeout=120):
     (out / name).write_bytes(data)
     if actual_download:
         folder = Path.home() / 'Downloads'
-        before = set(folder.glob('*')) if folder.exists() else set()
+        before = {f: (f.stat().st_mtime_ns, f.stat().st_size) for f in folder.glob('*') if f.is_file()} if folder.exists() else {}
         click(link)
         def downloaded(_):
-            for f in set(folder.glob('*')) - before:
+            for f in folder.glob('*'):
                 if f.is_file() and f.suffix.lower() not in ('.download', '.part'):
                     try:
-                        if f.read_bytes() == data:
+                        current = (f.stat().st_mtime_ns, f.stat().st_size)
+                        if current != before.get(f) and f.read_bytes() == data:
                             return f.name
                     except OSError:
                         pass
@@ -320,6 +326,45 @@ try:
             assert 'ZWEITE SEITE BLEIBT ERHALTEN' in label('Text für Block 3').get_attribute('value')
         check('Accessible document draft imports both PDF pages',accessible)
 
+        def verified_form(cancel=False):
+            # Distinct source names also give distinct native download names,
+            # avoiding Safari's same-name replacement prompt between cases.
+            form=folder / ('safari-form-cancel-input.pdf' if cancel else 'safari-form-input.pdf')
+            shutil.copyfile(Path('.cache/editor-browser/adaptive/form.pdf'),form)
+            fresh(form)
+            if cancel:
+                driver.execute_script("""const NativeWorker=Worker;
+                  window.Worker=class extends NativeWorker {
+                    postMessage(...args) {
+                      if(window.holdVerification && args[0]?.action==='GetOperatorList' && document.body.textContent.includes('Gespeicherte PDF prüfen')) {
+                        window.verificationHeld=true; return;
+                      }
+                      return super.postMessage(...args);
+                    }
+                  };""")
+            tool('PDF bearbeiten')
+            click(button('Text bearbeiten: Original heading'))
+            fill(label('Text direkt in der PDF bearbeiten'),'Edited heading')
+            if cancel: driver.execute_script('window.holdVerification=true')
+            click(button('Bearbeitete PDF erstellen'))
+            if cancel:
+                WebDriverWait(driver,60).until(lambda _:driver.execute_script('return window.verificationHeld===true'))
+                click(button('Abbrechen'))
+                button('Bearbeitete PDF erstellen', timeout=5)
+                assert not driver.find_elements(By.CSS_SELECTOR,'a[download][href^="blob:"]'), 'Cancelled PDF must not be published'
+                driver.execute_script('window.holdVerification=false')
+                click(button('Bearbeitete PDF erstellen'))
+            data=output_bytes('a[download]', 'safari-form-cancel.pdf' if cancel else 'safari-form.pdf', actual_download=True)
+            with pymupdf.open(stream=data,filetype='pdf') as after, pymupdf.open(form) as before:
+                assert len(after)==2
+                assert 'Edited heading' in after[0].get_text() and 'Original heading' not in after[0].get_text()
+                fields=lambda pdf:[(w.field_name,w.field_value,tuple(w.rect)) for p in pdf for w in p.widgets()]
+                assert fields(after)==fields(before) and len(fields(after))==3
+                a,b=before[1].get_pixmap(),after[1].get_pixmap()
+                assert (a.width,a.height,a.samples)==(b.width,b.height,b.samples)
+        check('Native Safari form edit, actual download and independent preservation',verified_form)
+        check('Native Safari injected worker stall cancels and the same edit exports',lambda:verified_form(True))
+
         def comparison():
             fresh(source)
             other=folder/'safari-changed.pdf'
@@ -341,4 +386,4 @@ finally:
     (out/'safari-text-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     if driver:driver.quit()
 print(json.dumps(report,ensure_ascii=False,indent=2),flush=True)
-raise SystemExit(1 if report.get('setupError') or len(results)!=9 or any(r['status']!='passed' for r in results) else 0)
+raise SystemExit(1 if report.get('setupError') or len(results)!=11 or any(r['status']!='passed' for r in results) else 0)

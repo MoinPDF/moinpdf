@@ -80,6 +80,10 @@ export function useExportAudit(
         'Ausgabe konnte nicht zuverlässig gelesen werden. Bitte erneut prüfen oder neu erzeugen.',
         'Output could not be read reliably. Please retry verification or regenerate it.',
       ),
+      timeout: t(
+        'Die Exportprüfung hat zu lange gedauert. Bitte erneut prüfen.',
+        'Export verification took too long. Please retry verification.',
+      ),
       empty: t('Die Ausgabedatei ist leer.', 'The output file is empty.'),
     })[code];
   const panel = !pdf ? null : (

@@ -117,7 +117,12 @@ function aborted(signal: AbortSignal) {
 }
 export function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   return new Promise((resolve, reject) => {
-    const abort = () => reject(new DOMException('Abgebrochen', 'AbortError'));
+    const abort = () =>
+      reject(
+        signal.reason instanceof Error && signal.reason.name !== 'AbortError'
+          ? signal.reason
+          : new DOMException('Abgebrochen', 'AbortError'),
+      );
     if (signal.aborted) {
       promise.catch(() => {});
       abort();
@@ -126,6 +131,118 @@ export function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<
     signal.addEventListener('abort', abort, { once: true });
     promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', abort));
   });
+}
+
+export class PdfTimeoutError extends Error {
+  constructor(readonly stage: string) {
+    super(
+      'Die PDF-Prüfung hat zu lange gedauert. Bitte erneut versuchen. Deine Bearbeitung bleibt geöffnet.',
+    );
+    this.name = 'PdfTimeoutError';
+  }
+}
+
+/** Own the renderer used by temporary checks, including its actual worker.
+ * PDF.js may leave reads or Terminate acknowledgements pending after a worker
+ * stops replying. Cancellation must not depend on that same worker replying.
+ * Original workspace documents never belong to this temporary session. */
+export async function withPdfDocument<T>(
+  bytes: Uint8Array,
+  parent: AbortSignal,
+  inspect: (
+    pdf: PDFDocumentProxy,
+    signal: AbortSignal,
+    step: <V>(stage: string, operation: Promise<V>) => Promise<V>,
+  ) => Promise<T>,
+  options: { disableFontFace?: boolean; discard?: (value: T) => void } = {},
+): Promise<T> {
+  parent.throwIfAborted();
+  const controller = new AbortController(),
+    signal = controller.signal;
+  const abort = () => controller.abort(parent.reason);
+  parent.addEventListener('abort', abort, { once: true });
+  const step = async <V>(stage: string, operation: Promise<V>): Promise<V> => {
+    const timer = setTimeout(() => controller.abort(new PdfTimeoutError(stage)), 60000);
+    try {
+      const value = await abortable(operation, signal);
+      signal.throwIfAborted();
+      return value;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  let worker: InstanceType<typeof import('pdfjs-dist/legacy/build/pdf.mjs').PDFWorker> | undefined,
+    task: ReturnType<typeof import('pdfjs-dist/legacy/build/pdf.mjs').getDocument> | undefined,
+    closing: Promise<void> | undefined,
+    finished = false,
+    delivered = false,
+    discarded = false,
+    hasResult = false,
+    result: T;
+  const discard = () => {
+    if (!hasResult || discarded || delivered) return;
+    discarded = true;
+    options.discard?.(result);
+  };
+  const close = () => {
+    closing ??= (async () => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        // Explicitly supplied PDFWorker instances are not owned by PDF.js's
+        // loading task. Give graceful shutdown a bounded chance, then always
+        // terminate the owned worker even if its acknowledgement never arrives.
+        await Promise.race([
+          Promise.resolve()
+            .then(() => task?.destroy())
+            .catch(() => {}),
+          new Promise<void>((resolve) => {
+            timer = setTimeout(resolve, 1500);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+        worker?.destroy();
+      }
+    })();
+    return closing;
+  };
+  const stop = () => {
+    void close();
+  };
+  try {
+    const pdfjs = await step('renderer-load', getPdfJs());
+    signal.throwIfAborted();
+    worker = new pdfjs.PDFWorker();
+    task = pdfjs.getDocument({
+      data: bytes.slice(),
+      worker,
+      cMapUrl: '/vendor/pdf/cmaps/',
+      cMapPacked: true,
+      standardFontDataUrl: '/vendor/pdf/standard_fonts/',
+      wasmUrl: '/vendor/pdf/wasm/',
+      fontExtraProperties: true,
+      ...(options.disableFontFace ? { disableFontFace: true } : {}),
+    });
+    signal.addEventListener('abort', stop, { once: true });
+    const pdf = await step('document-open', task.promise);
+    const operation = inspect(pdf, signal, step).then((value) => {
+      result = value;
+      hasResult = true;
+      if (finished) discard();
+      return value;
+    });
+    const value = await abortable(operation, signal);
+    await close();
+    signal.throwIfAborted();
+    delivered = true;
+    return value;
+  } finally {
+    finished = true;
+    parent.removeEventListener('abort', abort);
+    signal.removeEventListener('abort', stop);
+    await close();
+    discard();
+  }
 }
 export async function openSource(
   file: File,

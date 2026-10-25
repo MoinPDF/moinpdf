@@ -57,6 +57,7 @@ jobs:
           node tests/editor-workflow-smoke.mjs
           node tests/editor-adaptive-smoke.mjs
           node tests/editor-adaptive-fixtures.mjs
+          node tests/pdf-session-smoke.mjs
       - name: Independently produced two-column PDF
         run: |
           mkdir -p .cache/editor-corpus
@@ -84,6 +85,7 @@ jobs:
           python tests/editor-adaptive-browser.py || status=1
           python tests/word-export-browser.py || status=1
           python tests/editor-browser-report-check.py || status=1
+          python tests/editor-verification-browser.py || status=1
           exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
