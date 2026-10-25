@@ -147,26 +147,50 @@ const publishWorkflow = (await readFile('.github/workflows/publish-images.yml', 
 const publishScript = publishWorkflow.match(/          script: \|\n([\s\S]*?)\n  image:/)?.[1]
   .split('\n').map(line => line.replace(/^            /, '')).join('\n');
 assert.ok(publishScript);
-const publishVerify = new AsyncFunction('github', 'context', 'core', 'process', publishScript);
-async function publish(patch = {}, eventName = 'workflow_run', checkPatch = {}) {
-  const outputs = {}, calls = [];
+const publishVerify = new AsyncFunction('github', 'context', 'core', 'process', 'Date', 'setTimeout', publishScript);
+async function publish(patch = {}, eventName = 'workflow_run', checkPatch = {}, scenario = {}) {
+  const outputs = {}, calls = [], messages = [];
+  let now = 0, sleeps = 0, reads = 0;
   const run = { id: 456, path: '.github/workflows/docker.yml', status: 'completed', conclusion: 'success', head_sha: source, head_branch: 'main', event: 'push', repository: { full_name: 'MoinPDF/moinpdf' }, head_repository: { full_name: 'MoinPDF/moinpdf' }, ...patch };
   const github = { rest: { actions: {
-    getWorkflowRun: async ({ run_id }) => { calls.push('get'); assert.equal(run_id, 456); return { data: run }; },
-    // Reproduce the production incident: the list index has not caught up yet.
-    listWorkflowRuns: async ({workflow_id}) => {
+    getWorkflowRun: async ({ run_id }) => {
+      calls.push('get'); assert.equal(run_id, 456); reads++;
+      return { data: reads > 1 ? {...run, ...scenario.dockerAfterWait} : run };
+    },
+    // The completed Docker webhook can precede the list index. The other
+    // workflows can also appear late or finish after the publishing job starts.
+    listWorkflowRuns: async ({workflow_id, head_sha, branch, event}) => {
+      assert.equal(head_sha, source);
       if (workflow_id !== 'docker.yml') {
+        assert.equal(branch, 'main'); assert.equal(event, 'push');
         calls.push(workflow_id);
-        return { data: {workflow_runs: checkPatch.missing ? [] : [{...run,id:789,path:`.github/workflows/${workflow_id}`,...checkPatch}]} };
+        if (scenario.apiError) throw scenario.apiError;
+        const state = scenario.checkAt?.({workflow: workflow_id, sleeps}) ?? checkPatch;
+        const check = {...run, id:789, path:`.github/workflows/${workflow_id}`, ...state};
+        return { data: {workflow_runs: scenario.candidates?.(check) ?? (state.missing ? [] : [check])} };
       }
-      calls.push('list'); return { data: { workflow_runs: eventName === 'workflow_run' ? [] : [run] } };
+      calls.push('list');
+      return { data: { workflow_runs: scenario.dockerCandidates ?? (eventName === 'workflow_run' ? [] : [run]) } };
+    },
+  }, repos: {
+    getBranch: async ({branch}) => {
+      assert.equal(branch, 'main'); calls.push('main');
+      return {data: {commit: {sha: scenario.currentAt?.(sleeps) ?? source}}};
     },
   } } };
-  await publishVerify(github, { repo: { owner: 'MoinPDF', repo: 'moinpdf' }, eventName, payload: { workflow_run: { id: 456 } } }, { setOutput: (key, value) => { outputs[key] = value; } }, { env: { SOURCE_SHA: source } });
-  return { outputs, calls };
+  const core = {
+    setOutput: (key, value) => { outputs[key] = value; scenario.onOutput?.(key, value); },
+    info: message => messages.push(message),
+  };
+  await publishVerify(github, { repo: { owner: 'MoinPDF', repo: 'moinpdf' }, eventName, payload: { workflow_run: { id: 456 } } }, core, { env: { SOURCE_SHA: source } }, { now: () => now }, (callback, delay) => {
+    assert.equal(delay, 30_000); sleeps++; now += delay; callback();
+  });
+  return { outputs, calls, messages, sleeps };
 }
 const published = await publish();
-assert.deepEqual(published, { outputs: { source, run_id: 456 }, calls: ['get', 'editor.yml', 'browser-text.yml', 'documentation.yml'] });
+assert.deepEqual(published.outputs, { source, run_id: 456 });
+assert.deepEqual(published.calls, ['get', 'main', 'editor.yml', 'browser-text.yml', 'documentation.yml', 'get']);
+assert.equal(published.sleeps, 0);
 assert.equal((await publish({}, 'workflow_dispatch')).outputs.source, source);
 for (const patch of [
   { conclusion: 'failure' }, { status: 'in_progress' }, { head_sha: 'c'.repeat(40) },
@@ -176,10 +200,58 @@ for (const patch of [
   await assert.rejects(() => publish(patch), /successful complete Docker/);
   await assert.rejects(() => publish(patch, 'workflow_dispatch'), /successful complete Docker/);
 }
-console.log('PASS: image publication uses the completed run directly despite a stale list index and rejects unverified sources; releases retain the same verification run.');
+console.log('PASS: image publication uses the completed Docker run despite a stale list index and rejects unverified sources.');
+
+for (const status of ['queued', 'in_progress', 'waiting', 'pending']) {
+  const delayed = await publish({}, 'workflow_run', {}, {
+    checkAt: ({workflow, sleeps}) => workflow === 'editor.yml' && sleeps < 2 ? {status, conclusion:null} : {},
+  });
+  assert.equal(delayed.sleeps, 2);
+  assert.equal(delayed.messages.length, 2);
+  assert.deepEqual(delayed.outputs, {source, run_id:456});
+}
+const indexedLate = await publish({}, 'workflow_run', {}, {
+  checkAt: ({sleeps}) => sleeps < 2 ? {missing:true} : sleeps < 4 ? {status:'in_progress', conclusion:null} : {},
+});
+assert.equal(indexedLate.sleeps, 4, 'Missing and unfinished checks can settle without rejecting a valid release');
+for (const conclusion of ['failure', 'cancelled', 'timed_out', 'skipped', 'neutral', 'action_required', null]) {
+  let outputs = 0;
+  await assert.rejects(() => publish({}, 'workflow_run', {conclusion}, {onOutput: () => outputs++}), /verification of this exact source/);
+  assert.equal(outputs, 0, 'Failed or skipped checks never produce publication outputs');
+}
 for (const check of [
-  {missing:true}, {conclusion:'failure'}, {status:'in_progress'}, {status:'queued'},
+  {missing:true}, {status:'in_progress', conclusion:null}, {status:'queued', conclusion:null},
   {head_sha:'c'.repeat(40)}, {head_branch:'feature'}, {event:'pull_request'},
   {repository:{full_name:'Other/fork'}}, {head_repository:{full_name:'Other/fork'}},
-]) await assert.rejects(() => publish({}, 'workflow_run', check), /verification of this exact source/);
-console.log('PASS: image publication also requires successful editor, browser compatibility and documentation checks on the exact main source.');
+]) {
+  let outputs = 0;
+  await assert.rejects(() => publish({}, 'workflow_run', check, {onOutput: () => outputs++}), /Timed out waiting for verification of this exact source/);
+  assert.equal(outputs, 0, 'Missing, stalled or foreign checks remain blocked at the deadline');
+}
+await assert.rejects(() => publish({}, 'workflow_run', {}, {
+  candidates: check => [{...check, id:10}, {...check, id:20, conclusion:'failure'}],
+}), /verification of this exact source/);
+await assert.rejects(() => publish({}, 'workflow_run', {}, {
+  checkAt: ({sleeps}) => sleeps ? {conclusion:'failure'} : {status:'in_progress', conclusion:null},
+}), /verification of this exact source/);
+await assert.rejects(() => publish({}, 'workflow_run', {status:'in_progress', conclusion:null}, {
+  currentAt: sleeps => sleeps ? 'c'.repeat(40) : source,
+}), /superseded on main/);
+await assert.rejects(() => publish({}, 'workflow_run', {}, {dockerAfterWait:{conclusion:'failure'}}), /successful complete Docker/);
+const goodDocker = {id:456, path:'.github/workflows/docker.yml', status:'completed', conclusion:'success', head_sha:source, head_branch:'main', event:'push', repository:{full_name:'MoinPDF/moinpdf'}, head_repository:{full_name:'MoinPDF/moinpdf'}};
+await assert.rejects(() => publish({}, 'workflow_dispatch', {}, {
+  dockerCandidates:[goodDocker, {...goodDocker, id:789, conclusion:'failure'}],
+}), /successful complete Docker/);
+const apiError = new Error('API unavailable');
+await assert.rejects(() => publish({}, 'workflow_run', {}, {apiError}), apiError);
+console.log('PASS: delayed checks wait, terminal failures and newer failed runs block, changed main and failed Docker reruns block, and missing/foreign checks time out without publication.');
+
+for (const file of ['docker.yml', 'editor.yml', 'browser-text.yml', 'documentation.yml']) {
+  const yaml = await readFile(`.github/workflows/${file}`, 'utf8');
+  const push = yaml.match(/\n  push:\n([\s\S]*?)(?=\n  [a-z_]+:|\npermissions:)/)?.[1];
+  assert.ok(push, `${file} must start on push`);
+  assert.match(push, /branches: \[[^\]\n]*\bmain\b/, `${file} must cover main`);
+  assert.doesNotMatch(push, /(?:paths|paths-ignore):/, `${file} must not omit the exact release source based on changed files`);
+}
+assert.match(publishWorkflow, /timeout-minutes: 50/, 'The job must outlast the bounded verification wait');
+console.log('PASS: all four release checks cover every main push, including lockfile-only and CI-only changes.');

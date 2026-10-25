@@ -151,3 +151,11 @@ Zusätzliche Schriftformung: [HarfBuzz-Hinweise](../public/component-notices/har
 ---
 
 [Zur README](../README.md) · [Funktionen und Grenzen](FUNKTIONEN.md) · [Docker-Anleitung](../DOCKER.md)
+
+## Release-Freigabe
+
+Jeder Push auf `main` startet Docker-Integration, Editor-Matrix, native Browserprüfung und Dokumentationsprüfung. Dateifilter dürfen für diese Push-Prüfungen keinen Commit auslassen: Die Veröffentlichung akzeptiert ausschließlich erfolgreiche Prüfläufe desselben Quellstands.
+
+Nach erfolgreicher Docker-Integration wartet die Image-Veröffentlichung höchstens 45 Minuten auf die übrigen Prüfungen. Sie kontrolliert alle 30 Sekunden den aktuellen Hauptzweig und die jeweils neuesten passenden Läufe. Fehler, abgebrochene oder übersprungene Prüfungen und fehlende Ergebnisse nach Ablauf der Zeitgrenze blockieren die Veröffentlichung. Unmittelbar vor der Freigabe wird auch der Docker-Lauf erneut gelesen.
+
+`node tests/release-workflow-smoke.mjs` führt die tatsächlichen Freigabeskripte mit kontrollierter Uhr und GitHub-Antworten aus. Die Regressionen decken verspätete Indizierung, wartende Prüfungen, Zeitüberschreitungen, fremde oder ältere Commits, neuere fehlgeschlagene Läufe und einen während der Prüfung geänderten Hauptzweig ab. Container werden erst nach Freigabe für amd64 und arm64 gebaut. Laufzeitänderungen benötigen eine neue Version mit Änderungsprotokoll; bestehende Releases und ihre Image-Referenzen bleiben unverändert.

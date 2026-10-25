@@ -2,42 +2,7 @@ name: Documentation and footer
 on:
   push:
     branches: [main, rebuild/editor-adaptive-workspace]
-    paths:
-      - 'docs/**'
-      - 'media/**'
-      - 'public/media/**'
-      - 'public/medienbereich.html'
-      - 'scripts/build-media.mjs'
-      - 'public/docs/**'
-      - 'public/dokumentation.html'
-      - 'public/impressum.html'
-      - 'public/datenschutz.html'
-      - 'public/legal/**'
-      - 'public/locales/**'
-      - 'components/studio/legal-footer*'
-      - 'scripts/build-documentation.mjs'
-      - 'lib/tool-catalog.ts'
-      - 'package.json'
-      - 'tests/documentation-smoke.py'
-      - 'tests/accessibility-browser.py'
-      - 'tests/harbor-layout-browser.py'
-      - 'tests/hafenlicht-browser.py'
-      - 'components/studio/harbor-light-feedback.tsx'
-      - 'components/studio/hafenlicht.css'
-      - 'components/studio/tool-mosaic*'
-      - 'components/studio/workspace-layout.css'
-      - 'components/studio/interaction-refinements.css'
-      - 'components/studio/ui-feedback*'
-      - 'components/studio/tool-chooser.tsx'
-      - 'components/studio/upload-entry.tsx'
-      - 'public/hafenstudio-theme.css'
-      - 'public/appearance.css'
-      - 'components/studio/home-tools.tsx'
-      - 'components/studio/tool-file-entry.tsx'
-      - 'components/studio/server-workbench.tsx'
-      - 'components/studio/hafenstudio.css'
-      - 'app/page.tsx'
-      - '.github/workflows/documentation.yml'
+    # Every main commit needs this check for exact-source release verification.
   pull_request:
   workflow_dispatch:
 permissions:

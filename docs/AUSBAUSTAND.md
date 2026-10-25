@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 25. Oktober 2026 · Version 0.21.1. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 25. Oktober 2026 · Version 0.21.2. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 - Exportprüfungen haben begrenzte Wartezeiten, bleiben abbrechbar und starten nach einer Zeitüberschreitung höchstens einmal vollständig neu. Ungeprüfte Ausgaben bleiben gesperrt; die Bearbeitung bleibt für einen erneuten Versuch geöffnet.
 

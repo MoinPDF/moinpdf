@@ -132,3 +132,11 @@ Additional font shaping: [HarfBuzz notices](../public/component-notices/harfbuzz
 ---
 
 [README](../README.en.md) · [Features and limitations](FEATURES.en.md) · [Docker guide](../DOCKER.en.md)
+
+## Release approval
+
+Every push to `main` starts Docker integration, the editor matrix, native browser checks and documentation checks. Path filters must not omit a commit from these push checks: publication accepts successful runs for the exact same source only.
+
+After Docker integration succeeds, image publication waits at most 45 minutes for the remaining checks. Every 30 seconds it checks the current main branch and the newest matching runs. Failed, cancelled or skipped checks, and results still missing at the deadline, block publication. The Docker run is read again immediately before approval.
+
+`node tests/release-workflow-smoke.mjs` executes the actual approval scripts using a controlled clock and GitHub responses. Regressions cover delayed indexing, pending checks, timeouts, foreign or older commits, newer failed runs and main changing during verification. Images are built for amd64 and arm64 only after approval. Runtime changes require a new version and changelog; existing releases and their image references remain unchanged.
