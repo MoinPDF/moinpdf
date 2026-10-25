@@ -44,9 +44,14 @@ def click(element):
     element.click()
 
 
-def button(name):
-    return WebDriverWait(driver, 40).until(EC.element_to_be_clickable(
-        (By.XPATH, '//button[normalize-space(.)=' + xp(name) + ' or @aria-label=' + xp(name) + ']')))
+def button(name, timeout=40):
+    # Desktop and mobile actions share accessible names. Selenium's first-match
+    # helper can wait forever on the hidden mobile action; select the visible one.
+    def ready(_):
+        for element in driver.find_elements(By.XPATH, '//button[normalize-space(.)=' + xp(name) + ' or @aria-label=' + xp(name) + ']'):
+            if element.is_displayed() and element.is_enabled(): return element
+        return False
+    return WebDriverWait(driver, timeout).until(ready)
 
 
 def label(name):
@@ -341,7 +346,7 @@ try:
             if cancel:
                 WebDriverWait(driver,60).until(lambda _:driver.execute_script('return window.verificationHeld===true'))
                 click(button('Abbrechen'))
-                WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'//button[normalize-space(.)="Bearbeitete PDF erstellen"]')))
+                button('Bearbeitete PDF erstellen', timeout=5)
                 assert not driver.find_elements(By.CSS_SELECTOR,'a[download][href^="blob:"]'), 'Cancelled PDF must not be published'
                 driver.execute_script('window.holdVerification=false')
                 click(button('Bearbeitete PDF erstellen'))
