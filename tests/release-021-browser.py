@@ -179,7 +179,17 @@ def offline_case(browser, engine):
         for width in (320, 390):
             page.set_viewport_size({'width': width, 'height': 950})
             no_overflow(page)
-            assert projects.evaluate('(el) => el.scrollWidth <= el.clientWidth + 2'), 'Offline controls overflow the dialog'
+            assert projects.evaluate('(el) => el.scrollWidth <= el.clientWidth + 2'), {
+                'error': 'Project controls overflow the dialog', 'viewport': width,
+                'overflow': projects.evaluate('''(el) => {
+                    const outer = el.getBoundingClientRect();
+                    return [...el.querySelectorAll('*')].filter(child => {
+                        const r = child.getBoundingClientRect();
+                        return r.width && (r.right > outer.right + 2 || r.left < outer.left - 2);
+                    }).map(child => ({tag: child.tagName, className: child.className,
+                        text: child.textContent.slice(0, 80), width: child.getBoundingClientRect().width}));
+                }'''),
+            }
         page.set_viewport_size({'width': 1280, 'height': 950})
         offline.get_by_role('button', name='Auswahl herunterladen / aktualisieren', exact=True).click()
         expect(offline).to_contain_text('Offline-Dateien geprüft und gespeichert.', timeout=240000)

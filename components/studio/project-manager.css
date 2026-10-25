@@ -13,6 +13,10 @@
   max-height: 90dvh;
   overflow: auto;
   overflow-wrap: anywhere;
+  grid-template-columns: minmax(0, 1fr);
+}
+.project-dialog > * {
+  min-width: 0;
 }
 .project-list {
   display: grid;
@@ -59,8 +63,10 @@
   }
 }
 
-.project-dialog .project-actions > button {
+.project-dialog .project-actions > button,
+.project-dialog .advanced-card > button {
   max-width: 100%;
+  min-width: 0;
   height: auto;
   min-height: 36px;
   white-space: normal;
