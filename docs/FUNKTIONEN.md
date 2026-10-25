@@ -24,7 +24,7 @@ Projektdateien und Gesamtarchive können optional mit einem mindestens zwölf Ze
 
 Unter Projekte stehen Speicherbelegung, Anfrage dauerhafter Speicherung und Offline-Pakete zur Verfügung. Offline benötigt HTTPS oder localhost, einen unterstützten Browser und einen abgeschlossenen Download der App sowie der gewählten Sprachen/Laufzeiten. Der Download prüft die Integrität jeder Programmdatei. App-Updates werden nach dem Schließen aller älteren Tabs aktiv. Serverwerkzeuge brauchen weiter den eigenen Server. Offline-Dateien entfernen löscht keine Projekte oder Ergebnisse.
 
-Vorschauen werden nach Verlassen des sichtbaren Bereichs freigegeben. Die OCR-Verarbeitung verwendet auf Geräten mit mindestens 8 GB gemeldetem Speicher und acht logischen Kernen höchstens zwei, sonst höchstens einen Hauptworker. Zusätzliche Sprachproben können einen eigenen kurzlebigen Worker nutzen. Die Grenzen für Quelldateien und aktive Seiten werden nicht ohne weitere Belastungsnachweise erhöht.
+Noch laufende Vorschauen werden beim Verlassen des sichtbaren Bereichs sofort abgebrochen, damit neu sichtbare Seiten nicht warten müssen. Fertige Vorschaubilder werden nach einer kurzen Speicherfrist freigegeben. Die OCR-Verarbeitung verwendet auf Geräten mit mindestens 8 GB gemeldetem Speicher und acht logischen Kernen höchstens zwei, sonst höchstens einen Hauptworker. Zusätzliche Sprachproben können einen eigenen kurzlebigen Worker nutzen. Die Grenzen für Quelldateien und aktive Seiten werden nicht ohne weitere Belastungsnachweise erhöht.
 
 Physische iPhone-/iPad-/Android-/Windows-Touch-Geräte und echte Microsoft-Word-Rundläufe bleiben gesondert abzunehmen; Browserautomation gilt nicht als Nachweis dafür. Siehe [Gerätecheckliste](quality/editor-device-checklist.md).
 

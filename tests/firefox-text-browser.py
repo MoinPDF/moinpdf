@@ -43,6 +43,9 @@ with sync_playwright() as api,tempfile.TemporaryDirectory() as temporary:
     def output(page,name,selector='a[download]',timeout=120000):
         link=page.locator(selector).first
         expect(link).to_be_visible(timeout=timeout)
+        # PDF actions are visible while export verification still blocks them.
+        # Wait for its actual local download URL before starting the download.
+        expect(link).to_have_attribute('href',re.compile(r'^(blob:|data:)'),timeout=timeout)
         with page.expect_download(timeout=30000) as download:link.click()
         path=out/name;download.value.save_as(path)
         return path

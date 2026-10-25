@@ -8,8 +8,10 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 
 ## Prüfplan für 0.21.0
 
-- 57 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,
+- 58 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,
   falscher Passwörter, manipulierten/abgeschnittenen Projektdateien und Abbruch.
+- Vorschau-Regressionen prüfen den sofortigen Abbruch unsichtbarer Arbeit, das
+  Freigeben der Warteschlange sowie begrenzte Bildablage und erneutes Laden.
 - Exportprüfung erkennt verlorenen Text, geänderte Formularfelder und unlesbare PDFs.
   Download, Teilen und Weiterbearbeitung verwenden denselben, an die Ausgabedatei
   gebundenen Status. Eine technische Prüfung ersetzt keine inhaltliche Sichtkontrolle.
@@ -48,10 +50,10 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| PDF-Engines und DOM | 57 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| PDF-Engines und DOM | 58 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
 | Dokumentenserver | 65 Tests: native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
-| Oberfläche | Alle Werkzeugansichten auf Desktop und Mobilgerät, PDF-/EPUB-/Audio-Downloads |
+| Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |
 | Dokumentation und Medien | Suche, Kategorien, Druck, Downloads, Video, keine horizontalen Überläufe und erhaltene Arbeitsdateien |
 | Rechtsseiten | 1440, 390 und 320 Pixel, gemeinsame Farbpalette, Kontaktlinks und Abstand zwischen Anschrift und E-Mail |
 | Container | Plattform-Indizes für amd64 und arm64 sowie feste Digests |

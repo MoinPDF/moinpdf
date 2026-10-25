@@ -24,7 +24,7 @@ Project snapshots and archives support optional password encryption with a minim
 
 Projects includes storage usage, an explicit persistent-storage request and offline packages. Offline use requires HTTPS or localhost, a supported browser and a completed download of the app and selected languages/runtimes. Every program file is integrity-checked. Updates activate once all older app tabs close. Server tools still need the user's document server. Removing offline files does not delete projects or results.
 
-Offscreen previews release their image data. OCR allows at most two main workers on devices reporting at least 8 GB memory and eight logical cores, otherwise one. Language probes can use a separate short-lived worker. Input size and active page limits are not raised without additional load-test evidence.
+Unfinished offscreen previews are cancelled immediately so newly visible pages do not have to wait. Completed preview images are released after a short retention period. OCR allows at most two main workers on devices reporting at least 8 GB memory and eight logical cores, otherwise one. Language probes can use a separate short-lived worker. Input size and active page limits are not raised without additional load-test evidence.
 
 Physical iPhone/iPad/Android/Windows touch devices and native Microsoft Word roundtrips remain separately pending; browser automation is not evidence of those checks. See the [device checklist](quality/editor-device-checklist.md).
 

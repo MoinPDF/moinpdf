@@ -6,8 +6,10 @@ The version number is in [package.json](package.json). A successful run provides
 
 ## Verification scope for 0.21.0
 
-- 57 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
+- 58 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
   passwords, tampered/truncated project files and cancellation.
+- Preview regressions check immediate cancellation of hidden work, queue release,
+  bounded image retention and recreation on return.
 - Export verification detects lost text, changed form fields and unreadable PDFs.
   Download, sharing and adoption use the status tied to the exact output Blob.
   Technical verification does not establish content accuracy.
@@ -29,10 +31,10 @@ The version number is in [package.json](package.json). A successful run provides
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| PDF engines and DOM | 57 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| PDF engines and DOM | 58 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
 | Document server | 65 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
-| Interface | All tool views on desktop and mobile, PDF/EPUB/audio downloads |
+| Interface | All tool views on desktop and narrow touch viewports, PDF/EPUB/audio downloads |
 | Documentation and media | Search, categories, printing, downloads, video, no horizontal overflow and preserved working files |
 | Legal pages | 1440, 390 and 320 pixels, shared palette, contact links and spacing between address and email |
 | Containers | Platform indexes for amd64 and arm64, plus fixed digests |
