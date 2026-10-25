@@ -1871,7 +1871,9 @@ function Studio() {
           setDocumentSessions(state.documentSessions);
           setToolDrafts(state.toolDrafts || {});
           setZoom(state.viewState?.zoom || 100);
-          setView(state.viewState?.view || 'check');
+          setView(
+            state.viewState?.view === 'result' ? 'document' : state.viewState?.view || 'check',
+          );
           restoredView.current = state.viewState;
           setActiveId(state.activeId);
           setToolId(
@@ -1912,7 +1914,9 @@ function Studio() {
           setDocumentSessions(state.documentSessions);
           setToolDrafts(state.toolDrafts || {});
           setZoom(state.viewState?.zoom || 100);
-          setView(state.viewState?.view || 'check');
+          setView(
+            state.viewState?.view === 'result' ? 'document' : state.viewState?.view || 'check',
+          );
           restoredView.current = state.viewState;
           setActiveId(state.activeId);
           setToolId(
