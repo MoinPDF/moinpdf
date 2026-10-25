@@ -16,6 +16,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Speicheranzeige, Hinweis bei knapper Speicherquote und ausdrückliche Anfrage dauerhafter Browserspeicherung. Falsche Größenangaben bei Projektimporten korrigiert.
 - Installierbare Offline-App mit einzeln wählbaren OCR-Sprachpaketen und optionalen Laufzeiten. Integritätsprüfung der Programmdateien, getrennte Offline-Ablage, Abbruch und Entfernung; kein Cache für Dokumente oder Server-API-Antworten.
 - Vorschauen außerhalb des sichtbaren Bereichs geben ihre Bilddaten frei. OCR-Worker werden geräteabhängig begrenzt und wartende Aufträge lassen sich abbrechen. Die belegten Grenzen von 80 MB und 200 aktiven Seiten bleiben bestehen.
+- Offline-Hintergrundprozesse behalten den lokalen Cache-Zugriff und die erforderlichen Sicherheitsheader; Rückgängig/Wiederholen vermeiden störende Fokuswechsel beim Antippen im Texteditor.
 - Aktuelle Programmgrenzen in der Dokumentation werden aus den Anwendungskonstanten erzeugt. Deutsche und englische Anleitungen um Exportprüfung, Projektschutz, Speicher und Offline-Nutzung erweitert.
 
 - Inhaltserhaltende Komprimierung, verlustfreier Modus und synchronisierter Originalvergleich.

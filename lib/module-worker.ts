@@ -1,12 +1,29 @@
 /**
  * Blob workers inherit the document's embedder policy. Hosted static assets
- * currently omit COEP even when the document uses require-corp, so starting
- * their HTTP URL directly is blocked before any worker code can run.
+ * currently omit COEP even when the document uses require-corp. Our active
+ * offline worker supplies that policy for direct worker responses; use its
+ * HTTP scope so nested workers and module imports remain controlled offline.
  */
 export function createLocalModuleWorker(url: string) {
   const entry = new URL(url, location.href);
   if (!['http:', 'https:'].includes(entry.protocol) || entry.origin !== location.origin)
     throw new Error('Ungültige Adresse für den lokalen Hintergrundprozess.');
+
+  if (
+    typeof navigator !== 'undefined' &&
+    navigator.serviceWorker?.controller?.scriptURL === new URL('/sw.js', location.href).href
+  ) {
+    const worker = new Worker(entry.href, { type: 'module' });
+    let disposed = false;
+    return {
+      worker,
+      dispose() {
+        if (disposed) return;
+        disposed = true;
+        worker.terminate();
+      },
+    };
+  }
 
   // Import the real entry rather than copying it: its own import.meta.url and
   // relative module/WASM imports retain the emitted HTTP base. Root-relative

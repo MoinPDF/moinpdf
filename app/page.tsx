@@ -1758,6 +1758,7 @@ function Studio() {
                 type="button"
                 className="harbor-nav-item"
                 disabled={locked || !history.length}
+                onPointerDown={(event) => event.preventDefault()}
                 onClick={undo}
               >
                 <Undo2 size={21} />
@@ -2252,6 +2253,7 @@ function Studio() {
               aria-label={t('Rückgängig')}
               title={ui('Rückgängig · Strg+Z')}
               disabled={!history.length || locked}
+              onPointerDown={(event) => event.preventDefault()}
               onClick={undo}
             >
               <Undo2 size={18} />
@@ -2262,6 +2264,7 @@ function Studio() {
               aria-label={t('Wiederholen')}
               title={ui('Wiederholen · Strg+Umschalt+Z')}
               disabled={!future.length || locked}
+              onPointerDown={(event) => event.preventDefault()}
               onClick={redo}
             >
               <Redo2 size={18} />

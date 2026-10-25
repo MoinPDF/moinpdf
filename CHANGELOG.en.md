@@ -6,6 +6,8 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## 0.21.0 – 2026-10-25
 
+- Offline background workers retain local cache access and the required security headers; undo/redo avoid disruptive pointer-driven focus changes in the text editor.
+
 - Shared technical PDF export verification before download and sharing; page dimensions, searchable text, links and form fields are compared when source-page mapping is available. Findings and verification gaps require explicit review.
 - Optional password-encrypted project snapshots and archives with AES-256-GCM, authenticated chunks and PBKDF2-SHA-256. Export content review and a flattened PDF handoff containing visible page images only.
 - Storage estimates, low-quota notices and an explicit persistent-storage request. Corrected misleading project import size messages.

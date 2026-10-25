@@ -168,6 +168,13 @@ def project_case(browser, engine, en):
 
 def offline_case(browser, engine):
     context = browser.new_context(viewport={'width': 1280, 'height': 950}, accept_downloads=True, reduced_motion='reduce')
+    context.tracing.start(screenshots=True, snapshots=True)
+    diagnostics = []
+    def observe(page):
+        page.on('pageerror', lambda error: diagnostics.append({'type': 'pageerror', 'error': str(error)}))
+        page.on('console', lambda message: diagnostics.append({'type': 'console', 'text': message.text}) if message.type == 'error' else None)
+        page.on('requestfailed', lambda request: diagnostics.append({'type': 'requestfailed', 'url': request.url, 'error': request.failure}))
+    context.on('page', observe)
     page = context.new_page()
     page.set_default_timeout(45000)
     result = {'case': f'{engine}-offline-ocr-and-200-pages'}
@@ -205,6 +212,8 @@ def offline_case(browser, engine):
         choose(page, 'OCR & Text')
         page.get_by_role('button', name='Text erkennen', exact=True).click()
         link = page.locator('.export-actions a[download]')
+        expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=180000)
+        assert link.is_visible(), {'error': page.locator('.error-box').inner_text(), 'diagnostics': diagnostics}
         expect(link).to_have_attribute('href', re.compile(r'^blob:'), timeout=180000)
         path = download_file(page, link, f'{engine}-offline-ocr.pdf')
         with pymupdf.open(path) as pdf:
@@ -238,9 +247,13 @@ def offline_case(browser, engine):
         page.screenshot(path=str(out / f'{engine}-bounded-previews.png'), full_page=True)
         result['status'] = 'passed'
     except Exception:
-        result.update(status='failed', error=traceback.format_exc())
+        result.update(status='failed', error=traceback.format_exc(), diagnostics=diagnostics)
         page.screenshot(path=str(out / f'{engine}-offline-failed.png'), full_page=True)
     finally:
+        if result.get('status') == 'failed':
+            context.tracing.stop(path=str(out / f'{engine}-offline-trace.zip'))
+        else:
+            context.tracing.stop()
         context.close()
     return result
 

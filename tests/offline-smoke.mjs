@@ -19,7 +19,7 @@ const fetch=async(request,options={})=>{
 const context={self:{location:{origin:'https://moinpdf.test'},clients:{claim:async()=>{}},addEventListener:(type,fn)=>events[type]=fn},caches:cacheAPI,fetch,Response,Headers,URL,Set,AbortController,console};
 vm.runInNewContext((await readFile('scripts/offline-worker.js','utf8')).replace('__MOINPDF_OFFLINE_MANIFEST__',JSON.stringify(manifest)),context);
 async function message(data){let promise;const list=[];events.message({data,source:{url:'https://moinpdf.test/'},ports:[{postMessage:value=>list.push(value)}],waitUntil:p=>promise=p});await promise;messages.push(...list);return list.at(-1);}
-async function request(path,mode='cors',method='GET'){let response;events.fetch({request:{url:'https://moinpdf.test'+path,mode,method},respondWith:p=>response=p});return response?await response:undefined;}
+async function request(path,mode='cors',method='GET',destination=''){let response;events.fetch({request:{url:'https://moinpdf.test'+path,mode,method,destination},respondWith:p=>response=p});return response?await response:undefined;}
 assert.equal((await message({type:'status'})).result.ready.length,0);
 assert.equal(cachesMap.size,0,'Checking status must not create empty caches');
 await cacheAPI.open('unrelated-project-cache');
@@ -29,6 +29,7 @@ broken=false;assert((await message({type:'prepare',packs:['core','language-deu']
 assert.equal(await request('/api/documents/jobs'),undefined,'No API interception');assert.equal(await request('/uploads/private.pdf'),undefined,'No document interception');assert.equal(await request('/assets/app.js','cors','POST'),undefined,'No mutation interception');
 auth=false;assert.equal((await request('/','navigate')).status,401,'An online sign-in wall is not bypassed');
 network=false;const offlineShell = await request('/','navigate');assert.equal(offlineShell.headers.get('Cross-Origin-Opener-Policy'),'same-origin');assert.equal(offlineShell.headers.get('Cross-Origin-Embedder-Policy'),'require-corp');assert.equal(offlineShell.headers.get('Set-Cookie'),null);assert.match(await(await request('/','navigate')).text(),/MoinPDF/);assert.equal(await(await request('/assets/app.js')).text(),'asset');assert.equal((await(await request('/offline-manifest.json')).json()).build,manifest.build);
+const offlineWorker=await request('/assets/app.js','same-origin','GET','worker');assert.equal(offlineWorker.headers.get('Cross-Origin-Embedder-Policy'),'require-corp');assert.equal(offlineWorker.headers.get('Cross-Origin-Resource-Policy'),'same-origin');assert.equal(await offlineWorker.text(),'asset');
 await message({type:'remove',pack:'all'});assert(cachesMap.has('unrelated-project-cache'),'Removal is confined to offline program files');assert.equal((await request('/','navigate')).status,503);
 assert((await message({type:'prepare',packs:['../../private']})).error);
 network=true;auth=true;delay=true;const entered=new Promise(resolve=>started=resolve);const pending=message({type:'prepare',packs:['core']});await entered;await message({type:'cancel'});assert((await pending).error);assert.equal((await message({type:'status'})).result.ready.length,0,'Cancellation cannot complete a partially downloaded package');

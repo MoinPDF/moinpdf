@@ -23,7 +23,9 @@ self.onmessage = async ({ data }) => {
           workerPath: new URL('/vendor/ocr/worker.min.js', origin).href,
           corePath: new URL('/vendor/ocr', origin).href,
           langPath: new URL('/vendor/languages', origin).href,
-          workerBlobURL: true,
+          // Direct workers retain the offline service-worker scope. The blob
+          // fallback is only needed when hosted assets lack an embedder policy.
+          workerBlobURL: self.location.protocol === 'blob:',
           errorHandler: (error: unknown) =>
             rejectFailure(
               new Error(

@@ -86,6 +86,17 @@ self.addEventListener('message', event => {
     } catch (error) { port.postMessage({ error: String(error?.message || error) }); }
   })());
 });
+function isolatedWorkerResponse(response, request) {
+    if (!['worker', 'sharedworker'].includes(request.destination)) return response;
+    // Static hosting may omit COEP on assets. Keep dedicated/nested workers in
+    // the HTTP scope controlled by this service worker, including offline.
+    const headers = new Headers(response.headers);
+    headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+    headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+    headers.delete('Content-Encoding');
+    headers.delete('Content-Length');
+    return new Response(response.body, {status:response.status, statusText:response.statusText, headers});
+}
 self.addEventListener('fetch', event => {
   const request = event.request, url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
@@ -114,5 +125,5 @@ self.addEventListener('fetch', event => {
       if (response) return response;
     }
     return fetch(request);
-  })());
+  })().then(response => isolatedWorkerResponse(response, request)));
 });
