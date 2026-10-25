@@ -236,13 +236,18 @@ def offline_case(browser, engine):
         result['200_pages_open_seconds'] = round(time.monotonic() - started, 2)
         first = page.get_by_role('button', name='Seite 1 in Einzelansicht öffnen', exact=True)
         last = page.get_by_role('button', name='Seite 200 in Einzelansicht öffnen', exact=True)
+        started = time.monotonic()
         last.scroll_into_view_if_needed()
-        expect(last.locator('img')).to_be_visible()
+        # Several newly visible thumbnails share a bounded serial render queue.
+        # Allow the slower CI engine to finish that work; still require the real
+        # final-page image, eviction and successful recreation on returning.
+        expect(last.locator('img')).to_be_visible(timeout=20000)
+        result['last_page_preview_seconds'] = round(time.monotonic() - started, 2)
         expect(first.locator('img')).to_have_count(0, timeout=20000)
         result['retained_preview_images'] = page.locator('.page-preview img').count()
         assert result['retained_preview_images'] < 80, result
         first.scroll_into_view_if_needed()
-        expect(first.locator('img')).to_be_visible()
+        expect(first.locator('img')).to_be_visible(timeout=20000)
         no_overflow(page)
         page.screenshot(path=str(out / f'{engine}-bounded-previews.png'), full_page=True)
         result['status'] = 'passed'

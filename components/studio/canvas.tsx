@@ -52,6 +52,13 @@ export function PagePreview({
         visible = entries.some((e) => e.isIntersecting);
         clearTimeout(eviction);
         if (!visible) {
+          // Retain completed images briefly, but never let hidden rendering
+          // occupy the serial queue ahead of newly visible pages.
+          if (cancel) {
+            generation++;
+            cancel.abort();
+            cancel = undefined;
+          }
           eviction = setTimeout(clear, deviceBudget().previewRetentionMs);
           return;
         }

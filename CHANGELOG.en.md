@@ -12,7 +12,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Optional password-encrypted project snapshots and archives with AES-256-GCM, authenticated chunks and PBKDF2-SHA-256. Export content review and a flattened PDF handoff containing visible page images only.
 - Storage estimates, low-quota notices and an explicit persistent-storage request. Corrected misleading project import size messages.
 - Installable offline app with individually selected OCR languages and optional runtimes. Program file integrity checks, separate caches, cancellation and removal; no document or server API response caching.
-- Offscreen previews release their image data. Device-aware OCR worker limits and cancellable waiting jobs. Validated limits remain 80 MB and 200 active pages.
+- Offscreen previews release their image data; unfinished previews are cancelled immediately so they cannot delay newly visible pages. Device-aware OCR worker limits and cancellable waiting jobs. Validated limits remain 80 MB and 200 active pages.
 - Documentation limit tables are generated from application constants. Updated German and English export, project, storage and offline instructions.
 
 - Content-preserving compression, lossless mode and synchronized original comparison.

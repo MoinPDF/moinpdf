@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 const suites = [
   'release-021',
   'offline',
+  'page-preview',
   'workspace',
   'workspace-results',
   'appearance',
