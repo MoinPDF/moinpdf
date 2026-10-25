@@ -61,6 +61,7 @@ INSTRUMENT = r"""(() => {
       if (window.holdVerificationWorker && checking && data?.action === 'GetOperatorList' &&
           (window.holdVerificationWorker !== 'once' || !window.heldVerificationOwner || window.heldVerificationOwner === this.probeId)) {
         window.heldVerificationOwner ||= this.probeId;
+        (window.verificationHeldWorkers ||= new Set()).add(this.probeId);
         window.heldVerificationMessages ||= [];
         window.heldVerificationMessages.push(() => {
           if (!this.probeClosed) super.postMessage(...args);
@@ -70,7 +71,7 @@ INSTRUMENT = r"""(() => {
       }
       return super.postMessage(...args);
     }
-    terminate() {this.probeClosed = true; record('worker-terminated', {id: this.probeId}); return super.terminate();}
+    terminate() {(window.verificationClosedWorkers ||= new Set()).add(this.probeId); this.probeClosed = true; record('worker-terminated', {id: this.probeId}); return super.terminate();}
   };
   const font = Object.getOwnPropertyDescriptor(FontFace.prototype, 'loaded');
   Object.defineProperty(FontFace.prototype, 'loaded', {...font, get() {
@@ -173,8 +174,8 @@ with sync_playwright() as api:
                     if case == 'worker-retry':
                         assert page.evaluate('window.heldVerificationMessages.length > 0'), 'Worker fault must actually be injected'
                 if fault and not baseline:
-                    held = page.evaluate('window.verificationEvents.filter(e => e.event === "worker-request-held").map(e => e.id)')
-                    closed = page.evaluate('window.verificationEvents.filter(e => e.event === "worker-terminated").map(e => e.id)')
+                    held = page.evaluate('[...(window.verificationHeldWorkers || [])]')
+                    closed = page.evaluate('[...(window.verificationClosedWorkers || [])]')
                     assert set(held).issubset(set(closed)), 'Every stalled temporary worker must be terminated'
                 assert not errors, errors
                 result['status'] = 'passed'

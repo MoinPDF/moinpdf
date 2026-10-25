@@ -14,6 +14,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Hängende PDF-Exportprüfungen lassen sich abbrechen, auch wenn der PDF-Worker nicht mehr antwortet. Temporäre Prüfsitzungen beenden ihre Worker spätestens nach einer begrenzten Aufräumphase.
 - Jeder asynchrone Prüfschritt hat eine Zeitgrenze von 60 Sekunden. Bei Zeitüberschreitung wird die vollständige Prüfung einmal mit einem neuen Worker und Schriftkonturen wiederholt. Bei erneutem Stillstand bleibt der Download gesperrt und die Bearbeitung geöffnet.
 - Regressionen für blockierte Worker, blockierte Schriftladung, Abbruch, erneuten Export derselben Bearbeitung und erhaltene Formularfelder. Native Safari-Prüfungen ergänzen die Browser-Engine-Matrix; physische Geräte und Microsoft Word bleiben gesondert ausstehend.
+- Auch die gemeinsame Downloadprüfung verwendet beendbare Prüfsitzungen. Ein Zeitlimit hält ungeprüfte Ausgaben gesperrt und bietet eine erneute Prüfung an.
 
 ## 0.21.0 – 2026-10-25
 

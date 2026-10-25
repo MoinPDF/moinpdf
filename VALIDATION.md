@@ -37,7 +37,7 @@ bestand 25 aufeinanderfolgende Formular-Exporte. Ein gezielt zurückgehaltener
 wartete. Das belegt die Abbruchschwachstelle, nicht den internen Auslöser des
 ursprünglichen einmaligen WebKit-Hängers.
 
-`tests/pdf-session-smoke.mjs` prüft neun Lebenszyklusfälle mit kontrollierter Uhr.
+`tests/pdf-session-smoke.mjs` prüft elf Lebenszyklus- und Exportprüfungsfälle mit kontrollierter Uhr.
 `tests/editor-verification-browser.py` ergänzt je Engine fünf echte Formular-Exporte
 und vier ausdrücklich injizierte Fehlerfälle: Abbruch, automatische Wiederholung,
 zweimalige Zeitüberschreitung und blockierte Schriftladung. Heruntergeladene PDFs

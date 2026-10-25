@@ -9,6 +9,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Stalled editor export verification can be cancelled even when the PDF worker stops replying. Temporary verification sessions terminate their workers after a bounded cleanup period.
 - Each asynchronous verification step has a 60-second deadline. A timeout restarts the complete verification once with a fresh worker and glyph outlines. Another stall keeps the download blocked and the edit open.
 - Regressions cover stalled workers/font loading, cancellation, re-exporting the same edit and preserved form fields. Native Safari checks supplement the browser-engine matrix; physical devices and Microsoft Word remain separately pending.
+- The shared download audit also uses bounded temporary sessions. A timeout keeps unverified output blocked and offers another verification attempt.
 
 ## 0.21.0 – 2026-10-25
 

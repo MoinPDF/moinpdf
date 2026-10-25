@@ -33,7 +33,7 @@ passed 25 consecutive form exports. Deliberately holding a `GetOperatorList` req
 then proved that cancellation waited for a worker reply. This establishes the
 cancellation defect, not the internal trigger of the original one-off WebKit hang.
 
-`tests/pdf-session-smoke.mjs` covers nine lifecycle cases with a controlled clock.
+`tests/pdf-session-smoke.mjs` covers eleven lifecycle and shared-audit cases with a controlled clock.
 `tests/editor-verification-browser.py` adds five real form exports per engine and
 four explicitly injected failures: cancellation, automatic retry, two timeouts
 and stalled font loading. Downloaded PDFs are independently checked for text,

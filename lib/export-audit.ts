@@ -1,5 +1,5 @@
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import type { Source, PageItem } from './pdf-engine';
+import { withPdfDocument, PdfTimeoutError, type Source, type PageItem } from './pdf-engine';
 import { readPdfText } from './pdf-text';
 export type ExportAudit = {
   version: 1;
@@ -16,6 +16,7 @@ export type ExportAudit = {
       | 'partial'
       | 'encrypted'
       | 'unreadable'
+      | 'timeout'
       | 'empty';
     page?: number;
     before?: number;
@@ -100,64 +101,66 @@ export async function auditPdfExport(
   };
   if (!blob.size) return { ...result, status: 'invalid', issues: [{ code: 'empty' }] };
   signal.throwIfAborted();
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdf/pdf.worker.min.mjs';
-  const task = pdfjs.getDocument({
-    data: new Uint8Array(await blob.arrayBuffer()),
-    cMapUrl: '/vendor/pdf/cmaps/',
-    cMapPacked: true,
-    standardFontDataUrl: '/vendor/pdf/standard_fonts/',
-    wasmUrl: '/vendor/pdf/wasm/',
-  });
-  const abort = () => {
-    void task.destroy();
-  };
-  signal.addEventListener('abort', abort, { once: true });
   try {
-    signal.throwIfAborted();
-    const pdf = await task.promise;
-    result.pages = pdf.numPages;
-    if (expectedPages && expectedPages !== pdf.numPages)
-      result.issues.push({ code: 'pages', before: expectedPages, after: pdf.numPages });
-    for (let index = 0; index < Math.min(200, pdf.numPages); index++) {
-      const after = await summarize(pdf, index, 0, signal);
-      const ref = mapping?.[index],
-        source = sources.find((s) => s.id === ref?.sourceId);
-      if (after.limited) result.issues.push({ code: 'partial', page: index + 1 });
-      if (ref && source) {
-        const before = await summarize(source.pdf, ref.index, ref.rotation, signal);
-        const issue = (code: 'links' | 'forms', a: number, b: number) => {
-          if (a !== b) result.issues.push({ code, page: index + 1, before: a, after: b });
-        };
-        issue('links', before.links, after.links);
-        issue('forms', before.forms, after.forms);
-        if (Math.abs(before.width - after.width) > 1 || Math.abs(before.height - after.height) > 1)
-          result.issues.push({ code: 'geometry', page: index + 1 });
-        if (before.limited) result.issues.push({ code: 'partial', page: index + 1 });
-        if (
-          preserveText.has(tool || '') &&
-          [...before.words].some(([word, count]) => (after.words.get(word) || 0) < count)
-        )
-          result.issues.push({ code: 'text', page: index + 1 });
-      }
-      result.checkedPages++;
-      // Yield between pages so cancellation and the rest of the workplace stay responsive.
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    }
-    if (pdf.numPages > result.checkedPages) result.issues.push({ code: 'partial' });
-    if (result.issues.length) result.status = 'review';
-    return result;
+    return await withPdfDocument(
+      new Uint8Array(await blob.arrayBuffer()),
+      signal,
+      async (pdf, signal, step) => {
+        result.pages = pdf.numPages;
+        if (expectedPages && expectedPages !== pdf.numPages)
+          result.issues.push({ code: 'pages', before: expectedPages, after: pdf.numPages });
+        for (let index = 0; index < Math.min(200, pdf.numPages); index++) {
+          const after = await step('audit-output', summarize(pdf, index, 0, signal));
+          const ref = mapping?.[index],
+            source = sources.find((s) => s.id === ref?.sourceId);
+          if (after.limited) result.issues.push({ code: 'partial', page: index + 1 });
+          if (ref && source) {
+            const before = await step(
+              'audit-original',
+              summarize(source.pdf, ref.index, ref.rotation, signal),
+            );
+            const issue = (code: 'links' | 'forms', a: number, b: number) => {
+              if (a !== b) result.issues.push({ code, page: index + 1, before: a, after: b });
+            };
+            issue('links', before.links, after.links);
+            issue('forms', before.forms, after.forms);
+            if (
+              Math.abs(before.width - after.width) > 1 ||
+              Math.abs(before.height - after.height) > 1
+            )
+              result.issues.push({ code: 'geometry', page: index + 1 });
+            if (before.limited) result.issues.push({ code: 'partial', page: index + 1 });
+            if (
+              preserveText.has(tool || '') &&
+              [...before.words].some(([word, count]) => (after.words.get(word) || 0) < count)
+            )
+              result.issues.push({ code: 'text', page: index + 1 });
+          }
+          result.checkedPages++;
+          // Yield between pages so cancellation and the rest of the workplace stay responsive.
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
+        if (pdf.numPages > result.checkedPages) result.issues.push({ code: 'partial' });
+        if (result.issues.length) result.status = 'review';
+        return result;
+      },
+      { disableFontFace: true },
+    );
   } catch (error) {
     signal.throwIfAborted();
     return {
       ...result,
       status: (error as Error).name === 'PasswordException' ? 'unavailable' : 'invalid',
       issues: [
-        { code: (error as Error).name === 'PasswordException' ? 'encrypted' : 'unreadable' },
+        {
+          code:
+            error instanceof PdfTimeoutError
+              ? 'timeout'
+              : (error as Error).name === 'PasswordException'
+                ? 'encrypted'
+                : 'unreadable',
+        },
       ],
     };
-  } finally {
-    signal.removeEventListener('abort', abort);
-    await task.destroy();
   }
 }

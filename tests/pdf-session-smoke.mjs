@@ -7,10 +7,11 @@ import ts from 'typescript';
 
 const dir = '.cache/pdf-session';
 await mkdir(dir, { recursive: true });
-for (const name of ['pdf-engine', 'pdf-text']) {
+for (const name of ['pdf-engine', 'pdf-text', 'export-audit']) {
   const source = await readFile(`lib/${name}.ts`, 'utf8');
   const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText
     .replace("from './pdf-text'", "from './pdf-text.mjs'")
+    .replace("from './pdf-engine'", "from './pdf-engine.mjs'")
     .replace("import('pdfjs-dist/legacy/build/pdf.mjs')", 'Promise.resolve(globalThis.testPdfRenderer)');
   await writeFile(`${dir}/${name}.mjs`, code);
 }
@@ -105,3 +106,23 @@ await test('already aborted work creates no renderer', async t => {
   assert.equal(state.workers.length, 0);
 });
 console.log('PASS: temporary PDF session cancellation, deadlines, shutdown, immutable input and late-resource disposal.');
+
+const { auditPdfExport } = await import('../.cache/pdf-session/export-audit.mjs');
+await test('shared export audit times out, blocks output and supports a fresh retry', async t => {
+  const parent = setup(t); state.load.resolve({ numPages: 1, getPage: () => pending().promise }); state.shutdown.resolve();
+  const check = auditPdfExport(new Blob([bytes]), 1, [], undefined, undefined, parent.signal);
+  await flush(); t.mock.timers.tick(60000);
+  const report = await check;
+  assert.equal(report.status, 'invalid'); assert.deepEqual(report.issues, [{ code: 'timeout' }]);
+  assert.equal(report.checkedPages, 0);
+  state.load = pending(); state.load.resolve({ numPages: 1, getPage: async () => ({ rotate: 0, getViewport: () => ({ width: 300, height: 400 }), streamTextContent: () => new ReadableStream({start(c) { c.close(); }}), getAnnotations: async () => [], cleanup() {} }) });
+  const retried = auditPdfExport(new Blob([bytes]), 1, [], undefined, undefined, parent.signal);
+  await flush(); t.mock.timers.tick(0); const retry = await retried;
+  assert.equal(retry.status, 'checked'); assert.equal(retry.checkedPages, 1);
+});
+await test('shared audit cancellation also survives unresponsive worker shutdown', async t => {
+  const parent = setup(t); state.load.resolve({ numPages: 1, getPage: () => pending().promise });
+  const check = auditPdfExport(new Blob([bytes]), 1, [], undefined, undefined, parent.signal);
+  const rejected = assert.rejects(check, { name: 'AbortError' });
+  await flush(); parent.abort(); await flush(); t.mock.timers.tick(1500); await rejected;
+});
