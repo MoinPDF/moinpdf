@@ -260,7 +260,7 @@ def gate_case(browser, engine):
     return result
 
 
-report = {'results': [], 'limitations': ['Browser engines and touch emulation; physical devices, native Safari and native Microsoft Word remain pending.']}
+report = {'results': [], 'limitations': ['This matrix covers desktop engines and touch emulation. Native Safari uses the separate macOS text workflow; physical devices and native Microsoft Word remain pending.']}
 with sync_playwright() as api:
     for engine in os.getenv('MOINPDF_TEST_BROWSERS', 'chromium,firefox,webkit').split(','):
         assert engine in ('chromium', 'firefox', 'webkit')

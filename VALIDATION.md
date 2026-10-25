@@ -74,8 +74,9 @@ nicht automatisch für spätere Änderungen an `main`.
 - ARM-Images werden gebaut und ihre Plattform-Indizes geprüft. Ein nativer
   ARM-Lauf ist damit nicht nachgewiesen.
 - Die vollständigen Oberflächenprüfungen laufen unter Chromium. Ergänzende
-  PDF-Text- und OCR-Prüfungen laufen unter Firefox und WebKit. Ein WebKit-Lauf
-  belegt keinen nativen Safari- oder iOS-Test.
+  PDF-Text- und OCR-Prüfungen laufen unter Firefox sowie nativem Safari auf
+  macOS-CI. Die separate Editor-Matrix nutzt WebKit; diese belegt keinen
+  nativen Safari- oder iOS-Test.
   Konkrete Smartphones und native Teilen-Dialoge benötigen eigene Gerätetests.
 - Die eigene Serverinstallation und ihre öffentliche Domain müssen
   separat mit künstlichen Testdokumenten geprüft werden.

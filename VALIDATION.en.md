@@ -46,7 +46,7 @@ Version **0.9.1**, commit `b488a9ce0358ce54fb3030e1b66bc8d20b3b04e4`, passed the
 ## Limitations and operator checks
 
 - ARM images are built and their platform indexes checked. This does not establish a successful native ARM run.
-- Full interface checks run in Chromium. Additional PDF text and OCR checks run in Firefox and WebKit. WebKit does not establish native Safari or iOS coverage. Specific smartphones and native share sheets still require device testing.
+- Full interface checks run in Chromium. Additional PDF text and OCR checks run in Firefox and native Safari on macOS CI. The separate editor matrix uses WebKit, which does not establish native Safari or iOS coverage. Specific smartphones and native share sheets still require device testing.
 - Test your own server installation and public domain separately with synthetic documents.
 - Large or unusual documents may reach converter limits. Check results against the original.
 - The complete Docker installation includes the document server. Server addresses and API keys are not entered manually in the browser.

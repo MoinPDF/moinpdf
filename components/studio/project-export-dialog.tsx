@@ -78,6 +78,7 @@ export function ProjectExportDialog({
         <label className="advanced-field">
           <span>{t('Ausgabe', 'Output')}</span>
           <select
+            aria-label={t('Ausgabe', 'Output')}
             value={handoff ? 'handoff' : 'project'}
             disabled={busy}
             onChange={(e) => setHandoff(e.target.value === 'handoff')}
