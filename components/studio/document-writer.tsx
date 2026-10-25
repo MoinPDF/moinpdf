@@ -1,5 +1,5 @@
 'use client';
-import { ResultActions, ResultSummary, useResultName } from './result-actions';
+import { ResultActions, ResultSummary, useResultName, useResultAuditGate } from './result-actions';
 import type { DownloadResult } from '@/lib/result-details';
 
 import {
@@ -160,6 +160,7 @@ export function DocumentWriter({
   const [preview, setPreview] = useState<Source | null>(null);
   const [exported, setExported] = useState<DownloadResult | null>(null);
   const [exportUrl, setExportUrl] = useState('');
+  const { onAuditState, auditBlocked } = useResultAuditGate(exported);
   const [exportName, renameExport] = useResultName(exported);
   useEffect(() => {
     setExported(null);
@@ -424,6 +425,16 @@ export function DocumentWriter({
     try {
       const { createWriterPdf } = await import('@/lib/writer-pdf');
       const blob = await createWriterPdf(latest.current, language);
+      const { auditPdfExport } = await import('@/lib/export-audit');
+      const exportAudit = await auditPdfExport(
+        blob,
+        undefined,
+        [],
+        undefined,
+        undefined,
+        new AbortController().signal,
+      );
+      if (!mounted.current) return;
       if (showPreview) {
         const source = await openSource(
           new File([blob], writerFilename(latest.current.title, 'pdf'), {
@@ -442,14 +453,15 @@ export function DocumentWriter({
           filename: writerFilename(latest.current.title, 'pdf'),
           kind: 'pdf',
           pages: source.pdf.numPages,
+          exportAudit,
         });
         setPreviewPage(0);
         setMode('preview');
         if (previous) void previous.pdf.loadingTask.destroy();
       } else {
         const filename = writerFilename(latest.current.title, 'pdf');
-        setExported({ blob, filename, kind: 'pdf' });
-        downloadBlob(blob, filename);
+        setExported({ blob, filename, kind: 'pdf', exportAudit });
+        if (exportAudit.status === 'checked') downloadBlob(blob, filename);
       }
     } catch (error) {
       toast.error(
@@ -586,7 +598,7 @@ export function DocumentWriter({
           <button
             type="button"
             className="writer-download"
-            disabled={busy}
+            disabled={busy || auditBlocked}
             onClick={() =>
               exported ? downloadBlob(exported.blob, exportName) : void exportPdf(false)
             }
@@ -600,6 +612,7 @@ export function DocumentWriter({
         <section className="writer-export" aria-label={t('PDF-Ergebnis', 'PDF result')}>
           <ResultSummary result={exported} />
           <ResultActions
+            onAuditState={onAuditState}
             result={exported}
             url={exportUrl}
             filename={exportName}

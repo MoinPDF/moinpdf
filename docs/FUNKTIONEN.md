@@ -1,8 +1,33 @@
 # Funktionen und Grenzen
 
+<!-- generated-capabilities:start -->
+**Aktuelle Grenzen aus der Implementierung · 0.21.0**
+
+| Funktion | Wert |
+| --- | --- |
+| Aktive Quelldateien | 80 MiB |
+| Aktive Seiten | 200 |
+| OCR | 21 Sprachen; bis zu 8 gleichzeitig |
+
+Beim Dokumentationsbuild aus den Anwendungskonstanten erzeugt.
+<!-- generated-capabilities:end -->
+
 **Deutsch** · [English](FEATURES.en.md) · [← README](../README.md)
 
 Diese Übersicht erklärt Werkzeuge, Ausgabeformate und technische Grenzen. Das durchsuchbare Handbuch mit Arbeitsschritten erreichst du in der App über **Dokumentation**. Für die vollständige Installation siehe [Docker](../DOCKER.md).
+
+## Neu in 0.21.0
+
+Die gemeinsame PDF-Exportprüfung kontrolliert Lesbarkeit und bekannte Seitenzahlen. Bei vorhandener Seitenzuordnung werden Maße, Links und Formularfelder verglichen; bei Werkzeugen mit Texterhalt auch Originaltext. Bis zu 200 Seiten und 100.000 Zeichen je Seite werden geprüft. Auffälligkeiten erfordern eine Bestätigung, unlesbare Ergebnisse werden nicht zum Download freigegeben. Verschlüsselte PDF-Ausgaben sind als inhaltlich ungeprüft gekennzeichnet. Das ersetzt keinen vollständigen Bildvergleich.
+
+Projektdateien und Gesamtarchive können optional mit einem mindestens zwölf Zeichen langen Passwort verschlüsselt werden. Die Exportübersicht zeigt Originaldateien und frühere Bearbeitungsschritte. Die bereinigte Weitergabe erzeugt eine PDF aus sichtbaren Seitenbildern bis 2800 Pixel; sie enthält keine Originaldateien, Anhänge oder Projektverläufe. Suchtext, Links, interaktive Formulare und Zertifikatssignaturen entfallen. Sichtbare vertrauliche Angaben bleiben sichtbar. Der Browserspeicher bleibt unverschlüsselt.
+
+Unter Projekte stehen Speicherbelegung, Anfrage dauerhafter Speicherung und Offline-Pakete zur Verfügung. Offline benötigt HTTPS oder localhost, einen unterstützten Browser und einen abgeschlossenen Download der App sowie der gewählten Sprachen/Laufzeiten. Der Download prüft die Integrität jeder Programmdatei. App-Updates werden nach dem Schließen aller älteren Tabs aktiv. Serverwerkzeuge brauchen weiter den eigenen Server. Offline-Dateien entfernen löscht keine Projekte oder Ergebnisse.
+
+Noch laufende Vorschauen werden beim Verlassen des sichtbaren Bereichs sofort abgebrochen, damit neu sichtbare Seiten nicht warten müssen. Fertige Vorschaubilder werden nach einer kurzen Speicherfrist freigegeben. Die OCR-Verarbeitung verwendet auf Geräten mit mindestens 8 GB gemeldetem Speicher und acht logischen Kernen höchstens zwei, sonst höchstens einen Hauptworker. Zusätzliche Sprachproben können einen eigenen kurzlebigen Worker nutzen. Die Grenzen für Quelldateien und aktive Seiten werden nicht ohne weitere Belastungsnachweise erhöht.
+
+Physische iPhone-/iPad-/Android-/Windows-Touch-Geräte und echte Microsoft-Word-Rundläufe bleiben gesondert abzunehmen; Browserautomation gilt nicht als Nachweis dafür. Siehe [Gerätecheckliste](quality/editor-device-checklist.md).
+
 
 ## Browser und Dokumentenserver
 
@@ -46,7 +71,7 @@ PDFs, Rechnungs-XML und unterstützte Bildformate lassen sich überall ins Fenst
 
 Ergebnisse können als neue Arbeitsdokumente übernommen werden. OCR exportiert durchsuchbare PDF, TXT und DOCX (Text ohne Rekonstruktion des ursprünglichen Layouts). Seitenwerkzeuge übernehmen ausstehende visuelle Änderungen auf den ausgewählten Seiten. Beim Wechsel in Spezialwerkzeuge wird der Arbeitsstand übernommen; bei möglichen Strukturverlusten ist eine bewusste Entscheidung nötig. Die Übernahme von Ergebnissen erhält den Rückgängig-Verlauf.
 
-Über „Projekte“ lassen sich Dateien und Arbeitsstände einschließlich Editorverlauf, Formularen und Lesezeichen lokal wiederherstellen (letzte fünf gespeicherte Stände). Speicherung erfolgt unverschlüsselt im Browserspeicher; beim Projektwechsel wird die aktuelle Sitzung davor gesichert. Die letzten zehn Ergebnisse werden bis insgesamt 160 MB lokal abgelegt; der Arbeitsstand wird automatisch zur Wiederherstellung nach dem Neuladen gesichert. Ein gewählter Stand lässt sich als unverschlüsselte `.moinpdf`-Projektdatei einschließlich Originalen und Verlauf übertragen. Dafür „Projektdatei herunterladen“ beziehungsweise „Projektdatei öffnen“ verwenden. Projektdateien sind keine bereinigten Ergebnis-PDFs. Obergrenzen: 80 MB aktive Quelldateien, 200 aktive Seiten und 240 MB einschließlich Rückgängig-Verlauf. Umfangreiche OCR kann auf Mobilgeräten langsam sein.
+Über „Projekte“ lassen sich Dateien und Arbeitsstände einschließlich Editorverlauf, Formularen und Lesezeichen lokal wiederherstellen (letzte fünf gespeicherte Stände). Speicherung erfolgt unverschlüsselt im Browserspeicher; beim Projektwechsel wird die aktuelle Sitzung davor gesichert. Die letzten zehn Ergebnisse werden bis insgesamt 160 MB lokal abgelegt; der Arbeitsstand wird automatisch zur Wiederherstellung nach dem Neuladen gesichert. Ein gewählter Stand lässt sich als optional passwortverschlüsselte `.moinpdf`-Projektdatei einschließlich Originalen und Verlauf übertragen. Dafür „Projektdatei herunterladen“ beziehungsweise „Projektdatei öffnen“ verwenden. Projektdateien sind keine bereinigten Ergebnis-PDFs. Obergrenzen: 80 MB aktive Quelldateien, 200 aktive Seiten und 240 MB einschließlich Rückgängig-Verlauf. Umfangreiche OCR kann auf Mobilgeräten langsam sein.
 
 ## Website-Link zu PDF
 
@@ -163,8 +188,6 @@ Die erweiterten Konverter sind Teil der vollständigen Docker-Installation. Die 
 
 Diese Einträge beschreiben den damaligen Versionsstand. Aktuell unterstützt OCR bis zu acht Sprachen und eine optionale Sprachprobe, wie oben beschrieben.
 
-- **OCR und Scan-Suche:** Bis zu vier der 21 lokal ausgelieferten Sprachen kombinieren.
-  Keine automatische Spracherkennung; mehr Sprachen benötigen mehr Arbeitsspeicher.
 - **PDFs vergleichen:** Neben dem seitenweisen Vergleich gibt es „Inhalte über
   Seiten hinweg“. Der Bericht zeigt Wortänderungen, Fundseiten und verschobene
   Textblöcke. Doppelte oder uneindeutige Zuordnungen sind gekennzeichnet; Bilder

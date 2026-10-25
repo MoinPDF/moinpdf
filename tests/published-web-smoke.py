@@ -46,6 +46,15 @@ def close_project_dialog(page):
     page.keyboard.press('Escape')
     expect(dialog).to_have_count(0)
 
+def reviewed_project_download(page):
+    page.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
+    review = page.get_by_role('dialog', name='Projekt exportieren', exact=True)
+    expect(review).to_contain_text('Originale, frühere Bearbeitungen')
+    if nonlocal_http:
+        expect(review.get_by_label('Projektdatei mit Passwort verschlüsseln', exact=True)).to_be_disabled()
+        expect(review).to_contain_text('Passwortschutz benötigt HTTPS oder localhost.')
+    return review.get_by_role('button', name='Datei herunterladen', exact=True)
+
 def no_overflow(page, context):
     dimensions = page.evaluate('({width:innerWidth, content:document.documentElement.scrollWidth})')
     assert dimensions['content'] <= dimensions['width'] + 2, f'Horizontal overflow in {context}: {dimensions}'
@@ -197,7 +206,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Seiten speichern', exact=True).click()
         expect(page.get_by_role('heading', name='Erledigt.', exact=True)).to_be_visible()
         with page.expect_download() as download:
-            page.locator('a[download]').first.click()
+            page.locator('a[download][href^="blob:"]').first.click()
         saved = Path(temporary) / 'organisiert.pdf'
         download.value.save_as(saved)
         with pymupdf.open(saved) as document:
@@ -214,7 +223,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Objektänderung exportieren', exact=True).click()
         expect(page.locator('.advanced-result')).to_be_visible()
         with page.expect_download() as download:
-            page.locator('.advanced-result a[download]').click()
+            page.locator('.advanced-result a[download][href^="blob:"]').click()
         saved = Path(temporary) / 'native-objekte.pdf'
         download.value.save_as(saved)
         with pymupdf.open(saved) as document:
@@ -240,7 +249,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Absatz exportieren', exact=True).click()
         expect(page.locator('.advanced-result')).to_be_visible()
         with page.expect_download() as download:
-            page.locator('.advanced-result a[download]').click()
+            page.locator('.advanced-result a[download][href^="blob:"]').click()
         saved = Path(temporary) / 'absatz.pdf'
         download.value.save_as(saved)
         with pymupdf.open(saved) as document:
@@ -262,7 +271,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Absatz exportieren', exact=True).click()
         expect(page.locator('.advanced-result')).to_be_visible()
         with page.expect_download() as download:
-            page.locator('.advanced-result a[download]').click()
+            page.locator('.advanced-result a[download][href^="blob:"]').click()
         saved = Path(temporary) / 'absatz-formatiert.pdf'
         download.value.save_as(saved)
         with pymupdf.open(saved) as document:
@@ -277,7 +286,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Absatz exportieren', exact=True).click()
         expect(page.locator('.advanced-result')).to_be_visible()
         with page.expect_download() as download:
-            page.locator('.advanced-result a[download]').click()
+            page.locator('.advanced-result a[download][href^="blob:"]').click()
         saved = Path(temporary) / 'absatz-folgeseiten.pdf'
         download.value.save_as(saved)
         with pymupdf.open(saved) as document:
@@ -293,8 +302,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Projekt speichern', exact=True).click()
         expect(page.get_by_role('dialog', name='Lokale PDF-Projekte').get_by_role('status').filter(has_text='Alles an Bord – gespeichert.')).to_be_visible()
         expect(page.locator('.project-toggle')).to_have_attribute('aria-label', 'Projekte – Gespeichert')
+        project_download = reviewed_project_download(page)
         with page.expect_download() as download:
-            page.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
+            project_download.click()
         project_file = Path(temporary) / 'projekt.moinpdf'
         download.value.save_as(project_file)
         assert project_file.read_bytes().startswith(b'MOINPDF-PROJECT\n')
@@ -319,7 +329,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         transfer.get_by_role('button', name='Seiten speichern', exact=True).click()
         expect(transfer.get_by_role('heading', name='Erledigt.', exact=True)).to_be_visible()
         with transfer.expect_download() as download:
-            transfer.locator('a[download]').first.click()
+            transfer.locator('a[download][href^="blob:"]').first.click()
         transferred_pdf = Path(temporary) / 'projekt-wiederhergestellt.pdf'
         download.value.save_as(transferred_pdf)
         with pymupdf.open(transferred_pdf) as document:
@@ -363,8 +373,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         lifecycle.get_by_label('Projektname', exact=True).fill('Verbleibendes Projekt')
         lifecycle.get_by_role('button', name='Projekt speichern', exact=True).click()
         expect(lifecycle.get_by_role('dialog', name='Lokale PDF-Projekte').get_by_role('status').filter(has_text='Alles an Bord – gespeichert.')).to_be_visible()
+        project_download = reviewed_project_download(lifecycle)
         with lifecycle.expect_download() as download:
-            lifecycle.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
+            project_download.click()
         cleaned_file = Path(temporary) / 'bereinigt.moinpdf'
         download.value.save_as(cleaned_file)
         cleaned_bytes = cleaned_file.read_bytes()
@@ -409,7 +420,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         transfer.get_by_role('button', name='Text erkennen', exact=True).click()
         expect(transfer.get_by_role('heading', name='Erledigt.', exact=True)).to_be_visible(timeout=180000)
         with transfer.expect_download() as download:
-            transfer.locator('a[download]').first.click()
+            transfer.locator('a[download][href^="blob:"]').first.click()
         ocr_pdf = Path(temporary) / 'acht-sprachen.pdf'
         download.value.save_as(ocr_pdf)
         with pymupdf.open(ocr_pdf) as document:
@@ -438,7 +449,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         automatic.get_by_role('button',name='Text erkennen',exact=True).click()
         expect(automatic.get_by_role('heading',name='Erledigt.',exact=True)).to_be_visible(timeout=240000)
         with automatic.expect_download() as download:
-            automatic.locator('a[download]').first.click()
+            automatic.locator('a[download][href^="blob:"]').first.click()
         detected_pdf=Path(temporary)/'sprache-erkannt.pdf'
         download.value.save_as(detected_pdf)
         with pymupdf.open(detected_pdf) as document:
@@ -460,7 +471,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         transfer.get_by_role('button', name='Text vergleichen', exact=True).click()
         expect(transfer.get_by_role('heading', name='PDF-Inhaltsvergleich', exact=True)).to_be_visible()
         with transfer.expect_download() as download:
-            transfer.locator('a[download]').first.click()
+            transfer.locator('a[download][href^="blob:"]').first.click()
         comparison = Path(temporary) / 'vergleich.txt'
         download.value.save_as(comparison)
         comparison_text = comparison.read_text(encoding='utf-8-sig')
@@ -474,7 +485,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='EPUB erstellen', exact=True).click()
         expect(page.locator('.advanced-result')).to_be_visible()
         with page.expect_download() as download:
-            page.locator('.advanced-result a[download]').click()
+            page.locator('.advanced-result a[download][href^="blob:"]').click()
         saved = Path(temporary) / 'buch.epub'
         download.value.save_as(saved)
         with zipfile.ZipFile(saved) as archive:
@@ -496,7 +507,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             page.get_by_role('button', name='PDF/UA erstellen und prüfen', exact=True).click()
             expect(page.locator('.advanced-result')).to_be_visible(timeout=180000)
             with page.expect_download() as download:
-                page.locator('.advanced-result a[download]').first.click()
+                page.locator('.advanced-result a[download][href^="blob:"]').first.click()
             saved = Path(temporary) / 'pdfua.zip'
             download.value.save_as(saved)
             with zipfile.ZipFile(saved) as bundle:
@@ -514,7 +525,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             page.get_by_role('button', name='PDF/UA erstellen und prüfen', exact=True).click()
             expect(page.locator('.advanced-result')).to_be_visible(timeout=180000)
             with page.expect_download() as download:
-                page.locator('.advanced-result a[download]').first.click()
+                page.locator('.advanced-result a[download][href^="blob:"]').first.click()
             saved = Path(temporary) / 'pdfua-updated.zip'
             download.value.save_as(saved)
             with zipfile.ZipFile(saved) as bundle:
@@ -544,7 +555,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             page.get_by_role('button', name='Hörbuch erstellen', exact=True).click()
             expect(page.locator('audio')).to_be_visible(timeout=180000)
             with page.expect_download() as download:
-                page.locator('.century-audio-output a[download]').click()
+                page.locator('.century-audio-output a[download][href^="blob:"]').click()
             saved = Path(temporary) / 'hoerbuch.wav'
             download.value.save_as(saved)
             with wave.open(str(saved), 'rb') as audio:

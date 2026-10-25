@@ -7,6 +7,7 @@ import { LoaderCircle, PenLine, Trash2 } from 'lucide-react';
 import { MarkLayers } from './editor-canvas';
 import { Button } from '@/components/ui/button';
 import { renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
+import { deviceBudget } from '@/lib/resource-budget';
 import { normalizedRect, type Mark, type Rect } from '@/lib/studio-engine';
 
 export type Signature = { image: string; aspect: number };
@@ -31,24 +32,54 @@ export function PagePreview({
   const holder = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let active = true,
+      visible = false,
+      url = '',
+      generation = 0;
+    let cancel: AbortController | undefined;
+    let eviction: ReturnType<typeof setTimeout> | undefined;
+    const clear = () => {
+      generation++;
+      cancel?.abort();
+      cancel = undefined;
+      if (url) URL.revokeObjectURL(url);
       url = '';
-    const cancel = new AbortController();
+      if (active) setImage('');
+    };
     setImage('');
     setError(false);
     const observer = new IntersectionObserver(
       (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        observer.disconnect();
+        visible = entries.some((e) => e.isIntersecting);
+        clearTimeout(eviction);
+        if (!visible) {
+          // Retain completed images briefly, but never let hidden rendering
+          // occupy the serial queue ahead of newly visible pages.
+          if (cancel) {
+            generation++;
+            cancel.abort();
+            cancel = undefined;
+          }
+          eviction = setTimeout(clear, deviceBudget().previewRetentionMs);
+          return;
+        }
+        if (url || cancel) return;
+        const abort = new AbortController();
+        cancel = abort;
+        const current = ++generation;
         queue = queue
           .catch(() => {})
           .then(async () => {
-            if (!active) return;
+            if (!active || abort.signal.aborted || current !== generation) return;
+            if (!visible) {
+              cancel = undefined;
+              return;
+            }
             try {
               const { canvas } = await renderPage(
                 source,
                 { index: page.index, rotation: page.rotation },
                 small ? 270 : Math.min(3000, Math.max(300, resolution)),
-                cancel.signal,
+                abort.signal,
               );
               let blob: Blob | null;
               try {
@@ -59,23 +90,26 @@ export function PagePreview({
                 canvas.width = canvas.height = 0;
                 (await source.pdf.getPage(page.index + 1)).cleanup();
               }
-              if (active && blob) {
+              if (active && !abort.signal.aborted && current === generation && blob) {
                 url = URL.createObjectURL(blob);
                 setImage(url);
+                setError(false);
               }
             } catch {
-              if (active) setError(true);
+              if (active && !abort.signal.aborted && current === generation) setError(true);
+            } finally {
+              if (current === generation) cancel = undefined;
             }
           });
       },
-      { rootMargin: '100px' },
+      { rootMargin: '200px' },
     );
     if (holder.current) observer.observe(holder.current);
     return () => {
       active = false;
-      cancel.abort();
+      clearTimeout(eviction);
+      clear();
       observer.disconnect();
-      if (url) URL.revokeObjectURL(url);
     };
   }, [source, page.index, page.rotation, small, resolution, lossless]);
   return (

@@ -134,3 +134,7 @@ Nur `website` erhält für diese Aufgabe Internetzugriff. `documents` und `trans
 Pro Auftrag gelten 160 Abrufe, insgesamt 40 MiB übertragene Webressourcen und 40 MiB PDF-Ausgabe. Nach spätestens 75 Sekunden oder bei einem erkannten Verbindungsabbruch wird die gesamte Prozessgruppe beendet. Höchstens zwei Aufträge laufen gleichzeitig. Temporäre Dateien und Browserprofile werden anschließend entfernt; URL-Abfragen werden nicht protokolliert. Fehlende Ressourcen werden bei der Ausgabe gekennzeichnet. Login-Seiten, Cookie-Banner, Bot-Schutz und manche dynamischen Inhalte können das Ergebnis einschränken.
 
 Der neue Dienst hat standardmäßig 1 GiB Arbeitsspeicher (`MOINPDF_WEBSITE_MEMORY`). Chromium stammt aus den Debian-Sicherheitsaktualisierungen für amd64 und arm64; das Image regelmäßig neu bauen, um Browser-Sicherheitskorrekturen zu übernehmen.
+
+## Offline-App und lokale Sicherungen
+
+Unter Projekte stehen Speicherbelegung, Anfrage dauerhafter Speicherung und Offline-Pakete zur Verfügung. Offline benötigt HTTPS oder localhost, einen unterstützten Browser und einen abgeschlossenen Download der App sowie der gewählten Sprachen/Laufzeiten. Der Download prüft die Integrität jeder Programmdatei. App-Updates werden nach dem Schließen aller älteren Tabs aktiv. Serverwerkzeuge brauchen weiter den eigenen Server. Offline-Dateien entfernen löscht keine Projekte oder Ergebnisse.

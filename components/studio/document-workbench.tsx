@@ -1,5 +1,6 @@
 'use client';
-import { ResultActions, ResultSummary, useResultName } from './result-actions';
+import { sourcePages } from '@/lib/pdf-engine';
+import { ResultActions, ResultSummary, useResultName, useResultAuditGate } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
 import { ui, uiLocale } from '@/lib/ui-language';
@@ -98,6 +99,7 @@ export function DocumentWorkbench({
     [showResult, setShowResult] = useState(false),
     [outputPage, setOutputPage] = useState(0);
   const resultFresh = useFreshResult(output);
+  const { onAuditState, auditBlocked } = useResultAuditGate(output);
   const [resultName, renameResult] = useResultName(output);
   const source = sources.find((s) => s.id === sourceId) || sources[0],
     session = sessions[source.id],
@@ -611,6 +613,14 @@ export function DocumentWorkbench({
                   <JobStatusIcon fresh={resultFresh} size={20} />
                   <ResultSummary result={output} />
                   <ResultActions
+                    onAuditState={onAuditState}
+                    auditSources={sources}
+                    auditPages={
+                      source && output.pages === source.pdf.numPages
+                        ? sourcePages(source)
+                        : undefined
+                    }
+                    auditTool={tool}
                     result={output}
                     url={outputUrl}
                     filename={resultName}
@@ -1216,7 +1226,7 @@ export function DocumentWorkbench({
             {output && (
               <Button
                 variant="outline"
-                disabled={locked}
+                disabled={locked || auditBlocked}
                 onClick={async () => {
                   setBusy(true);
                   try {

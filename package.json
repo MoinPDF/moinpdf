@@ -1,6 +1,6 @@
 {
   "name": "moinpdf",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -20,7 +20,7 @@
     "test:security": "node tests/security-invoice-smoke.mjs",
     "test:advanced": "node tests/advanced-tools-smoke.mjs",
     "test": "node tests/run-all.mjs",
-    "build:selfhost": "node --experimental-strip-types scripts/build-documentation.mjs && node scripts/build-media.mjs && node scripts/build-english-pages.mjs && node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts && node scripts/check-worker-assets.mjs dist/selfhost && node --experimental-vm-modules tests/bundled-module-worker-smoke.mjs dist/selfhost",
+    "build:selfhost": "node --experimental-strip-types scripts/build-documentation.mjs && node scripts/build-media.mjs && node scripts/build-english-pages.mjs && node scripts/prepare-pdf-assets.mjs && vite build --config vite.selfhost.config.ts && node scripts/build-offline.mjs dist/selfhost && node scripts/check-worker-assets.mjs dist/selfhost && node --experimental-vm-modules tests/bundled-module-worker-smoke.mjs dist/selfhost",
     "typecheck:selfhost": "tsc --project tsconfig.selfhost.json --noEmit",
     "package:pages": "pnpm run build:selfhost && node scripts/package-pages.mjs",
     "test:conversion": "node tests/conversion-smoke.mjs",

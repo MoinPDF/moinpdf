@@ -29,11 +29,12 @@ for (const [source, name] of Object.entries(modules)) {
     '@/lib/utils': './utils.mjs', '@/components/ui/button': './button.mjs',
     '@/components/ui/dialog': './dialog.mjs', './result-actions': './result-actions.mjs',
     './workspace-result-context': './workspace-result-context.mjs',
-    './result-next-steps': './result-next-steps.mjs',
+    './result-next-steps': './result-next-steps.mjs', './export-audit': './export-audit.mjs',
     './appearance': './appearance.mjs', sonner: './toast.mjs', '@/lib/pdf-engine': './pdf-engine.mjs',
   })) code = code.replaceAll(`'${from}'`, `'${to}'`).replaceAll(`"${from}"`, `"${to}"`);
   await writeFile(`.cache/writer-ui/${name}.mjs`, code);
 }
+await writeFile('.cache/writer-ui/export-audit.mjs', 'export const useExportAudit=()=>({panel:null,blocked:false});');
 await writeFile('.cache/writer-ui/appearance.mjs', `const t=(de,en)=>de; export const useLanguage=()=>({language:'de',t});`);
 await writeFile('.cache/writer-ui/toast.mjs', `export const errors=[]; export const toast={error:value=>errors.push(value),success(){}};`);
 await writeFile('.cache/writer-ui/pdf-engine.mjs', `const unused=()=>{throw Error('PDF operations are covered by writer-smoke and browser CI')}; export const downloadBlob=unused,openSource=unused,renderPage=unused;`);

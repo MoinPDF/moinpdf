@@ -13,6 +13,9 @@ on:
       - 'public/locales/**'
       - 'tests/editor*'
       - 'tests/word*'
+      - 'tests/release-021*'
+      - 'scripts/build-offline.mjs'
+      - 'scripts/offline-worker.js'
       - 'tests/text-browser-server.py'
       - '.github/workflows/editor.yml'
   pull_request:
@@ -73,6 +76,7 @@ jobs:
           MOINPDF_TEST_START_SERVER: '1'
         run: |
           status=0
+          python tests/release-021-browser.py || status=1
           python tests/editor-corpus-check.py || status=1
           python tests/editor-browser.py || status=1
           python tests/editor-quality-browser.py || status=1

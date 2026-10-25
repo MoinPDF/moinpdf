@@ -13,7 +13,12 @@ import { reportText } from '@/lib/pdf-report';
 import { ui, uiLocale } from '@/lib/ui-language';
 import { EditorResultReview } from '@/components/studio/editor-result-review';
 import { applyEditorPatch, type EditorSelection } from '@/lib/editor-rich-text';
-import { ResultActions, ResultSummary, useResultName } from '@/components/studio/result-actions';
+import {
+  ResultActions,
+  ResultSummary,
+  useResultName,
+  useResultAuditGate,
+} from '@/components/studio/result-actions';
 import { ToolBrowserMemory, useToolNavigation } from '@/components/studio/tool-browser-memory';
 import { DuplicatePrompt, type DuplicateRequest } from '@/components/studio/duplicate-prompt';
 import { duplicateSource, uploadFingerprint } from '@/lib/upload-duplicates';
@@ -395,6 +400,7 @@ function Studio() {
     [resultPage, setResultPage] = useState(0),
     [resultText, setResultText] = useState(''),
     [resultLoading, setResultLoading] = useState(false);
+  const { onAuditState, auditBlocked } = useResultAuditGate(result);
   const [ocrDraft, setOcrDraft] = useState<OcrResultPage[]>([]);
   const [ocrSaving, setOcrSaving] = useState(false);
   const ocrController = useRef<AbortController | null>(null);
@@ -1752,6 +1758,7 @@ function Studio() {
                 type="button"
                 className="harbor-nav-item"
                 disabled={locked || !history.length}
+                onPointerDown={(event) => event.preventDefault()}
                 onClick={undo}
               >
                 <Undo2 size={21} />
@@ -1772,10 +1779,10 @@ function Studio() {
               {view === 'result' && resultUrl ? (
                 <a
                   className="harbor-nav-item editor-mobile-primary"
-                  href={ocrDirty || ocrSaving ? undefined : resultUrl}
-                  aria-disabled={ocrDirty || ocrSaving}
+                  href={auditBlocked || ocrDirty || ocrSaving ? undefined : resultUrl}
+                  aria-disabled={auditBlocked || ocrDirty || ocrSaving}
                   onClick={(event) => {
-                    if (ocrDirty || ocrSaving) event.preventDefault();
+                    if (auditBlocked || ocrDirty || ocrSaving) event.preventDefault();
                   }}
                   download={resultName}
                 >
@@ -2246,6 +2253,7 @@ function Studio() {
               aria-label={t('Rückgängig')}
               title={ui('Rückgängig · Strg+Z')}
               disabled={!history.length || locked}
+              onPointerDown={(event) => event.preventDefault()}
               onClick={undo}
             >
               <Undo2 size={18} />
@@ -2256,6 +2264,7 @@ function Studio() {
               aria-label={t('Wiederholen')}
               title={ui('Wiederholen · Strg+Umschalt+Z')}
               disabled={!future.length || locked}
+              onPointerDown={(event) => event.preventDefault()}
               onClick={redo}
             >
               <Redo2 size={18} />
@@ -2874,6 +2883,10 @@ function Studio() {
                             />
                           </div>
                           <ResultActions
+                            onAuditState={onAuditState}
+                            auditSources={sources}
+                            auditPages={selected}
+                            auditTool={toolId}
                             result={result}
                             url={resultUrl}
                             filename={resultName}
@@ -3124,7 +3137,7 @@ function Studio() {
                             <Button
                               variant="outline"
                               onClick={continueResult}
-                              disabled={locked || ocrDirty || ocrSaving}
+                              disabled={auditBlocked || locked || ocrDirty || ocrSaving}
                             >
                               <PenLine size={16} />
                               {t('Ergebnis weiterbearbeiten')}
@@ -3759,14 +3772,14 @@ function Studio() {
                     asChild
                     className="apply-button workspace-download result-download"
                     data-fresh={resultFresh}
-                    disabled={ocrDirty || ocrSaving}
+                    disabled={auditBlocked || ocrDirty || ocrSaving}
                   >
                     <a
-                      href={ocrDirty || ocrSaving ? undefined : resultUrl}
-                      aria-disabled={ocrDirty || ocrSaving}
+                      href={auditBlocked || ocrDirty || ocrSaving ? undefined : resultUrl}
+                      aria-disabled={auditBlocked || ocrDirty || ocrSaving}
                       download={resultName}
                       onClick={(event) => {
-                        if (ocrDirty || ocrSaving) event.preventDefault();
+                        if (auditBlocked || ocrDirty || ocrSaving) event.preventDefault();
                       }}
                     >
                       <Download size={18} aria-hidden="true" />

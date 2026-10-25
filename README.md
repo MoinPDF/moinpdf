@@ -64,7 +64,7 @@ docker compose up -d --build
 2. **Bearbeiten:** Schnellzugriff oder Suche nutzen. Dateiname, Seitenzahl und Größe bleiben in der Dokumentübersicht sichtbar; die Werkzeugseitenleiste lässt sich bei Bedarf öffnen.
 3. **Prüfen und mitnehmen:** Ergebnis herunterladen oder direkt als neues Arbeitsdokument übernehmen. Auf Smartphones stehen die wichtigsten Aktionen in einer kompakten Leiste bereit.
 
-Mit **Projekten** sicherst du bis zu fünf Arbeitsstände lokal, einschließlich Originaldateien und Bearbeitungsverlauf. Eine `.moinpdf`-Projektdatei überträgt den Stand auf ein anderes Gerät. Browser-Projekte und Projektarchive sind unverschlüsselt und enthalten auch Originale sowie frühere Bearbeitungen; zum Weitergeben fertiger Dokumente die Ergebnisdatei verwenden.
+Mit **Projekten** sicherst du bis zu fünf Arbeitsstände lokal, einschließlich Originaldateien und Bearbeitungsverlauf. Eine `.moinpdf`-Projektdatei überträgt den Stand auf ein anderes Gerät. Browser-Projekte bleiben unverschlüsselt. Beim Export zeigt MoinPDF enthaltene Originale und frühere Bearbeitungen und bietet optional Passwortschutz. Für fertige Dokumente steht zusätzlich eine bereinigte PDF aus sichtbaren Seitenbildern zur Verfügung. Unter Projekte kannst du außerdem die Speicherbelegung prüfen und die App mit ausgewählten Sprachpaketen für die Offline-Nutzung vorbereiten (HTTPS oder localhost erforderlich).
 
 ## Wo deine Dokumente verarbeitet werden
 

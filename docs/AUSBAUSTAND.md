@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 25. Oktober 2026. Unveröffentlichte Verbesserungen auf Basis von Version 0.20.1.
+Stand: 25. Oktober 2026 · Version 0.21.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 - Komprimierung erhält standardmäßig Text, Vektoren, Links und Formularfelder. Geeignete RGB-JPEGs werden einzeln verkleinert; zusätzlich sind verlustfreie Optimierung und ausdrücklich gewählter Bildneuaufbau verfügbar. Der Originalvergleich verwendet gleichen Zoom und gekoppelte Ausschnitte. Dokumentweite Strukturen erfordern eine vollständige einzelne PDF; signierte Dokumente werden abgewiesen.
 - „OCR & Text“ erkennt gemischte Seiten. „Korrekturen übernehmen“ schreibt korrigierte Zeilen in die PDF-Suchebene; sichtbarer Originaltext bleibt gesperrt und das Seitenbild unverändert. Vorhandene Suchtexte werden vor dem erneuten Schreiben entfernt. Kleine Schräglagen bleiben bei der Zuordnung und beim Schriftvergleich erhalten.
@@ -74,9 +74,22 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 | 21. Große Dateien               | PDFium-, Bilddecoder-, Prüfsummen- und Seitenwerkzeug-Worker; Abbruch und Speicherfreigabe                                                                                                                                                                                                                     | Durchgängiges Streaming und höhere belegte Dateigrenzen; weiterhin 80 MB und 200 Seiten                                                                                                         |
 | 22. Lokale Projekte             | Unveränderliche fünf Arbeitsstände, vollständiges Archiv mit deduplizierten Binärdaten, SHA-256-Prüfungen, atomarer Import und Wiederherstellung                                                                                                                                                               | Noch nicht übernommene Ergebnisse sämtlicher Spezialwerkzeuge automatisch mitspeichern                                                                                                          |
 
+## Neu in 0.21.0
+
+Die gemeinsame PDF-Exportprüfung kontrolliert Lesbarkeit und bekannte Seitenzahlen. Bei vorhandener Seitenzuordnung werden Maße, Links und Formularfelder verglichen; bei Werkzeugen mit Texterhalt auch Originaltext. Bis zu 200 Seiten und 100.000 Zeichen je Seite werden geprüft. Auffälligkeiten erfordern eine Bestätigung, unlesbare Ergebnisse werden nicht zum Download freigegeben. Verschlüsselte PDF-Ausgaben sind als inhaltlich ungeprüft gekennzeichnet. Das ersetzt keinen vollständigen Bildvergleich.
+
+Projektdateien und Gesamtarchive können optional mit einem mindestens zwölf Zeichen langen Passwort verschlüsselt werden. Die Exportübersicht zeigt Originaldateien und frühere Bearbeitungsschritte. Die bereinigte Weitergabe erzeugt eine PDF aus sichtbaren Seitenbildern bis 2800 Pixel; sie enthält keine Originaldateien, Anhänge oder Projektverläufe. Suchtext, Links, interaktive Formulare und Zertifikatssignaturen entfallen. Sichtbare vertrauliche Angaben bleiben sichtbar. Der Browserspeicher bleibt unverschlüsselt.
+
+Unter Projekte stehen Speicherbelegung, Anfrage dauerhafter Speicherung und Offline-Pakete zur Verfügung. Offline benötigt HTTPS oder localhost, einen unterstützten Browser und einen abgeschlossenen Download der App sowie der gewählten Sprachen/Laufzeiten. Der Download prüft die Integrität jeder Programmdatei. App-Updates werden nach dem Schließen aller älteren Tabs aktiv. Serverwerkzeuge brauchen weiter den eigenen Server. Offline-Dateien entfernen löscht keine Projekte oder Ergebnisse.
+
+Noch laufende Vorschauen werden außerhalb des sichtbaren Bereichs sofort abgebrochen, damit neu sichtbare Seiten nicht warten müssen. Fertige Vorschaubilder werden nach einer kurzen Aufbewahrungszeit freigegeben. Die OCR-Verarbeitung verwendet auf Geräten mit mindestens 8 GB gemeldetem Speicher und acht logischen Kernen höchstens zwei, sonst höchstens einen Hauptworker. Zusätzliche Sprachproben können einen eigenen kurzlebigen Worker nutzen. Die Grenzen für Quelldateien und aktive Seiten werden nicht ohne weitere Belastungsnachweise erhöht.
+
+Physische iPhone-/iPad-/Android-/Windows-Touch-Geräte und echte Microsoft-Word-Rundläufe bleiben gesondert abzunehmen; Browserautomation gilt nicht als Nachweis dafür. Siehe [Gerätecheckliste](quality/editor-device-checklist.md).
+
+
 ## Prüfung und Freigabe
 
-44 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
+58 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
 Text, Glyphen, Bildpixel, Links, Formulare, Schriftgrößen, Seitenreihenfolge,
 Projektarchive, echte HEIC-/PSD-Decodierung und tatsächliche OCR mit ausgelieferten
 Sprachmodellen. Dichte zweispaltige Seiten werden ohne quadratische Vollvergleiche
@@ -89,7 +102,7 @@ Produktionskonfiguration des Zeitstempeldienstes.
 
 Die Freigabe verlangt Typprüfung, Formatprüfung, Linter, Produktionsbuild und
 vollständige Docker-CI. Browserprüfungen testen alle Werkzeugansichten auf Desktop
-und Smartphone, Downloads, gemischte Absatzformatierung, neue Folgeseiten,
+und schmalen Touch-Ansichten, Downloads, gemischte Absatzformatierung, neue Folgeseiten,
 Projekttransfer, acht OCR-Sprachen sowie echte lokale Modellinferenz. Jeder neue
 Quellstand erhält einen eigenen Prüflauf. Unfertige oder fehlgeschlagene Prüfungen
 werden nicht durch ältere erfolgreiche Läufe ersetzt.

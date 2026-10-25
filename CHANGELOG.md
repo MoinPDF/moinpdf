@@ -9,7 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Unveröffentlicht – 2026-10-25
+## 0.21.0 – 2026-10-25
+
+- Gemeinsame technische Prüfung von PDF-Ausgaben vor Download und Teilen; Seitenmaße, Suchtext, Links und Formularfelder werden bei vorhandener Seitenzuordnung verglichen. Auffälligkeiten und Prüflücken sind ausdrücklich zu bestätigen.
+- Optional passwortverschlüsselte Projektdateien und Gesamtarchive mit AES-256-GCM, authentifizierten Blöcken und PBKDF2-SHA-256. Inhaltsübersicht vor dem Export; bereinigte PDF-Weitergabe als reine Seitenbilder.
+- Speicheranzeige, Hinweis bei knapper Speicherquote und ausdrückliche Anfrage dauerhafter Browserspeicherung. Falsche Größenangaben bei Projektimporten korrigiert.
+- Installierbare Offline-App mit einzeln wählbaren OCR-Sprachpaketen und optionalen Laufzeiten. Integritätsprüfung der Programmdateien, getrennte Offline-Ablage, Abbruch und Entfernung; kein Cache für Dokumente oder Server-API-Antworten.
+- Vorschauen außerhalb des sichtbaren Bereichs geben ihre Bilddaten frei; noch laufende Vorschauen werden sofort abgebrochen, damit sie neu sichtbare Seiten nicht aufhalten. OCR-Worker werden geräteabhängig begrenzt und wartende Aufträge lassen sich abbrechen. Die belegten Grenzen von 80 MB und 200 aktiven Seiten bleiben bestehen.
+- Offline-Hintergrundprozesse behalten den lokalen Cache-Zugriff und die erforderlichen Sicherheitsheader; Rückgängig/Wiederholen vermeiden störende Fokuswechsel beim Antippen im Texteditor.
+- Aktuelle Programmgrenzen in der Dokumentation werden aus den Anwendungskonstanten erzeugt. Deutsche und englische Anleitungen um Exportprüfung, Projektschutz, Speicher und Offline-Nutzung erweitert.
 
 - Inhaltserhaltende Komprimierung, verlustfreier Modus und synchronisierter Originalvergleich.
 - OCR-Zeilenkorrekturen in der PDF-Suchebene, gemischte Seiten und genaue Schräglagenzuordnung.

@@ -138,3 +138,7 @@ The service defaults to 1 GiB of RAM (`MOINPDF_WEBSITE_MEMORY`). Chromium comes 
 ---
 
 [README](README.en.md) · [Features](docs/FEATURES.en.md) · [Development](docs/DEVELOPMENT.en.md)
+
+## Offline app and local backups
+
+Projects includes storage usage, an explicit persistent-storage request and offline packages. Offline use requires HTTPS or localhost, a supported browser and a completed download of the app and selected languages/runtimes. Every program file is integrity-checked. Updates activate once all older app tabs close. Server tools still need the user's document server. Removing offline files does not delete projects or results.

@@ -4,7 +4,16 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## Unreleased – 2026-10-25
+## 0.21.0 – 2026-10-25
+
+- Offline background workers retain local cache access and the required security headers; undo/redo avoid disruptive pointer-driven focus changes in the text editor.
+
+- Shared technical PDF export verification before download and sharing; page dimensions, searchable text, links and form fields are compared when source-page mapping is available. Findings and verification gaps require explicit review.
+- Optional password-encrypted project snapshots and archives with AES-256-GCM, authenticated chunks and PBKDF2-SHA-256. Export content review and a flattened PDF handoff containing visible page images only.
+- Storage estimates, low-quota notices and an explicit persistent-storage request. Corrected misleading project import size messages.
+- Installable offline app with individually selected OCR languages and optional runtimes. Program file integrity checks, separate caches, cancellation and removal; no document or server API response caching.
+- Offscreen previews release their image data; unfinished previews are cancelled immediately so they cannot delay newly visible pages. Device-aware OCR worker limits and cancellable waiting jobs. Validated limits remain 80 MB and 200 active pages.
+- Documentation limit tables are generated from application constants. Updated German and English export, project, storage and offline instructions.
 
 - Content-preserving compression, lossless mode and synchronized original comparison.
 - OCR line corrections in PDF search text, mixed-page recognition and retained skew geometry.

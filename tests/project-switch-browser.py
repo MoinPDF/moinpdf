@@ -53,8 +53,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             if attempt:
                 projects.click()
             download_button = page.get_by_role('button', name='Projektdatei herunterladen', exact=True)
+            download_button.click()
+            review = page.get_by_role('dialog', name='Projekt exportieren', exact=True)
+            expect(review).to_contain_text('Originale, frühere Bearbeitungen')
             with page.expect_download() as download:
-                download_button.click()
+                review.get_by_role('button', name='Datei herunterladen', exact=True).click()
             saved = Path(temporary) / f'project-{attempt}.moinpdf'
             download.value.save_as(saved)
             assert saved.read_bytes().startswith(b'MOINPDF-PROJECT\n')

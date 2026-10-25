@@ -43,3 +43,21 @@ OS version, browser/version and result. Use the fictional payroll fixture from
 
 Record failures with reproducible steps and non-sensitive evidence. A missing run
 stays pending. Device checks complement the independent PDF/raster checks in CI.
+
+## Additional 0.21.0 acceptance (pending on physical devices)
+
+11. Export an encrypted snapshot and a complete archive, reopen both after restarting,
+    and reject a wrong password without changing the current document. Verify no
+    password is restored. Inspect the originals/history inventory before download.
+12. Export the flattened handoff. Inspect visible edits in another PDF viewer;
+    confirm the absence of searchable text, interactive fields and original attachments.
+13. Prepare core and chosen OCR languages, close every app tab, disconnect, restart
+    and process a fictional PDF. Cancel a package download and verify incomplete
+    packages are not advertised as ready. Remove offline packages without losing projects.
+14. Review storage estimates and persistence grant/refusal. Exercise a nearly full
+    browser profile and retain the original project when a write fails.
+15. Open a fictional 200-page document, scroll repeatedly, edit and export. Record
+    peak memory, opening/export time and failures on the actual device. Do not raise
+    the 80 MB / 200-page limits on the basis of desktop emulation.
+16. Compare an export with retained text, links and forms; deliberately flattened
+    output must show differences. Replacing the output resets the acknowledgement.

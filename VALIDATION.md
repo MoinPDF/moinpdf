@@ -6,6 +6,29 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.21.0
+
+- 58 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,
+  falscher Passwörter, manipulierten/abgeschnittenen Projektdateien und Abbruch.
+- Vorschau-Regressionen prüfen den sofortigen Abbruch unsichtbarer Arbeit, das
+  Freigeben der Warteschlange sowie begrenzte Bildablage und erneutes Laden.
+- Exportprüfung erkennt verlorenen Text, geänderte Formularfelder und unlesbare PDFs.
+  Download, Teilen und Weiterbearbeitung verwenden denselben, an die Ausgabedatei
+  gebundenen Status. Eine technische Prüfung ersetzt keine inhaltliche Sichtkontrolle.
+- Offline-Tests prüfen vollständige Pakete, Integritätsanforderungen, fehlgeschlagene
+  Downloads, Anmeldeseiten, erhaltene Sicherheitsheader und begrenztes Löschen.
+- `tests/release-021-browser.py` ergänzt die Chromium-/Firefox-/WebKit-Matrix um
+  echte verschlüsselte Projektdateien, falsches Passwort ohne Import, Wiederöffnung,
+  bereinigte PDF mit unabhängiger Inhaltskontrolle, Offline-Neustart samt OCR und
+  200 Seiten mit Freigabe und erneutem Laden nicht sichtbarer Vorschauen.
+- Ein 200-Seiten-Test mit künstlichem Text belegt keine beliebigen 80-MB-Scans.
+  Die Grenzen bleiben bei 80 MiB aktiven Quelldateien insgesamt und 200 aktiven Seiten.
+- Physische iPhones/iPads/Android-Geräte, native Teilen-Dialoge und Microsoft Word
+  sind weiterhin offen; die [Gerätecheckliste](docs/quality/editor-device-checklist.md)
+  trennt diese Fälle ausdrücklich von Desktop-Engines und Touch-Emulation.
+- Maßgeblich ist der erfolgreiche Actions-Lauf des jeweiligen Commits. Neue
+  Prüffälle und lokale Vorprüfungen sind kein Ersatz für diesen Release-Nachweis.
+
 ## Bedienungsverbesserungen in 0.14.2
 
 - Alle 36 automatisierten Suiten bestanden, einschließlich echter PDF-Ausgaben,
@@ -27,10 +50,10 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| Browser-Engines | 44 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| PDF-Engines und DOM | 58 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
 | Dokumentenserver | 65 Tests: native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
-| Oberfläche | Alle Werkzeugansichten auf Desktop und Mobilgerät, PDF-/EPUB-/Audio-Downloads |
+| Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |
 | Dokumentation und Medien | Suche, Kategorien, Druck, Downloads, Video, keine horizontalen Überläufe und erhaltene Arbeitsdateien |
 | Rechtsseiten | 1440, 390 und 320 Pixel, gemeinsame Farbpalette, Kontaktlinks und Abstand zwischen Anschrift und E-Mail |
 | Container | Plattform-Indizes für amd64 und arm64 sowie feste Digests |
@@ -53,7 +76,9 @@ nicht automatisch für spätere Änderungen an `main`.
 - ARM-Images werden gebaut und ihre Plattform-Indizes geprüft. Ein nativer
   ARM-Lauf ist damit nicht nachgewiesen.
 - Die vollständigen Oberflächenprüfungen laufen unter Chromium. Ergänzende
-  PDF-Text- und OCR-Prüfungen laufen unter Firefox und nativem Safari.
+  PDF-Text- und OCR-Prüfungen laufen unter Firefox sowie nativem Safari auf
+  macOS-CI. Die separate Editor-Matrix nutzt WebKit; diese belegt keinen
+  nativen Safari- oder iOS-Test.
   Konkrete Smartphones und native Teilen-Dialoge benötigen eigene Gerätetests.
 - Die eigene Serverinstallation und ihre öffentliche Domain müssen
   separat mit künstlichen Testdokumenten geprüft werden.

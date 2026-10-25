@@ -1,5 +1,6 @@
 'use client';
-import { ResultActions, ResultSummary, useResultName } from './result-actions';
+import { sourcePages } from '@/lib/pdf-engine';
+import { ResultActions, ResultSummary, useResultName, useResultAuditGate } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, resultScrollBehavior, useFreshResult } from './ui-feedback';
 import { ui } from '@/lib/ui-language';
@@ -80,6 +81,7 @@ export function AdvancedWorkbench({
     [preview, setPreview] = useState<Source | null>(null),
     [page, setPage] = useState(0);
   const resultFresh = useFreshResult(result);
+  const { onAuditState, auditBlocked } = useResultAuditGate(result);
   const [resultName, renameResult] = useResultName(result);
   const resultRef = useRef<HTMLElement>(null);
   const controller = useRef<AbortController | null>(null),
@@ -302,6 +304,12 @@ export function AdvancedWorkbench({
             {result.note && <p>{ui(result.note)}</p>}
             <div className="advanced-actions">
               <ResultActions
+                onAuditState={onAuditState}
+                auditSources={sources}
+                auditPages={
+                  source && result.pages === source.pdf.numPages ? sourcePages(source) : undefined
+                }
+                auditTool={tool}
                 result={result}
                 url={url}
                 filename={resultName}
@@ -312,7 +320,7 @@ export function AdvancedWorkbench({
               {result.kind === 'pdf' && (
                 <Button
                   variant="outline"
-                  disabled={busy}
+                  disabled={busy || auditBlocked}
                   onClick={() =>
                     run(async () => {
                       await onUse({

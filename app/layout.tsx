@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
+import { APP_VERSION } from '@/lib/version';
 import './globals.css';
 import '@fontsource-variable/manrope';
 import '@fontsource-variable/space-grotesk';
 
 export const metadata: Metadata = {
+  manifest: '/manifest.webmanifest',
+  other: { 'moinpdf-offline': APP_VERSION },
   title: 'MoinPDF – Papierkram. Läuft.',
   description:
     'PDFs bearbeiten, zusammenfügen, teilen und Text aus Scans erkennen. Direkt im Browser, ohne Dokumenten-Upload.',

@@ -6,7 +6,7 @@ import ts from 'typescript';
 
 const code=ts.transpileModule(await readFile('lib/module-worker.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
 const {createLocalModuleWorker}=await import('data:text/javascript,'+encodeURIComponent(code));
-const original={Worker:globalThis.Worker,location:globalThis.location};
+const original={Worker:globalThis.Worker,location:globalThis.location,navigator:Object.getOwnPropertyDescriptor(globalThis,'navigator')};
 class CaptureWorker {
  constructor(url,options){this.url=url;this.options=options;this.terminated=0;}
  terminate(){this.terminated++;}
@@ -42,6 +42,12 @@ try {
   assert.equal(handle.worker.terminated,1);
   assert.equal(resolveObjectURL(handle.worker.url),undefined);
  }
+ Object.defineProperty(globalThis,'navigator',{configurable:true,value:{serviceWorker:{controller:{scriptURL:location.origin+'/sw.js'}}}});
+ const direct=createLocalModuleWorker('/assets/editor-ocr.js');
+ assert.equal(direct.worker.url,location.origin+'/assets/editor-ocr.js');
+ direct.dispose();direct.dispose();assert.equal(direct.worker.terminated,1);
+ Object.defineProperty(globalThis,'navigator',{configurable:true,value:{serviceWorker:{controller:{scriptURL:location.origin+'/other-worker.js'}}}});
+ const fallback=createLocalModuleWorker('/assets/editor-ocr.js');assert(fallback.worker.url.startsWith('blob:'));fallback.dispose();
  for(const url of ['file:///tmp/worker.js','https://external.test/worker.js','javascript:alert(1)','data:text/javascript,','blob:https://moinpdf.test/123'])
   assert.throws(()=>createLocalModuleWorker(url),/Ungültige Adresse/);
  let failedUrl;
@@ -52,4 +58,5 @@ try {
 }finally {
  if(original.Worker===undefined)delete globalThis.Worker;else globalThis.Worker=original.Worker;
  if(original.location===undefined)delete globalThis.location;else globalThis.location=original.location;
+ if(original.navigator)Object.defineProperty(globalThis,'navigator',original.navigator);else delete globalThis.navigator;
 }

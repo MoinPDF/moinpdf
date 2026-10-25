@@ -36,7 +36,7 @@ for (const [source, name] of Object.entries(modules)) {
     '@/components/ui/button': './button.mjs',
     '@/components/ui/dialog': './dialog.mjs',
     './workspace-result-context': './workspace-result-context.mjs',
-    './result-next-steps': './result-next-steps.mjs',
+    './result-next-steps': './result-next-steps.mjs', './export-audit': './export-audit.mjs',
     './appearance': './appearance.mjs',
     './content-digest': './content-digest.mjs',
     './tool-search': './tool-search.mjs',
@@ -46,6 +46,7 @@ for (const [source, name] of Object.entries(modules)) {
     code = code.replaceAll(`'${from}'`, `'${to}'`).replaceAll(`"${from}"`, `"${to}"`);
   await writeFile(`.cache/usability/${name}.mjs`, code);
 }
+await writeFile('.cache/usability/export-audit.mjs', 'export const useExportAudit=()=>({panel:null,blocked:false});');
 await writeFile(
   '.cache/usability/appearance.mjs',
   `export let language='de'; export const setLanguage=value=>language=value; export const useLanguage=()=>({language,t:(de,en)=>language==='de'?de:en||de});`,

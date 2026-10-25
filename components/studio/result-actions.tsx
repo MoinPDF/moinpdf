@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Pencil, Share2, LoaderCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from './appearance';
 import { useWorkspaceResults } from './workspace-result-context';
 import { Button } from '@/components/ui/button';
 import { ResultNextSteps } from './result-next-steps';
+import { useExportAudit } from './export-audit';
+import type { Source, PageItem } from '@/lib/pdf-engine';
 import {
   canShareResult,
   filenameParts,
@@ -15,6 +17,17 @@ import {
   resultSummary,
   type DownloadResult,
 } from '@/lib/result-details';
+
+// All download/adoption controls share the verification state of the exact Blob.
+export function useResultAuditGate(result: DownloadResult | null) {
+  const [state, setState] = useState<{ blob: Blob; blocked: boolean } | null>(null);
+  const onAuditState = useCallback((blob: Blob, blocked: boolean) => {
+    setState((previous) =>
+      previous?.blob === blob && previous.blocked === blocked ? previous : { blob, blocked },
+    );
+  }, []);
+  return { onAuditState, auditBlocked: !!result && (state?.blob !== result.blob || state.blocked) };
+}
 
 // Naming is independent of the output object: renaming must not reload its PDF
 // preview, replay a success animation, or reset the selected preview page.
@@ -102,6 +115,10 @@ export function ResultActions({
   label,
   disabled = false,
   nextDisabled = disabled,
+  auditSources,
+  auditPages,
+  auditTool,
+  onAuditState,
 }: {
   result: DownloadResult;
   url: string;
@@ -111,8 +128,19 @@ export function ResultActions({
   label?: string;
   disabled?: boolean;
   nextDisabled?: boolean;
+  auditSources?: Source[];
+  auditPages?: PageItem[];
+  auditTool?: string;
+  onAuditState?: (blob: Blob, blocked: boolean) => void;
 }) {
   const { t } = useLanguage();
+  const audit = useExportAudit(result, auditSources, auditPages, auditTool);
+  useEffect(
+    () => onAuditState?.(result.blob, audit.blocked),
+    [onAuditState, result.blob, audit.blocked],
+  );
+  disabled = disabled || audit.blocked;
+  nextDisabled = nextDisabled || audit.blocked;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const input = useRef<HTMLInputElement>(null);
@@ -134,6 +162,7 @@ export function ResultActions({
   };
   return (
     <div className="export-actions">
+      {audit.panel}
       <div className="export-filename">
         {editing ? (
           <div className="export-name-edit">
