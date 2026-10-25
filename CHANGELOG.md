@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Unveröffentlicht – 2026-10-25
+
+- Inhaltserhaltende Komprimierung, verlustfreier Modus und synchronisierter Originalvergleich.
+- OCR-Zeilenkorrekturen in der PDF-Suchebene, gemischte Seiten und genaue Schräglagenzuordnung.
+- Zusätzlicher Word-Export mit Fließtext, echten Rastertabellen, Bildern und Kopf-/Fußzeilen; schmale Tabellen auch im PDF-Editor.
+- Wiederherstellung von Zoom, Scrollposition und typgeprüften Spezialwerkzeug-Entwürfen.
+- Fortsetzbare lineare/verzweigte Stapel, Einzel- und Teildownloads, gezielte Fehlerwiederholung und begrenzte lokale Ablage.
+- Seitenressourcen nach Vorschauen freigeben; zusätzliche echte Ausgabeprüfungen mit fiktiven Dokumenten. Physische Mobilgerätetests sind weiterhin offen.
+
 ## 0.20.1 – 2026-10-24
 
 - „PDF zu Word“ bietet im Browser standardmäßig „Seitenlayout mit Bildern“. Originale Seitenformate, Bildpositionen, Spalten und Tabellenlinien bleiben erhalten; Text wird in bearbeitbaren Textfeldern angeordnet. Der einfache Absatzexport und der Dokumentenserver bleiben verfügbar.

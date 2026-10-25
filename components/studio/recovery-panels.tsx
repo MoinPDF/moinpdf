@@ -1,4 +1,5 @@
 'use client';
+import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -102,8 +103,11 @@ export function ReadingPanel({
   busy,
 }: PanelProps & { format: ReadingFormat }) {
   useLanguage();
-  const [title, setTitle] = useState(filenameStem(source.name)),
-    [language, setLanguage] = useState('de');
+  const [title, setTitle] = useToolDraftState(
+      'ReadingPanel.title:' + source.id + '',
+      filenameStem(source.name),
+    ),
+    [language, setLanguage] = useToolDraftState('ReadingPanel.language:' + source.id + '', 'de');
   return (
     <section className="advanced-card">
       <Text label={ui('Dokumenttitel')} value={title} onChange={setTitle} />
@@ -144,11 +148,17 @@ export function ScanSplitPanel({
   invalidate,
 }: PanelProps & { invalidate: () => void }) {
   useLanguage();
-  const [page, setPage] = useState(0),
-    [regions, setRegions] = useState<ScanRegions>({}),
-    [gap, setGap] = useState(3),
-    [format, setFormat] = useState<'pdf' | 'png' | 'jpeg'>('pdf'),
-    [dpi, setDpi] = useState(150),
+  const [page, setPage] = useToolDraftState('ScanSplitPanel.page:' + source.id + '', 0),
+    [regions, setRegions] = useToolDraftState<ScanRegions>(
+      'ScanSplitPanel.regions:' + source.id + '',
+      {},
+    ),
+    [gap, setGap] = useToolDraftState('ScanSplitPanel.gap:' + source.id + '', 3),
+    [format, setFormat] = useToolDraftState<'pdf' | 'png' | 'jpeg'>(
+      'ScanSplitPanel.format:' + source.id + '',
+      'pdf',
+    ),
+    [dpi, setDpi] = useToolDraftState('ScanSplitPanel.dpi:' + source.id + '', 150),
     [reviewed, setReviewed] = useState(false);
   const current = regions[page] || [],
     count = Object.values(regions).reduce((n, r) => n + r.length, 0);

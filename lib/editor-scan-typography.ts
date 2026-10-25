@@ -28,7 +28,7 @@ export async function refineEditorScanTypography(
   if (
     !mark.sourceIsScan ||
     !mark.sourceRect ||
-    (mark.textRotation || 0) % 90 ||
+    ((mark.textRotation || 0) % 90 && !mark.textAspect) ||
     !text.trim() ||
     (text.trim().length < 3 && references.length < 2) ||
     text.length > 120 ||

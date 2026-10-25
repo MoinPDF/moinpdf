@@ -29,6 +29,17 @@ OS version, browser/version and result. Use the fictional payroll fixture from
    viewer. Confirm both replacements, unchanged labels/amount/footer and attachment.
 5. Reload/close and reopen the app, restore the correct local working state and
    verify all edits. Repeat with two tabs/documents so recovery does not mix them.
+6. Restore zoom, horizontal/vertical scrolling, corrected table cells and OCR-review
+   inputs. Passwords and explicit review confirmations must require fresh entry.
+7. Compress a fictional PDF with links and an editable form. Compare both previews
+   at 200% and pan them; download and verify the links and form in another viewer.
+8. Correct an OCR line, apply it, download and search for the corrected text. The
+   visible scan must remain unchanged. Check on-screen keyboard and long lines.
+9. Pause a multi-file workflow, close/reopen and resume using the same inputs.
+   Download one completed file and a partial ZIP; retry a failed file without
+   repeating a previously completed rotation. Check the platform download flow.
+10. Download the flowing Word mode and open it in the device's actual Word viewer.
+    Edit a paragraph and a table cell; inspect images, page numbers and headers.
 
 Record failures with reproducible steps and non-sensitive evidence. A missing run
 stays pending. Device checks complement the independent PDF/raster checks in CI.

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { toolDraftSchema } from './tool-draft-schema';
 import { stringifyEditorProject, editorProjectReviver } from './editor-project-codec';
 import {
   cleanProjectState,
@@ -424,6 +425,7 @@ const options = z
     autoLanguage: z.boolean().optional(),
     imageFormat: z.enum(['png', 'jpg', 'webp', 'tiff', 'bmp']),
     quality: short,
+    compressionMode: z.enum(['preserve', 'lossless', 'raster']).optional(),
     watermark: short,
     numberStart: z.number().int().min(0).max(999999),
     firstSource: short,
@@ -454,6 +456,19 @@ const options = z
   .partial()
   .strict();
 export const projectStateSchema = snapshot.extend({
+  viewState: z
+    .object({
+      choosingTool: z.boolean().optional(),
+      zoom: z.number().finite().min(50).max(400),
+      view: z.string().max(50),
+      scrollX: z.number().finite().nonnegative().max(10000000),
+      scrollY: z.number().finite().nonnegative().max(10000000),
+      documentX: z.number().finite().nonnegative().max(10000000),
+      documentY: z.number().finite().nonnegative().max(10000000),
+    })
+    .strict()
+    .optional(),
+  toolDrafts: toolDraftSchema.optional(),
   options,
   history: z.array(snapshot).max(100),
   future: z.array(snapshot).max(100),
@@ -521,6 +536,8 @@ export function validateProjectReferences(
   counts?: Map<string, number>,
 ) {
   validateProject(state, sources);
+  if (state.toolDrafts && !toolDraftSchema.safeParse(state.toolDrafts).success)
+    throw new Error('Der Arbeitsstand enthält ungültige Werkzeugeingaben.');
   const ids = new Set(sources.map((s) => s.id));
   for (const snapshot of [state, ...state.history, ...state.future]) {
     if (

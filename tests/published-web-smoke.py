@@ -383,9 +383,12 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         zero_version = lifecycle.locator('.project-version').filter(has_text='0 Seiten')
         expect(zero_version).to_have_count(1)
         zero_version.get_by_role('button', name='Öffnen', exact=True).click()
-        chooser(lifecycle)
-        expect(lifecycle.locator('.chooser-document-count')).to_have_text('1 Datei·0 Seiten')
-        lifecycle.get_by_role('button', name='Seiten organisieren', exact=True).click()
+        # Restoring a project now restores its active tool as well as its data.
+        # A zero-page backup therefore opens the empty organizer directly.
+        expect(lifecycle.locator('main h1')).to_have_text('Seiten organisieren')
+        expect(lifecycle.locator('.tool-file-entry')).to_be_visible()
+        expect(lifecycle.get_by_role('button', name='Seite 1 entfernen', exact=True)).to_have_count(0)
+        expect(lifecycle.get_by_role('button', name='Rückgängig', exact=True)).to_be_enabled()
         lifecycle.get_by_role('button', name='Rückgängig', exact=True).click()
         expect(lifecycle.get_by_role('button', name='Seite 1 entfernen', exact=True)).to_be_visible()
         lifecycle.get_by_role('button', name='Wiederholen', exact=True).click()

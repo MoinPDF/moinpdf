@@ -97,6 +97,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     back()
     for name in ['Lesezeichen bearbeiten', 'Formular ausfüllen', 'Formular erstellen']:
         tool(name)
+        # Tool navigation moves focus to the workspace in its next animation
+        # frame. Wait for that handoff before testing the preview's own focus.
+        expect(page.locator('#moinpdf-content')).to_be_focused()
         preview = page.get_by_role('region', name='Vorschaudokument', exact=True)
         expect(preview).to_have_attribute('tabindex', '0')
         preview.focus()

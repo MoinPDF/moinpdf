@@ -25,6 +25,7 @@ export type WordLayoutPage = {
   ocr: boolean;
   imageOnly: boolean;
   preservedText: number;
+  preservedRects?: { x: number; y: number; w: number; h: number }[];
 };
 const twips = (pt: number) => Math.round(pt * 20);
 const emu = (pt: number) => Math.round(pt * 12700);

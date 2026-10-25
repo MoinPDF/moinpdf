@@ -34,6 +34,8 @@ const suites = [
   'document-server',
   'conversion',
   'word-layout',
+  'quality-workflows',
+  'tool-drafts',
   'recovery',
   'evidence',
   'century',

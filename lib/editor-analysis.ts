@@ -94,7 +94,7 @@ export function mergeEditorTargets(native: TextTarget[], recognized: TextTarget[
 
 // Lazy, owned worker session. Disposing its parent also terminates an OCR
 // worker still initializing, for which Tesseract has not returned a handle yet.
-export function createEditorRecognizer(signal: AbortSignal): EditorRecognizer {
+export function createEditorRecognizer(signal: AbortSignal, layout?: string): EditorRecognizer {
   let session: Promise<EditorRecognizer> | undefined;
   let disposed = false;
   return {
@@ -102,7 +102,7 @@ export function createEditorRecognizer(signal: AbortSignal): EditorRecognizer {
       signal.throwIfAborted();
       if (disposed) throw new DOMException('Abgebrochen', 'AbortError');
       session ||= import('./editor-recognizer').then(({ openEditorRecognizer }) =>
-        openEditorRecognizer(signal),
+        openEditorRecognizer(signal, layout),
       );
       const active = await session;
       if (disposed || signal.aborted) {
@@ -275,13 +275,32 @@ export function ocrEditorTargets(
       };
       // Tesseract can recognise sideways lines without rotating the input. Its
       // baseline, not only our recovery rotation, defines the word orientation.
-      const lineAngle = baseline
-        ? Math.round(
-            (Math.atan2(baseline.y1 - baseline.y0, baseline.x1 - baseline.x0) * 2) / Math.PI,
-          ) * 90
-        : 0;
-      const rotation = (((lineAngle - quarter * 90) % 360) + 360) % 360;
-      const thickness = Math.abs(lineAngle % 180) === 90 ? b.x1 - b.x0 : b.y1 - b.y0;
+      const lineAngle =
+        baseline && [baseline.x0, baseline.y0, baseline.x1, baseline.y1].every(Number.isFinite)
+          ? Math.atan2(baseline.y1 - baseline.y0, baseline.x1 - baseline.x0)
+          : 0;
+      const restore = (x: number, y: number) => {
+        const p = prepared ? prepared.restore(x, y) : [x, y];
+        return restorePoint(p[0] / cw, p[1] / ch, quarter);
+      };
+      const from = restore(b.x0, b.y0),
+        to = restore(b.x0 + Math.cos(lineAngle), b.y0 + Math.sin(lineAngle));
+      let rotation =
+        ((Math.atan2((to[1] - from[1]) * height, (to[0] - from[0]) * width) * 180) / Math.PI +
+          360) %
+        360;
+      const nearest = Math.round(rotation / 90) * 90;
+      if (Math.abs(rotation - nearest) < 0.5) rotation = nearest % 360;
+      const c = Math.abs(Math.cos(lineAngle)),
+        s = Math.abs(Math.sin(lineAngle)),
+        determinant = c * c - s * s;
+      const rawWidth = b.x1 - b.x0,
+        rawHeight = b.y1 - b.y0;
+      const localWidth =
+        Math.abs(determinant) > 0.1 ? (c * rawWidth - s * rawHeight) / determinant : rawWidth;
+      const localHeight =
+        Math.abs(determinant) > 0.1 ? (c * rawHeight - s * rawWidth) / determinant : rawHeight;
+      const thickness = localHeight > 0 ? localHeight : rawHeight;
       const fontSize = thickness / (canvas.width / width) / 0.85;
       return {
         ...r,
@@ -292,6 +311,10 @@ export function ocrEditorTargets(
         origin: 'ocr' as const,
         confidence: word.confidence,
         rotation,
+        textAspect: Math.max(
+          0.01,
+          localWidth > 0 ? localWidth / thickness : rawWidth / Math.max(1, rawHeight),
+        ),
         fill: sampleFill(pixels, canvas.width, canvas.height, r),
       };
     })
@@ -387,15 +410,17 @@ export async function analyzeEditorPage(
     recognizer?: EditorRecognizer;
     report?: (p: EditorProgress) => void;
     onNative?: (value: EditorPageText) => void;
+    cache?: boolean;
+    autoLanguage?: boolean;
   },
 ): Promise<EditorPageText> {
   const { signal } = options,
-    language = options.language || 'deu+eng',
     report = options.report || (() => {});
+  let language = options.language || 'deu+eng';
   signal.throwIfAborted();
   parseOcrLanguages(language);
   const key = keyFor(page, language),
-    existing = cachedEditorPage(source, page, language);
+    existing = options.cache === false ? undefined : cachedEditorPage(source, page, language);
   if (existing && !options.forceOcr) {
     options.onNative?.(existing);
     return existing;
@@ -437,7 +462,7 @@ export async function analyzeEditorPage(
     }
   }
   if (valid.length && !hasImage && !base.replaceTextLayer && !options.forceOcr) {
-    retainPage(source, key, base);
+    if (options.cache !== false) retainPage(source, key, base);
     return base;
   }
   const rendered = await renderPage(source, page, 2400, signal);
@@ -446,6 +471,10 @@ export async function analyzeEditorPage(
     signal.throwIfAborted();
     let recognized: TextTarget[] = [];
     if (imageHasInk(rendered.canvas)) {
+      if (options.autoLanguage)
+        language = (
+          await (await import('./ocr-language-probe')).probeOcrLanguages(rendered.canvas, signal)
+        ).join('+');
       recognizer ||= createEditorRecognizer(signal);
       let data = await recognizer.recognize(rendered.canvas, language, report),
         quarter = 0,
@@ -527,7 +556,7 @@ export async function analyzeEditorPage(
       uncertain: targets.filter(editorOcrNeedsReview).length,
     };
     // Only text/coordinates are retained, never canvases or document copies.
-    retainPage(source, key, result);
+    if (options.cache !== false) retainPage(source, key, result);
     report({
       percent: 100,
       label: targets.length

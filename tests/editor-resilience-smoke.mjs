@@ -44,7 +44,7 @@ await writer.cancel();
 await writeFile(folder + '/button.mjs', `import React from 'react';export const Button=({variant,size,...p})=>React.createElement('button',p);`);
 await writeFile(folder + '/appearance.mjs', `export const useLanguage=()=>({t:de=>de});`);
 await writeFile(folder + '/pdf-engine.mjs', `export const uid=()=>crypto.randomUUID();export const openSource=async()=>{throw Error('Unexpected restore')};`);
-await writeFile(folder + '/local-projects.mjs', `export const cleanProjectState=s=>s;export const validateProject=()=>{};`);
+await writeFile(folder + '/local-projects.mjs', `export const cleanProjectState=s=>s;export const validateStoredProject=async()=>{};`);
 await writeFile(folder + '/workspace-storage.mjs', `export const writes=[],jobs=[],events=[],keys=[],cleared=[];export const loadRecovery=async()=>{throw Error('Unexpected restore')};export const listRecoveries=async()=>[{id:'other-tab',updated:1,sources:[{name:'Other document.pdf'}]}];export const storeRecovery=(value,key)=>new Promise(resolve=>{keys.push(key);writes.push(value);events.push('write');jobs.push(resolve)});export const clearRecovery=async key=>{cleared.push(key);events.push('clear')};`);
 await writeFile(folder + '/editor-live-flow.mjs', `export const jobs=[];export const prepareLinkedEditorFlow=(sources,pages,edits,group,signal)=>new Promise((resolve,reject)=>jobs.push({edits,signal,resolve,reject}));`);
 await writeFile(folder + '/ui-language.mjs', `export const ui=s=>s;`);

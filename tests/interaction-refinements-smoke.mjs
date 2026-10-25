@@ -9,6 +9,7 @@ await mkdir('.cache/interactions', { recursive: true });
 for (const [source, name] of [
   ['lib/interaction-feedback.ts', 'interactions'],
   ['lib/local-projects.ts', 'local-projects'],
+  ['lib/tool-draft-schema.ts', 'tool-draft-schema'],
   ['lib/editor-project-codec.ts', 'editor-project-codec'],
   ['lib/project-checkpoint.ts', 'checkpoint'],
   ['components/studio/search-highlight.tsx', 'highlight'],
@@ -22,7 +23,7 @@ for (const [source, name] of [
         jsx: ts.JsxEmit.ReactJSX,
       },
     })
-    .outputText.replaceAll("'./editor-project-codec'", "'./editor-project-codec.mjs'").replaceAll("'./local-projects'", "'./local-projects.mjs'")
+    .outputText.replaceAll("'./editor-project-codec'", "'./editor-project-codec.mjs'").replaceAll("'./local-projects'", "'./local-projects.mjs'").replaceAll("'./tool-draft-schema'", "'./tool-draft-schema.mjs'")
     .replaceAll("'@/lib/interaction-feedback'", "'./interactions.mjs'");
   await writeFile(`.cache/interactions/${name}.mjs`, output);
 }
@@ -161,8 +162,14 @@ const state = {
   activeId: 'page',
   toolId: 'organize',
   documentSessions: {},
+  toolDrafts: { 'CoverPanel.title:source': 'Saved title' },
 };
 const signature = (value = state, name = 'Test') => projectContentSignature(name, value);
+assert.equal(
+  signature({ ...state, toolDrafts: undefined }),
+  signature({ ...state, toolDrafts: {} }),
+  'Legacy projects without tool drafts match the empty defaults used after opening',
+);
 assert.equal(matchesProjectCheckpoint(null, undefined, [source], signature()), false);
 const id = await saveProject('Test', undefined, [source], state);
 const checkpoint = captureProjectCheckpoint(id, 'Test', [source], state);
@@ -180,6 +187,8 @@ for (const changed of [
     edits: { marks: { page: [{ id: 'mark', kind: 'text', text: 'Change' }] }, crops: {} },
   },
   { ...state, options: { language: 'eng' } },
+  { ...state, toolDrafts: { 'CoverPanel.title:source': 'Changed title' } },
+  { ...state, toolDrafts: {} },
   { ...state, documentSessions: { source: { current: { fields: [{ value: 'Name' }] } } } },
 ])
   assert.equal(matchesProjectCheckpoint(checkpoint, id, [source], signature(changed)), false);

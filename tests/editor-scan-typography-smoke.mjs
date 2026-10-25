@@ -8,7 +8,7 @@ import fontkit from '@pdf-lib/fontkit';
 import {createWorker, PSM} from 'tesseract.js';
 import {resolve} from 'node:path';
 const folder='.cache/editor-scan-typography';await mkdir(folder,{recursive:true});
-for(const name of ['content-digest','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-rich-text','editor-rich-layout','editor-verification','editor-detail-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','editor-analysis','editor-text-layer','editor-fonts','editor-font-outline','editor-font-match','editor-scan-typography','editor-font-cmap','editor-font-catalog','editor-native','editor-scan-pixels','editor-repair','pdf-security','native-pdf-core','nested-native','editor-project-codec','local-projects','project-archive']){
+for(const name of ['content-digest','local-font-bytes','pdf-text','ocr-languages','content-compare','image-codecs','pdf-engine','studio-engine','advanced-types','extra-options','extra-tools','pdf-report','pdf-signature-guard','editor-model','editor-rich-text','editor-rich-layout','editor-verification','editor-detail-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search','editor-analysis','editor-text-layer','editor-fonts','editor-font-outline','editor-font-match','editor-scan-typography','editor-font-cmap','editor-font-catalog','editor-native','editor-scan-pixels','editor-repair','pdf-security','native-pdf-core','nested-native','editor-project-codec','tool-draft-schema','local-projects','project-archive']){
  const code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replaceAll("'/vendor/pdf/standard_fonts/'", "'public/vendor/pdf/standard_fonts/'").replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}.mjs${q}`);await writeFile(`${folder}/${name}.mjs`,code);
 }
 await writeFile(folder+'/native-pdf.mjs',editorNativeAdapter);
@@ -62,7 +62,7 @@ try {
   const fitted=await refineEditorScanTypography(mark,scan,pageOf(scan),W,H,signal);
   assert.equal(JSON.stringify(mark),before,'Matching does not mutate the input');
   assert(!editorMarkChanged(fitted),'Selection alone never modifies a scanned PDF');
-  assert.equal(fitted.bold,bold,choice+' keeps the source weight');
+  assert.equal(fitted.bold,bold,choice+' keeps the source weight '+JSON.stringify({rotation:target.rotation,match:fitted.scanMatch}));
   assert.equal(fitted.italic,italic,choice+' keeps the source slope');
   assert.equal(fitted.fontChoice,choice,'Visual ranking selects the known fixture family');
   assert(Math.abs(fitted.fontScale*W-size)<.8,'Ink metrics recover size within 0.8 pt');

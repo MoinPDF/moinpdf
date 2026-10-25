@@ -72,8 +72,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         zero = page.locator('.project-version').filter(has_text='0 Seiten')
         expect(zero).to_have_count(1)
         zero.get_by_role('button', name='Öffnen', exact=True).click()
-        expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·0 Seiten')
-        page.get_by_role('button', name='Seiten organisieren', exact=True).click()
+        # The backup now restores the active organizer as well as its history.
+        expect(page.locator('main h1')).to_have_text('Seiten organisieren')
+        expect(page.get_by_role('button', name='Seite 1 entfernen', exact=True)).to_have_count(0)
         page.get_by_role('button', name='Rückgängig', exact=True).click()
         expect(page.get_by_role('button', name='Seite 1 entfernen', exact=True)).to_be_visible()
         print('PASS: three mobile project downloads followed by Escape, immediate reopen, zero-page backup and restored undo')

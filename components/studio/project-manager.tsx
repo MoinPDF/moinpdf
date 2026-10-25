@@ -95,10 +95,10 @@ export function ProjectManager({
     current = identity.id,
     setName = (name: string) => setIdentity((old) => ({ ...old, name })),
     setCurrent = (id: string | undefined) => setIdentity((old) => ({ ...old, id }));
-  const { pages, edits, options, documentSessions } = state;
+  const { pages, edits, options, documentSessions, toolDrafts } = state;
   const content = useMemo(
-    () => projectContentSignature(name, { pages, edits, options, documentSessions }),
-    [name, pages, edits, options, documentSessions],
+    () => projectContentSignature(name, { pages, edits, options, documentSessions, toolDrafts }),
+    [name, pages, edits, options, documentSessions, toolDrafts],
   );
   const saved = matchesProjectCheckpoint(checkpoint, current, sources, content);
   const saveStatus = !sources.length ? 'empty' : saved ? 'saved' : 'dirty';
@@ -360,7 +360,7 @@ export function ProjectManager({
           </div>
           <p className="fine-note">
             {ui(
-              'Bewusstes Speichern in diesem Browser, ohne Upload. Die gespeicherten PDFs liegen unverschlüsselt im Browserspeicher – auch zuvor entsperrte Dateien. Beim Löschen der Browserdaten können Projekte verloren gehen. Eine .moinpdf-Projektdatei überträgt den gewählten Stand auf einen anderen Browser oder Computer. Das Gesamtarchiv umfasst alle bis zu fünf gespeicherten Stände; beim Import entsteht ein neues Projekt. Beide enthalten auch Originale, frühere Bearbeitungen und gegebenenfalls entsperrte PDFs unverschlüsselt. Zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden. Einstellungen und Zwischenergebnisse der Spezialwerkzeuge gehören erst nach „Ergebnis übernehmen“ zum Projekt.',
+              'Bewusstes Speichern in diesem Browser, ohne Upload. Die gespeicherten PDFs liegen unverschlüsselt im Browserspeicher – auch zuvor entsperrte Dateien. Beim Löschen der Browserdaten können Projekte verloren gehen. Eine .moinpdf-Projektdatei überträgt den gewählten Stand auf einen anderen Browser oder Computer. Das Gesamtarchiv umfasst alle bis zu fünf gespeicherten Stände; beim Import entsteht ein neues Projekt. Beide enthalten auch Originale, frühere Bearbeitungen und gegebenenfalls entsperrte PDFs unverschlüsselt. Zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden. Ansicht und unterstützte Werkzeugeingaben werden mitgespeichert. Passwörter und ausgewählte Zusatzdateien werden nicht gespeichert. Ergebnisdateien der Spezialwerkzeuge zuerst in das Dokument übernehmen.',
             )}
           </p>
           {notice && <p role="status">{ui(notice)}</p>}

@@ -1,4 +1,5 @@
 'use client';
+import { useToolDraftState } from './workspace-drafts';
 import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -65,9 +66,18 @@ type Props = PanelProps & { invalidate: () => void };
 
 export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
   useLanguage();
-  const [responses, setResponses] = useState<FormResponse[]>([]),
-    [selected, setSelected] = useState(''),
-    [layout, setLayout] = useState<'matrix' | 'details'>('matrix'),
+  const [responses, setResponses] = useToolDraftState<FormResponse[]>(
+      'FormResponsesPanel.responses:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [selected, setSelected] = useToolDraftState(
+      'FormResponsesPanel.selected:' + sources.map((s) => s.id).join(':') + '',
+      '',
+    ),
+    [layout, setLayout] = useToolDraftState<'matrix' | 'details'>(
+      'FormResponsesPanel.layout:' + sources.map((s) => s.id).join(':') + '',
+      'matrix',
+    ),
     [focus, setFocus] = useState<EvidenceRef>(),
     [limit, setLimit] = useState(60);
   const current = responses.find((r) => r.sourceId === selected) || responses[0];
@@ -219,9 +229,18 @@ export function FormResponsesPanel({ sources, busy, run, invalidate }: Props) {
 
 export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
   useLanguage();
-  const [ocr, setOcr] = useState(false),
-    [pages, setPages] = useState<EvidencePage[]>([]),
-    [items, setItems] = useState<ChronologyItem[]>([]),
+  const [ocr, setOcr] = useToolDraftState(
+      'ChronologyPanel.ocr:' + sources.map((s) => s.id).join(':') + '',
+      false,
+    ),
+    [pages, setPages] = useToolDraftState<EvidencePage[]>(
+      'ChronologyPanel.pages:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [items, setItems] = useToolDraftState<ChronologyItem[]>(
+      'ChronologyPanel.items:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
     [focus, setFocus] = useState<EvidenceRef>();
   const update = (id: string, patch: Partial<ChronologyItem>) => {
     invalidate();
@@ -404,14 +423,28 @@ export function ChronologyPanel({ sources, busy, run, invalidate }: Props) {
 
 export function ArithmeticPanel({ source, busy, run, invalidate }: Props) {
   useLanguage();
-  const [page, setPage] = useState(0),
-    [area, setArea] = useState<Rect>({ x: 0.55, y: 0.12, w: 0.4, h: 0.72 }),
-    [ocr, setOcr] = useState(false),
-    [pages, setPages] = useState<EvidencePage[]>([]),
-    [rows, setRows] = useState<ArithmeticRow[]>([]),
-    [locale, setLocale] = useState<NumberLocale>('de'),
-    [total, setTotal] = useState(''),
-    [totalId, setTotalId] = useState(''),
+  const [page, setPage] = useToolDraftState('ArithmeticPanel.page:' + source.id + '', 0),
+    [area, setArea] = useToolDraftState<Rect>('ArithmeticPanel.area:' + source.id + '', {
+      x: 0.55,
+      y: 0.12,
+      w: 0.4,
+      h: 0.72,
+    }),
+    [ocr, setOcr] = useToolDraftState('ArithmeticPanel.ocr:' + source.id + '', false),
+    [pages, setPages] = useToolDraftState<EvidencePage[]>(
+      'ArithmeticPanel.pages:' + source.id + '',
+      [],
+    ),
+    [rows, setRows] = useToolDraftState<ArithmeticRow[]>(
+      'ArithmeticPanel.rows:' + source.id + '',
+      [],
+    ),
+    [locale, setLocale] = useToolDraftState<NumberLocale>(
+      'ArithmeticPanel.locale:' + source.id + '',
+      'de',
+    ),
+    [total, setTotal] = useToolDraftState('ArithmeticPanel.total:' + source.id + '', ''),
+    [totalId, setTotalId] = useToolDraftState('ArithmeticPanel.totalId:' + source.id + '', ''),
     [reviewed, setReviewed] = useState(false),
     [focus, setFocus] = useState<EvidenceRef>();
   const change = () => {
@@ -836,16 +869,34 @@ export function LayersPanel({ source, busy, run, invalidate }: Props) {
 
 export function MeasurePanel({ source, busy, run, invalidate }: Props) {
   useLanguage();
-  const [page, setPage] = useState(0),
-    [size, setSize] = useState({ width: 595, height: 842 }),
-    [mode, setMode] = useState<'calibrate' | 'length' | 'area'>('calibrate'),
-    [points, setPoints] = useState<Point[]>([]),
-    [length, setLength] = useState(1),
-    [unit, setUnit] = useState<Calibration['unit']>('m'),
-    [calibrations, setCalibrations] = useState<Record<number, Calibration>>({}),
-    [items, setItems] = useState<Measurement[]>([]),
+  const [page, setPage] = useToolDraftState('MeasurePanel.page:' + source.id + '', 0),
+    [size, setSize] = useToolDraftState('MeasurePanel.size:' + source.id + '', {
+      width: 595,
+      height: 842,
+    }),
+    [mode, setMode] = useToolDraftState<'calibrate' | 'length' | 'area'>(
+      'MeasurePanel.mode:' + source.id + '',
+      'calibrate',
+    ),
+    [points, setPoints] = useToolDraftState<Point[]>('MeasurePanel.points:' + source.id + '', []),
+    [length, setLength] = useToolDraftState('MeasurePanel.length:' + source.id + '', 1),
+    [unit, setUnit] = useToolDraftState<Calibration['unit']>(
+      'MeasurePanel.unit:' + source.id + '',
+      'm',
+    ),
+    [calibrations, setCalibrations] = useToolDraftState<Record<number, Calibration>>(
+      'MeasurePanel.calibrations:' + source.id + '',
+      {},
+    ),
+    [items, setItems] = useToolDraftState<Measurement[]>(
+      'MeasurePanel.items:' + source.id + '',
+      [],
+    ),
     [error, setError] = useState(''),
-    [manual, setManual] = useState({ x: 0.5, y: 0.5 });
+    [manual, setManual] = useToolDraftState('MeasurePanel.manual:' + source.id + '', {
+      x: 0.5,
+      y: 0.5,
+    });
   const surface = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let active = true;
@@ -861,7 +912,7 @@ export function MeasurePanel({ source, busy, run, invalidate }: Props) {
     return () => {
       active = false;
     };
-  }, [source, page]);
+  }, [source, page, setSize]);
   const reset = () => {
     invalidate();
     setPoints([]);

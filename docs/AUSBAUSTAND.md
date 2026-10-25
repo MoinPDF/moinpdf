@@ -2,7 +2,14 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 23. Oktober 2026. Unveröffentlichte Editor-Fortsetzung auf Basis von Version 0.19.0.
+Stand: 25. Oktober 2026. Unveröffentlichte Verbesserungen auf Basis von Version 0.20.1.
+
+- Komprimierung erhält standardmäßig Text, Vektoren, Links und Formularfelder. Geeignete RGB-JPEGs werden einzeln verkleinert; zusätzlich sind verlustfreie Optimierung und ausdrücklich gewählter Bildneuaufbau verfügbar. Der Originalvergleich verwendet gleichen Zoom und gekoppelte Ausschnitte. Dokumentweite Strukturen erfordern eine vollständige einzelne PDF; signierte Dokumente werden abgewiesen.
+- „OCR & Text“ erkennt gemischte Seiten. „Korrekturen übernehmen“ schreibt korrigierte Zeilen in die PDF-Suchebene; sichtbarer Originaltext bleibt gesperrt und das Seitenbild unverändert. Vorhandene Suchtexte werden vor dem erneuten Schreiben entfernt. Kleine Schräglagen bleiben bei der Zuordnung und beim Schriftvergleich erhalten.
+- Der zusätzliche lokale Word-Modus „Fließtext, Tabellen und Bilder“ erzeugt Absätze, unterstützte Rastertabellen, Bilder sowie wiederkehrende Kopf- und Fußzeilen. Komplexe Grafiken können als Bild übernommen werden; Seitenumbrüche, Reihenfolge und nicht erkannte Tabellen sind zu prüfen. Auch Tabellen mit nur einer Zeile oder Spalte sind im PDF-Editor verfügbar.
+- Wiederherstellung und Projektdateien enthalten Zoom, Scrollposition und typgeprüfte Entwürfe von Spezialwerkzeugen, unter anderem Tabellenkorrekturen, OCR-Prüfung, Formularserien, Messungen, Konvertierungseinstellungen und Abläufe. Passwörter, Datei-Auswahldialoge und Freigabebestätigungen werden nicht gespeichert. Ergebnisdateien stehen separat in der Ergebnisablage.
+- Lineare und verzweigte Stapel speichern nach jedem abgeschlossenen Schritt einen atomaren lokalen Zwischenstand. Dieselben Eingabedateien und derselbe Ablauf können fortgesetzt werden. Fertige Dateien sind einzeln oder als Teil-ZIP verfügbar; Fehler lassen sich gezielt wiederholen. Web Locks verhindern gleichzeitige Bearbeitung desselben Stapels. Die Stapelablage ist auf 160 MB begrenzt und bietet Löschen alter Stapel.
+- Vorschauen geben PDF-Seitenressourcen nach dem Rendern frei; OCR verwendet außerhalb des Editors keinen zusätzlichen Editorcache. Neue fiktive Regressionen prüfen tatsächliche PDF-, DOCX- und Stapelausgaben. Physische Mobilgerätetests bleiben ausdrücklich offen: [Gerätecheckliste](quality/editor-device-checklist.md).
 
 Der automatische Scan-Schriftvergleich prüft 56 Schnitte aus 14 Familien und bis zu drei benachbarte Originalstellen. Kurze Zahlen werden nur bei mehreren übereinstimmenden Referenzen angepasst; geeignete rechtwinklig gedrehte Ausschnitte sind unterstützt. Gemischte Stile und beliebige Schräglagen bleiben eingeschränkt. Die Exportansicht trennt technische Prüfung und Schriftähnlichkeit und zeigt automatische Detailpaare mit gemeinsamem Zoom. [Physische Gerätetests](quality/editor-device-checklist.md) sind separat dokumentiert und noch offen.
 

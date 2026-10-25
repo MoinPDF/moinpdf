@@ -236,8 +236,8 @@ export function recognizeEditorTable(input: {
   const ys = coordinates(segments.flatMap((s) => [s.y1, s.y2]));
   const nr = ys.length - 1,
     nc = xs.length - 1;
-  if (nr < 2 || nc < 2 || nr > MAX_ROWS || nc > MAX_COLUMNS || nr * nc > MAX_CELLS)
-    fail('The candidate must be a bounded grid with at least two rows and two columns.');
+  if (nr < 1 || nc < 1 || nr * nc < 2 || nr > MAX_ROWS || nc > MAX_COLUMNS || nr * nc > MAX_CELLS)
+    fail('The candidate must be a bounded grid with at least two cells.');
   const rect = bounds(xs, ys);
   if (!contains({ x: 0, y: 0, w: pageWidth, h: pageHeight }, rect, paths[0].width / 2))
     fail('The table extends outside the page.');

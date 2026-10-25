@@ -1,9 +1,7 @@
 import { readPdfText } from './pdf-text';
 import { PDFDocument, PDFDict, PDFName, StandardFonts, degrees, rgb, type PDFPage } from 'pdf-lib';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import type { Worker } from 'tesseract.js';
 import type { PdfReport } from './pdf-report';
-import { parseOcrLanguages } from './ocr-languages';
 import type { Language } from './ui-language';
 
 export type Source = {
@@ -42,6 +40,7 @@ export type JobOptions = {
   autoLanguage?: boolean;
   imageFormat: string;
   quality: string;
+  compressionMode?: 'preserve' | 'lossless' | 'raster';
   watermark: string;
   numberStart: number;
 };
@@ -54,6 +53,8 @@ export type JobResult = {
   inputSize: number;
   report?: PdfReport;
   note?: string;
+  ocrData?: import('./ocr-document').OcrResultPage[];
+  ocrBase?: Blob;
   editorVerification?: import('./editor-verification').EditorVerification;
 };
 export type ProgressUpdate = { percent: number; label: string };
@@ -391,6 +392,14 @@ export async function runJob(
 ): Promise<JobResult> {
   if (!pages.length) throw new Error('Bitte wähle mindestens eine Seite aus.');
   aborted(signal);
+  if (tool === 'compress' && options.compressionMode !== 'raster') {
+    const { compressPreservingPdf } = await import('./pdf-compression');
+    return compressPreservingPdf(sources, pages, options, report, signal);
+  }
+  if (tool === 'ocr') {
+    const { runDocumentOcr } = await import('./ocr-document');
+    return runDocumentOcr(sources, pages, options, report, signal);
+  }
   const loaded = await prepareSources(sources, pages);
   const doc = await PDFDocument.create();
   doc.setProducer('PDF-Werkzeuge');
@@ -402,111 +411,18 @@ export async function runJob(
     0,
   );
   const base = { pages: pages.length, inputSize };
-  let worker: Worker | undefined;
-  const stop = () => {
-    void worker?.terminate();
-  };
-  signal.addEventListener('abort', stop, { once: true });
-  const texts: string[] = [];
-  const languageNotes: string[] = [];
   const zip =
     tool === 'split' || tool === 'to-images' ? new (await import('jszip')).default() : null;
-  let currentIndex = 0;
-  try {
+  {
     for (let i = 0; i < pages.length; i++) {
       aborted(signal);
-      currentIndex = i;
       const item = pages[i],
         source = sources.find((s) => s.id === item.sourceId)!;
       report({
         percent: (i / pages.length) * 100,
         label: `Seite ${i + 1} von ${pages.length} wird verarbeitet …`,
       });
-      if (tool === 'ocr') {
-        const nativeText = options.forceOcr ? '' : await extractPageText(source, item);
-        if (nativeText.replace(/\s/g, '').length >= 20) {
-          texts.push(nativeText);
-          await appendPage(doc, loaded, item);
-        } else {
-          let selectedLanguage = options.language;
-          if (options.autoLanguage) {
-            await worker?.terminate();
-            worker = undefined;
-            report({
-              percent: (i / pages.length) * 100,
-              label: `Sprachprobe mit 21 Modellen · Seite ${i + 1}`,
-            });
-            const preview = await renderPage(source, item, 1800, signal);
-            try {
-              const { probeOcrLanguages } = await import('./ocr-language-probe');
-              const languages = await probeOcrLanguages(preview.canvas, signal);
-              selectedLanguage = languages.join('+');
-              languageNotes.push(`Seite ${i + 1}: ${selectedLanguage}`);
-              report({
-                percent: (i / pages.length) * 100,
-                label: `Erkannte Sprachmodelle: ${selectedLanguage}`,
-              });
-            } finally {
-              preview.canvas.width = preview.canvas.height = 0;
-            }
-          }
-          if (!worker) {
-            report({ percent: (i / pages.length) * 100, label: 'Texterkennung wird geladen …' });
-            const { createWorker, PSM } = await import('tesseract.js');
-            const creating = createWorker(parseOcrLanguages(selectedLanguage), 1, {
-              workerPath: '/vendor/ocr/worker.min.js',
-              corePath: '/vendor/ocr',
-              langPath: '/vendor/languages',
-              workerBlobURL: false,
-              logger: (m) => {
-                if (signal.aborted) return;
-                if (m.status === 'recognizing text')
-                  report({
-                    percent: ((currentIndex + m.progress * 0.95) / pages.length) * 100,
-                    label: `Text erkennen · Seite ${currentIndex + 1} von ${pages.length}`,
-                  });
-                else if (m.status === 'loading language traineddata')
-                  report({
-                    percent: (currentIndex / pages.length) * 100,
-                    label: 'Sprachpaket wird geladen …',
-                  });
-              },
-            });
-            creating
-              .then((w) => {
-                if (signal.aborted) void w.terminate();
-              })
-              .catch(() => {});
-            worker = await abortable(creating, signal);
-            await worker.setParameters({
-              tessedit_pageseg_mode: (['3', '4', '6', '7', '11'].includes(options.ocrLayout || '')
-                ? options.ocrLayout
-                : PSM.AUTO) as typeof PSM.AUTO,
-              preserve_interword_spaces: '1',
-            });
-          }
-          const { canvas, width, height, scale } = await renderPage(source, item, 2800, signal);
-          try {
-            await worker.setParameters({ user_defined_dpi: String(Math.round(scale * 72)) });
-            const { data } = await abortable(
-              worker.recognize(
-                canvas,
-                { pdfTitle: filenameStem(source.name), pdfTextOnly: false },
-                { text: true, pdf: true },
-              ),
-              signal,
-            );
-            texts.push(data.text.trim());
-            if (!data.pdf) throw new Error('Die durchsuchbare PDF konnte nicht erstellt werden.');
-            const scanPdf = await PDFDocument.load(new Uint8Array(data.pdf));
-            const [scanPage] = await doc.embedPages(scanPdf.getPages());
-            const page = doc.addPage([width, height]);
-            page.drawPage(scanPage, { x: 0, y: 0, width, height });
-          } finally {
-            canvas.width = canvas.height = 0;
-          }
-        }
-      } else if (tool === 'to-images' || tool === 'compress') {
+      if (tool === 'to-images' || tool === 'compress') {
         const side =
           tool === 'compress'
             ? options.quality === 'small'
@@ -615,25 +531,7 @@ export async function runJob(
       blob,
       filename: `${stem}-${suffix[tool]}.pdf`,
       kind: 'pdf',
-      ...(languageNotes.length
-        ? {
-            note:
-              'Automatische Sprachwahl: ' +
-              languageNotes.join('; ') +
-              '. Statistische Vorschläge und OCR-Ergebnis bitte prüfen; kurze oder uneindeutige Texte benötigen eine manuelle Auswahl.',
-          }
-        : {}),
-      ...(tool === 'ocr'
-        ? {
-            text: texts
-              .map((text, i) => `— Seite ${i + 1} —\n\n${text || '[Kein Text erkannt]'}`)
-              .join('\n\n'),
-          }
-        : {}),
     };
-  } finally {
-    signal.removeEventListener('abort', stop);
-    await worker?.terminate();
   }
 }
 export function downloadBlob(blob: Blob, name: string) {

@@ -4,7 +4,7 @@ import { abortable } from './pdf-engine';
 import type { Page as OcrPage } from 'tesseract.js';
 import type { EditorRecognizer, EditorProgress } from './editor-analysis';
 
-export function openEditorRecognizer(signal: AbortSignal): EditorRecognizer {
+export function openEditorRecognizer(signal: AbortSignal, layout?: string): EditorRecognizer {
   signal.throwIfAborted();
   const { worker, dispose } = createLocalModuleWorker(workerUrl);
   let closed = false,
@@ -84,7 +84,7 @@ export function openEditorRecognizer(signal: AbortSignal): EditorRecognizer {
         pending = { id, report, resolve, reject, timer };
         report({ percent: 5, label: 'Texterkennung wird vorbereitet …' });
         try {
-          worker.postMessage({ id, language, bytes, origin: location.origin }, [bytes]);
+          worker.postMessage({ id, language, layout, bytes, origin: location.origin }, [bytes]);
         } catch {
           stop(new Error('Die Scan-Seite konnte nicht vorbereitet werden.'));
         }

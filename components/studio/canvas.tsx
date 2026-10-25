@@ -16,10 +16,14 @@ export function PagePreview({
   source,
   page,
   small = false,
+  resolution = 1200,
+  lossless = false,
 }: {
   source: Source;
   page: PageItem;
   small?: boolean;
+  resolution?: number;
+  lossless?: boolean;
 }) {
   useLanguage();
   const [image, setImage] = useState(''),
@@ -43,13 +47,18 @@ export function PagePreview({
               const { canvas } = await renderPage(
                 source,
                 { index: page.index, rotation: page.rotation },
-                small ? 270 : 1200,
+                small ? 270 : Math.min(3000, Math.max(300, resolution)),
                 cancel.signal,
               );
-              const blob = await new Promise<Blob | null>((r) =>
-                canvas.toBlob(r, 'image/jpeg', 0.88),
-              );
-              canvas.width = canvas.height = 0;
+              let blob: Blob | null;
+              try {
+                blob = await new Promise<Blob | null>((r) =>
+                  canvas.toBlob(r, lossless ? 'image/png' : 'image/jpeg', 0.88),
+                );
+              } finally {
+                canvas.width = canvas.height = 0;
+                (await source.pdf.getPage(page.index + 1)).cleanup();
+              }
               if (active && blob) {
                 url = URL.createObjectURL(blob);
                 setImage(url);
@@ -68,7 +77,7 @@ export function PagePreview({
       observer.disconnect();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [source, page.index, page.rotation, small]);
+  }, [source, page.index, page.rotation, small, resolution, lossless]);
   return (
     <div ref={holder} className={`page-preview ${small ? 'small' : ''}`}>
       {image ? (
