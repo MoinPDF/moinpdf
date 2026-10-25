@@ -11,6 +11,7 @@ export type ProjectSnapshot = {
 };
 export type ProjectState = ProjectSnapshot & {
   viewState?: {
+    choosingTool?: boolean;
     zoom: number;
     view: string;
     scrollX: number;

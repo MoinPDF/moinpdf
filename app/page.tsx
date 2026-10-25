@@ -438,6 +438,7 @@ function Studio() {
     [future, setFuture] = useState<Snapshot[]>([]);
   const [documentSessions, setDocumentSessions] = useState<DocumentSessions>({}),
     [documentBusy, setDocumentBusy] = useState(false);
+  const [choosingTool, setChoosingTool] = useState(true);
   const projectSources = useMemo(
     () => workspaceSources(sources, archivedSources, history, future),
     [sources, archivedSources, history, future],
@@ -458,7 +459,7 @@ function Studio() {
       documentSessions,
       activeId,
       toolId,
-      viewState: { zoom, view, ...scrollState },
+      viewState: { choosingTool, zoom, view, ...scrollState },
       toolDrafts,
       sourceIds: sources.map((s) => s.id),
     }),
@@ -476,6 +477,7 @@ function Studio() {
       view,
       scrollState,
       toolDrafts,
+      choosingTool,
     ],
   );
   useEffect(() => {
@@ -534,8 +536,7 @@ function Studio() {
   const [duplicateRequest, setDuplicateRequest] = useState<DuplicateRequest | null>(null);
   const duplicateResolver = useRef<DuplicateRequest['resolve'] | null>(null);
   useEffect(() => () => duplicateResolver.current?.({ add: false, remember: true }), []);
-  const [choosingTool, setChoosingTool] = useState(true),
-    [browseEmpty, setBrowseEmpty] = useState(false);
+  const [browseEmpty, setBrowseEmpty] = useState(false);
   const [homeRequested, setHomeRequested] = useState(false);
   const [repairInput, setRepairInput] = useState<File | null>(null);
   const [conversionInput, setConversionInput] = useState<{ tool: ServerTool; file: File } | null>(
@@ -1880,7 +1881,7 @@ function Studio() {
             tools.some((t) => t.id === state.toolId) ? (state.toolId as WorkspaceTool) : 'inspect',
           );
           setHomeRequested(false);
-          setChoosingTool(false);
+          setChoosingTool(state.viewState?.choosingTool ?? true);
           setResult(null);
         }}
       />
@@ -1924,7 +1925,7 @@ function Studio() {
           );
           setResult(null);
           setError('');
-          setChoosingTool(false);
+          setChoosingTool(state.viewState?.choosingTool ?? true);
           setSelectedMarkId('');
         }}
       />

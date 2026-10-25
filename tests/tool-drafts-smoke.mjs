@@ -14,7 +14,7 @@ const {encodeProjectFile,decodeProjectFile}=await import('../.cache/tool-drafts/
 const {storeRecovery,loadRecovery}=await import('../.cache/tool-drafts/workspace-storage.mjs');
 const doc=await PDFDocument.create();doc.addPage();const bytes=await doc.save();
 const source={id:'source',name:'fictional.pdf',kind:'pdf',size:bytes.length,bytes};
-const viewState={zoom:200,view:'pages',scrollX:0,scrollY:650,documentX:40,documentY:900};
+const viewState={choosingTool:false,zoom:200,view:'pages',scrollX:0,scrollY:650,documentX:40,documentY:900};
 const toolDrafts={'TablePanel.rows:source':[['Item','Amount'],['Fictional invoice','125.50']], 'OcrReviewPanel.corrections:source':{word:'Corrected value'}, 'MeasurePanel.manual:source':{x:.4,y:.5}};
 assert(toolDraftSchema.safeParse(toolDrafts).success);
 assert(toolDraftSchema.safeParse({'WorkflowPanel.steps:source':[{kind:'ocr',text:undefined,condition:undefined}]}).success,'Optional unset fields can be saved before JSON serialization');

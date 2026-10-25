@@ -458,6 +458,7 @@ const options = z
 export const projectStateSchema = snapshot.extend({
   viewState: z
     .object({
+      choosingTool: z.boolean().optional(),
       zoom: z.number().finite().min(50).max(400),
       view: z.string().max(50),
       scrollX: z.number().finite().nonnegative().max(10000000),
