@@ -27,6 +27,8 @@ const sources = [
   'components/studio/mobile-tool-search.tsx',
   'components/studio/harbor-navigation.tsx',
   'components/studio/project-manager.tsx',
+  'components/studio/project-export-dialog.tsx',
+  'lib/project-encryption.ts',
   'components/studio/tool-browser-memory.tsx',
   'components/studio/tool-mosaic.tsx',
   'components/studio/home-tools.tsx',
@@ -57,6 +59,8 @@ for (const source of sources) {
     code,
   );
 }
+await writeFile(`${folder}/storage-health.mjs`, 'export const StorageHealthPanel=()=>null;');
+await writeFile(`${folder}/offline-panel.mjs`, 'export const OfflinePanel=()=>null,OfflineIndicator=()=>null;');
 await writeFile(`${folder}/version.mjs`, 'export const APP_VERSION="test";');
 await writeFile(`${folder}/toast.mjs`, 'export const toast={success(){}};');
 await writeFile(
@@ -90,7 +94,7 @@ await writeFile(
 );
 await writeFile(
   `${folder}/pdf-engine.mjs`,
-  `export const openSource=()=>{},filenameStem=x=>x;
+  `export const openSource=()=>{},filenameStem=x=>x,formatSize=()=>'1 KB';
 export let downloads=0;
 let onDownload=()=>{};
 export const setOnDownload=callback=>{onDownload=callback;};
@@ -192,7 +196,7 @@ function Harness({ locked = false, hasSources = false }) {
       open,
       onOpenChange: setOpen,
       sources: hasSources ? [{ id: 'fixture', name: 'fixture.pdf' }] : [],
-      state: { pages: [], edits: {}, options: {}, documentSessions: {} },
+      state: { pages: [], edits: {}, options: {}, documentSessions: {}, history: [], future: [] },
       identity: { name: 'Session name' },
       setIdentity() {},
       checkpoint: null,
@@ -428,17 +432,21 @@ try {
   const downloadButton = [...dialog().querySelectorAll('button')].find(
     (button) => button.textContent === 'Projektdatei herunterladen',
   );
+  await click(downloadButton);
+  const exportDialog = () => [...document.querySelectorAll('[role="dialog"]')].find(el => el.textContent.includes('Projekt exportieren'));
+  assert(exportDialog(), 'Export opens a review of included originals and history');
+  const exportButton = [...exportDialog().querySelectorAll('button')].find(button => button.textContent === 'Datei herunterladen');
   let lockedAtDownload;
   downloads.setOnDownload(() => {
     // Deliver Escape exactly when the browser download would start, before
     // job() can commit its idle state. This deterministically exposes the
     // invalid assumption that download completion means the modal can close.
-    lockedAtDownload = downloadButton.disabled;
+    lockedAtDownload = exportButton.disabled;
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   });
-  await click(downloadButton);
+  await click(exportButton);
   assert.equal(downloads.downloads, 0, 'Encoding is still pending');
-  assert(downloadButton.disabled, 'Actions stay locked during archive encoding');
+  assert(exportButton.disabled, 'Actions stay locked during archive encoding');
   await key(document.activeElement, 'Escape');
   assert(dialog(), 'Escape cannot dismiss a project operation in progress');
   await act(async () => archive.finishDownload());

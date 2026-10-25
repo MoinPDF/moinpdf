@@ -4,6 +4,7 @@ export type DownloadResult = {
   kind?: string;
   pages?: number;
   inputSize?: number;
+  exportAudit?: import('./export-audit').ExportAudit;
 };
 
 // Omitting or repeating pages changes the document itself and must not be

@@ -107,7 +107,7 @@ export async function encodeProjectArchive(archive: ProjectArchive, signal?: Abo
   const json = new TextEncoder().encode(JSON.stringify(parsed.data));
   const total = headerSize + json.length + [...pool.values()].reduce((n, b) => n + b.length, 0);
   if (json.length > maxManifest || total > MAX_PROJECT_ARCHIVE)
-    throw new Error('Das Projektarchiv überschreitet die Grenze von 500 MB.');
+    throw new Error('Das Projektarchiv überschreitet die Grenze von 1300 MB.');
   const header = new Uint8Array(headerSize),
     view = new DataView(header.buffer);
   header.set(magic);
@@ -127,7 +127,7 @@ export async function decodeProjectArchive(
 ): Promise<ProjectArchive> {
   check(signal);
   if (file.size < headerSize || file.size > MAX_PROJECT_ARCHIVE)
-    throw new Error('Das Projektarchiv ist beschädigt oder größer als 500 MB.');
+    throw new Error('Das Projektarchiv ist beschädigt oder größer als 1300 MB.');
   const header = new Uint8Array(await file.slice(0, headerSize).arrayBuffer()),
     view = new DataView(header.buffer);
   if (!magic.every((value, index) => header[index] === value))

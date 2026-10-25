@@ -4,12 +4,32 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification scope for 0.21.0
+
+- 57 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
+  passwords, tampered/truncated project files and cancellation.
+- Export verification detects lost text, changed form fields and unreadable PDFs.
+  Download, sharing and adoption use the status tied to the exact output Blob.
+  Technical verification does not establish content accuracy.
+- Offline checks cover complete packages, integrity requirements, failed downloads,
+  sign-in pages, retained security headers and removal confined to program caches.
+- `tests/release-021-browser.py` adds real encrypted project downloads, wrong-password
+  rejection, reopening, independently inspected flattened PDFs, offline restart/OCR
+  and 200-page preview eviction/re-entry to the Chromium/Firefox/WebKit matrix.
+- A synthetic 200-page text fixture does not prove arbitrary 80-MiB scans. Limits
+  remain 80 MiB per input file and 200 active pages.
+- Physical iPhone/iPad/Android devices, native share sheets and Microsoft Word remain
+  pending in the [device checklist](docs/quality/editor-device-checklist.md). Desktop
+  engines, touch emulation and native device results are separate evidence.
+- Release evidence is the successful Actions run for the exact commit. Local checks
+  and newly written test cases do not replace that gate.
+
 ## Automated checks
 
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| Browser engines | 44 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| PDF engines and DOM | 57 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
 | Document server | 65 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and mobile, PDF/EPUB/audio downloads |
@@ -26,7 +46,7 @@ Version **0.9.1**, commit `b488a9ce0358ce54fb3030e1b66bc8d20b3b04e4`, passed the
 ## Limitations and operator checks
 
 - ARM images are built and their platform indexes checked. This does not establish a successful native ARM run.
-- Full interface checks run in Chromium. Additional PDF text and OCR checks run in Firefox and native Safari. Specific smartphones and native share sheets still require device testing.
+- Full interface checks run in Chromium. Additional PDF text and OCR checks run in Firefox and WebKit. WebKit does not establish native Safari or iOS coverage. Specific smartphones and native share sheets still require device testing.
 - Test your own server installation and public domain separately with synthetic documents.
 - Large or unusual documents may reach converter limits. Check results against the original.
 - The complete Docker installation includes the document server. Server addresses and API keys are not entered manually in the browser.

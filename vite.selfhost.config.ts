@@ -1,6 +1,8 @@
 import {fileURLToPath} from 'node:url';
 import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
+import { readFileSync } from 'node:fs';
+const appVersion = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
 
 // The PDF workplace is a client application. This build needs no hosting SDK,
 // Cloudflare worker, database, or external account session at runtime.
@@ -11,6 +13,7 @@ export default defineConfig({
   publicDir: root + 'public',
   plugins: [react(), {
     name: 'moinpdf-bundle-budget',
+    transformIndexHtml(html) { return html.replace('%MOINPDF_VERSION%', appVersion); },
     generateBundle(_options, bundle) {
       for (const item of Object.values(bundle)) {
         if (item.type !== 'chunk') continue;

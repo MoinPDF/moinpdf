@@ -34,8 +34,11 @@ import {
   type ProjectState,
   type ProjectSource,
 } from '@/lib/local-projects';
-import { openSource, filenameStem, downloadBlob, type Source } from '@/lib/pdf-engine';
+import { openSource, filenameStem, type Source } from '@/lib/pdf-engine';
 import './project-manager.css';
+import { OfflinePanel, OfflineIndicator } from './offline-panel';
+import { StorageHealthPanel } from './storage-health';
+import { ProjectExportDialog, type ProjectExportRequest } from './project-export-dialog';
 export function ProjectManager({
   open,
   onOpenChange: setOpen,
@@ -70,6 +73,9 @@ export function ProjectManager({
     [projects, setProjects] = useState<ProjectMeta[]>([]),
     [notice, setNotice] = useState(''),
     [deleteId, setDeleteId] = useState('');
+  const [exportRequest, setExportRequest] = useState<ProjectExportRequest | null>(null);
+  const [encryptedImport, setEncryptedImport] = useState<File | null>(null);
+  const [importPassword, setImportPassword] = useState('');
   const importInput = useRef<HTMLInputElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const [toolbar, setToolbar] = useState<HTMLElement | null>(null);
@@ -123,12 +129,30 @@ export function ProjectManager({
   };
   const refresh = async () => setProjects(await listProjects());
   const download = async (name: string, data: ProjectSource[], snapshot: ProjectState) => {
-    const { encodeProjectFile } = await import('@/lib/project-archive');
-    const blob = await encodeProjectFile(name, data, snapshot);
-    downloadBlob(blob, filenameStem(name + '.moinpdf') + '.moinpdf');
-    setNotice(
-      'Projektdatei heruntergeladen. Sie enthält diesen Arbeitsstand einschließlich Rückgängig-Verlauf.',
-    );
+    setExportRequest({
+      whole: false,
+      archive: {
+        name,
+        updated: Date.now(),
+        versions: [{ created: Date.now(), sources: data, state: snapshot }],
+      },
+    });
+  };
+  const importFile = async (file: Blob) => {
+    const { isProjectArchive, decodeProjectArchive } = await import('@/lib/project-bundle');
+    if (await isProjectArchive(file)) {
+      const archive = await decodeProjectArchive(file);
+      for (const version of archive.versions.slice(1)) {
+        const checked = await openSnapshot(version.sources, version.state);
+        for (const source of checked) await source.pdf.loadingTask.destroy();
+      }
+      const latest = archive.versions[0];
+      await restore(archive.name, latest.sources, latest.state, undefined, archive);
+    } else {
+      const { decodeProjectFile } = await import('@/lib/project-archive');
+      const imported = await decodeProjectFile(file);
+      await restore(imported.name, imported.sources, imported.state);
+    }
   };
   const openSnapshot = async (data: ProjectSource[], snapshot: ProjectState) => {
     const { validateOpenedProject } = await import('@/lib/project-archive');
@@ -338,33 +362,24 @@ export function ProjectManager({
                 e.target.value = '';
                 if (file)
                   void job(async () => {
-                    const { isProjectArchive, decodeProjectArchive } =
-                      await import('@/lib/project-bundle');
-                    if (await isProjectArchive(file)) {
-                      const archive = await decodeProjectArchive(file);
-                      // Validate every retained PDF/history before committing any imported version.
-                      for (const version of archive.versions.slice(1)) {
-                        const checked = await openSnapshot(version.sources, version.state);
-                        for (const source of checked) await source.pdf.loadingTask.destroy();
-                      }
-                      const latest = archive.versions[0];
-                      await restore(archive.name, latest.sources, latest.state, undefined, archive);
-                    } else {
-                      const { decodeProjectFile } = await import('@/lib/project-archive');
-                      const imported = await decodeProjectFile(file);
-                      await restore(imported.name, imported.sources, imported.state);
-                    }
+                    const { isEncryptedProject } = await import('@/lib/project-encryption');
+                    if (await isEncryptedProject(file)) {
+                      setImportPassword('');
+                      setEncryptedImport(file);
+                    } else await importFile(file);
                   });
               }}
             />
           </div>
           <p className="fine-note">
             {ui(
-              'Bewusstes Speichern in diesem Browser, ohne Upload. Die gespeicherten PDFs liegen unverschlüsselt im Browserspeicher – auch zuvor entsperrte Dateien. Beim Löschen der Browserdaten können Projekte verloren gehen. Eine .moinpdf-Projektdatei überträgt den gewählten Stand auf einen anderen Browser oder Computer. Das Gesamtarchiv umfasst alle bis zu fünf gespeicherten Stände; beim Import entsteht ein neues Projekt. Beide enthalten auch Originale, frühere Bearbeitungen und gegebenenfalls entsperrte PDFs unverschlüsselt. Zum Weitergeben eines fertigen Dokuments die Ergebnis-PDF verwenden. Ansicht und unterstützte Werkzeugeingaben werden mitgespeichert. Passwörter und ausgewählte Zusatzdateien werden nicht gespeichert. Ergebnisdateien der Spezialwerkzeuge zuerst in das Dokument übernehmen.',
+              'Bewusstes Speichern in diesem Browser, ohne Upload. Die gespeicherten PDFs liegen unverschlüsselt im Browserspeicher – auch zuvor entsperrte Dateien. Beim Löschen der Browserdaten können Projekte verloren gehen. Eine .moinpdf-Projektdatei überträgt den gewählten Stand auf einen anderen Browser oder Computer. Das Gesamtarchiv umfasst alle bis zu fünf gespeicherten Stände; beim Import entsteht ein neues Projekt. Vor jedem Download werden enthaltene Originale und frühere Bearbeitungen angezeigt. Optional ist Passwortschutz möglich; der Browserspeicher bleibt unverschlüsselt. Für die Weitergabe gibt es zusätzlich eine bereinigte PDF aus sichtbaren Seitenbildern ohne Suchtext, Links oder interaktive Formulare. Ansicht und unterstützte Werkzeugeingaben werden mitgespeichert. Passwörter und ausgewählte Zusatzdateien werden nicht gespeichert. Ergebnisdateien der Spezialwerkzeuge zuerst in das Dokument übernehmen.',
             )}
           </p>
           {notice && <p role="status">{ui(notice)}</p>}
           {working && <p role="status">{t('Arbeitsstand wird verarbeitet …')}</p>}
+          <StorageHealthPanel />
+          <OfflinePanel />
           <div className="project-list">
             {!projects.length && !working && <p>{t('Noch keine gespeicherten Projekte.')}</p>}
             {projects.map((p) => (
@@ -380,14 +395,7 @@ export function ProjectManager({
                   onClick={() =>
                     job(async () => {
                       const archive = await loadProjectArchive(p.id);
-                      const { encodeProjectArchive } = await import('@/lib/project-bundle');
-                      downloadBlob(
-                        await encodeProjectArchive(archive),
-                        filenameStem(p.name + '.moinpdf') + '-gesamt.moinpdf',
-                      );
-                      setNotice(
-                        `Gesamtarchiv mit ${archive.versions.length} gespeicherten Arbeitsständen heruntergeladen.`,
-                      );
+                      setExportRequest({ whole: true, archive });
                     })
                   }
                 >
@@ -469,6 +477,55 @@ export function ProjectManager({
               </section>
             ))}
           </div>
+        </DialogContent>
+      </Dialog>
+      <OfflineIndicator onOpen={() => setOpen(true)} />
+      <ProjectExportDialog
+        request={exportRequest}
+        onBusy={onBusy}
+        onClose={() => setExportRequest(null)}
+      />
+      <Dialog
+        open={!!encryptedImport}
+        onOpenChange={(v) => {
+          if (!v && !working) {
+            setEncryptedImport(null);
+            setImportPassword('');
+          }
+        }}
+      >
+        <DialogContent className="project-dialog z-[52]">
+          <DialogHeader>
+            <DialogTitle>{t('Projektdatei entsperren', 'Unlock project file')}</DialogTitle>
+            <DialogDescription>{encryptedImport?.name}</DialogDescription>
+          </DialogHeader>
+          <label className="advanced-field">
+            <span>{t('Passwort', 'Password')}</span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={importPassword}
+              maxLength={1024}
+              disabled={working}
+              onChange={(e) => setImportPassword(e.target.value)}
+            />
+          </label>
+          {notice && <p role="alert">{ui(notice)}</p>}
+          <Button
+            disabled={working || !importPassword}
+            onClick={() =>
+              void job(async () => {
+                if (!encryptedImport) return;
+                const { decryptProject } = await import('@/lib/project-encryption');
+                const plain = await decryptProject(encryptedImport, importPassword);
+                await importFile(plain);
+                setImportPassword('');
+                setEncryptedImport(null);
+              })
+            }
+          >
+            {t('Entsperren und öffnen', 'Unlock and open')}
+          </Button>
         </DialogContent>
       </Dialog>
     </>

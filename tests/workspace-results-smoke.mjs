@@ -24,6 +24,7 @@ export const removeResult=async id=>operations.push(['remove',id]);
 export const clearResults=async()=>operations.push(['clear']);
 export const uuid=()=>crypto.randomUUID();
 const unused=()=>{throw Error('Unexpected presentation service');};
+export const useExportAudit=unused;
 export const useLanguage=unused,downloadBlob=unused,formatSize=unused,storedServerJobs=unused,inspectServerJob=unused,resumeServerJob=unused,cancelServerJob=unused;
 export const Button=unused,Dialog=unused,DialogContent=unused,DialogHeader=unused,DialogTitle=unused,DialogDescription=unused;
 `);

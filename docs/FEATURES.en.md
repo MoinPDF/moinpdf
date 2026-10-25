@@ -1,8 +1,33 @@
 # Features and limitations
 
+<!-- generated-capabilities:start -->
+**Current implementation limits · 0.21.0**
+
+| Capability | Value |
+| --- | --- |
+| Active source files | 80 MiB |
+| Active pages | 200 |
+| OCR | 21 languages; up to 8 combined |
+
+Generated from the application constants when building the documentation.
+<!-- generated-capabilities:end -->
+
 [Deutsch](FUNKTIONEN.md) · **English** · [← README](../README.en.md)
 
 This overview explains tools, output formats and technical limitations. Open **Documentation** in the app for the searchable handbook with step-by-step instructions. For the complete installation, see [Docker](../DOCKER.en.md).
+
+## New in 0.21.0
+
+Shared PDF export verification checks readability and known page counts. With source-page mapping it compares dimensions, links and form fields; tools that preserve text also check original text. Verification covers up to 200 pages and 100,000 characters per page. Findings require explicit review; unreadable results cannot be downloaded. Encrypted PDF output is labelled as not content-verified. This is not a complete visual comparison.
+
+Project snapshots and archives support optional password encryption with a minimum of twelve characters. Export review lists included source files and earlier edits. Flattened handoff exports visible page images up to 2800 pixels without source files, attachments or project history. Searchable text, links, interactive forms and certificate signatures are not retained. Visible confidential information remains visible. Browser storage is still unencrypted.
+
+Projects includes storage usage, an explicit persistent-storage request and offline packages. Offline use requires HTTPS or localhost, a supported browser and a completed download of the app and selected languages/runtimes. Every program file is integrity-checked. Updates activate once all older app tabs close. Server tools still need the user's document server. Removing offline files does not delete projects or results.
+
+Offscreen previews release their image data. OCR allows at most two main workers on devices reporting at least 8 GB memory and eight logical cores, otherwise one. Language probes can use a separate short-lived worker. Input size and active page limits are not raised without additional load-test evidence.
+
+Physical iPhone/iPad/Android/Windows touch devices and native Microsoft Word roundtrips remain separately pending; browser automation is not evidence of those checks. See the [device checklist](quality/editor-device-checklist.md).
+
 
 ## Browser and document server
 
@@ -46,7 +71,7 @@ Drop PDFs, invoice XML and supported image formats anywhere in the window. Chang
 
 Results can be adopted as new working documents. OCR exports searchable PDF, TXT and DOCX; DOCX contains text without reconstruction of the original layout. Page tools apply pending visual changes on the selected pages. Switching to specialist tools applies the current workspace; potentially lossy structural transitions require an explicit choice. Adopting results retains undo history.
 
-**Projects** locally restore files and working states, including editing history, forms and bookmarks, from the last five saved states. Storage is unencrypted browser storage; the current session is saved before switching projects. The latest ten results are saved locally up to 160 MB in total, and the workspace is automatically saved for recovery after reloading. A chosen state can be transferred as an unencrypted `.moinpdf` file including originals and history, using “Download project file” or “Open project file”. Project files are not sanitised final PDFs. Limits: 80 MB of active source files, 200 active pages and 240 MB including undo history. Extensive OCR can be slow on mobile devices.
+**Projects** locally restore files and working states, including editing history, forms and bookmarks, from the last five saved states. Storage is unencrypted browser storage; the current session is saved before switching projects. The latest ten results are saved locally up to 160 MB in total, and the workspace is automatically saved for recovery after reloading. A chosen state can be transferred as an optionally password-encrypted `.moinpdf` file including originals and history, using “Download project file” or “Open project file”. Project files are not sanitised final PDFs. Limits: 80 MB of active source files, 200 active pages and 240 MB including undo history. Extensive OCR can be slow on mobile devices.
 
 ## Website link to PDF
 

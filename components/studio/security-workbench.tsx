@@ -1,5 +1,6 @@
 'use client';
-import { ResultActions, ResultSummary, useResultName } from './result-actions';
+import { sourcePages } from '@/lib/pdf-engine';
+import { ResultActions, ResultSummary, useResultName, useResultAuditGate } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import { JobStatusIcon, useFreshResult } from './ui-feedback';
 import { ui, uiLocale } from '@/lib/ui-language';
@@ -63,6 +64,7 @@ export function SecurityWorkbench({
     [result, setResult] = useState<JobResult | null>(null),
     [url, setUrl] = useState('');
   const resultFresh = useFreshResult(result);
+  const { onAuditState, auditBlocked } = useResultAuditGate(result);
   const [resultName, renameResult] = useResultName(result);
   const controller = useRef<AbortController | null>(null),
     source = sources.find((s) => s.id === sourceId) || sources[0],
@@ -369,6 +371,12 @@ export function SecurityWorkbench({
               </span>
               <ResultSummary result={result} />
               <ResultActions
+                onAuditState={onAuditState}
+                auditSources={sources}
+                auditPages={
+                  source && result.pages === source.pdf.numPages ? sourcePages(source) : undefined
+                }
+                auditTool={protect ? 'protect' : 'unlock'}
                 result={result}
                 url={url}
                 filename={resultName}
@@ -379,7 +387,7 @@ export function SecurityWorkbench({
               {!protect && (
                 <Button
                   variant="outline"
-                  disabled={busy}
+                  disabled={busy || auditBlocked}
                   onClick={async () => {
                     setBusy(true);
                     try {

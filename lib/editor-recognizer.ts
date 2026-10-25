@@ -3,10 +3,23 @@ import { createLocalModuleWorker } from './module-worker';
 import { abortable } from './pdf-engine';
 import type { Page as OcrPage } from 'tesseract.js';
 import type { EditorRecognizer, EditorProgress } from './editor-analysis';
+import { acquireOcrWorker } from './resource-budget';
 
-export function openEditorRecognizer(signal: AbortSignal, layout?: string): EditorRecognizer {
+export async function openEditorRecognizer(
+  signal: AbortSignal,
+  layout?: string,
+): Promise<EditorRecognizer> {
   signal.throwIfAborted();
-  const { worker, dispose } = createLocalModuleWorker(workerUrl);
+  const release = await acquireOcrWorker(signal);
+  let owned: ReturnType<typeof createLocalModuleWorker>;
+  try {
+    signal.throwIfAborted();
+    owned = createLocalModuleWorker(workerUrl);
+  } catch (error) {
+    release();
+    throw error;
+  }
+  const { worker, dispose } = owned;
   let closed = false,
     sequence = 0;
   let pending:
@@ -28,6 +41,7 @@ export function openEditorRecognizer(signal: AbortSignal, layout?: string): Edit
     }
     signal.removeEventListener('abort', abort);
     dispose();
+    release();
   };
   const abort = () => stop();
   signal.addEventListener('abort', abort, { once: true });

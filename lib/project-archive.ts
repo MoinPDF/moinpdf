@@ -630,7 +630,7 @@ export async function encodeProjectFile(
 export async function decodeProjectFile(file: Blob, signal?: AbortSignal) {
   check(signal);
   if (file.size < headerSize || file.size > MAX_PROJECT_FILE)
-    throw new Error('Die Projektdatei ist leer, beschädigt oder größer als 100 MB.');
+    throw new Error('Die Projektdatei ist leer, beschädigt oder größer als 260 MB.');
   const bytes = new Uint8Array(await file.arrayBuffer()),
     view = new DataView(bytes.buffer);
   if (!magic.every((b, i) => bytes[i] === b))

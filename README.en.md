@@ -64,7 +64,7 @@ Then open **[localhost:8080](http://localhost:8080)**. The web app, document ser
 2. **Edit:** Use a shortcut or search. File names, page counts and sizes remain visible in the document overview; open the tool sidebar whenever you need it.
 3. **Review and take it with you:** Download the result or use it directly as a new working document. On phones, a compact action bar keeps the main actions within reach.
 
-**Projects** keep up to five local working states, including original files and editing history. A `.moinpdf` project file transfers a state to another device. Browser projects and project archives are unencrypted and include originals and earlier edits; use the final output file when sharing completed documents.
+**Projects** keep up to five local working states, including original files and editing history. A `.moinpdf` project file transfers a state to another device. Browser projects remain unencrypted. Export review lists included originals and earlier edits and offers optional password protection. A flattened PDF handoff exports visible page images only. Projects also shows storage usage and lets you prepare the app with selected language packs for offline use (HTTPS or localhost required).
 
 ## Where your documents are processed
 

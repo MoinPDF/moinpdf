@@ -30,12 +30,15 @@ import {
 import { useLanguage } from './appearance';
 import { ui, uiLocale } from '@/lib/ui-language';
 
+import { useExportAudit } from './export-audit';
+import type { ExportAudit } from '@/lib/export-audit';
 import { ResultsContext, useWorkspaceResults } from './workspace-result-context';
 export { useWorkspaceResults } from './workspace-result-context';
 export function WorkspaceResultsProvider({ children }: { children: ReactNode }) {
   const [results, setResults] = useState<SavedResult[]>([]);
   const ids = useRef(new WeakMap<Blob, { id: string; created: number }>());
   const writes = useRef(Promise.resolve());
+  const audits = useRef(new WeakMap<Blob, ExportAudit>());
   const generation = useRef(0);
   const warned = useRef(false);
   useEffect(() => {
@@ -43,7 +46,10 @@ export function WorkspaceResultsProvider({ children }: { children: ReactNode }) 
     void storedResults()
       .then((saved) => {
         if (current === generation.current) {
-          saved.forEach((s) => ids.current.set(s.blob, s));
+          saved.forEach((s) => {
+            ids.current.set(s.blob, s);
+            if (s.exportAudit) audits.current.set(s.blob, s.exportAudit);
+          });
           setResults(saved);
         }
       })
@@ -53,7 +59,8 @@ export function WorkspaceResultsProvider({ children }: { children: ReactNode }) 
     if (!result.blob.size) return;
     const meta = ids.current.get(result.blob) || { id: uuid(), created: Date.now() };
     ids.current.set(result.blob, meta);
-    const saved = { ...result, ...meta };
+    if (result.exportAudit) audits.current.set(result.blob, result.exportAudit);
+    const saved = { ...result, exportAudit: audits.current.get(result.blob), ...meta };
     const current = ++generation.current;
     setResults((old) => [saved, ...old.filter((r) => r.id !== saved.id)].slice(0, 10));
     writes.current = writes.current
@@ -251,7 +258,9 @@ export function WorkspaceTray({
                           controller.current = new AbortController();
                           const result = await resumeServerJob(job, '', controller.current.signal);
                           remember(result);
-                          downloadBlob(result.blob, result.filename);
+                          toast.success(
+                            t('Ergebnis in der Ablage bereit.', 'Result is ready in the tray.'),
+                          );
                         })
                       }
                     >
@@ -294,19 +303,11 @@ export function WorkspaceTray({
                   {new Date(result.created).toLocaleString(uiLocale())}
                 </p>
                 <div className="advanced-actions">
-                  <Button onClick={() => downloadBlob(result.blob, result.filename)}>
-                    <Download size={16} />
-                    {t('Herunterladen', 'Download')}
-                  </Button>
-                  {result.blob.type.includes('pdf') && (
-                    <Button
-                      variant="outline"
-                      disabled={locked || !!working}
-                      onClick={() => void work(result.id, () => use(result))}
-                    >
-                      {t('Weiterbearbeiten', 'Keep editing')}
-                    </Button>
-                  )}
+                  <StoredResultDownload
+                    result={result}
+                    locked={locked || !!working}
+                    onUse={() => void work(result.id, () => use(result))}
+                  />
                   <Button
                     variant="ghost"
                     aria-label={t('Ergebnis löschen', 'Delete result')}
@@ -320,6 +321,33 @@ export function WorkspaceTray({
           </div>
         </DialogContent>
       </Dialog>
+    </>
+  );
+}
+
+function StoredResultDownload({
+  result,
+  locked,
+  onUse,
+}: {
+  result: DownloadResult;
+  locked: boolean;
+  onUse: () => void;
+}) {
+  const { t } = useLanguage(),
+    audit = useExportAudit(result);
+  return (
+    <>
+      <div style={{ flexBasis: '100%' }}>{audit.panel}</div>
+      <Button disabled={audit.blocked} onClick={() => downloadBlob(result.blob, result.filename)}>
+        <Download size={16} />
+        {t('Herunterladen', 'Download')}
+      </Button>
+      {result.blob.type.includes('pdf') && (
+        <Button variant="outline" disabled={locked || audit.blocked} onClick={onUse}>
+          {t('Weiterbearbeiten', 'Keep editing')}
+        </Button>
+      )}
     </>
   );
 }

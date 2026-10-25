@@ -74,6 +74,19 @@ Konvertierungen und Prüfstandards werden nicht als verfügbar ausgewiesen.
 | 21. Große Dateien               | PDFium-, Bilddecoder-, Prüfsummen- und Seitenwerkzeug-Worker; Abbruch und Speicherfreigabe                                                                                                                                                                                                                     | Durchgängiges Streaming und höhere belegte Dateigrenzen; weiterhin 80 MB und 200 Seiten                                                                                                         |
 | 22. Lokale Projekte             | Unveränderliche fünf Arbeitsstände, vollständiges Archiv mit deduplizierten Binärdaten, SHA-256-Prüfungen, atomarer Import und Wiederherstellung                                                                                                                                                               | Noch nicht übernommene Ergebnisse sämtlicher Spezialwerkzeuge automatisch mitspeichern                                                                                                          |
 
+## Neu in 0.21.0
+
+Die gemeinsame PDF-Exportprüfung kontrolliert Lesbarkeit und bekannte Seitenzahlen. Bei vorhandener Seitenzuordnung werden Maße, Links und Formularfelder verglichen; bei Werkzeugen mit Texterhalt auch Originaltext. Bis zu 200 Seiten und 100.000 Zeichen je Seite werden geprüft. Auffälligkeiten erfordern eine Bestätigung, unlesbare Ergebnisse werden nicht zum Download freigegeben. Verschlüsselte PDF-Ausgaben sind als inhaltlich ungeprüft gekennzeichnet. Das ersetzt keinen vollständigen Bildvergleich.
+
+Projektdateien und Gesamtarchive können optional mit einem mindestens zwölf Zeichen langen Passwort verschlüsselt werden. Die Exportübersicht zeigt Originaldateien und frühere Bearbeitungsschritte. Die bereinigte Weitergabe erzeugt eine PDF aus sichtbaren Seitenbildern bis 2800 Pixel; sie enthält keine Originaldateien, Anhänge oder Projektverläufe. Suchtext, Links, interaktive Formulare und Zertifikatssignaturen entfallen. Sichtbare vertrauliche Angaben bleiben sichtbar. Der Browserspeicher bleibt unverschlüsselt.
+
+Unter Projekte stehen Speicherbelegung, Anfrage dauerhafter Speicherung und Offline-Pakete zur Verfügung. Offline benötigt HTTPS oder localhost, einen unterstützten Browser und einen abgeschlossenen Download der App sowie der gewählten Sprachen/Laufzeiten. Der Download prüft die Integrität jeder Programmdatei. App-Updates werden nach dem Schließen aller älteren Tabs aktiv. Serverwerkzeuge brauchen weiter den eigenen Server. Offline-Dateien entfernen löscht keine Projekte oder Ergebnisse.
+
+Vorschauen werden nach Verlassen des sichtbaren Bereichs freigegeben. Die OCR-Verarbeitung verwendet auf Geräten mit mindestens 8 GB gemeldetem Speicher und acht logischen Kernen höchstens zwei, sonst höchstens einen Hauptworker. Zusätzliche Sprachproben können einen eigenen kurzlebigen Worker nutzen. Die Grenzen für Quelldateien und aktive Seiten werden nicht ohne weitere Belastungsnachweise erhöht.
+
+Physische iPhone-/iPad-/Android-/Windows-Touch-Geräte und echte Microsoft-Word-Rundläufe bleiben gesondert abzunehmen; Browserautomation gilt nicht als Nachweis dafür. Siehe [Gerätecheckliste](quality/editor-device-checklist.md).
+
+
 ## Prüfung und Freigabe
 
 44 Engine- und Oberflächentestsuiten prüfen Verarbeitung, Navigation und Darstellungseinstellungen. PDF-Ergebnisse werden unabhängig zurückgelesen. Dazu gehören
