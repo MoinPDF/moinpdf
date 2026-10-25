@@ -199,13 +199,14 @@ def output_bytes(selector, name, actual_download=False, timeout=120):
     (out / name).write_bytes(data)
     if actual_download:
         folder = Path.home() / 'Downloads'
-        before = set(folder.glob('*')) if folder.exists() else set()
+        before = {f: (f.stat().st_mtime_ns, f.stat().st_size) for f in folder.glob('*') if f.is_file()} if folder.exists() else {}
         click(link)
         def downloaded(_):
-            for f in set(folder.glob('*')) - before:
+            for f in folder.glob('*'):
                 if f.is_file() and f.suffix.lower() not in ('.download', '.part'):
                     try:
-                        if f.read_bytes() == data:
+                        current = (f.stat().st_mtime_ns, f.stat().st_size)
+                        if current != before.get(f) and f.read_bytes() == data:
                             return f.name
                     except OSError:
                         pass
@@ -326,7 +327,10 @@ try:
         check('Accessible document draft imports both PDF pages',accessible)
 
         def verified_form(cancel=False):
-            form=Path('.cache/editor-browser/adaptive/form.pdf')
+            # Distinct source names also give distinct native download names,
+            # avoiding Safari's same-name replacement prompt between cases.
+            form=folder / ('safari-form-cancel-input.pdf' if cancel else 'safari-form-input.pdf')
+            shutil.copyfile(Path('.cache/editor-browser/adaptive/form.pdf'),form)
             fresh(form)
             if cancel:
                 driver.execute_script("""const NativeWorker=Worker;
