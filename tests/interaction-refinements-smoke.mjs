@@ -9,6 +9,7 @@ await mkdir('.cache/interactions', { recursive: true });
 for (const [source, name] of [
   ['lib/interaction-feedback.ts', 'interactions'],
   ['lib/local-projects.ts', 'local-projects'],
+  ['lib/tool-draft-schema.ts', 'tool-draft-schema'],
   ['lib/editor-project-codec.ts', 'editor-project-codec'],
   ['lib/project-checkpoint.ts', 'checkpoint'],
   ['components/studio/search-highlight.tsx', 'highlight'],
@@ -22,7 +23,7 @@ for (const [source, name] of [
         jsx: ts.JsxEmit.ReactJSX,
       },
     })
-    .outputText.replaceAll("'./editor-project-codec'", "'./editor-project-codec.mjs'").replaceAll("'./local-projects'", "'./local-projects.mjs'")
+    .outputText.replaceAll("'./editor-project-codec'", "'./editor-project-codec.mjs'").replaceAll("'./local-projects'", "'./local-projects.mjs'").replaceAll("'./tool-draft-schema'", "'./tool-draft-schema.mjs'")
     .replaceAll("'@/lib/interaction-feedback'", "'./interactions.mjs'");
   await writeFile(`.cache/interactions/${name}.mjs`, output);
 }

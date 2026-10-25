@@ -95,6 +95,19 @@ def inspect_docx(path, kind):
             assert 'MoinPDF Word Test' in text and 'Rotated page' in text
             assert not boxes and not pictures, 'The explicitly selected paragraph export stays text-only'
             return
+        if kind == 'structured':
+            assert not boxes, 'Flowing text must use paragraphs rather than positioned text boxes'
+            assert len(sections) == 1 and pictures, 'Flowing output keeps artwork in one editable section'
+            tables = xml.findall('.//w:tbl', NS)
+            assert tables, 'The bounded one-row grid must become a real Word table'
+            table_text = ' '.join(n.text or '' for n in tables[0].findall('.//w:t', NS))
+            assert 'Table cell' in table_text and '123,45 EUR' in table_text
+            for value in ('MoinPDF Word Test', 'Left column', 'Right column'):
+                assert text.count(value) == 1, (value, text)
+            title = next(p for p in xml.findall('.//w:p', NS) if 'MoinPDF Word Test' in ''.join(n.text or '' for n in p.findall('.//w:t', NS)))
+            assert title.find('.//w:b', NS) is not None
+            assert not xml.findall('.//w:vanish', NS)
+            return
         assert boxes and pictures, 'Layout output contains visible editable text and image data'
         assert not xml.findall('.//w:vanish', NS), 'Editable text is visible, not a hidden search layer'
         sizes = [(int(s.find('w:pgSz', NS).get('{%s}w' % NS['w'])), int(s.find('w:pgSz', NS).get('{%s}h' % NS['w']))) for s in sections]
@@ -160,8 +173,8 @@ def run_case(browser, engine, name, language, width, kind):
             processing.select_option('local')
         output = page.get_by_label('Word output' if en else 'Word-Ausgabe', exact=True)
         expect(output).to_have_value('layout')
-        if kind == 'text':
-            output.select_option('text')
+        if kind in ('text', 'structured'):
+            output.select_option(kind)
         page.get_by_role('button', name='Create Word file' if en else 'Word-Datei erstellen', exact=True).click()
         link = page.get_by_role('link', name='Download Word' if en else 'Word herunterladen', exact=True)
         expect(link).to_be_visible(timeout=180000)
@@ -193,7 +206,7 @@ def run_case(browser, engine, name, language, width, kind):
 
 engines = os.getenv('MOINPDF_TEST_BROWSERS', 'chromium,firefox,webkit').split(',')
 assert engines and all(e in ('chromium', 'firefox', 'webkit') for e in engines)
-cases = [('layout-desktop', 'de', 1440, 'native'), ('layout-touch', 'en', 390, 'native'), ('scan', 'de', 1280, 'scan'), ('paragraphs', 'en', 1280, 'text')]
+cases = [('layout-desktop', 'de', 1440, 'native'), ('layout-touch', 'en', 390, 'native'), ('scan', 'de', 1280, 'scan'), ('paragraphs', 'en', 1280, 'text'), ('flowing-desktop', 'de', 1440, 'structured'), ('flowing-touch', 'en', 390, 'structured')]
 report = {'results': [], 'limitations': ['Browser engines and touch emulation; no physical-device or native Word check.']}
 with sync_playwright() as api:
     for engine in engines:

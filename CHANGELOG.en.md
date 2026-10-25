@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased – 2026-10-25
+
+- Content-preserving compression, lossless mode and synchronized original comparison.
+- OCR line corrections in PDF search text, mixed-page recognition and retained skew geometry.
+- Additional Word export with flowing text, real grid tables, images and headers/footers; narrow tables in the PDF editor too.
+- Recovery of zoom, scrolling and typed specialist-tool drafts.
+- Resumable linear/graph batches, individual and partial downloads, failed-file retries and bounded local checkpoints.
+- Release page resources after previews; new real-output checks with fictional documents. Physical mobile-device tests remain pending.
+
 ## 0.20.1 – 2026-10-24
 
 - Browser PDF-to-Word conversion now defaults to “Page layout with images”. Original page sizes, image positions, columns and table lines are retained; text is placed in editable text boxes. The plain paragraph export and document server remain available.

@@ -8,14 +8,14 @@ Diese Übersicht erklärt Werkzeuge, Ausgabeformate und technische Grenzen. Das 
 
 Viele Werkzeuge arbeiten lokal im Browser. Die vollständige Docker-Installation ergänzt einen automatisch verbundenen Dokumentenserver. Dessen Aufträge starten erst mit dem jeweiligen Aktionsknopf. Der PDF-Editor bereitet sichtbare Seiten und Scan-Texte automatisch lokal vor.
 
-Die reine Browser-Ausgabe bietet für PDF zu Word einen lokalen Textexport ohne Layoutübernahme und für die Wunschgrößen-Komprimierung eine lokale Optimierung ohne Bild-Downsampling. Erweiterte Konvertierungen und Prüfungen benötigen die entsprechenden Serverkomponenten; Details stehen in der [Serverdokumentation](../server/README.md).
+Die Browser-Ausgabe bietet für PDF zu Word drei lokale Modi: Seitenlayout mit Bildern und Textfeldern, bearbeitbaren Fließtext mit erkannten Tabellen und Bildern sowie reinen Absatztext. Die normale Komprimierung erhält PDF-Inhalte und verkleinert geeignete JPEG-Bilder; die separate Wunschgrößen-Komprimierung bietet lokal eine Struktur-Optimierung. Erweiterte Konvertierungen und Prüfungen benötigen die entsprechenden Serverkomponenten; Details stehen in der [Serverdokumentation](../server/README.md).
 
 ## Seiten, Bearbeitung und OCR
 
 - Check & Seitenfinder: dateiübergreifende Textsuche, lokale Scan-Erkennung, Trefferseiten als neue PDF; Hinweise auf Scan-Seiten, mögliche Leerseiten, optisch gleiche Seiten und unterschiedliche Papierformate
 - OCR & Text: 21 Sprachen, bis zu acht kombiniert und optionale automatische Sprachprobe; automatische Seiteneinteilung, Textblock, Textspalte, Textzeile oder verstreuter Text; korrigierbarer Text neben PDF-Vorschau
 - JPG, PNG, WebP, BMP, mehrseitige TIFF, HEIC/HEIF, PSD und eigenständige SVG zu PDF (als Bildseiten); PDF zu PNG/JPG/WebP/TIFF/BMP im ZIP
-- Scan-Komprimierung
+- Komprimierung mit Inhaltserhalt, verlustfreie Optimierung oder ausdrücklich gewählter Bildneuaufbau; Originalvergleich mit gleichem Zoom
 - Zusammenfügen; einzelne Seiten als PDF im ZIP
 - Seiten organisieren: auswählen, sortieren, drehen, duplizieren, entfernen und Leerseiten ergänzen
 - Seitennummern, dateiübergreifende Bates-Nummerierung mit Kopf-/Fußzeilen und internen Seitenbezeichnungen

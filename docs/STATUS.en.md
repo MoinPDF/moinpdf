@@ -2,7 +2,14 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 23 October 2026. Unreleased editor continuation based on version 0.19.0.
+As of 25 October 2026. Unreleased improvements based on version 0.20.1.
+
+- Compression preserves text, vectors, links and form fields by default, selectively reducing compatible RGB JPEGs. Lossless optimization and an explicit page-image mode are also available. The comparison uses shared zoom and synchronized scrolling. Document-level structures require one complete PDF; signed documents are rejected.
+- OCR handles mixed pages. “Apply corrections” writes edited lines into the PDF search layer without changing visible pixels or native text. Existing search text is removed before replacement. Small scan skew is retained in text geometry and font matching.
+- The additional local Word mode creates flowing paragraphs, supported grid tables, images and repeating headers/footers. Complex graphics may remain images; pagination, reading order and unrecognized tables require review. Single-row and single-column tables are supported by the PDF editor too.
+- Recovery and project files include zoom, scrolling and typed drafts for specialist tools, including table corrections, OCR review, form mail merge, measurement, conversion settings and workflows. Passwords, file-picker handles and review confirmations are excluded. Output files remain in the separate results tray.
+- Linear and graph batches save an atomic local checkpoint after each completed step. Reopen the same files and workflow to resume. Completed files can be downloaded individually or as a partial ZIP; failed files can be retried. Web Locks exclude concurrent runs of the same batch. The 160 MB batch store includes controls to remove older batches.
+- Previews release decoded page resources after rendering; OCR output does not add an editor-cache copy. Fictional regressions inspect actual PDF, DOCX and batch output. Physical mobile tests remain pending: [device checklist](quality/editor-device-checklist.md).
 
 Automatic scan matching checks 56 faces across 14 families and up to three nearby original samples. Short numbers require multiple agreeing references; suitable right-angle crops are supported. Mixed styles and arbitrary angles remain limited. Export review separates output verification from original-font similarity and provides automatic detail pairs with shared zoom. [Physical-device checks](quality/editor-device-checklist.md) are documented separately and remain pending.
 

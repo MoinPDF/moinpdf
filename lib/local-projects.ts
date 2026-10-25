@@ -10,6 +10,15 @@ export type ProjectSnapshot = {
   activeId?: string;
 };
 export type ProjectState = ProjectSnapshot & {
+  viewState?: {
+    zoom: number;
+    view: string;
+    scrollX: number;
+    scrollY: number;
+    documentX: number;
+    documentY: number;
+  };
+  toolDrafts?: Record<string, unknown>;
   options: StudioOptions;
   history: ProjectSnapshot[];
   future: ProjectSnapshot[];
@@ -113,6 +122,16 @@ export function validateProject(state: ProjectState, sources: ProjectSource[]) {
       'Dieser Arbeitsstand enthält zu viele Bearbeitungsdaten. Bitte das aktuelle PDF-Ergebnis übernehmen und dann speichern.',
     );
 }
+// Keep the large tool schema off the initial application path. Storage awaits
+// validation before opening a write transaction, including automatic recovery.
+export async function validateStoredProject(state: ProjectState, sources: ProjectSource[]) {
+  validateProject(state, sources);
+  if (state.toolDrafts !== undefined) {
+    const { toolDraftSchema } = await import('./tool-draft-schema');
+    if (!toolDraftSchema.safeParse(state.toolDrafts).success)
+      throw new Error('Der Arbeitsstand enthält ungültige Werkzeugeingaben.');
+  }
+}
 export async function listProjects() {
   const d = await db();
   try {
@@ -135,7 +154,7 @@ export async function saveProject(
     throw new Error('Bitte einen Projektnamen mit 1 bis 100 Zeichen eingeben.');
   const sourceData = sources.map(({ pdf: _pdf, ...source }) => source);
   state = cleanProjectState(state);
-  validateProject(state, sourceData);
+  await validateStoredProject(state, sourceData);
   const d = await db(),
     pid = projectId || id(),
     now = Date.now(),
@@ -207,7 +226,7 @@ export async function loadProject(versionId: string) {
       ),
     )) as ProjectSource[];
     if (sources.some((s) => !s)) throw new Error('Zu diesem Arbeitsstand fehlen Originaldateien.');
-    validateProject(version.state, sources);
+    await validateStoredProject(version.state, sources);
     return { version: { ...version, state: cleanProjectState(version.state) }, sources };
   } finally {
     d.close();
@@ -254,19 +273,21 @@ export async function loadProjectArchive(projectId: string): Promise<ProjectArch
     return {
       name: project.name,
       updated: project.updated,
-      versions: project.versions.map((entry) => {
-        const version = versions.find((v) => v.id === entry.id);
-        if (!version) throw new Error('Ein gespeicherter Arbeitsstand fehlt.');
-        const sources = (
-          version.sourceKeys || version.sourceIds.map((s) => projectId + ':' + s)
-        ).map((key) => {
-          const source = byKey.get(key);
-          if (!source) throw new Error('Zu einem Arbeitsstand fehlen Originaldateien.');
-          return source;
-        });
-        validateProject(version.state, sources);
-        return { created: version.created, state: cleanProjectState(version.state), sources };
-      }),
+      versions: await Promise.all(
+        project.versions.map(async (entry) => {
+          const version = versions.find((v) => v.id === entry.id);
+          if (!version) throw new Error('Ein gespeicherter Arbeitsstand fehlt.');
+          const sources = (
+            version.sourceKeys || version.sourceIds.map((s) => projectId + ':' + s)
+          ).map((key) => {
+            const source = byKey.get(key);
+            if (!source) throw new Error('Zu einem Arbeitsstand fehlen Originaldateien.');
+            return source;
+          });
+          await validateStoredProject(version.state, sources);
+          return { created: version.created, state: cleanProjectState(version.state), sources };
+        }),
+      ),
     };
   } finally {
     d.close();
@@ -282,7 +303,8 @@ export async function importProjectArchive(archive: ProjectArchive) {
     archive.versions.length > 5
   )
     throw new Error('Ungültiges Projektarchiv.');
-  for (const version of archive.versions) validateProject(version.state, version.sources);
+  for (const version of archive.versions)
+    await validateStoredProject(version.state, version.sources);
   const d = await db(),
     pid = id();
   try {

@@ -252,9 +252,9 @@ export const guides = {
   ], 'ZIP mit aufeinanderfolgenden PDF-Teilen innerhalb des erreichbaren Limits.', 'Die Reihenfolge bleibt erhalten, Seiten werden nicht als Bilder neu komprimiert. Lesezeichen, Signaturen und interaktive Formularfunktionen werden nicht übernommen.'),
   'pdf-word': guide('Eine PDF mit Text oder gut lesbaren Scan-Seiten.', [
     'Wähle die Datei. Seiten ohne auslesbaren Text werden beim Word-Export automatisch per OCR erkannt.',
-    'Im Browser ist „Seitenlayout mit Bildern“ voreingestellt: Seitenformat, Bilder und Grafiken bleiben erhalten, Text wird in bearbeitbaren Textfeldern angeordnet. „Nur Text als Absätze“ bietet einen einfachen Textexport. Die vollständige Installation bietet zusätzlich den Dokumentenserver.',
+    'Wähle „Seitenlayout mit Bildern“ für positionierte Textfelder oder „Fließtext, Tabellen und Bilder“ für Absätze, echte erkannte Rastertabellen und Bilder. „Nur Text als Absätze“ und der Dokumentenserver bleiben verfügbar.',
     'Öffne die DOCX-Datei in Word und kontrolliere insbesondere Tabellen, Schriften, Absätze und Seitenumbrüche.'
-  ], 'Bearbeitbare DOCX-Datei.', 'Im Layoutmodus bilden Grafiken und Tabellenlinien den Seitenhintergrund; Textfelder bleiben bearbeitbar, Tabellen sind keine Word-Tabellen. Nicht installierte Schriften können ersetzt werden. Scans und komplexe Layouts bitte kontrollieren. Nicht rekonstruierbare Seiten bleiben als gekennzeichnete Bildseiten erhalten.'),
+  ], 'Bearbeitbare DOCX-Datei.', 'Im Layoutmodus bleiben Tabellenlinien im Seitenhintergrund. Der Fließtextmodus rekonstruiert unterstützte Rastertabellen und wiederkehrende Kopf-/Fußzeilen; nicht erkannte Tabellen bleiben Text, komplexe Grafiken können Bilder bleiben. Seitenumbrüche, Lesereihenfolge und Schriften prüfen.'),
   'email-pdf': guide('Eine gespeicherte EML-Datei oder eine Outlook-MSG-Datei.', [
     'Wähle die E-Mail-Datei. MoinPDF übernimmt Kopfzeilen wie Absender und Betreff sowie den Nachrichteninhalt.',
     'Aktiviere bei Bedarf die zusätzliche Ausgabe der Anlagen als ZIP.',
@@ -263,13 +263,13 @@ export const guides = {
   'batch': guide('Mehrere PDFs, auf die derselbe Bearbeitungsschritt angewendet werden soll.', [
     'Öffne die Dateien und wähle den gewünschten Schritt, etwa Stempeln, Nummerieren, Bereinigen oder Schützen.',
     'Lege die Einstellungen für den gesamten Stapel fest und prüfe die aufgelisteten Dokumente.',
-    'Verarbeite den Stapel, entpacke die Ergebnisse und kontrolliere mindestens die unterschiedlichen Dokumenttypen.'
-  ], 'ZIP mit einer bearbeiteten PDF pro Eingabedatei.', 'Die Dateien bleiben getrennt. Für eine gemeinsame PDF nutze „Zusammenfügen“, für mehrere aufeinanderfolgende Schritte „Arbeitsabläufe“.'),
+    'Starte oder setze den Stapel fort. Jeder abgeschlossene Schritt wird lokal gesichert. Lade fertige Dateien einzeln oder als Teil-ZIP herunter und wiederhole fehlgeschlagene Dateien bei Bedarf.'
+  ], 'ZIP mit einer bearbeiteten PDF pro Eingabedatei.', 'Die Dateien bleiben getrennt. Zum Fortsetzen dieselben Eingabedateien und denselben Ablauf öffnen. Höchstens 160 MB Stapelstände werden lokal gespeichert; alte Stapel lassen sich herunterladen und löschen. Passwörter erneut eingeben.'),
   'workflows': guide('PDFs und eine wiederkehrende Abfolge von Bearbeitungsschritten.', [
     'Benenne den Ablauf und füge die gewünschten Schritte hinzu, zum Beispiel OCR, Leerseiten entfernen und Nummerieren.',
     'Ordne die Schritte mit den Pfeilen. Passwortschutz muss am Ende stehen. Kontrolliere die jeweiligen Einstellungen und führe den Ablauf aus.',
     'Speichere den Ablauf im Browser oder exportiere ihn als JSON, um ihn später wieder zu laden. Prüfe die PDFs im Ergebnis-ZIP.'
-  ], 'ZIP mit verarbeiteten PDFs; optional wiederverwendbare JSON-Ablaufdatei.', 'Bis zu zwölf Schritte sind möglich. Gespeichert werden nur Schritte und Einstellungen, keine Dokumente oder Passwörter. Passwörter müssen bei der Ausführung erneut eingegeben werden; OCR und Leerseitenerkennung erfordern eine Ergebniskontrolle.'),
+  ], 'ZIP mit verarbeiteten PDFs; optional wiederverwendbare JSON-Ablaufdatei.', 'Bis zu zwölf lineare Schritte oder 60 Diagrammknoten sind möglich. JSON-Abläufe enthalten keine Dokumente oder Passwörter. Während der Ausführung werden PDF-Zwischenstände lokal gespeichert; Fortsetzen, Teildownload und Fehlerwiederholung sind auch im Knotendiagramm verfügbar. Ergebnisse prüfen.'),
   'auto-rename': guide('Mehrere PDFs mit erkennbaren Daten, Rechnungsnummern oder Titeln.', [
     'Öffne die Dokumente und lege ein Namensmuster fest, etwa {datum}_{nummer}_{titel}. Lasse daraus Dateinamen vorschlagen.',
     'Prüfe jeden Vorschlag und korrigiere falsche Daten, Nummern oder Titel direkt in der Liste.',
@@ -398,7 +398,7 @@ export const guides = {
   'ocr': guide('Gescannte PDFs, Bilder oder PDFs mit unzureichendem Suchtext.', [
     'Wähle die Seiten und eine der 21 Erkennungssprachen. Über „Sprachen kombinieren“ sind bis zu acht Sprachen gleichzeitig möglich. Wähle den Seitenaufbau und erzwinge OCR nur, wenn vorhandener Text neu erkannt werden soll.',
     'Optional „Sprachen automatisch ermitteln“ aktivieren. Eine lokale Probe wählt pro Scan-Seite passende Modelle. Kurze, unscharfe oder mehrdeutige Texte erfordern eine manuelle Auswahl; die Probe braucht zusätzlichen Arbeitsspeicher.',
-    'Starte die Erkennung und vergleiche den Text mit der Seitenvorschau. Korrigiere insbesondere Zahlen, Namen und Lesereihenfolge.',
+    'Starte die Erkennung. Korrigiere erkannte Zeilen neben der Vorschau und wähle „Korrekturen übernehmen“, um den Suchtext der PDF zu aktualisieren. Sichtbarer Originaltext ist gesperrt; das Scanbild bleibt unverändert.',
     'Speichere eine durchsuchbare PDF, TXT oder DOCX. Übernimm die PDF als Arbeitsdokument, wenn weitere textbasierte Werkzeuge folgen sollen.'
   ], 'PDF mit Suchtext oder Textausgabe als TXT/DOCX.', 'DOCX enthält den erkannten Text ohne Rekonstruktion des ursprünglichen Layouts. Handschrift, Spalten und unscharfe Scans sind besonders fehleranfällig. Große OCR-Aufträge können auf Smartphones länger dauern.'),
   'images': guide('JPG- oder PNG-Dateien, auch gemeinsam mit PDFs.', [
@@ -412,10 +412,10 @@ export const guides = {
     'Entpacke das ZIP und prüfe Auflösung, Dateinamen und Reihenfolge.'
   ], 'Ein Bild pro ausgewählter Seite im ZIP.', 'Die Bilddateien enthalten die sichtbare Seitendarstellung, keine interaktiven Felder, Links oder kopierbare Textebene. PNG eignet sich häufig für scharfe Schrift, JPG für kompakte Fotodarstellungen.'),
   'compress': guide('Vorwiegend bildbasierte PDFs, beispielsweise eingescannte Briefe.', [
-    'Wähle die Seiten und die Komprimierung: „Sanft“ für hohe Bildqualität, „Ausgewogen“ als Mittelweg oder „Möglichst klein“ für stärkere Komprimierung.',
-    'Starte die Komprimierung mit reduzierter Auflösung und JPEG-Bildern.',
-    'Vergleiche Größe und Lesbarkeit mit dem Original. Probiere bei schlecht lesbarer Kleinschrift eine höhere Qualität.'
-  ], 'PDF mit komprimierten Seitenbildern.', 'Die Datei wird nicht in jedem Fall kleiner. Text, Links und Formularfunktionen werden bei der Bildausgabe nicht erhalten. Für strukturwahrende Optimierung zuerst „PDF auf Wunschgröße komprimieren“ ausprobieren.'),
+    'Wähle „Inhalte erhalten, Bilder verkleinern“ oder „Verlustfrei optimieren“. Für die Bildverkleinerung stehen „Sanft“, „Ausgewogen“ und „Möglichst klein“ bereit.',
+    'Starte die Komprimierung. Geeignete RGB-JPEGs werden einzeln verkleinert; andere Bildformate bleiben erhalten. Verlustfreie Optimierung ändert keine Bildpixel.',
+    'Vergleiche Größe und Lesbarkeit in der Original-/Ergebnisansicht mit gemeinsamem Zoom. Wähle bei Bedarf eine höhere Qualität. Eine kleinere Ausgabe ist nicht garantiert.'
+  ], 'Optimierte PDF; Text, Vektoren, Links und Formularfelder bleiben im Standardmodus erhalten.', 'Bei Dokumenten mit Formularen, Lesezeichen oder Tags jeweils eine vollständige einzelne PDF verwenden. Signierte PDFs werden abgewiesen. Nur der ausdrücklich gewählte Modus „Seiten als Bilder neu aufbauen“ entfernt Text, Links und Formularfunktionen.'),
   'merge': guide('Mehrere PDFs und gegebenenfalls JPG-/PNG-Bilder.', [
     'Öffne alle Dateien im selben Arbeitsbereich.',
     'Ordne die Seiten in der gewünschten Reihenfolge an und wähle die benötigten Seiten aus.',

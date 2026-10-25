@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { openSource, uid, type Source } from '@/lib/pdf-engine';
-import { cleanProjectState, validateProject, type ProjectState } from '@/lib/local-projects';
+import { cleanProjectState, validateStoredProject, type ProjectState } from '@/lib/local-projects';
 import {
   listRecoveries,
   loadRecovery,
@@ -67,7 +67,7 @@ export function WorkspaceRecovery({
       writer = createRecoveryWriter(
         async ({ sources, state }) => {
           const data = sources.map(({ pdf: _pdf, ...source }) => source);
-          validateProject(state, data);
+          await validateStoredProject(state, data);
           await storeRecovery(
             { updated: Date.now(), sources: data, state: cleanProjectState(state) },
             key,

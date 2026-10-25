@@ -731,3 +731,78 @@ dialog.editor-settings-sheet::backdrop {
     --mobile-offset-bottom: calc(88px + env(safe-area-inset-bottom)) !important;
   }
 }
+
+.ocr-correction-lines {
+  display: grid;
+  gap: 0.7rem;
+  max-height: 60vh;
+  overflow: auto;
+  padding: 0.4rem;
+}
+.ocr-correction-lines label {
+  display: grid;
+  gap: 0.25rem;
+}
+.ocr-correction-lines label > span {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+.ocr-correction-lines input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.65rem;
+  background: var(--background);
+  color: inherit;
+}
+.compression-compare {
+  width: 100%;
+}
+.batch-progress {
+  min-width: 0;
+  width: 100%;
+}
+.batch-progress ul {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+.batch-progress li,
+.batch-saved {
+  overflow-wrap: anywhere;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+.batch-progress li > span {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.batch-progress .advanced-actions {
+  flex-wrap: wrap;
+}
+.batch-progress button {
+  min-height: 44px;
+  white-space: normal;
+}
+.compression-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.8rem;
+}
+.compression-compare-scroll {
+  overflow: auto;
+  max-height: 65vh;
+  border: 1px solid var(--border);
+}
+@media (max-width: 640px) {
+  .compression-compare-grid {
+    grid-template-columns: 1fr;
+  }
+  .compression-compare-scroll {
+    max-height: 40vh;
+  }
+}

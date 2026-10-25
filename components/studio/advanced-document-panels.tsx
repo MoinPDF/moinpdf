@@ -1,4 +1,5 @@
 'use client';
+import { useToolDraftState } from './workspace-drafts';
 import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -31,10 +32,13 @@ import {
 
 export function LinksPanel({ source, busy, run }: PanelProps) {
   useLanguage();
-  const [links, setLinks] = useState<LinkDraft[]>([]),
-    [loaded, setLoaded] = useState(false),
-    [selected, setSelected] = useState(''),
-    [page, setPage] = useState(0);
+  const [links, setLinks] = useToolDraftState<LinkDraft[]>(
+      'LinksPanel.links:' + source.id + '',
+      [],
+    ),
+    [loaded, setLoaded] = useToolDraftState('LinksPanel.loaded:' + source.id + '', false),
+    [selected, setSelected] = useToolDraftState('LinksPanel.selected:' + source.id + '', ''),
+    [page, setPage] = useToolDraftState('LinksPanel.page:' + source.id + '', 0);
   const link = links.find((l) => l.id === selected && !l.deleted),
     patch = (values: Partial<LinkDraft>) =>
       setLinks(links.map((l) => (l.id === selected ? { ...l, ...values } : l)));
@@ -293,10 +297,15 @@ export function AttachmentsPanel({ source, busy, run }: PanelProps) {
 }
 export function CoverPanel({ source, busy, run }: PanelProps) {
   useLanguage();
-  const [title, setTitle] = useState(source.name.replace(/\.pdf$/i, '')),
-    [subtitle, setSubtitle] = useState(''),
-    [cover, setCover] = useState(true),
-    [entries, setEntries] = useState(() => ui('Dokument | 1'));
+  const [title, setTitle] = useToolDraftState(
+      'CoverPanel.title:' + source.id + '',
+      source.name.replace(/\.pdf$/i, ''),
+    ),
+    [subtitle, setSubtitle] = useToolDraftState('CoverPanel.subtitle:' + source.id + '', ''),
+    [cover, setCover] = useToolDraftState('CoverPanel.cover:' + source.id + '', true),
+    [entries, setEntries] = useToolDraftState('CoverPanel.entries:' + source.id + '', () =>
+      ui('Dokument | 1'),
+    );
   return (
     <div className="advanced-grid">
       <section className="advanced-card">
@@ -359,11 +368,23 @@ export function CoverPanel({ source, busy, run }: PanelProps) {
 }
 export function MailMergePanel({ source, busy, run }: PanelProps) {
   useLanguage();
-  const [rows, setRows] = useState<string[][]>([]),
-    [fields, setFields] = useState<FormField[]>([]),
-    [mapping, setMapping] = useState<Record<string, number>>({}),
-    [nameColumn, setNameColumn] = useState(-1),
-    [flatten, setFlatten] = useState(true);
+  const [rows, setRows] = useToolDraftState<string[][]>(
+      'MailMergePanel.rows:' + source.id + '',
+      [],
+    ),
+    [fields, setFields] = useToolDraftState<FormField[]>(
+      'MailMergePanel.fields:' + source.id + '',
+      [],
+    ),
+    [mapping, setMapping] = useToolDraftState<Record<string, number>>(
+      'MailMergePanel.mapping:' + source.id + '',
+      {},
+    ),
+    [nameColumn, setNameColumn] = useToolDraftState(
+      'MailMergePanel.nameColumn:' + source.id + '',
+      -1,
+    ),
+    [flatten, setFlatten] = useToolDraftState('MailMergePanel.flatten:' + source.id + '', true);
   const input = useRef<HTMLInputElement>(null);
   return (
     <>

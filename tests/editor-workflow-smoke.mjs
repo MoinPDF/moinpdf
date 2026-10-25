@@ -26,7 +26,7 @@ const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs'),
   assets = dirname(require.resolve('pdfjs-dist/package.json'));
 const folder = '.cache/editor-workflow';
 await mkdir(folder, { recursive: true });
-for (const name of ['content-digest','local-projects','project-archive','editor-project-codec','editor-live-flow','editor-tables','editor-table-workspace','editor-preflight','editor-auto-flow','editor-auto-workspace','editor-rich-text','editor-rich-layout','editor-verification','editor-detail-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search',
+for (const name of ['content-digest','tool-draft-schema','local-projects','project-archive','editor-project-codec','editor-live-flow','editor-tables','editor-table-workspace','editor-preflight','editor-auto-flow','editor-auto-workspace','editor-rich-text','editor-rich-layout','editor-verification','editor-detail-verification','editor-layout-plan','editor-sparse','editor-scan','editor-workflow','editor-ink-verification','editor-blocks','editor-document-search',
   'local-font-bytes',
   'pdf-text',
   'ocr-languages',

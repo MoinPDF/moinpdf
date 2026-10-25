@@ -861,8 +861,7 @@ export const tools = [
   {
     id: 'compress',
     title: 'Scans komprimieren',
-    description:
-      'Bildbasierte Dokumente mit reduzierter Auflösung und JPEG-Komprimierung speichern.',
+    description: 'PDF-Inhalte erhalten und Bilder verkleinern oder verlustfrei optimieren.',
     icon: Minimize2,
     group: 1,
     action: 'Komprimieren',

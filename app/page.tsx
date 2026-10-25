@@ -1,4 +1,8 @@
 'use client';
+import { WorkspaceDraftProvider, useWorkspaceDrafts } from '@/components/studio/workspace-drafts';
+import { OcrCorrectionEditor } from '@/components/studio/ocr-correction-editor';
+import { CompressionCompare } from '@/components/studio/compression-compare';
+import type { OcrResultPage } from '@/lib/ocr-document';
 import { useToolPreferences } from '@/components/studio/use-tool-preferences';
 import { ResponsiveInspector } from '@/components/studio/responsive-inspector';
 import {
@@ -27,7 +31,7 @@ import { WorkspaceRecovery } from '@/components/studio/workspace-recovery';
 import type { RecoveryStatus } from '@/lib/recovery-writer';
 import { ProjectManager } from '@/components/studio/project-manager';
 import { createPortal } from 'react-dom';
-import { emptyWriterDocument, type WriterDocument } from '@/lib/writer-model';
+import type { WriterDocument } from '@/lib/writer-model';
 const DocumentWriter = lazy(() =>
   import('@/components/studio/document-writer').then((module) => ({
     default: module.DocumentWriter,
@@ -247,6 +251,7 @@ const defaults: StudioOptions = {
   forceOcr: false,
   imageFormat: 'png',
   quality: 'balanced',
+  compressionMode: 'preserve',
   watermark: 'ENTWURF',
   numberStart: 1,
   pageSize: 'a4',
@@ -303,7 +308,9 @@ function WorkspaceShell() {
             </div>
           }
         >
-          <Studio />
+          <WorkspaceDraftProvider>
+            <Studio />
+          </WorkspaceDraftProvider>
         </Suspense>
       </SidebarProvider>
       <LegalFooter />
@@ -311,6 +318,34 @@ function WorkspaceShell() {
   );
 }
 function Studio() {
+  const { drafts: toolDrafts, setDrafts: setToolDrafts } = useWorkspaceDrafts();
+  const [scrollState, setScrollState] = useState({
+    scrollX: 0,
+    scrollY: 0,
+    documentX: 0,
+    documentY: 0,
+  });
+  const restoredView = useRef<ProjectState['viewState']>(undefined);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const capture = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const holder = document.querySelector('.document-scroll');
+        setScrollState({
+          scrollX: Math.max(0, window.scrollX),
+          scrollY: Math.max(0, window.scrollY),
+          documentX: Math.max(0, holder?.scrollLeft || 0),
+          documentY: Math.max(0, holder?.scrollTop || 0),
+        });
+      }, 200);
+    };
+    window.addEventListener('scroll', capture, true);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', capture, true);
+    };
+  }, []);
   const toolPreferences = useToolPreferences();
   const [editorSettingsOpen, setEditorSettingsOpen] = useState(false);
   const continuingResult = useRef(false);
@@ -360,6 +395,19 @@ function Studio() {
     [resultPage, setResultPage] = useState(0),
     [resultText, setResultText] = useState(''),
     [resultLoading, setResultLoading] = useState(false);
+  const [ocrDraft, setOcrDraft] = useState<OcrResultPage[]>([]);
+  const [ocrSaving, setOcrSaving] = useState(false);
+  const ocrController = useRef<AbortController | null>(null);
+  useEffect(
+    () => () => {
+      ocrController.current?.abort();
+    },
+    [result],
+  );
+  useEffect(() => {
+    setOcrDraft(result?.ocrData || []);
+  }, [result?.blob, result?.ocrData]);
+  const ocrDirty = !!result?.ocrData && resultText !== result.text;
   const resultFresh = useFreshResult(result);
   const [resultName, renameResult] = useResultName(result);
   const [range, setRange] = useState(''),
@@ -410,10 +458,51 @@ function Studio() {
       documentSessions,
       activeId,
       toolId,
+      viewState: { zoom, view, ...scrollState },
+      toolDrafts,
       sourceIds: sources.map((s) => s.id),
     }),
-    [pages, edits, options, history, future, documentSessions, activeId, toolId, sources],
+    [
+      pages,
+      edits,
+      options,
+      history,
+      future,
+      documentSessions,
+      activeId,
+      toolId,
+      sources,
+      zoom,
+      view,
+      scrollState,
+      toolDrafts,
+    ],
   );
+  useEffect(() => {
+    const saved = restoredView.current;
+    if (!saved) return;
+    let attempts = 0;
+    const stop = () => {
+      clearInterval(timer);
+      restoredView.current = undefined;
+    };
+    const restore = () => {
+      window.scrollTo(saved.scrollX, saved.scrollY);
+      const holder = document.querySelector('.document-scroll');
+      if (holder) {
+        holder.scrollLeft = saved.documentX;
+        holder.scrollTop = saved.documentY;
+      }
+      if (++attempts >= 40) stop();
+    };
+    const timer = setInterval(restore, 200);
+    const events = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
+    events.forEach((event) => window.addEventListener(event, stop, { once: true, passive: true }));
+    return () => {
+      clearInterval(timer);
+      events.forEach((event) => window.removeEventListener(event, stop));
+    };
+  }, [sources, toolId, view]);
   useEffect(() => {
     const needed = new Set(projectSources.map((s) => s.id));
     for (const [id, source] of sourcePool.current)
@@ -1230,6 +1319,8 @@ function Studio() {
     invalidate();
   }
   function clear() {
+    restoredView.current = undefined;
+    setToolDrafts({});
     workspaceResults.clear();
     window.dispatchEvent(new Event('moinpdf-clear-workspace'));
     setProjectCheckpoint(null);
@@ -1383,7 +1474,7 @@ function Studio() {
     }
   }
   async function continueResult() {
-    if (!result || result.kind !== 'pdf' || locked) return;
+    if (!result || result.kind !== 'pdf' || locked || ocrDirty || ocrSaving) return;
     try {
       await adoptDocumentResult({ ...result, filename: resultName });
     } catch (error) {
@@ -1544,6 +1635,7 @@ function Studio() {
       | 'language'
       | 'imageFormat'
       | 'quality'
+      | 'compressionMode'
       | 'pageSize'
       | 'orientation'
       | 'perSheet',
@@ -1603,12 +1695,21 @@ function Studio() {
             aria-pressed={writerOpen}
             aria-label={t('Neues Dokument')}
             title={t('Neues Dokument')}
-            onClick={() => {
-              if (!writerDocument)
-                setWriterDocument(emptyWriterDocument(t('Mein Dokument', 'My document')));
-              setWriterOpen(true);
-              setOpenMobile(false);
-              requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+            onClick={async () => {
+              setDocumentBusy(true);
+              try {
+                if (!writerDocument) {
+                  const { emptyWriterDocument } = await import('@/lib/writer-model');
+                  setWriterDocument(emptyWriterDocument(t('Mein Dokument', 'My document')));
+                }
+                setWriterOpen(true);
+                setOpenMobile(false);
+                requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+              } catch (error) {
+                toast.error(ui((error as Error).message));
+              } finally {
+                setDocumentBusy(false);
+              }
             }}
           >
             <FilePlus2 size={19} aria-hidden="true" />
@@ -1670,7 +1771,11 @@ function Studio() {
               {view === 'result' && resultUrl ? (
                 <a
                   className="harbor-nav-item editor-mobile-primary"
-                  href={resultUrl}
+                  href={ocrDirty || ocrSaving ? undefined : resultUrl}
+                  aria-disabled={ocrDirty || ocrSaving}
+                  onClick={(event) => {
+                    if (ocrDirty || ocrSaving) event.preventDefault();
+                  }}
                   download={resultName}
                 >
                   <Download size={21} />
@@ -1764,12 +1869,16 @@ function Studio() {
           setHistory(state.history);
           setFuture(state.future);
           setDocumentSessions(state.documentSessions);
+          setToolDrafts(state.toolDrafts || {});
+          setZoom(state.viewState?.zoom || 100);
+          setView(state.viewState?.view || 'check');
+          restoredView.current = state.viewState;
           setActiveId(state.activeId);
           setToolId(
             tools.some((t) => t.id === state.toolId) ? (state.toolId as WorkspaceTool) : 'inspect',
           );
           setHomeRequested(false);
-          setChoosingTool(true);
+          setChoosingTool(false);
           setResult(null);
         }}
       />
@@ -1801,13 +1910,17 @@ function Studio() {
           setHistory(state.history);
           setFuture(state.future);
           setDocumentSessions(state.documentSessions);
+          setToolDrafts(state.toolDrafts || {});
+          setZoom(state.viewState?.zoom || 100);
+          setView(state.viewState?.view || 'check');
+          restoredView.current = state.viewState;
           setActiveId(state.activeId);
           setToolId(
             tools.some((t) => t.id === state.toolId) ? (state.toolId as WorkspaceTool) : 'inspect',
           );
           setResult(null);
           setError('');
-          setChoosingTool(true);
+          setChoosingTool(false);
           setSelectedMarkId('');
         }}
       />
@@ -2761,7 +2874,8 @@ function Studio() {
                             filename={resultName}
                             onRename={renameResult}
                             fresh={resultFresh}
-                            nextDisabled={locked}
+                            disabled={ocrDirty || ocrSaving}
+                            nextDisabled={locked || ocrDirty || ocrSaving}
                             label={
                               result.kind === 'zip'
                                 ? t('ZIP herunterladen')
@@ -2825,13 +2939,60 @@ function Studio() {
                                 <label htmlFor="recognized-text">{t('Erkannter Text')}</label>
                                 <span>{t('BEARBEITBAR')}</span>
                               </div>
-                              <Textarea
-                                id="recognized-text"
-                                value={resultText}
-                                onChange={(e) => setResultText(e.target.value)}
-                                className="recognized-text"
-                              />
+                              {result.ocrData ? (
+                                <OcrCorrectionEditor
+                                  pages={ocrDraft}
+                                  page={resultPage}
+                                  disabled={ocrSaving}
+                                  onChange={(next, text) => {
+                                    setOcrDraft(next);
+                                    setResultText(text);
+                                  }}
+                                />
+                              ) : (
+                                <Textarea
+                                  id="recognized-text"
+                                  value={resultText}
+                                  onChange={(e) => setResultText(e.target.value)}
+                                  className="recognized-text"
+                                />
+                              )}
                               <div className="text-export-actions">
+                                {result.ocrBase && (
+                                  <Button
+                                    disabled={!ocrDirty || ocrSaving}
+                                    onClick={async () => {
+                                      const controller = new AbortController();
+                                      ocrController.current?.abort();
+                                      ocrController.current = controller;
+                                      setOcrSaving(true);
+                                      try {
+                                        const { writeOcrCorrections } =
+                                          await import('@/lib/ocr-document');
+                                        const blob = await writeOcrCorrections(
+                                          result.ocrBase!,
+                                          ocrDraft,
+                                          controller.signal,
+                                        );
+                                        controller.signal.throwIfAborted();
+                                        setResult({
+                                          ...result,
+                                          blob,
+                                          text: resultText,
+                                          ocrData: ocrDraft,
+                                        });
+                                      } catch (error) {
+                                        if (!controller.signal.aborted)
+                                          toast.error(ui((error as Error).message));
+                                      } finally {
+                                        setOcrSaving(false);
+                                      }
+                                    }}
+                                  >
+                                    {ocrSaving ? <LoaderCircle className="spin" size={15} /> : null}
+                                    {t('Korrekturen übernehmen', 'Apply corrections')}
+                                  </Button>
+                                )}
                                 <Button
                                   variant="outline"
                                   onClick={async () => {
@@ -2871,7 +3032,7 @@ function Studio() {
                               </div>
                               <p className="export-note">
                                 {t(
-                                  'Korrekturen gelten für Text und Word. Die PDF enthält das ursprüngliche OCR-Ergebnis. Word übernimmt den Text ohne das Original-Layout.',
+                                  'Korrekturen mit „Korrekturen übernehmen“ in die PDF schreiben. Die sichtbare Seite bleibt unverändert; der Suchtext wird aktualisiert.',
                                 )}
                               </p>
                             </div>
@@ -2900,16 +3061,27 @@ function Studio() {
                                     <ChevronRight size={17} />
                                   </button>
                                 </div>
-                                <PagePreview
-                                  source={resultSource}
-                                  page={{
-                                    id: `result-${resultPage}`,
-                                    sourceId: resultSource.id,
-                                    index: resultPage,
-                                    rotation: 0,
-                                    selected: true,
-                                  }}
-                                />
+                                {toolId === 'compress' && selected[resultPage] ? (
+                                  <CompressionCompare
+                                    source={sources.find(
+                                      (s) => s.id === selected[resultPage].sourceId,
+                                    )!}
+                                    page={selected[resultPage]}
+                                    result={resultSource}
+                                    index={resultPage}
+                                  />
+                                ) : (
+                                  <PagePreview
+                                    source={resultSource}
+                                    page={{
+                                      id: `result-${resultPage}`,
+                                      sourceId: resultSource.id,
+                                      index: resultPage,
+                                      rotation: 0,
+                                      selected: true,
+                                    }}
+                                  />
+                                )}
                               </>
                             ) : resultLoading ? (
                               <LoaderCircle className="spin" />
@@ -2944,7 +3116,11 @@ function Studio() {
                         {result.kind === 'pdf' && (
                           <div className="continue-result">
                             <span>{t('Noch etwas vor mit diesem Dokument?')}</span>
-                            <Button variant="outline" onClick={continueResult} disabled={locked}>
+                            <Button
+                              variant="outline"
+                              onClick={continueResult}
+                              disabled={locked || ocrDirty || ocrSaving}
+                            >
                               <PenLine size={16} />
                               {t('Ergebnis weiterbearbeiten')}
                             </Button>
@@ -3221,7 +3397,7 @@ function Studio() {
                     </label>
                     <p className="fine-note">
                       {t(
-                        'Bildseiten werden automatisch erkannt. Bei gemischten Text- und Scanbereichen „Alle Seiten neu erkennen“ aktivieren.',
+                        'Scanbereiche werden auch auf gemischten Seiten automatisch erkannt. „Alle Seiten neu erkennen“ ersetzt vorhandene OCR-Ergebnisse.',
                       )}
                     </p>
                   </>
@@ -3236,6 +3412,11 @@ function Studio() {
                   ])}
                 {toolId === 'compress' && (
                   <>
+                    {renderChoice('compressionMode', 'Verarbeitung', [
+                      ['preserve', 'Inhalte erhalten, Bilder verkleinern'],
+                      ['lossless', 'Verlustfrei optimieren'],
+                      ['raster', 'Seiten als Bilder neu aufbauen'],
+                    ])}
                     <CompressionPresets
                       value={options.quality}
                       onChange={(quality) => setOptions((old) => ({ ...old, quality }))}
@@ -3243,7 +3424,9 @@ function Studio() {
                     />
                     <div className="notice">
                       {t(
-                        'Erstellt eine Bild-PDF. Kopierbare Texte, Links und Formularfunktionen gehen verloren. Eine kleinere Datei ist nicht garantiert.',
+                        options.compressionMode === 'raster'
+                          ? 'Erstellt eine Bild-PDF. Kopierbare Texte, Links und Formularfunktionen gehen verloren. Eine kleinere Datei ist nicht garantiert.'
+                          : 'Text, Links und Formularfunktionen bleiben erhalten. Vor dem Download kannst du Original und Ergebnis vergleichen.',
                       )}
                     </div>
                   </>
@@ -3571,8 +3754,16 @@ function Studio() {
                     asChild
                     className="apply-button workspace-download result-download"
                     data-fresh={resultFresh}
+                    disabled={ocrDirty || ocrSaving}
                   >
-                    <a href={resultUrl} download={resultName}>
+                    <a
+                      href={ocrDirty || ocrSaving ? undefined : resultUrl}
+                      aria-disabled={ocrDirty || ocrSaving}
+                      download={resultName}
+                      onClick={(event) => {
+                        if (ocrDirty || ocrSaving) event.preventDefault();
+                      }}
+                    >
                       <Download size={18} aria-hidden="true" />
                       {result.kind === 'pdf'
                         ? t('PDF herunterladen', 'Download PDF')

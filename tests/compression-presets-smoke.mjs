@@ -55,6 +55,7 @@ const pdf = await pdfjs.getDocument({
 const source = { id: 'fixture', name: 'Fixture.pdf', bytes, size: bytes.length, pdf, kind: 'pdf' };
 const selected = [{ id: 'p1', sourceId: source.id, index: 0, rotation: 90, selected: true }];
 const options = {
+  compressionMode: 'raster',
   language: 'deu',
   forceOcr: false,
   imageFormat: 'png',

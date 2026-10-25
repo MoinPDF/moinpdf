@@ -8,14 +8,14 @@ This overview explains tools, output formats and technical limitations. Open **D
 
 Many tools run locally in the browser. The complete Docker installation adds an automatically connected document server. Server jobs start only when you press the respective action button. The PDF editor automatically prepares visible pages and recognises scans locally.
 
-The browser-only edition offers local PDF-to-Word text export without layout preservation, and local target-size optimisation without image downsampling. Advanced conversions and validation require the corresponding server components; see the [server documentation](../server/README.en.md).
+The browser edition offers three local PDF-to-Word modes: page layout with images and text boxes, flowing text with recognized tables and images, and plain paragraphs. Standard compression preserves PDF content and reduces compatible JPEG images; the separate target-size tool offers local structural optimization. Advanced conversions and validation require the corresponding server components; see the [server documentation](../server/README.en.md).
 
 ## Pages, editing and OCR
 
 - Check & page finder: cross-file text search, local scan recognition, matching pages exported as a new PDF; hints for scan pages, possible blank pages, visually identical pages and mixed paper sizes
 - OCR & text: 21 languages, up to eight combined, with optional automatic language sampling; automatic page segmentation, text block, column, line or sparse text; editable recognised text beside a PDF preview
 - JPG, PNG, WebP, BMP, multipage TIFF, HEIC/HEIF, PSD and standalone SVG to PDF as image pages; PDF to PNG/JPG/WebP/TIFF/BMP in a ZIP
-- Scan compression
+- Compression preserving content, lossless optimization or explicitly selected page images; comparison at shared zoom
 - Merge; individual pages as PDFs in a ZIP
 - Organise pages: select, reorder, rotate, duplicate, remove and add blank pages
 - Page numbers, cross-file Bates numbering with headers/footers and internal page labels

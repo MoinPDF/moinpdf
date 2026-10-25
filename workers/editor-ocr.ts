@@ -6,7 +6,7 @@ let currentLanguage = '',
 let rejectFailure: (reason: Error) => void = () => {};
 let failure: Promise<never>;
 self.onmessage = async ({ data }) => {
-  const { id, language, bytes, origin } = data;
+  const { id, language, bytes, origin, layout } = data;
   activeId = id;
   try {
     const languages = parseOcrLanguages(language);
@@ -51,6 +51,8 @@ self.onmessage = async ({ data }) => {
         failure,
       ]);
     }
+    if (['3', '4', '6', '7', '11'].includes(layout))
+      await worker.setParameters({ tessedit_pageseg_mode: layout });
     const { data: result } = await Promise.race([
       worker.recognize(
         new Blob([bytes], { type: 'image/png' }),

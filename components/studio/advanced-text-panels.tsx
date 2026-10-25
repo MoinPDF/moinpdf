@@ -1,4 +1,5 @@
 'use client';
+import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -39,8 +40,14 @@ import {
 
 export function RenamePanel({ sources, busy, run }: PanelProps) {
   useLanguage();
-  const [template, setTemplate] = useState('{datum}_{nummer}_{titel}'),
-    [rows, setRows] = useState<Awaited<ReturnType<typeof suggestNames>>>([]);
+  const [template, setTemplate] = useToolDraftState(
+      'RenamePanel.template:' + sources.map((s) => s.id).join(':') + '',
+      '{datum}_{nummer}_{titel}',
+    ),
+    [rows, setRows] = useToolDraftState<Awaited<ReturnType<typeof suggestNames>>>(
+      'RenamePanel.rows:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    );
   return (
     <section className="advanced-card">
       <Text
@@ -101,11 +108,14 @@ export function RenamePanel({ sources, busy, run }: PanelProps) {
 }
 export function SplitPanel({ source, busy, run }: PanelProps) {
   useLanguage();
-  const [mode, setMode] = useState<'text' | 'bookmarks' | 'blank' | 'qr'>('text'),
-    [query, setQuery] = useState('Rechnung'),
-    [exclude, setExclude] = useState(true),
-    [parts, setParts] = useState<SplitPart[]>([]),
-    [page, setPage] = useState(0);
+  const [mode, setMode] = useToolDraftState<'text' | 'bookmarks' | 'blank' | 'qr'>(
+      'SplitPanel.mode:' + source.id + '',
+      'text',
+    ),
+    [query, setQuery] = useToolDraftState('SplitPanel.query:' + source.id + '', 'Rechnung'),
+    [exclude, setExclude] = useToolDraftState('SplitPanel.exclude:' + source.id + '', true),
+    [parts, setParts] = useToolDraftState<SplitPart[]>('SplitPanel.parts:' + source.id + '', []),
+    [page, setPage] = useToolDraftState('SplitPanel.page:' + source.id + '', 0);
   return (
     <div className="advanced-grid">
       <section className="advanced-card">
@@ -188,18 +198,38 @@ export function SplitPanel({ source, busy, run }: PanelProps) {
 }
 export function TablePanel({ source, busy, run }: PanelProps) {
   useLanguage();
-  const [page, setPage] = useState(0),
-    [area, setArea] = useState<Rect>({ x: 0.05, y: 0.05, w: 0.9, h: 0.9 }),
-    [boundaries, setBoundaries] = useState('35, 65'),
-    [ocr, setOcr] = useState(false),
-    [targets, setTargets] = useState<TextTarget[][]>([]),
-    [pageRange, setPageRange] = useState(''),
-    [headerRows, setHeaderRows] = useState('1'),
-    [repeatHeaders, setRepeatHeaders] = useState(true),
-    [locale, setLocale] = useState<'de' | 'en'>('de'),
-    [columnTypes, setColumnTypes] = useState<ColumnType[]>([]),
-    [tableNote, setTableNote] = useState(''),
-    [rows, setRows] = useState<string[][]>([]);
+  const [page, setPage] = useToolDraftState('TablePanel.page:' + source.id + '', 0),
+    [area, setArea] = useToolDraftState<Rect>('TablePanel.area:' + source.id + '', {
+      x: 0.05,
+      y: 0.05,
+      w: 0.9,
+      h: 0.9,
+    }),
+    [boundaries, setBoundaries] = useToolDraftState(
+      'TablePanel.boundaries:' + source.id + '',
+      '35, 65',
+    ),
+    [ocr, setOcr] = useToolDraftState('TablePanel.ocr:' + source.id + '', false),
+    [targets, setTargets] = useToolDraftState<TextTarget[][]>(
+      'TablePanel.targets:' + source.id + '',
+      [],
+    ),
+    [pageRange, setPageRange] = useToolDraftState('TablePanel.pageRange:' + source.id + '', ''),
+    [headerRows, setHeaderRows] = useToolDraftState('TablePanel.headerRows:' + source.id + '', '1'),
+    [repeatHeaders, setRepeatHeaders] = useToolDraftState(
+      'TablePanel.repeatHeaders:' + source.id + '',
+      true,
+    ),
+    [locale, setLocale] = useToolDraftState<'de' | 'en'>(
+      'TablePanel.locale:' + source.id + '',
+      'de',
+    ),
+    [columnTypes, setColumnTypes] = useToolDraftState<ColumnType[]>(
+      'TablePanel.columnTypes:' + source.id + '',
+      [],
+    ),
+    [tableNote, setTableNote] = useToolDraftState('TablePanel.tableNote:' + source.id + '', ''),
+    [rows, setRows] = useToolDraftState<string[][]>('TablePanel.rows:' + source.id + '', []);
   const split = (t: TextTarget[][], r = area, b = boundaries) => {
     const edges = b
       .split(/[;,\s]+/)
@@ -440,14 +470,14 @@ export function TablePanel({ source, busy, run }: PanelProps) {
 }
 export function RedactPanel({ source, busy, run }: PanelProps) {
   useLanguage();
-  const [terms, setTerms] = useState(''),
-    [email, setEmail] = useState(true),
-    [iban, setIban] = useState(true),
-    [ocr, setOcr] = useState(false),
-    [hits, setHits] = useState<RedactionHit[]>([]),
-    [page, setPage] = useState(0),
+  const [terms, setTerms] = useToolDraftState('RedactPanel.terms:' + source.id + '', ''),
+    [email, setEmail] = useToolDraftState('RedactPanel.email:' + source.id + '', true),
+    [iban, setIban] = useToolDraftState('RedactPanel.iban:' + source.id + '', true),
+    [ocr, setOcr] = useToolDraftState('RedactPanel.ocr:' + source.id + '', false),
+    [hits, setHits] = useToolDraftState<RedactionHit[]>('RedactPanel.hits:' + source.id + '', []),
+    [page, setPage] = useToolDraftState('RedactPanel.page:' + source.id + '', 0),
     [review, setReview] = useState(false),
-    [searched, setSearched] = useState(false);
+    [searched, setSearched] = useToolDraftState('RedactPanel.searched:' + source.id + '', false);
   const reset = () => {
     setHits([]);
     setReview(false);

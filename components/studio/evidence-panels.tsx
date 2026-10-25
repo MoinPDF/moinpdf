@@ -1,4 +1,5 @@
 'use client';
+import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -390,19 +391,33 @@ type CollectedCell = {
 };
 export function CollectFieldsPanel({ sources, busy, run }: PanelProps) {
   useLanguage();
-  const [input, setInput] = useState(() =>
-      defaultFieldRules
-        .split('\n')
-        .map((line) => {
-          const at = line.indexOf('=');
-          return at < 0 ? line : ui(line.slice(0, at).trim()) + ' = ' + line.slice(at + 1).trim();
-        })
-        .join('\n'),
+  const [input, setInput] = useToolDraftState(
+      'CollectFieldsPanel.input:' + sources.map((s) => s.id).join(':') + '',
+      () =>
+        defaultFieldRules
+          .split('\n')
+          .map((line) => {
+            const at = line.indexOf('=');
+            return at < 0 ? line : ui(line.slice(0, at).trim()) + ' = ' + line.slice(at + 1).trim();
+          })
+          .join('\n'),
     ),
-    [ocr, setOcr] = useState(false),
-    [pages, setPages] = useState<EvidencePage[]>([]),
-    [rules, setRules] = useState<FieldRule[]>([]),
-    [cells, setCells] = useState<CollectedCell[]>([]),
+    [ocr, setOcr] = useToolDraftState(
+      'CollectFieldsPanel.ocr:' + sources.map((s) => s.id).join(':') + '',
+      false,
+    ),
+    [pages, setPages] = useToolDraftState<EvidencePage[]>(
+      'CollectFieldsPanel.pages:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [rules, setRules] = useToolDraftState<FieldRule[]>(
+      'CollectFieldsPanel.rules:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [cells, setCells] = useToolDraftState<CollectedCell[]>(
+      'CollectFieldsPanel.cells:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
     [focus, setFocus] = useState<EvidenceRef>(),
     [visible, setVisible] = useState(40);
   const clear = () => {
@@ -667,10 +682,22 @@ export function PageGapsPanel({ sources, busy, run }: PanelProps) {
 
 export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
   useLanguage();
-  const [pages, setPages] = useState<EvidencePage[]>([]),
-    [corrections, setCorrections] = useState<Record<string, string>>({}),
-    [threshold, setThreshold] = useState('85'),
-    [all, setAll] = useState(false),
+  const [pages, setPages] = useToolDraftState<EvidencePage[]>(
+      'OcrReviewPanel.pages:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [corrections, setCorrections] = useToolDraftState<Record<string, string>>(
+      'OcrReviewPanel.corrections:' + sources.map((s) => s.id).join(':') + '',
+      {},
+    ),
+    [threshold, setThreshold] = useToolDraftState(
+      'OcrReviewPanel.threshold:' + sources.map((s) => s.id).join(':') + '',
+      '85',
+    ),
+    [all, setAll] = useToolDraftState(
+      'OcrReviewPanel.all:' + sources.map((s) => s.id).join(':') + '',
+      false,
+    ),
     [focus, setFocus] = useState<EvidenceRef>(),
     [limit, setLimit] = useState(40);
   const words = useMemo(
@@ -812,10 +839,22 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
 
 export function PseudonymPanel({ sources, busy, run }: PanelProps) {
   useLanguage();
-  const [input, setInput] = useState(''),
-    [rules, setRules] = useState<PseudonymRule[]>([]),
-    [pages, setPages] = useState<EvidencePage[]>([]),
-    [hits, setHits] = useState<PseudonymHit[]>([]),
+  const [input, setInput] = useToolDraftState(
+      'PseudonymPanel.input:' + sources.map((s) => s.id).join(':') + '',
+      '',
+    ),
+    [rules, setRules] = useToolDraftState<PseudonymRule[]>(
+      'PseudonymPanel.rules:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [pages, setPages] = useToolDraftState<EvidencePage[]>(
+      'PseudonymPanel.pages:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [hits, setHits] = useToolDraftState<PseudonymHit[]>(
+      'PseudonymPanel.hits:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
     [focus, setFocus] = useState<EvidenceRef>(),
     [confirmed, setConfirmed] = useState(false),
     [limit, setLimit] = useState(40);
@@ -1276,18 +1315,37 @@ export function BestScansPanel({ source, sources, busy, run }: PanelProps) {
 
 export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
   useLanguage();
-  const [order, setOrder] = useState(
+  const [order, setOrder] = useToolDraftState(
+      'ReconcilePanel.order:' + sources.map((s) => s.id).join(':') + '',
       sources.filter((s) => s.id !== source.id).length > 1
         ? sources.find((s) => s.id !== source.id)!.id
         : '',
     ),
-    [invoice, setInvoice] = useState(sources.filter((s) => s.id !== source.id).at(-1)?.id || ''),
-    [ocr, setOcr] = useState(false),
-    [pages, setPages] = useState<EvidencePage[]>([]),
-    [positions, setPositions] = useState<Record<string, Position[]>>({}),
+    [invoice, setInvoice] = useToolDraftState(
+      'ReconcilePanel.invoice:' + sources.map((s) => s.id).join(':') + '',
+      sources.filter((s) => s.id !== source.id).at(-1)?.id || '',
+    ),
+    [ocr, setOcr] = useToolDraftState(
+      'ReconcilePanel.ocr:' + sources.map((s) => s.id).join(':') + '',
+      false,
+    ),
+    [pages, setPages] = useToolDraftState<EvidencePage[]>(
+      'ReconcilePanel.pages:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [positions, setPositions] = useToolDraftState<Record<string, Position[]>>(
+      'ReconcilePanel.positions:' + sources.map((s) => s.id).join(':') + '',
+      {},
+    ),
     [focus, setFocus] = useState<EvidenceRef>(),
-    [rows, setRows] = useState<Finding[]>([]),
-    [compared, setCompared] = useState(false),
+    [rows, setRows] = useToolDraftState<Finding[]>(
+      'ReconcilePanel.rows:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [compared, setCompared] = useToolDraftState(
+      'ReconcilePanel.compared:' + sources.map((s) => s.id).join(':') + '',
+      false,
+    ),
     [confirmed, setConfirmed] = useState(false);
   const selected = sources.length
     ? [
@@ -1529,8 +1587,14 @@ export function ReconcilePanel({ source, sources, busy, run }: PanelProps) {
 
 export function CommentExportPanel({ sources, busy, run }: PanelProps) {
   useLanguage();
-  const [rows, setRows] = useState<CommentRow[]>([]),
-    [ready, setReady] = useState(false),
+  const [rows, setRows] = useToolDraftState<CommentRow[]>(
+      'CommentExportPanel.rows:' + sources.map((s) => s.id).join(':') + '',
+      [],
+    ),
+    [ready, setReady] = useToolDraftState(
+      'CommentExportPanel.ready:' + sources.map((s) => s.id).join(':') + '',
+      false,
+    ),
     [focus, setFocus] = useState<EvidenceRef>(),
     [limit, setLimit] = useState(40);
   return (

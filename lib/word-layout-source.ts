@@ -194,6 +194,7 @@ export async function readWordLayoutPage(
       ocr,
       imageOnly: imageOnly || !text.length,
       preservedText: imageOnly ? native.targets.length : preserved.size,
+      preservedRects: [...preserved].map(({ x, y, w, h }) => ({ x, y, w, h })),
     };
   } finally {
     signal.removeEventListener('abort', stop);

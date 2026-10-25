@@ -304,3 +304,20 @@ export async function runPipeline(
     note: `${sources.length} ${sources.length === 1 ? 'Datei' : 'Dateien'} · ${steps.map((s) => stepLabels[s.kind]).join(' → ')}`,
   };
 }
+
+export async function runWorkflowStep(
+  source: Source,
+  configured: WorkflowStep,
+  password: string,
+  ctx: RunContext,
+) {
+  const matched = configured.condition
+    ? await conditionMatches(source, configured.condition, ctx)
+    : undefined;
+  const step = matched === false ? configured.otherwise : configured;
+  return {
+    bytes: step ? await applyWorkflowAction(source, step, password, ctx) : source.bytes,
+    action: step ? stepLabels[step.kind] : 'Übersprungen',
+    protected: step?.kind === 'protect',
+  };
+}

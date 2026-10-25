@@ -1,4 +1,6 @@
 'use client';
+import { BatchProgress } from './batch-progress';
+import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -9,7 +11,6 @@ import {
   stepLabels,
   workflowTemplates,
   validateWorkflow,
-  runPipeline,
   type StepKind,
   type WorkflowStep,
   type SavedWorkflow,
@@ -25,17 +26,27 @@ export function WorkflowPanel({
   batch = false,
 }: PanelProps & { batch?: boolean }) {
   useLanguage();
-  const [steps, setSteps] = useState<WorkflowStep[]>(
+  const [steps, setSteps] = useToolDraftState<WorkflowStep[]>(
+      'WorkflowPanel.steps:' + sources.map((s) => s.id).join(':') + '',
       batch
         ? [{ kind: 'stamp', text: 'GEPRÜFT' }]
         : [{ kind: 'ocr' }, { kind: 'removeBlank' }, { kind: 'numbers', number: 1 }],
     ),
-    [name, setName] = useState(() => ui('Mein Arbeitsablauf')),
+    [name, setName] = useToolDraftState(
+      'WorkflowPanel.name:' + sources.map((s) => s.id).join(':') + '',
+      () => ui('Mein Arbeitsablauf'),
+    ),
     [password, setPassword] = useState(''),
     [saved, setSaved] = useState<SavedWorkflow[]>([]),
     [notice, setNotice] = useState('');
-  const [graph, setGraph] = useState<WorkflowGraph | null>(null),
-    [graphView, setGraphView] = useState(false);
+  const [graph, setGraph] = useToolDraftState<WorkflowGraph | null>(
+      'WorkflowPanel.graph:' + sources.map((s) => s.id).join(':') + '',
+      null,
+    ),
+    [graphView, setGraphView] = useToolDraftState(
+      'WorkflowPanel.graphView:' + sources.map((s) => s.id).join(':') + '',
+      false,
+    );
   const input = useRef<HTMLInputElement>(null);
   useEffect(() => {
     try {
@@ -351,20 +362,13 @@ export function WorkflowPanel({
             'Bedingungen werden am jeweiligen Zwischenstand geprüft. Textbedingungen lesen vorhandenen PDF-Text; bei Scans zuerst einen OCR-Schritt einsetzen. Das ZIP enthält ein Protokoll der ausgeführten und übersprungenen Schritte. Die Dateien werden einzeln verarbeitet. Bei OCR und Leerseitenerkennung bitte die Ausgabe kontrollieren.',
           )}
         </p>
-        <Button
-          disabled={busy || !sources.length}
-          onClick={() =>
-            run(async (c) => {
-              try {
-                return await runPipeline(sources, workflow(), password, c);
-              } finally {
-                setPassword('');
-              }
-            })
-          }
-        >
-          {sources.length} {sources.length === 1 ? ui('Datei') : ui('Dateien')} {ui(' verarbeiten')}
-        </Button>
+        <BatchProgress
+          sources={sources}
+          workflow={{ version: 1, name, steps }}
+          password={password}
+          busy={busy}
+          run={run}
+        />
       </section>
       <section className="advanced-card">
         {!batch && (

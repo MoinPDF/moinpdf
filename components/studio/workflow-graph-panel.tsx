@@ -1,4 +1,5 @@
 'use client';
+import { BatchProgress } from './batch-progress';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -6,12 +7,7 @@ import { useRef, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Choice, Text, NumberField, type PanelProps } from './advanced-shared';
 import { stepLabels, type StepKind } from '@/lib/advanced-pipeline';
-import {
-  validateWorkflowGraph,
-  runWorkflowGraph,
-  type WorkflowGraph,
-  type GraphNode,
-} from '@/lib/workflow-graph';
+import { validateWorkflowGraph, type WorkflowGraph, type GraphNode } from '@/lib/workflow-graph';
 import { downloadBlob, uid } from '@/lib/pdf-engine';
 const key = 'moinpdf.workflows.graphs.v2';
 export function WorkflowGraphPanel({
@@ -452,12 +448,13 @@ export function WorkflowGraphPanel({
           />
         )}
         <div className="project-actions">
-          <Button
-            disabled={busy || !sources.length}
-            onClick={() => run((ctx) => runWorkflowGraph(sources, validate(), password, ctx))}
-          >
-            {ui('Ablauf auf alle Dateien anwenden')}
-          </Button>
+          <BatchProgress
+            sources={sources}
+            workflow={value}
+            password={password}
+            busy={busy}
+            run={run}
+          />
           <Button
             variant="outline"
             disabled={busy}

@@ -1,4 +1,5 @@
 'use client';
+import { useToolDraftState } from './workspace-drafts';
 import { ResultActions, ResultSummary, useResultName } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
 import {
@@ -73,16 +74,32 @@ function StandardServerWorkbench({
 }: Props) {
   const { t } = useLanguage();
   const { tools } = useTools();
-  const [processing, setProcessing] = useState(
+  const [processing, setProcessing] = useToolDraftState(
+    'StandardServerWorkbench.processing:' + sources.map((s) => s.id).join(':') + tool,
     tool === 'pdf-word' && integratedDocumentServer ? 'server' : 'local',
   );
-  const [wordOutput, setWordOutput] = useState('layout');
-  const [mode, setMode] = useState(tool === 'certificate-sign' ? 'validate' : 'create');
+  const [wordOutput, setWordOutput] = useToolDraftState(
+    'StandardServerWorkbench.wordOutput:' + sources.map((s) => s.id).join(':') + tool,
+    'layout',
+  );
+  const [mode, setMode] = useToolDraftState(
+    'StandardServerWorkbench.mode:' + sources.map((s) => s.id).join(':') + tool,
+    tool === 'certificate-sign' ? 'validate' : 'create',
+  );
   const [progress, setProgress] = useState('');
   const [backgroundAvailable, setBackgroundAvailable] = useState(false);
-  const [htmlInput, setHtmlInput] = useState(initialFile ? 'file' : 'url');
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  const [websiteSettings, setWebsiteSettings] = useState(initialWebsiteSettings);
+  const [htmlInput, setHtmlInput] = useToolDraftState(
+    'StandardServerWorkbench.htmlInput:' + sources.map((s) => s.id).join(':') + tool,
+    initialFile ? 'file' : 'url',
+  );
+  const [websiteUrl, setWebsiteUrl] = useToolDraftState(
+    'StandardServerWorkbench.websiteUrl:' + sources.map((s) => s.id).join(':') + tool,
+    '',
+  );
+  const [websiteSettings, setWebsiteSettings] = useToolDraftState(
+    'StandardServerWorkbench.websiteSettings:' + sources.map((s) => s.id).join(':') + tool,
+    initialWebsiteSettings,
+  );
   const websiteMode = tool === 'html-pdf' && htmlInput === 'url';
   const serverBase = websiteMode ? integratedWebsiteServer : integratedDocumentServer;
   const localOffice = tool === 'office-pdf' && processing === 'local';
@@ -100,16 +117,37 @@ function StandardServerWorkbench({
     [file, setFile] = useState<File | null>(initialFile || null);
   const [cert, setCert] = useState<File | null>(null),
     [password, setPassword] = useState('');
-  const [profile, setProfile] = useState(tool === 'zugferd-create' ? 'E' : '2b');
-  const [uaMode, setUaMode] = useState('basic'),
-    [uaProfile, setUaProfile] = useState('ua1'),
-    [uaDocument, setUaDocument] = useState(initialAccessibleDocument);
-  const [signLevel, setSignLevel] = useState('basic');
+  const [profile, setProfile] = useToolDraftState(
+    'StandardServerWorkbench.profile:' + sources.map((s) => s.id).join(':') + tool,
+    tool === 'zugferd-create' ? 'E' : '2b',
+  );
+  const [uaMode, setUaMode] = useToolDraftState(
+      'StandardServerWorkbench.uaMode:' + sources.map((s) => s.id).join(':') + tool,
+      'basic',
+    ),
+    [uaProfile, setUaProfile] = useToolDraftState(
+      'StandardServerWorkbench.uaProfile:' + sources.map((s) => s.id).join(':') + tool,
+      'ua1',
+    ),
+    [uaDocument, setUaDocument] = useToolDraftState(
+      'StandardServerWorkbench.uaDocument:' + sources.map((s) => s.id).join(':') + tool,
+      initialAccessibleDocument,
+    );
+  const [signLevel, setSignLevel] = useToolDraftState(
+    'StandardServerWorkbench.signLevel:' + sources.map((s) => s.id).join(':') + tool,
+    'basic',
+  );
   const [tagRepair, setTagRepair] = useState<TagRepair | null>(null);
   useEffect(() => setTagRepair(null), [sourceId, sources]);
-  const [extra, setExtra] = useState(initialExtraSettings),
+  const [extra, setExtra] = useToolDraftState(
+      'StandardServerWorkbench.extra:' + sources.map((s) => s.id).join(':') + tool,
+      initialExtraSettings,
+    ),
     [spreadsheet, setSpreadsheet] = useState<File | null>(null),
-    [attachments, setAttachments] = useState(false);
+    [attachments, setAttachments] = useToolDraftState(
+      'StandardServerWorkbench.attachments:' + sources.map((s) => s.id).join(':') + tool,
+      false,
+    );
   const [result, setResult] = useState<ExportFile | null>(null),
     [report, setReport] = useState(''),
     [url, setUrl] = useState(''),
@@ -208,7 +246,7 @@ function StandardServerWorkbench({
       setFile(initialFile);
       setHtmlInput('file');
     }
-  }, [initialFile]);
+  }, [initialFile, setHtmlInput]);
   useEffect(() => {
     onBusy(busy);
     return () => onBusy(false);
@@ -376,11 +414,14 @@ function StandardServerWorkbench({
     if (localWord) {
       if (!source) throw new Error('Bitte zuerst eine PDF auswählen.');
       const { createTextWordFile, createLayoutWordFile } = await import('@/lib/word-export');
-      const out = await (wordOutput === 'text' ? createTextWordFile : createLayoutWordFile)(
-        source,
-        signal,
-        { report: setProgress },
-      );
+      const { createStructuredWordFile } = await import('@/lib/word-structure');
+      const out = await (
+        wordOutput === 'structured'
+          ? createStructuredWordFile
+          : wordOutput === 'text'
+            ? createTextWordFile
+            : createLayoutWordFile
+      )(source, signal, { report: setProgress });
       if (!signal.aborted) setResult(out);
       return;
     }
@@ -762,6 +803,7 @@ function StandardServerWorkbench({
                   onChange={setWordOutput}
                   items={[
                     ['layout', 'Seitenlayout mit Bildern'],
+                    ['structured', 'Fließtext, Tabellen und Bilder'],
                     ['text', 'Nur Text als Absätze'],
                   ]}
                 />
@@ -772,9 +814,13 @@ function StandardServerWorkbench({
                     ? ui(
                         'Seitenformat und Bilder bleiben erhalten. Text wird in bearbeitbaren Textfeldern angeordnet. Grafiken und Tabellenlinien bilden den Seitenhintergrund. Schriften und komplexe Layouts können abweichen.',
                       )
-                    : ui(
-                        'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.',
-                      )
+                    : wordOutput === 'structured'
+                      ? ui(
+                          'Zusammenhängende Absätze, erkannte Tabellen und Bilder zum Weiterbearbeiten. Wiederkehrende Kopf- und Fußzeilen werden getrennt übernommen. Die Seitenaufteilung kann abweichen.',
+                        )
+                      : ui(
+                          'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.',
+                        )
                   : ui(
                       'Text, Tabellen und Bilder werden für Word übernommen. Bei komplexen Layouts kann die Anordnung abweichen.',
                     )}{' '}
