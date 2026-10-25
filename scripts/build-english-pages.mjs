@@ -1,6 +1,11 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 const catalog = JSON.parse(await readFile(new URL('../public/locales/en.json', import.meta.url), 'utf8'));
 const root = new URL('../public/', import.meta.url);
+// Main input limits use the same generated capability data as the German manual.
+const capability = JSON.parse(await readFile(new URL('capabilities.json', root), 'utf8'));
+catalog[`${capability.sourceMiB} MiB Quelldateien · ${capability.activePages} aktive Seiten · ${capability.ocrLanguages} OCR-Sprachen, bis zu ${capability.simultaneousOcrLanguages} gleichzeitig.`] = `${capability.sourceMiB} MiB of source files · ${capability.activePages} active pages · ${capability.ocrLanguages} OCR languages, up to ${capability.simultaneousOcrLanguages} combined.`;
+catalog[`PDF sowie JPG, PNG, WebP, BMP, TIFF, SVG, HEIC/HEIF und PSD; maximal ${capability.sourceMiB} MB Quelldateien und ${capability.activePages} Seiten insgesamt. Rechnungs-XML öffnet den Rechnungsarbeitsplatz.`] = `PDF and JPG, PNG, WebP, BMP, TIFF, SVG, HEIC/HEIF and PSD; up to ${capability.sourceMiB} MB of source files and ${capability.activePages} pages in total. Invoice XML opens the invoice workspace.`;
+
 const routes = {
   '/dokumentation.html': '/en/documentation.html',
   '/medienbereich.html': '/en/media.html',

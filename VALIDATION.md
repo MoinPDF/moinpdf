@@ -20,7 +20,7 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
   bereinigte PDF mit unabhängiger Inhaltskontrolle, Offline-Neustart samt OCR und
   200 Seiten mit Freigabe und erneutem Laden nicht sichtbarer Vorschauen.
 - Ein 200-Seiten-Test mit künstlichem Text belegt keine beliebigen 80-MB-Scans.
-  Die Grenzen bleiben bei 80 MiB je Eingabedatei und 200 aktiven Seiten.
+  Die Grenzen bleiben bei 80 MiB aktiven Quelldateien insgesamt und 200 aktiven Seiten.
 - Physische iPhones/iPads/Android-Geräte, native Teilen-Dialoge und Microsoft Word
   sind weiterhin offen; die [Gerätecheckliste](docs/quality/editor-device-checklist.md)
   trennt diese Fälle ausdrücklich von Desktop-Engines und Touch-Emulation.

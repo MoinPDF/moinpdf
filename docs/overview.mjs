@@ -1,3 +1,6 @@
+import { productCapabilities } from '../scripts/product-capabilities.mjs';
+const capability = await productCapabilities();
+
 export const chapters = [
   ['schnellstart', '01', 'Schnellstart'],
   ['arbeitsplatz', '02', 'Dein Arbeitsbereich'],
@@ -74,13 +77,13 @@ export const furtherReading = `
   <p>Die gemeinsame Exportprüfung kontrolliert PDF-Lesbarkeit und bekannte Seitenzahlen. Mit verfügbarer Seitenzuordnung vergleicht sie Seitenmaße, Links und Formularfelder; bei Werkzeugen mit Texterhalt zusätzlich Originaltext. Änderungen oder Prüflücken müssen vor dem Download bestätigt werden. Die Prüfung ist auf 200 Seiten und 100.000 Zeichen je Seite begrenzt. Passwortgeschützte Ausgaben werden als nicht inhaltlich geprüft gekennzeichnet. Das ist kein vollständiger Bildvergleich und keine Garantie inhaltlicher Richtigkeit.</p>
   <p>Bereinigte PDF zur Weitergabe exportiert nur die sichtbaren Seiten des neuesten gewählten Projektstands als Seitenbilder bis 2800 Pixel. Originaldateien, Anhänge und Bearbeitungsverläufe entfallen. Suchtext, Links, interaktive Formulare und Zertifikatssignaturen werden nicht übernommen. Sichtbare vertrauliche Angaben bleiben sichtbar; kontrolliere die PDF vor der Weitergabe.</p>
   <h3>Übersetzung und Sprachausgabe</h3>
-  <p>Bei der ersten vollständigen Installation werden die Übersetzungsmodelle für die angebotenen Sprachen geladen; dafür ist Internetzugang nötig. Danach verarbeitet die Übersetzung Texte auf dem eigenen Server. Die zwei deutschen Piper-Stimmen sind installiert und erzeugen Audio dort ohne Cloud-Dienst. OCR verarbeitet die Dokumente auf deinem Gerät und bietet 21 mitgelieferte Erkennungssprachen. Bis zu acht Sprachen lassen sich kombinieren; optional kann eine lokale Probe passende Sprachen vorschlagen.</p>
+  <p>Bei der ersten vollständigen Installation werden die Übersetzungsmodelle für die angebotenen Sprachen geladen; dafür ist Internetzugang nötig. Danach verarbeitet die Übersetzung Texte auf dem eigenen Server. Die zwei deutschen Piper-Stimmen sind installiert und erzeugen Audio dort ohne Cloud-Dienst. OCR verarbeitet die Dokumente auf deinem Gerät. Die angebotenen Sprachen und Kombinationsgrenzen stehen unter Aktuelle Programmgrenzen; optional kann eine lokale Probe passende Sprachen vorschlagen.</p>
   <p>Angaben zum Betrieb dieser Website und zum Datenschutz findest du in der <a href="/datenschutz.html">Datenschutzerklärung</a>. Bei einer selbst betriebenen Installation sind außerdem die Angaben ihres Betreibers maßgeblich.</p>
 </section>
 <section class="docs-section" id="grenzen" aria-labelledby="title-grenzen">
   <div class="docs-section-heading"><span class="docs-section-number">06</span><div><p class="docs-eyebrow">Planbar arbeiten</p><h2 id="title-grenzen">Formate, Grenzen und Ergebnisqualität</h2></div></div>
   <div class="docs-table-wrap" tabindex="0" role="region" aria-label="Dateiformate und Eingabegrenzen"><table><thead><tr><th scope="col">Bereich</th><th scope="col">Unterstützung / Grenze</th></tr></thead><tbody>
-    <tr><th scope="row">Gemeinsamer PDF-Arbeitsbereich</th><td>PDF sowie JPG, PNG, WebP, BMP, TIFF, SVG, HEIC/HEIF und PSD; maximal 80 MB Quelldateien und 200 Seiten insgesamt. Rechnungs-XML öffnet den Rechnungsarbeitsplatz.</td></tr>
+    <tr><th scope="row">Gemeinsamer PDF-Arbeitsbereich</th><td>PDF sowie JPG, PNG, WebP, BMP, TIFF, SVG, HEIC/HEIF und PSD; maximal ${capability.sourceMiB} MB Quelldateien und ${capability.activePages} Seiten insgesamt. Rechnungs-XML öffnet den Rechnungsarbeitsplatz.</td></tr>
     <tr><th scope="row">Office-Konvertierung</th><td>DOC, DOCX, XLS, XLSX, PPT, PPTX, ODT, ODS, ODP und RTF lokal im Browser bis 40 MB pro Datei; alternativ mit Dokumentenserver. Pages, Visio und Publisher benötigen den Dokumentenserver.</td></tr>
     <tr><th scope="row">Weitere Eingabeformate</th><td>EML/MSG für E-Mails, HTML/HTM für gespeicherte Webseiten und ungeschützte EPUB-Dateien für E-Books.</td></tr>
     <tr><th scope="row">E-Book zu PDF</th><td>Bis 40 MB und 200 Ausgabeseiten. Keine verschlüsselten EPUB-Inhalte.</td></tr>

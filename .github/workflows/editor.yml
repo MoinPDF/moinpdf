@@ -76,13 +76,13 @@ jobs:
           MOINPDF_TEST_START_SERVER: '1'
         run: |
           status=0
+          python tests/release-021-browser.py || status=1
           python tests/editor-corpus-check.py || status=1
           python tests/editor-browser.py || status=1
           python tests/editor-quality-browser.py || status=1
           python tests/editor-workflow-browser.py || status=1
           python tests/editor-adaptive-browser.py || status=1
           python tests/word-export-browser.py || status=1
-          python tests/release-021-browser.py || status=1
           python tests/editor-browser-report-check.py || status=1
           exit "$status"
       - uses: actions/upload-artifact@v4

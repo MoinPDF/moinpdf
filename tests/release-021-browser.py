@@ -137,7 +137,8 @@ def project_case(browser, engine, en):
         unlock.get_by_label('Password' if en else 'Passwort', exact=True).fill('Fictional-wrong-password')
         unlock.get_by_role('button', name='Unlock and open' if en else 'Entsperren und öffnen', exact=True).click()
         expect(unlock.get_by_role('alert')).to_contain_text('password' if en else 'Passwort')
-        expect(projects.get_by_role('heading', name='Fictional encrypted project')).to_have_count(1)
+        # Radix correctly hides the underlying projects dialog while the password dialog is modal.
+        expect(page.get_by_role('heading', name='Fictional encrypted project', include_hidden=True)).to_have_count(1)
         unlock.get_by_label('Password' if en else 'Passwort', exact=True).fill(password)
         unlock.get_by_role('button', name='Unlock and open' if en else 'Entsperren und öffnen', exact=True).click()
         expect(unlock).to_have_count(0)

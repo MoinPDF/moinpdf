@@ -17,7 +17,7 @@ The version number is in [package.json](package.json). A successful run provides
   rejection, reopening, independently inspected flattened PDFs, offline restart/OCR
   and 200-page preview eviction/re-entry to the Chromium/Firefox/WebKit matrix.
 - A synthetic 200-page text fixture does not prove arbitrary 80-MiB scans. Limits
-  remain 80 MiB per input file and 200 active pages.
+  remain 80 MiB of active source files in total and 200 active pages.
 - Physical iPhone/iPad/Android devices, native share sheets and Microsoft Word remain
   pending in the [device checklist](docs/quality/editor-device-checklist.md). Desktop
   engines, touch emulation and native device results are separate evidence.

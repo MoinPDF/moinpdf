@@ -148,7 +148,14 @@ export function OfflinePanel() {
                     t(
                       'Offline-Dateien geprüft und gespeichert. Du kannst die App über das Browsermenü installieren.',
                       'Offline files verified and saved. You can install the app from the browser menu.',
-                    ),
+                    ) +
+                      (worker.current.state === 'installed'
+                        ? ' ' +
+                          t(
+                            'Zum Aktivieren der Aktualisierung alle MoinPDF-Tabs schließen und die App erneut öffnen.',
+                            'To activate the update, close every MoinPDF tab and reopen the app.',
+                          )
+                        : ''),
                   );
                 } catch (e) {
                   setNotice((e as Error).message);
