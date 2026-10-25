@@ -46,6 +46,15 @@ def close_project_dialog(page):
     page.keyboard.press('Escape')
     expect(dialog).to_have_count(0)
 
+def reviewed_project_download(page):
+    page.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
+    review = page.get_by_role('dialog', name='Projekt exportieren', exact=True)
+    expect(review).to_contain_text('Originale, frühere Bearbeitungen')
+    if nonlocal_http:
+        expect(review.get_by_label('Projektdatei mit Passwort verschlüsseln', exact=True)).to_be_disabled()
+        expect(review).to_contain_text('Passwortschutz benötigt HTTPS oder localhost.')
+    return review.get_by_role('button', name='Datei herunterladen', exact=True)
+
 def no_overflow(page, context):
     dimensions = page.evaluate('({width:innerWidth, content:document.documentElement.scrollWidth})')
     assert dimensions['content'] <= dimensions['width'] + 2, f'Horizontal overflow in {context}: {dimensions}'
@@ -293,8 +302,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('button', name='Projekt speichern', exact=True).click()
         expect(page.get_by_role('dialog', name='Lokale PDF-Projekte').get_by_role('status').filter(has_text='Alles an Bord – gespeichert.')).to_be_visible()
         expect(page.locator('.project-toggle')).to_have_attribute('aria-label', 'Projekte – Gespeichert')
+        project_download = reviewed_project_download(page)
         with page.expect_download() as download:
-            page.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
+            project_download.click()
         project_file = Path(temporary) / 'projekt.moinpdf'
         download.value.save_as(project_file)
         assert project_file.read_bytes().startswith(b'MOINPDF-PROJECT\n')
@@ -363,8 +373,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         lifecycle.get_by_label('Projektname', exact=True).fill('Verbleibendes Projekt')
         lifecycle.get_by_role('button', name='Projekt speichern', exact=True).click()
         expect(lifecycle.get_by_role('dialog', name='Lokale PDF-Projekte').get_by_role('status').filter(has_text='Alles an Bord – gespeichert.')).to_be_visible()
+        project_download = reviewed_project_download(lifecycle)
         with lifecycle.expect_download() as download:
-            lifecycle.get_by_role('button', name='Projektdatei herunterladen', exact=True).click()
+            project_download.click()
         cleaned_file = Path(temporary) / 'bereinigt.moinpdf'
         download.value.save_as(cleaned_file)
         cleaned_bytes = cleaned_file.read_bytes()
