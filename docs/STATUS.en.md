@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 25 October 2026. Unreleased improvements based on version 0.20.1.
+As of 25 October 2026 · Version 0.21.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 - Compression preserves text, vectors, links and form fields by default, selectively reducing compatible RGB JPEGs. Lossless optimization and an explicit page-image mode are also available. The comparison uses shared zoom and synchronized scrolling. Document-level structures require one complete PDF; signed documents are rejected.
 - OCR handles mixed pages. “Apply corrections” writes edited lines into the PDF search layer without changing visible pixels or native text. Existing search text is removed before replacement. Small scan skew is retained in text geometry and font matching.
@@ -66,18 +66,18 @@ Project snapshots and archives support optional password encryption with a minim
 
 Projects includes storage usage, an explicit persistent-storage request and offline packages. Offline use requires HTTPS or localhost, a supported browser and a completed download of the app and selected languages/runtimes. Every program file is integrity-checked. Updates activate once all older app tabs close. Server tools still need the user's document server. Removing offline files does not delete projects or results.
 
-Offscreen previews release their image data. OCR allows at most two main workers on devices reporting at least 8 GB memory and eight logical cores, otherwise one. Language probes can use a separate short-lived worker. Input size and active page limits are not raised without additional load-test evidence.
+Unfinished offscreen previews are cancelled immediately so newly visible pages do not have to wait. Completed preview images are released after a short retention period. OCR allows at most two main workers on devices reporting at least 8 GB memory and eight logical cores, otherwise one. Language probes can use a separate short-lived worker. Input size and active page limits are not raised without additional load-test evidence.
 
 Physical iPhone/iPad/Android/Windows touch devices and native Microsoft Word roundtrips remain separately pending; browser automation is not evidence of those checks. See the [device checklist](quality/editor-device-checklist.md).
 
 
 ## Verification and release
 
-44 engine and interface test suites check processing, navigation and display settings. PDF outputs are read back independently, covering text, glyphs, image pixels, links, forms, font sizes, page order, project archives, real HEIC/PSD decoding and actual OCR with the shipped language models. Dense two-column pages are ordered without quadratic full comparisons and checked for complete text preservation.
+58 engine and interface test suites check processing, navigation and display settings. PDF outputs are read back independently, covering text, glyphs, image pixels, links, forms, font sizes, page order, project archives, real HEIC/PSD decoding and actual OCR with the shipped language models. Dense two-column pages are ordered without quadratic full comparisons and checked for complete text preservation.
 
 Server checks cover real LibreOffice inputs, SVG/vectors, editable slides, translation overflow, veraPDF and synthetic CA/TSA/CRL evidence for long-term signatures. Passing a synthetic test does not replace production configuration of the timestamp service.
 
-Release requires type checking, formatting checks, linting, a production build and complete Docker CI. Browser checks cover every tool view on desktop and phones, downloads, mixed paragraph formatting, new continuation pages, project transfer, eight OCR languages and real local model inference. Every new source commit receives its own verification run. Incomplete or failed checks are not replaced by older successful runs.
+Release requires type checking, formatting checks, linting, a production build and complete Docker CI. Browser checks cover every tool view on desktop and narrow touch viewports, downloads, mixed paragraph formatting, new continuation pages, project transfer, eight OCR languages and real local model inference. Every new source commit receives its own verification run. Incomplete or failed checks are not replaced by older successful runs.
 
 ## Components and licences
 
