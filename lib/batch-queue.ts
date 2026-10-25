@@ -36,14 +36,85 @@ export type BatchQueue = {
 const MAX_STORED = 160 * 1024 * 1024;
 async function db() {
   return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open('moinpdf.batch.v1', 1);
+    const request = indexedDB.open('moinpdf.batch.v1', 2);
     request.onupgradeneeded = () => {
-      request.result.createObjectStore('queues', { keyPath: 'id' });
-      request.result.createObjectStore('bytes');
+      for (const name of ['queues', 'bytes', 'leases'])
+        if (!request.result.objectStoreNames.contains(name))
+          request.result.createObjectStore(name, name === 'queues' ? { keyPath: 'id' } : undefined);
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
+}
+type BatchLease = { token: string; expires: number };
+const lockedMessage = 'Dieser Stapel wird bereits in einem anderen Tab verarbeitet.';
+const lostMessage =
+  'Die Stapelsperre ist abgelaufen. Bitte den gespeicherten Stand erneut fortsetzen.';
+async function updateLease(id: string, change: (current?: BatchLease) => BatchLease | undefined) {
+  const database = await db();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = database.transaction('leases', 'readwrite'),
+        store = tx.objectStore('leases');
+      tx.oncomplete = () => resolve();
+      tx.onerror = tx.onabort = () => reject(tx.error || new Error(lostMessage));
+      const request = store.get(id);
+      request.onsuccess = () => {
+        try {
+          const next = change(request.result as BatchLease | undefined);
+          if (next) store.put(next, id);
+          else store.delete(id);
+        } catch (error) {
+          reject(error);
+          tx.abort();
+        }
+      };
+    });
+  } finally {
+    database.close();
+  }
+}
+// IndexedDB also works on local HTTP. Every checkpoint checks the token in
+// the same write transaction: a suspended/expired tab cannot overwrite a new
+// owner's progress even if its old PDF operation finishes later.
+async function withBatchLease<T>(id: string, task: (token: string) => Promise<T>) {
+  const token = Array.from(crypto.getRandomValues(new Uint8Array(16)), (n) =>
+    n.toString(16).padStart(2, '0'),
+  ).join('');
+  await updateLease(id, (current) => {
+    if (current && current.expires > Date.now()) throw new Error(lockedMessage);
+    return { token, expires: Date.now() + 60000 };
+  });
+  const timer = setInterval(() => {
+    void updateLease(id, (current) => {
+      if (current?.token !== token || current.expires <= Date.now()) throw new Error(lostMessage);
+      return { token, expires: Date.now() + 60000 };
+    }).catch(() => {});
+  }, 15000);
+  try {
+    return await task(token);
+  } finally {
+    clearInterval(timer);
+    await updateLease(id, (current) => (current?.token === token ? undefined : current)).catch(
+      () => {},
+    );
+  }
+}
+function withLeaseInTransaction(
+  tx: IDBTransaction,
+  id: string,
+  token: string,
+  write: () => void,
+  reject: (error: Error) => void,
+) {
+  const request = tx.objectStore('leases').get(id);
+  request.onsuccess = () => {
+    const current = request.result as BatchLease | undefined;
+    if (current?.token !== token || current.expires <= Date.now()) {
+      reject(new Error(lostMessage));
+      tx.abort();
+    } else write();
+  };
 }
 const requestValue = <T>(request: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {
@@ -109,49 +180,65 @@ export async function batchBytes(id: string, index: number) {
     database.close();
   }
 }
-export async function saveBatch(queue: BatchQueue, index?: number, bytes?: Uint8Array) {
+async function saveBatch(queue: BatchQueue, token: string, index?: number, bytes?: Uint8Array) {
   const database = await db();
   try {
     await new Promise<void>((resolve, reject) => {
-      const tx = database.transaction(['queues', 'bytes'], 'readwrite'),
+      const tx = database.transaction(['queues', 'bytes', 'leases'], 'readwrite'),
         table = tx.objectStore('queues');
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
       tx.onabort = () =>
         reject(tx.error || new Error('Der Stapel konnte nicht gespeichert werden.'));
-      const request = table.getAll();
-      request.onsuccess = () => {
-        const stored = (request.result as BatchQueue[])
-          .filter((q) => q.id !== queue.id)
-          .reduce((n, q) => n + q.files.reduce((sum, f) => sum + f.size, 0), 0);
-        if (stored + queue.files.reduce((n, f) => n + f.size, 0) > MAX_STORED) {
-          tx.abort();
-          reject(
-            new Error(
-              'Die Stapelsicherung ist voll. Fertige Dateien herunterladen und den gespeicherten Stapel entfernen.',
-            ),
-          );
-          return;
-        }
-        table.put({ ...queue, updated: Date.now() });
-        if (index !== undefined && bytes)
-          tx.objectStore('bytes').put(
-            new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }),
-            `${queue.id}:${index}`,
-          );
-      };
+      withLeaseInTransaction(
+        tx,
+        queue.id,
+        token,
+        () => {
+          const request = table.getAll();
+          request.onsuccess = () => {
+            const stored = (request.result as BatchQueue[])
+              .filter((q) => q.id !== queue.id)
+              .reduce((n, q) => n + q.files.reduce((sum, f) => sum + f.size, 0), 0);
+            if (stored + queue.files.reduce((n, f) => n + f.size, 0) > MAX_STORED) {
+              tx.abort();
+              reject(
+                new Error(
+                  'Die Stapelsicherung ist voll. Fertige Dateien herunterladen und den gespeicherten Stapel entfernen.',
+                ),
+              );
+              return;
+            }
+            table.put({ ...queue, updated: Date.now() });
+            if (index !== undefined && bytes)
+              tx.objectStore('bytes').put(
+                new Blob([new Uint8Array(bytes)], { type: 'application/pdf' }),
+                `${queue.id}:${index}`,
+              );
+          };
+        },
+        reject,
+      );
     });
   } finally {
     database.close();
   }
 }
-async function deleteBatch(queue: BatchQueue) {
+async function deleteBatch(queue: BatchQueue, token: string) {
   const database = await db();
   try {
     await new Promise<void>((resolve, reject) => {
-      const tx = database.transaction(['queues', 'bytes'], 'readwrite');
-      tx.objectStore('queues').delete(queue.id);
-      queue.files.forEach((_, index) => tx.objectStore('bytes').delete(`${queue.id}:${index}`));
+      const tx = database.transaction(['queues', 'bytes', 'leases'], 'readwrite');
+      withLeaseInTransaction(
+        tx,
+        queue.id,
+        token,
+        () => {
+          tx.objectStore('queues').delete(queue.id);
+          queue.files.forEach((_, index) => tx.objectStore('bytes').delete(`${queue.id}:${index}`));
+        },
+        reject,
+      );
       tx.oncomplete = () => resolve();
       tx.onerror = tx.onabort = () => reject(tx.error);
     });
@@ -161,10 +248,11 @@ async function deleteBatch(queue: BatchQueue) {
 }
 export async function clearBatch(queue: BatchQueue) {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
-  if (!locks) return deleteBatch(queue);
+  const clear = () => withBatchLease(queue.id, (token) => deleteBatch(queue, token));
+  if (!locks) return clear();
   return locks.request(`moinpdf-batch:${queue.id}`, { ifAvailable: true }, (lock) => {
-    if (!lock) throw new Error('Dieser Stapel wird bereits in einem anderen Tab verarbeitet.');
-    return deleteBatch(queue);
+    if (!lock) throw new Error(lockedMessage);
+    return clear();
   });
 }
 async function processBatch(
@@ -173,6 +261,7 @@ async function processBatch(
   password: string,
   ctx: RunContext,
   options: { pause: () => boolean; retry?: boolean; update: (queue: BatchQueue) => void },
+  token: string,
 ) {
   const identity = await batchIdentity(sources, queue.workflow, ctx.signal);
   if (identity.id !== queue.id)
@@ -180,7 +269,7 @@ async function processBatch(
   const state: BatchQueue = structuredClone((await loadBatch(queue.id)) || queue);
   const total = batchStepCount(state.workflow);
   const publish = () => options.update(structuredClone(state));
-  await saveBatch(state);
+  await saveBatch(state, token);
   for (const [index, file] of state.files.entries()) {
     if (file.status === 'done' || (file.status === 'failed' && !options.retry)) continue;
     if (options.pause() || ctx.signal.aborted) break;
@@ -260,7 +349,7 @@ async function processBatch(
           log: [...file.log, result.action],
         };
         const checkpoint = { ...state, files: state.files.map((f, i) => (i === index ? next : f)) };
-        await saveBatch(checkpoint, index, result.bytes); // bytes and next step commit atomically
+        await saveBatch(checkpoint, token, index, result.bytes); // bytes and next step commit atomically
         Object.assign(file, next);
         publish();
         if (owned) {
@@ -281,21 +370,27 @@ async function processBatch(
       file.error = ctx.signal.aborted ? undefined : (error as Error).message;
     } finally {
       if (owned) await owned.pdf.loadingTask.destroy();
-      await saveBatch(state);
+      await saveBatch(state, token);
       publish();
     }
   }
   return state;
 }
-export async function resumeBatch(...args: Parameters<typeof processBatch>) {
+export async function resumeBatch(
+  ...args: [
+    BatchQueue,
+    Source[],
+    string,
+    RunContext,
+    { pause: () => boolean; retry?: boolean; update: (queue: BatchQueue) => void },
+  ]
+) {
   const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined;
-  if (!locks)
-    throw new Error(
-      'Dieser Browser unterstützt keine sichere Stapelsicherung. Bitte einen aktuellen Browser verwenden.',
-    );
+  const run = () => withBatchLease(args[0].id, (token) => processBatch(...args, token));
+  if (!locks) return run();
   return locks.request(`moinpdf-batch:${args[0].id}`, { ifAvailable: true }, (lock) => {
-    if (!lock) throw new Error('Dieser Stapel wird bereits in einem anderen Tab verarbeitet.');
-    return processBatch(...args);
+    if (!lock) throw new Error(lockedMessage);
+    return run();
   });
 }
 export async function batchZip(queue: BatchQueue, signal: AbortSignal): Promise<ExportFile> {

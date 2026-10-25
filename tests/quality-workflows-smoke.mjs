@@ -137,5 +137,29 @@ try {
   const graphQueue=await batchIdentity([unprotected],graph,signal);const graphResult=await resumeBatch(graphQueue,[unprotected],'',{signal,report:()=>{}},{pause:()=>false,update:()=>{}});assert.equal(graphResult.files[0].status,'done');assert(graphResult.files[0].log.some(l=>l.includes('Ja')));
   assert.equal((await PDFDocument.load(await (await batchBytes(graphResult.id,0)).arrayBuffer())).getPage(0).getRotation().angle,180);
   await clearBatch(state);assert.equal(await loadBatch(state.id),undefined);await clearBatch(graphResult);
+  // Local HTTP has no Web Locks API. Exercise the real IndexedDB lease, including
+  // a suspended tab finishing after a second owner has taken over its expiry.
+  Object.defineProperty(navigator,'locks',{value:undefined,configurable:true});
+  let release, entered;
+  const gate = new Promise(resolve => { release = resolve; });
+  const reading = new Promise(resolve => { entered = resolve; });
+  const suspended = {...unprotected, pdf: {numPages:unprotected.pdf.numPages, getPage:async (...args) => { entered(); await gate; return unprotected.pdf.getPage(...args); }}};
+  const leaseWorkflow = {version:1,name:'HTTP lease fixture',steps:[{kind:'rotate90',condition:{field:'text',operator:'contains',value:'Fictional'}}]};
+  const leaseQueue = await batchIdentity([suspended],leaseWorkflow,signal);
+  const running = resumeBatch(leaseQueue,[suspended],'',{signal,report:()=>{}},{pause:()=>false,update:()=>{}});
+  await reading;
+  await assert.rejects(()=>resumeBatch(leaseQueue,[unprotected],'',{signal,report:()=>{}},{pause:()=>false,update:()=>{}}),/anderen Tab/);
+  await assert.rejects(()=>clearBatch(leaseQueue),/anderen Tab/);
+  const database = await new Promise((resolve,reject)=>{const request=indexedDB.open('moinpdf.batch.v1',2);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+  await new Promise((resolve,reject)=>{const tx=database.transaction('leases','readwrite'),store=tx.objectStore('leases'),request=store.get(leaseQueue.id);request.onsuccess=()=>store.put({...request.result,expires:Date.now()-1},leaseQueue.id);tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error);});
+  database.close();
+  const takeover = await resumeBatch(leaseQueue,[unprotected],'',{signal,report:()=>{}},{pause:()=>false,update:()=>{}});
+  assert.equal(takeover.files[0].status,'done');
+  const takeoverBytes = new Uint8Array(await (await batchBytes(leaseQueue.id,0)).arrayBuffer());
+  const stopped = assert.rejects(()=>running,/abgelaufen/);release();await stopped;
+  assert.deepEqual(new Uint8Array(await (await batchBytes(leaseQueue.id,0)).arrayBuffer()),takeoverBytes,'An expired tab cannot overwrite a newer checkpoint');
+  assert.equal((await PDFDocument.load(takeoverBytes)).getPage(0).getRotation().angle,90);
+  await clearBatch(takeover);
   console.log('PASS: IndexedDB atomic checkpoints, pause/resume, partial ZIP, failed-file retry, unchanged completed files, graph decisions, cross-tab exclusion and deletion.');
+  console.log('PASS: local HTTP without Web Locks, atomic lease exclusion, expired-tab takeover and fencing of stale writes.');
 } finally {for(const pdf of proxies)await pdf.loadingTask.destroy();globalThis.fetch=fetchOriginal;}
