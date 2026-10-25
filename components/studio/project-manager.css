@@ -12,6 +12,7 @@
 .project-dialog {
   max-height: 90dvh;
   overflow: auto;
+  overflow-wrap: anywhere;
 }
 .project-list {
   display: grid;
@@ -56,4 +57,11 @@
   .project-dialog {
     max-height: 85dvh;
   }
+}
+
+.project-dialog .project-actions > button {
+  max-width: 100%;
+  height: auto;
+  min-height: 36px;
+  white-space: normal;
 }

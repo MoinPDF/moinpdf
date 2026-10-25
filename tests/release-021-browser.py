@@ -176,6 +176,11 @@ def offline_case(browser, engine):
         projects = open_project(page)
         offline = projects.get_by_role('region', name='Offline-Nutzung', exact=True)
         offline.get_by_text('Offline-Pakete verwalten', exact=True).click()
+        for width in (320, 390):
+            page.set_viewport_size({'width': width, 'height': 950})
+            no_overflow(page)
+            assert projects.evaluate('(el) => el.scrollWidth <= el.clientWidth + 2'), 'Offline controls overflow the dialog'
+        page.set_viewport_size({'width': 1280, 'height': 950})
         offline.get_by_role('button', name='Auswahl herunterladen / aktualisieren', exact=True).click()
         expect(offline).to_contain_text('Offline-Dateien geprüft und gespeichert.', timeout=240000)
         assert page.evaluate('crossOriginIsolated'), 'Online isolation headers missing'

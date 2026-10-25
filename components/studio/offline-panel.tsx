@@ -20,8 +20,11 @@ export function OfflinePanel() {
     [notice, setNotice] = useState(''),
     [online, setOnline] = useState(true);
   const worker = useRef<ServiceWorker | null>(null);
+  const mounted = useRef(true),
+    downloading = useRef(false);
   useEffect(() => {
     let active = true;
+    mounted.current = true;
     const controller = new AbortController();
     const update = () => setOnline(navigator.onLine);
     update();
@@ -46,6 +49,9 @@ export function OfflinePanel() {
         .catch(() => {});
     return () => {
       active = false;
+      mounted.current = false;
+      if (downloading.current && worker.current)
+        void offlineMessage(worker.current, { type: 'cancel' }).catch(() => {});
       controller.abort();
       window.removeEventListener('online', update);
       window.removeEventListener('offline', update);
@@ -131,9 +137,11 @@ export function OfflinePanel() {
               disabled={busy || !online}
               onClick={async () => {
                 setBusy(true);
+                downloading.current = true;
                 setNotice('');
                 try {
                   worker.current = await offlineWorker();
+                  if (!mounted.current) return;
                   const next = await offlineMessage<OfflineStatus>(
                     worker.current,
                     {
@@ -160,7 +168,8 @@ export function OfflinePanel() {
                 } catch (e) {
                   setNotice((e as Error).message);
                 } finally {
-                  setBusy(false);
+                  downloading.current = false;
+                  if (mounted.current) setBusy(false);
                 }
               }}
             >
