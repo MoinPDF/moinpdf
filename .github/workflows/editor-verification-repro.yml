@@ -1,0 +1,45 @@
+name: Diagnose editor verification
+on:
+  push:
+    branches: [fix/editor-verification-hang]
+permissions:
+  contents: read
+concurrency:
+  group: verification-repro-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  reproduce:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build unchanged production application and fictional forms
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+          pnpm run build:selfhost
+          node tests/editor-adaptive-fixtures.mjs
+      - name: Prepare WebKit
+        run: |
+          bash scripts/ci-prepare-apt.sh
+          python -m pip install playwright==1.64.0 pymupdf==1.26.6
+          python -m playwright install --with-deps webkit
+      - name: Repeated real exports and injected worker stall
+        env:
+          MOINPDF_TEST_BROWSERS: webkit
+          MOINPDF_TEST_START_SERVER: '1'
+          MOINPDF_VERIFY_BASELINE: '1'
+          MOINPDF_VERIFY_REPEATS: '25'
+        run: python tests/editor-verification-browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-diagnosis
+          path: .cache/editor-browser/verification/
+          retention-days: 14
