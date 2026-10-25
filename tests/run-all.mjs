@@ -10,6 +10,7 @@ const suites = [
   'interaction-refinements',
   'pdf',
   'pdf-text',
+  'pdf-session',
   'compression-presets',
   'studio',
   'document-check',

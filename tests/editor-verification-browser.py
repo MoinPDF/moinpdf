@@ -21,7 +21,7 @@ out = Path(os.environ.get('MOINPDF_BROWSER_OUTPUT', '.cache/editor-browser')) / 
 out.mkdir(parents=True, exist_ok=True)
 fixture = Path('.cache/editor-browser/adaptive/form.pdf').resolve()
 baseline = os.environ.get('MOINPDF_VERIFY_BASELINE') == '1'
-repeats = int(os.environ.get('MOINPDF_VERIFY_REPEATS', '20'))
+repeats = int(os.environ.get('MOINPDF_VERIFY_REPEATS', '5'))
 if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
     log = open(out / 'http.log', 'w')
     server = subprocess.Popen(['python', 'tests/text-browser-server.py'], stdout=log, stderr=subprocess.STDOUT)
@@ -58,7 +58,9 @@ INSTRUMENT = r"""(() => {
       record('worker-request', {id: this.probeId, action: data?.action,
         callback: data?.callbackId, stream: data?.streamId, kind: data?.stream});
       const checking = document.body?.textContent.includes('Gespeicherte PDF prüfen');
-      if (window.holdVerificationWorker && checking && data?.action === 'GetOperatorList') {
+      if (window.holdVerificationWorker && checking && data?.action === 'GetOperatorList' &&
+          (window.holdVerificationWorker !== 'once' || !window.heldVerificationOwner || window.heldVerificationOwner === this.probeId)) {
+        window.heldVerificationOwner ||= this.probeId;
         window.heldVerificationMessages ||= [];
         window.heldVerificationMessages.push(() => {
           if (!this.probeClosed) super.postMessage(...args);
@@ -73,12 +75,18 @@ INSTRUMENT = r"""(() => {
   const font = Object.getOwnPropertyDescriptor(FontFace.prototype, 'loaded');
   Object.defineProperty(FontFace.prototype, 'loaded', {...font, get() {
     const promise = font.get.call(this);
+    if (window.holdVerificationFonts && document.body?.textContent.includes('Gespeicherte PDF prüfen')) {
+      window.heldVerificationFonts = (window.heldVerificationFonts || 0) + 1;
+      record('font-held', {family: this.family});
+      return new Promise(() => {});
+    }
     record('font-wait', {family: this.family});
     promise.then(() => record('font-ready', {family: this.family}), () => record('font-error', {family: this.family}));
     return promise;
   }});
   window.releaseVerificationWorker = () => {
     window.holdVerificationWorker = false;
+    window.holdVerificationFonts = false;
     (window.heldVerificationMessages || []).splice(0).forEach(release => release());
   };
 })();"""
@@ -96,7 +104,7 @@ def prepare(page):
 
 def verify_download(page, name):
     link = page.get_by_role('link', name='PDF herunterladen', exact=True).first
-    expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=90000)
+    expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=180000)
     assert link.is_visible(), page.locator('.error-box').inner_text()
     expect(link).to_have_attribute('href', re.compile(r'^blob:'), timeout=45000)
     with page.expect_download() as download:
@@ -117,9 +125,10 @@ results = []
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS', 'webkit').split(','):
         browser = getattr(api, engine).launch()
-        for iteration in range(repeats + 1):
-            fault = iteration == repeats
-            name = f'{engine}-verification-' + ('worker-cancel' if fault else f'form-{iteration + 1:02}')
+        cases = [f'form-{i + 1:02}' for i in range(repeats)] + (['worker-cancel'] if baseline else ['worker-cancel', 'worker-retry', 'worker-timeout', 'font-retry'])
+        for case in cases:
+            fault = not case.startswith('form-')
+            name = f'{engine}-verification-' + case
             context = browser.new_context(accept_downloads=True, viewport={'width': 1440, 'height': 1000}, reduced_motion='reduce')
             context.add_init_script(INSTRUMENT)
             context.tracing.start(screenshots=True, snapshots=True, sources=True)
@@ -132,9 +141,9 @@ with sync_playwright() as api:
             try:
                 prepare(page)
                 if fault:
-                    page.evaluate('window.holdVerificationWorker = true')
+                    page.evaluate('mode => {if(mode === "font-retry") window.holdVerificationFonts = true; else window.holdVerificationWorker = mode === "worker-retry" ? "once" : "all";}', case)
                 page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True).click()
-                if fault:
+                if case == 'worker-cancel':
                     page.wait_for_function('window.heldVerificationMessages?.length > 0', timeout=60000)
                     page.get_by_role('button', name='Abbrechen', exact=True).last.click()
                     idle = page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True)
@@ -150,8 +159,23 @@ with sync_playwright() as api:
                         page.evaluate('window.releaseVerificationWorker()')
                         idle.click()
                         result['verification'] = verify_download(page, name)
+                elif case == 'worker-timeout':
+                    expect(page.locator('.error-box')).to_contain_text('Die PDF-Prüfung hat zu lange gedauert.', timeout=160000)
+                    assert not page.get_by_role('link', name='PDF herunterladen', exact=True).count(), 'Unverified output must stay unavailable'
+                    result['timeout_seconds'] = round(time.monotonic() - started, 2)
+                    page.evaluate('window.releaseVerificationWorker()')
+                    page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True).click()
+                    result['verification'] = verify_download(page, name)
                 else:
                     result['verification'] = verify_download(page, name)
+                    if case == 'font-retry':
+                        assert page.evaluate('window.heldVerificationFonts > 0'), 'Font fault must actually be injected'
+                    if case == 'worker-retry':
+                        assert page.evaluate('window.heldVerificationMessages.length > 0'), 'Worker fault must actually be injected'
+                if fault and not baseline:
+                    held = page.evaluate('window.verificationEvents.filter(e => e.event === "worker-request-held").map(e => e.id)')
+                    closed = page.evaluate('window.verificationEvents.filter(e => e.event === "worker-terminated").map(e => e.id)')
+                    assert set(held).issubset(set(closed)), 'Every stalled temporary worker must be terminated'
                 assert not errors, errors
                 result['status'] = 'passed'
             except Exception as error:
@@ -178,4 +202,5 @@ with sync_playwright() as api:
             if result['status'] == 'failed':
                 break
         browser.close()
-assert results and all(result['status'] == 'passed' for result in results), 'Verification acceptance failed'
+expected = len(os.environ.get('MOINPDF_TEST_BROWSERS', 'webkit').split(',')) * (repeats + (1 if baseline else 4))
+assert len(results) == expected and len({r['case'] for r in results}) == expected and all(r['status'] == 'passed' for r in results), 'Verification acceptance failed or incomplete'

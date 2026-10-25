@@ -1025,6 +1025,7 @@ export async function runStudioJob(
           editorPainted,
         )
       : undefined;
+  check(signal);
   const suffix: Record<string, string> = {
     'edit-text': 'Text-bearbeitet',
     erase: 'bereinigt',

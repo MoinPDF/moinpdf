@@ -320,6 +320,42 @@ try:
             assert 'ZWEITE SEITE BLEIBT ERHALTEN' in label('Text für Block 3').get_attribute('value')
         check('Accessible document draft imports both PDF pages',accessible)
 
+        def verified_form(cancel=False):
+            form=Path('.cache/editor-browser/adaptive/form.pdf')
+            fresh(form)
+            if cancel:
+                driver.execute_script("""const NativeWorker=Worker;
+                  window.Worker=class extends NativeWorker {
+                    postMessage(...args) {
+                      if(window.holdVerification && args[0]?.action==='GetOperatorList' && document.body.textContent.includes('Gespeicherte PDF prüfen')) {
+                        window.verificationHeld=true; return;
+                      }
+                      return super.postMessage(...args);
+                    }
+                  };""")
+            tool('PDF bearbeiten')
+            click(button('Text bearbeiten: Original heading'))
+            fill(label('Text direkt in der PDF bearbeiten'),'Edited heading')
+            if cancel: driver.execute_script('window.holdVerification=true')
+            click(button('Bearbeitete PDF erstellen'))
+            if cancel:
+                WebDriverWait(driver,60).until(lambda _:driver.execute_script('return window.verificationHeld===true'))
+                click(button('Abbrechen'))
+                WebDriverWait(driver,5).until(EC.element_to_be_clickable((By.XPATH,'//button[normalize-space(.)="Bearbeitete PDF erstellen"]')))
+                assert not driver.find_elements(By.CSS_SELECTOR,'a[download][href^="blob:"]'), 'Cancelled PDF must not be published'
+                driver.execute_script('window.holdVerification=false')
+                click(button('Bearbeitete PDF erstellen'))
+            data=output_bytes('a[download]', 'safari-form-cancel.pdf' if cancel else 'safari-form.pdf', actual_download=True)
+            with pymupdf.open(stream=data,filetype='pdf') as after, pymupdf.open(form) as before:
+                assert len(after)==2
+                assert 'Edited heading' in after[0].get_text() and 'Original heading' not in after[0].get_text()
+                fields=lambda pdf:[(w.field_name,w.field_value,tuple(w.rect)) for p in pdf for w in p.widgets()]
+                assert fields(after)==fields(before) and len(fields(after))==3
+                a,b=before[1].get_pixmap(),after[1].get_pixmap()
+                assert (a.width,a.height,a.samples)==(b.width,b.height,b.samples)
+        check('Native Safari form edit, actual download and independent preservation',verified_form)
+        check('Native Safari injected worker stall cancels and the same edit exports',lambda:verified_form(True))
+
         def comparison():
             fresh(source)
             other=folder/'safari-changed.pdf'
@@ -341,4 +377,4 @@ finally:
     (out/'safari-text-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
     if driver:driver.quit()
 print(json.dumps(report,ensure_ascii=False,indent=2),flush=True)
-raise SystemExit(1 if report.get('setupError') or len(results)!=9 or any(r['status']!='passed' for r in results) else 0)
+raise SystemExit(1 if report.get('setupError') or len(results)!=11 or any(r['status']!='passed' for r in results) else 0)

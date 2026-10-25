@@ -4,9 +4,9 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
-## Verification scope for 0.21.0
+## Verification scope for 0.21.1
 
-- 58 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
+- 59 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
   passwords, tampered/truncated project files and cancellation.
 - Preview regressions check immediate cancellation of hidden work, queue release,
   bounded image retention and recreation on return.
@@ -26,12 +26,28 @@ The version number is in [package.json](package.json). A successful run provides
 - Release evidence is the successful Actions run for the exact commit. Local checks
   and newly written test cases do not replace that gate.
 
+## Investigation of the WebKit hang
+
+The [unchanged baseline](https://github.com/MoinPDF/moinpdf/actions/runs/40216810705)
+passed 25 consecutive form exports. Deliberately holding a `GetOperatorList` request
+then proved that cancellation waited for a worker reply. This establishes the
+cancellation defect, not the internal trigger of the original one-off WebKit hang.
+
+`tests/pdf-session-smoke.mjs` covers nine lifecycle cases with a controlled clock.
+`tests/editor-verification-browser.py` adds five real form exports per engine and
+four explicitly injected failures: cancellation, automatic retry, two timeouts
+and stalled font loading. Downloaded PDFs are independently checked for text,
+three form widgets and unchanged page pixels. Native macOS Safari additionally
+checks actual downloads and cancellation followed by re-export. The successful
+run for the exact source commit remains authoritative.
+
+
 ## Automated checks
 
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| PDF engines and DOM | 58 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| PDF engines and DOM | 59 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
 | Document server | 65 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and narrow touch viewports, PDF/EPUB/audio downloads |

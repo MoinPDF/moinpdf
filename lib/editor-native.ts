@@ -7,7 +7,7 @@ import {
   PDFObjectCopier,
   degrees,
 } from 'pdf-lib';
-import { renderPage, type PageItem, type Source } from './pdf-engine';
+import { renderPage, withPdfDocument, type PageItem, type Source } from './pdf-engine';
 import type { Mark, Edits } from './studio-engine';
 import {
   editorRemovalRects,
@@ -677,44 +677,37 @@ export async function removeEditorContent(
     }
   }
   if (signal.aborted) throw new DOMException('Abgebrochen', 'AbortError');
-  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const task = getDocument({
-    data: cleaned.slice(),
-    disableFontFace: true,
-    standardFontDataUrl: '/vendor/pdf/standard_fonts/',
-    cMapUrl: '/vendor/pdf/cmaps/',
-    cMapPacked: true,
-  });
-  const cancel = () => {
-    void task.destroy();
-  };
-  signal.addEventListener('abort', cancel, { once: true });
-  try {
-    const proxy = await task.promise;
-    const content = await readPdfText(await proxy.getPage(1));
-    const actual = content.items
-      .filter((p) => 'str' in p)
-      .map((p) => ('str' in p ? p.str : ''))
-      .join('');
-    const expected =
-      remainingEditorTargets(
-        targets,
-        removals.map((r) => r.rect),
-      )
-        .map((t) => t.text)
-        .join('') +
-      marks
-        .filter((m) => m.nativeTextSlice)
-        .map((m) => m.nativeTextSlice!.before + m.nativeTextSlice!.after)
+  await withPdfDocument(
+    cleaned,
+    signal,
+    async (proxy, signal, step) => {
+      const page = await step('removal-page', proxy.getPage(1));
+      const content = await step('removal-text', readPdfText(page));
+      signal.throwIfAborted();
+      const actual = content.items
+        .filter((p) => 'str' in p)
+        .map((p) => ('str' in p ? p.str : ''))
         .join('');
-    const normalized = (text: string) => text.normalize('NFKC').replace(/\s/gu, '');
-    const counts = (text: string) => [...normalized(text)].sort().join('');
-    if (counts(actual) !== counts(expected))
-      throw new Error('Die verbleibenden Textinhalte konnten nicht vollständig bestätigt werden.');
-  } finally {
-    signal.removeEventListener('abort', cancel);
-    await task.destroy();
-  }
+      const expected =
+        remainingEditorTargets(
+          targets,
+          removals.map((r) => r.rect),
+        )
+          .map((t) => t.text)
+          .join('') +
+        marks
+          .filter((m) => m.nativeTextSlice)
+          .map((m) => m.nativeTextSlice!.before + m.nativeTextSlice!.after)
+          .join('');
+      const normalized = (text: string) => text.normalize('NFKC').replace(/\s/gu, '');
+      const counts = (text: string) => [...normalized(text)].sort().join('');
+      if (counts(actual) !== counts(expected))
+        throw new Error(
+          'Die verbleibenden Textinhalte konnten nicht vollständig bestätigt werden.',
+        );
+    },
+    { disableFontFace: true },
+  );
   return PDFDocument.load(cleaned, { updateMetadata: false });
 }
 
@@ -727,28 +720,25 @@ export async function renderEditorBackground(
   targets: TextTarget[],
   signal: AbortSignal,
   previewSide = 1400,
+  disableFontFace = false,
 ) {
   const original = await loadEditorPdf(source.bytes, source, signal);
   const cleaned = await removeEditorContent(original, item, marks, targets, signal);
   signal.throwIfAborted();
-  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const task = getDocument({
-    data: await cleaned.save(),
-    standardFontDataUrl: '/vendor/pdf/standard_fonts/',
-    cMapUrl: '/vendor/pdf/cmaps/',
-    cMapPacked: true,
-    wasmUrl: '/vendor/pdf/wasm/',
-  });
-  const cancel = () => {
-    void task.destroy();
-  };
-  signal.addEventListener('abort', cancel, { once: true });
-  try {
-    const pdf = await task.promise;
-    signal.throwIfAborted();
-    return await renderPage({ ...source, pdf }, { index: 0, rotation: 0 }, previewSide, signal);
-  } finally {
-    signal.removeEventListener('abort', cancel);
-    await task.destroy();
-  }
+  return withPdfDocument(
+    await cleaned.save(),
+    signal,
+    async (pdf, signal, step) => {
+      return step(
+        'background-render',
+        renderPage({ ...source, pdf }, { index: 0, rotation: 0 }, previewSide, signal),
+      );
+    },
+    {
+      disableFontFace,
+      discard: ({ canvas }) => {
+        canvas.width = canvas.height = 0;
+      },
+    },
+  );
 }
