@@ -29,6 +29,12 @@ Noch laufende Vorschauen werden beim Verlassen des sichtbaren Bereichs sofort ab
 Physische iPhone-/iPad-/Android-/Windows-Touch-Geräte und echte Microsoft-Word-Rundläufe bleiben gesondert abzunehmen; Browserautomation gilt nicht als Nachweis dafür. Siehe [Gerätecheckliste](quality/editor-device-checklist.md).
 
 
+## Formularhelfer und Belege auf A4
+
+Der **Formularhelfer** speichert bis zu zehn Profile nach ausdrücklichem Speichern lokal. Eindeutige Feldbezeichnungen liefern Vorschläge für leere Textfelder; vorhandene Werte und unklare Zuordnungen bleiben erhalten. Angaben lassen sich manuell zuordnen oder als transparente Textfelder auf Scans platzieren. Vor dem Export ist die Prüfung am Original zu bestätigen. Optional werden Formularwerte festgeschrieben. Profile bleiben unverschlüsselt im Browserspeicher und werden nicht mit Projektdateien übertragen; Formularentwürfe gehören zum Projekt. Signierte PDFs und dynamische XFA werden abgewiesen. Überlaufende neue Einträge und nicht unterstützte Zeichen sperren den Export.
+
+**Belege auf A4 sammeln** schneidet einzelne Belege aus Fotos oder PDFs zu, auch mehrere Ausschnitte derselben Scan-Seite. Reihenfolge, Beschriftung, Nummerierung und Druckbreiten von 30–190 mm sind wählbar. Die A4-Vorschau verwendet dieselbe Anordnung wie der Export. Lange Belege werden bei gleicher Breite in gekennzeichnete Teile aufgeteilt; zu breite Belege müssen angepasst werden. Die Ausgabe besteht aus zugeschnittenen Seitenbildern ohne ursprüngliche Textebene, Links, Formulare, Anhänge oder Signaturen. Bis zu 200 Belege, 400 platzierte Teile und 80 MB Ausgabe; Ausschnitte werden mit bis zu rund vier Megapixeln gerendert. Mit 100 % / Tatsächliche Größe drucken. Zuschnitte und Anordnung werden im Projekt gespeichert.
+
 ## Browser und Dokumentenserver
 
 Viele Werkzeuge arbeiten lokal im Browser. Die vollständige Docker-Installation ergänzt einen automatisch verbundenen Dokumentenserver. Dessen Aufträge starten erst mit dem jeweiligen Aktionsknopf. Der PDF-Editor bereitet sichtbare Seiten und Scan-Texte automatisch lokal vor.

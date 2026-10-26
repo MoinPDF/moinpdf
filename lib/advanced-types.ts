@@ -1,4 +1,6 @@
 export const advancedToolIds = [
+  'form-helper',
+  'receipts-a4',
   'klar-schiff',
   'local-assistant',
   'native-objects',

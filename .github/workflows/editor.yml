@@ -57,6 +57,11 @@ jobs:
           bash scripts/ci-prepare-apt.sh
           python -m pip install playwright==1.64.0 pymupdf==1.26.6
           python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Form profiles and A4 receipt workflows
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+          MOINPDF_TEST_START_SERVER: '1'
+        run: python tests/everyday-browser.py
       - name: Klar Schiff document review, PDF downloads and audio language
         env:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}

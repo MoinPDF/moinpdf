@@ -5,6 +5,17 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'form-helper': {
+    title: 'Form helper',
+    description:
+      'Save recurring details in local profiles, match form fields and place entries on scans.',
+    action: 'Prepare form',
+  },
+  'receipts-a4': {
+    title: 'Collect receipts on A4',
+    description: 'Crop and label receipts, then arrange them at a readable size on A4 sheets.',
+    action: 'Arrange receipts',
+  },
   'klar-schiff': {
     title: 'Clear Deck',
     description:

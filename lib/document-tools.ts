@@ -411,6 +411,7 @@ export async function saveDocumentDraft(
   tool: DocumentTool,
   flatten = false,
   signal?: AbortSignal,
+  appearance?: { plainFields?: boolean; fontBytes?: Uint8Array },
 ): Promise<JobResult> {
   check(signal);
   const doc = await PDFDocument.load(source.bytes, { updateMetadata: false });
@@ -423,8 +424,14 @@ export async function saveDocumentDraft(
     )
   ) {
     const form = requireAcroForm(doc);
-    const names = new Set<string>(),
-      font = await doc.embedFont(StandardFonts.Helvetica);
+    const names = new Set<string>();
+    if (appearance?.fontBytes) {
+      const { default: fontkit } = await import('@pdf-lib/fontkit');
+      doc.registerFontkit(fontkit);
+    }
+    const font = await doc.embedFont(appearance?.fontBytes || StandardFonts.Helvetica, {
+      subset: true,
+    });
     for (const item of draft.fields) {
       check(signal);
       if (item.deleted) {
@@ -491,14 +498,14 @@ export async function saveDocumentDraft(
           width: Math.abs(b[0] - a[0]),
           height: Math.abs(b[1] - a[1]),
         };
-        const appearance = {
+        const fieldAppearance = {
           x: rect.x,
           y: rect.y,
           width: r.w * viewport.width,
           height: r.h * viewport.height,
-          borderWidth: 1,
+          borderWidth: appearance?.plainFields ? 0 : 1,
           borderColor: rgb(0.1, 0.5, 0.51),
-          backgroundColor: rgb(1, 1, 1),
+          backgroundColor: appearance?.plainFields ? undefined : rgb(1, 1, 1),
           textColor: rgb(0.08, 0.15, 0.16),
           rotate: degrees(page.rotate),
           font,
@@ -508,7 +515,7 @@ export async function saveDocumentDraft(
           field instanceof PDFDropdown ||
           field instanceof PDFCheckBox
         )
-          field.addToPage(doc.getPage(widget.page), appearance);
+          field.addToPage(doc.getPage(widget.page), fieldAppearance);
         field.acroField.getWidgets().at(-1)!.setRectangle(rect);
         if (field instanceof PDFTextField) {
           if (!Number.isFinite(item.fontSize) || item.fontSize < 6 || item.fontSize > 48)

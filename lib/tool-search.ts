@@ -2,6 +2,25 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'form-helper': [
+    'Profil',
+    'Stammdaten',
+    'Adresse eintragen',
+    'Anmeldung ausfüllen',
+    'Formularhelfer',
+    'form helper',
+    'autofill',
+    'personal details',
+  ],
+  'receipts-a4': [
+    'Kassenbons',
+    'Quittungen',
+    'Belege auf A4',
+    'Bon drucken',
+    'receipt collage',
+    'collect receipts',
+    'print receipts',
+  ],
   'klar-schiff': [
     'Klar Schiff',
     'Papierchaos',

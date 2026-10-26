@@ -26,6 +26,7 @@ import { Choice, PageStage, PageSelect } from './advanced-shared';
 import { SplitSizePanel } from './expansion-panels';
 import { RepairPanel, ReadingPanel, ScanSplitPanel } from './recovery-panels';
 import { LocalAssistantPanel } from './local-assistant-panel';
+import { FormHelperPanel, ReceiptsPanel } from './everyday-panels';
 import { KlarSchiffPanel } from './klar-schiff-panel';
 import { NativePanel } from './native-panel';
 import { ProPanel } from './pro-panels';
@@ -154,6 +155,7 @@ export function AdvancedWorkbench({
     multi = (
       [
         'klar-schiff',
+        'receipts-a4',
         'local-assistant',
         'bates',
         'continuous-page',
@@ -232,6 +234,8 @@ export function AdvancedWorkbench({
           <div className="advanced-empty">{ui('Bitte zuerst eine PDF öffnen.')}</div>
         ) : (
           <>
+            {tool === 'form-helper' && <FormHelperPanel {...newProps} />}
+            {tool === 'receipts-a4' && <ReceiptsPanel {...newProps} />}
             {tool === 'klar-schiff' && <KlarSchiffPanel {...newProps} />}
             {tool === 'local-assistant' && <LocalAssistantPanel {...props} />}
             {tool === 'native-objects' && <NativePanel key={source.id} {...props} />}
@@ -310,7 +314,10 @@ export function AdvancedWorkbench({
                 onAuditState={onAuditState}
                 auditSources={sources}
                 auditPages={
-                  tool !== 'klar-schiff' && source && result.pages === source.pdf.numPages
+                  tool !== 'klar-schiff' &&
+                  tool !== 'receipts-a4' &&
+                  source &&
+                  result.pages === source.pdf.numPages
                     ? sourcePages(source)
                     : undefined
                 }

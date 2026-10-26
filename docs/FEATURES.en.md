@@ -29,6 +29,12 @@ Unfinished offscreen previews are cancelled immediately so newly visible pages d
 Physical iPhone/iPad/Android/Windows touch devices and native Microsoft Word roundtrips remain separately pending; browser automation is not evidence of those checks. See the [device checklist](quality/editor-device-checklist.md).
 
 
+## Form helper and receipts on A4
+
+**Form helper** stores up to ten profiles locally on explicit save. Exact field labels suggest values for empty text fields; existing values and ambiguous labels are kept unchanged. Manually assign details or place transparent text fields on scans. Review the original before export. Optional flattening makes values permanent. Profiles stay unencrypted in browser storage and are separate from project exports; form drafts are retained in projects. Signed PDFs and dynamic XFA are rejected. New text that does not fit or uses unsupported characters blocks export.
+
+**Collect receipts on A4** crops individual receipts from photos or PDFs, including several crops from one scan. Choose order, captions, numbering and print widths of 30–190 mm. The A4 preview uses the export layout. Long receipts are split into numbered parts at the selected width; excessively wide items require correction. Export uses cropped page images, without original text layers, links, forms, attachments or signatures. Up to 200 receipts, 400 placed parts and 80 MB of output; crops are rendered at up to about four megapixels. Print at 100% / Actual size. Crops and layout are saved in projects.
+
 ## Browser and document server
 
 Many tools run locally in the browser. The complete Docker installation adds an automatically connected document server. Server jobs start only when you press the respective action button. The PDF editor automatically prepares visible pages and recognises scans locally.

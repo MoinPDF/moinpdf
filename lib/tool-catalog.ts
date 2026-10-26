@@ -77,6 +77,26 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'form-helper',
+    title: 'Formularhelfer',
+    description:
+      'Wiederkehrende Angaben in lokalen Profilen speichern, Formularfelder zuordnen und Einträge auf Scans platzieren.',
+    icon: ClipboardPen,
+    group: 3,
+    action: 'Formular vorbereiten',
+    fresh: true,
+  },
+  {
+    id: 'receipts-a4',
+    title: 'Belege auf A4 sammeln',
+    description:
+      'Kassenbons und Quittungen zuschneiden, beschriften und in lesbarer Größe auf A4-Blättern anordnen.',
+    icon: ReceiptText,
+    group: 2,
+    action: 'Belege zusammenstellen',
+    fresh: true,
+  },
+  {
     id: 'klar-schiff',
     title: 'Klar Schiff',
     description:
