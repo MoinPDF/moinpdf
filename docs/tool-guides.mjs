@@ -2,6 +2,28 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+  "form-helper": {
+  "input": "Eine PDF mit Formularfeldern oder ein Scan; wiederkehrende Angaben wie Name und Anschrift.",
+  "steps": [
+    "Lege unter „Formularhelfer“ deine Angaben an. Ergänze eigene Bezeichnungen. Ein benanntes Profil wird erst über „Profil speichern“ lokal gespeichert; bestehende Profile lassen sich auswählen, kopieren oder löschen.",
+    "Lade die Formularfelder und wähle „Angaben vorschlagen“. Nur eindeutige Bezeichnungen leerer Textfelder werden zugeordnet. Prüfe jedes Feld am Original, ordne Angaben manuell zu und korrigiere bei Bedarf den Feldinhalt.",
+    "Bei Scans: Angabe wählen und einen Bereich auf der Seite aufziehen oder „Bereich hinzufügen“ verwenden. Position und Größe lassen sich über Prozentwerte, Ziehgriffe und Schriftgröße anpassen.",
+    "Bestätige die Prüfung und erstelle die ausgefüllte PDF. Optional werden Formularwerte dauerhaft festgeschrieben. Prüfe die Ergebnisvorschau und lade die PDF herunter."
+  ],
+  "output": "Ausgefüllte PDF mit erhaltenen oder optional festgeschriebenen Formularfeldern. Auf Scans platzierte Angaben haben einen transparenten Hintergrund.",
+  "note": "Bis zu zehn lokale Profile mit je 30 Angaben und 500 Zeichen pro Angabe. Profile bleiben unverschlüsselt im Browser und werden nicht mit Projektdateien übertragen; bearbeitete Formularfelder gehören zum Arbeitsstand. Keine automatische Erkennung von Beschriftungen auf Scans. Vorhandene Werte, Checkboxen und Auswahlfelder bleiben bei Vorschlägen erhalten. Signierte PDFs und dynamische XFA-Formulare werden abgewiesen. Nicht unterstützte Zeichen und überlaufende neue Einträge werden vor dem Export gemeldet."
+},
+  "receipts-a4": {
+  "input": "Fotos oder PDFs mit Kassenbons und Quittungen, gemeinsam im Arbeitsbereich geöffnet.",
+  "steps": [
+    "Wähle „Belege auf A4 sammeln“ und „Belege laden“. Jede geöffnete Seite wird zunächst als ein Beleg übernommen.",
+    "Wähle einen Beleg und ziehe einen Zuschnittrahmen auf. Korrigiere die Prozentwerte bei Bedarf. Für mehrere Belege auf einem Scan verwende „Weiterer Beleg auf dieser Seite“ und schneide den neuen Ausschnitt zu.",
+    "Bestimme die Druckbreite in Millimetern, optional eine Beschriftung und die Reihenfolge. Drehen setzt den Zuschnitt zurück. Entfernte Belege lassen sich mit „Letzten Beleg wiederherstellen“ zurückholen.",
+    "Stelle Seitenrand, Abstand und Nummerierung ein. Prüfe die A4-Vorschau und erzeuge die PDF. Lange Belege werden bei gleicher Druckbreite in gekennzeichnete Teile auf passende A4-Blätter verteilt. Drucke mit 100 % / Tatsächliche Größe."
+  ],
+  "output": "Eine A4-PDF mit zugeschnittenen Belegbildern, optionalen Nummern und Beschriftungen. Zuschnitte und Anordnung bleiben in Projektdateien erhalten.",
+  "note": "Bis zu 200 Belege, 400 platzierte Teile und 80 MB Ausgabe. Druckbreite 30–190 mm, Seitenrand 5–25 mm, Abstand 2–20 mm. Die gewählte Breite wird nicht automatisch verkleinert; zu breite Belege müssen angepasst werden. Bildausschnitte werden mit bis zu rund vier Megapixeln gerendert. Originale bleiben unverändert; Suchtext, Links, Formularfelder, Anhänge und digitale Signaturen werden nicht übernommen."
+},
   'klar-schiff': guide('Eine oder mehrere PDFs, Scans oder Bilder im Arbeitsbereich.', [
     'Öffne unter Stapel das Werkzeug Klar Schiff und starte Stapel erkennen. Dokumentnummer, Absender, Datum und gedruckte Seitenzählung liefern Zuordnungsvorschläge; Scans werden lokal per OCR gelesen.',
     'Prüfe jedes Dokument in der Originalvorschau. Korrigiere Titel, Absender, Datum und Dateiname. Ordne Seiten einem anderen oder neuen Dokument zu, ändere die Reihenfolge oder lasse eine Seite bewusst aus. Bestätige jedes geprüfte Dokument.',

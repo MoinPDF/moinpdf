@@ -11,6 +11,11 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Unveröffentlicht — Klar Schiff und englische Sprachausgabe
 
+- Formularhelfer mit ausdrücklich gespeicherten lokalen Profilen, vorsichtigen Vorschlägen für leere Formularfelder, manueller Zuordnung und transparenten Einträgen auf Scans. Geprüfter PDF-Export, optionale Fixierung, Unicode-Schrift und Projektentwürfe.
+- Belege auf A4 sammeln mit Zuschnitt, mehreren Belegen von einer Scan-Seite, Reihenfolge, Beschriftungen, Nummerierung, millimetergenauer Druckbreite und gemeinsamer Vorschau-/Exportanordnung. Lange Belege behalten ihre Breite und werden in gekennzeichneten Teilen fortgesetzt.
+- Deutsche und englische Oberfläche und Anleitungen, synthetische PDF-Rundlauf- und Bildprüfungen sowie Browserregressionen für beide Abläufe.
+
+
 - Klar Schiff unter Stapel: lokale Text-/OCR-Erkennung, konservative Dokumentgruppen, Originalvorschau, bearbeitbare Zuordnungen/Dateinamen/Reihenfolge, Duplikat- und Seitenlückenhinweise, ausdrückliche Prüfung, gespeicherte Arbeitsstände und echte Einzel-PDF-ZIPs oder verlinkte Dokumentenmappen.
 - Vorlesesprache unabhängig von der Oberfläche, zusätzlich zu deutschen Stimmen das fest versionierte lokale LJ-Speech-Modell für US-Englisch. Verfügbare Stimmen werden nach Sprache angeboten; fehlende englische Modelle sperren deutsche Stimmen nicht und führen zu keinem stillen Sprachwechsel.
 - Deutsche/englische Anleitung, Modellhinweise, Regressionen für Originalseiten und Exporte, echte Spracherzeugung und Browserabnahme ergänzt.

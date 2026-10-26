@@ -33,8 +33,8 @@ MoinPDF ist eine Webanwendung zum Erstellen, Bearbeiten und Umwandeln von PDFs u
 
 | Dein Vorhaben | Passende Werkzeuge |
 | --- | --- |
-| **Seiten in Ordnung bringen** | Zusammenfügen, teilen, drehen, sortieren, zuschneiden, nummerieren, Lesezeichen und Posterdruck |
-| **PDFs bearbeiten** | Texte und Originalobjekte, Absätze mit Vorschau, Bilder, Notizen, Markierungen, Schwärzungen und Formulare |
+| **Seiten in Ordnung bringen** | Zusammenfügen, teilen, drehen, sortieren, zuschneiden, nummerieren, Lesezeichen, Posterdruck und Belege auf A4 |
+| **PDFs bearbeiten** | Texte und Originalobjekte, Absätze mit Vorschau, Bilder, Notizen, Markierungen, Schwärzungen, Formulare und Formularhelfer mit lokalen Profilen |
 | **Scans lesbar machen** | OCR mit 21 Sprachen, bis zu acht kombiniert, durchsuchbare PDFs, Scanverbesserung und Kamerascanner |
 | **Dateien umwandeln** | Bilder, Text, Tabellen und lokales Office; mit Server zusätzlich erweiterte Office-Formate, E-Mails und Website-Links |
 | **Inhalte überprüfen** | Text- und Bildvergleich, Zahlen, Rechenprüfung, Dokumentlücken und Berichte mit Fundstellen |

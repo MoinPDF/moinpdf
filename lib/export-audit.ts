@@ -71,6 +71,7 @@ async function summarize(
   }
 }
 const preserveText = new Set([
+  'form-helper',
   'compress',
   'watermark',
   'numbers',
@@ -123,7 +124,8 @@ export async function auditPdfExport(
               if (a !== b) result.issues.push({ code, page: index + 1, before: a, after: b });
             };
             issue('links', before.links, after.links);
-            issue('forms', before.forms, after.forms);
+            // This workflow deliberately adds or flattens form fields.
+            if (tool !== 'form-helper') issue('forms', before.forms, after.forms);
             if (
               Math.abs(before.width - after.width) > 1 ||
               Math.abs(before.height - after.height) > 1

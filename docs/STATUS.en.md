@@ -1,5 +1,7 @@
 # Implementation status
 
+Form helper and receipt collection on A4 are integrated browser tools. Profile suggestions, manual scan entries, receipt crops, A4 layout and project drafts are described in [Features](FEATURES.en.md#form-helper-and-receipts-on-a4); the in-app manual provides the steps. Labels on scans are not detected automatically.
+
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
 As of 26 October 2026 · Version 0.22.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.

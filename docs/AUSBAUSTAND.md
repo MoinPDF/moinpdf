@@ -1,5 +1,7 @@
 # Ausbau nach dem Funktionsvergleich
 
+Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvorschläge, manuelle Scan-Einträge, Belegzuschnitt, A4-Anordnung und Projektentwürfe sind im [Funktionsumfang](FUNKTIONEN.md#formularhelfer-und-belege-auf-a4) beschrieben; die Anleitung in der App enthält die einzelnen Arbeitsschritte. Keine automatische Beschriftungserkennung auf Scans.
+
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
 Stand: 26. Oktober 2026 · Version 0.22.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).

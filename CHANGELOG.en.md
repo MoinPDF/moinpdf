@@ -6,6 +6,11 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased — Clear Deck and English narration
 
+- Form helper with explicitly saved local profiles, conservative suggestions for empty form fields, manual assignment and transparent scan entries. Reviewed PDF export, optional flattening, Unicode font and project drafts.
+- Receipt collection on A4 with cropping, multiple receipts from one scan, ordering, captions, numbering, millimetre print width and a shared preview/export layout. Long receipts keep their width and continue across A4 sheets as needed.
+- German and English UI and manuals, synthetic PDF round-trip and rendering checks, and browser regression coverage for both workflows.
+
+
 - Clear Deck under Batch: local text/OCR recognition, conservative document groups, original previews, editable assignments/filenames/order, duplicate and page-gap notes, explicit review, persistent drafts and actual individual-PDF ZIP or linked document-bundle exports.
 - Narration language independent of the interface, with the pinned local LJ Speech US-English model in addition to the German voices. Available voices are selected per language; missing English models do not disable German narration or silently substitute it.
 - German/English manuals, model notices, source-page/export regressions, real speech synthesis and browser acceptance updated.
