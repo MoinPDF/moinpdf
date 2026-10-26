@@ -77,6 +77,16 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'header-footer-cleanup',
+    title: 'Kopf- und Fußzeilen bereinigen',
+    description:
+      'Wiederkehrende Randtexte und Seitenzahlen erkennen, Fundstellen prüfen und ausgewählte Kopf- oder Fußbereiche entfernen.',
+    icon: Eraser,
+    group: 3,
+    action: 'Randbereiche bereinigen',
+    fresh: true,
+  },
+  {
     id: 'form-helper',
     title: 'Formularhelfer',
     description:

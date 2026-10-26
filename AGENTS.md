@@ -9,6 +9,8 @@
 - Publish an updated existing Site when requested work changes that Site; preserve
   its audience. A GitHub merge does not require a new release or Docker tag unless
   the task requests one.
+- Update German and English user documentation and changelogs alongside changes
+  to tools, controls, output behavior or limits.
 - Keep private customer PDFs, document text and screenshots out of the repository,
   CI artifacts and public reports. Use licensed public or clearly fictional fixtures.
 - Report browser automation, touch emulation, native Safari and physical-device

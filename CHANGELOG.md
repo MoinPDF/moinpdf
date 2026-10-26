@@ -11,6 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Unveröffentlicht — Klar Schiff und englische Sprachausgabe
 
+- Kopf- und Fußzeilen bereinigen: wiederkehrende Randtexte und wechselnde Seitenzahlen, prüfbare Einzeltreffer mit Ausnahmen, manuelle Scan-Bereiche und weiße Vorschau. Tatsächliche Inhaltsentfernung mit unabhängiger Text-, Geometrie- und Anmerkungsprüfung, Projektentwürfen sowie deutscher und englischer Anleitung.
 - Formularhelfer mit ausdrücklich gespeicherten lokalen Profilen, vorsichtigen Vorschlägen für leere Formularfelder, manueller Zuordnung und transparenten Einträgen auf Scans. Geprüfter PDF-Export, optionale Fixierung, Unicode-Schrift und Projektentwürfe.
 - Belege auf A4 sammeln mit Zuschnitt, mehreren Belegen von einer Scan-Seite, Reihenfolge, Beschriftungen, Nummerierung, millimetergenauer Druckbreite und gemeinsamer Vorschau-/Exportanordnung. Lange Belege behalten ihre Breite und werden in gekennzeichneten Teilen fortgesetzt.
 - Deutsche und englische Oberfläche und Anleitungen, synthetische PDF-Rundlauf- und Bildprüfungen sowie Browserregressionen für beide Abläufe.

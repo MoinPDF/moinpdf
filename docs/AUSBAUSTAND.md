@@ -1,5 +1,7 @@
 # Ausbau nach dem Funktionsvergleich
 
+„Kopf- und Fußzeilen bereinigen“ ergänzt Bearbeiten & bereinigen: wiederkehrende Randtexte, einzeln prüfbare Ausnahmen und manuelle Scan-Bereiche. Bedienung und Grenzen: [Funktionen](FUNKTIONEN.md#kopf--und-fußzeilen-bereinigen).
+
 Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvorschläge, manuelle Scan-Einträge, Belegzuschnitt, A4-Anordnung und Projektentwürfe sind im [Funktionsumfang](FUNKTIONEN.md#formularhelfer-und-belege-auf-a4) beschrieben; die Anleitung in der App enthält die einzelnen Arbeitsschritte. Keine automatische Beschriftungserkennung auf Scans.
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)

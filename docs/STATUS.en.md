@@ -1,5 +1,7 @@
 # Implementation status
 
+Clean up headers and footers adds recurring margin detection, individual exceptions and manual scan areas to Edit & clean up. See [Features](FEATURES.en.md#clean-up-headers-and-footers) for usage and limits.
+
 Form helper and receipt collection on A4 are integrated browser tools. Profile suggestions, manual scan entries, receipt crops, A4 layout and project drafts are described in [Features](FEATURES.en.md#form-helper-and-receipts-on-a4); the in-app manual provides the steps. Labels on scans are not detected automatically.
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)

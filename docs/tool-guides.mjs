@@ -2,6 +2,18 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+  "header-footer-cleanup": {
+  "input": "Eine PDF mit wiederkehrenden Randtexten, alten Seitenzahlen oder manuell markierbaren Kopf- und Fußbereichen.",
+  "steps": [
+    "Wähle unter „Bearbeiten & bereinigen“ das Werkzeug „Kopf- und Fußzeilen bereinigen“. Stelle Kopfzeilen, Fußzeilen und Suchränder von 3–25 % ein. „Wechselnde Seitenzahlen erkennen“ fasst passende Seitenzählungen zusammen.",
+    "Starte „Kopf- und Fußzeilen erkennen“. Vorschläge entstehen aus auslesbaren Textzeilen an ähnlicher Position auf mindestens zwei Seiten. Eine neue Erkennung oder geänderte Suchränder ersetzen die Trefferliste.",
+    "Prüfe jede Fundstelle über „Anzeigen“ am Original. Nimm einzelne Treffer aus oder ändere die gesamte Auswahl. Mit „Bereinigungsvorschau“ siehst du die geplanten weißen Löschbereiche. Die Seitennavigation zeigt auch Seiten ohne Treffer.",
+    "Für einzelne Seiten oder reine Scans: „Bereich manuell markieren“, einen Bereich aufziehen oder Prozentwerte eingeben und „Randbereich hinzufügen“ wählen. Der Bereich muss vollständig im oberen oder unteren Seitenviertel liegen. Auf allen Seiten wird dieselbe relative Position verwendet; unterschiedliche Formate einzeln prüfen.",
+    "Bestätige die Prüfung aller Fundstellen und Ausnahmen. Erstelle die bereinigte PDF, prüfe das Ergebnis und lade die neue Kopie herunter. Jede Änderung der Auswahl setzt die Bestätigung zurück und verwirft ein veraltetes Ergebnis."
+  ],
+  "output": "Eine bereinigte PDF-Kopie mit tatsächlich entfernten Seiteninhalten in den bestätigten Bereichen und weißer Füllung. Ausgeschlossene Fundstellen bleiben erhalten. Erkennungseinstellungen, Treffer und Ausnahmen werden in Projektdateien gespeichert; die Prüfbestätigung wird nicht gespeichert.",
+  "note": "Bis zu 200 Seiten, 2.000 Fundstellen und 80 MB. Keine automatische OCR bei reinen Scans; dort Bereiche manuell markieren oder zuerst OCR verwenden. Bilder und Linien innerhalb ausgewählter Bereiche werden ebenfalls entfernt. Vollständig erfasste Links werden gelöscht, angeschnittene Links und Textzeilen sowie berührte Kommentare oder Formularfelder sperren den Export. Übriger auslesbarer Text, Seitenzahl, sichtbare Seitengrößen und verbleibende Anmerkungen werden unabhängig geprüft. Bei unklaren Textpositionen oder Abweichungen wird keine Ausgabe bereitgestellt. Signierte PDFs und dynamische XFA werden abgewiesen. Anhänge, Dokumentinfos und Barrierefreiheits-Tags sind kein Bereinigungsziel; dies ersetzt keine vollständige Anonymisierung. Das Original bleibt unverändert."
+},
   "form-helper": {
   "input": "Eine PDF mit Formularfeldern oder ein Scan; wiederkehrende Angaben wie Name und Anschrift.",
   "steps": [

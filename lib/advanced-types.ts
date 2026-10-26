@@ -1,4 +1,5 @@
 export const advancedToolIds = [
+  'header-footer-cleanup',
   'form-helper',
   'receipts-a4',
   'klar-schiff',

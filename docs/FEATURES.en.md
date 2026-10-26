@@ -29,6 +29,12 @@ Unfinished offscreen previews are cancelled immediately so newly visible pages d
 Physical iPhone/iPad/Android/Windows touch devices and native Microsoft Word roundtrips remain separately pending; browser automation is not evidence of those checks. See the [device checklist](quality/editor-device-checklist.md).
 
 
+## Clean up headers and footers
+
+Recurring extractable margin text is suggested at similar positions on at least two pages. Headers and footers are selected separately, with search margins of 3–25%. Changing page numbers can be grouped. Exclude individual matches and review them against the original; cleanup preview shows white removal areas. Image-only scans and individual pages support manual areas within the top or bottom quarter, on the current page or at the same relative position on all pages.
+
+Export actually removes content, including images and lines inside confirmed areas and fully enclosed links. Partially enclosed text lines or links, overlapping comments/form fields and conflicting exceptions block export. Remaining extractable text, page count, visible page sizes and remaining annotations are independently checked. Up to 200 pages, 2,000 matches and 80 MB. No automatic OCR for image-only scans. Signed PDFs and dynamic XFA are rejected. Attachments, metadata and accessibility tags are not specifically cleaned; this does not replace full anonymisation. Drafts are saved in projects; review must be confirmed again after changes.
+
 ## Form helper and receipts on A4
 
 **Form helper** stores up to ten profiles locally on explicit save. Exact field labels suggest values for empty text fields; existing values and ambiguous labels are kept unchanged. Manually assign details or place transparent text fields on scans. Review the original before export. Optional flattening makes values permanent. Profiles stay unencrypted in browser storage and are separate from project exports; form drafts are retained in projects. Signed PDFs and dynamic XFA are rejected. New text that does not fit or uses unsupported characters blocks export.
