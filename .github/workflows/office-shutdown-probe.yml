@@ -1,0 +1,75 @@
+name: Office shutdown comparison
+on:
+  push:
+    branches: [codex/office-shutdown-probe]
+permissions:
+  contents: read
+jobs:
+  compare:
+    name: Office shutdown ${{ matrix.mode }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [parent-delayed, self-only]
+    env:
+      MOINPDF_TEST_URL: http://localhost:8080
+      OFFICE_SHUTDOWN_VARIANT: ${{ matrix.mode }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Prepare isolated shutdown variant
+        run: |
+          python - <<'PY'
+          import os, json, hashlib
+          from pathlib import Path
+          mode=os.environ['OFFICE_SHUTDOWN_VARIANT']
+          p=Path('lib/browser-office.ts')
+          src=p.read_text()
+          old="if (data.type === 'ready' && data.id === 3) complete();"
+          assert src.count(old)==1
+          if mode=='parent-delayed':
+              src=src.replace(old,"if (data.type === 'ready' && data.id === 3) { clearTimeout(cleanupTimer); setTimeout(complete, 500); }")
+          else:
+              src=src.replace("const complete = () => {","const complete = (force = true) => {")
+              src=src.replace("activeWorker.terminate();","if (force) activeWorker.terminate();")
+              src=src.replace("activeWorker.onerror = complete;","activeWorker.onerror = () => complete();")
+              src=src.replace(old,"if (data.type === 'ready' && data.id === 3) { clearTimeout(cleanupTimer); setTimeout(() => complete(false), 250); }")
+              patches=Path('public/component-notices/browser-office/MOINPDF-PATCHES.json')
+              data=json.loads(patches.read_text())
+              for patch in data['replacements']:
+                  if 'setTimeout(()=>self.close(),100)' in patch['before']:
+                      patch['after']=patch['before']
+              data['id']='moinpdf-shutdown-probe-self-only'
+              patches.write_text(json.dumps(data,indent=2)+'\n')
+              checksum=patches.parent/'NOTICES.sha256'
+              lines=checksum.read_text().splitlines()
+              lines=[hashlib.sha256(patches.read_bytes()).hexdigest()+'  MOINPDF-PATCHES.json' if line.endswith('  MOINPDF-PATCHES.json') else line for line in lines]
+              checksum.write_text('\n'.join(lines)+'\n')
+          p.write_text(src)
+          print('Isolated variant:',mode)
+          PY
+      - name: Build and start exact test variant
+        run: |
+          docker build -t moinpdf-office-probe .
+          docker run -d --name moinpdf-office-probe -p 8080:8080 -e MOINPDF_API_KEY=synthetic-local-model-test-key-00000000 moinpdf-office-probe
+          curl --fail --retry 20 --retry-all-errors --retry-delay 1 http://localhost:8080/ -o /dev/null
+      - name: Install pinned browser runtime
+        run: |
+          bash scripts/ci-prepare-apt.sh
+          python -m pip install playwright==1.64.0 pymupdf==1.28.2 python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 Pillow==11.3.0
+          python -m playwright install --with-deps chromium
+      - name: Two complete real conversion and native-thread cleanup runs
+        run: |
+          for round in 1 2; do
+            python tests/browser-office-browser.py
+          done
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: office-shutdown-${{ matrix.mode }}
+          path: web-evidence/
+          retention-days: 14
+      - name: Cleanup
+        if: always()
+        run: docker rm -f moinpdf-office-probe || true
