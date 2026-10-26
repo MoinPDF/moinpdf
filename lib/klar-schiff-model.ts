@@ -103,17 +103,15 @@ function inspectPage(page: EvidencePage): KlarPage {
     excerpt: text.slice(0, 1600),
     warnings,
     duplicateOf: '',
-    layout: page.words
-      .slice(0, 1200)
-      .map(({ id, text, x, y, w, h, confidence }) => ({
-        id,
-        text,
-        x,
-        y,
-        w,
-        h,
-        ...(confidence === undefined ? {} : { confidence }),
-      })),
+    layout: page.words.slice(0, 1200).map(({ id, text, x, y, w, h, confidence }) => ({
+      id,
+      text,
+      x,
+      y,
+      w,
+      h,
+      ...(confidence === undefined ? {} : { confidence }),
+    })),
   };
 }
 

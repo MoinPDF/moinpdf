@@ -55,7 +55,7 @@ with sync_playwright() as api:
                 def open_tool(path):
                     page.goto(origin+('?lang=en' if en else '?lang=de'))
                     page.locator('input[type=file]').first.set_input_files(str(path.resolve()))
-                    expect(page.locator('.chooser-tool')).to_have_count(117)
+                    expect(page.locator('.chooser-tool')).to_have_count(118)
                     page.locator('.chooser-tool').filter(has=page.get_by_text(t('Kopf- und Fußzeilen bereinigen','Clean up headers and footers'),exact=True)).click()
                     expect(page.get_by_role('heading',name=t('Kopf- und Fußzeilen bereinigen','Clean up headers and footers'),exact=True)).to_be_visible()
                 def no_overflow():assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2'),name

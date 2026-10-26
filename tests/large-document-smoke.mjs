@@ -27,6 +27,15 @@ try{
  assert.throws(()=>e.checkLargeStructure({pages:[{}],qpdf:[{'/Outlines':'1 0 R'}]}),/Lesezeichen/);
  assert.throws(()=>e.checkLargeStructure({pages:[{}],encrypt:{encrypted:true},qpdf:[]}),/unverschlüsselte/);
  await writeFile(`.cache/large-document/fictional-${count}.pdf`,bytes);await writeFile(`.cache/large-document/rotated-${count}.pdf`,new Uint8Array(await output.blob.arrayBuffer()));
+
+ // Quota rejection leaves the last checkpoint intact; corrupted output is never released.
+ await s.withLargeLease(job.id,async token=>{
+  await assert.rejects(()=>s.saveLargeJob({...finished,size:768*1024*1024},token),/Ablage.*voll/);
+ });
+ assert.equal((await s.loadLargeJob(job.id)).size,finished.size);
+ await s.withLargeLease(job.id,token=>s.saveLargeJob(finished,token,new Blob(['corrupt']),0));
+ await assert.rejects(()=>e.assembleLargeJob(job.id,ctx),/beschädigt/);
+ await assert.rejects(()=>e.exportLargeChunk(job.id,0,ctx),/beschädigt/);
  await s.deleteLargeJob(job.id);assert.equal((await s.listLargeJobs()).length,0);assert.equal(await s.largeOriginal(job.id),undefined);assert.equal(await s.largeChunkBlob(job.id,0),undefined);
  console.log('PASS: '+count+' real PDF pages, file-range reading, QPDF WORKERFS extraction/assembly, full-page verification, durable checkpoints, cancellation/resume, tab leases, chunk export, incompatible replacement, corruption, unsupported structures and deletion.');
 }finally{await close();}

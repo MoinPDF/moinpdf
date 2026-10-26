@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
-import {PDFDocument,StandardFonts,PDFName,PDFString,rgb,degrees} from 'pdf-lib';
+import {PDFDocument,StandardFonts,PDFName,PDFString,PDFRawStream,decodePDFRawStream,rgb,degrees} from 'pdf-lib';
 import {setup} from './optimization-test-setup.mjs';
 const {source,ctx,close}=await setup('native-redaction');
 const {redactPreservingContent}=await import('../.cache/native-redaction/native-redaction.mjs');
@@ -15,6 +15,11 @@ try{
  const result=await redactPreservingContent(input,regions,ctx),out=await source(await result.blob.arrayBuffer(),'redacted.pdf');
  assert.equal(out.pdf.numPages,4);for(let i=0;i<4;i++){assert(!(await text(out,i)).includes('SECRET'));assert((await text(out,i)).includes('KEEP searchable'));assert.equal((await out.pdf.getPage(i+1)).rotate,i*90);assert.equal((await(await out.pdf.getPage(i+1)).getAnnotations())[0].url,'https://example.test/keep');}
  assert.equal((await PDFDocument.load(out.bytes)).getTitle(),undefined);assert.deepEqual(input.bytes,original);
+ const parsed=await PDFDocument.load(out.bytes);
+ for(const [,object] of parsed.context.enumerateIndirectObjects())if(object instanceof PDFRawStream){const decoded=Buffer.from(decodePDFRawStream(object).decode()).toString('latin1');assert(!decoded.includes(secret));assert(!decoded.toUpperCase().includes(Buffer.from(secret).toString('hex').toUpperCase()));}
+ const linkedDoc=await PDFDocument.load(input.bytes),annots=linkedDoc.getPage(0).node.Annots();annots.push(linkedDoc.context.register(linkedDoc.context.obj({Type:'Annot',Subtype:'Link',Rect:[55,701,150,705],A:{S:'URI',URI:PDFString.of('https://example.test/SECRET')}})));
+ const linked=await source(await linkedDoc.save(),'inside-link.pdf');const unlinked=await source(await(await redactPreservingContent(linked,regions,ctx)).blob.arrayBuffer(),'unlinked.pdf');assert.equal((await(await unlinked.pdf.getPage(1)).getAnnotations()).length,1);
+
  await writeFile('.cache/native-redaction/fictional.pdf',input.bytes);await writeFile('.cache/native-redaction/redacted.pdf',out.bytes);
  const partial={page:0,rect:{...regions[0].rect,w:.03}};await assert.rejects(()=>redactPreservingContent(input,[partial],ctx),/Textzeile|geeignet/);
  for(const kind of ['form','marked','signed','image']){

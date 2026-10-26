@@ -8,9 +8,16 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 
 ## Prüfplan für 0.23.0
 
-- 63 Engine-/DOM-Suiten einschließlich Klar Schiff, Formularprofilen, A4-Belegen und Kopf-/Fußzeilenbereinigung. Die neuen Browserabläufe prüfen tatsächliche PDF-Downloads in Chromium, Firefox und WebKit auf Desktop und mit schmaler Touch-Emulation.
+- 66 Engine-/DOM-Suiten einschließlich Klar Schiff, Formularprofilen, A4-Belegen und Kopf-/Fußzeilenbereinigung. Die neuen Browserabläufe prüfen tatsächliche PDF-Downloads in Chromium, Firefox und WebKit auf Desktop und mit schmaler Touch-Emulation.
 - Native Safari-Prüfung auf `macos-15-intel` mit unverändertem Testumfang; physische Geräte und iOS sind davon getrennt zu prüfen.
 - Freigabe erst nach erfolgreichen PR-Prüfungen und den erneuten Prüfungen des tatsächlichen `main`-Commits. Die vollständige Veröffentlichung umfasst zusätzlich vier Docker-Images mit amd64/arm64 und den Release samt unveränderlichen Image-Referenzen. Fehlende Runner oder übersprungene Prüfungen gelten nicht als erfolgreich.
+
+## Ergänzte Prüfungen: Schwärzung, große PDFs und Regeln
+
+- `native-redaction-smoke.mjs`: echte Textentfernung, vollständig erfasste Links, übrige Vektoren und Texte, vier Rotationen mit CropBox, bereinigte Metadaten und dekodierte Ausgabestreams; Abweisung unklarer Strukturen und Abbruch.
+- `large-document-smoke.mjs`: 101 Seiten über drei Abschnitte, Original- und Ausgabeprüfung, Abbruch/Fortsetzen, Sperren zwischen Tabs, atomare Ablehnung bei voller Ablage, beschädigte Abschnitte und vollständiges Löschen. Die Node-Canvas-Testumgebung ist kein Browser.
+- `optimizations-browser.py`: echte Produktions-Worker und Downloads, 1.000 Seiten im Desktop-Ablauf sowie eine 81-MiB-Eingabe mit schmaler Touch-Emulation. Jede Seite wird unabhängig mit PyMuPDF gelesen; keine physischen Geräte oder native Safari-Abdeckung dieser neuen Abläufe.
+- Klar-Schiff-Prüfungen: wiederverwendete Layoutregel, neue Dokumentnummer, konkurrierende Regeln, unsichere OCR, Schema und sichtbare Speicherung in DE/EN. Regeln bestätigen niemals Dokumente automatisch.
 
 ## Bisheriger Prüfplan für 0.22.0
 

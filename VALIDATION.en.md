@@ -6,9 +6,16 @@ The version number is in [package.json](package.json). A successful run provides
 
 ## Verification scope for 0.23.0
 
-- 63 engine/DOM suites include Clear Deck, form profiles, A4 receipts and header/footer cleanup. New browser flows inspect actual PDF downloads in Chromium, Firefox and WebKit on desktop and with narrow touch emulation.
+- 66 engine/DOM suites include Clear Deck, form profiles, A4 receipts and header/footer cleanup. New browser flows inspect actual PDF downloads in Chromium, Firefox and WebKit on desktop and with narrow touch emulation.
 - Native Safari verification on `macos-15-intel` retains the complete test scope; physical devices and iOS require separate checks.
 - Approval requires successful PR checks and fresh checks of the actual `main` commit. Complete publication also includes four Docker images with amd64/arm64 and the release with immutable image references. Unavailable runners and skipped checks do not count as successful verification.
+
+## Added coverage: redaction, large PDFs and rules
+
+- `native-redaction-smoke.mjs`: actual text removal, fully enclosed links, remaining vectors/text, four rotations with CropBoxes, cleaned metadata and decoded output streams; unsafe-structure rejection and cancellation.
+- `large-document-smoke.mjs`: 101 pages across three sections, original/output verification, cancellation/resume, cross-tab leases, atomic storage-cap rejection, corrupted sections and complete deletion. The Node Canvas test environment is not a browser.
+- `optimizations-browser.py`: actual production workers and downloads, a 1,000-page desktop workflow and an 81 MiB input with narrow touch emulation. PyMuPDF independently reads every output page; no physical-device or native Safari coverage of these new workflows.
+- Clear Deck checks: reused layout rule, new document number, competing rules, uncertain OCR, schema validation and visible DE/EN persistence. Rules never confirm documents automatically.
 
 ## Previous verification scope for 0.22.0
 

@@ -56,7 +56,7 @@ with sync_playwright() as api:
                 try:
                     page.goto(origin+('?lang=en' if en else '?lang=de'))
                     page.locator('input[type=file]').first.set_input_files(str(fixture.resolve()))
-                    expect(page.locator('.chooser-tool')).to_have_count(117)
+                    expect(page.locator('.chooser-tool')).to_have_count(118)
                     choose('Farben & Hintergrund ändern','Change colors & background')
                     # PagePreview intentionally renders only near the viewport.
                     for preview in page.locator('.document-color-preview section').all():
