@@ -38,8 +38,8 @@ export const english: Record<string, string> = {
   'Die Vorschau zeigt eine Seite. Die Ausgabe wendet die Einstellungen auf alle Seiten an. Maximal 200 Seiten und 80 MB.':
     'The preview shows one page. The output applies the settings to all pages. Up to 200 pages and 80 MB.',
   'Schreibgeschützte Formularfelder freigeben': 'Unlock read-only form fields',
-  'Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte bleiben erhalten. Andere Feldregeln und Passwortschutz werden dadurch nicht aufgehoben.':
-    'Choose which fields should be editable again in the new PDF. Existing values are kept. Other field rules and password protection remain in place.',
+  'Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte und andere Feldregeln bleiben erhalten.':
+    'Choose which fields should be editable again in the new PDF. Existing values and other field rules are preserved.',
   'Freigaben zurücknehmen': 'Reset unlocked fields',
   'Alle angezeigten Felder freigeben': 'Unlock all listed fields',
   'Freigegebene Felder bleiben ausfüllbar. Die Ausgabe wird nicht festgeschrieben.':

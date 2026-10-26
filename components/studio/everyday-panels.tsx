@@ -347,7 +347,7 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 <summary>{ui('Schreibgeschützte Formularfelder freigeben')}</summary>
                 <p>
                   {ui(
-                    'Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte bleiben erhalten. Andere Feldregeln und Passwortschutz werden dadurch nicht aufgehoben.',
+                    'Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte und andere Feldregeln bleiben erhalten.',
                   )}
                 </p>
                 <Button

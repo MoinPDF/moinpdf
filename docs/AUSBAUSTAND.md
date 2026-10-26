@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Die nächsten Vergleichslücken sind geschlossen: Farben & Hintergrund mit Vorlagen/Vorschau, gezielte Freigabe schreibgeschützter Formularfelder, Text erhaltender Zuschnitt und Duplex-Sortierung innerhalb einer PDF. Grenzen: Hintergrund liegt hinter deckenden Inhalten; Bildfarbkorrekturen verlieren Text/Felder/Links; CropBox blendet Randinhalte nur aus. Freigaben lösen keinen Passwortschutz. Einzel-PDF-Duplex verarbeitet höchstens 200 ausgewählte Seiten.
+Die nächsten Vergleichslücken sind geschlossen: Farben & Hintergrund mit Vorlagen/Vorschau, gezielte Freigabe schreibgeschützter Formularfelder, Text erhaltender Zuschnitt und Duplex-Sortierung innerhalb einer PDF. Grenzen: Hintergrund liegt hinter deckenden Inhalten; Bildfarbkorrekturen verlieren Text/Felder/Links; CropBox blendet Randinhalte nur aus. Einzel-PDF-Duplex verarbeitet höchstens 200 ausgewählte Seiten.
 
 „Kopf- und Fußzeilen bereinigen“ ergänzt Bearbeiten & bereinigen: wiederkehrende Randtexte, einzeln prüfbare Ausnahmen und manuelle Scan-Bereiche. Bedienung und Grenzen: [Funktionen](FUNKTIONEN.md#kopf--und-fußzeilen-bereinigen).
 

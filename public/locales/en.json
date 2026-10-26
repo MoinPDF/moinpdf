@@ -906,7 +906,7 @@
   "Linksbündig": "Align left",
   "Zentriert": "Centre",
   "Rechtsbündig": "Align right",
-  "Textfarbe": "Text color",
+  "Textfarbe": "Text colour",
   "Füllfarbe des entfernten Bereichs": "Fill colour of the removed area",
   "Füllfarbe": "Fill colour",
   "Deckkraft ·": "Opacity ·",
@@ -5783,7 +5783,6 @@
   "Deckende Flächen und Scans können den neuen Hintergrund verdecken. Unsichtbarer OCR-Text bleibt unsichtbar.": "Opaque fills and scans may cover the new background. Invisible OCR text stays invisible.",
   "Die Vorschau zeigt eine Seite. Die Ausgabe wendet die Einstellungen auf alle Seiten an. Maximal 200 Seiten und 80 MB.": "The preview shows one page. The output applies the settings to all pages. Up to 200 pages and 80 MB.",
   "Schreibgeschützte Formularfelder freigeben": "Unlock read-only form fields",
-  "Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte bleiben erhalten. Andere Feldregeln und Passwortschutz werden dadurch nicht aufgehoben.": "Choose which fields should be editable again in the new PDF. Existing values are kept. Other field rules and password protection remain in place.",
   "Freigaben zurücknehmen": "Reset unlocked fields",
   "Alle angezeigten Felder freigeben": "Unlock all listed fields",
   "Freigegebene Felder bleiben ausfüllbar. Die Ausgabe wird nicht festgeschrieben.": "Unlocked fields remain fillable. The output is not flattened.",
@@ -5844,5 +5843,6 @@
   "Seiten zuschneiden: Randinhalt entfernen oder den sichtbaren Bereich mit Texterhalt ändern.": "Crop pages: remove margins or change the visible area while preserving text.",
   "Die Formularfreigabe konnte nicht bestätigt werden.": "The form field unlock could not be verified.",
   "Bitte 2 bis 200 Seiten für die Duplex-Sortierung auswählen.": "Please select 2 to 200 pages for duplex collation.",
-  "Die Trennstelle muss zwischen der ersten und letzten ausgewählten Seite liegen.": "The split must fall between the first and last selected pages."
+  "Die Trennstelle muss zwischen der ersten und letzten ausgewählten Seite liegen.": "The split must fall between the first and last selected pages.",
+  "Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte und andere Feldregeln bleiben erhalten.": "Choose which fields should be editable again in the new PDF. Existing values and other field rules are preserved."
 }

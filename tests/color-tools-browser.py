@@ -62,7 +62,7 @@ with sync_playwright() as api:
                     for preview in page.locator('.document-color-preview section').all():
                         preview.scroll_into_view_if_needed()
                         expect(preview.locator('img')).to_be_visible(timeout=120000)
-                    label('Textfarbe','Text color').fill('#0000ff')
+                    label('Textfarbe','Text colour').fill('#0000ff')
                     label('Hintergrundfarbe','Background color').fill('#ffff00')
                     expect(button('Farben auf alle Seiten anwenden','Apply colors to all pages')).to_be_enabled(timeout=120000)
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')

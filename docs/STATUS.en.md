@@ -1,6 +1,6 @@
 # Implementation status
 
-The next comparison gaps are covered: colors and background with presets/preview, selective unlocking of read-only form fields, text-preserving crop and single-PDF duplex collation. Limits: backgrounds sit behind opaque content; image color adjustments lose text/fields/links; CropBox only hides margins. Field unlocking does not remove password protection. Single-PDF duplex accepts up to 200 selected pages.
+The next comparison gaps are covered: colors and background with presets/preview, selective unlocking of read-only form fields, text-preserving crop and single-PDF duplex collation. Limits: backgrounds sit behind opaque content; image color adjustments lose text/fields/links; CropBox only hides margins. Single-PDF duplex accepts up to 200 selected pages.
 
 Clean up headers and footers adds recurring margin detection, individual exceptions and manual scan areas to Edit & clean up. See [Features](FEATURES.en.md#clean-up-headers-and-footers) for usage and limits.
 
