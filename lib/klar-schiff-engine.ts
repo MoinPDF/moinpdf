@@ -5,6 +5,7 @@ import { pdfBlob, renderPage, sourcePages, requireAcroForm, type Source } from '
 import { writeBookmarks } from './document-tools';
 import { checkAbort, uniqueNames, type ExportFile, type RunContext } from './advanced-types';
 import { suggestKlarPlan, validateKlarPlan, type KlarPlan } from './klar-schiff-model';
+import { contentDigest } from './content-digest';
 
 export async function analyseKlarSchiff(sources: Source[], ctx: RunContext): Promise<KlarPlan> {
   const evidence = await readEvidence(sources, 'auto', {
@@ -19,10 +20,12 @@ export async function analyseKlarSchiff(sources: Source[], ctx: RunContext): Pro
     const { canvas } = await renderPage(source, sourcePages(source)[page.page], 700, ctx.signal);
     try {
       const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data;
-      const digest = await crypto.subtle.digest('SHA-256', pixels.buffer as ArrayBuffer);
       const hash =
         `${canvas.width}x${canvas.height}:` +
-        Array.from(new Uint8Array(digest), (n) => n.toString(16).padStart(2, '0')).join('');
+        (await contentDigest(
+          new Uint8Array(pixels.buffer, pixels.byteOffset, pixels.byteLength),
+          ctx.signal,
+        ));
       page.duplicateOf = fingerprints.get(hash) || '';
       if (!page.duplicateOf) fingerprints.set(hash, page.id);
     } finally {

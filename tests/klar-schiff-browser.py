@@ -41,6 +41,14 @@ with pymupdf.open() as document:
         for index, text in enumerate([sender, 'Rechnung N-100', 'Rechnungsdatum: 26.10.2026', 'Fictional services only', f'Seite {number} von {total}']):
             page.insert_text((45, 55 + index * 35), text, fontsize=16)
     document.save(source)
+duplicate_source = out / 'fictional-duplicate.pdf'
+with pymupdf.open(source) as document:
+    with pymupdf.open() as duplicate:
+        duplicate.insert_pdf(document, from_page=3, to_page=3)
+        duplicate.save(duplicate_source)
+    document.delete_page(3)
+    source_bytes = document.tobytes()
+source.write_bytes(source_bytes)
 
 reports = []
 with sync_playwright() as playwright:
@@ -68,8 +76,12 @@ with sync_playwright() as playwright:
                     return path
                 try:
                     page.goto(origin + ('?lang=en' if en else '?lang=de'))
-                    page.locator('input[type=file]').first.set_input_files(str(source.resolve()))
-                    choose(t('Klar Schiff', 'Clear Deck'))
+                    page.locator('input[type=file]').first.set_input_files([str(source.resolve()), str(duplicate_source.resolve())])
+                    shortcut = page.get_by_role('button', name=t('Mit Klar Schiff automatisch ordnen', 'Organise automatically with Clear Deck'), exact=True)
+                    expect(shortcut).to_be_visible()
+                    no_overflow()
+                    shortcut.click()
+                    expect(page.get_by_role('heading', name=t('Klar Schiff', 'Clear Deck'), exact=True)).to_be_visible()
                     page.get_by_role('button', name=t('Stapel erkennen', 'Recognise documents'), exact=True).click()
                     expect(page.locator('.klar-document')).to_have_count(2, timeout=120000)
                     expect(page.locator('.klar-summary')).to_contain_text(t('2 Dokumente vorgeschlagen','2 documents suggested'))

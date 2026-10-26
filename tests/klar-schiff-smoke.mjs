@@ -55,6 +55,14 @@ try {
   const a = await makePdf([invoice('Nordlicht GmbH', 'N-100', 2), invoice('Suedwind GmbH', 'N-100', 1, 1), invoice('Nordlicht GmbH', 'N-100', 1)], 'scrambled.pdf');
   const b = await makePdf([invoice('Nordlicht GmbH', 'N-100', 1)], 'duplicate.pdf');
   const plan = await e.analyseKlarSchiff([a, b], ctx);
+  const originalCrypto = globalThis.crypto;
+  try {
+    Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { getRandomValues: originalCrypto.getRandomValues.bind(originalCrypto) } });
+    const localHttp = await e.analyseKlarSchiff([a, b], ctx);
+    assert.deepEqual(localHttp, plan, 'Local HTTP without SubtleCrypto retains identical grouping and duplicate detection');
+  } finally {
+    Object.defineProperty(globalThis, 'crypto', { configurable: true, value: originalCrypto });
+  }
   assert.equal(plan.documents.length, 2, 'Same invoice number from different senders stays separate');
   const north = plan.documents.find((d) => d.sender === 'Nordlicht GmbH');
   assert.deepEqual(north.pageIds.map((id) => plan.pages.find((p) => p.id === id).number), [1, 1, 2]);

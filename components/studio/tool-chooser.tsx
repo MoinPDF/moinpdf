@@ -132,7 +132,12 @@ export function ToolChooser({
         </div>
         <div className="chooser-search-dock">
           {sources.length > 1 && (
-            <Button variant="ghost" disabled={locked} onClick={() => onChoose('klar-schiff')}>
+            <Button
+              variant="ghost"
+              className="h-auto min-h-9 max-w-full whitespace-normal text-left"
+              disabled={locked}
+              onClick={() => onChoose('klar-schiff')}
+            >
               <Anchor size={16} />
               {ui('Mit Klar Schiff automatisch ordnen')}
             </Button>
