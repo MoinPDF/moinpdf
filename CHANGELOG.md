@@ -11,6 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Noch nicht versioniert
 
+- Formularprofile behalten alle Angaben bei schnellen aufeinanderfolgenden Eingaben und beim automatischen Ausfüllen mehrerer Felder.
 - Lokale Office-Konvertierung: bestätigtes Herunterfahren läuft ohne einen zweiten, konkurrierenden Abbruch aus. Auch eine späte Bestätigung hebt den harten Zeitwächter auf; blockierte Laufzeiten werden weiterhin begrenzt abgebrochen. Strenge Prüfungen auf verbliebene Prozesse bleiben erhalten.
 - Farben & Hintergrund ändern: Textfarben ohne Schriftwechsel, Hintergrund hinter vorhandenen Inhalten, Vorlagen, Original-/Ergebnisvorschau und Bildmodus für Helligkeit, Kontrast und Sättigung.
 - Formularhelfer: einzelne oder alle unterstützten schreibgeschützten Felder freigeben, vorhandene Werte und andere Feldflags erhalten; keine gleichzeitige Fixierung.

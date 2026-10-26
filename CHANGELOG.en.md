@@ -6,6 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased
 
+- Form profiles retain all details during rapid consecutive input and when autofill updates several fields together.
 - Local Office conversion lets acknowledged shutdown complete without a second, competing termination. Even a late acknowledgment cancels the hard deadline; blocked runtimes still receive bounded forced termination. Strict checks for surviving threads remain.
 - Change colors & background: recolor existing glyphs without replacing fonts, add backgrounds behind content, presets, original/result previews and image mode for brightness, contrast and saturation.
 - Form helper: unlock individual or all supported read-only fields while preserving values and other field flags; no simultaneous flattening.

@@ -70,8 +70,27 @@ with sync_playwright() as api:
                     label('Profilname','Profile name').fill('Fictional family')
                     label('Vorname','First name').fill('Jörg')
                     label('Nachname','Last name').fill('Müller')
+                    expect(label('Vorname','First name')).to_have_value('Jörg')
+                    expect(label('Nachname','Last name')).to_have_value('Müller')
+                    # Autofill can deliver several input events before React commits.
+                    # Each update must retain the other fields from the same batch.
+                    page.locator('.profile-entries').evaluate('''root => {
+                        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+                        const rows = root.querySelectorAll('.profile-entry');
+                        for (const [index, value] of [[0, 'Jörg Beispiel'], [1, 'Müller Beispiel']]) {
+                            const input = rows[index].querySelectorAll('input')[1];
+                            setter.call(input, value);
+                            input.dispatchEvent(new Event('input', {bubbles: true}));
+                        }
+                    }''')
+                    expect(label('Vorname','First name')).to_have_value('Jörg Beispiel')
+                    expect(label('Nachname','Last name')).to_have_value('Müller Beispiel')
+                    label('Vorname','First name').fill('Jörg')
+                    label('Nachname','Last name').fill('Müller')
                     button('Profil speichern','Save profile').click()
                     expect(page.get_by_text(t('Profil auf diesem Gerät gespeichert.','Profile saved on this device.'),exact=True)).to_be_visible()
+                    expect(label('Vorname','First name')).to_have_value('Jörg')
+                    expect(label('Nachname','Last name')).to_have_value('Müller')
                     button('Formularfelder laden','Load form fields').click()
                     button('Angaben vorschlagen','Suggest details').click()
                     expect(page.locator('.helper-field-list')).to_contain_text('Jörg')

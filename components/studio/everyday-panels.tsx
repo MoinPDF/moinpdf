@@ -148,7 +148,7 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
             label="Profilname"
             value={profile.name}
             onChange={(name) => {
-              setProfile({ ...profile, name });
+              setProfile((previous) => ({ ...previous, name }));
               setMessage('');
             }}
           />
@@ -165,12 +165,13 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                   aria-label={`${ui('Bezeichnung')} ${index + 1}`}
                   value={item.label}
                   onChange={(e) => {
-                    setProfile({
-                      ...profile,
-                      entries: profile.entries.map((v) =>
-                        v.id === item.id ? { ...v, label: e.target.value } : v,
+                    const label = e.currentTarget.value;
+                    setProfile((previous) => ({
+                      ...previous,
+                      entries: previous.entries.map((v) =>
+                        v.id === item.id ? { ...v, label } : v,
                       ),
-                    });
+                    }));
                     setMessage('');
                   }}
                 />
@@ -182,12 +183,11 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 maxLength={500}
                 autoComplete="off"
                 onChange={(e) => {
-                  setProfile({
-                    ...profile,
-                    entries: profile.entries.map((v) =>
-                      v.id === item.id ? { ...v, value: e.target.value } : v,
-                    ),
-                  });
+                  const value = e.currentTarget.value;
+                  setProfile((previous) => ({
+                    ...previous,
+                    entries: previous.entries.map((v) => (v.id === item.id ? { ...v, value } : v)),
+                  }));
                   setMessage('');
                 }}
               />
@@ -196,10 +196,10 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 aria-label={`${ui('Angabe entfernen')}: ${item.label}`}
                 disabled={profile.entries.length <= 1}
                 onClick={() =>
-                  setProfile({
-                    ...profile,
-                    entries: profile.entries.filter((v) => v.id !== item.id),
-                  })
+                  setProfile((previous) => ({
+                    ...previous,
+                    entries: previous.entries.filter((v) => v.id !== item.id),
+                  }))
                 }
               >
                 <Trash2 size={16} />
@@ -212,10 +212,13 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
             variant="outline"
             disabled={profile.entries.length >= 30}
             onClick={() =>
-              setProfile({
-                ...profile,
-                entries: [...profile.entries, { id: uid(), label: ui('Eigene Angabe'), value: '' }],
-              })
+              setProfile((previous) => ({
+                ...previous,
+                entries: [
+                  ...previous.entries,
+                  { id: uid(), label: ui('Eigene Angabe'), value: '' },
+                ],
+              }))
             }
           >
             <Plus size={16} />
@@ -228,7 +231,11 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
             <Button
               variant="outline"
               onClick={() => {
-                setProfile({ ...profile, id: '', name: profile.name + ' ' + ui('Kopie') });
+                setProfile((previous) => ({
+                  ...previous,
+                  id: '',
+                  name: previous.name + ' ' + ui('Kopie'),
+                }));
                 setMessage('');
               }}
             >
