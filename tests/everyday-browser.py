@@ -112,6 +112,14 @@ with sync_playwright() as api:
                     button('A4-Vorschau','A4 preview').click()
                     expect(page.locator('.receipt-placement')).to_have_count(2)
                     expect(page.locator('.receipt-source img')).to_have_count(2,timeout=30000)
+                    # The full source must exactly fill its scaled box before cropping.
+                    # Global preview height limits would otherwise offset long receipts
+                    # on desktop while the exported PDF and mobile layout remain correct.
+                    preview_geometry=page.locator('.receipt-source').evaluate_all('''nodes => nodes.map(node => {
+                        const box=node.getBoundingClientRect(), image=node.querySelector('img').getBoundingClientRect();
+                        return ['x','y','width','height'].map(key => Math.abs(box[key]-image[key]));
+                    })''')
+                    assert all(delta<1 for box in preview_geometry for delta in box),preview_geometry
                     no_overflow();page.screenshot(path=str(out/f'{name}-receipts.png'),full_page=True)
                     button('Belege als A4-PDF erstellen','Create A4 receipt PDF').click()
                     expect(page.locator('.advanced-result')).to_be_visible(timeout=120000)
