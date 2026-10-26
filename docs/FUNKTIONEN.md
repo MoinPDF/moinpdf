@@ -1,7 +1,7 @@
 # Funktionen und Grenzen
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.22.0**
+**Aktuelle Grenzen aus der Implementierung · 0.23.0**
 
 | Funktion | Wert |
 | --- | --- |

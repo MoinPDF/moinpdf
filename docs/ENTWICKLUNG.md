@@ -154,6 +154,10 @@ Zusätzliche Schriftformung: [HarfBuzz-Hinweise](../public/component-notices/har
 
 ## Release-Freigabe
 
+Die native Safari-Prüfung verwendet `macos-15-intel`; `macos-15` bezeichnet den ARM-Pool, der wiederholt wegen fehlender Runner-Kapazität vor dem Teststart abgebrochen hat. Der vollständige Safari-Test bleibt eine Freigabevoraussetzung. Ein Infrastrukturabbruch gilt als ausstehende Prüfung und darf nicht als bestandener Test gemeldet werden.
+
+Vor dem Zusammenführen müssen alle PR-Prüfungen erfolgreich sein. Danach den tatsächlichen `main`-Quellstand einschließlich Image- und Release-Workflow kontrollieren. Ein Bericht nennt offene oder fehlgeschlagene Prüfungen und deren Auswirkungen auf die Veröffentlichung ausdrücklich. Änderungen an der Anwendung benötigen vor einer neuen Veröffentlichung eine freie Versionsnummer mit deutschem und englischem Changelog; eine bereits veröffentlichte Version bleibt unverändert.
+
 Jeder Push auf `main` startet Docker-Integration, Editor-Matrix, native Browserprüfung und Dokumentationsprüfung. Dateifilter dürfen für diese Push-Prüfungen keinen Commit auslassen: Die Veröffentlichung akzeptiert ausschließlich erfolgreiche Prüfläufe desselben Quellstands.
 
 Nach erfolgreicher Docker-Integration wartet die Image-Veröffentlichung höchstens 45 Minuten auf die übrigen Prüfungen. Sie kontrolliert alle 30 Sekunden den aktuellen Hauptzweig und die jeweils neuesten passenden Läufe. Fehler, abgebrochene oder übersprungene Prüfungen und fehlende Ergebnisse nach Ablauf der Zeitgrenze blockieren die Veröffentlichung. Unmittelbar vor der Freigabe wird auch der Docker-Lauf erneut gelesen.

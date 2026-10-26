@@ -9,8 +9,9 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Unveröffentlicht — Klar Schiff und englische Sprachausgabe
+## 0.23.0 – 26. Oktober 2026
 
+- Die native Safari-Prüfung verwendet den Intel-Mac-Pool, nachdem der ARM-Pool wiederholt vor dem Teststart abgebrochen hat. Alle Browser-, Docker- und Dokumentationsprüfungen bleiben Voraussetzung für die Veröffentlichung. Die neue Versionsnummer fasst die seit 0.22.0 hinzugekommenen Werkzeuge zusammen und erhält die bestehenden Release-Artefakte unverändert.
 - Kopf- und Fußzeilen bereinigen: wiederkehrende Randtexte und wechselnde Seitenzahlen, prüfbare Einzeltreffer mit Ausnahmen, manuelle Scan-Bereiche und weiße Vorschau. Tatsächliche Inhaltsentfernung mit unabhängiger Text-, Geometrie- und Anmerkungsprüfung, Projektentwürfen sowie deutscher und englischer Anleitung.
 - Formularhelfer mit ausdrücklich gespeicherten lokalen Profilen, vorsichtigen Vorschlägen für leere Formularfelder, manueller Zuordnung und transparenten Einträgen auf Scans. Geprüfter PDF-Export, optionale Fixierung, Unicode-Schrift und Projektentwürfe.
 - Belege auf A4 sammeln mit Zuschnitt, mehreren Belegen von einer Scan-Seite, Reihenfolge, Beschriftungen, Nummerierung, millimetergenauer Druckbreite und gemeinsamer Vorschau-/Exportanordnung. Lange Belege behalten ihre Breite und werden in gekennzeichneten Teilen fortgesetzt.

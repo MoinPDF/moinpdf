@@ -4,6 +4,10 @@
   `main` as part of each change. A preview or an unmerged feature branch does not
   complete the task. Use a pull request when CI needs to validate a branch, then
   merge the tested head. Do not force-push or bypass failed required checks.
+- Wait for every PR verification workflow to succeed before merging; a cancelled
+  or unavailable runner is incomplete verification. After merging, check the
+  actual `main` runs and downstream image/release jobs before reporting success.
+  State any pending, failed or skipped verification and its publication impact.
 - Include shared editor changes made in the hosted Site in the GitHub source.
   Preserve the different Site and self-hosted build/deployment configurations.
 - Publish an updated existing Site when requested work changes that Site; preserve
