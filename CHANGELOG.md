@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.22.0 – 26. Oktober 2026
+
+- Der Word-Export startet lokal mit zwei klaren Zielen: „Aussehen möglichst erhalten“ und „Text und Tabellen bearbeiten“. Text-only-Ausgabe und ein eingerichteter Dokumentenserver stehen unter „Weitere Optionen“; gespeicherte Einstellungen bleiben nutzbar.
+- Präzisere Schriftvergleiche für gedrehte Textstellen, Unicode-Zeichen, Zeichenabstände und horizontal skalierte Texte. Abweichungen beziehen sich auf die tatsächlich verwendete Ersatzschrift.
+- Die Vorprüfung bündelt Hinweise je Textstelle mit Seitennummer, Textausschnitt und einem Sprung zur Bearbeitung. Unsichere Scan-Schriften verweisen auf den Vergleich; ungeeignete Höhenanpassungen bei Tabellen, Scans und gedrehten Texten werden nicht angeboten.
+- Sichtbare Seiten haben Vorrang vor wartenden Vorschauen außerhalb des Bildschirms. Abgebrochene Bildkodierung blockiert die Warteschlange nicht mehr; temporäre Bildflächen werden auch bei Fehlern freigegeben. Die Vorbereitung der nächsten OCR-Seite pausiert während Eingaben und Interaktionen.
+- Der Textcursor bleibt auch beim Schreiben auf horizontal vergrößerten Seiten und bei Bewegungen des mobilen Sichtbereichs erreichbar. Bewusstes Scrollen und Bedienaktionen behalten Vorrang.
+- Deutsche und englische Anleitung sowie Regressionen für echte PDF-/DOCX-Ausgaben, Vorschauabbruch, Leerlaufvorbereitung und mobile Cursor-Geometrie aktualisiert. Physische iPhone-, iPad- und Android-Prüfungen bleiben separat offen.
+
 ## 0.21.2 – 25. Oktober 2026
 
 - Docker-, Editor-, native Browser- und Dokumentationsprüfungen starten für jeden Commit auf `main`, auch bei reinen Abhängigkeits- oder CI-Änderungen.

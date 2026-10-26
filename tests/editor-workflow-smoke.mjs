@@ -259,10 +259,15 @@ try {
  assert.equal((ftext.match(/Following paragraph stays complete/g)||[]).length,1);assert.equal((ftext.match(/FOOTER/g)||[]).length,1);assert.equal((ftext.match(/SIDE/g)||[]).length,1);
  assert.equal(fout.pdf.numPages,material.pages.length);const fo=await renderPage(fsrc,fpages[1],900),fn=await renderPage(fout,{...fpages[1],sourceId:fout.id,index:fout.pdf.numPages-1},900);assert.deepEqual(fo.canvas.getContext('2d').getImageData(0,0,fo.canvas.width,fo.canvas.height).data,fn.canvas.getContext('2d').getImageData(0,0,fn.canvas.width,fn.canvas.height).data);fo.canvas.width=fo.canvas.height=fn.canvas.width=fn.canvas.height=0;
  await writeFile(folder+'/automatic-flow.pdf',fout.bytes);
- const {preflightEditor,safeEditorHeight,editorDocumentState,testEditorRemoval}=await import('../.cache/editor-workflow/editor-preflight.mjs');
+ const {preflightEditor,safeEditorHeight,editorDocumentState,testEditorRemoval,groupEditorPreflightIssues,canAdjustEditorHeight}=await import('../.cache/editor-workflow/editor-preflight.mjs');
  const tooSmall={...editorTargetMark(ft,0,400,'fit'),text:'A longer replacement line that needs several lines in this narrow frame.',w:.4,h:.01};
  const issues=await preflightEditor([fsrc],fpages,{marks:{p0:[tooSmall]},crops:{}},signal);assert(issues.some(i=>i.kind==='layout'));
  const brokenPage={...fpage,id:'broken',sourceId:'missing-source'},progress=[];
+ const warning={pageId:'p0',markId:tooSmall.id,kind:'font',message:'Replacement font'};
+ const grouped=groupEditorPreflightIssues([...issues,warning,warning,{...warning,pageId:'p1'}]);
+ assert.equal(grouped.length,2);assert.equal(grouped[0].issues.filter(i=>i.kind==='font'&&i.message===warning.message).length,1);
+ assert(canAdjustEditorHeight(tooSmall));
+ for(const extra of [{textRotation:90},{sourceIsScan:true},{tableCell:{tableId:'t',cellId:'c'}},{kind:'erase'}]) assert(!canAdjustEditorHeight({...tooSmall,...extra}));
  const partial=await preflightEditor([fsrc],[brokenPage,...fpages],{marks:{broken:[{...tooSmall,id:'broken-mark'}],p0:[tooSmall]},crops:{}},signal,(completed,total)=>progress.push([completed,total]));
  assert(partial.some(i=>i.pageId==='broken'&&i.kind==='error'),'Unreadable pages produce an explicit page issue');
  assert(partial.some(i=>i.pageId==='p0'&&i.kind==='layout'),'One failed page does not suppress issues on later pages');

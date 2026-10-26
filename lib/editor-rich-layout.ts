@@ -35,6 +35,8 @@ export function prepareEditorRuns(mark: Mark, source?: Source): Promise<Prepared
     mark.fontScale,
     mark.insetScale,
     mark.textScaleX,
+    mark.textRotation,
+    mark.textAspect,
     mark.tracking,
     mark.listStyle,
   ]);

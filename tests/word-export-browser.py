@@ -168,13 +168,17 @@ def run_case(browser, engine, name, language, width, kind):
         title = 'PDF to Word' if en else 'PDF zu Word'
         page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
         expect(page.get_by_role('heading', name=title, exact=True)).to_be_visible()
-        processing = page.get_by_label('Processing' if en else 'Verarbeitung', exact=True)
-        if processing.count():
-            processing.select_option('local')
-        output = page.get_by_label('Word output' if en else 'Word-Ausgabe', exact=True)
-        expect(output).to_have_value('layout')
-        if kind in ('text', 'structured'):
-            output.select_option(kind)
+        layout = page.get_by_role('radio', name='Preserve appearance as closely as possible' if language == 'en' else 'Aussehen möglichst erhalten', exact=True)
+        structured = page.get_by_role('radio', name='Edit text and tables' if language == 'en' else 'Text und Tabellen bearbeiten', exact=True)
+        expect(layout).to_be_checked()
+        expect(structured).to_be_visible()
+        details = page.locator('.word-export-options details')
+        expect(details).not_to_have_attribute('open', '')
+        if kind == 'structured':
+            structured.check()
+        elif kind == 'text':
+            details.locator('summary').click()
+            page.get_by_label('Text as paragraphs only' if language == 'en' else 'Nur Text als Absätze', exact=True).check()
         page.get_by_role('button', name='Create Word file' if en else 'Word-Datei erstellen', exact=True).click()
         link = page.get_by_role('link', name='Download Word' if en else 'Word herunterladen', exact=True)
         expect(link).to_be_visible(timeout=180000)
@@ -193,7 +197,12 @@ def run_case(browser, engine, name, language, width, kind):
         assert not errors, errors
         assert not blocked, blocked
         # Switching output invalidates the previous result instead of downloading stale bytes.
-        output.select_option('layout' if kind == 'text' else 'text')
+        if kind == 'text':
+            layout.check()
+        else:
+            if not details.evaluate('(node) => node.open'):
+                details.locator('summary').click()
+            page.get_by_label('Text as paragraphs only' if en else 'Nur Text als Absätze', exact=True).check()
         expect(link).to_have_count(0)
         result['status'] = 'passed'
     except Exception:

@@ -6,13 +6,13 @@ import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { LoaderCircle, PenLine, Trash2 } from 'lucide-react';
 import { MarkLayers } from './editor-canvas';
 import { Button } from '@/components/ui/button';
-import { renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
+import { abortable, renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
 import { deviceBudget } from '@/lib/resource-budget';
 import { normalizedRect, type Mark, type Rect } from '@/lib/studio-engine';
 
 export type Signature = { image: string; aspect: number };
 export type EditMode = 'redact' | 'crop' | 'text' | 'highlight' | 'signature' | null;
-let queue = Promise.resolve();
+import { queuePagePreview } from '@/lib/page-preview-queue';
 export function PagePreview({
   source,
   page,
@@ -66,9 +66,8 @@ export function PagePreview({
         const abort = new AbortController();
         cancel = abort;
         const current = ++generation;
-        queue = queue
-          .catch(() => {})
-          .then(async () => {
+        queuePagePreview(
+          async () => {
             if (!active || abort.signal.aborted || current !== generation) return;
             if (!visible) {
               cancel = undefined;
@@ -83,8 +82,11 @@ export function PagePreview({
               );
               let blob: Blob | null;
               try {
-                blob = await new Promise<Blob | null>((r) =>
-                  canvas.toBlob(r, lossless ? 'image/png' : 'image/jpeg', 0.88),
+                blob = await abortable(
+                  new Promise<Blob | null>((r) =>
+                    canvas.toBlob(r, lossless ? 'image/png' : 'image/jpeg', 0.88),
+                  ),
+                  abort.signal,
                 );
               } finally {
                 canvas.width = canvas.height = 0;
@@ -100,7 +102,19 @@ export function PagePreview({
             } finally {
               if (current === generation) cancel = undefined;
             }
-          });
+          },
+          abort.signal,
+          () => {
+            const rect = holder.current?.getBoundingClientRect();
+            return rect &&
+              rect.bottom > 0 &&
+              rect.top < window.innerHeight &&
+              rect.right > 0 &&
+              rect.left < window.innerWidth
+              ? 1
+              : 0;
+          },
+        );
       },
       { rootMargin: '200px' },
     );
@@ -169,8 +183,15 @@ export function PageCanvas({
     setError(false);
     renderPage(source, { index: page.index, rotation: page.rotation }, 1600, ctrl.signal)
       .then(async ({ canvas, width, height }) => {
-        const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.92));
-        canvas.width = canvas.height = 0;
+        let blob: Blob | null;
+        try {
+          blob = await abortable(
+            new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/jpeg', 0.92)),
+            ctrl.signal,
+          );
+        } finally {
+          canvas.width = canvas.height = 0;
+        }
         if (active && blob) {
           objectUrl = URL.createObjectURL(blob);
           setUrl(objectUrl);

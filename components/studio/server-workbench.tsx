@@ -43,6 +43,7 @@ import { AccessibleEditor, initialAccessibleDocument } from './accessible-editor
 import { validateAccessibleDocument } from '@/lib/accessible-document';
 import { TagRepairEditor, tagRepairRequest, type TagRepair } from './tag-repair-editor';
 import { initialWebsiteSettings, websiteAddress } from '@/lib/website-pdf';
+import { WordExportOptions } from './word-export-options';
 
 type Props = {
   tool: ServerTool;
@@ -76,7 +77,7 @@ function StandardServerWorkbench({
   const { tools } = useTools();
   const [processing, setProcessing] = useToolDraftState(
     'StandardServerWorkbench.processing:' + sources.map((s) => s.id).join(':') + tool,
-    tool === 'pdf-word' && integratedDocumentServer ? 'server' : 'local',
+    'local',
   );
   const [wordOutput, setWordOutput] = useToolDraftState(
     'StandardServerWorkbench.wordOutput:' + sources.map((s) => s.id).join(':') + tool,
@@ -578,7 +579,6 @@ function StandardServerWorkbench({
       <section className="advanced-card conversion-card" aria-label={ui(info.title)}>
         <fieldset disabled={busy} className="advanced-fields conversion-fields">
           {(['office-pdf', 'optimize-pdf'].includes(tool) ||
-            (tool === 'pdf-word' && integratedDocumentServer) ||
             (tool === 'certificate-sign' && mode === 'sign')) && (
             <Choice
               label={ui('Verarbeitung')}
@@ -795,40 +795,14 @@ function StandardServerWorkbench({
             </p>
           )}
           {tool === 'pdf-word' && (
-            <>
-              {localWord && (
-                <Choice
-                  label={ui('Word-Ausgabe')}
-                  value={wordOutput}
-                  onChange={setWordOutput}
-                  items={[
-                    ['layout', 'Seitenlayout mit Bildern'],
-                    ['structured', 'Fließtext, Tabellen und Bilder'],
-                    ['text', 'Nur Text als Absätze'],
-                  ]}
-                />
-              )}
-              <p className="fine-note">
-                {localWord
-                  ? wordOutput === 'layout'
-                    ? ui(
-                        'Seitenformat und Bilder bleiben erhalten. Text wird in bearbeitbaren Textfeldern angeordnet. Grafiken und Tabellenlinien bilden den Seitenhintergrund. Schriften und komplexe Layouts können abweichen.',
-                      )
-                    : wordOutput === 'structured'
-                      ? ui(
-                          'Zusammenhängende Absätze, erkannte Tabellen und Bilder zum Weiterbearbeiten. Wiederkehrende Kopf- und Fußzeilen werden getrennt übernommen. Die Seitenaufteilung kann abweichen.',
-                        )
-                      : ui(
-                          'Der Text wird als bearbeitbare Word-Datei gespeichert. Bilder und das ursprüngliche Seitenlayout werden dabei nicht übernommen.',
-                        )
-                  : ui(
-                      'Text, Tabellen und Bilder werden für Word übernommen. Bei komplexen Layouts kann die Anordnung abweichen.',
-                    )}{' '}
-                {ui(
-                  'Scan-Seiten werden automatisch per OCR erkannt. Erkannte Texte bitte kontrollieren.',
-                )}
-              </p>
-            </>
+            <WordExportOptions
+              mode={wordOutput}
+              local={localWord}
+              serverAvailable={!!integratedDocumentServer}
+              disabled={busy}
+              onModeChange={setWordOutput}
+              onProcessingChange={setProcessing}
+            />
           )}
           {tool === 'email-pdf' && (
             <>

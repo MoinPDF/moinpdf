@@ -76,6 +76,8 @@ export async function editorFont(
     | 'insetScale'
     | 'tracking'
     | 'textScaleX'
+    | 'textRotation'
+    | 'textAspect'
   >,
   source?: Source,
   report?: (resolution: EditorFontResolution) => void,

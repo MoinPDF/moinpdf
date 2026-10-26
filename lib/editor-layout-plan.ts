@@ -20,6 +20,22 @@ export type EditorPlannedPiece = {
   underline?: boolean;
   advance?: number;
 };
+/** The drawn extent includes tracking, shaped advances and horizontal scale. */
+export function editorLayoutWidth(plan: { pieces: EditorPlannedPiece[]; scaleX: number }) {
+  return (
+    plan.scaleX *
+    Math.max(
+      0,
+      ...plan.pieces.map(
+        (piece) =>
+          piece.x +
+          (piece.advance ??
+            piece.font.measure(piece.text, piece.size) +
+              Math.max(0, [...piece.text].length - 1) * piece.tracking),
+      ),
+    )
+  );
+}
 export function editorLayoutPlan(
   mark: Mark,
   width: number,

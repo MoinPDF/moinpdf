@@ -6,6 +6,7 @@ import {
   editorRectsOverlap,
   editorRemovalRects,
   editorTextCollision,
+  editorScanMatchStatus,
 } from './editor-model';
 import { prepareEditorRuns } from './editor-rich-layout';
 import { editorLayoutPlan, prepareEditorLayout } from './editor-layout-plan';
@@ -65,6 +66,26 @@ export type EditorPreflightIssue = {
   message: string;
   kind: 'layout' | 'font' | 'collision' | 'error';
 };
+export function groupEditorPreflightIssues(issues: EditorPreflightIssue[]) {
+  const groups = new Map<
+    string,
+    { pageId: string; markId: string; issues: EditorPreflightIssue[] }
+  >();
+  for (const issue of issues) {
+    const key = JSON.stringify([issue.pageId, issue.markId]);
+    let group = groups.get(key);
+    if (!group) {
+      group = { pageId: issue.pageId, markId: issue.markId, issues: [] };
+      groups.set(key, group);
+    }
+    if (!group.issues.some((entry) => entry.kind === issue.kind && entry.message === issue.message))
+      group.issues.push(issue);
+  }
+  return [...groups.values()];
+}
+export function canAdjustEditorHeight(mark: Mark) {
+  return mark.kind === 'text' && !mark.tableCell && !mark.textRotation && !mark.sourceIsScan;
+}
 export async function preflightEditor(
   sources: Source[],
   pages: PageItem[],
@@ -108,6 +129,11 @@ export async function preflightEditor(
       )
         add('collision', 'Die Änderung berührt ein Formularfeld.');
       if (mark.kind !== 'text' || !mark.text) continue;
+      if (mark.sourceIsScan && editorScanMatchStatus(mark) !== 'matched')
+        add(
+          'font',
+          'Die Schriftähnlichkeit im Scan ist noch nicht bestätigt. Original und Schriftalternativen vergleichen.',
+        );
       if (editorTextCollision(mark, marks, state.targets))
         add('collision', 'Der Text überlappt einen anderen Inhalt.');
       try {

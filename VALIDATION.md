@@ -6,9 +6,10 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
-## Prüfplan für 0.21.2
+## Prüfplan für 0.22.0
 
-- 59 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,
+- Neue 0.22-Prüfungen: zwei Word-Ziele mit erweiterten Optionen, Unicode-Zeichenabstände, gedrehte Ersatzschrift-Metriken, gebündelte Vorprüfhinweise, abbrechbare Bildkodierung, sichtbare Vorschaupriorität, OCR-Pause bei Eingaben und horizontale Cursorführung samt simuliertem mobilem Sichtbereich.
+- 60 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,
   falscher Passwörter, manipulierten/abgeschnittenen Projektdateien und Abbruch.
 - Vorschau-Regressionen prüfen den sofortigen Abbruch unsichtbarer Arbeit, das
   Freigeben der Warteschlange sowie begrenzte Bildablage und erneutes Laden.
@@ -67,7 +68,7 @@ und erneuten Export. Maßgeblich bleibt der erfolgreiche Lauf des jeweiligen Com
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| PDF-Engines und DOM | 59 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| PDF-Engines und DOM | 60 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
 | Dokumentenserver | 65 Tests: native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |

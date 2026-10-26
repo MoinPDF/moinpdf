@@ -6,6 +6,8 @@ import {
   preflightEditor,
   safeEditorHeight,
   testEditorRemoval,
+  groupEditorPreflightIssues,
+  canAdjustEditorHeight,
   type EditorPreflightIssue,
 } from '@/lib/editor-preflight';
 import { Button } from '@/components/ui/button';
@@ -40,6 +42,7 @@ export function EditorPreflightPanel({
     current = useRef(key),
     controller = useRef<AbortController | null>(null);
   current.current = key;
+  const groups = groupEditorPreflightIssues(issues);
   useEffect(() => {
     controller.current?.abort();
     setBusy(false);
@@ -147,7 +150,7 @@ export function EditorPreflightPanel({
             (progress.total ? ` ${progress.completed}/${progress.total}` : '')
           : disabled || completedKey !== key
             ? ui('Noch nicht geprüft')
-            : issues.length}
+            : `${groups.length} ${ui('Textstellen')}`}
       </summary>
       <p>
         {ui(
@@ -159,27 +162,60 @@ export function EditorPreflightPanel({
           {ui(changedCount ? 'Keine Auffälligkeiten in der Vorprüfung.' : 'Noch keine Änderungen.')}
         </p>
       )}
-      {issues.map((issue, i) => {
-        const mark = edits.marks[issue.pageId]?.find((m) => m.id === issue.markId);
+      {groups.map((group) => {
+        const mark = edits.marks[group.pageId]?.find((m) => m.id === group.markId);
+        const layout = group.issues.find((issue) => issue.kind === 'layout');
+        const excerpt = (mark?.text || '').replace(/\s+/g, ' ').slice(0, 80);
         return (
-          <div key={i}>
+          <div
+            key={JSON.stringify([group.pageId, group.markId])}
+            className="editor-preflight-location"
+          >
             <p>
-              {ui('Seite')} {pages.findIndex((p) => p.id === issue.pageId) + 1}: {ui(issue.message)}
+              <strong>
+                {ui('Seite')} {pages.findIndex((p) => p.id === group.pageId) + 1}
+              </strong>
+              {excerpt && (
+                <>
+                  {' '}
+                  · „{excerpt}
+                  {(mark?.text?.length || 0) > 80 ? '…' : ''}“
+                </>
+              )}
             </p>
+            <ul>
+              {group.issues.map((issue) => (
+                <li key={issue.kind + issue.message}>{ui(issue.message)}</li>
+              ))}
+            </ul>
+            {group.issues.some((issue) => issue.kind === 'font') && (
+              <p>
+                {ui('Unter „Anzeigen“ kannst du Original und Schriftalternativen vergleichen.')}
+              </p>
+            )}
+            {layout && mark && !canAdjustEditorHeight(mark) && (
+              <p>
+                {ui(
+                  mark.tableCell
+                    ? 'Die Höhe der Tabellenzeile in den Tabellenoptionen anpassen.'
+                    : 'Textfeld und Schriftgröße direkt auf der Seite prüfen und anpassen.',
+                )}
+              </p>
+            )}
             <Button
               variant="outline"
               size="sm"
               disabled={disabled || busy || !mark}
-              onClick={() => mark && onReveal(issue.pageId, mark)}
+              onClick={() => mark && onReveal(group.pageId, mark)}
             >
               {ui('Anzeigen')}
             </Button>
-            {issue.kind === 'layout' && (
+            {layout && mark && canAdjustEditorHeight(mark) && (
               <Button
                 variant="outline"
                 size="sm"
                 disabled={disabled || busy}
-                onClick={() => void fix(issue)}
+                onClick={() => void fix(layout)}
               >
                 {ui('Höhe sicher anpassen')}
               </Button>

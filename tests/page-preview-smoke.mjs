@@ -20,10 +20,14 @@ for (const [name, contents] of Object.entries({
   'studio-engine': 'export const normalizedRect=()=>({});',
 })) await writeFile(folder + '/' + name + '.mjs', contents);
 
+const abortWrapper = ts.transpileModule((await readFile('lib/pdf-engine.ts','utf8')).match(/export function abortable[\s\S]*?\n}/)[0], {compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
+await writeFile(folder+'/pdf-engine.mjs', (await readFile(folder+'/pdf-engine.mjs','utf8'))+'\n'+abortWrapper);
+await writeFile(folder+'/page-preview-queue.mjs',ts.transpileModule(await readFile('lib/page-preview-queue.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
 const dom = new JSDOM('<!doctype html><div id="root"></div>', { url: 'https://moinpdf.test' });
 for (const name of ['window', 'document', 'HTMLElement', 'Element', 'Node']) globalThis[name] = dom.window[name];
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const observers = [], jobs = [], cleaned = [], revoked = [];
+let delayEncoding = false;
 globalThis.IntersectionObserver = class {
   constructor(callback) { this.callback = callback; observers.push(this); }
   observe() {}
@@ -31,8 +35,9 @@ globalThis.IntersectionObserver = class {
   visible(value) { this.callback([{ isIntersecting: value }]); }
 };
 globalThis.previewRender = (source, page, size, signal) => new Promise((resolve, reject) => {
-  const canvas = { width: 216, height: 270, toBlob: callback => callback(new Blob(['fictional preview'])) };
-  const job = { page, signal, canvas, finish: () => resolve({ canvas }) };
+  let encode;
+  const canvas = { width: 216, height: 270, toBlob: callback => { encode = () => callback(new Blob(['fictional preview'])); if (!delayEncoding) encode(); } };
+  const job = { page, signal, canvas, encode: () => encode(), finish: () => resolve({ canvas }) };
   jobs.push(job);
   signal.addEventListener('abort', () => reject(signal.reason), { once: true });
 });
@@ -65,6 +70,19 @@ try {
   await act(async () => jobs[2].finish());
   assert.equal(document.querySelectorAll('img').length, 1);
   const restored = document.querySelector('img').src;
+  delayEncoding = true;
+  await act(async () => observers[0].visible(true));
+  await act(async () => jobs[3].finish());
+  assert.equal(jobs[3].canvas.width,216,'Encoding is deliberately pending');
+  await act(async () => observers[1].visible(false));
+  await act(async () => new Promise(resolve => setTimeout(resolve,45)));
+  await act(async () => { observers[0].visible(false); observers[1].visible(true); });
+  assert.equal(jobs.length,5,'Aborted encoding releases the queue before its callback finishes');
+  assert.equal(jobs[3].canvas.width,0);
+  delayEncoding = false;
+  await act(async () => { jobs[3].encode(); jobs[4].finish(); });
+  assert.equal(document.querySelectorAll('img').length,1,'Late encoding cannot restore a hidden preview');
+
   await act(async () => root.unmount());
   assert(revoked.includes(restored));
   assert(observers.every(observer => observer.disconnected));
@@ -73,3 +91,12 @@ try {
   dom.window.close();
 }
 console.log('PASS: hidden preview work is cancelled immediately, visible work proceeds, stale output is rejected and retained images are evicted/recreated/released.');
+
+const {queuePagePreview}=await import('../.cache/page-preview/page-preview-queue.mjs');
+const order=[], deleted=new AbortController();
+queuePagePreview(async()=>{order.push('near');},new AbortController().signal,()=>0);
+queuePagePreview(async()=>{order.push('cancelled');},deleted.signal,()=>2);
+queuePagePreview(async()=>{order.push('visible');},new AbortController().signal,()=>1);
+deleted.abort();
+await new Promise(resolve=>setTimeout(resolve,0));
+assert.deepEqual(order,['visible','near'],'Visible pages precede queued neighbours and aborted jobs are removed');

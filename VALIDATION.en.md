@@ -4,9 +4,10 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
-## Verification scope for 0.21.2
+## Verification scope for 0.22.0
 
-- 59 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
+- New 0.22 checks cover the two Word goals and advanced options, Unicode tracking, rotated fallback metrics, grouped preflight notices, cancellable image encoding, visible-preview priority, OCR pausing during input and horizontal caret following with a simulated mobile viewport.
+- 60 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
   passwords, tampered/truncated project files and cancellation.
 - Preview regressions check immediate cancellation of hidden work, queue release,
   bounded image retention and recreation on return.
@@ -47,7 +48,7 @@ run for the exact source commit remains authoritative.
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| PDF engines and DOM | 59 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| PDF engines and DOM | 60 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
 | Document server | 65 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and narrow touch viewports, PDF/EPUB/audio downloads |

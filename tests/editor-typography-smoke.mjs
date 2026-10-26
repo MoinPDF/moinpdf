@@ -111,6 +111,32 @@ try {
     const rotatedMark={...markFor(t,geometry.width),text:'Spacing 2026'};const fontInfo=await resolveEditorFont(rotatedMark,s);const layout=layoutEditorText(rotatedMark,geometry.width,geometry.height,fontInfo.font.measure,fontInfo.font.descent);assert(!layout.overflow,'Detected text fits exactly without rounding-induced wrapping');const result=await run(s,[rotatedMark]);assert(!result.note?.includes('Hintergrund wurde als Bild'),result.note); const out=await source(await result.blob.arrayBuffer());
     const resultTarget=(await readTextTargets(out,pageOf(out))).targets.find(t=>t.text==='Spacing 2026'); assert(resultTarget);assert(Math.abs(t.x-resultTarget.x)<.002 && Math.abs(t.y-resultTarget.y)<.002,'Rotated text is placed at the original position');
   }
+  // Font metric matching must be invariant under axis-aligned projection.
+  const metricSample='Width comparison 2026';
+  const metricFont=(await resolveEditorFont({fontChoice:'liberation-sans',text:metricSample})).font;
+  const metricWidth=metricFont.measure(metricSample,1), localWidth=metricWidth*.025;
+  const metricMark={fontChoice:'auto',fontFamily:'sans',originalFontName:'Unknown Sans',originalText:metricSample,text:metricSample,fontScale:.025,sourceRect:{x:0,y:0,w:localWidth,h:.04},textAspect:8};
+  const unrotated=await resolveEditorFont(metricMark);
+  for(const angle of [90,37,180,270]) {
+    const radians=angle*Math.PI/180, projection=Math.abs(Math.cos(radians))+Math.abs(Math.sin(radians))/8;
+    const rotated=await resolveEditorFont({...metricMark,textRotation:angle,sourceRect:{...metricMark.sourceRect,w:localWidth*projection}});
+    assert.equal(rotated.font.name,unrotated.font.name);
+    assert(Math.abs(rotated.widthDeviation-unrotated.widthDeviation)<1e-8,'Rotated fallback metrics use the local text width');
+  }
+  assert.equal((await resolveEditorFont({...metricMark,textRotation:90,textAspect:undefined})).widthDeviation,undefined,'Legacy rotated geometry cannot claim a width match');
+  const unicodeFallback=await resolveEditorFont({...metricMark,text:'😀'});
+  assert(unicodeFallback.font.covers('😀'));
+  assert(Math.abs(unicodeFallback.widthDeviation-(unicodeFallback.font.measure(metricSample,1)/metricWidth-1)*100)<1e-8,'Deviation describes the final Unicode fallback');
+  const unicodeDoc=await PDFDocument.create();unicodeDoc.registerFontkit(fontkit);
+  const fixtureUnicodeFont=await unicodeDoc.embedFont(unicodeFallback.font.bytes), unicodePage=unicodeDoc.addPage([500,700]);
+  const unicodeKey=unicodePage.node.newFontDictionary(fixtureUnicodeFont.name,fixtureUnicodeFont.ref), unicodeText='A😀BC';
+  unicodePage.pushOperators(beginText(),setFontAndSize(unicodeKey,12),setCharacterSpacing(.7),setTextMatrix(1,0,0,1,50,600),showText(fixtureUnicodeFont.encodeText(unicodeText)),endText());
+  const unicodeSource=await source(await unicodeDoc.save(),'unicode-spacing.pdf'), unicodeTarget=(await readTextTargets(unicodeSource,pageOf(unicodeSource))).targets.find(t=>t.text===unicodeText);
+  assert(unicodeTarget);assert(Math.abs(unicodeTarget.tracking-.7/12)<.001,'Tracking counts Unicode characters rather than UTF-16 units');
+  const {editorLayoutWidth}=await import('../.cache/editor-typography/editor-layout-plan.mjs');
+  const piece={text:'A😀B',x:2,y:0,size:10,font:unicodeFallback.font,color:'#000000',tracking:2};
+  assert.equal(editorLayoutWidth({scaleX:1.5,pieces:[piece]}),1.5*(2+piece.font.measure(piece.text,10)+4));
+  assert.equal(editorLayoutWidth({scaleX:.8,pieces:[{...piece,advance:30}]}),.8*32,'Shaped advances take precedence over nominal font width');
   const hiddenDoc=await PDFDocument.create();hiddenDoc.registerFontkit(fontkit);const hiddenFont=await hiddenDoc.embedFont(bytes);const hiddenPage=hiddenDoc.addPage([500,700]);
   hiddenPage.pushOperators(pushGraphicsState(),setTextRenderingMode(TextRenderingMode.Invisible));hiddenPage.drawText('OCR search layer',{font:hiddenFont,size:12,x:50,y:600});hiddenPage.pushOperators(popGraphicsState());
   const hiddenSource=await source(await hiddenDoc.save(),'existing-ocr.pdf'), hiddenTarget=(await readTextTargets(hiddenSource,pageOf(hiddenSource))).targets[0];
