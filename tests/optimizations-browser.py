@@ -76,6 +76,7 @@ with sync_playwright() as pw:
                 with pymupdf.open(result) as d:
                     assert len(d)==(1 if en else 1000)
                     for i,p in enumerate(d):assert p.rotation==90 and (('FICTIONAL BIG INPUT' if en else f'FICTIONAL PAGE {i+1}') in p.get_text())
+                if not en:expect(page.locator('.advanced-result .result-next-steps')).to_have_count(0)
                 report['pages']=1 if en else 1000;report['input_bytes']=(wide if en else large).stat().st_size;report['seconds']=round(time.monotonic()-started,2)
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 2')
                 page.screenshot(path=str(out/(name+'.png')),full_page=False)

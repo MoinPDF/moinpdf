@@ -122,6 +122,9 @@ await act(async () => root.render(h(ResultNextSteps, { result, disabled: false }
 await act(async () => document.querySelector('.result-next-steps button').click());
 assert.equal(next.result, result);
 assert.equal(next.tool, 'edit-text');
+await act(async () => root.render(h(ResultNextSteps, { result: {...result,pages:1000}, disabled:false })));
+assert.equal(document.querySelector('.result-next-steps'),null,'Large output stays available for download without unsupported editor handoff');
+
 await act(async () =>
   root.render(
     h(ResultNextSteps, {
