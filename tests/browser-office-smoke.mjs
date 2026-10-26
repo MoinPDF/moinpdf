@@ -46,8 +46,8 @@ for (const converter of [true, false]) {
     if(instance){assert.equal(instance.getModule(),null);assert.equal(instance.getLokBindings(),null);assert.equal(instance.isReady(),false);}
     assert.equal(pool.runningWorkers.length,1,'The owner still owns its running children');
     assert.equal(pool.unusedWorkers.length,1,'The owner still owns its idle children');
-    assert.equal(timers.length,0,'The runtime must not schedule a competing self-close after acknowledgment');
-    assert(!events.some(event=>event[0]==='close'),'Only the page-side owner terminates the worker tree');
+    for(const timer of timers)timer();
+    assert.deepEqual(events.at(-1),['close']);
   }
 }
 
@@ -95,7 +95,10 @@ globalThis.Worker = class {
       setTimeout(() => {
         this.events.push('destroyed');
         this.emit({ type: 'ready', id: 3 });
-      }, 20);
+        setTimeout(() => {
+          if (!this.events.includes('terminated')) this.events.push('self-closed');
+        }, this.mode === 'slow-close' ? 400 : 100);
+      }, this.mode === 'late-ack' ? 900 : 20);
     }
   }
   terminate() { this.events.push('terminated'); }
@@ -104,7 +107,7 @@ const { convertOfficeLocally, browserOfficeUnavailable } = await import('../.cac
 const file = new File(['document'], 'Moin.docx'), signal = new AbortController().signal;
 assert.equal(browserOfficeUnavailable(), null);
 assert.equal((await convertOfficeLocally(file, signal)).filename, 'Moin.pdf');
-assert.deepEqual(workers.at(-1).events, ['init', 'convert', 'destroy', 'destroyed', 'terminated']);
+assert.deepEqual(workers.at(-1).events, ['init', 'convert', 'destroy', 'destroyed', 'self-closed']);
 assert.equal(liveUrls.size, 0);
 assert(requests.every(([url, options]) => url.startsWith('/vendor/office/') && !options?.method));
 
@@ -122,12 +125,20 @@ abort.abort();
 assert.equal(settled, false, 'Caller must await cleanup before starting the next conversion');
 assert.equal(liveUrls.size, 2, 'Runtime URLs remain available during teardown');
 await rejected;
-assert.deepEqual(workers.at(-1).events, ['init', 'destroy', 'destroyed', 'terminated'], 'Late ready must not start a cancelled conversion; only the page-side owner terminates after cleanup');
+assert.deepEqual(workers.at(-1).events, ['init', 'destroy', 'destroyed', 'self-closed'], 'Late ready must not start a cancelled conversion; acknowledged cleanup owns its shutdown without a second termination');
 assert.equal(liveUrls.size, 0);
 started = undefined;
 mode = 'success';
 assert.equal((await convertOfficeLocally(file, signal)).filename, 'Moin.pdf');
-assert.deepEqual(workers.at(-1).events, ['init', 'convert', 'destroy', 'destroyed', 'terminated']);
+assert.deepEqual(workers.at(-1).events, ['init', 'convert', 'destroy', 'destroyed', 'self-closed']);
+
+for (mode of ['slow-close', 'late-ack']) {
+  assert.equal((await convertOfficeLocally(file, signal)).filename, 'Moin.pdf');
+  const completedWorker = workers.at(-1);
+  if (mode === 'slow-close') await new Promise(resolve => setTimeout(resolve, 250));
+  assert.deepEqual(completedWorker.events, ['init', 'convert', 'destroy', 'destroyed', 'self-closed'], 'Acknowledged shutdown must not race either the grace interval or the original hard deadline');
+  assert.equal(liveUrls.size, 0);
+}
 
 for (mode of ['unresponsive', 'destroy-throws']) {
   const begin = Date.now();
@@ -139,4 +150,4 @@ for (mode of ['unresponsive', 'destroy-throws']) {
 await assert.rejects(convertOfficeLocally(new File(['x'], 'bad.pub'), signal), /unterstützt/);
 globalThis.crossOriginIsolated = false;
 await assert.rejects(convertOfficeLocally(file, signal), /isoliertem/);
-console.log('PASS: Office integrity, no uploads, acknowledged cleanup, abort during initialization, ignored late ready, restart and bounded termination fallback.');
+console.log('PASS: Office integrity, no uploads, acknowledged self-close, slow shutdown, late cleanup acknowledgment, abort during initialization, ignored late ready, restart and bounded termination fallback.');

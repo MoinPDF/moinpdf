@@ -23,7 +23,7 @@ Der Browser-Worker wird für die reine Konvertierung angepasst: `noInitialRun=tr
 
 ## Verifikation
 
-Beim Beenden bestätigt die Laufzeit zuerst die Dokumentbereinigung. Danach beendet ausschließlich der aufrufende Browser-Code den gesamten Worker-Baum; ein konkurrierender Selbstabschluss der Laufzeit ist entfernt. Reagiert die Laufzeit nicht, greift nach einer Sekunde der erzwungene Abbruch. Die Prüfung auf verbliebene native Hintergrundthreads bleibt unverändert.
+Beim Beenden bestätigt die Laufzeit zuerst die Dokumentbereinigung und beendet ihren Worker-Baum anschließend selbst. Nach dieser Bestätigung hebt der aufrufende Code den harten Zeitwächter auf und wartet kurz, ohne eine zweite Beendigung auszulösen. Reagiert die Laufzeit nicht, greift nach einer Sekunde der erzwungene Abbruch. Die Prüfung auf verbliebene native Hintergrundthreads bleibt unverändert.
 
 `tests/browser-office-browser.py` konvertiert im echten Produktions-Chromium sechs Office-/ODF-Fixtures und drei reichere DOCX-/XLSX-/PPTX-Dateien. MuPDF prüft Text, Umlaute, Bilder, Tabellen-/Diagrammzeichnungen, den errechneten Betrag 53,30 und beide Präsentationsseiten. Zusätzlich werden 15-maliger Abbruch mit Wiederanlauf ohne Neuladen, weitere Konvertierungen nach Erfolg, gesperrte Binärdownloads, fehlende Dokument-Uploads und vollständig beendete Office-Worker geprüft. Der aktuelle GitHub-CI-Lauf entscheidet über die Freigabe.
 

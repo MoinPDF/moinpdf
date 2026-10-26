@@ -75,19 +75,24 @@ patch 12; it supplements the real-browser thread and PDF checks below.
 
 ## Single shutdown owner
 
-The 2026-10-26 acceptance run exposed a remaining overlap: patch 12 still
-scheduled the upstream worker's `self.close()` 100 ms after acknowledgment,
-while the page called `Worker.terminate()` after 250 ms. Valid cached DOCX
-conversions again left an unresponsive Office target and native worker threads.
-The failure repeated on a fresh runner; extending the delay does not establish
-that the first shutdown has completed.
+The 2026-10-26 acceptance run exposed a remaining overlap: patch 12 schedules
+the upstream worker's `self.close()` 100 ms after acknowledgment, while the page
+also called `Worker.terminate()` after 250 ms. Valid cached DOCX conversions left
+an unresponsive Office target and native worker threads, including on a fresh
+runner. Removing self-close and immediately terminating the owner also failed.
 
-Patch `moinpdf-conversion-worker-13` removes that scheduled self-close. The page
-terminates the entire tree immediately after acknowledged document cleanup,
-retaining the one-second fallback when the runtime cannot respond. The generated
-worker regression now rejects a competing close timer as well as explicit child
-termination. The existing browser cleanup deadline and native-thread checks
-remain unchanged. Browser acceptance is required before this correction ships.
+An [isolated browser comparison](https://github.com/MoinPDF/moinpdf/actions/runs/40404030039)
+tested self-closure without a second termination and delayed owner-only
+termination. Both completed two full acceptance runs. The application uses the
+acknowledged self-closure path: it cancels the hard deadline, retains the short
+grace interval, and does not terminate an already closing worker a second time.
+The one-second forced fallback remains for an unresponsive runtime. Runtime
+patch 12 and its corresponding sources remain unchanged.
+
+The regression exercises the actual generated worker's self-close contract and
+models both slow closure and an acknowledgment just before the hard deadline.
+The real-browser cleanup deadline, native-thread checks and upload restrictions
+remain unchanged; the complete PR workflows still gate integration.
 
 ## Acceptance checks
 

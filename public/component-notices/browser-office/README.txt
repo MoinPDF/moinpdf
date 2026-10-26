@@ -30,13 +30,6 @@ Document and LibreOfficeKit cleanup remain; the page-side owner terminates the
 complete worker tree after acknowledgment. MOINPDF-PATCHES.json records both
 exact replacements and NOTICES.sha256 covers this notice and the patch file.
 
-SINGLE SHUTDOWN OWNER (2026-10-26)
-Patch moinpdf-conversion-worker-13 additionally removes the scheduled self.close()
-after the cleanup acknowledgment. Only the page-side owner terminates the complete
-tree, avoiding competing owner and self-closure paths. Document cleanup and the
-bounded fallback for an unresponsive runtime remain unchanged. The pinned WASM,
-data and upstream source files are unchanged.
-
 LIBREOFFICE AND COMPONENTS
 The embedded versionrc identifies core commit:
 https://github.com/LibreOffice/core/tree/d1c9e0e4e1ddeb24fe8f93e56860b3765043f8b1

@@ -6,7 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased
 
-- Local Office conversion removes competing worker self-closure; only its owner terminates the complete worker tree after acknowledged document cleanup. Bounded cancellation for blocked runtimes and strict checks for surviving threads remain.
+- Local Office conversion lets acknowledged shutdown complete without a second, competing termination. Even a late acknowledgment cancels the hard deadline; blocked runtimes still receive bounded forced termination. Strict checks for surviving threads remain.
 - Change colors & background: recolor existing glyphs without replacing fonts, add backgrounds behind content, presets, original/result previews and image mode for brightness, contrast and saturation.
 - Form helper: unlock individual or all supported read-only fields while preserving values and other field flags; no simultaneous flattening.
 - Crop: additional text-preserving mode with an explicit hidden-content notice. Interleave: duplex blocks within one PDF, split position, reverse backs and page-order preview.
