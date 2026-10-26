@@ -237,6 +237,11 @@ try {
  caretHost.scrollLeft=0;
  await act(async()=>{viewport.dispatchEvent(new Event('scroll'));await new Promise(resolve=>setTimeout(resolve,15));});
  assert.equal(caretHost.scrollLeft,0,'Deliberate scrolling pauses caret following');
+ Range.prototype.getBoundingClientRect=function(){const left=(this.collapsed?this.startOffset*100:100)-caretHost.scrollLeft;return {left,right:this.collapsed?left+2:900-caretHost.scrollLeft,top:200,bottom:218,width:this.collapsed?2:800,height:18};};
+ caretHost.scrollLeft=400;
+ await act(async()=>{setEditorDomSelection(caretField,9,1);caretField.dispatchEvent(new KeyboardEvent('keydown',{key:'Shift',bubbles:true}));await new Promise(resolve=>setTimeout(resolve,15));});
+ assert.equal(caretHost.scrollLeft,88,'A wide backward selection reveals the active left edge, not its right anchor');
+ assert.deepEqual(editorDomSelection(caretField),{anchor:9,focus:1,start:1,end:9},'Geometry measurement never changes selection direction or range');
  await act(async()=>caretRoot.unmount());Range.prototype.getBoundingClientRect=oldRangeRect;delete window.visualViewport;
  const prefetchHost=document.createElement('div');document.body.append(prefetchHost);const prefetchRoot=createRoot(prefetchHost),prefetchSource={...source,id:'prefetch',pdf:{numPages:3}};
  Object.defineProperty(navigator,'deviceMemory',{value:8,configurable:true});let visibility='visible';Object.defineProperty(document,'visibilityState',{get:()=>visibility,configurable:true});

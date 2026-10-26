@@ -321,8 +321,14 @@ export function EditorRichInput({
           selection = window.getSelection();
         if (!followCaret || !root || document.activeElement !== root || !selection?.rangeCount)
           return;
-        const range = selection.getRangeAt(0);
+        const range = selection.getRangeAt(0).cloneRange();
         if (!root.contains(range.commonAncestorContainer)) return;
+        // Follow the active selection end. The full selection may be wider
+        // than the viewport, especially when dragging backwards at high zoom.
+        if (selection.focusNode && root.contains(selection.focusNode)) {
+          range.setStart(selection.focusNode, selection.focusOffset);
+          range.collapse(true);
+        }
         if (typeof range.getBoundingClientRect !== 'function') return;
         const viewport = window.visualViewport;
         if (range.getBoundingClientRect().height > 0) {
