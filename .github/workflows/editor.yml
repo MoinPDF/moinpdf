@@ -57,13 +57,17 @@ jobs:
           bash scripts/ci-prepare-apt.sh
           python -m pip install playwright==1.64.0 pymupdf==1.26.6
           python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Klar Schiff document review, PDF downloads and audio language
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+          MOINPDF_TEST_START_SERVER: '1'
+        run: python tests/klar-schiff-browser.py
       - name: Edit, undo, export, independently inspect and reopen
         env:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
           MOINPDF_TEST_START_SERVER: '1'
         run: |
           status=0
-          python tests/klar-schiff-browser.py || status=1
           python tests/release-021-browser.py || status=1
           python tests/editor-corpus-check.py || status=1
           python tests/editor-browser.py || status=1
