@@ -28,7 +28,7 @@ completed = []
 
 def chooser(page):
     page.get_by_role('heading', name='Was möchtest du tun?', exact=True).wait_for()
-    expect(page.locator('.chooser-tool')).to_have_count(112)
+    expect(page.locator('.chooser-tool')).to_have_count(113)
 
 def back(page):
     mobile_tools = page.locator('.harbor-mobile-nav').get_by_role('button', name='Werkzeuge', exact=True)
@@ -83,7 +83,7 @@ def project_toolbar(page):
 
 def all_views(page, messages, context, empty=False):
     titles = page.locator('.chooser-tool strong').all_text_contents()
-    assert len(titles) == len(set(titles)) == 112
+    assert len(titles) == len(set(titles)) == 113
     for title in titles:
         page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
         if empty and page.locator('.upload-entry').is_visible():
@@ -98,7 +98,7 @@ def all_views(page, messages, context, empty=False):
         assert not messages, f'JavaScript exception in {context} / {title}: {messages}'
         no_overflow(page, context + ' / ' + title)
         back(page)
-    completed.append(f'{context}: all 112 tool entries checked without losing files')
+    completed.append(f'{context}: all 113 tool entries checked without losing files')
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
@@ -170,7 +170,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             count = page.locator('.chooser-tool').count()
             assert count > 0, f'Empty category {label}'
             total += count
-        assert total == 112
+        assert total == 113
         categories.get_by_role('button', name='Alle', exact=True).click()
         chooser(page)
         search = page.get_by_placeholder('Zum Beispiel: PDF kleiner machen …', exact=True)
@@ -183,7 +183,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('menuitemradio', name='English', exact=True).click()
         expect(page.locator('.chooser-document-count')).to_contain_text('1 file')
         expect(page.locator('.chooser-file')).to_contain_text('moinpdf-ui-test.pdf')
-        expect(page.locator('.chooser-tool')).to_have_count(112)
+        expect(page.locator('.chooser-tool')).to_have_count(113)
         page.get_by_placeholder('For example: make a PDF smaller …', exact=True).fill('word to pdf')
         expect(page.get_by_role('option').first).to_contain_text('Office to PDF')
         page.get_by_placeholder('For example: make a PDF smaller …', exact=True).fill('')
@@ -192,7 +192,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('menuitemradio', name='Deutsch', exact=True).click()
         page.get_by_role('button', name='Hellen Modus einschalten', exact=True).click()
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
-        completed.append('Theme/language switching keeps imported documents and all 112 tools')
+        completed.append('Theme/language switching keeps imported documents and all 113 tools')
 
         all_views(page, errors, 'Desktop with PDF')
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
@@ -561,7 +561,20 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             with wave.open(str(saved), 'rb') as audio:
                 assert audio.getnframes() > audio.getframerate()
                 assert audio.getnchannels() == 1
-            completed.append('Reviewed text to local Piper audiobook through the real UI and proxy')
+            page.get_by_label('Vorlesesprache', exact=True).select_option('en')
+            expect(page.get_by_label('Stimme', exact=True)).to_have_value('ljspeech')
+            page.get_by_label('Vorlesetext', exact=True).fill('Hello from the fictional harbour. This English audiobook is generated locally.')
+            page.get_by_label('Lesereihenfolge und Vorlesetext der ausgewählten Abschnitte geprüft', exact=True).check()
+            page.get_by_role('button', name='Hörbuch erstellen', exact=True).click()
+            expect(page.locator('audio')).to_be_visible(timeout=180000)
+            with page.expect_download() as english_download:
+                page.locator('.century-audio-output a[download][href^="blob:"]').click()
+            english_saved = Path(temporary) / 'english-audiobook.wav'
+            english_download.value.save_as(english_saved)
+            with wave.open(str(english_saved), 'rb') as audio:
+                assert audio.getframerate() == 22050 and audio.getnframes() > 22050
+            assert english_saved.read_bytes() != saved.read_bytes()
+            completed.append('Reviewed German and English text to real local Piper audiobooks through the UI and proxy')
             back(page)
 
         page.set_viewport_size({'width': 390, 'height': 844})

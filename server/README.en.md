@@ -116,13 +116,13 @@ Test: `python -m unittest server.test_recovery -v`.
 
 ## Local audiobooks (0.5.0)
 
-`POST /v1/audio` accepts an authenticated multipart field `request` containing JSON: `voice` (`thorsten` or `kerstin`), `speed` (0.75–1.5), and `sections`, each with `title` and validated plain-text `text`. Model paths, download URLs and original PDFs are not accepted. One section produces WAV; multiple sections produce a ZIP with numbered WAV files, `Kapitel.json` and `Hoerbuch.m3u8`.
+`POST /v1/audio` accepts an authenticated multipart field `request` containing JSON: `voice` (`thorsten`, `kerstin` or `ljspeech`), `speed` (0.75–1.5), and `sections`, each with `title` and validated plain-text `text`. Model paths, download URLs and original PDFs are not accepted. One section produces WAV; multiple sections produce a ZIP with numbered WAV files, `Kapitel.json` and `Hoerbuch.m3u8`.
 
 Limits: 20,000 characters, 100 sections, 80 MiB PCM output, two simultaneous document jobs and 180 seconds of process time. ONNX uses at most two CPU threads per job. The existing process-group limit also terminates subprocesses; all job files stay exclusively in the temporary job directory. Cancelling in the browser stops the request, while the server job may continue until completion or timeout.
 
-Piper and its runtime dependencies are pinned in `requirements.lock.txt`. `install_voices.py` downloads only the immutable revisions in `voices.lock.json` and verifies each model, configuration and model card. Both German voices are installed during image construction; the document service needs no internet access at runtime. Missing models disable the `speech` capability. `/v1/capabilities` reports available `audioVoices` and text/section limits. Licence information: [AUDIO-NOTICES.md](AUDIO-NOTICES.md).
+Piper and its runtime dependencies are pinned in `requirements.lock.txt`. `install_voices.py` downloads only the immutable revisions in `voices.lock.json` and verifies each model, configuration and model card. Thorsten and Kerstin (German) and LJ (US English) are installed during image construction; the document service needs no internet access at runtime. The `speech` capability stays enabled while any voice is available. Requests for a missing voice return 503 without falling back to a different language. `/v1/capabilities` reports available `audioVoices` and text/section limits. Licence information: [AUDIO-NOTICES.md](AUDIO-NOTICES.md).
 
-For local tests, install Python dependencies, set `MOINPDF_TOOLS` to a dedicated test directory, run `python server/install_voices.py`, then `python -m unittest server.test_audio -v`. The test generates real WAV files with both models, checks format, signal and speed, and performs an authenticated chapter ZIP export. In Docker, this test runs without a network.
+For local tests, install Python dependencies, set `MOINPDF_TOOLS` to a dedicated test directory, run `python server/install_voices.py`, then `python -m unittest server.test_audio -v`. The test generates real WAV files with all three models, checks format, signal and speed, and performs an authenticated chapter ZIP export. In Docker, this test runs without a network.
 
 ---
 

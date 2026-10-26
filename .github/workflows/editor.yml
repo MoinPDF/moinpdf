@@ -38,7 +38,6 @@ jobs:
           node tests/editor-preservation-smoke.mjs
           node tests/editor-rich-smoke.mjs
           node tests/editor-resilience-smoke.mjs
-          node tests/release-022-smoke.mjs
           node tests/editor-ui-smoke.mjs
           node tests/editor-workflow-smoke.mjs
           node tests/editor-adaptive-smoke.mjs
@@ -63,6 +62,7 @@ jobs:
           MOINPDF_TEST_START_SERVER: '1'
         run: |
           status=0
+          python tests/klar-schiff-browser.py || status=1
           python tests/release-021-browser.py || status=1
           python tests/editor-corpus-check.py || status=1
           python tests/editor-browser.py || status=1

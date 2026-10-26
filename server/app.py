@@ -204,7 +204,7 @@ def capabilities():
             "jobQueue": {"operations": sorted(QUEUED_OPERATIONS), "retentionSeconds": 86400, "timeoutSeconds": 900}, "versions": versions(), "translationService": urlsplit(os.getenv('MOINPDF_TRANSLATE_URL','')).hostname,
             "translationStatus": translation,
             "capabilities": {
-                "speech": len(voices) == 2,
+                "speech": bool(voices),
                 "office": bool(office_binary()),
                 "pdfWord": importlib.util.find_spec("pdf2docx") is not None,
                 "email": bool(office_binary() and importlib.util.find_spec("extract_msg")),
@@ -237,8 +237,8 @@ def audio_export(request: str = Form(...)):
         settings = validate_audio(json.loads(request))
     except (ValueError, TypeError, KeyError):
         raise HTTPException(422, 'Bitte Stimme, Tempo und 1 bis 100 nicht leere Abschnitte mit insgesamt höchstens 20.000 Zeichen prüfen.')
-    if len(voices_available()) != 2:
-        raise HTTPException(503, 'Die beiden lokalen Stimmen sind noch nicht installiert.')
+    if settings['voice'] not in {voice['id'] for voice in voices_available()}:
+        raise HTTPException(503, 'Die ausgewählte lokale Stimme ist noch nicht installiert. Bitte den Dokumentenserver aktualisieren.')
     with job() as directory:
         (directory / 'request.json').write_text(json.dumps(settings, ensure_ascii=False))
         code, _ = command([sys.executable, str(Path(__file__).with_name('audio_documents.py')), str(directory)], directory, accepted=(0, 2))

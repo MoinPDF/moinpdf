@@ -11,12 +11,13 @@ from unittest.mock import patch
 
 import numpy as np
 sys.path.insert(0, str(Path(__file__).parent))
-from audio_documents import validate_request, text_chunks, synthesize, voices_available
+from audio_documents import validate_request, text_chunks, synthesize, voices_available, VOICES
 
 
 class AudioTests(unittest.TestCase):
     def request(self, voice="thorsten", speed=1):
-        return {"voice": voice, "speed": speed, "sections": [{"title": "Moin", "text": "Moin! Dies ist ein kurzer Hörbuchtest mit deutschen Wörtern."}]}
+        text = "Hello! This is an English audiobook test with a local voice." if voice == "ljspeech" else "Moin! Dies ist ein kurzer Hörbuchtest mit deutschen Wörtern."
+        return {"voice": voice, "speed": speed, "sections": [{"title": "Moin", "text": text}]}
 
     def validate_wave(self, data, rate):
         with wave.open(io.BytesIO(data), "rb") as audio:
@@ -31,9 +32,9 @@ class AudioTests(unittest.TestCase):
             return seconds
 
     def test_real_installed_voices_and_speed(self):
-        self.assertEqual(len(voices_available()), 2, "Both verified voice models must be installed; this test must not pass with mocks.")
+        self.assertEqual({v['id'] for v in voices_available()}, set(VOICES), "All verified German and English voice models must be installed; no mocks.")
         durations = []
-        for voice, rate, speed in [("thorsten", 22050, .8), ("thorsten", 22050, 1.4), ("kerstin", 16000, 1)]:
+        for voice, rate, speed in [("thorsten", 22050, .8), ("thorsten", 22050, 1.4), ("kerstin", 16000, 1), ("ljspeech", 22050, 1)]:
             with tempfile.TemporaryDirectory() as directory:
                 output = Path(directory)
                 self.assertEqual(synthesize(self.request(voice, speed), output), "wav")
@@ -60,7 +61,10 @@ class AudioTests(unittest.TestCase):
             self.assertEqual(client.post('/v1/audio', data={"request": json.dumps(self.request())}).status_code, 401)
             caps = client.get('/v1/capabilities', headers=headers).json()
             self.assertTrue(caps['capabilities']['speech'])
-            self.assertEqual(len(caps['audioVoices']), 2)
+            self.assertEqual({voice['language'] for voice in caps['audioVoices']}, {'de-DE', 'en-US'})
+            english = client.post('/v1/audio', headers=headers, data={'request':json.dumps(self.request('ljspeech'))})
+            self.assertEqual(english.status_code, 200)
+            self.validate_wave(english.content, 22050)
             before = set(Path(tempfile.gettempdir()).glob('moinpdf-*'))
             request = self.request()
             request['sections'] = [{"title": "Einleitung", "text": "Moin aus dem Norden."}, {"title": "Kapitel zwei", "text": "Dies ist das zweite Kapitel."}]
@@ -79,6 +83,14 @@ class AudioTests(unittest.TestCase):
                 self.assertEqual(client.post('/v1/audio', headers=headers, data={'request':payload}).status_code, 422)
             with patch.object(service, 'voices_available', return_value=[]):
                 self.assertEqual(client.post('/v1/audio', headers=headers, data={'request':json.dumps(request)}).status_code, 503)
+            # A partially upgraded installation must neither speak German when
+            # English was requested nor disable installed German voices.
+            with patch.object(service, 'voices_available', return_value=[{'id':'thorsten','label':'Thorsten','language':'de-DE'}]):
+                self.assertTrue(client.get('/v1/capabilities', headers=headers).json()['capabilities']['speech'])
+                self.assertEqual(client.post('/v1/audio', headers=headers, data={'request':json.dumps(self.request('ljspeech'))}).status_code, 503)
+                german = client.post('/v1/audio', headers=headers, data={'request':json.dumps(self.request())})
+                self.assertEqual(german.status_code, 200)
+                self.validate_wave(german.content, 22050)
 
 
 if __name__ == '__main__':unittest.main()

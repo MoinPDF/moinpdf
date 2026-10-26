@@ -1,4 +1,5 @@
 export const advancedToolIds = [
+  'klar-schiff',
   'local-assistant',
   'native-objects',
   'bates',

@@ -5,6 +5,12 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'klar-schiff': {
+    title: 'Clear Deck',
+    description:
+      'Recognise, organise and split document piles. Review assignments and download individual PDFs or an organised bundle.',
+    action: 'Recognise documents',
+  },
   'local-assistant': {
     title: 'Local PDF assistant',
     description:
@@ -110,7 +116,7 @@ export const englishTools: Record<
   'pdf-audio': {
     title: 'PDF to audio',
     description:
-      'Review text and OCR results. Export audio with two local German voices as WAV or as an audio ZIP organised by pages and chapters.',
+      'Review text and OCR results. Export audio with local German or English voices as WAV or as an audio ZIP organised by pages and chapters.',
     action: 'Prepare narration text',
   },
   'number-compare': {

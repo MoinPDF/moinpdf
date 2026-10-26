@@ -77,7 +77,7 @@ export const furtherReading = `
   <p>Die gemeinsame Exportprüfung kontrolliert PDF-Lesbarkeit und bekannte Seitenzahlen. Mit verfügbarer Seitenzuordnung vergleicht sie Seitenmaße, Links und Formularfelder; bei Werkzeugen mit Texterhalt zusätzlich Originaltext. Änderungen oder Prüflücken müssen vor dem Download bestätigt werden. Die Prüfung ist auf 200 Seiten und 100.000 Zeichen je Seite begrenzt. Passwortgeschützte Ausgaben werden als nicht inhaltlich geprüft gekennzeichnet. Das ist kein vollständiger Bildvergleich und keine Garantie inhaltlicher Richtigkeit.</p>
   <p>Bereinigte PDF zur Weitergabe exportiert nur die sichtbaren Seiten des neuesten gewählten Projektstands als Seitenbilder bis 2800 Pixel. Originaldateien, Anhänge und Bearbeitungsverläufe entfallen. Suchtext, Links, interaktive Formulare und Zertifikatssignaturen werden nicht übernommen. Sichtbare vertrauliche Angaben bleiben sichtbar; kontrolliere die PDF vor der Weitergabe.</p>
   <h3>Übersetzung und Sprachausgabe</h3>
-  <p>Bei der ersten vollständigen Installation werden die Übersetzungsmodelle für die angebotenen Sprachen geladen; dafür ist Internetzugang nötig. Danach verarbeitet die Übersetzung Texte auf dem eigenen Server. Die zwei deutschen Piper-Stimmen sind installiert und erzeugen Audio dort ohne Cloud-Dienst. OCR verarbeitet die Dokumente auf deinem Gerät. Die angebotenen Sprachen und Kombinationsgrenzen stehen unter Aktuelle Programmgrenzen; optional kann eine lokale Probe passende Sprachen vorschlagen.</p>
+  <p>Bei der ersten vollständigen Installation werden die Übersetzungsmodelle für die angebotenen Sprachen geladen; dafür ist Internetzugang nötig. Danach verarbeitet die Übersetzung Texte auf dem eigenen Server. Die deutschen Piper-Stimmen Thorsten und Kerstin sowie LJ für US-Englisch sind installiert und erzeugen Audio dort ohne Cloud-Dienst. OCR verarbeitet die Dokumente auf deinem Gerät. Die angebotenen Sprachen und Kombinationsgrenzen stehen unter Aktuelle Programmgrenzen; optional kann eine lokale Probe passende Sprachen vorschlagen.</p>
   <p>Angaben zum Betrieb dieser Website und zum Datenschutz findest du in der <a href="/datenschutz.html">Datenschutzerklärung</a>. Bei einer selbst betriebenen Installation sind außerdem die Angaben ihres Betreibers maßgeblich.</p>
 </section>
 <section class="docs-section" id="grenzen" aria-labelledby="title-grenzen">
@@ -89,7 +89,7 @@ export const furtherReading = `
     <tr><th scope="row">E-Book zu PDF</th><td>Bis 40 MB und 200 Ausgabeseiten. Keine verschlüsselten EPUB-Inhalte.</td></tr>
     <tr><th scope="row">PDF zu PowerPoint</th><td>Bis 100 Seiten; eine Seite als Bild je Folie.</td></tr>
     <tr><th scope="row">Ausrichtung / Felderkennung</th><td>Jeweils bis 50 Seiten; Felderkennung mit höchstens 500 neuen Feldern.</td></tr>
-    <tr><th scope="row">Hörbuch</th><td>Bis 20.000 Zeichen und 100 Abschnitte pro Auftrag; zwei deutsche Stimmen.</td></tr>
+    <tr><th scope="row">Hörbuch</th><td>Bis 20.000 Zeichen und 100 Abschnitte pro Auftrag; deutsche und englische Stimmen.</td></tr>
     <tr><th scope="row">Übersetzung</th><td>Bis 60.000 Zeichen pro Auftrag; sieben angebotene Sprachen.</td></tr>
     <tr><th scope="row">Word-Serienbriefe</th><td>Bis 50 Datensätze und 50 Spalten im ersten XLSX-Tabellenblatt.</td></tr>
     <tr><th scope="row">Kamera-Scanner</th><td>Bis 50 gesammelte Seiten. Kamerazugriff benötigt einen sicheren Browserkontext und deine Freigabe.</td></tr>

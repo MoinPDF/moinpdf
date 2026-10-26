@@ -9,6 +9,12 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Unveröffentlicht — Klar Schiff und englische Sprachausgabe
+
+- Klar Schiff unter Stapel: lokale Text-/OCR-Erkennung, konservative Dokumentgruppen, Originalvorschau, bearbeitbare Zuordnungen/Dateinamen/Reihenfolge, Duplikat- und Seitenlückenhinweise, ausdrückliche Prüfung, gespeicherte Arbeitsstände und echte Einzel-PDF-ZIPs oder verlinkte Dokumentenmappen.
+- Vorlesesprache unabhängig von der Oberfläche, zusätzlich zu deutschen Stimmen das fest versionierte lokale LJ-Speech-Modell für US-Englisch. Verfügbare Stimmen werden nach Sprache angeboten; fehlende englische Modelle sperren deutsche Stimmen nicht und führen zu keinem stillen Sprachwechsel.
+- Deutsche/englische Anleitung, Modellhinweise, Regressionen für Originalseiten und Exporte, echte Spracherzeugung und Browserabnahme ergänzt.
+
 ## 0.22.0 – 26. Oktober 2026
 
 - Der Word-Export startet lokal mit zwei klaren Zielen: „Aussehen möglichst erhalten“ und „Text und Tabellen bearbeiten“. Text-only-Ausgabe und ein eingerichteter Dokumentenserver stehen unter „Weitere Optionen“; gespeicherte Einstellungen bleiben nutzbar.

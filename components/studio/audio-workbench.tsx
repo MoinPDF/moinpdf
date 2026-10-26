@@ -16,6 +16,12 @@ import type { EvidencePage } from '@/lib/evidence-model';
 import { selectRange, type Source } from '@/lib/pdf-engine';
 import type { ExportFile, RunContext } from '@/lib/advanced-types';
 import {
+  defaultAudioVoices,
+  voicesForLanguage,
+  selectedAudioVoice,
+  type AudioLanguage,
+} from '@/lib/audio-voices';
+import {
   integratedDocumentServer,
   serverCapabilities,
   runServerJob,
@@ -44,6 +50,9 @@ export function AudioWorkbench({
     [selected, setSelected] = useState(''),
     [range, setRange] = useState(''),
     [reviewed, setReviewed] = useState(false),
+    [audioLanguage, setAudioLanguage] = useState<AudioLanguage>(() =>
+      uiLocale().startsWith('en') ? 'en' : 'de',
+    ),
     [voice, setVoice] = useState('thorsten'),
     [speed, setSpeed] = useState(1),
     [caps, setCaps] = useState<ServerCapabilities | null>(null),
@@ -59,9 +68,12 @@ export function AudioWorkbench({
     output = useRef<HTMLElement>(null),
     source = sources.find((s) => s.id === sourceId) || sources[0],
     current = sections.find((s) => s.id === selected) || sections[0];
+  const availableVoices = caps ? caps.audioVoices || [] : defaultAudioVoices;
+  const languageVoices = voicesForLanguage(availableVoices, audioLanguage);
+  const activeVoice = selectedAudioVoice(availableVoices, audioLanguage, voice);
   const chosen = sections.filter((s) => s.enabled),
     characters = chosen.reduce((n, s) => n + s.text.length, 0),
-    ready = !!caps?.capabilities.speech;
+    ready = !!caps?.capabilities.speech && !!activeVoice;
   const clear = () => {
     setResult(null);
     setReviewed(false);
@@ -82,7 +94,7 @@ export function AudioWorkbench({
           setCaps(value);
           setStatus(
             value.capabilities.speech
-              ? 'Zwei deutsche Stimmen stehen auf deinem Dokumentenserver bereit.'
+              ? 'Die installierten Stimmen stehen auf deinem Dokumentenserver bereit.'
               : 'Die Sprachausgabe ist noch nicht verfügbar. Bitte die vollständige Installation aktualisieren.',
           );
         })
@@ -151,7 +163,7 @@ export function AudioWorkbench({
           : 'Hörbuch wird auf deinem Dokumentenserver gesprochen …',
       });
       const body = new FormData();
-      body.append('request', JSON.stringify({ voice, speed, sections: selected }));
+      body.append('request', JSON.stringify({ voice: activeVoice!.id, speed, sections: selected }));
       const out = await runServerJob(integratedDocumentServer, '', '/v1/audio', body, ctx.signal);
       return {
         ...out,
@@ -328,17 +340,36 @@ export function AudioWorkbench({
             <section className="advanced-card">
               <h2>{ui('Stimme und Ausgabe')}</h2>
               <Choice
-                label={ui('Deutsche Stimme')}
-                value={voice}
-                onChange={setVoice}
-                items={(caps?.audioVoices?.length
-                  ? caps.audioVoices
-                  : [
-                      { id: 'thorsten', label: 'Thorsten · Deutsch' },
-                      { id: 'kerstin', label: 'Kerstin · Deutsch' },
-                    ]
-                ).map((v) => [v.id, v.label])}
+                label={ui('Vorlesesprache')}
+                value={audioLanguage}
+                onChange={(value) => setAudioLanguage(value as AudioLanguage)}
+                items={[
+                  ['de', 'Deutsch'],
+                  ['en', 'Englisch'],
+                ]}
               />
+              <p className="fine-note">
+                {ui(
+                  'Die Stimme liest den vorhandenen Text vor. Die Sprachwahl übersetzt das Dokument nicht.',
+                )}
+              </p>
+              <Choice
+                label={ui('Stimme')}
+                value={activeVoice?.id || ''}
+                onChange={setVoice}
+                items={
+                  languageVoices.length
+                    ? languageVoices.map((v) => [v.id, v.label])
+                    : [['', 'Keine Stimme für diese Sprache installiert']]
+                }
+              />
+              {caps && !activeVoice && (
+                <p className="workbench-notice">
+                  {ui(
+                    'Für diese Vorlesesprache bitte den Dokumentenserver aktualisieren. Andere installierte Sprachen bleiben verfügbar.',
+                  )}
+                </p>
+              )}
               <NumberField
                 label={ui('Sprechtempo')}
                 value={speed}

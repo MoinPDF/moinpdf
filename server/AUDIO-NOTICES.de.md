@@ -17,9 +17,10 @@ Das Image installiert unveränderte Upstream-Wheels. Zum Neubau der Engine die m
 - ONNX Runtime: MIT, https://github.com/microsoft/onnxruntime
 
 Repository der Stimmmodelle: https://huggingface.co/rhasspy/piper-voices (MIT).
-Beide Modelle verwenden CC0-Sprachdatensätze; diese sind von der Engine-Lizenz getrennt:
+Die beiden deutschen Modelle verwenden CC0-Sprachdatensätze; diese sind von der Engine-Lizenz getrennt:
 
 - Thorsten Voice: https://github.com/thorstenMueller/Thorsten-Voice
 - Kerstin: https://github.com/rhasspy/dataset-voice-kerstin
+- LJ Speech (US-Englisch): https://keithito.com/LJ-Speech-Dataset/ — Public-Domain-Datensatz gemäß mitgelieferter Upstream-Modellkarte.
 
-Modelldateien, JSON-Konfigurationen und die einzelnen Upstream-Modellkarten sind in `voices.lock.json` auf Revision `c10ece1aade47bb51c153c893d14e5bf8e5b7117` fixiert. Alle sechs Dateien werden beim Imagebau mit SHA-256 geprüft. Karten und Lockfile bleiben im Image unter `/opt/moinpdf-tools/voices`. Während der Dokumentverarbeitung werden keine Stimmmodelle heruntergeladen.
+Modelldateien, JSON-Konfigurationen und die einzelnen Upstream-Modellkarten sind in `voices.lock.json` auf Revision `c10ece1aade47bb51c153c893d14e5bf8e5b7117` fixiert. Alle neun Dateien werden beim Imagebau mit SHA-256 geprüft. Karten und Lockfile bleiben im Image unter `/opt/moinpdf-tools/voices`. Während der Dokumentverarbeitung werden keine Stimmmodelle heruntergeladen.
