@@ -58,7 +58,10 @@ with sync_playwright() as api:
                     page.locator('input[type=file]').first.set_input_files(str(fixture.resolve()))
                     expect(page.locator('.chooser-tool')).to_have_count(117)
                     choose('Farben & Hintergrund ändern','Change colors & background')
-                    expect(page.locator('.document-color-preview img')).to_have_count(2,timeout=120000)
+                    # PagePreview intentionally renders only near the viewport.
+                    for preview in page.locator('.document-color-preview section').all():
+                        preview.scroll_into_view_if_needed()
+                        expect(preview.locator('img')).to_be_visible(timeout=120000)
                     label('Textfarbe','Text color').fill('#0000ff')
                     label('Hintergrundfarbe','Background color').fill('#ffff00')
                     expect(button('Farben auf alle Seiten anwenden','Apply colors to all pages')).to_be_enabled(timeout=120000)
@@ -94,6 +97,7 @@ with sync_playwright() as api:
                     assert not errors,errors
                     reports.append({'case':name,'passed':True})
                 except Exception as error:
+                    print('FAILED',name,'page errors:',errors,'visible tool:',page.locator('.advanced-workbench').inner_text() if page.locator('.advanced-workbench').count() else page.locator('main').inner_text())
                     reports.append({'case':name,'passed':False,'error':str(error),'pageErrors':errors})
                     page.screenshot(path=str(out/(name+'-failure.png')),full_page=True)
                     raise
