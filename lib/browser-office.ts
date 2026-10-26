@@ -160,12 +160,10 @@ export async function convertOfficeLocally(
         // nested-worker shutdown; the runtime patch deliberately leaves them alive.
         const activeWorker = worker!;
         let cleaned = false;
-        let gracefulTimer: ReturnType<typeof setTimeout> | undefined;
         const complete = () => {
           if (cleaned) return;
           cleaned = true;
           clearTimeout(cleanupTimer);
-          clearTimeout(gracefulTimer);
           activeWorker.onmessage = null;
           activeWorker.onerror = null;
           activeWorker.terminate();
@@ -176,12 +174,10 @@ export async function convertOfficeLocally(
         // finish promptly; terminate is the bounded fallback for an unresponsive worker.
         const cleanupTimer = setTimeout(complete, 1000);
         activeWorker.onmessage = ({ data }) => {
-          if (data.type === 'ready' && data.id === 3 && !gracefulTimer) {
-            // The pinned runtime calls self.close() 100 ms after this acknowledgment.
-            // Let that event-loop shutdown finish before the hard fallback: immediate
-            // termination can race the owner and its nested pthread teardown.
-            gracefulTimer = setTimeout(complete, 250);
-          }
+          // The pinned runtime acknowledges document cleanup without self-closing.
+          // Only this owner terminates the complete tree; two competing shutdown
+          // paths can strand Chromium threads even with a delay between them.
+          if (data.type === 'ready' && data.id === 3) complete();
         };
         activeWorker.onerror = complete;
         try {

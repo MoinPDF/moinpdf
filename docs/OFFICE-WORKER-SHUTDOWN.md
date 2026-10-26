@@ -73,6 +73,22 @@ It verifies document cleanup and acknowledgment while rejecting any child-pool o
 individual-child termination. The test fails against patch 11 and passes against
 patch 12; it supplements the real-browser thread and PDF checks below.
 
+## Single shutdown owner
+
+The 2026-10-26 acceptance run exposed a remaining overlap: patch 12 still
+scheduled the upstream worker's `self.close()` 100 ms after acknowledgment,
+while the page called `Worker.terminate()` after 250 ms. Valid cached DOCX
+conversions again left an unresponsive Office target and native worker threads.
+The failure repeated on a fresh runner; extending the delay does not establish
+that the first shutdown has completed.
+
+Patch `moinpdf-conversion-worker-13` removes that scheduled self-close. The page
+terminates the entire tree immediately after acknowledged document cleanup,
+retaining the one-second fallback when the runtime cannot respond. The generated
+worker regression now rejects a competing close timer as well as explicit child
+termination. The existing browser cleanup deadline and native-thread checks
+remain unchanged. Browser acceptance is required before this correction ships.
+
 ## Acceptance checks
 
 `tests/browser-office-browser.py` continues to enforce the ten-second cleanup

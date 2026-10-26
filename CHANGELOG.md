@@ -11,6 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Noch nicht versioniert
 
+- Lokale Office-Konvertierung: konkurrierendes Selbstbeenden des Workers entfernt; nur sein Besitzer beendet nach bestätigter Dokumentbereinigung den gesamten Prozessbaum. Der begrenzte Abbruch für blockierte Laufzeiten und die strengen Prüfungen auf verbliebene Prozesse bleiben erhalten.
 - Farben & Hintergrund ändern: Textfarben ohne Schriftwechsel, Hintergrund hinter vorhandenen Inhalten, Vorlagen, Original-/Ergebnisvorschau und Bildmodus für Helligkeit, Kontrast und Sättigung.
 - Formularhelfer: einzelne oder alle unterstützten schreibgeschützten Felder freigeben, vorhandene Werte und andere Feldflags erhalten; keine gleichzeitige Fixierung.
 - Zuschneiden: zusätzlicher Text erhaltender Modus mit deutlichem Hinweis auf verbleibende Randinhalte. Abwechselnd zusammenfügen: Duplex-Blöcke in einer PDF, Trennstelle, Rückseitenumkehr und Seitenfolgevorschau.

@@ -24,6 +24,8 @@ Before the first native calls, the adapter waits for all prestarted pthreads to 
 
 ## Verification
 
+During shutdown, the runtime first acknowledges document cleanup. Only the calling browser code then terminates the complete worker tree; competing runtime self-closure has been removed. An unresponsive runtime is forcibly terminated after one second. Checks for surviving native worker threads remain unchanged.
+
 `tests/browser-office-browser.py` converts six Office/ODF fixtures and three richer DOCX/XLSX/PPTX files in real production Chromium. MuPDF checks text, umlauts, images, table/chart drawings, the calculated amount 53.30 and both presentation pages. Tests also cover 15 cancellation/restart cycles without reloading, further conversions after success, blocked binary downloads, absence of document uploads and complete termination of Office workers. The current GitHub CI run determines release readiness.
 
 Complex layouts, missing fonts, macros and external data sources may produce different results. Macros are not enabled; the adapter exposes neither arbitrary loading options nor document passwords. General fidelity to the original and PDF/A compliance are not claimed. Review outputs before using them.

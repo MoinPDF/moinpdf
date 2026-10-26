@@ -1,5 +1,5 @@
 {
-  "id": "moinpdf-conversion-worker-12",
+  "id": "moinpdf-conversion-worker-13",
   "upstream": "@matbee/libreoffice-converter@2.7.2",
   "license": "MPL-2.0",
   "description": "MoinPDF uses LibreOfficeKit for one-shot conversion without also starting the soffice desktop application. Honor verbose=false, as the upstream Node converter does. Original corresponding source remains in MATBEE-SOURCES; these exact replacements are applied by scripts/prepare-office-assets.mjs.",
@@ -43,6 +43,11 @@
       "description": "Pure load/save conversion does not post editor input events. Leave the regular LibreOfficeKit yield path enabled.",
       "before": "c.enableSyncEvents(),console.log(\"[LOK Worker] Enabled synchronous event dispatch (Unipoll mode)\"),",
       "after": ""
+    },
+    {
+      "description": "Keep a single shutdown owner. After native document cleanup, acknowledge without scheduling self.close(); a concurrent self-close and page-side Worker.terminate() can strand Chromium threads. The page terminates the entire worker tree on acknowledgment, with a bounded fallback for an unresponsive runtime.",
+      "before": "E=null,b=false,y({type:\"ready\",id:l.id}),setTimeout(()=>self.close(),100);",
+      "after": "E=null,b=false,y({type:\"ready\",id:l.id});"
     },
     {
       "description": "Do not enter synchronous LibreOfficeKit calls until all initial pthread workers have acknowledged their compiled module. Record the readiness barrier for the real-browser regression test.",
