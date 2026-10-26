@@ -5,6 +5,12 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'large-document': {
+    title: 'Process large PDFs',
+    description:
+      'Process up to 1,000 pages in locally saved sections, pause and resume. Verify every page before exporting the complete file.',
+    action: 'Prepare large PDF',
+  },
   'document-colors': {
     title: 'Change colors & background',
     description:

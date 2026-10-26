@@ -18,6 +18,15 @@ Generated from the application constants when building the documentation.
 
 This overview explains tools, output formats and technical limitations. Open **Documentation** in the app for the searchable handbook with step-by-step instructions. For the complete installation, see [Docker](../DOCKER.en.md).
 
+## redaction, large PDFs and recognition rules
+
+- **Text-preserving redaction:** Manual regions and search matches can remove complete, simple digital text objects while preserving remaining text and vectors. Page geometry, remaining text, links and rendered views are checked before export. Document metadata and unused resources are removed. Unsupported structures block export; the existing image mode remains an explicit choice.
+- **Large PDFs:** Dedicated workspace for files up to 256 MB and 1,000 pages, with rotation, lossless optimization and OCR. File-backed reading, sections of at most 50 pages, atomic local checkpoints and resume after cancellation. Sections can be edited in the standard editor and replaced with the same page count. Every final page is checked against its verified section. The standard editor retains its 80 MB / 200 active-page limits.
+- **Clear Deck:** Up to 30 explicitly saved local layout rules for sender, document number and date. Recurring documents receive suggestions; conflicting rules and uncertain OCR remain visible. Unambiguous suggestions can be confirmed together after review.
+
+Large jobs and recognition rules remain unencrypted in this browser until deleted; project archives do not include them. Large PDFs containing forms, signatures, internal destinations, bookmarks, attachments or structure tags are rejected upfront. Up to 768 MB of saved jobs and 256 MB of final output; document metadata is not carried into the assembled output. A desktop browser is recommended.
+
+
 ## New in 0.21.0
 
 Shared PDF export verification checks readability and known page counts. With source-page mapping it compares dimensions, links and form fields; tools that preserve text also check original text. Verification covers up to 200 pages and 100,000 characters per page. Findings require explicit review; unreadable results cannot be downloaded. Encrypted PDF output is labelled as not content-verified. This is not a complete visual comparison.

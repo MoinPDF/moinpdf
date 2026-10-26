@@ -470,6 +470,10 @@ export function TablePanel({ source, busy, run }: PanelProps) {
 }
 export function RedactPanel({ source, busy, run }: PanelProps) {
   useLanguage();
+  const [mode, setMode] = useToolDraftState<'raster' | 'preserve'>(
+    'RedactPanel.mode:' + source.id,
+    'raster',
+  );
   const [terms, setTerms] = useToolDraftState('RedactPanel.terms:' + source.id + '', ''),
     [email, setEmail] = useToolDraftState('RedactPanel.email:' + source.id + '', true),
     [iban, setIban] = useToolDraftState('RedactPanel.iban:' + source.id + '', true),
@@ -497,6 +501,18 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
             }}
           />
         </Field>
+        <Choice
+          label="Schwärzungsmodus"
+          value={mode}
+          onChange={(value) => {
+            setMode(value as typeof mode);
+            setReview(false);
+          }}
+          items={[
+            ['raster', 'Seiten als Bilder neu aufbauen'],
+            ['preserve', 'Text und Vektoren erhalten'],
+          ]}
+        />
         <Tick
           label={ui('E-Mail-Adressen erkennen')}
           value={email}
@@ -570,13 +586,15 @@ export function RedactPanel({ source, busy, run }: PanelProps) {
             />
             <Button
               disabled={busy || !review}
-              onClick={() => run((c) => redactHits(source, hits, c))}
+              onClick={() => run((c) => redactHits(source, hits, c, mode))}
             >
               {ui('Ausgewählte Fundstellen schwärzen')}
             </Button>
             <p className="fine-note">
               {ui(
-                'Die Ausgabe wird vollständig als Seitenbilder neu aufgebaut; Textschichten, Anhänge und Formulare werden entfernt.',
+                mode === 'preserve'
+                  ? 'Entfernt vollständige Textzeilen in geeigneten digitalen PDFs. Übrige Inhalte werden geprüft. Komplexe Seiten benötigen den Bildmodus; es erfolgt kein automatischer Wechsel.'
+                  : 'Die Ausgabe wird vollständig als Seitenbilder neu aufgebaut; Textschichten, Anhänge und Formulare werden entfernt.',
               )}
             </p>
           </>

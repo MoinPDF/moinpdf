@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Unveröffentlicht: Schwärzen, große PDFs und Erkennungsregeln
+
+- **Schwärzen mit Texterhalt:** Manuelle Bereiche und Suchtreffer können vollständig erfasste, einfache digitale Textobjekte entfernen und übrigen Text sowie Vektorgrafiken erhalten. Seitengeometrie, Resttext, Links und Bilddarstellung werden vor der Ausgabe geprüft. Dokumentinfos und ungenutzte Ressourcen werden bereinigt. Bei nicht unterstützten Strukturen wird die Ausgabe gesperrt; der bestehende Bildmodus bleibt ausdrücklich wählbar.
+- **Große PDFs:** Eigener Arbeitsbereich bis 256 MB und 1.000 Seiten für Drehen, verlustfreies Optimieren und OCR. Dateibasiertes Lesen, Abschnitte mit höchstens 50 Seiten, atomare lokale Zwischenstände und Fortsetzen nach Abbruch. Abschnitte können im Editor bearbeitet und bei gleicher Seitenzahl ersetzt werden. Die Gesamtausgabe wird auf allen Seiten gegen die geprüften Abschnitte geprüft. Der normale Editor bleibt bei 80 MB und 200 aktiven Seiten.
+- **Klar Schiff:** Bis zu 30 ausdrücklich gespeicherte lokale Layoutregeln für Absender, Dokumentnummer und Datum. Wiederkehrende Dokumente erhalten Vorschläge; Konflikte und unsichere OCR bleiben sichtbar. Eindeutige Vorschläge lassen sich nach Prüfung gemeinsam bestätigen.
+
+Große Aufträge und Erkennungsregeln bleiben unverschlüsselt im Browser, bis sie gelöscht werden; sie werden nicht in Projektdateien eingebettet. Große PDFs mit Formularen, Signaturen, internen Verweisen, Lesezeichen, Anhängen oder Struktur-Tags werden vorab abgelehnt. Maximal 768 MB gespeicherte Aufträge und 256 MB Gesamtausgabe; Dokumentinfos werden bei der Zusammenführung nicht übernommen. Desktop-Browser empfohlen.
+
+
 ## Noch nicht versioniert
 
 - Formularprofile behalten alle Angaben bei schnellen aufeinanderfolgenden Eingaben und beim automatischen Ausfüllen mehrerer Felder.

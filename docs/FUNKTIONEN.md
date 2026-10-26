@@ -18,6 +18,15 @@ Beim Dokumentationsbuild aus den Anwendungskonstanten erzeugt.
 
 Diese Übersicht erklärt Werkzeuge, Ausgabeformate und technische Grenzen. Das durchsuchbare Handbuch mit Arbeitsschritten erreichst du in der App über **Dokumentation**. Für die vollständige Installation siehe [Docker](../DOCKER.md).
 
+## Schwärzen, große PDFs und Erkennungsregeln
+
+- **Schwärzen mit Texterhalt:** Manuelle Bereiche und Suchtreffer können vollständig erfasste, einfache digitale Textobjekte entfernen und übrigen Text sowie Vektorgrafiken erhalten. Seitengeometrie, Resttext, Links und Bilddarstellung werden vor der Ausgabe geprüft. Dokumentinfos und ungenutzte Ressourcen werden bereinigt. Bei nicht unterstützten Strukturen wird die Ausgabe gesperrt; der bestehende Bildmodus bleibt ausdrücklich wählbar.
+- **Große PDFs:** Eigener Arbeitsbereich bis 256 MB und 1.000 Seiten für Drehen, verlustfreies Optimieren und OCR. Dateibasiertes Lesen, Abschnitte mit höchstens 50 Seiten, atomare lokale Zwischenstände und Fortsetzen nach Abbruch. Abschnitte können im Editor bearbeitet und bei gleicher Seitenzahl ersetzt werden. Die Gesamtausgabe wird auf allen Seiten gegen die geprüften Abschnitte geprüft. Der normale Editor bleibt bei 80 MB und 200 aktiven Seiten.
+- **Klar Schiff:** Bis zu 30 ausdrücklich gespeicherte lokale Layoutregeln für Absender, Dokumentnummer und Datum. Wiederkehrende Dokumente erhalten Vorschläge; Konflikte und unsichere OCR bleiben sichtbar. Eindeutige Vorschläge lassen sich nach Prüfung gemeinsam bestätigen.
+
+Große Aufträge und Erkennungsregeln bleiben unverschlüsselt im Browser, bis sie gelöscht werden; sie werden nicht in Projektdateien eingebettet. Große PDFs mit Formularen, Signaturen, internen Verweisen, Lesezeichen, Anhängen oder Struktur-Tags werden vorab abgelehnt. Maximal 768 MB gespeicherte Aufträge und 256 MB Gesamtausgabe; Dokumentinfos werden bei der Zusammenführung nicht übernommen. Desktop-Browser empfohlen.
+
+
 ## Neu in 0.21.0
 
 Die gemeinsame PDF-Exportprüfung kontrolliert Lesbarkeit und bekannte Seitenzahlen. Bei vorhandener Seitenzuordnung werden Maße, Links und Formularfelder verglichen; bei Werkzeugen mit Texterhalt auch Originaltext. Bis zu 200 Seiten und 100.000 Zeichen je Seite werden geprüft. Auffälligkeiten erfordern eine Bestätigung, unlesbare Ergebnisse werden nicht zum Download freigegeben. Verschlüsselte PDF-Ausgaben sind als inhaltlich ungeprüft gekennzeichnet. Das ersetzt keinen vollständigen Bildvergleich.

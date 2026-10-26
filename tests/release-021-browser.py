@@ -246,14 +246,18 @@ def offline_case(browser, engine):
         expect(first.locator('img')).to_have_count(0, timeout=20000)
         result['retained_preview_images'] = page.locator('.page-preview img').count()
         assert result['retained_preview_images'] < 80, result
-        first.scroll_into_view_if_needed()
+        # Jump back without WebKit's ElementHandle stability wait over a long grid.
+        first.evaluate("el => el.scrollIntoView({behavior: 'instant', block: 'center'})")
         expect(first.locator('img')).to_be_visible(timeout=20000)
         no_overflow(page)
-        page.screenshot(path=str(out / f'{engine}-bounded-previews.png'), full_page=True)
+        page.screenshot(path=str(out / f'{engine}-bounded-previews.png'), full_page=False)
         result['status'] = 'passed'
     except Exception:
         result.update(status='failed', error=traceback.format_exc(), diagnostics=diagnostics)
-        page.screenshot(path=str(out / f'{engine}-offline-failed.png'), full_page=True)
+        try:
+            page.screenshot(path=str(out / f'{engine}-offline-failed.png'), full_page=False, timeout=10000)
+        except Exception as screenshot_error:
+            result['screenshot_error'] = str(screenshot_error)
     finally:
         if result.get('status') == 'failed':
             context.tracing.stop(path=str(out / f'{engine}-offline-trace.zip'))

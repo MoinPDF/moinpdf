@@ -21,7 +21,7 @@ export function checkNewPassword(password: string) {
 }
 function workerJob(
   bytes: Uint8Array,
-  operation: 'encrypt' | 'decrypt' | 'rewrite' | 'optimize' | 'linearize',
+  operation: 'encrypt' | 'decrypt' | 'rewrite' | 'redactRewrite' | 'optimize' | 'linearize',
   settings: Partial<SecuritySettings> & { jpegQuality?: number },
   signal?: AbortSignal,
 ): Promise<Uint8Array> {
@@ -91,6 +91,9 @@ export function unlockPdf(bytes: Uint8Array, password: string, signal?: AbortSig
 }
 export function rewritePdf(bytes: Uint8Array, signal?: AbortSignal) {
   return workerJob(bytes, 'rewrite', {}, signal);
+}
+export function rewriteRedactedPdf(bytes: Uint8Array, signal?: AbortSignal) {
+  return workerJob(bytes, 'redactRewrite', {}, signal);
 }
 export function linearizePdf(bytes: Uint8Array, signal?: AbortSignal) {
   return workerJob(bytes, 'linearize', {}, signal);

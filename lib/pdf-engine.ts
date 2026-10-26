@@ -147,7 +147,7 @@ export class PdfTimeoutError extends Error {
  * stops replying. Cancellation must not depend on that same worker replying.
  * Original workspace documents never belong to this temporary session. */
 export async function withPdfDocument<T>(
-  bytes: Uint8Array,
+  bytes: Uint8Array | Blob,
   parent: AbortSignal,
   inspect: (
     pdf: PDFDocumentProxy,
@@ -213,8 +213,33 @@ export async function withPdfDocument<T>(
     const pdfjs = await step('renderer-load', getPdfJs());
     signal.throwIfAborted();
     worker = new pdfjs.PDFWorker();
+    let range: InstanceType<typeof pdfjs.PDFDataRangeTransport> | undefined;
+    if (bytes instanceof Blob) {
+      const file = bytes;
+      const initial = new Uint8Array(await step('file-header', file.slice(0, 65536).arrayBuffer()));
+      class LocalFileRange extends pdfjs.PDFDataRangeTransport {
+        requestDataRange(begin: number, end: number) {
+          void file
+            .slice(begin, end)
+            .arrayBuffer()
+            .then((buffer) => {
+              if (!signal.aborted) this.onDataRange(begin, new Uint8Array(buffer));
+            })
+            .catch((error) => controller.abort(error));
+        }
+      }
+      range = new LocalFileRange(file.size, initial);
+    }
     task = pdfjs.getDocument({
-      data: bytes.slice(),
+      ...(range
+        ? {
+            range,
+            length: (bytes as Blob).size,
+            rangeChunkSize: 262144,
+            disableAutoFetch: true,
+            disableStream: true,
+          }
+        : { data: (bytes as Uint8Array).slice() }),
       worker,
       cMapUrl: '/vendor/pdf/cmaps/',
       cMapPacked: true,

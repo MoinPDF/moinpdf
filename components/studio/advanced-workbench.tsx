@@ -30,6 +30,7 @@ import { FormHelperPanel, ReceiptsPanel } from './everyday-panels';
 import { DocumentColorsPanel } from './document-colors-panel';
 import { HeaderFooterPanel } from './header-footer-panel';
 import { KlarSchiffPanel } from './klar-schiff-panel';
+import { LargeDocumentPanel } from './large-document-panel';
 import { NativePanel } from './native-panel';
 import { ProPanel } from './pro-panels';
 import { isProTool } from '@/lib/pro-tools';
@@ -116,9 +117,10 @@ export function AdvancedWorkbench({
     const objectUrl = URL.createObjectURL(result.blob);
     setUrl(objectUrl);
     setPage(0);
+    setPreview(null);
     let active = true,
       owned: Source | undefined;
-    if (result.kind === 'pdf')
+    if (result.kind === 'pdf' && (result.pages || 0) <= 200 && result.blob.size <= 80 * 1024 * 1024)
       openSource(new File([result.blob], result.filename, { type: 'application/pdf' }))
         .then((s) => {
           owned = s;
@@ -157,6 +159,7 @@ export function AdvancedWorkbench({
     multi = (
       [
         'klar-schiff',
+        'large-document',
         'receipts-a4',
         'local-assistant',
         'bates',
@@ -228,7 +231,9 @@ export function AdvancedWorkbench({
         onChangeCapture={() => setResult(null)}
         key={`${tool}-${multi ? 'all' : source?.id || 'camera'}-${sources.map((s) => s.id).join(':')}`}
       >
-        {tool === 'pdf-repair' ? (
+        {tool === 'large-document' ? (
+          <LargeDocumentPanel busy={busy} run={run} initialFile={initialFile} />
+        ) : tool === 'pdf-repair' ? (
           <RepairPanel source={source} busy={busy} run={run} initialFile={initialFile} />
         ) : tool === 'camera-scan' ? (
           <CameraPanel busy={busy} run={run} />
@@ -319,6 +324,7 @@ export function AdvancedWorkbench({
                 auditSources={sources}
                 auditPages={
                   tool !== 'klar-schiff' &&
+                  tool !== 'large-document' &&
                   tool !== 'receipts-a4' &&
                   source &&
                   result.pages === source.pdf.numPages
@@ -333,24 +339,26 @@ export function AdvancedWorkbench({
                 fresh={resultFresh}
                 label={t('Herunterladen')}
               />
-              {result.kind === 'pdf' && (
-                <Button
-                  variant="outline"
-                  disabled={busy || auditBlocked}
-                  onClick={() =>
-                    run(async () => {
-                      await onUse({
-                        ...result,
-                        filename: resultName,
-                        kind: 'pdf',
-                        inputSize: sources.reduce((n, s) => n + s.size, 0),
-                      });
-                    })
-                  }
-                >
-                  {t('Ergebnis weiterbearbeiten')}
-                </Button>
-              )}
+              {result.kind === 'pdf' &&
+                (result.pages || 0) <= 200 &&
+                result.blob.size <= 80 * 1024 * 1024 && (
+                  <Button
+                    variant="outline"
+                    disabled={busy || auditBlocked}
+                    onClick={() =>
+                      run(async () => {
+                        await onUse({
+                          ...result,
+                          filename: resultName,
+                          kind: 'pdf',
+                          inputSize: sources.reduce((n, s) => n + s.size, 0),
+                        });
+                      })
+                    }
+                  >
+                    {t('Ergebnis weiterbearbeiten')}
+                  </Button>
+                )}
             </div>
           </div>
           {preview && (

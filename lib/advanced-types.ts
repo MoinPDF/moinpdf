@@ -1,4 +1,5 @@
 export const advancedToolIds = [
+  'large-document',
   'document-colors',
   'header-footer-cleanup',
   'form-helper',
@@ -82,6 +83,7 @@ export type ServerTool = (typeof serverToolIds)[number];
 export const isServerTool = (id: string): id is ServerTool =>
   (serverToolIds as readonly string[]).includes(id);
 export type ExportFile = {
+  exportAudit?: import('./export-audit').ExportAudit;
   blob: Blob;
   filename: string;
   kind: 'pdf' | 'zip' | 'data';

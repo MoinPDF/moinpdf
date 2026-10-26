@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased: redaction, large PDFs and recognition rules
+
+- **Text-preserving redaction:** Manual regions and search matches can remove complete, simple digital text objects while preserving remaining text and vectors. Page geometry, remaining text, links and rendered views are checked before export. Document metadata and unused resources are removed. Unsupported structures block export; the existing image mode remains an explicit choice.
+- **Large PDFs:** Dedicated workspace for files up to 256 MB and 1,000 pages, with rotation, lossless optimization and OCR. File-backed reading, sections of at most 50 pages, atomic local checkpoints and resume after cancellation. Sections can be edited in the standard editor and replaced with the same page count. Every final page is checked against its verified section. The standard editor retains its 80 MB / 200 active-page limits.
+- **Clear Deck:** Up to 30 explicitly saved local layout rules for sender, document number and date. Recurring documents receive suggestions; conflicting rules and uncertain OCR remain visible. Unambiguous suggestions can be confirmed together after review.
+
+Large jobs and recognition rules remain unencrypted in this browser until deleted; project archives do not include them. Large PDFs containing forms, signatures, internal destinations, bookmarks, attachments or structure tags are rejected upfront. Up to 768 MB of saved jobs and 256 MB of final output; document metadata is not carried into the assembled output. A desktop browser is recommended.
+
+
 ## Unreleased
 
 - Form profiles retain all details during rapid consecutive input and when autofill updates several fields together.

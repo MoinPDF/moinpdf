@@ -103,6 +103,10 @@ with sync_playwright() as playwright:
                     page.get_by_label(checked, exact=True).check()
                     page.get_by_role('button', name=t('Nächstes ungeprüftes Dokument','Next unreviewed document')).click()
                     page.get_by_label(checked, exact=True).check()
+                    page.get_by_role('button',name=t('Erkennungsregel aus diesem Dokument erstellen','Create a recognition rule from this document'),exact=True).click()
+                    page.get_by_label(t('Geltungsbereich und erkannte Werte dieser Regel geprüft',"I have reviewed this rule's scope and extracted values"),exact=True).check()
+                    page.get_by_role('button',name=t('Erkennungsregel speichern','Save recognition rule'),exact=True).click()
+                    expect(page.get_by_text(t('Lokale Erkennungsregeln','Local recognition rules')+' (1/30)',exact=True)).to_be_visible()
                     # Tool remount preserves all review decisions and exclusions.
                     page.get_by_role('button',name=t('Zurück zur Auswahl','Back to selection'),exact=True).click()
                     choose(t('Klar Schiff','Clear Deck'))

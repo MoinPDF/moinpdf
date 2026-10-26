@@ -435,6 +435,7 @@ const options = z
     interleaveMode: z.enum(['two', 'single']).optional(),
     duplexSplit: z.number().int().min(0).max(199).optional(),
     cropMode: z.enum(['remove', 'preserve']).optional(),
+    redactionMode: z.enum(['raster', 'preserve']).optional(),
     compareMode: z.enum(['pages', 'content']),
     splitMode: z.enum(['every', 'ranges']),
     splitEvery: z.number().int().min(1).max(200),
