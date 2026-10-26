@@ -47,6 +47,8 @@ export type FormField = {
   existing: boolean;
   required: boolean;
   readOnly: boolean;
+  /** Explicitly selected in the form helper; original protection stays recorded. */
+  unlockReadOnly?: boolean;
   multiline: boolean;
   maxLength?: number;
   multiple?: boolean;
@@ -411,10 +413,18 @@ export async function saveDocumentDraft(
   tool: DocumentTool,
   flatten = false,
   signal?: AbortSignal,
-  appearance?: { plainFields?: boolean; fontBytes?: Uint8Array },
+  appearance?: { plainFields?: boolean; fontBytes?: Uint8Array; unlockReadOnly?: string[] },
 ): Promise<JobResult> {
   check(signal);
   const doc = await PDFDocument.load(source.bytes, { updateMetadata: false });
+  const unlockNames = new Set(appearance?.unlockReadOnly || []);
+  if (unlockNames.size) {
+    (await import('./pdf-signature-guard')).rejectSignedPdf(doc);
+    if (flatten)
+      throw new Error(
+        'Freigegebene Formularfelder können nicht gleichzeitig festgeschrieben werden.',
+      );
+  }
   if (tool === 'bookmarks' || JSON.stringify(draft.bookmarks) !== draft.originalBookmarks)
     writeBookmarks(doc, draft.bookmarks);
   if (
@@ -447,9 +457,12 @@ export async function saveDocumentDraft(
         );
       if (names.has(item.name)) throw new Error(`Der Feldname „${item.name}“ ist doppelt.`);
       names.add(item.name);
+      const unlock = item.existing && unlockNames.has(item.name) && item.kind !== 'unsupported';
+      if (unlock) form.getField(item.name).disableReadOnly();
       const changed =
         !item.existing || JSON.stringify(item.value) !== JSON.stringify(item.initialValue);
-      if (item.existing && (!changed || item.kind === 'unsupported' || item.readOnly)) continue;
+      if (item.existing && (!changed || item.kind === 'unsupported' || (item.readOnly && !unlock)))
+        continue;
       const field = item.existing
         ? form.getField(item.name)
         : item.kind === 'text'

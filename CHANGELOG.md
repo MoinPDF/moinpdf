@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Noch nicht versioniert
+
+- Formularprofile behalten alle Angaben bei schnellen aufeinanderfolgenden Eingaben und beim automatischen Ausfüllen mehrerer Felder.
+- Lokale Office-Konvertierung: bestätigtes Herunterfahren läuft ohne einen zweiten, konkurrierenden Abbruch aus. Auch eine späte Bestätigung hebt den harten Zeitwächter auf; blockierte Laufzeiten werden weiterhin begrenzt abgebrochen. Strenge Prüfungen auf verbliebene Prozesse bleiben erhalten.
+- Farben & Hintergrund ändern: Textfarben ohne Schriftwechsel, Hintergrund hinter vorhandenen Inhalten, Vorlagen, Original-/Ergebnisvorschau und Bildmodus für Helligkeit, Kontrast und Sättigung.
+- Formularhelfer: einzelne oder alle unterstützten schreibgeschützten Felder freigeben, vorhandene Werte und andere Feldflags erhalten; keine gleichzeitige Fixierung.
+- Zuschneiden: zusätzlicher Text erhaltender Modus mit deutlichem Hinweis auf verbleibende Randinhalte. Abwechselnd zusammenfügen: Duplex-Blöcke in einer PDF, Trennstelle, Rückseitenumkehr und Seitenfolgevorschau.
+- Deutsche/englische Oberfläche und Anleitung, gespeicherte Einstellungen und Regressionen mit fiktiven PDFs für native Farben, Formularwerte, gedrehte Ausschnitte und Reihenfolge.
+
 ## 0.23.0 – 26. Oktober 2026
 
 - Die native Safari-Prüfung verwendet den Intel-Mac-Pool, nachdem der ARM-Pool wiederholt vor dem Teststart abgebrochen hat. Alle Browser-, Docker- und Dokumentationsprüfungen bleiben Voraussetzung für die Veröffentlichung. Die neue Versionsnummer fasst die seit 0.22.0 hinzugekommenen Werkzeuge zusammen und erhält die bestehenden Release-Artefakte unverändert.

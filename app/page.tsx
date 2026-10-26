@@ -251,6 +251,7 @@ import {
 
 const defaults: StudioOptions = {
   ...extraDefaults,
+  cropMode: 'remove',
   language: 'deu',
   ocrLayout: '3',
   forceOcr: false,
@@ -1638,6 +1639,7 @@ function Studio() {
   }, [tools]);
   const renderChoice = (
     key:
+      | 'cropMode'
       | 'ocrLayout'
       | 'language'
       | 'imageFormat'
@@ -3336,6 +3338,7 @@ function Studio() {
                     tool={toolId}
                     sources={sources}
                     selectedCount={selected.length}
+                    selectedPages={selected}
                     options={options}
                     locked={locked}
                     onChange={(patch) => setOptions((old) => ({ ...old, ...patch }))}
@@ -3512,9 +3515,22 @@ function Studio() {
                 )}
                 {toolId === 'crop' && (
                   <>
+                    {renderChoice('cropMode', 'Zuschnittmodus', [
+                      ['remove', 'Randinhalt dauerhaft entfernen'],
+                      ['preserve', 'Sichtbaren Ausschnitt ändern · Text erhalten'],
+                    ])}
+                    {options.cropMode === 'preserve' && (
+                      <p className="notice strong">
+                        {ui(
+                          'Die Ränder werden nur ausgeblendet. Vertrauliche Inhalte außerhalb des Ausschnitts bleiben in der Datei und können wieder sichtbar gemacht werden.',
+                        )}
+                      </p>
+                    )}
                     <p className="fine-note">
                       {t(
-                        'Zugeschnittene Seiten werden als neue Seitenbilder exportiert. Inhalte außerhalb des Ausschnitts werden entfernt; die Textebene entfällt.',
+                        options.cropMode === 'preserve'
+                          ? 'Text und Vektoren bleiben erhalten. Vorhandene visuelle Änderungen zuerst anwenden. Bei Teilausgaben können dokumentweite Funktionen entfallen.'
+                          : 'Zugeschnittene Seiten werden als neue Seitenbilder exportiert. Inhalte außerhalb des Ausschnitts werden entfernt; die Textebene entfällt.',
                       )}
                     </p>
                     {activePage && edits.crops[activePage.id] && (

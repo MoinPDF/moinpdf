@@ -80,6 +80,15 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
     if (draft)
       change({ ...draft, fields: draft.fields.map((f) => (f.id === id ? { ...f, ...patch } : f)) });
   };
+  const protectedFields =
+    draft?.fields.filter(
+      (f) => f.existing && f.readOnly && !f.deleted && f.kind !== 'unsupported',
+    ) || [];
+  const hasUnlocked = protectedFields.some((f) => f.unlockReadOnly);
+  const unlockField = (id: string, enabled: boolean) => {
+    if (enabled) setFlatten(false);
+    updateField(id, { unlockReadOnly: enabled });
+  };
   const field = draft?.fields.find((f) => f.id === selected && !f.deleted);
   const entry = profile.entries.find((e) => e.id === entryId) || profile.entries[0];
   const persist = (next: FormProfile[]) => {
@@ -139,7 +148,7 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
             label="Profilname"
             value={profile.name}
             onChange={(name) => {
-              setProfile({ ...profile, name });
+              setProfile((previous) => ({ ...previous, name }));
               setMessage('');
             }}
           />
@@ -156,12 +165,13 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                   aria-label={`${ui('Bezeichnung')} ${index + 1}`}
                   value={item.label}
                   onChange={(e) => {
-                    setProfile({
-                      ...profile,
-                      entries: profile.entries.map((v) =>
-                        v.id === item.id ? { ...v, label: e.target.value } : v,
+                    const label = e.currentTarget.value;
+                    setProfile((previous) => ({
+                      ...previous,
+                      entries: previous.entries.map((v) =>
+                        v.id === item.id ? { ...v, label } : v,
                       ),
-                    });
+                    }));
                     setMessage('');
                   }}
                 />
@@ -173,12 +183,11 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 maxLength={500}
                 autoComplete="off"
                 onChange={(e) => {
-                  setProfile({
-                    ...profile,
-                    entries: profile.entries.map((v) =>
-                      v.id === item.id ? { ...v, value: e.target.value } : v,
-                    ),
-                  });
+                  const value = e.currentTarget.value;
+                  setProfile((previous) => ({
+                    ...previous,
+                    entries: previous.entries.map((v) => (v.id === item.id ? { ...v, value } : v)),
+                  }));
                   setMessage('');
                 }}
               />
@@ -187,10 +196,10 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 aria-label={`${ui('Angabe entfernen')}: ${item.label}`}
                 disabled={profile.entries.length <= 1}
                 onClick={() =>
-                  setProfile({
-                    ...profile,
-                    entries: profile.entries.filter((v) => v.id !== item.id),
-                  })
+                  setProfile((previous) => ({
+                    ...previous,
+                    entries: previous.entries.filter((v) => v.id !== item.id),
+                  }))
                 }
               >
                 <Trash2 size={16} />
@@ -203,10 +212,13 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
             variant="outline"
             disabled={profile.entries.length >= 30}
             onClick={() =>
-              setProfile({
-                ...profile,
-                entries: [...profile.entries, { id: uid(), label: ui('Eigene Angabe'), value: '' }],
-              })
+              setProfile((previous) => ({
+                ...previous,
+                entries: [
+                  ...previous.entries,
+                  { id: uid(), label: ui('Eigene Angabe'), value: '' },
+                ],
+              }))
             }
           >
             <Plus size={16} />
@@ -219,7 +231,11 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
             <Button
               variant="outline"
               onClick={() => {
-                setProfile({ ...profile, id: '', name: profile.name + ' ' + ui('Kopie') });
+                setProfile((previous) => ({
+                  ...previous,
+                  id: '',
+                  name: previous.name + ' ' + ui('Kopie'),
+                }));
                 setMessage('');
               }}
             >
@@ -333,6 +349,47 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 </Button>
               </p>
             )}
+            {protectedFields.length > 0 && (
+              <details className="advanced-card">
+                <summary>{ui('Schreibgeschützte Formularfelder freigeben')}</summary>
+                <p>
+                  {ui(
+                    'Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte und andere Feldregeln bleiben erhalten.',
+                  )}
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const enable = !protectedFields.every((f) => f.unlockReadOnly);
+                    if (enable) setFlatten(false);
+                    change({
+                      ...draft,
+                      fields: draft.fields.map((f) =>
+                        protectedFields.some((p) => p.id === f.id)
+                          ? { ...f, unlockReadOnly: enable }
+                          : f,
+                      ),
+                    });
+                  }}
+                >
+                  {ui(
+                    protectedFields.every((f) => f.unlockReadOnly)
+                      ? 'Freigaben zurücknehmen'
+                      : 'Alle angezeigten Felder freigeben',
+                  )}
+                </Button>
+                {protectedFields.map((f) => (
+                  <label className="advanced-tick" key={f.id}>
+                    <input
+                      type="checkbox"
+                      checked={!!f.unlockReadOnly}
+                      onChange={(e) => unlockField(f.id, e.target.checked)}
+                    />
+                    <span>{f.name}</span>
+                  </label>
+                ))}
+              </details>
+            )}
             <div className="everyday-columns">
               <div className="everyday-original">
                 <PageSelect source={source} page={page} onChange={setPage} />
@@ -388,7 +445,7 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 {field && (
                   <div className="helper-field-editor">
                     <h3>{field.name}</h3>
-                    {field.kind === 'text' && !field.readOnly ? (
+                    {field.kind === 'text' && (!field.readOnly || field.unlockReadOnly) ? (
                       <>
                         <Choice
                           label="Angabe zuordnen"
@@ -463,15 +520,23 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 )}
               </div>
             </div>
-            <Tick
-              label="Formularwerte dauerhaft festschreiben"
-              value={flatten}
-              onChange={(v) => {
-                invalidate();
-                setFlatten(v);
-                setReviewed(false);
-              }}
-            />
+            {hasUnlocked ? (
+              <p className="fine-note">
+                {ui(
+                  'Freigegebene Felder bleiben ausfüllbar. Die Ausgabe wird nicht festgeschrieben.',
+                )}
+              </p>
+            ) : (
+              <Tick
+                label="Formularwerte dauerhaft festschreiben"
+                value={flatten}
+                onChange={(v) => {
+                  invalidate();
+                  setFlatten(v);
+                  setReviewed(false);
+                }}
+              />
+            )}
             <Tick
               label="Ich habe Angaben und Positionen am Original geprüft."
               value={reviewed}

@@ -1,5 +1,7 @@
 # Ausbau nach dem Funktionsvergleich
 
+Die nächsten Vergleichslücken sind geschlossen: Farben & Hintergrund mit Vorlagen/Vorschau, gezielte Freigabe schreibgeschützter Formularfelder, Text erhaltender Zuschnitt und Duplex-Sortierung innerhalb einer PDF. Grenzen: Hintergrund liegt hinter deckenden Inhalten; Bildfarbkorrekturen verlieren Text/Felder/Links; CropBox blendet Randinhalte nur aus. Einzel-PDF-Duplex verarbeitet höchstens 200 ausgewählte Seiten.
+
 „Kopf- und Fußzeilen bereinigen“ ergänzt Bearbeiten & bereinigen: wiederkehrende Randtexte, einzeln prüfbare Ausnahmen und manuelle Scan-Bereiche. Bedienung und Grenzen: [Funktionen](FUNKTIONEN.md#kopf--und-fußzeilen-bereinigen).
 
 Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvorschläge, manuelle Scan-Einträge, Belegzuschnitt, A4-Anordnung und Projektentwürfe sind im [Funktionsumfang](FUNKTIONEN.md#formularhelfer-und-belege-auf-a4) beschrieben; die Anleitung in der App enthält die einzelnen Arbeitsschritte. Keine automatische Beschriftungserkennung auf Scans.

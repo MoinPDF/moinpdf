@@ -54,6 +54,15 @@ try{
    const canvas=await render(reopened,page);assert(canvas.width>0);canvas.width=canvas.height=0;
    const widget=reopenedDoc.getForm().getTextField(field.name).acroField.getWidgets()[0];assert(!widget.getAppearanceCharacteristics()?.getBackgroundColor(),'No white box over scan');
  }
+ const unlockDraft=structuredClone(draft);unlockDraft.fields.find(f=>f.name==='Referenz').unlockReadOnly=true;
+ const unlocked=await e.exportHelperForm(original,unlockDraft,true,false,ctx),unlockedDoc=await PDFDocument.load(await unlocked.blob.arrayBuffer());
+ assert.equal(unlockedDoc.getForm().getTextField('Referenz').getText(),'Do not change');assert.equal(unlockedDoc.getForm().getTextField('Referenz').isReadOnly(),false);assert(reopenedDoc.getForm().getTextField('Referenz').isReadOnly());
+ assert(toolDraftSchema.safeParse({'FormHelperPanel.draft:fictional':unlockDraft}).success);
+ await assert.rejects(()=>e.exportHelperForm(original,unlockDraft,true,true,ctx),/festgeschrieben/);
+ const controls=await PDFDocument.create(),cp=controls.addPage([300,300]),cf=controls.getForm(),check=cf.createCheckBox('Checked');check.addToPage(cp,{x:20,y:20,width:15,height:15});check.check();check.enableReadOnly();check.enableRequired();
+ const keep=cf.createTextField('Keep locked');keep.addToPage(cp,{x:20,y:100,width:100,height:20});keep.setText('Kept');keep.enableReadOnly();
+ const cs=await source(await controls.save(),'controls.pdf'),cd=await e.readHelperForm(cs,ctx);cd.fields.find(f=>f.name==='Checked').unlockReadOnly=true;
+ const co=await PDFDocument.load(await(await e.exportHelperForm(cs,cd,true,false,ctx)).blob.arrayBuffer()),cc=co.getForm().getCheckBox('Checked');assert(cc.isChecked());assert(cc.isRequired());assert(!cc.isReadOnly());assert(co.getForm().getTextField('Keep locked').isReadOnly());assert.equal(co.getForm().getTextField('Keep locked').getText(),'Kept');
  const flat=await e.exportHelperForm(original,draft,true,true,ctx),flatDoc=await PDFDocument.load(await flat.blob.arrayBuffer());assert.equal(flatDoc.getForm().getFields().length,0);
  const flatSource=await source(await flat.blob.arrayBuffer(),'flat.pdf');
  for(let page=0;page<4;page++)assert.match(await text(flatSource,page),/Müller/,'Flattened entries are real text');

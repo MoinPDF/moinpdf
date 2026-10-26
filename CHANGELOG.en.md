@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased
+
+- Form profiles retain all details during rapid consecutive input and when autofill updates several fields together.
+- Local Office conversion lets acknowledged shutdown complete without a second, competing termination. Even a late acknowledgment cancels the hard deadline; blocked runtimes still receive bounded forced termination. Strict checks for surviving threads remain.
+- Change colors & background: recolor existing glyphs without replacing fonts, add backgrounds behind content, presets, original/result previews and image mode for brightness, contrast and saturation.
+- Form helper: unlock individual or all supported read-only fields while preserving values and other field flags; no simultaneous flattening.
+- Crop: additional text-preserving mode with an explicit hidden-content notice. Interleave: duplex blocks within one PDF, split position, reverse backs and page-order preview.
+- German/English UI and documentation, saved settings and fictional PDF regressions for native colors, form values, rotated crops and page order.
+
 ## 0.23.0 – 26 October 2026
 
 - Native Safari verification uses the Intel Mac pool after repeated ARM runner allocation failures before test startup. All browser, Docker and documentation checks remain required for publication. The new version includes the tools added since 0.22.0 and preserves existing release artifacts.

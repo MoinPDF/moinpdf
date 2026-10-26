@@ -2,6 +2,22 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'document-colors': [
+    'farbwechsel',
+    'textfarbe',
+    'hintergrundfarbe',
+    'farben ändern',
+    'sättigung',
+    'helligkeit',
+    'kontrast',
+    'graustufen',
+    'text color',
+    'background color',
+    'saturation',
+    'brightness',
+    'contrast',
+    'recolor',
+  ],
   'header-footer-cleanup': [
     'Kopfzeile entfernen',
     'Fußzeile entfernen',
@@ -15,6 +31,10 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'print date',
   ],
   'form-helper': [
+    'schreibgeschützte formularfelder',
+    'formular freigeben',
+    'read only fields',
+    'unlock form',
     'Profil',
     'Stammdaten',
     'Adresse eintragen',

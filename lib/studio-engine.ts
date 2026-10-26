@@ -145,6 +145,7 @@ export type StudioOptions = JobOptions &
   ExtraOptions & {
     editorLanguage?: string;
     editorAllowRaster?: boolean;
+    cropMode?: 'remove' | 'preserve';
     pageSize: 'a4' | 'letter';
     orientation: 'portrait' | 'landscape';
     perSheet: '2' | '4';
@@ -905,6 +906,14 @@ export async function runStudioJob(
     throw new Error('Bitte dieses Werkzeug im Dokumenteditor öffnen.');
   if (!pages.length) throw new Error('Bitte wähle mindestens eine Seite aus.');
   check(signal);
+  if (tool === 'crop' && options.cropMode === 'preserve')
+    return (await import('./page-adjustments')).cropPreservingContent(
+      sources,
+      pages,
+      edits,
+      report,
+      signal,
+    );
   const hasEdits = countEdits(edits, pages) > 0;
   if (isExtraTool(tool)) {
     const config = { ...extraDefaults, ...options };

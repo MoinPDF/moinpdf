@@ -73,6 +73,27 @@ It verifies document cleanup and acknowledgment while rejecting any child-pool o
 individual-child termination. The test fails against patch 11 and passes against
 patch 12; it supplements the real-browser thread and PDF checks below.
 
+## Single shutdown owner
+
+The 2026-10-26 acceptance run exposed a remaining overlap: patch 12 schedules
+the upstream worker's `self.close()` 100 ms after acknowledgment, while the page
+also called `Worker.terminate()` after 250 ms. Valid cached DOCX conversions left
+an unresponsive Office target and native worker threads, including on a fresh
+runner. Removing self-close and immediately terminating the owner also failed.
+
+An [isolated browser comparison](https://github.com/MoinPDF/moinpdf/actions/runs/40404030039)
+tested self-closure without a second termination and delayed owner-only
+termination. Both completed two full acceptance runs. The application uses the
+acknowledged self-closure path: it cancels the hard deadline, retains the short
+grace interval, and does not terminate an already closing worker a second time.
+The one-second forced fallback remains for an unresponsive runtime. Runtime
+patch 12 and its corresponding sources remain unchanged.
+
+The regression exercises the actual generated worker's self-close contract and
+models both slow closure and an acknowledgment just before the hard deadline.
+The real-browser cleanup deadline, native-thread checks and upload restrictions
+remain unchanged; the complete PR workflows still gate integration.
+
 ## Acceptance checks
 
 `tests/browser-office-browser.py` continues to enforce the ten-second cleanup

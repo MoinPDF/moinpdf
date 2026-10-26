@@ -1,6 +1,132 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  'Vorder- und Rückseiten aus zwei Dateien oder zwei Blöcken einer PDF abwechselnd kombinieren.':
+    'Alternate fronts and backs from two files or two blocks within one PDF.',
+  'Seiten zuschneiden: Randinhalt entfernen oder den sichtbaren Bereich mit Texterhalt ändern.':
+    'Crop pages: remove margins or change the visible area while preserving text.',
+  'Die Formularfreigabe konnte nicht bestätigt werden.':
+    'The form field unlock could not be verified.',
+  'Bitte 2 bis 200 Seiten für die Duplex-Sortierung auswählen.':
+    'Please select 2 to 200 pages for duplex collation.',
+  'Die Trennstelle muss zwischen der ersten und letzten ausgewählten Seite liegen.':
+    'The split must fall between the first and last selected pages.',
+
+  'Farben & Hintergrund ändern': 'Change colors & background',
+  'Text und Hintergrund umfärben oder Helligkeit, Kontrast und Sättigung ganzer Seiten mit Vorschau anpassen.':
+    'Recolor text and background, or adjust page brightness, contrast and saturation with a preview.',
+  'Farben anpassen': 'Adjust colors',
+  Farbmodus: 'Color mode',
+  'Text & Hintergrund – Text erhalten': 'Text & background – preserve text',
+  'Gesamte Seite als Bild': 'Whole page as an image',
+  Farbvorlagen: 'Color presets',
+  Lesefreundlich: 'Easy reading',
+  'Schwarz auf Weiß': 'Black on white',
+  'Graustufen-Druck': 'Grayscale print',
+  Farbeinstellungen: 'Color settings',
+  'Textfarbe ändern': 'Change text color',
+  'Hintergrund ergänzen': 'Add background',
+  Farbvorschau: 'Color preview',
+  'Farbvorschau wird erstellt …': 'Preparing color preview …',
+  'Farben auf alle Seiten anwenden': 'Apply colors to all pages',
+  'Dokumenttext bleibt erhalten. Bilder, Formularfelder und Kommentare werden nicht umgefärbt. Der Hintergrund liegt hinter dem vorhandenen Inhalt.':
+    'Document text is preserved. Images, form fields and comments are not recolored. The background sits behind existing content.',
+  'Alle Seiten wurden als Bilder ausgegeben. Textsuche, Formularfelder und Links sind im Ergebnis nicht mehr verfügbar.':
+    'All pages are output as images. Text search, form fields and links are no longer available in the result.',
+  'Deckende Flächen und Scans können den neuen Hintergrund verdecken. Unsichtbarer OCR-Text bleibt unsichtbar.':
+    'Opaque fills and scans may cover the new background. Invisible OCR text stays invisible.',
+  'Die Vorschau zeigt eine Seite. Die Ausgabe wendet die Einstellungen auf alle Seiten an. Maximal 200 Seiten und 80 MB.':
+    'The preview shows one page. The output applies the settings to all pages. Up to 200 pages and 80 MB.',
+  'Schreibgeschützte Formularfelder freigeben': 'Unlock read-only form fields',
+  'Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte und andere Feldregeln bleiben erhalten.':
+    'Choose which fields should be editable again in the new PDF. Existing values and other field rules are preserved.',
+  'Freigaben zurücknehmen': 'Reset unlocked fields',
+  'Alle angezeigten Felder freigeben': 'Unlock all listed fields',
+  'Freigegebene Felder bleiben ausfüllbar. Die Ausgabe wird nicht festgeschrieben.':
+    'Unlocked fields remain fillable. The output is not flattened.',
+  'Freigegebene Formularfelder können nicht gleichzeitig festgeschrieben werden.':
+    'Unlocked form fields cannot be flattened at the same time.',
+  'Scan-Aufteilung': 'Scan arrangement',
+  'Vorder- und Rückseiten in zwei Dateien': 'Fronts and backs in two files',
+  'Vorder- und Rückseiten in einer Datei': 'Fronts and backs in one file',
+  'Trennstelle nach ausgewählter Seite': 'Split after selected page',
+  'In der Mitte teilen': 'Split in the middle',
+  'Zuerst stehen alle Vorderseiten, danach alle Rückseiten. Die Trennstelle zählt die ausgewählten Seiten in ihrer aktuellen Reihenfolge.':
+    'All fronts come first, followed by all backs. The split position counts selected pages in their current order.',
+  'Neue Seitenreihenfolge': 'New page order',
+  'Die Blöcke sind unterschiedlich lang. Übrige Seiten werden am Ende angehängt. Bitte die Zuordnung prüfen.':
+    'The blocks have different lengths. Remaining pages are appended at the end. Please check the pairing.',
+  'Rückseitenblock rückwärts': 'Reverse the backs block',
+  'Für die Duplex-Sortierung nur Seiten einer Datei auswählen.':
+    'Select pages from just one file for duplex collation.',
+  Zuschnittmodus: 'Crop mode',
+  'Randinhalt dauerhaft entfernen': 'Permanently remove margins',
+  'Sichtbaren Ausschnitt ändern · Text erhalten': 'Change visible crop · preserve text',
+  'Die Ränder werden nur ausgeblendet. Vertrauliche Inhalte außerhalb des Ausschnitts bleiben in der Datei und können wieder sichtbar gemacht werden.':
+    'The margins are only hidden. Confidential content outside the crop remains in the file and can be made visible again.',
+  'Text und Vektoren bleiben erhalten. Vorhandene visuelle Änderungen zuerst anwenden. Bei Teilausgaben können dokumentweite Funktionen entfallen.':
+    'Text and vectors are preserved. Apply existing visual edits first. Partial exports may lose document-wide features.',
+  'Text bleibt erhalten. Ausgeblendete Randinhalte bleiben in der PDF und können wieder sichtbar gemacht werden.':
+    'Text is preserved. Hidden margins remain in the PDF and can be made visible again.',
+  'Text bleibt erhalten. Ausgeblendete Randinhalte bleiben in der PDF. Bei einer Seitenauswahl werden Formularwerte festgeschrieben; dokumentweite Strukturen können entfallen.':
+    'Text is preserved. Hidden margins remain in the PDF. Exporting selected pages flattens form values and may lose document-wide structures.',
+  'Sichtbaren Ausschnitt ändern …': 'Changing visible crop …',
+  'Textfarben anpassen …': 'Adjusting text colors …',
+  'Seitenfarben anpassen …': 'Adjusting page colors …',
+  'Ungültige Farbeinstellungen.': 'Invalid color settings.',
+  'Bitte höchstens 200 Seiten und 80 MB verwenden.': 'Please use no more than 200 pages and 80 MB.',
+  'Ungültige Vorschauseite.': 'Invalid preview page.',
+  'Ungültige Farbauswahl.': 'Invalid color selection.',
+  'Text mit einer Maskierungsfunktion kann nicht sicher umgefärbt werden.':
+    'Text used as a clipping mask cannot be recolored safely.',
+  'Dieses Textobjekt kann nicht sicher umgefärbt werden.':
+    'This text object cannot be recolored safely.',
+  'Die Textfarbe konnte nicht geändert werden.': 'The text color could not be changed.',
+  'Das Seitenbild konnte nicht erstellt werden.': 'The page image could not be created.',
+  'Text erhaltenden Zuschnitt bitte ohne weitere Seitenmarkierungen ausführen.':
+    'Please crop with text preservation without additional page markings.',
+  'Bitte zwischen 1 und 200 Seiten auswählen.': 'Please select between 1 and 200 pages.',
+  'Ungültige Seitenauswahl.': 'Invalid page selection.',
+  'Ungültiger Zuschnitt.': 'Invalid crop.',
+  'Eine PDF mit auslesbarem Text oder gescannten Seiten.':
+    'A PDF containing readable text or scanned pages.',
+  'Öffne „Farben & Hintergrund ändern“. Wähle eine Vorlage oder den Modus „Text & Hintergrund – Text erhalten“. Aktiviere Textfarbe und Hintergrund unabhängig und wähle eigene Farben.':
+    'Open “Change colors & background”. Choose a preset or “Text & background – preserve text”. Enable text color and background independently and choose custom colors.',
+  'Für Helligkeit, Kontrast und Sättigung wähle „Gesamte Seite als Bild“. Dieser Modus erstellt Bildseiten ohne Textsuche, Formularfelder und Links.':
+    'For brightness, contrast and saturation, choose “Whole page as an image”. This mode creates image pages without text search, form fields or links.',
+  'Vergleiche Original und Farbvoransicht. Wechsle die Vorschauseite und prüfe auch Bilder und Formulare. „Farben auf alle Seiten anwenden“ erstellt eine neue PDF-Kopie.':
+    'Compare the original with the color preview. Switch preview pages and also check images and forms. “Apply colors to all pages” creates a new PDF copy.',
+  'PDF mit geänderten Farben; Einstellungen werden im Projekt gespeichert.':
+    'PDF with adjusted colors; settings are saved in the project.',
+  'Bis zu 200 Seiten und 80 MB. Der Textmodus erhält vorhandene Zeichen und Schriften, auch in unterstützten Objektgruppen; unsichtbarer OCR-Text bleibt unsichtbar. Formularfelder, Kommentare und Bilder werden nicht umgefärbt. Deckende Flächen oder Scans können den ergänzten Hintergrund verdecken. Textmasken, signierte PDFs und dynamische XFA werden abgewiesen. Der Bildmodus rastert alle Seiten mit höchstens rund 4 Megapixeln und 2.800 Pixeln Kantenlänge.':
+    'Up to 200 pages and 80 MB. Text mode preserves existing glyphs and fonts, including supported object groups; invisible OCR text stays invisible. Form fields, comments and images are not recolored. Opaque fills or scans may cover the added background. Text clipping masks, signed PDFs and dynamic XFA are rejected. Image mode rasterizes all pages at up to about 4 megapixels and 2,800 pixels per side.',
+  'Eine PDF, deren sichtbaren Seitenbereich du verkleinern möchtest.':
+    'A PDF whose visible page area you want to reduce.',
+  'Wähle eine Seite und ziehe den Ausschnitt auf. Passe ihn bei Bedarf über Prozentwerte an.':
+    'Choose a page and draw the crop. Adjust it using percentage values if needed.',
+  'Wähle den Zuschnittmodus: „Randinhalt dauerhaft entfernen“ erstellt ein neues Seitenbild; „Sichtbaren Ausschnitt ändern · Text erhalten“ setzt nur den sichtbaren Bereich.':
+    'Choose a crop mode: “Permanently remove margins” creates a new page image; “Change visible crop · preserve text” changes only the visible area.',
+  'Erstelle die PDF und kontrolliere jede bearbeitete Seite. Vorhandene Markierungen müssen vor dem Text erhaltenden Zuschnitt angewendet werden.':
+    'Create the PDF and check every edited page. Apply existing markings before cropping with text preservation.',
+  'PDF mit entferntem Randinhalt oder geändertem sichtbaren Bereich, abhängig vom Modus.':
+    'PDF with removed margins or a changed visible area, depending on the mode.',
+  'Der Text erhaltende Modus ist keine Schwärzung: versteckte Randinhalte bleiben in der Datei und können wieder sichtbar gemacht werden. Bei einer vollständigen einzelnen PDF bleiben Formulare erhalten; Teilausgaben schreiben Formularwerte fest und können dokumentweite Strukturen verlieren. Gedrehte Seiten und vorhandene Ausschnitte werden berücksichtigt. Signierte PDFs und dynamische XFA sind im Textmodus nicht unterstützt. Der bisherige Bildmodus entfernt Randinhalte, verliert aber die Textebene.':
+    'Text-preserving mode is not redaction: hidden margins remain in the file and can be made visible again. Forms are retained for one complete PDF; partial exports flatten form values and may lose document-wide structures. Rotated pages and existing crops are respected. Signed PDFs and dynamic XFA are unsupported in text mode. The existing image mode removes margins but loses the text layer.',
+  'Zwei PDFs mit Vorder- und Rückseiten oder eine PDF mit zwei aufeinanderfolgenden Scan-Blöcken.':
+    'Two PDFs with fronts and backs, or one PDF with two consecutive scan blocks.',
+  'Wähle unter „Scan-Aufteilung“ zwei Dateien oder eine Datei. Bei zwei Dateien lege Datei A und B fest.':
+    'Under “Scan arrangement”, choose two files or one file. For two files, select files A and B.',
+  'Bei einer Datei wähle nur deren gewünschte Seiten. Setze die Trennstelle zwischen Vorder- und Rückseiten oder verwende „In der Mitte teilen“.':
+    'For one file, select only its intended pages. Set the split between fronts and backs or use “Split in the middle”.',
+  'Kehre bei Bedarf den Rückseitenblock um. Prüfe die angezeigte neue Seitenreihenfolge und erstelle die PDF. Bei ungleich langen Blöcken prüfe die zusätzlich angehängten Seiten.':
+    'Reverse the backs block if needed. Check the displayed new page order and create the PDF. For unequal blocks, check the extra pages appended at the end.',
+  'PDF mit abwechselnden Vorder- und Rückseiten; keine ausgewählte Seite wird ausgelassen.':
+    'PDF with alternating fronts and backs; no selected page is omitted.',
+  'Die Ein-Datei-Sortierung verarbeitet 2–200 ausgewählte Seiten in ihrer aktuellen Reihenfolge. Die Trennstelle zählt ausgewählte Seiten, nicht ursprüngliche Seitennummern. Zusätzliche Seiten des längeren Blocks werden am Ende angehängt; die Zuordnung bitte am Original kontrollieren.':
+    'Single-file collation processes 2–200 selected pages in their current order. The split counts selected pages, not original page numbers. Extra pages from the longer block are appended at the end; check the pairing against the original.',
+  'Unter „Schreibgeschützte Formularfelder freigeben“ kannst du einzelne oder alle angezeigten Felder wieder ausfüllbar machen. Vorhandene Werte und andere Feldregeln bleiben erhalten. Freigegebene Felder werden nicht festgeschrieben.':
+    'Under “Unlock read-only form fields”, make individual fields or all listed fields fillable again. Existing values and other field rules are preserved. Unlocked fields are not flattened.',
+
   'Papierkram. Läuft.': 'Paperwork. Sorted.',
   'Darstellung und Sprache': 'Appearance and language',
   'Sprache auswählen': 'Choose language',

@@ -77,6 +77,16 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'document-colors',
+    title: 'Farben & Hintergrund ändern',
+    description:
+      'Text und Hintergrund umfärben oder Helligkeit, Kontrast und Sättigung ganzer Seiten mit Vorschau anpassen.',
+    icon: Contrast,
+    group: 3,
+    action: 'Farben anpassen',
+    fresh: true,
+  },
+  {
     id: 'header-footer-cleanup',
     title: 'Kopf- und Fußzeilen bereinigen',
     description:
@@ -1000,7 +1010,8 @@ export const tools = [
   {
     id: 'crop',
     title: 'Zuschneiden',
-    description: 'Den gewünschten Ausschnitt direkt auf der Seite aufziehen.',
+    description:
+      'Seiten zuschneiden: Randinhalt entfernen oder den sichtbaren Bereich mit Texterhalt ändern.',
     icon: Crop,
     group: 3,
     action: 'Zuschneiden',
@@ -1101,7 +1112,7 @@ export const tools = [
     id: 'interleave',
     title: 'Abwechselnd zusammenfügen',
     description:
-      'Seiten aus zwei Dateien abwechselnd kombinieren. Praktisch für Vorder- und Rückseiten.',
+      'Vorder- und Rückseiten aus zwei Dateien oder zwei Blöcken einer PDF abwechselnd kombinieren.',
     icon: Shuffle,
     group: 2,
     action: 'Abwechselnd zusammenfügen',

@@ -161,14 +161,14 @@ export async function convertOfficeLocally(
         const activeWorker = worker!;
         let cleaned = false;
         let gracefulTimer: ReturnType<typeof setTimeout> | undefined;
-        const complete = () => {
+        const complete = (force = true) => {
           if (cleaned) return;
           cleaned = true;
           clearTimeout(cleanupTimer);
           clearTimeout(gracefulTimer);
           activeWorker.onmessage = null;
           activeWorker.onerror = null;
-          activeWorker.terminate();
+          if (force) activeWorker.terminate();
           worker = undefined;
           error ? reject(error) : resolve(value!);
         };
@@ -178,12 +178,13 @@ export async function convertOfficeLocally(
         activeWorker.onmessage = ({ data }) => {
           if (data.type === 'ready' && data.id === 3 && !gracefulTimer) {
             // The pinned runtime calls self.close() 100 ms after this acknowledgment.
-            // Let that event-loop shutdown finish before the hard fallback: immediate
-            // termination can race the owner and its nested pthread teardown.
-            gracefulTimer = setTimeout(complete, 250);
+            // Cancel the hard fallback even for a late acknowledgment. A second
+            // termination can race that shutdown and strand nested Chromium threads.
+            clearTimeout(cleanupTimer);
+            gracefulTimer = setTimeout(() => complete(false), 250);
           }
         };
-        activeWorker.onerror = complete;
+        activeWorker.onerror = () => complete();
         try {
           activeWorker.postMessage({ type: 'destroy', id: 3 });
         } catch {

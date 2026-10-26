@@ -36,6 +36,8 @@ export type NativeImagePatch = {
 };
 export type NativeChange = {
   index: number;
+  /** Recolor existing glyphs without replacing text or fonts. */
+  color?: string;
   order?: 'front' | 'back';
   flipX?: boolean;
   flipY?: boolean;
@@ -1025,6 +1027,37 @@ export function editNativeObjects(
           } finally {
             if (bitmap) api.FPDFBitmap_Destroy(bitmap);
             ctx.free(p);
+          }
+        }
+        if (change.color !== undefined) {
+          const mode = api.FPDFTextObj_GetTextRenderMode(obj);
+          if (
+            api.FPDFPageObj_GetType(obj) !== 1 ||
+            !/^#[0-9a-f]{6}$/i.test(change.color) ||
+            ![0, 1, 2].includes(mode)
+          )
+            throw new Error('Dieses Textobjekt kann nicht sicher umgefärbt werden.');
+          const channels = [1, 3, 5].map((i) => parseInt(change.color!.slice(i, i + 2), 16)),
+            ptr = ctx.alloc(16);
+          try {
+            for (const stroke of [false, true]) {
+              if ((stroke && mode === 0) || (!stroke && mode === 1)) continue;
+              const get = stroke ? api.FPDFPageObj_GetStrokeColor : api.FPDFPageObj_GetFillColor;
+              const set = stroke ? api.FPDFPageObj_SetStrokeColor : api.FPDFPageObj_SetFillColor;
+              if (
+                !get(obj, ptr, ptr + 4, ptr + 8, ptr + 12) ||
+                !set(
+                  obj,
+                  channels[0],
+                  channels[1],
+                  channels[2],
+                  api.pdfium.getValue(ptr + 12, 'i32'),
+                )
+              )
+                throw new Error('Die Textfarbe konnte nicht geändert werden.');
+            }
+          } finally {
+            ctx.free(ptr);
           }
         }
         if (change.text !== undefined) {

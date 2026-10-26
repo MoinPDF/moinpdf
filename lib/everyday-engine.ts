@@ -30,6 +30,15 @@ export async function exportHelperForm(
   checkAbort(ctx.signal);
   rejectSignedPdf(await PDFDocument.load(source.bytes, { updateMetadata: false }));
   if (draft.xfa || draft.signed) throw new Error('Bitte eine unsignierte PDF ohne XFA verwenden.');
+  const unlocked = draft.fields
+    .filter(
+      (f) => f.existing && f.readOnly && f.unlockReadOnly && !f.deleted && f.kind !== 'unsupported',
+    )
+    .map((f) => f.name);
+  if (flatten && unlocked.length)
+    throw new Error(
+      'Freigegebene Formularfelder können nicht gleichzeitig festgeschrieben werden.',
+    );
   const fontBytes = await helperFont(ctx.signal);
   // Validate all changed fields against the embedded font before writing anything.
   const probe = await PDFDocument.create();
@@ -37,7 +46,9 @@ export async function exportHelperForm(
   probe.registerFontkit(fontkit);
   const font = await probe.embedFont(fontBytes, { subset: true });
   const characters = new Set(font.getCharacterSet());
-  for (const field of draft.fields.filter((f) => !f.deleted && f.kind === 'text' && !f.readOnly)) {
+  for (const field of draft.fields.filter(
+    (f) => !f.deleted && f.kind === 'text' && (!f.readOnly || f.unlockReadOnly),
+  )) {
     const value = String(field.value || '');
     if (field.existing && value === field.initialValue) continue;
     if (value.length > 500 || (field.maxLength && value.length > field.maxLength))
@@ -63,12 +74,27 @@ export async function exportHelperForm(
   const result = await saveDocumentDraft(source, draft, 'fill-form', flatten, ctx.signal, {
     plainFields: true,
     fontBytes,
+    unlockReadOnly: unlocked,
   });
   // Independent round-trip of the form values before optional flattening.
   if (!flatten) {
     const verify = await PDFDocument.load(await result.blob.arrayBuffer());
+    const original = await PDFDocument.load(source.bytes, { updateMetadata: false });
+    for (const field of original
+      .getForm()
+      .getFields()
+      .filter(
+        (f) =>
+          unlocked.length &&
+          !draft.fields.some((item) => item.name === f.getName() && item.deleted),
+      )) {
+      const actual = verify.getForm().getField(field.getName());
+      const expected = field.acroField.getFlags() & (unlocked.includes(field.getName()) ? ~1 : -1);
+      if (actual.acroField.getFlags() !== expected)
+        throw new Error('Die Formularfreigabe konnte nicht bestätigt werden.');
+    }
     for (const field of draft.fields.filter(
-      (f) => !f.deleted && f.kind === 'text' && !f.readOnly,
+      (f) => !f.deleted && f.kind === 'text' && (!f.readOnly || f.unlockReadOnly),
     )) {
       const output = verify.getForm().getField(field.name);
       if (
