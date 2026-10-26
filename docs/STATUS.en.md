@@ -2,7 +2,7 @@
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 25 October 2026 · Version 0.21.2. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 26 October 2026 · Version 0.21.2. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 - Export verification has bounded waits, remains cancellable and restarts the complete check at most once after a timeout. Unverified output stays blocked; the edit remains open for another attempt.
 
@@ -31,7 +31,7 @@ counts, allow filename editing and support native file sharing when available.
 
 The entire language catalogue, originally 4,513 entries, has been reviewed. Around 2,000 translations were improved; missing UI messages and app-owned text in reports and document outputs were added. Regression tests check original data, form values, embedded invoices and language coverage.
 
-The interface includes 22 fully visible header images, nine shortcuts, a document overview and a mobile action bar in the shared PDF workspace. On desktop, the header image is limited to 640 pixels; its mobile presentation is unchanged. Tool cards and icons remain still. The project button uses a subtle white/green design. Working states without pages also offer undo and redo. The tool sidebar starts collapsed. The header and upload area retain their existing layout and colours; compression offers Gentle, Balanced and As small as possible. The handbook is available in German and English. Sample PDFs are generated in the selected app language. Evidence for technical features is recorded in the corresponding verification runs; a version number does not replace a functional check.
+The interface offers up to six sortable favourites, recently used tools, a document overview and a mobile action bar in the shared PDF workspace. The changing sailor illustration remains visible on mobile devices and is hidden in the desktop layout from 1101 pixels. Desktop global tool search has its own row below the top bar. Tool cards and icons remain still. The project button uses a subtle white/green design. Working states without pages also offer undo and redo. The tool sidebar starts collapsed. The header and upload area retain their existing layout and colours; compression offers Gentle, Balanced and As small as possible. The handbook is available in German and English. Sample PDFs are generated in the selected app language. Evidence for technical features is recorded in the corresponding verification runs; a version number does not replace a functional check.
 
 This overview describes the actual scope. The original 22-area plan is not yet fully complete. Unsupported conversions and validation standards are not presented as available.
 

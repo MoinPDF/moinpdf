@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 25. Oktober 2026 · Version 0.21.2. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 26. Oktober 2026 · Version 0.21.2. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 - Exportprüfungen haben begrenzte Wartezeiten, bleiben abbrechbar und starten nach einer Zeitüberschreitung höchstens einmal vollständig neu. Ungeprüfte Ausgaben bleiben gesperrt; die Bearbeitung bleibt für einen erneuten Versuch geöffnet.
 
@@ -35,9 +35,11 @@ Der gesamte Sprachkatalog mit ursprünglich 4.513 Einträgen wurde geprüft. Run
 Texte in Berichts- und Dokumentausgaben sind ergänzt. Regressionstests prüfen
 Originaldaten, Formularwerte, Rechnungseinbettungen und Sprachabdeckung.
 
-Die Oberfläche enthält 22 vollständig sichtbare Headerbilder, neun Schnellzugriffe,
-eine Dokumentübersicht und eine mobile Aktionsleiste im gemeinsamen PDF-Arbeitsbereich.
-Am Desktop ist das Headerbild auf 640 Pixel begrenzt; mobil bleibt es unverändert.
+Die Oberfläche bietet bis zu sechs sortierbare Favoriten, zuletzt verwendete
+Werkzeuge, eine Dokumentübersicht und eine mobile Aktionsleiste im gemeinsamen
+PDF-Arbeitsbereich. Die wechselnde Seemann-Grafik bleibt auf Mobilgeräten sichtbar;
+in der Desktopansicht ab 1101 Pixeln ist sie ausgeblendet. Die globale Werkzeugsuche
+steht am Desktop in einer eigenen Zeile unter der oberen Leiste.
 Werkzeugkacheln und Symbole bleiben ruhig. Der Projekt-Button ist dezent weiß-grün.
 Auch Projektstände ohne Seiten bieten Rückgängig und Wiederholen.
 Die Werkzeugseitenleiste ist zunächst eingeklappt. Header und Upload behalten ihre

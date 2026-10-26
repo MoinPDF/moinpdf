@@ -254,7 +254,7 @@ export const guides = {
     'Wähle die Datei. Seiten ohne auslesbaren Text werden beim Word-Export automatisch per OCR erkannt.',
     'Wähle „Seitenlayout mit Bildern“ für positionierte Textfelder oder „Fließtext, Tabellen und Bilder“ für Absätze, echte erkannte Rastertabellen und Bilder. „Nur Text als Absätze“ und der Dokumentenserver bleiben verfügbar.',
     'Öffne die DOCX-Datei in Word und kontrolliere insbesondere Tabellen, Schriften, Absätze und Seitenumbrüche.'
-  ], 'Bearbeitbare DOCX-Datei.', 'Im Layoutmodus bleiben Tabellenlinien im Seitenhintergrund. Der Fließtextmodus rekonstruiert unterstützte Rastertabellen und wiederkehrende Kopf-/Fußzeilen; nicht erkannte Tabellen bleiben Text, komplexe Grafiken können Bilder bleiben. Seitenumbrüche, Lesereihenfolge und Schriften prüfen.'),
+  ], 'Bearbeitbare DOCX-Datei.', 'Im lokalen Layoutmodus bleiben Tabellenlinien im Seitenhintergrund. Der Fließtextmodus rekonstruiert unterstützte Rastertabellen und wiederkehrende Kopf-/Fußzeilen; nicht erkannte Tabellen bleiben Text, komplexe Grafiken können Bilder bleiben. Der Server verwendet pdf2docx für digitale Seiten und erzeugt aus Seiten ohne auslesbaren Text per OCR bearbeitbare Absätze. Seitenumbrüche, Lesereihenfolge und Schriften in jedem Modus prüfen.'),
   'email-pdf': guide('Eine gespeicherte EML-Datei oder eine Outlook-MSG-Datei.', [
     'Wähle die E-Mail-Datei. MoinPDF übernimmt Kopfzeilen wie Absender und Betreff sowie den Nachrichteninhalt.',
     'Aktiviere bei Bedarf die zusätzliche Ausgabe der Anlagen als ZIP.',
@@ -396,11 +396,11 @@ export const guides = {
     'Prüfe die Trefferseiten, passe die Auswahl an und speichere die Auswahl als PDF.'
   ], 'Dokumentenübersicht und neue PDF aus ausgewählten beziehungsweise gefundenen Seiten.', 'Leerseiten und Duplikate sind Hinweise, keine automatische Löschentscheidung. Der lokale Suchindex macht die Original-PDF nicht dauerhaft durchsuchbar; dafür „OCR & Text“ verwenden. Ausstehende Änderungen zuerst anwenden, wenn sie Grundlage der Prüfung sein sollen.'),
   'ocr': guide('Gescannte PDFs, Bilder oder PDFs mit unzureichendem Suchtext.', [
-    'Wähle die Seiten und eine der 21 Erkennungssprachen. Über „Sprachen kombinieren“ sind bis zu acht Sprachen gleichzeitig möglich. Wähle den Seitenaufbau und erzwinge OCR nur, wenn vorhandener Text neu erkannt werden soll.',
+    'Wähle die Seiten, den Seitenaufbau und eine der 21 Erkennungssprachen; bis zu acht lassen sich kombinieren. Scanbereiche auf gemischten Seiten werden automatisch erkannt. „Alle Seiten neu erkennen“ ersetzt vorhandene OCR-Ergebnisse; sichtbarer Originaltext bleibt erhalten.',
     'Optional „Sprachen automatisch ermitteln“ aktivieren. Eine lokale Probe wählt pro Scan-Seite passende Modelle. Kurze, unscharfe oder mehrdeutige Texte erfordern eine manuelle Auswahl; die Probe braucht zusätzlichen Arbeitsspeicher.',
     'Starte die Erkennung. Korrigiere erkannte Zeilen neben der Vorschau und wähle „Korrekturen übernehmen“, um den Suchtext der PDF zu aktualisieren. Sichtbarer Originaltext ist gesperrt; das Scanbild bleibt unverändert.',
-    'Speichere eine durchsuchbare PDF, TXT oder DOCX. Übernimm die PDF als Arbeitsdokument, wenn weitere textbasierte Werkzeuge folgen sollen.'
-  ], 'PDF mit Suchtext oder Textausgabe als TXT/DOCX.', 'DOCX enthält den erkannten Text ohne Rekonstruktion des ursprünglichen Layouts. Handschrift, Spalten und unscharfe Scans sind besonders fehleranfällig. Große OCR-Aufträge können auf Smartphones länger dauern.'),
+    'Übernimm OCR-Korrekturen vor dem PDF-Download oder der Weiterbearbeitung. Speichere die aktualisierte durchsuchbare PDF oder exportiere den korrigierten Text als TXT/DOCX. Für weitere textbasierte Werkzeuge die PDF als Arbeitsdokument übernehmen.'
+  ], 'PDF mit Suchtext oder Textausgabe als TXT/DOCX.', 'OCR-Korrekturen ändern den Suchtext, nicht die sichtbaren Buchstaben im Scan. Für sichtbare Textänderungen „PDF bearbeiten“ verwenden. Der DOCX-Export dieses Werkzeugs enthält nur Text; für Bilder und Layout „PDF zu Word“ nutzen. Handschrift, Spalten und unscharfe Scans erfordern Kontrolle. Große OCR-Aufträge können auf Smartphones länger dauern.'),
   'images': guide('JPG- oder PNG-Dateien, auch gemeinsam mit PDFs.', [
     'Ziehe die Bilder in die App oder wähle sie über die Dateiauswahl.',
     'Kontrolliere in der Seitenübersicht Reihenfolge und Ausrichtung. Wähle nur die Seiten aus, die in die Ausgabe sollen.',
@@ -408,10 +408,10 @@ export const guides = {
   ], 'PDF mit proportional auf A4 eingepassten Bildern.', 'Das Bild wird nicht automatisch als Text erkannt. Wenn du danach suchen oder Text kopieren möchtest, führe zusätzlich OCR aus.'),
   'to-images': guide('Eine PDF mit den zu exportierenden Seiten.', [
     'Wähle in der Seitenübersicht die gewünschten Seiten aus.',
-    'Stelle JPG oder PNG ein und starte den Export.',
+    'Wähle PNG, JPG, WebP, TIFF oder BMP und starte den Export.',
     'Entpacke das ZIP und prüfe Auflösung, Dateinamen und Reihenfolge.'
   ], 'Ein Bild pro ausgewählter Seite im ZIP.', 'Die Bilddateien enthalten die sichtbare Seitendarstellung, keine interaktiven Felder, Links oder kopierbare Textebene. PNG eignet sich häufig für scharfe Schrift, JPG für kompakte Fotodarstellungen.'),
-  'compress': guide('Vorwiegend bildbasierte PDFs, beispielsweise eingescannte Briefe.', [
+  'compress': guide('PDFs mit Text, Grafiken oder Bildern, beispielsweise eingescannte Briefe.', [
     'Wähle „Inhalte erhalten, Bilder verkleinern“ oder „Verlustfrei optimieren“. Für die Bildverkleinerung stehen „Sanft“, „Ausgewogen“ und „Möglichst klein“ bereit.',
     'Starte die Komprimierung. Geeignete RGB-JPEGs werden einzeln verkleinert; andere Bildformate bleiben erhalten. Verlustfreie Optimierung ändert keine Bildpixel.',
     'Vergleiche Größe und Lesbarkeit in der Original-/Ergebnisansicht mit gemeinsamem Zoom. Wähle bei Bedarf eine höhere Qualität. Eine kleinere Ausgabe ist nicht garantiert.'

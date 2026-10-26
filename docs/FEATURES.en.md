@@ -38,7 +38,7 @@ The browser edition offers three local PDF-to-Word modes: page layout with image
 ## Pages, editing and OCR
 
 - Check & page finder: cross-file text search, local scan recognition, matching pages exported as a new PDF; hints for scan pages, possible blank pages, visually identical pages and mixed paper sizes
-- OCR & text: 21 languages, up to eight combined, with optional automatic language sampling; automatic page segmentation, text block, column, line or sparse text; editable recognised text beside a PDF preview
+- OCR & text: 21 languages, up to eight combined, with optional automatic language sampling; automatic page segmentation, text block, column, line or sparse text; editable OCR lines beside the PDF preview and corrections applied to the PDF search layer
 - JPG, PNG, WebP, BMP, multipage TIFF, HEIC/HEIF, PSD and standalone SVG to PDF as image pages; PDF to PNG/JPG/WebP/TIFF/BMP in a ZIP
 - Compression preserving content, lossless optimization or explicitly selected page images; comparison at shared zoom
 - Merge; individual pages as PDFs in a ZIP
@@ -136,7 +136,7 @@ Use the shortcuts, search or “All tools” to find tools grouped by task. Long
 | Tool | Runs in | Scope |
 | --- | --- | --- |
 | Split by file size | Browser | Actual measured bytes per PDF, complete page order, ZIP; oversized single pages are reported |
-| PDF to Word | Server | Editable DOCX from text, tables and images using pdf2docx; scanned pages receive automatic OCR and editable paragraphs |
+| PDF to Word | Browser / Server | Locally: page layout with images and text boxes, flowing text with recognised grid tables and images, or plain paragraphs. The server reconstructs digital pages using pdf2docx and converts pages without extractable text into editable paragraphs using OCR. |
 | PDF to PowerPoint | Server | One rendered page per slide by default; optional editable text with style and position. Complex layouts may differ. |
 | Emails to PDF | Server | EML/MSG, Unicode headers and message body; unchanged attachments with unique names in a ZIP |
 | HTML & websites to PDF | Server | Saved HTML with headings and tables without scripts/external resources; public website links use the separate Chromium service described above |
@@ -162,8 +162,8 @@ Advanced converters are part of the complete Docker installation, which sets up 
 - Cropped pages are rebuilt from the cropped pixel region, removing content outside it. Redaction, cropping, greyscale and flattening limit the longest raster dimension to 2800 pixels and the maximum scale factor to 4.2.
 - Text notes, highlights and signatures preserve existing text unless a raster tool is used on the same page. Drawn signatures are inserted images, not certificate signatures. Text notes support Latin script, including umlauts. Apply visual changes before rotating, then continue with the result.
 - Removing document information deletes the Info dictionary and document/page XMP. It does not anonymise visible content, comments, images or embedded object data.
-- OCR preserves existing text when it contains at least 20 non-whitespace characters. For mixed text and scan regions, enable recognition of all pages again. Text-field corrections affect TXT, DOCX and clipboard output; the OCR PDF contains the initial recognition result.
-- Scan compression creates image pages, removing copyable text, links and form functionality. A smaller file is not guaranteed.
+- “OCR & text” uses existing readable text and automatically recognises scan regions on mixed pages. “Recognise all pages again” replaces existing OCR results; visible original text is preserved and locked in the OCR correction view. Edited lines are available for TXT, DOCX and clipboard output. Before downloading or continuing with the PDF, choose “Apply corrections” to update its search layer too. The visible page image stays unchanged; use “Edit PDF” for visible text changes.
+- “Compress scans” defaults to “Preserve content, reduce images”: text, vectors, links and form fields are retained while compatible RGB JPEGs are reduced individually. “Optimize losslessly” does not change image pixels. Only “Rebuild pages as images” removes copyable text, links and form functionality. Use a complete single PDF for forms, bookmarks or tags; signed PDFs are rejected. No mode guarantees a smaller file.
 - Exports produce new files. Page-based exports may flatten form fields and lose document-wide features such as bookmarks. Form and bookmark tools preserve each other's document features; protect/unlock preserves pages, forms, bookmarks and attachments. Changes may invalidate existing digital signatures.
 - Protected PDFs are decrypted locally after a password prompt. Opening protection uses AES-256; print/copy/edit restrictions also depend on the PDF viewer. Passwords are not stored permanently.
 - E-invoices: at most 5 MB per XML file and 2,000 line items. The basic check covers essential details, date/number formats and selected totals, not full XSD, EN-16931, KoSIT, Peppol or PDF/A compliance. Line items that cannot be calculated are flagged. Payment terms remain visible without separate bank details. The reading PDF and check report attach the unchanged XML; they are not certified ZUGFeRD or PDF/A files.
