@@ -197,7 +197,12 @@ def run_case(browser, engine, name, language, width, kind):
         assert not errors, errors
         assert not blocked, blocked
         # Switching output invalidates the previous result instead of downloading stale bytes.
-        output.select_option('layout' if kind == 'text' else 'text')
+        if kind == 'text':
+            layout.check()
+        else:
+            if not details.evaluate('(node) => node.open'):
+                details.locator('summary').click()
+            page.get_by_label('Text as paragraphs only' if en else 'Nur Text als Absätze', exact=True).check()
         expect(link).to_have_count(0)
         result['status'] = 'passed'
     except Exception:
