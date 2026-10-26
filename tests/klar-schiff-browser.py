@@ -3,6 +3,7 @@ import atexit
 import io
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -125,9 +126,20 @@ with sync_playwright() as playwright:
                     result = download(control,name+'-bundle.pdf')
                     with pymupdf.open(result) as document:
                         assert len(document) == 4
-                        assert len(document[0].get_links()) == 2
-                        assert [link['page'] for link in document[0].get_links()] == [1,3]
-                        assert len(document.get_toc()) == 2
+                        links = document[0].get_links()
+                        assert len(links) == 2
+                        # PyMuPDF 1.26 reports /Fit destinations as one-based
+                        # strings; newer readers expose zero-based integers.
+                        assert [int(link['page']) - 1 if isinstance(link['page'], str) else link['page'] for link in links] == [1,3]
+                        references = []
+                        for link in links:
+                            kind, destination = document.xref_get_key(link['xref'], 'Dest')
+                            assert kind == 'array'
+                            match = re.fullmatch(r'\[\s*(\d+)\s+0\s+R\s*/Fit\s*\]', destination)
+                            assert match, destination
+                            references.append(int(match.group(1)))
+                        assert references == [document.page_xref(1), document.page_xref(3)]
+                        assert [entry[2] for entry in document.get_toc()] == [2,4]
                     no_overflow()
                     page.screenshot(path=str(out / f'{name}-export.png'), full_page=True)
                     # The narration language is independent of interface language.
