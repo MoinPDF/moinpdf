@@ -157,17 +157,23 @@ export async function withPdfDocument<T>(
   options: { disableFontFace?: boolean; discard?: (value: T) => void } = {},
 ): Promise<T> {
   parent.throwIfAborted();
+  const debugId = uid();
+  const debug = (...parts: unknown[]) => console.info('EXPORT_DIAG', debugId, Math.round(performance.now()), ...parts);
+  debug('session:open', options);
   const controller = new AbortController(),
     signal = controller.signal;
   const abort = () => controller.abort(parent.reason);
   parent.addEventListener('abort', abort, { once: true });
   const step = async <V>(stage: string, operation: Promise<V>): Promise<V> => {
-    const timer = setTimeout(() => controller.abort(new PdfTimeoutError(stage)), 60000);
+    debug('step:start', stage);
+    const timer = setTimeout(() => { debug('step:timeout', stage); controller.abort(new PdfTimeoutError(stage)); }, 60000);
     try {
       const value = await abortable(operation, signal);
       signal.throwIfAborted();
+      debug('step:done', stage);
       return value;
     } finally {
+      debug('step:finally', stage, signal.aborted);
       clearTimeout(timer);
     }
   };
@@ -186,6 +192,7 @@ export async function withPdfDocument<T>(
   };
   const close = () => {
     closing ??= (async () => {
+      debug('close:start');
       let timer: ReturnType<typeof setTimeout> | undefined;
       try {
         // Explicitly supplied PDFWorker instances are not owned by PDF.js's
@@ -201,7 +208,9 @@ export async function withPdfDocument<T>(
         ]);
       } finally {
         clearTimeout(timer);
+        debug('close:worker-destroy');
         worker?.destroy();
+        debug('close:done');
       }
     })();
     return closing;
@@ -226,6 +235,7 @@ export async function withPdfDocument<T>(
     signal.addEventListener('abort', stop, { once: true });
     const pdf = await step('document-open', task.promise);
     const operation = inspect(pdf, signal, step).then((value) => {
+      debug('inspect:done');
       result = value;
       hasResult = true;
       if (finished) discard();
@@ -367,11 +377,14 @@ export async function renderPage(
   const canvas = document.createElement('canvas');
   canvas.width = Math.ceil(viewport.width);
   canvas.height = Math.ceil(viewport.height);
+  console.info('EXPORT_DIAG render:start', item.index, maxSide, Math.round(performance.now()));
   const task = page.render({ canvas, viewport, background: 'rgb(255,255,255)' });
+  console.info('EXPORT_DIAG render:created', item.index, maxSide, Math.round(performance.now()));
   const cancel = () => task.cancel();
   signal?.addEventListener('abort', cancel, { once: true });
   try {
     await task.promise;
+    console.info('EXPORT_DIAG render:done', item.index, maxSide, Math.round(performance.now()));
     signal?.throwIfAborted();
   } catch (error) {
     canvas.width = canvas.height = 0;

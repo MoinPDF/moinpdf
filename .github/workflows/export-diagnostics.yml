@@ -1,0 +1,59 @@
+name: WebKit export diagnostics
+on:
+  push:
+    branches: [diagnostics/webkit-export-022]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    name: WebKit ${{ matrix.case }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [flow, forms]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Build diagnostic source
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+          pnpm run typecheck:selfhost
+          pnpm run build:selfhost
+          node tests/editor-adaptive-fixtures.mjs
+      - name: Prepare WebKit
+        run: |
+          bash scripts/ci-prepare-apt.sh
+          python -m pip install playwright==1.64.0 pymupdf==1.26.6
+          python -m playwright install --with-deps webkit
+      - name: Repeat flow exports with bounded diagnostics
+        if: matrix.case == 'flow'
+        env:
+          MOINPDF_TEST_BROWSERS: webkit
+          MOINPDF_TEST_START_SERVER: '1'
+          MOINPDF_ADAPTIVE_CASES: flow
+        run: |
+          for attempt in 1 2 3 4 5 6 7 8; do
+            echo "Flow diagnostic attempt $attempt"
+            timeout --kill-after=5s 180s python -u tests/editor-adaptive-browser.py || exit $?
+          done
+      - name: Repeat form exports with bounded diagnostics
+        if: matrix.case == 'forms'
+        env:
+          MOINPDF_TEST_BROWSERS: webkit
+          MOINPDF_TEST_START_SERVER: '1'
+          MOINPDF_VERIFY_REPEATS: '20'
+        run: timeout --kill-after=5s 300s python -u tests/editor-verification-browser.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: export-diagnostics-${{ matrix.case }}
+          path: .cache/editor-browser/
+          retention-days: 7

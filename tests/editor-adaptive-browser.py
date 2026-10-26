@@ -244,6 +244,8 @@ def execute(browser,name,width,callback):
     page.on('console',lambda message:diagnostics.append({'event':'console','type':message.type,'text':message.text}))
     page.on('requestfailed',lambda request:diagnostics.append({'event':'requestfailed','url':request.url,'failure':request.failure}))
     page.on('worker',lambda worker:(diagnostics.append({'event':'worker-created','url':worker.url}),worker.on('close',lambda *_:diagnostics.append({'event':'worker-closed','url':worker.url}))))
+    page.on('console',lambda message:print(message.text,flush=True) if message.text.startswith('EXPORT_DIAG') else None)
+    page.on('crash',lambda *_:print('EXPORT_DIAG PAGE_CRASH',flush=True))
     page.on('pageerror',lambda e:errors.append(str(e)))
     def route(r):
         if r.request.method not in ('GET','HEAD') or (urlsplit(r.request.url).netloc!=urlsplit(origin).netloc and not r.request.url.startswith(('blob:','data:'))):blocked.append(r.request.url);r.abort()

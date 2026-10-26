@@ -129,6 +129,7 @@ export async function verifyEditorExport(
             'Exportprüfung fehlgeschlagen: Die Seitenanzahl stimmt nicht überein. Die Bearbeitung bleibt geöffnet.',
           );
         for (const [i, page] of pages.entries()) {
+          console.info('EXPORT_DIAG page:start', i, outlineFonts, Math.round(performance.now()));
           signal.throwIfAborted();
           report({
             percent: 90 + (9 * i) / pages.length,
@@ -321,6 +322,7 @@ export async function verifyEditorExport(
                   'output-render',
                   renderPage(output, outPage, comparisonSide, signal),
                 );
+                console.info('EXPORT_DIAG ink:read-background', i, Math.round(performance.now()));
                 const base = background.canvas
                   .getContext('2d')!
                   .getImageData(0, 0, background.canvas.width, background.canvas.height);
@@ -343,6 +345,7 @@ export async function verifyEditorExport(
                       signal,
                     ),
                   );
+                console.info('EXPORT_DIAG ink:read-buffers', i, Math.round(performance.now()));
                 const expectedImage = context.getImageData(
                     0,
                     0,
@@ -354,12 +357,14 @@ export async function verifyEditorExport(
                     .getImageData(0, 0, actualImage.canvas.width, actualImage.canvas.height);
                 for (const [n, mark] of changedText.entries()) {
                   signal.throwIfAborted();
+                  console.info('EXPORT_DIAG ink:compare-start', i, n, Math.round(performance.now()));
                   const comparison = compareEditorInk(
                     base,
                     expectedImage,
                     savedImage,
                     editorBounds([mark, ...removals[n].sourceRects]),
                   );
+                  console.info('EXPORT_DIAG ink:compare-done', i, n, Math.round(performance.now()));
                   if (comparison.expectedInk < 8)
                     throw new Error('Schriftbild zu klein oder kontrastarm');
                   if (comparison.missing > 0.12 || comparison.extra > 0.12)
@@ -407,12 +412,14 @@ export async function verifyEditorExport(
               Math.abs(before.height - after.height) > 0.1
             )
               throw new Error('Seitenmaß verändert');
+            console.info('EXPORT_DIAG pixels:read', i, Math.round(performance.now()));
             const a = before.canvas
                 .getContext('2d')!
                 .getImageData(0, 0, before.canvas.width, before.canvas.height),
               b = after.canvas
                 .getContext('2d')!
                 .getImageData(0, 0, after.canvas.width, after.canvas.height);
+            console.info('EXPORT_DIAG pixels:compare-start', i, Math.round(performance.now()));
             const ratio = compareEditorPixels(
               a.data,
               b.data,
@@ -434,6 +441,7 @@ export async function verifyEditorExport(
                   : []),
               ]),
             );
+            console.info('EXPORT_DIAG pixels:compare-done', i, Math.round(performance.now()));
             if (ratio > 0.001)
               result.issues.push({
                 page: i,
@@ -455,6 +463,7 @@ export async function verifyEditorExport(
             if (after) after.canvas.width = after.canvas.height = 0;
           }
         }
+        console.info('EXPORT_DIAG verification:done', outlineFonts, Math.round(performance.now()));
         result.status = result.issues.length ? 'review' : 'passed';
         return result;
       },

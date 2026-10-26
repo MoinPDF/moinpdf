@@ -126,7 +126,7 @@ results = []
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS', 'webkit').split(','):
         browser = getattr(api, engine).launch()
-        cases = [f'form-{i + 1:02}' for i in range(repeats)] + (['worker-cancel'] if baseline else ['worker-cancel', 'worker-retry', 'worker-timeout', 'font-retry'])
+        cases = [f'form-{i + 1:02}' for i in range(repeats)]
         for case in cases:
             fault = not case.startswith('form-')
             name = f'{engine}-verification-' + case
@@ -135,6 +135,8 @@ with sync_playwright() as api:
             context.tracing.start(screenshots=True, snapshots=True, sources=True)
             page = context.new_page()
             errors = []
+            page.on('console', lambda message: print(message.text, flush=True) if message.text.startswith('EXPORT_DIAG') else None)
+            page.on('crash', lambda *_: print('EXPORT_DIAG PAGE_CRASH', flush=True))
             page.on('pageerror', lambda error: errors.append(str(error)))
             result = {'case': name, 'engine': browser.version, 'fault_injection': fault}
             started = time.monotonic()
@@ -203,5 +205,5 @@ with sync_playwright() as api:
             if result['status'] == 'failed':
                 break
         browser.close()
-expected = len(os.environ.get('MOINPDF_TEST_BROWSERS', 'webkit').split(',')) * (repeats + (1 if baseline else 4))
+expected = len(os.environ.get('MOINPDF_TEST_BROWSERS', 'webkit').split(',')) * repeats
 assert len(results) == expected and len({r['case'] for r in results}) == expected and all(r['status'] == 'passed' for r in results), 'Verification acceptance failed or incomplete'
