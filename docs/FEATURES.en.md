@@ -1,7 +1,7 @@
 # Features and limitations
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.21.2**
+**Current implementation limits · 0.22.0**
 
 | Capability | Value |
 | --- | --- |

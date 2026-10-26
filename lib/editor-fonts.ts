@@ -455,6 +455,8 @@ export async function resolveEditorFont(
     | 'fontScale'
     | 'insetScale'
     | 'textScaleX'
+    | 'textRotation'
+    | 'textAspect'
     | 'tracking'
   >,
   source?: Source,
@@ -494,7 +496,7 @@ export async function resolveEditorFont(
       ? mark.fontChoice
       : matchingEditorFont(mark.originalFontName, mark.fontFamily);
   let font = await localFont(choice, bold, italic);
-  let widthDeviation: number | undefined;
+  let referenceWidth: number | undefined;
   if (
     (!mark.fontChoice || mark.fontChoice === 'auto') &&
     mark.originalText &&
@@ -503,8 +505,17 @@ export async function resolveEditorFont(
     !mark.originalText.includes('\n')
   ) {
     const sample = mark.originalText,
+      angle = ((mark.textRotation || 0) * Math.PI) / 180,
+      aspect = mark.textAspect,
+      // sourceRect is axis-aligned; recover the local text width before
+      // comparing metrics. Legacy rotated marks without aspect stay name-based.
+      projection = !mark.textRotation
+        ? 1
+        : aspect && aspect > 0
+          ? Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)) / aspect
+          : NaN,
       reference =
-        mark.sourceRect.w / mark.fontScale / (mark.textScaleX || 1) -
+        mark.sourceRect.w / projection / mark.fontScale / (mark.textScaleX || 1) -
         2 * (mark.insetScale || 0) -
         Math.max(0, [...sample].length - 1) * (mark.tracking || 0);
     if (reference > 0) {
@@ -525,7 +536,7 @@ export async function resolveEditorFont(
           score(candidate) + 0.02 < score(font)
         )
           font = candidate;
-      widthDeviation = (font.measure(sample, 1) / reference - 1) * 100;
+      referenceWidth = reference;
     }
   }
   if (!font.covers(text)) {
@@ -546,6 +557,10 @@ export async function resolveEditorFont(
     throw new Error(
       'Der Text enthält nicht unterstützte Zeichen in der Ersatzschrift. Bitte im Werkzeug „PDF-Objekte bearbeiten“ eine passende Schrift verwenden.',
     );
+  const widthDeviation =
+    referenceWidth && mark.originalText
+      ? (font.measure(mark.originalText, 1) / referenceWidth - 1) * 100
+      : undefined;
   return { font, substituted: !!reason, ...(reason ? { reason } : {}), widthDeviation };
 }
 export async function loadEditorCssFont(font: EditorFont, source?: Source) {

@@ -70,3 +70,14 @@ case. These are not physical iOS checks. On each physical device, also cancel an
 ongoing editor export, verify that the edit remains available, and export it again.
 Record any verification retry or timeout and confirm that no unverified download
 is offered. Native Microsoft Word open/edit/save/reopen remains pending.
+
+## Zusätzliche Fälle für 0.22.0 / Additional 0.22.0 cases
+
+Weiterhin offen auf physischen Geräten / Still pending on physical devices:
+
+- [ ] iPhone/iPad/Android: bei 200–400 % Zoom weiter tippen; Cursor horizontal und oberhalb der Bildschirmtastatur sichtbar, Auswahl unverändert. / Continue typing at 200–400% zoom; caret remains visible horizontally and above the keyboard, selection unchanged.
+- [ ] Nach bewusstem Scrollen Export oder Rückgängig antippen; kein Zurückspringen während des Tippens auf die Schaltfläche. / After manual scrolling, tap export or undo without the view jumping during the tap.
+- [ ] Beide Word-Ziele auswählen, DOCX speichern und in der vorgesehenen Mobil-App öffnen; Text und Tabellen prüfen. / Select each Word goal, save the DOCX and open it in the intended mobile app; inspect text and tables.
+- [ ] Während der Erkennung einer längeren PDF schreiben, Text auswählen und rückgängig machen; anschließend Datei über die native Speichern-/Teilen-Oberfläche sichern. / While recognizing a longer PDF, type, select text and undo; then save using the native save/share surface.
+
+Automatisierte DOM- und Touch-Viewport-Prüfungen sind kein Nachweis dieser physischen Gerätefälle. / Automated DOM and touch-viewport checks do not establish these physical-device cases.

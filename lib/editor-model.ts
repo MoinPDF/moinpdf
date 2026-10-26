@@ -378,8 +378,9 @@ export async function readTextTargets(
       style?.vertical ||
       Math.abs(dx * vx + dy * vy) > Math.hypot(dx, dy) * fontSize * 0.02 ||
       dx * vy - dy * vx >= 0;
+    const characterCount = [...part.str].length;
     const spacing =
-      part.str.length > 1 ? (part.width - natural) / (part.str.length - 1) / fontSize / scaleX : 0;
+      characterCount > 1 ? (part.width - natural) / (characterCount - 1) / fontSize / scaleX : 0;
     targets.push({
       id: `text-${i}`,
       text: part.str,

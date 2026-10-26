@@ -194,7 +194,7 @@ def high_scan(page,name):
 
 def preflight(page,name):
     open_editor(page,'flow');field=pick(page,'First paragraph.');field.fill('A longer replacement needs several lines in this narrow frame.');geometry(page,'Objektbreite',160*25.4/72);geometry(page,'Objekthöhe',3)
-    check=panel(page,'Änderungen vorprüfen');fix=check.get_by_role('button',name='Höhe sicher anpassen',exact=True);expect(fix).to_be_visible(timeout=90000);fix.click();expect(fix).to_have_count(0,timeout=90000);check.get_by_role('button',name='Originaltextentfernung testen',exact=True).click();expect(check).to_contain_text('Originaltext lässt sich physisch entfernen',timeout=120000)
+    check=panel(page,'Änderungen vorprüfen');fix=check.get_by_role('button',name='Höhe sicher anpassen',exact=True);expect(fix).to_be_visible(timeout=90000);expect(check.locator('.editor-preflight-location')).to_have_count(1);expect(check.get_by_role('button',name='Anzeigen',exact=True)).to_have_count(1);expect(check).to_contain_text('A longer replacement');fix.click();expect(fix).to_have_count(0,timeout=90000);check.get_by_role('button',name='Originaltextentfernung testen',exact=True).click();expect(check).to_contain_text('Originaltext lässt sich physisch entfernen',timeout=120000)
     saved=save(page,name)
     with pymupdf.open(saved) as d:assert 'First paragraph.'not in d[0].get_text() and 'A longer replacement'in d[0].get_text()
     return {'scope':'delayed preflight, explicit safe height adjustment and physical original-text removal check'}

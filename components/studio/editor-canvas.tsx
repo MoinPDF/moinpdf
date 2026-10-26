@@ -45,7 +45,7 @@ import {
   useEditorTypography,
   type EditorPatch,
 } from './editor-typography';
-import { renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
+import { abortable, renderPage, uid, type Source, type PageItem } from '@/lib/pdf-engine';
 import { normalizedRect, type Mark, type Rect } from '@/lib/studio-engine';
 import {
   fitRect,
@@ -425,8 +425,9 @@ export function EditorCanvas({
         )
         .then(async ({ canvas }) => {
           try {
-            const blob = await new Promise<Blob | null>((resolve) =>
-              canvas.toBlob(resolve, 'image/png'),
+            const blob = await abortable(
+              new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')),
+              controller.signal,
             );
             if (!blob) throw new Error('Bild konnte nicht erstellt werden.');
             if (!controller.signal.aborted) {
@@ -465,10 +466,15 @@ export function EditorCanvas({
     setError('');
     renderPage(source, { index: page.index, rotation: page.rotation }, previewSide, cancel.signal)
       .then(async ({ canvas, width, height }) => {
-        const blob = await new Promise<Blob | null>((resolve) =>
-          canvas.toBlob(resolve, 'image/png'),
-        );
-        canvas.width = canvas.height = 0;
+        let blob: Blob | null;
+        try {
+          blob = await abortable(
+            new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png')),
+            cancel.signal,
+          );
+        } finally {
+          canvas.width = canvas.height = 0;
+        }
         if (!blob) throw new Error('Bild konnte nicht erstellt werden.');
         if (live && blob) {
           setUrl(URL.createObjectURL(blob));
@@ -551,26 +557,34 @@ export function EditorCanvas({
       !(source.pdf?.numPages > page.index + 1)
     )
       return;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => {
-      if (document.visibilityState === 'visible')
+    let ctrl: AbortController | undefined;
+    let timer: ReturnType<typeof setTimeout>;
+    const defer = () => {
+      clearTimeout(timer);
+      ctrl?.abort();
+      ctrl = undefined;
+      if (document.visibilityState !== 'visible') return;
+      timer = setTimeout(() => {
+        ctrl = new AbortController();
         void analyzeEditorPage(
           source,
           { rotation: page.rotation, index: page.index + 1 },
           { signal: ctrl.signal, language },
         ).catch(() => {});
-    }, 1500);
-    const visibility = () => {
-      if (document.visibilityState !== 'visible') {
-        clearTimeout(timer);
-        ctrl.abort();
-      }
+      }, 1500);
     };
-    document.addEventListener('visibilitychange', visibility);
+    defer();
+    document.addEventListener('visibilitychange', defer);
+    document.addEventListener('beforeinput', defer, true);
+    document.addEventListener('pointerdown', defer, true);
+    document.addEventListener('keydown', defer, true);
     return () => {
       clearTimeout(timer);
-      ctrl.abort();
-      document.removeEventListener('visibilitychange', visibility);
+      ctrl?.abort();
+      document.removeEventListener('visibilitychange', defer);
+      document.removeEventListener('beforeinput', defer, true);
+      document.removeEventListener('pointerdown', defer, true);
+      document.removeEventListener('keydown', defer, true);
     };
   }, [source, page, language, autoOcr, disabled, loadingText, previewReady, detectionError]);
   useEffect(() => {

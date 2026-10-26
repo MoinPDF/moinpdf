@@ -8,7 +8,7 @@ import {
   editorSelectionStyle,
   type EditorSelection,
 } from '@/lib/editor-rich-text';
-import { prepareEditorLayout } from '@/lib/editor-layout-plan';
+import { prepareEditorLayout, editorLayoutWidth } from '@/lib/editor-layout-plan';
 import { loadEditorCssFont, resolveEditorFont } from '@/lib/editor-fonts';
 import { EditorTextPreview, useEditorTypography, type EditorPatch } from './editor-typography';
 import { Button } from '@/components/ui/button';
@@ -121,10 +121,7 @@ export function EditorFontAlternatives({
             )
             .catch(() => null)
         : null;
-      const baseWidth = Math.max(
-        0.001,
-        ...base.pieces.map((p) => p.x + p.font.measure(p.text, p.size)),
-      );
+      const baseWidth = Math.max(0.001, editorLayoutWidth(base));
       const results = await Promise.all(
         editorFontCatalog
           .filter((f) => f.family === (context.style.fontFamily || 'sans'))
@@ -140,10 +137,7 @@ export function EditorFontAlternatives({
               ctrl.signal.throwIfAborted();
               const layout = await prepareEditorLayout(candidate, width, height, source);
               for (const piece of layout.pieces) await loadEditorCssFont(piece.font, source);
-              const inkWidth = Math.max(
-                0.001,
-                ...layout.pieces.map((p) => p.x + p.font.measure(p.text, p.size)),
-              );
+              const inkWidth = Math.max(0.001, editorLayoutWidth(layout));
               return {
                 name: f.name,
                 mark: candidate,

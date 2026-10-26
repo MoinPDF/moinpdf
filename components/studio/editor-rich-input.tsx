@@ -334,7 +334,10 @@ export function EditorRichInput({
             parent && parent !== document.body;
             parent = parent.parentElement
           ) {
-            if (!['auto', 'scroll'].includes(getComputedStyle(parent).overflowY)) continue;
+            const style = getComputedStyle(parent);
+            const vertical = ['auto', 'scroll'].includes(style.overflowY);
+            const horizontal = ['auto', 'scroll'].includes(style.overflowX);
+            if (!vertical && !horizontal) continue;
             const box = parent.getBoundingClientRect(),
               rect = range.getBoundingClientRect();
             const toolbar = parent.querySelector<HTMLElement>('.editor-inline-toolbar'),
@@ -348,9 +351,13 @@ export function EditorRichInput({
                   : 12;
             const top = box.top + inset,
               bottom = box.bottom - 12;
-            if (bottom > top) {
+            if (vertical && bottom > top) {
               if (rect.bottom > bottom) parent.scrollTop += rect.bottom - bottom;
               else if (rect.top < top) parent.scrollTop -= top - rect.top;
+            }
+            if (horizontal && box.width > 24) {
+              if (rect.right > box.right - 12) parent.scrollLeft += rect.right - box.right + 12;
+              else if (rect.left < box.left + 12) parent.scrollLeft -= box.left + 12 - rect.left;
             }
           }
           const rect = range.getBoundingClientRect(),
@@ -421,6 +428,7 @@ export function EditorRichInput({
     document.addEventListener('pointerup', up);
     document.addEventListener('pointercancel', up);
     window.visualViewport?.addEventListener('resize', reveal);
+    window.visualViewport?.addEventListener('scroll', reveal);
     const resize = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(reveal);
     const canvas = input.current?.closest('.editor-canvas-wrap');
     if (canvas) resize?.observe(canvas);
@@ -436,6 +444,7 @@ export function EditorRichInput({
       document.removeEventListener('pointerup', up);
       document.removeEventListener('pointercancel', up);
       window.visualViewport?.removeEventListener('resize', reveal);
+      window.visualViewport?.removeEventListener('scroll', reveal);
       resize?.disconnect();
     };
   }, []);

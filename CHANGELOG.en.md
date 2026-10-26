@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.22.0 – 2026-10-26
+
+- Word export starts locally with two clear goals: “Preserve appearance as closely as possible” and “Edit text and tables”. Text-only output and a configured document server are under “Other options”; saved settings remain usable.
+- More accurate font comparisons for rotated text, supplementary Unicode characters, tracking and horizontally scaled text. Reported deviation describes the font actually used after fallback.
+- Preflight groups notices by text location, with page number, excerpt and one navigation action. Uncertain scan fonts point to comparison; unsuitable height adjustments for tables, scans and rotated text are hidden.
+- Visible pages take priority over queued offscreen previews. Cancelled image encoding no longer holds the queue; temporary canvases are released on failure as well. Neighbour OCR preparation pauses during input and interaction.
+- Typing follows the cursor horizontally on zoomed pages and responds to mobile viewport movement. Deliberate scrolling and other controls retain priority.
+- Updated German/English instructions and regressions for real PDF/DOCX output, preview cancellation, idle preparation and mobile caret geometry. Physical iPhone, iPad and Android verification remains separately pending.
+
 ## 0.21.2 – 25 October 2026
 
 - Docker, editor, native-browser and documentation checks run for every commit on `main`, including dependency-only and CI-only changes.
