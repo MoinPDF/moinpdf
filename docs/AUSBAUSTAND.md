@@ -6,7 +6,7 @@ Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvor
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 26. Oktober 2026 · Version 0.22.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 26. Oktober 2026 · Version 0.23.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 Seit 0.22.0 stehen beim Word-Export zwei Ziele im Vordergrund: „Aussehen möglichst erhalten“ und „Text und Tabellen bearbeiten“. Text-only-Ausgabe und Serverwahl liegen unter „Weitere Optionen“. Die Vorprüfung bündelt Hinweise je Textstelle. Schriftvergleiche berücksichtigen gedrehte Geometrie, Unicode-Zeichenabstände und horizontale Skalierung. Sichtbare Vorschauen werden vor wartenden Nachbarseiten verarbeitet; zusätzliche OCR-Vorbereitung pausiert bei Eingaben. Die Cursorführung berücksichtigt horizontales Scrollen und Bewegungen des mobilen Sichtbereichs.
 

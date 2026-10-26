@@ -27,7 +27,9 @@ jobs:
       matrix:
         include:
           - browser: safari
-            os: macos-15
+            # Keep native Safari on the documented Intel pool. The macos-15
+            # ARM pool has repeatedly cancelled jobs before assigning a runner.
+            os: macos-15-intel
           - browser: firefox
             os: ubuntu-24.04
     runs-on: ${{ matrix.os }}

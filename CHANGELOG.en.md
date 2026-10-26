@@ -4,8 +4,9 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## Unreleased — Clear Deck and English narration
+## 0.23.0 – 26 October 2026
 
+- Native Safari verification uses the Intel Mac pool after repeated ARM runner allocation failures before test startup. All browser, Docker and documentation checks remain required for publication. The new version includes the tools added since 0.22.0 and preserves existing release artifacts.
 - Header/footer cleanup: recurring margin text and changing page numbers, reviewable matches with exceptions, manual scan areas and white preview. Actual content removal with independent text, geometry and annotation checks, project drafts and German/English instructions.
 - Form helper with explicitly saved local profiles, conservative suggestions for empty form fields, manual assignment and transparent scan entries. Reviewed PDF export, optional flattening, Unicode font and project drafts.
 - Receipt collection on A4 with cropping, multiple receipts from one scan, ordering, captions, numbering, millimetre print width and a shared preview/export layout. Long receipts keep their width and continue across A4 sheets as needed.

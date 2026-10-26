@@ -6,7 +6,13 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
-## Prüfplan für 0.22.0
+## Prüfplan für 0.23.0
+
+- 63 Engine-/DOM-Suiten einschließlich Klar Schiff, Formularprofilen, A4-Belegen und Kopf-/Fußzeilenbereinigung. Die neuen Browserabläufe prüfen tatsächliche PDF-Downloads in Chromium, Firefox und WebKit auf Desktop und mit schmaler Touch-Emulation.
+- Native Safari-Prüfung auf `macos-15-intel` mit unverändertem Testumfang; physische Geräte und iOS sind davon getrennt zu prüfen.
+- Freigabe erst nach erfolgreichen PR-Prüfungen und den erneuten Prüfungen des tatsächlichen `main`-Commits. Die vollständige Veröffentlichung umfasst zusätzlich vier Docker-Images mit amd64/arm64 und den Release samt unveränderlichen Image-Referenzen. Fehlende Runner oder übersprungene Prüfungen gelten nicht als erfolgreich.
+
+## Bisheriger Prüfplan für 0.22.0
 
 - Neue 0.22-Prüfungen: zwei Word-Ziele mit erweiterten Optionen, Unicode-Zeichenabstände, gedrehte Ersatzschrift-Metriken, gebündelte Vorprüfhinweise, abbrechbare Bildkodierung, sichtbare Vorschaupriorität, OCR-Pause bei Eingaben und horizontale Cursorführung samt simuliertem mobilem Sichtbereich.
 - 60 Engine-/DOM-Suiten einschließlich echter PDFs, unabhängiger AES-GCM-Entschlüsselung,

@@ -6,7 +6,7 @@ Form helper and receipt collection on A4 are integrated browser tools. Profile s
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 26 October 2026 · Version 0.22.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 26 October 2026 · Version 0.23.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 Since 0.22.0, Word export presents two goals: “Preserve appearance as closely as possible” and “Edit text and tables”. Text-only output and server selection are under “Other options”. Preflight groups notices by text location. Font comparison accounts for rotated geometry, Unicode tracking and horizontal scaling. Visible previews precede queued neighbours; additional OCR preparation pauses during input. Caret following accounts for horizontal scrolling and mobile viewport movement.
 

@@ -4,7 +4,13 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
-## Verification scope for 0.22.0
+## Verification scope for 0.23.0
+
+- 63 engine/DOM suites include Clear Deck, form profiles, A4 receipts and header/footer cleanup. New browser flows inspect actual PDF downloads in Chromium, Firefox and WebKit on desktop and with narrow touch emulation.
+- Native Safari verification on `macos-15-intel` retains the complete test scope; physical devices and iOS require separate checks.
+- Approval requires successful PR checks and fresh checks of the actual `main` commit. Complete publication also includes four Docker images with amd64/arm64 and the release with immutable image references. Unavailable runners and skipped checks do not count as successful verification.
+
+## Previous verification scope for 0.22.0
 
 - New 0.22 checks cover the two Word goals and advanced options, Unicode tracking, rotated fallback metrics, grouped preflight notices, cancellable image encoding, visible-preview priority, OCR pausing during input and horizontal caret following with a simulated mobile viewport.
 - 60 engine/DOM suites cover real PDFs, independent AES-GCM decryption, wrong
