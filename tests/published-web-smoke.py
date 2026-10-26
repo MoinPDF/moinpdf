@@ -563,7 +563,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 assert audio.getnchannels() == 1
             page.get_by_label('Vorlesesprache', exact=True).select_option('en')
             expect(page.get_by_label('Stimme', exact=True)).to_have_value('ljspeech')
-    page.get_by_role('textbox', name='Vorlesetext', exact=True).fill('Hello from the fictional harbour. This English audiobook is generated locally.')
+            page.get_by_role('textbox', name='Vorlesetext', exact=True).fill('Hello from the fictional harbour. This English audiobook is generated locally.')
             page.get_by_label('Lesereihenfolge und Vorlesetext der ausgewählten Abschnitte geprüft', exact=True).check()
             page.get_by_role('button', name='Hörbuch erstellen', exact=True).click()
             expect(page.locator('audio')).to_be_visible(timeout=180000)
