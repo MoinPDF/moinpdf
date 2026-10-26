@@ -5,6 +5,12 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'header-footer-cleanup': {
+    title: 'Clean up headers and footers',
+    description:
+      'Find recurring margin text and page numbers, review matches and remove selected header or footer areas.',
+    action: 'Clean up margins',
+  },
   'form-helper': {
     title: 'Form helper',
     description:

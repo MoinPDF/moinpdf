@@ -67,7 +67,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         expect(page.locator('main h1')).to_have_text(name)
     def back():
         page.get_by_role('button', name=re.compile(r'^(Zurück zur Auswahl|Werkzeug wechseln)$')).click()
-        expect(page.locator('.chooser-tool')).to_have_count(115)
+        expect(page.locator('.chooser-tool')).to_have_count(116)
     for name, label in [('Weiße Ränder entfernen', 'Rand in Millimetern'),
                         ('Schwarzweiß-Scan', 'Schwellenwert'),
                         ('PDFs überlagern', 'Deckkraft der Vorlage'),

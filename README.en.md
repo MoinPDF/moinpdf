@@ -46,6 +46,8 @@ See [Features](docs/FEATURES.en.md) and [Implementation status](docs/STATUS.en.m
 
 Form helper reuses explicitly saved local profiles for recurring form details. Collect receipts on A4 crops and arranges receipts at a chosen print width, with a preview and optional captions. Both workflows run in the browser.
 
+Clean up headers and footers finds recurring margin text, lets you exclude individual matches and removes reviewed areas from a new PDF copy. Manual margin areas also work on image-only scans.
+
 ## Quick start
 
 You need **Docker Engine with Compose v2 or Docker Desktop**, internet access for the initial setup and, as a starting point, **8 GB of available RAM and 20 GB of free disk space**.

@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 const suites = [
+  'header-footer',
   'everyday',
   'klar-schiff',
   'release-022', 'release-021',

@@ -29,6 +29,12 @@ Noch laufende Vorschauen werden beim Verlassen des sichtbaren Bereichs sofort ab
 Physische iPhone-/iPad-/Android-/Windows-Touch-Geräte und echte Microsoft-Word-Rundläufe bleiben gesondert abzunehmen; Browserautomation gilt nicht als Nachweis dafür. Siehe [Gerätecheckliste](quality/editor-device-checklist.md).
 
 
+## Kopf- und Fußzeilen bereinigen
+
+Wiederkehrende auslesbare Randtexte werden an ähnlichen Positionen auf mindestens zwei Seiten vorgeschlagen. Kopf- und Fußzeilen sind getrennt wählbar; Suchränder reichen von 3–25 %. Wechselnde Seitenzahlen werden optional gruppiert. Einzelne Treffer lassen sich ausschließen und direkt am Original prüfen. Die Bereinigungsvorschau zeigt weiße Löschbereiche. Reine Scans und einzelne Seiten lassen sich durch manuelle Bereiche im oberen oder unteren Seitenviertel bearbeiten, auf der aktuellen oder auf allen Seiten an derselben relativen Position.
+
+Der Export entfernt Inhalte tatsächlich; Bilder und Linien innerhalb der bestätigten Bereiche sowie vollständig erfasste Links werden ebenfalls entfernt. Angeschnittene Textzeilen oder Links, berührte Kommentare/Formularfelder und sich widersprechende Ausnahmen sperren den Export. Übriger auslesbarer Text, Seitenzahl, sichtbare Seitengrößen und verbleibende Anmerkungen werden unabhängig geprüft. Bis zu 200 Seiten, 2.000 Fundstellen und 80 MB. Keine automatische OCR für reine Scans. Signierte PDFs und dynamische XFA werden abgewiesen. Anhänge, Dokumentinfos und Barrierefreiheits-Tags werden nicht gezielt bereinigt; das Werkzeug ersetzt keine vollständige Anonymisierung. Entwürfe bleiben in Projekten, die Prüfbestätigung muss nach Änderungen erneut erfolgen.
+
 ## Formularhelfer und Belege auf A4
 
 Der **Formularhelfer** speichert bis zu zehn Profile nach ausdrücklichem Speichern lokal. Eindeutige Feldbezeichnungen liefern Vorschläge für leere Textfelder; vorhandene Werte und unklare Zuordnungen bleiben erhalten. Angaben lassen sich manuell zuordnen oder als transparente Textfelder auf Scans platzieren. Vor dem Export ist die Prüfung am Original zu bestätigen. Optional werden Formularwerte festgeschrieben. Profile bleiben unverschlüsselt im Browserspeicher und werden nicht mit Projektdateien übertragen; Formularentwürfe gehören zum Projekt. Signierte PDFs und dynamische XFA werden abgewiesen. Überlaufende neue Einträge und nicht unterstützte Zeichen sperren den Export.

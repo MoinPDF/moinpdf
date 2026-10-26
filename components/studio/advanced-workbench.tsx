@@ -27,6 +27,7 @@ import { SplitSizePanel } from './expansion-panels';
 import { RepairPanel, ReadingPanel, ScanSplitPanel } from './recovery-panels';
 import { LocalAssistantPanel } from './local-assistant-panel';
 import { FormHelperPanel, ReceiptsPanel } from './everyday-panels';
+import { HeaderFooterPanel } from './header-footer-panel';
 import { KlarSchiffPanel } from './klar-schiff-panel';
 import { NativePanel } from './native-panel';
 import { ProPanel } from './pro-panels';
@@ -234,6 +235,7 @@ export function AdvancedWorkbench({
           <div className="advanced-empty">{ui('Bitte zuerst eine PDF öffnen.')}</div>
         ) : (
           <>
+            {tool === 'header-footer-cleanup' && <HeaderFooterPanel {...newProps} />}
             {tool === 'form-helper' && <FormHelperPanel {...newProps} />}
             {tool === 'receipts-a4' && <ReceiptsPanel {...newProps} />}
             {tool === 'klar-schiff' && <KlarSchiffPanel {...newProps} />}

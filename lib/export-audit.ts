@@ -123,7 +123,9 @@ export async function auditPdfExport(
             const issue = (code: 'links' | 'forms', a: number, b: number) => {
               if (a !== b) result.issues.push({ code, page: index + 1, before: a, after: b });
             };
-            issue('links', before.links, after.links);
+            // Header cleanup removes links wholly inside reviewed areas and
+            // independently verifies the remaining annotations before export.
+            if (tool !== 'header-footer-cleanup') issue('links', before.links, after.links);
             // This workflow deliberately adds or flattens form fields.
             if (tool !== 'form-helper') issue('forms', before.forms, after.forms);
             if (

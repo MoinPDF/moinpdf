@@ -2,6 +2,18 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'header-footer-cleanup': [
+    'Kopfzeile entfernen',
+    'Fußzeile entfernen',
+    'Druckdatum entfernen',
+    'Webadresse entfernen',
+    'alte Seitenzahlen',
+    'Faxkopf',
+    'header footer cleanup',
+    'remove headers',
+    'remove footers',
+    'print date',
+  ],
   'form-helper': [
     'Profil',
     'Stammdaten',

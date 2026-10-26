@@ -6,6 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased — Clear Deck and English narration
 
+- Header/footer cleanup: recurring margin text and changing page numbers, reviewable matches with exceptions, manual scan areas and white preview. Actual content removal with independent text, geometry and annotation checks, project drafts and German/English instructions.
 - Form helper with explicitly saved local profiles, conservative suggestions for empty form fields, manual assignment and transparent scan entries. Reviewed PDF export, optional flattening, Unicode font and project drafts.
 - Receipt collection on A4 with cropping, multiple receipts from one scan, ordering, captions, numbering, millimetre print width and a shared preview/export layout. Long receipts keep their width and continue across A4 sheets as needed.
 - German and English UI and manuals, synthetic PDF round-trip and rendering checks, and browser regression coverage for both workflows.
