@@ -44,6 +44,8 @@ MoinPDF is a web application for creating, editing and converting PDFs and other
 
 See [Features](docs/FEATURES.en.md) and [Implementation status](docs/STATUS.en.md) for the precise scope and limitations.
 
+Form helper reuses explicitly saved local profiles for recurring form details. Collect receipts on A4 crops and arranges receipts at a chosen print width, with a preview and optional captions. Both workflows run in the browser.
+
 ## Quick start
 
 You need **Docker Engine with Compose v2 or Docker Desktop**, internet access for the initial setup and, as a starting point, **8 GB of available RAM and 20 GB of free disk space**.
