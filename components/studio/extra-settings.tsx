@@ -13,14 +13,15 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { resolvePair, rasterTools, type ExtraTool } from '@/lib/extra-options';
+import { resolvePair, rasterTools, duplexOrder, type ExtraTool } from '@/lib/extra-options';
 import type { StudioOptions } from '@/lib/studio-engine';
-import type { Source } from '@/lib/pdf-engine';
+import type { PageItem, Source } from '@/lib/pdf-engine';
 
 export function ExtraSettings({
   tool,
   sources,
   selectedCount,
+  selectedPages,
   options,
   locked,
   onChange,
@@ -28,6 +29,7 @@ export function ExtraSettings({
   tool: ExtraTool;
   sources: Source[];
   selectedCount: number;
+  selectedPages: PageItem[];
   options: StudioOptions;
   locked: boolean;
   onChange: (patch: Partial<StudioOptions>) => void;
@@ -37,7 +39,7 @@ export function ExtraSettings({
     <label className="field">
       <span>{ui(label)}</span>
       <Select
-        value={String(options[key])}
+        value={String(options[key] ?? (key === 'interleaveMode' ? 'two' : ''))}
         onValueChange={(v) => onChange({ [key]: v })}
         disabled={locked}
       >
@@ -55,7 +57,19 @@ export function ExtraSettings({
     </label>
   );
   const [first, second] = resolvePair(sources, options),
-    paired = ['compare', 'interleave', 'overlay'].includes(tool);
+    single = tool === 'interleave' && options.interleaveMode === 'single',
+    paired = ['compare', 'interleave', 'overlay'].includes(tool) && !single;
+  let duplex: ReturnType<typeof duplexOrder> | undefined;
+  let duplexError = '';
+  if (single) {
+    try {
+      if (new Set(selectedPages.map((p) => p.sourceId)).size > 1)
+        throw new Error('Für die Duplex-Sortierung nur Seiten einer Datei auswählen.');
+      duplex = duplexOrder(selectedCount, options.duplexSplit, options.reverseSecond);
+    } catch (error) {
+      duplexError = (error as Error).message;
+    }
+  }
   const pairSelect = (position: 'firstSource' | 'secondSource', label: string, value: string) => (
     <label className="field">
       <span>{ui(label)}</span>
@@ -81,6 +95,55 @@ export function ExtraSettings({
   );
   return (
     <div className="extra-settings">
+      {tool === 'interleave' &&
+        choice('interleaveMode', 'Scan-Aufteilung', [
+          ['two', 'Vorder- und Rückseiten in zwei Dateien'],
+          ['single', 'Vorder- und Rückseiten in einer Datei'],
+        ])}
+      {single && (
+        <>
+          <label className="field">
+            <span>{ui('Trennstelle nach ausgewählter Seite')}</span>
+            <Input
+              type="number"
+              aria-label={ui('Trennstelle nach ausgewählter Seite')}
+              min={1}
+              max={Math.max(1, selectedCount - 1)}
+              value={options.duplexSplit || Math.ceil(selectedCount / 2)}
+              disabled={locked}
+              onChange={(e) => onChange({ duplexSplit: Number(e.target.value) })}
+            />
+          </label>
+          <Button variant="outline" disabled={locked} onClick={() => onChange({ duplexSplit: 0 })}>
+            {ui('In der Mitte teilen')}
+          </Button>
+          <p className="fine-note">
+            {ui(
+              'Zuerst stehen alle Vorderseiten, danach alle Rückseiten. Die Trennstelle zählt die ausgewählten Seiten in ihrer aktuellen Reihenfolge.',
+            )}
+          </p>
+          {duplexError && (
+            <p role="alert" className="notice">
+              {ui(duplexError)}
+            </p>
+          )}
+          {duplex && (
+            <div role="status">
+              <strong>{ui('Neue Seitenreihenfolge')}</strong>
+              <p style={{ overflowWrap: 'anywhere' }}>
+                {duplex.order.map((i) => selectedPages[i]?.index + 1).join(' → ')}
+              </p>
+              {duplex.unequal && (
+                <p className="notice">
+                  {ui(
+                    'Die Blöcke sind unterschiedlich lang. Übrige Seiten werden am Ende angehängt. Bitte die Zuordnung prüfen.',
+                  )}
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
       {paired && (
         <>
           {pairSelect(
@@ -125,11 +188,11 @@ export function ExtraSettings({
         <>
           <label className="switch-field">
             <span>
-              {ui('Datei B rückwärts')}
+              {ui(single ? 'Rückseitenblock rückwärts' : 'Datei B rückwärts')}
               <small>{ui('Für umgekehrt gescannte Rückseiten')}</small>
             </span>
             <Switch
-              aria-label={ui('Datei B rückwärts')}
+              aria-label={ui(single ? 'Rückseitenblock rückwärts' : 'Datei B rückwärts')}
               checked={options.reverseSecond}
               disabled={locked}
               onCheckedChange={(v) => onChange({ reverseSecond: v })}

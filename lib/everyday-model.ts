@@ -50,7 +50,12 @@ export function emptyProfile(): FormProfile {
 }
 /** Exact aliases only. A generic Name, guardian name or repeated ambiguous label is not guessed. */
 export function suggestProfileEntry(field: FormField, entries: ProfileEntry[]) {
-  if (field.kind !== 'text' || field.readOnly || field.deleted || String(field.value || '').trim())
+  if (
+    field.kind !== 'text' ||
+    (field.readOnly && !field.unlockReadOnly) ||
+    field.deleted ||
+    String(field.value || '').trim()
+  )
     return undefined;
   const name = normaliseField(field.name);
   const matches = entries.filter((entry) => {

@@ -62,6 +62,11 @@ jobs:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
           MOINPDF_TEST_START_SERVER: '1'
         run: python tests/header-footer-browser.py
+      - name: Color preview and selective form unlocking with real PDF downloads
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+          MOINPDF_TEST_START_SERVER: '1'
+        run: python tests/color-tools-browser.py
       - name: Form profiles and A4 receipt workflows
         env:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}

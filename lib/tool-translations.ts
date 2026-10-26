@@ -5,6 +5,12 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'document-colors': {
+    title: 'Change colors & background',
+    description:
+      'Recolor text and background, or adjust page brightness, contrast and saturation with a preview.',
+    action: 'Adjust colors',
+  },
   'header-footer-cleanup': {
     title: 'Clean up headers and footers',
     description:
@@ -543,7 +549,7 @@ export const englishTools: Record<
   },
   crop: {
     title: 'Crop',
-    description: 'Drag directly on the page to mark the desired crop.',
+    description: 'Crop pages: remove margins or change the visible area while preserving text.',
     action: 'Crop',
   },
   annotate: {
@@ -600,8 +606,7 @@ export const englishTools: Record<
   },
   interleave: {
     title: 'Interleave PDFs',
-    description:
-      'Combine pages from two files in alternating order. Useful for front and back pages.',
+    description: 'Alternate fronts and backs from two files or two blocks within one PDF.',
     action: 'Interleave PDFs',
   },
   booklet: {

@@ -1,0 +1,54 @@
+.document-color-controls {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.document-color-controls legend {
+  padding: 0 8px;
+  font-weight: 600;
+}
+.document-color-controls label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.document-color-controls input[type='color'] {
+  width: 52px;
+  height: 36px;
+  cursor: pointer;
+}
+.document-color-controls input[type='range'] {
+  flex: 1;
+  min-width: 100px;
+}
+.document-color-controls output {
+  min-width: 4ch;
+  text-align: right;
+}
+.document-color-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: end;
+}
+.document-color-preview {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.document-color-preview section {
+  min-width: 0;
+}
+.document-color-preview h3 {
+  font-size: 14px;
+  margin: 8px 0;
+}
+@media (max-width: 640px) {
+  .document-color-preview {
+    grid-template-columns: 1fr;
+  }
+}

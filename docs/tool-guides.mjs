@@ -2,6 +2,16 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+  "document-colors": {
+  "input": "Eine PDF mit auslesbarem Text oder gescannten Seiten.",
+  "steps": [
+    "Öffne „Farben & Hintergrund ändern“. Wähle eine Vorlage oder den Modus „Text & Hintergrund – Text erhalten“. Aktiviere Textfarbe und Hintergrund unabhängig und wähle eigene Farben.",
+    "Für Helligkeit, Kontrast und Sättigung wähle „Gesamte Seite als Bild“. Dieser Modus erstellt Bildseiten ohne Textsuche, Formularfelder und Links.",
+    "Vergleiche Original und Farbvoransicht. Wechsle die Vorschauseite und prüfe auch Bilder und Formulare. „Farben auf alle Seiten anwenden“ erstellt eine neue PDF-Kopie."
+  ],
+  "output": "PDF mit geänderten Farben; Einstellungen werden im Projekt gespeichert.",
+  "note": "Bis zu 200 Seiten und 80 MB. Der Textmodus erhält vorhandene Zeichen und Schriften, auch in unterstützten Objektgruppen; unsichtbarer OCR-Text bleibt unsichtbar. Formularfelder, Kommentare und Bilder werden nicht umgefärbt. Deckende Flächen oder Scans können den ergänzten Hintergrund verdecken. Textmasken, signierte PDFs und dynamische XFA werden abgewiesen. Der Bildmodus rastert alle Seiten mit höchstens rund 4 Megapixeln und 2.800 Pixeln Kantenlänge."
+},
   "header-footer-cleanup": {
   "input": "Eine PDF mit wiederkehrenden Randtexten, alten Seitenzahlen oder manuell markierbaren Kopf- und Fußbereichen.",
   "steps": [
@@ -17,6 +27,7 @@ export const guides = {
   "form-helper": {
   "input": "Eine PDF mit Formularfeldern oder ein Scan; wiederkehrende Angaben wie Name und Anschrift.",
   "steps": [
+    "Unter „Schreibgeschützte Formularfelder freigeben“ kannst du einzelne oder alle angezeigten Felder wieder ausfüllbar machen. Vorhandene Werte und andere Feldregeln bleiben erhalten. Freigegebene Felder werden nicht festgeschrieben.",
     "Lege unter „Formularhelfer“ deine Angaben an. Ergänze eigene Bezeichnungen. Ein benanntes Profil wird erst über „Profil speichern“ lokal gespeichert; bestehende Profile lassen sich auswählen, kopieren oder löschen.",
     "Lade die Formularfelder und wähle „Angaben vorschlagen“. Nur eindeutige Bezeichnungen leerer Textfelder werden zugeordnet. Prüfe jedes Feld am Original, ordne Angaben manuell zu und korrigiere bei Bedarf den Feldinhalt.",
     "Bei Scans: Angabe wählen und einen Bereich auf der Seite aufziehen oder „Bereich hinzufügen“ verwenden. Position und Größe lassen sich über Prozentwerte, Ziehgriffe und Schriftgröße anpassen.",
@@ -523,11 +534,16 @@ export const guides = {
     'Prüfe die Markierungen in ausreichender Vergrößerung. Ergänze weitere Stellen, einschließlich Kopf- und Fußzeilen.',
     'Erstelle die geschwärzte PDF und kontrolliere genau diese Ausgabedatei vor der Weitergabe.'
   ], 'PDF mit entfernten vertraulichen Bereichen in neu erzeugten Seitenbildern.', 'Betroffene Seiten verlieren ihre ursprüngliche Textebene und interaktive Funktionen. Die Originaldateien bleiben ungeschwärzt. Für viele wiederkehrende Begriffe kann „Suchen & schwärzen“ helfen; auch dessen Treffer müssen kontrolliert werden.'),
-  'crop': guide('Eine PDF, aus deren Seiten nur ein bestimmter Ausschnitt erhalten bleiben soll.', [
-    'Wähle die Seite und ziehe den gewünschten Ausschnitt in der Vorschau auf.',
-    'Passe den Rahmen bei Bedarf über Prozentwerte an; einen falschen Ausschnitt kannst du zurücksetzen.',
-    'Erstelle die zugeschnittene PDF und kontrolliere die Ränder jeder bearbeiteten Seite.'
-  ], 'PDF mit neu gerenderten Ausschnitten.', 'Inhalte außerhalb des Ausschnitts werden aus den betroffenen Ausgabeseiten entfernt. Die ursprüngliche Textebene entfällt. Für gleich große Rasterausschnitte gibt es „Seiten aufteilen“ mit anderem Exportverhalten.'),
+  "crop": {
+  "input": "Eine PDF, deren sichtbaren Seitenbereich du verkleinern möchtest.",
+  "steps": [
+    "Wähle eine Seite und ziehe den Ausschnitt auf. Passe ihn bei Bedarf über Prozentwerte an.",
+    "Wähle den Zuschnittmodus: „Randinhalt dauerhaft entfernen“ erstellt ein neues Seitenbild; „Sichtbaren Ausschnitt ändern · Text erhalten“ setzt nur den sichtbaren Bereich.",
+    "Erstelle die PDF und kontrolliere jede bearbeitete Seite. Vorhandene Markierungen müssen vor dem Text erhaltenden Zuschnitt angewendet werden."
+  ],
+  "output": "PDF mit entferntem Randinhalt oder geändertem sichtbaren Bereich, abhängig vom Modus.",
+  "note": "Der Text erhaltende Modus ist keine Schwärzung: versteckte Randinhalte bleiben in der Datei und können wieder sichtbar gemacht werden. Bei einer vollständigen einzelnen PDF bleiben Formulare erhalten; Teilausgaben schreiben Formularwerte fest und können dokumentweite Strukturen verlieren. Gedrehte Seiten und vorhandene Ausschnitte werden berücksichtigt. Signierte PDFs und dynamische XFA sind im Textmodus nicht unterstützt. Der bisherige Bildmodus entfernt Randinhalte, verliert aber die Textebene."
+},
   'annotate': guide('Eine PDF, die Notizen oder Hervorhebungen erhalten soll.', [
     'Wähle Text oder Marker. Gib für eine Textnotiz den Inhalt ein und stelle die Schriftgröße ein.',
     'Platziere Notizen beziehungsweise ziehe Markierungen auf der Seite auf. Kontrolliere die aufgeführten Änderungen.',
@@ -578,11 +594,16 @@ export const guides = {
     'Trage Bereiche zum Beispiel als 1-3; 4-6; 7,9 ein. Semikolons trennen die Ausgabedokumente.',
     'Erstelle die Teildokumente und prüfe Seitenzahl und Inhalt jedes Teils.'
   ], 'Mehrere PDFs im ZIP.', 'Bereiche beziehen sich auf die gewählte Seitenzusammenstellung. Kontrolliere Überschneidungen und ausgelassene Seiten. Für automatisch erkannte Grenzen nutze „Intelligent teilen“.'),
-  'interleave': guide('Zwei PDFs, etwa getrennt gescannte Vorder- und Rückseiten.', [
-    'Öffne beide Dateien und wähle sie als Datei A und Datei B.',
-    'Aktiviere „Datei B rückwärts“, wenn die Rückseiten in umgekehrter Reihenfolge gescannt wurden.',
-    'Erstelle und kontrolliere die Ausgabe: A1, B1, A2, B2 und so weiter.'
-  ], 'PDF mit abwechselnd eingefügten Seiten beider Quellen.', 'Zusätzliche Seiten einer längeren Datei werden am Ende angehängt. Prüfe insbesondere Anfang und Ende, damit Vorder- und Rückseiten richtig zusammengehören.'),
+  "interleave": {
+  "input": "Zwei PDFs mit Vorder- und Rückseiten oder eine PDF mit zwei aufeinanderfolgenden Scan-Blöcken.",
+  "steps": [
+    "Wähle unter „Scan-Aufteilung“ zwei Dateien oder eine Datei. Bei zwei Dateien lege Datei A und B fest.",
+    "Bei einer Datei wähle nur deren gewünschte Seiten. Setze die Trennstelle zwischen Vorder- und Rückseiten oder verwende „In der Mitte teilen“.",
+    "Kehre bei Bedarf den Rückseitenblock um. Prüfe die angezeigte neue Seitenreihenfolge und erstelle die PDF. Bei ungleich langen Blöcken prüfe die zusätzlich angehängten Seiten."
+  ],
+  "output": "PDF mit abwechselnden Vorder- und Rückseiten; keine ausgewählte Seite wird ausgelassen.",
+  "note": "Die Ein-Datei-Sortierung verarbeitet 2–200 ausgewählte Seiten in ihrer aktuellen Reihenfolge. Die Trennstelle zählt ausgewählte Seiten, nicht ursprüngliche Seitennummern. Zusätzliche Seiten des längeren Blocks werden am Ende angehängt; die Zuordnung bitte am Original kontrollieren."
+},
   'booklet': guide('Eine PDF, die als gefaltete Broschüre gedruckt werden soll.', [
     'Wähle die Seiten in ihrer normalen Lesereihenfolge.',
     'Erstelle die Broschüre. Fehlende Seiten bis zum nächsten Vielfachen von vier werden als Leerseiten ergänzt.',

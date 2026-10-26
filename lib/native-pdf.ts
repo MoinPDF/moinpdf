@@ -58,6 +58,12 @@ export const inspectObjects = (
 ) => nativeJob<NativeObject[]>(bytes, { action: 'inspect', page, path }, signal);
 export const inspectObjectTree = (bytes: Uint8Array, page: number, signal?: AbortSignal) =>
   nativeJob<NativeObject[]>(bytes, { action: 'tree', page }, signal);
+export const recolorText = (
+  bytes: Uint8Array,
+  pages: number[],
+  color: string,
+  signal?: AbortSignal,
+) => nativeJob<Uint8Array>(bytes, { action: 'colors', pages, color }, signal);
 export const readImage = (
   bytes: Uint8Array,
   page: number,

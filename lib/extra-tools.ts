@@ -490,8 +490,18 @@ export async function runExtraPdfTool(
     };
   }
   if (tool === 'interleave') {
-    const { a, b } = selectedPair(sources, pages, options);
-    doc = await copyInOrder(doc, interleaveIndices(a, b, options.reverseSecond));
+    if (options.interleaveMode === 'single') {
+      if (new Set(pages.map((p) => p.sourceId)).size !== 1)
+        throw new Error('Für die Duplex-Sortierung nur Seiten einer Datei auswählen.');
+      const { duplexOrder } = await import('./extra-options');
+      doc = await copyInOrder(
+        doc,
+        duplexOrder(pages.length, options.duplexSplit, options.reverseSecond).order,
+      );
+    } else {
+      const { a, b } = selectedPair(sources, pages, options);
+      doc = await copyInOrder(doc, interleaveIndices(a, b, options.reverseSecond));
+    }
   }
   if (tool === 'remove-annotations') {
     for (const page of doc.getPages()) {

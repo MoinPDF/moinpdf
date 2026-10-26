@@ -80,6 +80,15 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
     if (draft)
       change({ ...draft, fields: draft.fields.map((f) => (f.id === id ? { ...f, ...patch } : f)) });
   };
+  const protectedFields =
+    draft?.fields.filter(
+      (f) => f.existing && f.readOnly && !f.deleted && f.kind !== 'unsupported',
+    ) || [];
+  const hasUnlocked = protectedFields.some((f) => f.unlockReadOnly);
+  const unlockField = (id: string, enabled: boolean) => {
+    if (enabled) setFlatten(false);
+    updateField(id, { unlockReadOnly: enabled });
+  };
   const field = draft?.fields.find((f) => f.id === selected && !f.deleted);
   const entry = profile.entries.find((e) => e.id === entryId) || profile.entries[0];
   const persist = (next: FormProfile[]) => {
@@ -333,6 +342,47 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 </Button>
               </p>
             )}
+            {protectedFields.length > 0 && (
+              <details className="advanced-card">
+                <summary>{ui('Schreibgeschützte Formularfelder freigeben')}</summary>
+                <p>
+                  {ui(
+                    'Wähle die Felder, die in der neuen PDF wieder ausfüllbar sein sollen. Vorhandene Werte bleiben erhalten. Andere Feldregeln und Passwortschutz werden dadurch nicht aufgehoben.',
+                  )}
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const enable = !protectedFields.every((f) => f.unlockReadOnly);
+                    if (enable) setFlatten(false);
+                    change({
+                      ...draft,
+                      fields: draft.fields.map((f) =>
+                        protectedFields.some((p) => p.id === f.id)
+                          ? { ...f, unlockReadOnly: enable }
+                          : f,
+                      ),
+                    });
+                  }}
+                >
+                  {ui(
+                    protectedFields.every((f) => f.unlockReadOnly)
+                      ? 'Freigaben zurücknehmen'
+                      : 'Alle angezeigten Felder freigeben',
+                  )}
+                </Button>
+                {protectedFields.map((f) => (
+                  <label className="advanced-tick" key={f.id}>
+                    <input
+                      type="checkbox"
+                      checked={!!f.unlockReadOnly}
+                      onChange={(e) => unlockField(f.id, e.target.checked)}
+                    />
+                    <span>{f.name}</span>
+                  </label>
+                ))}
+              </details>
+            )}
             <div className="everyday-columns">
               <div className="everyday-original">
                 <PageSelect source={source} page={page} onChange={setPage} />
@@ -388,7 +438,7 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 {field && (
                   <div className="helper-field-editor">
                     <h3>{field.name}</h3>
-                    {field.kind === 'text' && !field.readOnly ? (
+                    {field.kind === 'text' && (!field.readOnly || field.unlockReadOnly) ? (
                       <>
                         <Choice
                           label="Angabe zuordnen"
@@ -463,15 +513,23 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
                 )}
               </div>
             </div>
-            <Tick
-              label="Formularwerte dauerhaft festschreiben"
-              value={flatten}
-              onChange={(v) => {
-                invalidate();
-                setFlatten(v);
-                setReviewed(false);
-              }}
-            />
+            {hasUnlocked ? (
+              <p className="fine-note">
+                {ui(
+                  'Freigegebene Felder bleiben ausfüllbar. Die Ausgabe wird nicht festgeschrieben.',
+                )}
+              </p>
+            ) : (
+              <Tick
+                label="Formularwerte dauerhaft festschreiben"
+                value={flatten}
+                onChange={(v) => {
+                  invalidate();
+                  setFlatten(v);
+                  setReviewed(false);
+                }}
+              />
+            )}
             <Tick
               label="Ich habe Angaben und Positionen am Original geprüft."
               value={reviewed}
