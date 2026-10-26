@@ -61,7 +61,10 @@ export function KlarSchiffPanel({
   const move = (pageId: string, target: string) => {
     const next = moveKlarPage(plan, pageId, target, ui);
     change(next);
-    if (target === 'new') setSelected(next.documents[next.documents.length - 1].id);
+    if (target === 'new') {
+      setSelected(next.documents[next.documents.length - 1].id);
+      setPreviewId(pageId);
+    }
   };
   const reorder = (id: string, offset: number, pages = false) => {
     if (pages && item) {
