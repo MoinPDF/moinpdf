@@ -2,6 +2,17 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'klar-schiff': [
+    'Klar Schiff',
+    'Papierchaos',
+    'Dokumentenstapel',
+    'Rechnungen ordnen',
+    'Dokumente erkennen',
+    'Briefe sortieren',
+    'clear deck',
+    'organise documents',
+    'document pile',
+  ],
   'local-assistant': [
     'KI',
     'lokales Sprachmodell',

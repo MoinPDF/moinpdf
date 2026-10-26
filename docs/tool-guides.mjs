@@ -2,6 +2,11 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+  'klar-schiff': guide('Eine oder mehrere PDFs, Scans oder Bilder im Arbeitsbereich.', [
+    'Öffne unter Stapel das Werkzeug Klar Schiff und starte Stapel erkennen. Dokumentnummer, Absender, Datum und gedruckte Seitenzählung liefern Zuordnungsvorschläge; Scans werden lokal per OCR gelesen.',
+    'Prüfe jedes Dokument in der Originalvorschau. Korrigiere Titel, Absender, Datum und Dateiname. Ordne Seiten einem anderen oder neuen Dokument zu, ändere die Reihenfolge oder lasse eine Seite bewusst aus. Bestätige jedes geprüfte Dokument.',
+    'Wechsle zum Export und erstelle einzelne PDFs im ZIP oder eine Gesamt-PDF mit klickbarem Inhaltsverzeichnis und Lesezeichen. Ausgelassene Seiten werden vor dem Export angezeigt und können im Prüfschritt wiederhergestellt werden.'
+  ], 'Einzelne PDFs mit eindeutigen Dateinamen und Zuordnungsübersicht im ZIP oder eine geordnete Dokumentenmappe als PDF.', 'Die Erkennung liefert Vorschläge für Rechnungen und Briefe, keine sichere Dokumentklassifizierung. Unklare Zuordnungen, mögliche Duplikate und gedruckte Seitenlücken bleiben sichtbar. Keine automatische Löschung; alle Dokumente müssen bestätigt werden. Originalseiten bleiben erhalten, Scans bleiben Bildseiten. Formularwerte werden festgeschrieben; ursprüngliche Signaturen, Lesezeichen und Anhänge werden nicht übernommen.'),
   'svg-export': {
     input:'Eine PDF und der integrierte Dokumentenserver.',
     steps:['PDF öffnen und „PDF zu Vektor-SVG“ wählen.','Gewünschtes Dokument auswählen.','SVG-Dateien exportieren und die ZIP-Datei entpacken.'],
@@ -101,8 +106,8 @@ export const guides = {
   'pdf-audio': guide('Eine PDF mit auslesbarem Text oder gut lesbaren Scans.', [
     'Wähle das Dokument und die Aufteilung nach Dokument, Seiten oder Kapiteln. Bereite den Vorlesetext vor und wähle die gewünschten Abschnitte aus.',
     'Prüfe und bearbeite den Text je Abschnitt. Korrigiere besonders Lesereihenfolge, Spalten, Tabellen und OCR-Fehler; passe bei Bedarf die Abschnittstitel an.',
-    'Wähle Thorsten oder Kerstin und ein Sprechtempo zwischen 0,75 und 1,5. Höre eine Stimmprobe an, bestätige die Textprüfung und erstelle das Hörbuch.'
-  ], 'WAV-Audio oder ein ZIP mit einzelnen Audioabschnitten und Wiedergabeliste. Der Vorlesetext lässt sich auch als TXT speichern.', 'Die Audioausgabe benötigt den Dokumentenserver; die Texterkennung läuft im Browser. Nur der ausgewählte Vorlesetext wird übertragen. Maximal 20.000 Zeichen und 100 Abschnitte pro Auftrag; längere Texte in mehrere Aufträge aufteilen. Die beiden deutschen Stimmen arbeiten auf dem Server offline.'),
+    'Wähle die Vorlesesprache Deutsch oder Englisch, eine installierte Stimme und ein Sprechtempo zwischen 0,75 und 1,5. Höre eine Stimmprobe an, bestätige die Textprüfung und erstelle das Hörbuch.'
+  ], 'WAV-Audio oder ein ZIP mit einzelnen Audioabschnitten und Wiedergabeliste. Der Vorlesetext lässt sich auch als TXT speichern.', 'Die Audioausgabe benötigt den Dokumentenserver; die Texterkennung läuft im Browser. Nur der ausgewählte Vorlesetext wird übertragen. Maximal 20.000 Zeichen und 100 Abschnitte pro Auftrag. Thorsten und Kerstin lesen Deutsch, LJ liest US-Englisch; alle Stimmen arbeiten auf dem Server offline. Die Sprachwahl übersetzt den Text nicht. Fehlende Stimmen erfordern ein Serverupdate.'),
   'number-compare': guide('Zwei Fassungen eines Dokuments.', [
     'Öffne beide Dateien und wähle die zweite Fassung im Werkzeug. Entscheide, ob vorhandener Suchtext genügt oder alle sichtbaren Seiten per OCR gelesen werden sollen.',
     'Starte den Zahlenvergleich. Die Zuordnung nutzt die Beschriftungen der Zeilen und berücksichtigt Beträge, Prozentwerte, Daten und mögliche IBANs.',

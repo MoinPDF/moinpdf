@@ -79,6 +79,12 @@ Unter „HTML & Webseiten zu PDF“ lässt sich eine öffentliche Website-Adress
 
 Der Abruf übernimmt keine Anmeldung oder Cookies aus deinem Browser. Cookie-Banner, Bot-Schutz und geschützte oder stark dynamische Inhalte können abweichen. Private Netzwerkadressen und abweichende Ports sind gesperrt. Gespeicherte HTML-/HTM-Dateien bleiben als vereinfachte Textkonvertierung ohne Bilder, Skripte und CSS verfügbar.
 
+## Klar Schiff
+
+Unter **Stapel** erkennt Klar Schiff Rechnungen und Briefe anhand von Dokumentnummer, Absender, Datum und gedruckter Seitenzählung. Drei Schritte führen vom lokalen Einlesen einschließlich Scan-OCR über die Originalvorschau zum Export. Jede Dokumentzuordnung muss bestätigt werden. Titel, Absender, Datum, Dateiname, Dokument- und Seitenreihenfolge lassen sich korrigieren; einzelne Seiten können einem anderen oder neuen Dokument zugeordnet oder bewusst ausgelassen und wiederhergestellt werden.
+
+Visuell gleiche Vorschauseiten werden als mögliche Duplikate markiert, niemals automatisch entfernt. Hinweise auf Seitenlücken beziehen sich ausschließlich auf gedruckte Seitenzählungen. Unklare Dokumentgrenzen bleiben Prüfhinweise; eine allgemeine semantische Klassifizierung oder Vollständigkeitsgarantie ist damit nicht verbunden. Ausgabe: benannte Einzel-PDFs mit Zuordnungsübersicht im ZIP oder Gesamt-PDF mit verlinktem Inhaltsverzeichnis und Lesezeichen. Originalseiten bleiben erhalten, Scans bleiben Bildseiten. Formularwerte werden festgeschrieben; ursprüngliche Signaturen, Lesezeichen und Anhänge werden nicht übernommen. Zuordnungen bleiben beim Werkzeugwechsel und in Projektdateien erhalten.
+
 ## Stapel, Abläufe und weitere Dateiformate
 
 - Stapelverarbeitung und gespeicherte mehrstufige Arbeitsabläufe mit JSON-Import/-Export, Wenn-/Sonst-Schritten nach Dateiname, vorhandenen Texten oder Seitenzahl und Protokoll der Entscheidungen; Passwörter und Dokumente werden nicht in Abläufen gespeichert.
@@ -132,7 +138,7 @@ Werkzeuge für Formulare, Dokumentenmappen, Messungen und Audio:
 | PDF-Sicherheitsbereinigung | Aktive Aktionen, Skripte, XFA und Medien entfernen; Anhänge, Kommentare und Metadaten optional. Nicht mehr referenzierte Daten werden verworfen, die Ausgabe anschließend strukturell geprüft. Kein Virenscan. |
 | PDF-Ebenen verwalten | Echte optionale PDF-Ebenen mit Vorschau und gegenseitigen Ausschlüssen. Export der gewählten Ansicht als Seitenbilder; ausgeblendete Inhalte und ursprünglicher Suchtext werden nicht übernommen. |
 | PDF-Maßband | Referenzstrecke je Seite, Strecken und einfache Polygonflächen; selbst kreuzende Flächen werden abgelehnt. Beschriftete PDF mit Kalibrierungsprotokoll und CSV, einschließlich gedrehter Seiten. |
-| PDF als Hörbuch | Lokale OCR, bearbeitbarer Vorlesetext, Abschnitte nach Seiten oder Hauptlesezeichen; Thorsten/Kerstin, Sprechtempo und Stimmprobe. WAV oder Kapitel-ZIP mit Wiedergabeliste. Audioexport benötigt die vollständige Docker-Installation. |
+| PDF als Hörbuch | Lokale OCR, bearbeitbarer Vorlesetext, Abschnitte nach Seiten oder Hauptlesezeichen; Thorsten/Kerstin für Deutsch und LJ für US-Englisch, unabhängige Vorlesesprache, Sprechtempo und Stimmprobe. WAV oder Kapitel-ZIP mit Wiedergabeliste. Audioexport benötigt die vollständige Docker-Installation. |
 
 Die Sprachausgabe verwendet fest installierte, mit SHA-256 geprüfte Modelle und
 arbeitet während der Verarbeitung ohne Cloud-Dienst. Nur der ausgewählte

@@ -79,6 +79,12 @@ Results can be adopted as new working documents. OCR exports searchable PDF, TXT
 
 The fetch does not inherit your browser login or cookies. Cookie banners, bot protection and protected or highly dynamic content may produce different results. Private network addresses and non-standard ports are blocked. Saved HTML/HTM files remain available as simplified text conversion without images, scripts or CSS.
 
+## Clear Deck
+
+Under **Batch**, Clear Deck proposes groups for invoices and letters using document references, senders, dates and printed page numbering. Three steps cover local reading with scan OCR, original-page review and export. Each document must be confirmed. Users can edit metadata and filenames, reorder documents and pages, move pages to another or a new document, and explicitly exclude or restore pages.
+
+Visually matching preview pages are flagged as possible duplicates and never removed automatically. Gap warnings refer only to printed page numbering. Uncertain boundaries remain review notes; this is not general semantic classification or a completeness guarantee. Export individual PDFs plus an assignment manifest in a ZIP, or a combined PDF with linked contents and bookmarks. Original pages are copied; scans remain image pages. Form values are flattened; original signatures, bookmarks and attachments are not retained. Assignments persist across tool switches and project files.
+
 ## Batches, workflows and more formats
 
 - Batch processing and saved multistep workflows with JSON import/export, if/else steps based on file name, existing text or page count, and a decision log. Passwords and documents are not stored in workflows.
@@ -125,7 +131,7 @@ These tools do not process document data outside the browser. OCR uses bundled G
 | PDF security cleanup | Remove active actions, scripts, XFA and media; optionally attachments, comments and metadata. Discard unreferenced data and then structurally check the output. Not a virus scan. |
 | Manage PDF layers | Actual optional PDF layers with previews and mutually exclusive choices. Export the selected view as page images; hidden content and original search text are not retained. |
 | PDF measuring tool | Reference distance per page, lengths and simple polygon areas; self-intersecting areas are rejected. Labelled PDF with calibration log and CSV, including rotated pages. |
-| PDF audiobook | Local OCR, editable narration text, sections by page or main bookmark; Thorsten/Kerstin voices, speaking speed and voice preview. WAV or chapter ZIP with playlist. Audio export requires the complete Docker installation. |
+| PDF audiobook | Local OCR, editable narration text, sections by page or main bookmark; Thorsten/Kerstin for German and LJ for US English, independent narration language, speaking speed and voice preview. WAV or chapter ZIP with playlist. Audio export requires the complete Docker installation. |
 
 Speech generation uses installed models verified with SHA-256 and runs without a cloud service during processing. Only the selected narration text is sent to the integrated document server. Limits: 20,000 characters and 100 sections per job, with at most three minutes of processing. Cancelling the browser request does not immediately stop an already running server job. The browser edition can save narration text as TXT without a server. Licences and model versions: [Audio notices](../server/AUDIO-NOTICES.md).
 

@@ -126,7 +126,7 @@ Test: `python -m unittest server.test_recovery -v`.
 ## Lokales Hörbuch (0.5.0)
 
 `POST /v1/audio` nimmt ein authentifiziertes Multipart-Feld `request` mit JSON
-entgegen: `voice` (`thorsten` oder `kerstin`), `speed` (0,75–1,5), `sections`
+entgegen: `voice` (`thorsten`, `kerstin` oder `ljspeech`), `speed` (0,75–1,5), `sections`
 mit jeweils `title` und geprüftem Klartext `text`. Es werden keine Modellpfade,
 Download-URLs oder Original-PDFs angenommen. Ein Abschnitt ergibt WAV, mehrere
 ein ZIP mit nummerierten WAV-Dateien, `Kapitel.json` und `Hoerbuch.m3u8`.
@@ -140,10 +140,10 @@ läuft gegebenenfalls bis zum Abschluss oder Timeout weiter.
 
 Piper und seine Laufzeitabhängigkeiten sind in `requirements.lock.txt` gepinnt.
 `install_voices.py` lädt ausschließlich die unveränderlichen Revisionen aus
-`voices.lock.json` und verifiziert Modell, Konfiguration und Modellkarte. Beide
-deutschen Stimmen werden beim Imagebau installiert; der Dokumentendienst
-braucht zur Laufzeit keinen Internetzugang. Fehlende Modelle deaktivieren die
-Capability `speech`. `/v1/capabilities` nennt die verfügbaren `audioVoices` und
+`voices.lock.json` und verifiziert Modell, Konfiguration und Modellkarte. Thorsten und Kerstin für Deutsch sowie LJ für US-Englisch werden beim Imagebau
+installiert; der Dokumentendienst braucht zur Laufzeit keinen Internetzugang.
+`speech` bleibt aktiv, solange mindestens eine Stimme verfügbar ist. Aufträge für
+eine fehlende Stimme liefern 503, ohne eine andere Sprache zu verwenden. `/v1/capabilities` nennt die verfügbaren `audioVoices` und
 die Text-/Abschnittsgrenzen. Lizenzinformationen: `AUDIO-NOTICES.md`.
 
 Lokaler Testaufbau: Python-Abhängigkeiten installieren, `MOINPDF_TOOLS` auf ein

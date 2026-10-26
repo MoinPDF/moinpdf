@@ -4,6 +4,12 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased — Clear Deck and English narration
+
+- Clear Deck under Batch: local text/OCR recognition, conservative document groups, original previews, editable assignments/filenames/order, duplicate and page-gap notes, explicit review, persistent drafts and actual individual-PDF ZIP or linked document-bundle exports.
+- Narration language independent of the interface, with the pinned local LJ Speech US-English model in addition to the German voices. Available voices are selected per language; missing English models do not disable German narration or silently substitute it.
+- German/English manuals, model notices, source-page/export regressions, real speech synthesis and browser acceptance updated.
+
 ## 0.22.0 – 2026-10-26
 
 - Word export starts locally with two clear goals: “Preserve appearance as closely as possible” and “Edit text and tables”. Text-only output and a configured document server are under “Other options”; saved settings remain usable.

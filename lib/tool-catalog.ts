@@ -39,6 +39,7 @@ import {
   TextSelect,
   Bookmark,
   ImageDown,
+  Anchor,
 } from 'lucide-react';
 import type { StudioTool } from './studio-engine';
 import { LockKeyhole, LockKeyholeOpen, ReceiptText, ClipboardCheck } from 'lucide-react';
@@ -75,6 +76,16 @@ export const groups = [
   'Stapel & Abläufe',
 ];
 export const tools = [
+  {
+    id: 'klar-schiff',
+    title: 'Klar Schiff',
+    description:
+      'Dokumentenstapel automatisch erkennen, sortieren und aufteilen. Zuordnungen prüfen und als einzelne PDFs oder geordnete Mappe mitnehmen.',
+    icon: Anchor,
+    group: 4,
+    action: 'Stapel erkennen',
+    fresh: true,
+  },
   {
     id: 'local-assistant',
     title: 'Lokaler PDF-Assistent',
@@ -258,7 +269,7 @@ export const tools = [
     id: 'pdf-audio',
     title: 'PDF als Hörbuch',
     description:
-      'Text und OCR-Ergebnisse prüfen. Mit zwei lokalen deutschen Stimmen als WAV oder nach Seiten und Kapiteln als Audio-ZIP ausgeben.',
+      'Text und OCR-Ergebnisse prüfen. Mit lokalen deutschen oder englischen Stimmen als WAV oder nach Seiten und Kapiteln als Audio-ZIP ausgeben.',
     icon: Headphones,
     group: 1,
     action: 'Vorlesetext vorbereiten',

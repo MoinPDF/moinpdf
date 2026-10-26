@@ -28,13 +28,14 @@ No independently reproducible wheel build is claimed.
 - ONNX Runtime: MIT, https://github.com/microsoft/onnxruntime
 
 Voice model repository: https://huggingface.co/rhasspy/piper-voices (MIT).
-The two models use CC0 voice datasets; these are separate from the engine license:
+The German models use CC0 voice datasets; these are separate from the engine license:
 
 - Thorsten Voice: https://github.com/thorstenMueller/Thorsten-Voice
 - Kerstin: https://github.com/rhasspy/dataset-voice-kerstin
+- LJ Speech (US English): https://keithito.com/LJ-Speech-Dataset/ — public-domain dataset, as documented in the retained upstream model card.
 
 Model files, JSON configurations, and the individual upstream model cards are
 pinned to revision `c10ece1aade47bb51c153c893d14e5bf8e5b7117` in
-`voices.lock.json`. All six files are SHA-256 checked during image construction.
+`voices.lock.json`. All nine files are SHA-256 checked during image construction.
 The cards and lock file remain in `/opt/moinpdf-tools/voices` in the image.
 No voice model download is performed during document processing.

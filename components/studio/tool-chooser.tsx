@@ -10,7 +10,7 @@ import { useLanguage, useTools } from '@/components/studio/appearance';
 import './tool-chooser.css';
 import { useMemo } from 'react';
 import { useToolBrowserState } from './tool-browser-memory';
-import { FileText, Plus, X, Trash2, LoaderCircle } from 'lucide-react';
+import { FileText, Plus, X, Trash2, LoaderCircle, Anchor } from 'lucide-react';
 import { Command, CommandInput, CommandList, CommandItem } from '@/components/ui/command';
 import { Button } from '@/components/ui/button';
 import {
@@ -131,6 +131,17 @@ export function ToolChooser({
           ))}
         </div>
         <div className="chooser-search-dock">
+          {sources.length > 1 && (
+            <Button
+              variant="ghost"
+              className="h-auto min-h-9 max-w-full whitespace-normal text-left"
+              disabled={locked}
+              onClick={() => onChoose('klar-schiff')}
+            >
+              <Anchor size={16} />
+              {ui('Mit Klar Schiff automatisch ordnen')}
+            </Button>
+          )}
           <h1 id="chooser-title">{t('Was möchtest du tun?')}</h1>
           <Command
             shouldFilter={false}

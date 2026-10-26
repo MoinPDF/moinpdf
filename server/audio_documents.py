@@ -20,6 +20,7 @@ MAX_PCM_BYTES = 80 * 1024 * 1024
 VOICES = {
     "thorsten": {"id": "thorsten", "label": "Thorsten · Deutsch", "language": "de-DE", "model": "de_DE-thorsten-medium.onnx", "rate": 22050},
     "kerstin": {"id": "kerstin", "label": "Kerstin · Deutsch", "language": "de-DE", "model": "de_DE-kerstin-low.onnx", "rate": 16000},
+    "ljspeech": {"id": "ljspeech", "label": "LJ · English (US)", "language": "en-US", "model": "en_US-ljspeech-medium.onnx", "rate": 22050},
 }
 
 
@@ -37,7 +38,7 @@ def voices_available():
 
 def validate_request(value):
     if not isinstance(value, dict) or not isinstance(value.get("voice"), str) or value["voice"] not in VOICES:
-        raise ValueError("Bitte eine der installierten deutschen Stimmen wählen.")
+        raise ValueError("Bitte eine der installierten Stimmen wählen.")
     speed = value.get("speed", 1.0)
     if isinstance(speed, bool) or not isinstance(speed, (float, int)) or not math.isfinite(speed) or not .75 <= speed <= 1.5:
         raise ValueError("Das Sprechtempo muss zwischen 0,75 und 1,5 liegen.")
@@ -111,7 +112,7 @@ def synthesize(request, directory: Path):
     if len(entries) == 1:
         (directory / entries[0]["file"]).rename(directory / "output.wav")
         return "wav"
-    manifest = {"voice": request["voice"], "speed": request["speed"], "sections": entries}
+    manifest = {"voice": request["voice"], "language": spec["language"], "speed": request["speed"], "sections": entries}
     playlist = "#EXTM3U\n" + "".join(f"#EXTINF:{round(item['seconds'])},{item['title']}\n{item['file']}\n" for item in entries)
     with zipfile.ZipFile(directory / "output.zip", "w", compression=zipfile.ZIP_DEFLATED) as bundle:
         for item in entries:
