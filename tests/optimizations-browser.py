@@ -37,6 +37,35 @@ with sync_playwright() as pw:
         for en in (False,True):
             context=browser.new_context(viewport={'width':390 if en else 1440,'height':950},has_touch=en,accept_downloads=True,reduced_motion='reduce')
             page=context.new_page();page.set_default_timeout(45000)
+            page.add_init_script("""(() => {
+              const events = []; window.largeDiagnostics = events;
+              const record = (kind, detail) => { events.push({kind, detail, time: Date.now()}); if(events.length > 160) events.shift(); };
+              const arrayBuffer = Blob.prototype.arrayBuffer;
+              Blob.prototype.arrayBuffer = function(...args) {
+                const size = this.size; record('blob-start', size);
+                return arrayBuffer.apply(this,args).then(result => { record('blob-done', size); return result; }, error => { record('blob-error', String(error)); throw error; });
+              };
+              const open = IDBFactory.prototype.open;
+              IDBFactory.prototype.open = function(...args) {
+                const request = open.apply(this,args); record('db-open',args[0]);
+                for(const name of ['success','error','blocked','upgradeneeded']) request.addEventListener(name,()=>record('db-'+name,args[0]));
+                return request;
+              };
+              const transaction = IDBDatabase.prototype.transaction;
+              IDBDatabase.prototype.transaction = function(...args) {
+                const tx = transaction.apply(this,args); record('tx-start',args[0]);
+                for(const name of ['complete','abort','error']) tx.addEventListener(name,()=>record('tx-'+name,args[0]));
+                return tx;
+              };
+              const post = Worker.prototype.postMessage, watched = new WeakSet();
+              Worker.prototype.postMessage = function(data,...args) {
+                if(['inspect','extract','assemble'].includes(data?.operation)) {
+                  record('worker-start',data.operation);
+                  if(!watched.has(this)) { watched.add(this); this.addEventListener('message',e=>record('worker-done',{error:e.data.error,bytes:e.data.bytes?.length,json:!!e.data.json})); }
+                }
+                return post.call(this,data,...args);
+              };
+            })();""")
             name=f'{engine}-'+('touch-en' if en else 'desktop-de');report={'case':name};errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
             def t(a,b):return b if en else a
             def choose(title):
@@ -67,6 +96,8 @@ with sync_playwright() as pw:
                 page.get_by_label(t('Aktion','Action'),exact=True).select_option('rotate90')
                 start=page.get_by_role('button',name=t('Lokal sichern und starten','Save locally and start'),exact=True)
                 started=time.monotonic();start.click();expect(start).to_be_disabled()
+                # Creation is separate from the long page audit; expose the stalled browser API.
+                expect(page.get_by_label(t('Gespeicherter Auftrag','Saved job'),exact=True)).to_be_visible(timeout=240000)
                 complete=page.get_by_role('button',name=t('Gesamtausgabe prüfen und erstellen','Verify and create full export'),exact=True)
                 expect(start).to_be_enabled(timeout=900000)
                 assert page.locator('.error-box').count()==0,page.locator('.error-box').all_text_contents()
@@ -86,6 +117,8 @@ with sync_playwright() as pw:
                 assert not errors,errors;report['status']='passed'
             except Exception:
                 report.update(status='failed',error=traceback.format_exc(),page_errors=errors)
+                try:report['large_diagnostics']=page.evaluate('window.largeDiagnostics')
+                except Exception:pass
                 try:page.screenshot(path=str(out/(name+'-failed.png')),full_page=False,timeout=10000)
                 except Exception:pass
             finally:context.close()

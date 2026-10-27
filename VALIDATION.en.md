@@ -61,7 +61,7 @@ run for the exact source commit remains authoritative.
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| PDF engines and DOM | 60 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| PDF engines and DOM | 66 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
 | Document server | 65 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and narrow touch viewports, PDF/EPUB/audio downloads |
