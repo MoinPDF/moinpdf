@@ -5432,7 +5432,7 @@
   "Namen und Beträge prüfen, erkannte Zeilen bei Bedarf korrigieren und „Korrekturen übernehmen“ wählen. Danach die aktualisierte durchsuchbare PDF speichern. Für einzelne unsichere Wörter hilft die": "Check names and amounts, correct recognised lines if needed and choose “Apply corrections”. Then save the updated searchable PDF. For individual uncertain words, use the",
   "Warum sehe ich meine OCR-Korrektur nicht auf der PDF-Seite?": "Why is my OCR correction not visible on the PDF page?",
   "OCR-Korrekturen ändern die unsichtbare Suchebene, nicht das sichtbare Scanbild. Wähle „Korrekturen übernehmen“ und lade die aktualisierte PDF herunter. Suche darin nach dem korrigierten Wort. Wenn auch die sichtbaren Buchstaben geändert werden sollen, nutze „PDF bearbeiten“.": "OCR corrections change the invisible search layer, not the visible scan image. Choose “Apply corrections” and download the updated PDF. Search it for the corrected word. To change the visible letters too, use “Edit PDF”.",
-  "Stand: 26. Oktober 2026": "Updated: 26 October 2026",
+  "Stand: 27. Oktober 2026": "Updated: 27 October 2026",
   "Aussehen möglichst erhalten": "Preserve appearance as closely as possible",
   "Text und Tabellen bearbeiten": "Edit text and tables",
   "Bilder und Seitenaufteilung beibehalten. Text in einzelnen Feldern bearbeiten.": "Keep images and page arrangement. Edit text in individual boxes.",

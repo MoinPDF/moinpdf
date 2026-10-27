@@ -4,7 +4,7 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
-## Verification scope for 0.23.0
+## Verification scope for 0.24.0
 
 - 66 engine/DOM suites include Clear Deck, form profiles, A4 receipts and header/footer cleanup. New browser flows inspect actual PDF downloads in Chromium, Firefox and WebKit on desktop and with narrow touch emulation.
 - Native Safari verification on `macos-15-intel` retains the complete test scope; physical devices and iOS require separate checks.
