@@ -4,7 +4,9 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## Unreleased: redaction, large PDFs and recognition rules
+## 0.24.0 – 27 October 2026
+
+- The complete 118-tool workspace receives its own release version. The two additional tools are “Change colors & background” and “Process large PDFs”. Existing 0.23.0 release artifacts remain unchanged.
 
 - **Text-preserving redaction:** Manual regions and search matches can remove complete, simple digital text objects while preserving remaining text and vectors. Page geometry, remaining text, links and rendered views are checked before export. Document metadata and unused resources are removed. Unsupported structures block export; the existing image mode remains an explicit choice.
 - **Large PDFs:** Dedicated workspace for files up to 256 MB and 1,000 pages, with rotation, lossless optimization and OCR. File-backed reading, sections of at most 50 pages, atomic local checkpoints and resume after cancellation. Sections can be edited in the standard editor and replaced with the same page count. Every final page is checked against its verified section. The standard editor retains its 80 MB / 200 active-page limits.
@@ -13,7 +15,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 Large jobs and recognition rules remain unencrypted in this browser until deleted; project archives do not include them. Large PDFs containing forms, signatures, internal destinations, bookmarks, attachments or structure tags are rejected upfront. Up to 768 MB of saved jobs and 256 MB of final output; document metadata is not carried into the assembled output. A desktop browser is recommended. Browsers without local Blob storage (such as private WebKit windows) are rejected before starting with an explicit notice; storage transactions have deadlines.
 
 
-## Unreleased
+### Further improvements
 
 - Form profiles retain all details during rapid consecutive input and when autofill updates several fields together.
 - Local Office conversion lets acknowledged shutdown complete without a second, competing termination. Even a late acknowledgment cancels the hard deadline; blocked runtimes still receive bounded forced termination. Strict checks for surviving threads remain.
