@@ -39,6 +39,39 @@ jobs:
             python "tests/$test.py" || status=1
           done
           exit "$status"
+      - name: Prepare downloadable web preview
+        if: github.event_name == 'pull_request'
+        run: |
+          cat > dist/selfhost/PREVIEW-README.txt <<'EOF'
+          MoinPDF – testable web build from the pull request
+          =================================================
+          This package contains the actual production-built MoinPDF frontend.
+          No production website, Docker release, or version tag was changed.
+
+          Extract all files. Serve the extracted folder over local HTTP
+          (opening index.html via file:// is not sufficient).
+
+          Windows (with Python):  py -m http.server 8765
+          macOS/Linux:            python3 -m http.server 8765
+
+          Open http://localhost:8765 in your desktop browser.
+          Local PDF tools work in the browser. Features that require the
+          optional MoinPDF document server need their own server setup.
+
+          On a 1920px-wide screen the interface should use approximately
+          1613px of space, including the upload and quick-access cards.
+          Tablet and mobile layouts remain unchanged.
+          EOF
+      - name: Upload downloadable web preview
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: moinpdf-web-preview-${{ github.event.pull_request.number }}
+          path: dist/selfhost/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
       - name: Retain screenshots and verification report
         if: always()
         uses: actions/upload-artifact@v7
