@@ -81,12 +81,18 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 geometry = home_geometry(page, width)
                 within_viewport(page, f'home {theme} {width}')
                 if width >= 1600:
-                    sizes = page.evaluate('''() => {
+                    expected = min(1760, max(1180, width * 0.84), width - 60)
+                    # Browser viewport changes and CSS viewport-unit recalculation can
+                    # reach different animation frames. Wait for the matching layout.
+                    settled = page.wait_for_function('''({width, expected}) => {
+                        if (innerWidth !== width) return false;
                         const rect = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
                         const font = selector => parseFloat(getComputedStyle(document.querySelector(selector)).fontSize);
+                        const home = rect('.harbor-home');
+                        if (Math.abs(home.width - expected) > 2) return false;
                         return {
                             header: rect('.app-toolbar'),
-                            home: rect('.harbor-home'),
+                            home,
                             search: rect('.desktop-search-row'),
                             upload: rect('.harbor-upload'),
                             card: rect('.tool-mosaic-grid[data-mosaic-kind="quick"] .tool-mosaic-card'),
@@ -95,8 +101,11 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                             cardDescriptionFont: font('.tool-mosaic-grid[data-mosaic-kind="quick"] small'),
                             uploadButtonFont: font('.harbor-upload-cta'),
                         };
-                    }''')
-                    expected = min(1760, max(1180, width * 0.84), width - 60)
+                    }''', arg={'width': width, 'expected': expected}, timeout=15000)
+                    try:
+                        sizes = settled.json_value()
+                    finally:
+                        settled.dispose()
                     assert abs(sizes['home']['width'] - expected) <= 2, (theme, width, sizes)
                     assert abs(sizes['header']['width'] - sizes['home']['width']) <= 2
                     assert abs(sizes['search']['width'] - sizes['home']['width']) <= 2
