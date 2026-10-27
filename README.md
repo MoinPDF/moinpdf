@@ -29,7 +29,7 @@
 
 MoinPDF ist eine Webanwendung zum Erstellen, Bearbeiten und Umwandeln von PDFs und anderen Dokumenten. Dateien lassen sich zusammenführen und aufteilen, Seiten neu ordnen, Texte und Bilder bearbeiten sowie Formulare ausfüllen. Weitere Funktionen umfassen Texterkennung für Scans, Dokumentvergleiche, Rechnungsprüfungen und die Verarbeitung mehrerer Dateien im Stapel. Viele Werkzeuge arbeiten lokal im Browser. Eine Installation mit Docker ergänzt erweiterte Dateiumwandlungen, Dokumentübersetzungen und die Erstellung von Hörbüchern aus PDFs.
 
-Version 0.24.0 umfasst 118 Werkzeuge. Große PDFs bis 1.000 Seiten, fortsetzbare lokale Aufträge, Schwärzen mit geprüftem Texterhalt und wiederverwendbare Klar-Schiff-Regeln sind in den [Funktionsbeschreibungen](docs/FUNKTIONEN.md) mit ihren Grenzen erläutert.
+Version 0.25.0 umfasst 118 Werkzeuge. Große PDFs bis 1.000 Seiten, fortsetzbare lokale Aufträge, Schwärzen mit geprüftem Texterhalt und wiederverwendbare Klar-Schiff-Regeln sind in den [Funktionsbeschreibungen](docs/FUNKTIONEN.md) mit ihren Grenzen erläutert.
 
 ## Was du mit MoinPDF erledigen kannst
 
