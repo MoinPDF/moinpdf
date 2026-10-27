@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {writeFile} from 'node:fs/promises';
 import {PDFDocument,StandardFonts,PDFName,PDFString} from 'pdf-lib';
-import {indexedDB} from 'fake-indexeddb';
+import {indexedDB,IDBObjectStore} from 'fake-indexeddb';
 import {setup} from './optimization-test-setup.mjs';
 const {ctx,close}=await setup('large-document');globalThis.indexedDB=indexedDB;
 const e=await import('../.cache/large-document/large-document.mjs'),s=await import('../.cache/large-document/large-document-store.mjs');
@@ -9,7 +9,22 @@ const {withPdfDocument}=await import('../.cache/large-document/pdf-engine.mjs');
 try{
  const doc=await PDFDocument.create(),font=await doc.embedFont(StandardFonts.Helvetica),count=process.env.LARGE_TEST_PAGES?Number(process.env.LARGE_TEST_PAGES):101;
  for(let i=1;i<=count;i++){const p=doc.addPage([320,450]);p.drawText('FICTIONAL PAGE '+i,{x:20,y:380,size:14,font});if(i===count)p.node.set(PDFName.of('Annots'),doc.context.obj([doc.context.register(doc.context.obj({Type:'Annot',Subtype:'Link',Rect:[20,20,170,40],A:{S:'URI',URI:PDFString.of('https://example.test/final')}}))]));}
- const bytes=await doc.save(),file=new File([bytes],'fictional-large.pdf',{type:'application/pdf'}),job=await e.createLargeJob(file,'rotate90',ctx);
+ const bytes=await doc.save(),file=new File([bytes],'fictional-large.pdf',{type:'application/pdf'});
+ await assert.rejects(()=>s.checkLargeStorage(AbortSignal.abort()),{name:'AbortError'});
+ // A real asynchronous request error must abort cleanly before another lease is attempted.
+ const put=IDBObjectStore.prototype.put;
+ IDBObjectStore.prototype.put=function(value,key){
+  if(this.name==='probe'&&value instanceof Blob){this.add('fictional',key);return this.add('duplicate',key);}
+  return put.call(this,value,key);
+ };
+ try { await assert.rejects(()=>e.createLargeJob(file,'rotate90',ctx),/normales Browserfenster/); }
+ finally {IDBObjectStore.prototype.put=put;}
+ assert.equal((await s.listLargeJobs()).length,0,'failed storage preflight creates no job');
+ const schedule=globalThis.setTimeout;
+ globalThis.indexedDB={open:()=>({})};globalThis.setTimeout=(callback,ms,...args)=>schedule(callback,ms===10000?10:ms,...args);
+ try {await assert.rejects(()=>s.checkLargeStorage(ctx.signal),/normales Browserfenster/);}
+ finally {globalThis.indexedDB=indexedDB;globalThis.setTimeout=schedule;}
+ const job=await e.createLargeJob(file,'rotate90',ctx);
  assert.equal(job.pages,count);assert.equal((await s.listLargeJobs()).length,1);
  const controller=new AbortController();let checkpoints=0;
  await assert.rejects(()=>e.continueLargeJob(job.id,{...ctx,signal:controller.signal},()=>{checkpoints++;controller.abort();}),error=>{assert.equal(error.name,"AbortError",error.stack);return true;});

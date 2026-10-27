@@ -14,7 +14,7 @@ The version number is in [package.json](package.json). A successful run provides
 
 - `native-redaction-smoke.mjs`: actual text removal, fully enclosed links, remaining vectors/text, four rotations with CropBoxes, cleaned metadata and decoded output streams; unsafe-structure rejection and cancellation.
 - `large-document-smoke.mjs`: 101 pages across three sections, original/output verification, cancellation/resume, cross-tab leases, atomic storage-cap rejection, corrupted sections and complete deletion. The Node Canvas test environment is not a browser.
-- `optimizations-browser.py`: actual production workers and downloads, a 1,000-page desktop workflow and an 81 MiB input with narrow touch emulation. PyMuPDF independently reads every output page; no physical-device or native Safari coverage of these new workflows.
+- `optimizations-browser.py`: actual production workers and downloads, a 1,000-page desktop workflow and an 81 MiB input with narrow touch emulation. Isolated persistent browser profiles exercise file-backed storage; a separate private WebKit case checks explicit storage rejection and a responsive interface. PyMuPDF independently reads every output page; no physical-device or native Safari coverage of these new workflows.
 - Clear Deck checks: reused layout rule, new document number, competing rules, uncertain OCR, schema validation and visible DE/EN persistence. Rules never confirm documents automatically.
 
 ## Previous verification scope for 0.22.0

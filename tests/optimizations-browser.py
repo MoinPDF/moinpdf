@@ -1,5 +1,5 @@
 """Production workers, 1,000-page final output and >80 MiB input; fictional fixtures."""
-import atexit, json, os, subprocess, sys, time, traceback
+import atexit, json, os, subprocess, sys, time, traceback, tempfile
 from pathlib import Path
 from urllib.request import urlopen
 import pymupdf
@@ -33,39 +33,11 @@ with pymupdf.open() as d:
 reports=[]
 with sync_playwright() as pw:
     for engine in os.getenv('MOINPDF_TEST_BROWSERS','chromium').split(','):
-        browser=getattr(pw,engine).launch()
+        browser_type=getattr(pw,engine)
         for en in (False,True):
-            context=browser.new_context(viewport={'width':390 if en else 1440,'height':950},has_touch=en,accept_downloads=True,reduced_motion='reduce')
+            profile=tempfile.TemporaryDirectory(prefix='moinpdf-browser-')
+            context=browser_type.launch_persistent_context(profile.name,viewport={'width':390 if en else 1440,'height':950},has_touch=en,accept_downloads=True,reduced_motion='reduce')
             page=context.new_page();page.set_default_timeout(45000)
-            page.add_init_script("""(() => {
-              const events = []; window.largeDiagnostics = events;
-              const record = (kind, detail) => { events.push({kind, detail, time: Date.now()}); if(events.length > 160) events.shift(); };
-              const arrayBuffer = Blob.prototype.arrayBuffer;
-              Blob.prototype.arrayBuffer = function(...args) {
-                const size = this.size; record('blob-start', size);
-                return arrayBuffer.apply(this,args).then(result => { record('blob-done', size); return result; }, error => { record('blob-error', String(error)); throw error; });
-              };
-              const open = IDBFactory.prototype.open;
-              IDBFactory.prototype.open = function(...args) {
-                const request = open.apply(this,args); record('db-open',args[0]);
-                for(const name of ['success','error','blocked','upgradeneeded']) request.addEventListener(name,()=>record('db-'+name,args[0]));
-                return request;
-              };
-              const transaction = IDBDatabase.prototype.transaction;
-              IDBDatabase.prototype.transaction = function(...args) {
-                const tx = transaction.apply(this,args); record('tx-start',args[0]);
-                for(const name of ['complete','abort','error']) tx.addEventListener(name,()=>record('tx-'+name,args[0]));
-                return tx;
-              };
-              const post = Worker.prototype.postMessage, watched = new WeakSet();
-              Worker.prototype.postMessage = function(data,...args) {
-                if(['inspect','extract','assemble'].includes(data?.operation)) {
-                  record('worker-start',data.operation);
-                  if(!watched.has(this)) { watched.add(this); this.addEventListener('message',e=>record('worker-done',{error:e.data.error,bytes:e.data.bytes?.length,json:!!e.data.json})); }
-                }
-                return post.call(this,data,...args);
-              };
-            })();""")
             name=f'{engine}-'+('touch-en' if en else 'desktop-de');report={'case':name};errors=[];page.on('pageerror',lambda error:errors.append(str(error)))
             def t(a,b):return b if en else a
             def choose(title):
@@ -96,8 +68,10 @@ with sync_playwright() as pw:
                 page.get_by_label(t('Aktion','Action'),exact=True).select_option('rotate90')
                 start=page.get_by_role('button',name=t('Lokal sichern und starten','Save locally and start'),exact=True)
                 started=time.monotonic();start.click();expect(start).to_be_disabled()
-                # Creation is separate from the long page audit; expose the stalled browser API.
-                expect(page.get_by_label(t('Gespeicherter Auftrag','Saved job'),exact=True)).to_be_visible(timeout=240000)
+                # Persistent profiles exercise file-backed storage; surface failures immediately.
+                page.wait_for_function("() => document.querySelector('.error-box') || document.querySelectorAll('.large-document-panel select').length > 1",timeout=240000)
+                assert page.locator('.error-box').count()==0,page.locator('.error-box').all_text_contents()
+                expect(page.get_by_label(t('Gespeicherter Auftrag','Saved job'),exact=True)).to_be_visible()
                 complete=page.get_by_role('button',name=t('Gesamtausgabe prüfen und erstellen','Verify and create full export'),exact=True)
                 expect(start).to_be_enabled(timeout=900000)
                 assert page.locator('.error-box').count()==0,page.locator('.error-box').all_text_contents()
@@ -117,11 +91,27 @@ with sync_playwright() as pw:
                 assert not errors,errors;report['status']='passed'
             except Exception:
                 report.update(status='failed',error=traceback.format_exc(),page_errors=errors)
-                try:report['large_diagnostics']=page.evaluate('window.largeDiagnostics')
-                except Exception:pass
                 try:page.screenshot(path=str(out/(name+'-failed.png')),full_page=False,timeout=10000)
                 except Exception:pass
-            finally:context.close()
+            finally:context.close();profile.cleanup()
             reports.append(report);(out/'report.json').write_text(json.dumps(reports,indent=2));print(json.dumps(report),flush=True)
-        browser.close()
+        if engine=='webkit':
+            # WebKit ephemeral profiles reject IndexedDB Blobs. Verify the supported failure path
+            # separately; the complete 1,000-page and 81 MiB cases above still run in real WebKit.
+            browser=browser_type.launch();context=browser.new_context();page=context.new_page()
+            try:
+                page.goto(origin+'?lang=de');page.locator('input[type=file]').first.set_input_files(str(secret.resolve()))
+                page.locator('.chooser-tool').filter(has=page.get_by_text('Große PDFs verarbeiten',exact=True)).click()
+                page.get_by_label('Große PDF auswählen',exact=True).set_input_files(str(large.resolve()))
+                start=page.get_by_role('button',name='Lokal sichern und starten',exact=True)
+                for _ in range(2):
+                    start.click();expect(start).to_be_enabled(timeout=20000)
+                    expect(page.locator('.error-box')).to_contain_text('normales Browserfenster')
+                    expect(page.get_by_role('button',name='Zurück zur Auswahl',exact=True)).to_be_enabled()
+                    expect(page.get_by_label('Gespeicherter Auftrag',exact=True)).to_have_count(0)
+                reports.append({'case':'webkit-private-storage','status':'passed','storage_rejection':'explicit; UI recovered; retry remained usable'})
+            except Exception:
+                reports.append({'case':'webkit-private-storage','status':'failed','error':traceback.format_exc()})
+            finally:context.close();browser.close()
+            (out/'report.json').write_text(json.dumps(reports,indent=2));print(json.dumps(reports[-1]),flush=True)
 assert all(r['status']=='passed' for r in reports)

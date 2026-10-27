@@ -10,6 +10,7 @@ import {
   loadLargeJob,
   saveLargeJob,
   withLargeLease,
+  checkLargeStorage,
   type LargeJob,
   type LargeMode,
   type LargePageSummary,
@@ -193,6 +194,7 @@ export async function createLargeJob(
   )
     throw new Error('Bitte eine PDF mit höchstens 256 MB verwenden.');
   ctx.report({ percent: 0, label: 'Große PDF prüfen und lokal sichern …' });
+  await checkLargeStorage(ctx.signal);
   const pages = checkLargeStructure(
     (await largePdfJob({ operation: 'inspect', files: [file] }, ctx.signal)).json,
   );

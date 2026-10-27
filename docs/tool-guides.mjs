@@ -3,7 +3,7 @@
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
   "large-document": {
-  "input": "Eine unverschlüsselte PDF bis 256 MB und 1.000 Seiten.",
+  "input": "Eine unverschlüsselte PDF bis 256 MB und 1.000 Seiten. Der Browser muss lokale Dateien speichern können; bei eingeschränkter Speicherung ein normales Browserfenster verwenden.",
   "steps": [
     "Öffne „Große PDFs verarbeiten“ unter Stapel, wähle die Datei und eine Aktion: Drehen, verlustfrei optimieren oder OCR.",
     "„Lokal sichern und starten“ speichert das Original und verarbeitet Abschnitte mit höchstens 50 Seiten. Abbrechen behält nur vollständig geprüfte Abschnitte; über den gespeicherten Auftrag kannst du fortsetzen.",

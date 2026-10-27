@@ -16,7 +16,7 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 
 - `native-redaction-smoke.mjs`: echte Textentfernung, vollständig erfasste Links, übrige Vektoren und Texte, vier Rotationen mit CropBox, bereinigte Metadaten und dekodierte Ausgabestreams; Abweisung unklarer Strukturen und Abbruch.
 - `large-document-smoke.mjs`: 101 Seiten über drei Abschnitte, Original- und Ausgabeprüfung, Abbruch/Fortsetzen, Sperren zwischen Tabs, atomare Ablehnung bei voller Ablage, beschädigte Abschnitte und vollständiges Löschen. Die Node-Canvas-Testumgebung ist kein Browser.
-- `optimizations-browser.py`: echte Produktions-Worker und Downloads, 1.000 Seiten im Desktop-Ablauf sowie eine 81-MiB-Eingabe mit schmaler Touch-Emulation. Jede Seite wird unabhängig mit PyMuPDF gelesen; keine physischen Geräte oder native Safari-Abdeckung dieser neuen Abläufe.
+- `optimizations-browser.py`: echte Produktions-Worker und Downloads, 1.000 Seiten im Desktop-Ablauf sowie eine 81-MiB-Eingabe mit schmaler Touch-Emulation. Dauerhafte, isolierte Browserprofile prüfen die dateibasierte Ablage; ein separater privater WebKit-Fall prüft die klare Speicherablehnung und weiterhin bedienbare Oberfläche. Jede Seite wird unabhängig mit PyMuPDF gelesen; keine physischen Geräte oder native Safari-Abdeckung dieser neuen Abläufe.
 - Klar-Schiff-Prüfungen: wiederverwendete Layoutregel, neue Dokumentnummer, konkurrierende Regeln, unsichere OCR, Schema und sichtbare Speicherung in DE/EN. Regeln bestätigen niemals Dokumente automatisch.
 
 ## Bisheriger Prüfplan für 0.22.0

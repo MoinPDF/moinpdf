@@ -30,30 +30,121 @@ export type LargeJob = {
 const MAX_STORED = 768 * 1024 * 1024;
 const locked = 'Diese große PDF wird bereits in einem anderen Tab verarbeitet.';
 const stale = 'Die Auftragssperre ist abgelaufen. Bitte den gespeicherten Auftrag erneut öffnen.';
+const unavailable =
+  'Die lokale Dateispeicherung ist in diesem Browser nicht verfügbar. Bitte ein normales Browserfenster verwenden und freien Speicher prüfen.';
 type Lease = { token: string; expires: number };
-const value = <T>(request: IDBRequest<T>) =>
-  new Promise<T>((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-async function db() {
+/** Finish only after commit/abort, never in a bubbling request error. */
+function watchTransaction(
+  tx: IDBTransaction,
+  resolve: () => void,
+  reject: (error: unknown) => void,
+  signal?: AbortSignal,
+  timeout = 60000,
+) {
+  let failure: unknown,
+    done = false;
+  const finish = (error?: unknown) => {
+    if (done) return;
+    done = true;
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', cancel);
+    error ? reject(error) : resolve();
+  };
+  const fail = (error: unknown) => {
+    failure = error;
+    try {
+      tx.abort();
+    } catch {
+      finish(error);
+    }
+  };
+  const cancel = () => fail(signal?.reason || new DOMException('Abgebrochen', 'AbortError'));
+  const timer = setTimeout(() => {
+    const error = new Error(unavailable);
+    fail(error);
+    finish(error);
+  }, timeout);
+  tx.oncomplete = () => finish();
+  tx.onabort = () => finish(failure || tx.error || new Error(unavailable));
+  tx.onerror = (event) =>
+    fail((event.target as IDBRequest).error || tx.error || new Error(unavailable));
+  if (signal?.aborted) cancel();
+  else signal?.addEventListener('abort', cancel, { once: true });
+  return fail;
+}
+async function db(probe = false) {
   return new Promise<IDBDatabase>((resolve, reject) => {
-    const r = indexedDB.open('moinpdf.large-documents.v1', 1);
-    r.onupgradeneeded = () => {
-      for (const key of ['jobs', 'originals', 'chunks', 'leases']) r.result.createObjectStore(key);
+    let done = false;
+    const r = indexedDB.open(
+      probe ? 'moinpdf.large-storage-check.v1' : 'moinpdf.large-documents.v1',
+      1,
+    );
+    const fail = () => {
+      done = true;
+      clearTimeout(timer);
+      reject(new Error(unavailable));
     };
-    r.onsuccess = () => resolve(r.result);
-    r.onerror = () => reject(r.error);
+    const timer = setTimeout(fail, 10000);
+    r.onupgradeneeded = () => {
+      if (done) {
+        r.transaction?.abort();
+        return;
+      }
+      for (const key of probe ? ['probe'] : ['jobs', 'originals', 'chunks', 'leases'])
+        r.result.createObjectStore(key);
+    };
+    r.onsuccess = () => {
+      if (done) {
+        r.result.close();
+        return;
+      }
+      done = true;
+      clearTimeout(timer);
+      r.result.onversionchange = () => r.result.close();
+      resolve(r.result);
+    };
+    r.onerror = r.onblocked = fail;
   });
+}
+/** Some private browser profiles reject Blobs; check before acquiring a job lease. */
+export async function checkLargeStorage(signal: AbortSignal) {
+  signal.throwIfAborted();
+  const d = await db(true);
+  try {
+    signal.throwIfAborted();
+    await new Promise<void>((resolve, reject) => {
+      const tx = d.transaction('probe', 'readwrite');
+      const fail = watchTransaction(tx, resolve, reject, signal, 10000);
+      const store = tx.objectStore('probe'),
+        key = uid();
+      const put = store.put(new Blob(['moinpdf']), key);
+      put.onsuccess = () => {
+        const request = store.get(key);
+        request.onsuccess = () => {
+          if (!(request.result instanceof Blob) || request.result.size !== 7) {
+            fail(new Error(unavailable));
+            return;
+          }
+          store.delete(key);
+        };
+      };
+    });
+  } catch (error) {
+    if (signal.aborted) throw signal.reason;
+    throw new Error(unavailable, { cause: error });
+  } finally {
+    d.close();
+  }
 }
 async function read<T>(store: string, key?: string): Promise<T> {
   const d = await db();
   try {
-    return await value(
-      key === undefined
-        ? d.transaction(store).objectStore(store).getAll()
-        : d.transaction(store).objectStore(store).get(key),
-    );
+    return await new Promise<T>((resolve, reject) => {
+      const tx = d.transaction(store),
+        s = tx.objectStore(store);
+      const request = key === undefined ? s.getAll() : s.get(key);
+      watchTransaction(tx, () => resolve(request.result as T), reject);
+    });
   } finally {
     d.close();
   }
@@ -69,8 +160,7 @@ async function lease(id: string, change: (current?: Lease) => Lease | undefined)
     await new Promise<void>((resolve, reject) => {
       const tx = d.transaction('leases', 'readwrite'),
         s = tx.objectStore('leases');
-      tx.oncomplete = () => resolve();
-      tx.onerror = tx.onabort = () => reject(tx.error || new Error(stale));
+      const fail = watchTransaction(tx, resolve, reject);
       const request = s.get(id);
       request.onsuccess = () => {
         try {
@@ -78,8 +168,7 @@ async function lease(id: string, change: (current?: Lease) => Lease | undefined)
           if (next) s.put(next, id);
           else s.delete(id);
         } catch (error) {
-          reject(error);
-          tx.abort();
+          fail(error);
         }
       };
     });
@@ -123,15 +212,12 @@ export async function saveLargeJob(
   try {
     await new Promise<void>((resolve, reject) => {
       const tx = d.transaction(['jobs', 'originals', 'chunks', 'leases'], 'readwrite');
-      tx.oncomplete = () => resolve();
-      tx.onerror = tx.onabort = () =>
-        reject(tx.error || new Error('Die große PDF konnte nicht lokal gesichert werden.'));
+      const fail = watchTransaction(tx, resolve, reject);
       const check = tx.objectStore('leases').get(job.id);
       check.onsuccess = () => {
         const current = check.result as Lease | undefined;
         if (current?.token !== token || current.expires <= Date.now()) {
-          reject(new Error(stale));
-          tx.abort();
+          fail(new Error(stale));
           return;
         }
         const all = tx.objectStore('jobs').getAll();
@@ -140,12 +226,11 @@ export async function saveLargeJob(
             .filter((j) => j.id !== job.id)
             .reduce((n, j) => n + j.size + j.chunks.reduce((s, c) => s + c.size, 0), 0);
           if (stored + job.size + job.chunks.reduce((s, c) => s + c.size, 0) > MAX_STORED) {
-            reject(
+            fail(
               new Error(
                 'Die Ablage für große PDFs ist voll. Bitte abgeschlossene Aufträge löschen.',
               ),
             );
-            tx.abort();
             return;
           }
           tx.objectStore('jobs').put({ ...job, updated: Date.now() }, job.id);
@@ -166,13 +251,11 @@ export async function deleteLargeJob(id: string) {
     try {
       await new Promise<void>((resolve, reject) => {
         const tx = d.transaction(['jobs', 'originals', 'chunks', 'leases'], 'readwrite');
-        tx.oncomplete = () => resolve();
-        tx.onerror = tx.onabort = () => reject(tx.error || new Error(stale));
+        const fail = watchTransaction(tx, resolve, reject);
         const r = tx.objectStore('leases').get(id);
         r.onsuccess = () => {
           if (r.result?.token !== token || r.result.expires <= Date.now()) {
-            reject(new Error(stale));
-            tx.abort();
+            fail(new Error(stale));
             return;
           }
           tx.objectStore('jobs').delete(id);
