@@ -146,6 +146,7 @@ export type StudioOptions = JobOptions &
     editorLanguage?: string;
     editorAllowRaster?: boolean;
     cropMode?: 'remove' | 'preserve';
+    redactionMode?: 'raster' | 'preserve';
     pageSize: 'a4' | 'letter';
     orientation: 'portrait' | 'landscape';
     perSheet: '2' | '4';
@@ -906,6 +907,37 @@ export async function runStudioJob(
     throw new Error('Bitte dieses Werkzeug im Dokumenteditor öffnen.');
   if (!pages.length) throw new Error('Bitte wähle mindestens eine Seite aus.');
   check(signal);
+  if (tool === 'redact' && options.redactionMode === 'preserve') {
+    const source = sources[0];
+    if (
+      sources.length !== 1 ||
+      pages.length !== source.pdf.numPages ||
+      pages.some(
+        (page, index) =>
+          page.sourceId !== source.id ||
+          page.index !== index ||
+          page.rotation ||
+          edits.crops[page.id] ||
+          edits.marks[page.id]?.some((mark) => mark.kind !== 'redact'),
+      )
+    )
+      throw new Error(
+        'Texterhaltende Schwärzung benötigt eine vollständige PDF in Originalreihenfolge ohne weitere Änderungen.',
+      );
+    const result = await (
+      await import('./native-redaction')
+    ).redactPreservingContent(
+      source,
+      pages.flatMap((page) =>
+        (edits.marks[page.id] || []).map((mark) => ({
+          page: page.index,
+          rect: { x: mark.x, y: mark.y, w: mark.w, h: mark.h },
+        })),
+      ),
+      { signal, report },
+    );
+    return { ...result, kind: 'pdf', inputSize: source.size };
+  }
   if (tool === 'crop' && options.cropMode === 'preserve')
     return (await import('./page-adjustments')).cropPreservingContent(
       sources,

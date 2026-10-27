@@ -11,7 +11,12 @@ export function ResultNextSteps({
   disabled: boolean;
 }) {
   const { t } = useLanguage();
-  if (!result.blob.type.includes('pdf')) return null;
+  if (
+    !result.blob.type.includes('pdf') ||
+    (result.pages || 0) > 200 ||
+    result.blob.size > 80 * 1024 * 1024
+  )
+    return null;
   const next = (tool: string) =>
     window.dispatchEvent(new CustomEvent('moinpdf-continue-result', { detail: { result, tool } }));
   return (

@@ -77,6 +77,16 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'large-document',
+    title: 'Große PDFs verarbeiten',
+    description:
+      'Bis 1.000 Seiten in lokal gespeicherten Abschnitten bearbeiten, unterbrechen und fortsetzen. Alle Seiten vor der Gesamtausgabe prüfen.',
+    icon: Files,
+    group: 4,
+    action: 'Große PDF vorbereiten',
+    fresh: true,
+  },
+  {
     id: 'document-colors',
     title: 'Farben & Hintergrund ändern',
     description:

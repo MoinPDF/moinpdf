@@ -399,6 +399,23 @@ const shape38: z.ZodType = z.lazy(() =>
       excerpt: z.string().max(1000000),
       warnings: z.array(z.string().max(1000000)).max(100000),
       duplicateOf: z.string().max(1000000),
+      layout: z
+        .array(
+          z
+            .object({
+              id: z.string().max(2000),
+              text: z.string().max(100000),
+              x: z.number().finite(),
+              y: z.number().finite(),
+              w: z.number().finite(),
+              h: z.number().finite(),
+              confidence: z.number().finite().optional(),
+            })
+            .strict(),
+        )
+        .max(1200)
+        .optional(),
+      ruleName: z.string().max(80).optional(),
     })
     .strict(),
 );
@@ -826,6 +843,7 @@ const fields: Record<string, z.ZodType> = {
   'TablePanel.rows': z.array(z.array(z.string().max(1000000)).max(100000)).max(100000),
   'RedactPanel.terms': z.string().max(1000000),
   'RedactPanel.email': z.boolean(),
+  'RedactPanel.mode': z.enum(['raster', 'preserve']),
   'RedactPanel.iban': z.boolean(),
   'RedactPanel.ocr': z.boolean(),
   'RedactPanel.hits': z.array(shape52).max(100000),

@@ -55,6 +55,25 @@ try {
   const a = await makePdf([invoice('Nordlicht GmbH', 'N-100', 2), invoice('Suedwind GmbH', 'N-100', 1, 1), invoice('Nordlicht GmbH', 'N-100', 1)], 'scrambled.pdf');
   const b = await makePdf([invoice('Nordlicht GmbH', 'N-100', 1)], 'duplicate.pdf');
   const plan = await e.analyseKlarSchiff([a, b], ctx);
+
+  const rules = await import('../.cache/klar-schiff/klar-schiff-rules.mjs');
+  const rulePage = plan.pages.find(p => p.sender === 'Nordlicht GmbH');
+  const ruleDoc = plan.documents.find(d => d.sender === 'Nordlicht GmbH');
+  const rule = {...rules.draftKlarRule(rulePage,ruleDoc),id:'fictional-template'};
+  assert(rules.klarRuleSchema.safeParse(rule).success);
+  assert.equal(rules.readKlarRule(rulePage,rule).reference,'N-100');
+  assert(rule.referenceArea.y < .15,'A reference inside a labelled PDF text block uses that block, not a fallback area');
+  const nextInvoice = await makePdf([['Nordlicht GmbH','Rechnung N-200','Rechnungsdatum: 26.10.2026','Fictional service without a reference','Seite 1 von 1']],'next-invoice.pdf');
+  const learned = await e.analyseKlarSchiff([nextInvoice],ctx,[rule]);
+  assert.equal(learned.pages[0].reference,'N-200');assert.equal(learned.pages[0].ruleName,rule.name);
+  assert(learned.documents.every(d=>!d.confirmed),'rules never approve documents');
+  const collisions = await e.analyseKlarSchiff([nextInvoice],ctx,[rule,{...rule,id:'conflict'}]);
+  assert(collisions.pages[0].warnings.some(w=>w.includes('Mehrere Erkennungsregeln')));
+  const low = {...rulePage,layout:rulePage.layout.map(w=>({...w,confidence:20}))};
+  assert(rules.applyKlarRules([low],[rule])[0].warnings.some(w=>w.includes('Werte sind unklar')));
+  assert.throws(()=>rules.decodeKlarRules(JSON.stringify([rule,rule])));
+  assert.throws(()=>rules.decodeKlarRules(JSON.stringify([{...rule,matchArea:{x:2,y:0,w:.2,h:.2}}])));
+  const persisted=rules.decodeKlarRules(JSON.stringify([rule]));assert.deepEqual(persisted,[rule]);
   const originalCrypto = globalThis.crypto;
   try {
     Object.defineProperty(globalThis, 'crypto', { configurable: true, value: { getRandomValues: originalCrypto.getRandomValues.bind(originalCrypto) } });
@@ -70,7 +89,8 @@ try {
   assert.equal(plan.documents.reduce((n, d) => n + d.pageIds.length, 0), 4);
   assert.throws(() => m.validateKlarPlan(plan, expected([a, b])), /prüfen/);
   m.validateKlarPlan(confirm(plan), expected([a, b]));
-  assert(toolDraftSchema.safeParse({ 'KlarSchiffPanel.plan:test': plan, 'KlarSchiffPanel.stage:test': 2, 'KlarSchiffPanel.format:test': 'zip' }).success);
+  await writeFile('.cache/klar-plan.json',JSON.stringify(plan,null,2));
+  assert(toolDraftSchema.safeParse({ 'KlarSchiffPanel.plan:test': plan, 'KlarSchiffPanel.stage:test': 2, 'KlarSchiffPanel.format:test': 'zip' }).success, JSON.stringify(toolDraftSchema.safeParse({ 'KlarSchiffPanel.plan:test': plan }).error));
   assert(!toolDraftSchema.safeParse({ 'KlarSchiffPanel.plan:test': { ...plan, documents: [{ title: 'broken' }] } }).success);
   const duplicate = plan.pages.find((p) => p.duplicateOf);
   let changed = m.moveKlarPage(plan, duplicate.id, 'exclude');

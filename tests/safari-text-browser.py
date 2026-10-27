@@ -144,7 +144,7 @@ def chooser():
     def ready(_):
         toasts=driver.execute_script('return (window.__qaToasts||[]).filter(t=>t.type==="error")')
         if toasts: raise AssertionError('Upload errors: '+json.dumps(toasts,ensure_ascii=False))
-        return len(driver.find_elements(By.CSS_SELECTOR, '.chooser-tool')) == 117
+        return len(driver.find_elements(By.CSS_SELECTOR, '.chooser-tool')) == 118
     WebDriverWait(driver, 45).until(ready)
 
 

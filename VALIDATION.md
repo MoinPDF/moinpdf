@@ -8,9 +8,16 @@ Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 
 ## Prüfplan für 0.23.0
 
-- 63 Engine-/DOM-Suiten einschließlich Klar Schiff, Formularprofilen, A4-Belegen und Kopf-/Fußzeilenbereinigung. Die neuen Browserabläufe prüfen tatsächliche PDF-Downloads in Chromium, Firefox und WebKit auf Desktop und mit schmaler Touch-Emulation.
+- 66 Engine-/DOM-Suiten einschließlich Klar Schiff, Formularprofilen, A4-Belegen und Kopf-/Fußzeilenbereinigung. Die neuen Browserabläufe prüfen tatsächliche PDF-Downloads in Chromium, Firefox und WebKit auf Desktop und mit schmaler Touch-Emulation.
 - Native Safari-Prüfung auf `macos-15-intel` mit unverändertem Testumfang; physische Geräte und iOS sind davon getrennt zu prüfen.
 - Freigabe erst nach erfolgreichen PR-Prüfungen und den erneuten Prüfungen des tatsächlichen `main`-Commits. Die vollständige Veröffentlichung umfasst zusätzlich vier Docker-Images mit amd64/arm64 und den Release samt unveränderlichen Image-Referenzen. Fehlende Runner oder übersprungene Prüfungen gelten nicht als erfolgreich.
+
+## Ergänzte Prüfungen: Schwärzung, große PDFs und Regeln
+
+- `native-redaction-smoke.mjs`: echte Textentfernung, vollständig erfasste Links, übrige Vektoren und Texte, vier Rotationen mit CropBox, bereinigte Metadaten und dekodierte Ausgabestreams; Abweisung unklarer Strukturen und Abbruch.
+- `large-document-smoke.mjs`: 101 Seiten über drei Abschnitte, Original- und Ausgabeprüfung, Abbruch/Fortsetzen, Sperren zwischen Tabs, atomare Ablehnung bei voller Ablage, beschädigte Abschnitte und vollständiges Löschen. Die Node-Canvas-Testumgebung ist kein Browser.
+- `optimizations-browser.py`: echte Produktions-Worker und Downloads, 1.000 Seiten im Desktop-Ablauf sowie eine 81-MiB-Eingabe mit schmaler Touch-Emulation. Dauerhafte, isolierte Browserprofile prüfen die dateibasierte Ablage; ein separater privater WebKit-Fall prüft die klare Speicherablehnung und weiterhin bedienbare Oberfläche. Jede Seite wird unabhängig mit PyMuPDF gelesen; keine physischen Geräte oder native Safari-Abdeckung dieser neuen Abläufe.
+- Klar-Schiff-Prüfungen: wiederverwendete Layoutregel, neue Dokumentnummer, konkurrierende Regeln, unsichere OCR, Schema und sichtbare Speicherung in DE/EN. Regeln bestätigen niemals Dokumente automatisch.
 
 ## Bisheriger Prüfplan für 0.22.0
 
@@ -74,7 +81,7 @@ und erneuten Export. Maßgeblich bleibt der erfolgreiche Lauf des jeweiligen Com
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| PDF-Engines und DOM | 60 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| PDF-Engines und DOM | 66 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
 | Dokumentenserver | 65 Tests: native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |

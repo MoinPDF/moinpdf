@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Anchor, ArrowDown, ArrowUp, Check, FileSearch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from './appearance';
@@ -17,6 +17,14 @@ import {
   type KlarPlan,
 } from '@/lib/klar-schiff-model';
 import './klar-schiff.css';
+import { uid } from '@/lib/pdf-engine';
+import {
+  decodeKlarRules,
+  klarRuleSchema,
+  KLAR_RULES_KEY,
+  type KlarRule,
+} from '@/lib/klar-schiff-rules';
+import { KlarRuleEditor } from './klar-rule-editor';
 
 export function KlarSchiffPanel({
   sources,
@@ -34,6 +42,41 @@ export function KlarSchiffPanel({
   );
   const [selected, setSelected] = useState('');
   const [previewId, setPreviewId] = useState('');
+  const [rules, setRules] = useState<KlarRule[]>([]);
+  const [rulesError, setRulesError] = useState('');
+  const [ruleDocument, setRuleDocument] = useState('');
+  const [reviewFirst, setReviewFirst] = useState(false);
+  const [batchReviewed, setBatchReviewed] = useState(false);
+  useEffect(() => {
+    const read = () => {
+      try {
+        setRules(decodeKlarRules(localStorage.getItem(KLAR_RULES_KEY)));
+        setRulesError('');
+      } catch {
+        setRulesError('Gespeicherte Erkennungsregeln konnten nicht gelesen werden.');
+      }
+    };
+    read();
+    window.addEventListener('storage', read);
+    return () => window.removeEventListener('storage', read);
+  }, []);
+  const persistRule = (rule: KlarRule) => {
+    try {
+      const current = decodeKlarRules(localStorage.getItem(KLAR_RULES_KEY));
+      const checked = klarRuleSchema.parse({ ...rule, id: uid() });
+      if (current.length >= 30) throw new Error('Höchstens 30 Erkennungsregeln speichern.');
+      const next = [...current, checked];
+      localStorage.setItem(KLAR_RULES_KEY, JSON.stringify(next));
+      setRules(next);
+      setRulesError('');
+      return true;
+    } catch {
+      setRulesError(
+        'Erkennungsregel konnte nicht gespeichert werden. Bitte Regeln und Browserspeicher prüfen.',
+      );
+      return false;
+    }
+  };
   const item = plan.documents.find((document) => document.id === selected) || plan.documents[0];
   const preview =
     plan.pages.find((page) => page.id === previewId) ||
@@ -43,20 +86,39 @@ export function KlarSchiffPanel({
   const ready = !!plan.documents.length && confirmed === plan.documents.length;
   const total = sources.reduce((count, source) => count + source.pdf.numPages, 0);
   const warnings = item ? klarWarnings(plan, item) : [];
+  const clearDocuments = plan.documents.filter(
+    (document) =>
+      !document.confirmed &&
+      !klarWarnings(plan, document).length &&
+      document.title.trim() &&
+      document.filename.trim() &&
+      validDate(document.date),
+  );
+  const displayedDocuments = reviewFirst
+    ? [...plan.documents].sort(
+        (a, b) => Number(!!klarWarnings(plan, b).length) - Number(!!klarWarnings(plan, a).length),
+      )
+    : plan.documents;
+  const ruleItem = plan.documents.find((document) => document.id === ruleDocument);
+  const rulePage = plan.pages.find((page) => page.id === ruleItem?.pageIds[0]);
+  const ruleSource = sources.find((source) => source.id === rulePage?.sourceId);
   const change = (next: KlarPlan) => {
     invalidate();
+    setBatchReviewed(false);
     setPlan(next);
   };
   const update = (patch: Partial<KlarDocument>) => {
     if (!item) return;
-    change({
-      ...plan,
-      documents: plan.documents.map((document) =>
+    invalidate();
+    setBatchReviewed(false);
+    setPlan((previous) => ({
+      ...previous,
+      documents: previous.documents.map((document) =>
         document.id === item.id
           ? { ...document, ...patch, confirmed: patch.confirmed ?? false }
           : document,
       ),
-    });
+    }));
   };
   const move = (pageId: string, target: string) => {
     const next = moveKlarPage(plan, pageId, target, ui);
@@ -89,6 +151,46 @@ export function KlarSchiffPanel({
   };
   return (
     <div className="klar-schiff">
+      <details className="advanced-card">
+        <summary>
+          {ui('Lokale Erkennungsregeln')} ({rules.length}/30)
+        </summary>
+        <p className="fine-note">
+          {ui(
+            'Regeln werden nur nach ausdrücklichem Speichern unverschlüsselt in diesem Browser abgelegt. Sie werden beim nächsten Erkennen verwendet und können hier gelöscht werden.',
+          )}
+        </p>
+        {rules.map((rule) => (
+          <div className="advanced-actions" key={rule.id}>
+            <span>
+              {rule.name} · {rule.sender}
+            </span>
+            <Button
+              disabled={busy}
+              variant="outline"
+              onClick={() => {
+                try {
+                  const next = decodeKlarRules(localStorage.getItem(KLAR_RULES_KEY)).filter(
+                    (r) => r.id !== rule.id,
+                  );
+                  localStorage.setItem(KLAR_RULES_KEY, JSON.stringify(next));
+                  setRules(next);
+                  setRulesError('');
+                } catch {
+                  setRulesError('Erkennungsregel konnte nicht gelöscht werden.');
+                }
+              }}
+            >
+              {ui('Regel löschen')}
+            </Button>
+          </div>
+        ))}
+        {rulesError && (
+          <p className="error-box" role="alert">
+            {ui(rulesError)}
+          </p>
+        )}
+      </details>
       <nav className="klar-steps" aria-label={ui('Klar-Schiff-Schritte')}>
         {(['Erkennen', 'Vorschläge prüfen', 'Exportieren'] as const).map((label, index) => (
           <button
@@ -117,7 +219,7 @@ export function KlarSchiffPanel({
             disabled={busy || !total}
             onClick={() =>
               void run(async (ctx) => {
-                const next = await analyseKlarSchiff(sources, ctx);
+                const next = await analyseKlarSchiff(sources, ctx, rules);
                 if (ctx.signal.aborted) return;
                 change(next);
                 setSelected(next.documents[0]?.id || '');
@@ -167,54 +269,89 @@ export function KlarSchiffPanel({
               >
                 {ui('Nach Datum ordnen')}
               </Button>
-              {plan.documents.map((document, index) => (
-                <div
-                  className={`klar-document ${document.id === item?.id ? 'is-selected' : ''}`}
-                  key={document.id}
-                >
-                  <button
-                    className="klar-document-pick"
-                    type="button"
-                    onClick={() => choose(document)}
-                    aria-pressed={document.id === item?.id}
+              <Tick
+                label="Unklare Vorschläge zuerst anzeigen"
+                value={reviewFirst}
+                onChange={setReviewFirst}
+              />
+              {!!clearDocuments.length && (
+                <div className="advanced-card">
+                  <p>
+                    {ui(
+                      'Nur Vorschläge ohne Prüfhinweise werden gemeinsam bestätigt. Reihenfolge und Dateinamen bleiben unverändert.',
+                    )}
+                  </p>
+                  <Tick
+                    label="Die eindeutigen Vorschläge in der Liste geprüft"
+                    value={batchReviewed}
+                    onChange={setBatchReviewed}
+                  />
+                  <Button
+                    disabled={busy || !batchReviewed}
+                    onClick={() =>
+                      change({
+                        ...plan,
+                        documents: plan.documents.map((d) =>
+                          clearDocuments.some((c) => c.id === d.id) ? { ...d, confirmed: true } : d,
+                        ),
+                      })
+                    }
                   >
-                    <span className="klar-document-number">
-                      {document.confirmed ? <Check size={17} /> : index + 1}
-                    </span>
-                    <span>
-                      <strong>{document.title}</strong>
-                      <small>{document.sender || ui('Absender offen')}</small>
-                      <small>
-                        {document.date || ui('Ohne Datum')} ·{' '}
-                        {ui(`${document.pageIds.length} Seiten`)}
-                      </small>
-                      <span className="klar-state">
-                        {ui(document.confirmed ? 'Geprüft' : 'Bitte prüfen')}
-                      </span>
-                    </span>
-                  </button>
-                  <div className="klar-order">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={ui('Dokument nach oben')}
-                      disabled={index === 0}
-                      onClick={() => reorder(document.id, -1)}
-                    >
-                      <ArrowUp size={16} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={ui('Dokument nach unten')}
-                      disabled={index === plan.documents.length - 1}
-                      onClick={() => reorder(document.id, 1)}
-                    >
-                      <ArrowDown size={16} />
-                    </Button>
-                  </div>
+                    {ui('Eindeutige Vorschläge bestätigen')} ({clearDocuments.length})
+                  </Button>
                 </div>
-              ))}
+              )}
+              {displayedDocuments.map((document) => {
+                const index = plan.documents.findIndex((d) => d.id === document.id);
+                return (
+                  <div
+                    className={`klar-document ${document.id === item?.id ? 'is-selected' : ''}`}
+                    key={document.id}
+                  >
+                    <button
+                      className="klar-document-pick"
+                      type="button"
+                      onClick={() => choose(document)}
+                      aria-pressed={document.id === item?.id}
+                    >
+                      <span className="klar-document-number">
+                        {document.confirmed ? <Check size={17} /> : index + 1}
+                      </span>
+                      <span>
+                        <strong>{document.title}</strong>
+                        <small>{document.sender || ui('Absender offen')}</small>
+                        <small>
+                          {document.date || ui('Ohne Datum')} ·{' '}
+                          {ui(`${document.pageIds.length} Seiten`)}
+                        </small>
+                        <span className="klar-state">
+                          {ui(document.confirmed ? 'Geprüft' : 'Bitte prüfen')}
+                        </span>
+                      </span>
+                    </button>
+                    <div className="klar-order">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={ui('Dokument nach oben')}
+                        disabled={index === 0}
+                        onClick={() => reorder(document.id, -1)}
+                      >
+                        <ArrowUp size={16} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={ui('Dokument nach unten')}
+                        disabled={index === plan.documents.length - 1}
+                        onClick={() => reorder(document.id, 1)}
+                      >
+                        <ArrowDown size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </section>
             <section
               className="advanced-card klar-detail"
@@ -223,6 +360,12 @@ export function KlarSchiffPanel({
               {item ? (
                 <>
                   <h2>{ui('Dokument prüfen')}</h2>
+                  {plan.pages.find((page) => page.id === item.pageIds[0])?.ruleName && (
+                    <p className="fine-note">
+                      {ui('Angewendete Erkennungsregel')}:{' '}
+                      {plan.pages.find((page) => page.id === item.pageIds[0])?.ruleName}
+                    </p>
+                  )}
                   <div className="klar-metadata">
                     <Field label={ui('Titel')}>
                       <input
@@ -349,6 +492,17 @@ export function KlarSchiffPanel({
                       update({ confirmed });
                     }}
                   />
+                  <Button
+                    variant="outline"
+                    disabled={
+                      busy ||
+                      !item.confirmed ||
+                      !plan.pages.find((page) => page.id === item.pageIds[0])?.layout?.length
+                    }
+                    onClick={() => setRuleDocument(item.id)}
+                  >
+                    {ui('Erkennungsregel aus diesem Dokument erstellen')}
+                  </Button>
                   {(!item.title.trim() ||
                     !item.filename.trim() ||
                     (item.date && !validDate(item.date))) && (
@@ -400,6 +554,16 @@ export function KlarSchiffPanel({
               )}
             </aside>
           </div>
+          {ruleItem?.confirmed && rulePage && ruleSource && (
+            <KlarRuleEditor
+              key={ruleItem.id}
+              page={rulePage}
+              document={ruleItem}
+              source={ruleSource}
+              save={persistRule}
+              close={() => setRuleDocument('')}
+            />
+          )}
           {!!plan.excluded.length && (
             <details className="advanced-card klar-excluded" open>
               <summary>{ui(`Ausgelassene Seiten: ${plan.excluded.length}`)}</summary>

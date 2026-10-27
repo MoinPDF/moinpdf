@@ -1,6 +1,7 @@
 import { safeName } from './advanced-types';
 import { dateCandidates, validDate } from './century-model';
 import { fold, type EvidencePage } from './evidence-model';
+import { applyKlarRules, type KlarRule } from './klar-schiff-rules';
 
 export type KlarPage = {
   id: string;
@@ -16,6 +17,8 @@ export type KlarPage = {
   excerpt: string;
   warnings: string[];
   duplicateOf: string;
+  layout?: EvidencePage['words'];
+  ruleName?: string;
 };
 export type KlarDocument = {
   id: string;
@@ -100,6 +103,15 @@ function inspectPage(page: EvidencePage): KlarPage {
     excerpt: text.slice(0, 1600),
     warnings,
     duplicateOf: '',
+    layout: page.words.slice(0, 1200).map(({ id, text, x, y, w, h, confidence }) => ({
+      id,
+      text,
+      x,
+      y,
+      w,
+      h,
+      ...(confidence === undefined ? {} : { confidence }),
+    })),
   };
 }
 
@@ -107,9 +119,10 @@ function inspectPage(page: EvidencePage): KlarPage {
 export function suggestKlarPlan(
   evidence: EvidencePage[],
   t: (text: string) => string = (text) => text,
+  rules: KlarRule[] = [],
 ): KlarPlan {
   if (!evidence.length || evidence.length > 400) throw new Error('Bitte 1 bis 400 Seiten ordnen.');
-  const pages = evidence.map(inspectPage);
+  const pages = applyKlarRules(evidence.map(inspectPage), rules);
   if (new Set(pages.map((page) => page.id)).size !== pages.length)
     throw new Error('Eine Quellseite wurde mehrfach eingelesen.');
   const documents: KlarDocument[] = [];

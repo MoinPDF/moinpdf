@@ -6,13 +6,18 @@ import { writeBookmarks } from './document-tools';
 import { checkAbort, uniqueNames, type ExportFile, type RunContext } from './advanced-types';
 import { suggestKlarPlan, validateKlarPlan, type KlarPlan } from './klar-schiff-model';
 import { contentDigest } from './content-digest';
+import type { KlarRule } from './klar-schiff-rules';
 
-export async function analyseKlarSchiff(sources: Source[], ctx: RunContext): Promise<KlarPlan> {
+export async function analyseKlarSchiff(
+  sources: Source[],
+  ctx: RunContext,
+  rules: KlarRule[] = [],
+): Promise<KlarPlan> {
   const evidence = await readEvidence(sources, 'auto', {
     ...ctx,
     report: (value) => ctx.report({ ...value, percent: value.percent * 0.8 }),
   });
-  const plan = suggestKlarPlan(evidence, ctx.translate);
+  const plan = suggestKlarPlan(evidence, ctx.translate, rules);
   const fingerprints = new Map<string, string>();
   for (const [index, page] of plan.pages.entries()) {
     checkAbort(ctx.signal);

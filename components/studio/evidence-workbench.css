@@ -168,3 +168,22 @@
     min-height: 40px;
   }
 }
+
+.large-document-panel,
+.large-document-panel .advanced-stack {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.large-document-panel {
+  max-width: 980px;
+}
+.large-document-panel input[type='file'] {
+  display: block;
+  max-width: 100%;
+  margin-top: 0.5rem;
+}
+.large-document-panel details > .advanced-stack {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--ui-border, #dce7e2);
+}

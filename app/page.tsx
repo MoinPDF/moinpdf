@@ -252,6 +252,7 @@ import {
 const defaults: StudioOptions = {
   ...extraDefaults,
   cropMode: 'remove',
+  redactionMode: 'raster',
   language: 'deu',
   ocrLayout: '3',
   forceOcr: false,
@@ -854,10 +855,18 @@ function Studio() {
                 ...(/\.pdf$/i.test(file.name)
                   ? {
                       action: {
-                        label: ui('PDF reparieren'),
+                        label: ui(
+                          /80 MB|200 Seiten/.test((err as Error).message)
+                            ? 'Große PDFs verarbeiten'
+                            : 'PDF reparieren',
+                        ),
                         onClick: () => {
                           setRepairInput(file);
-                          setToolId('pdf-repair');
+                          setToolId(
+                            /80 MB|200 Seiten/.test((err as Error).message)
+                              ? 'large-document'
+                              : 'pdf-repair',
+                          );
                           setChoosingTool(false);
                           setBrowseEmpty(true);
                         },
@@ -1640,6 +1649,7 @@ function Studio() {
   const renderChoice = (
     key:
       | 'cropMode'
+      | 'redactionMode'
       | 'ocrLayout'
       | 'language'
       | 'imageFormat'
@@ -1990,7 +2000,7 @@ function Studio() {
         {fileInput}
         <AdvancedWorkbench
           key={toolId}
-          initialFile={toolId === 'pdf-repair' ? repairInput : null}
+          initialFile={toolId === 'pdf-repair' || toolId === 'large-document' ? repairInput : null}
           tool={toolId}
           sources={sources}
           onBack={returnToTools}
@@ -3507,11 +3517,21 @@ function Studio() {
                   </>
                 )}
                 {toolId === 'redact' && (
-                  <div className="notice strong">
-                    {t(
-                      'Schwärzungen werden in die Seitenbilder eingerechnet. Die betroffenen Seiten enthalten danach keine ursprüngliche Textebene. Prüfe die Ergebnisvorschau vor dem Download.',
-                    )}
-                  </div>
+                  <>
+                    <div>
+                      {renderChoice('redactionMode', 'Schwärzungsmodus', [
+                        ['raster', 'Seiten als Bilder neu aufbauen'],
+                        ['preserve', 'Text und Vektoren erhalten'],
+                      ])}
+                    </div>
+                    <div className="notice strong">
+                      {t(
+                        options.redactionMode === 'preserve'
+                          ? 'Entfernt vollständige Textzeilen in geeigneten digitalen PDFs. Übrige Inhalte werden geprüft. Komplexe Seiten benötigen den Bildmodus; es erfolgt kein automatischer Wechsel.'
+                          : 'Schwärzungen werden in die Seitenbilder eingerechnet. Die betroffenen Seiten enthalten danach keine ursprüngliche Textebene. Prüfe die Ergebnisvorschau vor dem Download.',
+                      )}
+                    </div>
+                  </>
                 )}
                 {toolId === 'crop' && (
                   <>

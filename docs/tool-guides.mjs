@@ -2,6 +2,17 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+  "large-document": {
+  "input": "Eine unverschlüsselte PDF bis 256 MB und 1.000 Seiten. Der Browser muss lokale Dateien speichern können; bei eingeschränkter Speicherung ein normales Browserfenster verwenden.",
+  "steps": [
+    "Öffne „Große PDFs verarbeiten“ unter Stapel, wähle die Datei und eine Aktion: Drehen, verlustfrei optimieren oder OCR.",
+    "„Lokal sichern und starten“ speichert das Original und verarbeitet Abschnitte mit höchstens 50 Seiten. Abbrechen behält nur vollständig geprüfte Abschnitte; über den gespeicherten Auftrag kannst du fortsetzen.",
+    "Optional einen Abschnitt als Ergebnis öffnen, im Editor bearbeiten und die heruntergeladene Kopie als Ersatzabschnitt einsetzen. Die Seitenzahl muss gleich bleiben.",
+    "„Gesamtausgabe prüfen und erstellen“ vergleicht jede Ausgabeseite mit dem geprüften Abschnitt. Lade die PDF herunter und lösche den lokalen Auftrag, wenn du ihn nicht mehr benötigst."
+  ],
+  "output": "Geprüfte Gesamt-PDF oder einzelne bearbeitete Abschnitte. Original und Zwischenstände bleiben bis zum Löschen lokal gespeichert.",
+  "note": "Desktop-Browser empfohlen. Original und Abschnitte liegen unverschlüsselt im Browserspeicher; Browserbereinigung löscht sie. Maximal 768 MB lokale Aufträge und 256 MB Gesamtausgabe. Aktive Editorabschnitte bleiben unter 80 MB und 50 Seiten. Formulare, Signaturen, interne Verweise, Lesezeichen, Anhänge und Struktur-Tags werden abgewiesen. Dokumentinfos werden nicht übernommen. Die Prüfung vergleicht alle Seiten auf Text, Maße, Rotation, externe Links und gerenderte Vorschauen mit höchstens 640 Pixeln Kantenlänge; sie ist kein PDF/A- oder Barrierefreiheitsnachweis."
+},
   "document-colors": {
   "input": "Eine PDF mit auslesbarem Text oder gescannten Seiten.",
   "steps": [
@@ -50,6 +61,8 @@ export const guides = {
   'klar-schiff': guide('Eine oder mehrere PDFs, Scans oder Bilder im Arbeitsbereich.', [
     'Öffne unter Stapel das Werkzeug Klar Schiff und starte Stapel erkennen. Dokumentnummer, Absender, Datum und gedruckte Seitenzählung liefern Zuordnungsvorschläge; Scans werden lokal per OCR gelesen.',
     'Prüfe jedes Dokument in der Originalvorschau. Korrigiere Titel, Absender, Datum und Dateiname. Ordne Seiten einem anderen oder neuen Dokument zu, ändere die Reihenfolge oder lasse eine Seite bewusst aus. Bestätige jedes geprüfte Dokument.',
+    "Für wiederkehrende Layouts: Am bestätigten Dokument eine Erkennungsregel erstellen, Absendermerkmal, Dokumentnummer und Datum am Original markieren und die Regel ausdrücklich speichern. Bis zu 30 Regeln bleiben unverschlüsselt in diesem Browser und lassen sich einzeln löschen; Projektdateien übertragen sie nicht. Beim nächsten Erkennen erscheinen passende Regeln als Vorschlag. Mehrdeutige oder unsichere Treffer bleiben zur Einzelprüfung offen.",
+    "Mit „Unklare Vorschläge zuerst anzeigen“ konzentrierst du dich auf Ausnahmen. Nach Prüfung der Liste kannst du ausschließlich Vorschläge ohne Prüfhinweise gemeinsam bestätigen. Regeln bestätigen Dokumente niemals automatisch.",
     'Wechsle zum Export und erstelle einzelne PDFs im ZIP oder eine Gesamt-PDF mit klickbarem Inhaltsverzeichnis und Lesezeichen. Ausgelassene Seiten werden vor dem Export angezeigt und können im Prüfschritt wiederhergestellt werden.'
   ], 'Einzelne PDFs mit eindeutigen Dateinamen und Zuordnungsübersicht im ZIP oder eine geordnete Dokumentenmappe als PDF.', 'Die Erkennung liefert Vorschläge für Rechnungen und Briefe, keine sichere Dokumentklassifizierung. Unklare Zuordnungen, mögliche Duplikate und gedruckte Seitenlücken bleiben sichtbar. Keine automatische Löschung; alle Dokumente müssen bestätigt werden. Originalseiten bleiben erhalten, Scans bleiben Bildseiten. Formularwerte werden festgeschrieben; ursprüngliche Signaturen, Lesezeichen und Anhänge werden nicht übernommen.'),
   'svg-export': {
@@ -338,8 +351,9 @@ export const guides = {
   'search-redact': guide('Eine PDF und die Begriffe oder Muster, die entfernt werden sollen.', [
     'Gib Namen und eigene Suchbegriffe jeweils in einer Zeile ein. Aktiviere bei Bedarf die Erkennung von E-Mail-Adressen und möglichen IBANs sowie OCR für Scans.',
     'Lasse Fundstellen ermitteln und prüfe jeden ausgewählten Bereich in der Vorschau. Ergänze abweichende Schreibweisen und kontrolliere nicht erkannte Angaben.',
+    "Wähle den Bildmodus oder „Text und Vektoren erhalten“. Der Textmodus entfernt vollständig markierte, einfache digitale Textobjekte. Scans, angeschnittene Textobjekte, überlagernde Grafiken, komplexe Gruppen, Formulare, Signaturen und Struktur-Tags werden abgewiesen; bei Bedarf den Bildmodus ausdrücklich wählen. Resttext, externe Links und Seitenansicht werden geprüft; Dokumentinfos und ungenutzte Ressourcen werden entfernt. Kein automatischer Wechsel zum Bildmodus.",
     'Bestätige die Auswahl, erstelle die geschwärzte Ausgabe und prüfe genau die heruntergeladene Datei.'
-  ], 'Neue PDF mit entfernten Trefferbereichen in neu aufgebauten Seitenbildern.', 'Erkennung ist keine Vollständigkeitsgarantie. Die ursprüngliche Textebene und interaktive Funktionen werden bei der Bildausgabe nicht übernommen. Ein dunkles Rechteck aus einem anderen Programm ist nicht automatisch eine sichere Schwärzung.'),
+  ], 'Neue PDF mit entfernten Trefferbereichen; wahlweise mit erhaltenem Resttext oder als Seitenbilder.', 'Erkennung ist keine Vollständigkeitsgarantie. Die ursprüngliche Textebene und interaktive Funktionen werden bei der Bildausgabe nicht übernommen. Ein dunkles Rechteck aus einem anderen Programm ist nicht automatisch eine sichere Schwärzung.'),
   'visual-compare': guide('Zwei PDF-Fassungen mit vergleichbaren Seiten.', [
     'Wähle die beiden Dateien und starte den visuellen Vergleich.',
     'Vergleiche die farbig hervorgehobenen Unterschiede seitenweise und beachte den angezeigten Anteil veränderter Bildbereiche.',
@@ -532,8 +546,9 @@ export const guides = {
   'redact': guide('Eine PDF mit vertraulichen Bereichen.', [
     'Ziehe auf jeder betroffenen Seite einen Rahmen über den vollständigen zu entfernenden Bereich.',
     'Prüfe die Markierungen in ausreichender Vergrößerung. Ergänze weitere Stellen, einschließlich Kopf- und Fußzeilen.',
+    "Wähle den Bildmodus oder „Text und Vektoren erhalten“. Der Textmodus entfernt vollständig markierte, einfache digitale Textobjekte. Scans, angeschnittene Textobjekte, überlagernde Grafiken, komplexe Gruppen, Formulare, Signaturen und Struktur-Tags werden abgewiesen; bei Bedarf den Bildmodus ausdrücklich wählen. Resttext, externe Links und Seitenansicht werden geprüft; Dokumentinfos und ungenutzte Ressourcen werden entfernt. Kein automatischer Wechsel zum Bildmodus.",
     'Erstelle die geschwärzte PDF und kontrolliere genau diese Ausgabedatei vor der Weitergabe.'
-  ], 'PDF mit entfernten vertraulichen Bereichen in neu erzeugten Seitenbildern.', 'Betroffene Seiten verlieren ihre ursprüngliche Textebene und interaktive Funktionen. Die Originaldateien bleiben ungeschwärzt. Für viele wiederkehrende Begriffe kann „Suchen & schwärzen“ helfen; auch dessen Treffer müssen kontrolliert werden.'),
+  ], 'PDF mit entfernten vertraulichen Bereichen; wahlweise mit erhaltenem Resttext oder als Seitenbilder.', 'Im Bildmodus verlieren betroffene Seiten ihre ursprüngliche Textebene und interaktive Funktionen. Die Originaldateien bleiben ungeschwärzt. Für viele wiederkehrende Begriffe kann „Suchen & schwärzen“ helfen; auch dessen Treffer müssen kontrolliert werden.'),
   "crop": {
   "input": "Eine PDF, deren sichtbaren Seitenbereich du verkleinern möchtest.",
   "steps": [

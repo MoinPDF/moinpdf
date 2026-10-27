@@ -53,6 +53,16 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'collect receipts',
     'print receipts',
   ],
+  'large-document': [
+    '1000 Seiten',
+    '256 MB',
+    'große Datei',
+    'fortsetzen',
+    'resume',
+    'large PDF',
+    'Abschnitte',
+    'checkpoint',
+  ],
   'klar-schiff': [
     'Klar Schiff',
     'Papierchaos',

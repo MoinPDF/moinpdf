@@ -343,11 +343,13 @@ function StoredResultDownload({
         <Download size={16} />
         {t('Herunterladen', 'Download')}
       </Button>
-      {result.blob.type.includes('pdf') && (
-        <Button variant="outline" disabled={locked || audit.blocked} onClick={onUse}>
-          {t('Weiterbearbeiten', 'Keep editing')}
-        </Button>
-      )}
+      {result.blob.type.includes('pdf') &&
+        (result.pages || 0) <= 200 &&
+        result.blob.size <= 80 * 1024 * 1024 && (
+          <Button variant="outline" disabled={locked || audit.blocked} onClick={onUse}>
+            {t('Weiterbearbeiten', 'Keep editing')}
+          </Button>
+        )}
     </>
   );
 }

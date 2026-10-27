@@ -1,5 +1,7 @@
 import { spawnSync } from 'node:child_process';
 const suites = [
+  'native-redaction',
+  'large-document',
   'color-page-tools',
   'header-footer',
   'everyday',

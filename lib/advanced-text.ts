@@ -332,6 +332,7 @@ export async function redactHits(
   source: Source,
   hits: RedactionHit[],
   ctx: RunContext,
+  mode: 'raster' | 'preserve' = 'raster',
 ): Promise<ExportFile> {
   if (!hits.some((h) => h.selected)) throw new Error('Bitte mindestens eine Fundstelle auswählen.');
   const pages = sourcePages(source),
@@ -351,6 +352,17 @@ export async function redactHits(
         kind: 'redact',
       });
     }
+  if (mode === 'preserve')
+    return (await import('./native-redaction')).redactPreservingContent(
+      source,
+      pages.flatMap((page) =>
+        (edits.marks[page.id] || []).map((mark) => ({
+          page: page.index,
+          rect: { x: mark.x, y: mark.y, w: mark.w, h: mark.h },
+        })),
+      ),
+      ctx,
+    );
   // Rebuild every page from the visible pixels: no hidden text, old objects, forms or attachments remain.
   const doc = await PDFDocument.create();
   for (const [i, item] of pages.entries()) {
