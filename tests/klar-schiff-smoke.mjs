@@ -62,7 +62,8 @@ try {
   const rule = {...rules.draftKlarRule(rulePage,ruleDoc),id:'fictional-template'};
   assert(rules.klarRuleSchema.safeParse(rule).success);
   assert.equal(rules.readKlarRule(rulePage,rule).reference,'N-100');
-  const nextInvoice = await makePdf([invoice('Nordlicht GmbH','N-200',1,1)],'next-invoice.pdf');
+  assert(rule.referenceArea.y < .15,'A reference inside a labelled PDF text block uses that block, not a fallback area');
+  const nextInvoice = await makePdf([['Nordlicht GmbH','Rechnung N-200','Rechnungsdatum: 26.10.2026','Fictional service without a reference','Seite 1 von 1']],'next-invoice.pdf');
   const learned = await e.analyseKlarSchiff([nextInvoice],ctx,[rule]);
   assert.equal(learned.pages[0].reference,'N-200');assert.equal(learned.pages[0].ruleName,rule.name);
   assert(learned.documents.every(d=>!d.confirmed),'rules never approve documents');

@@ -147,7 +147,7 @@ function regionFor(page: KlarPage, value: string, fallback: Rect) {
       for (let j = i; j < Math.min(line.words.length, i + 12); j++) {
         const words = line.words.slice(i, j + 1),
           text = words.map((w) => w.text).join(' ');
-        if (fold(text) === fold(value) || dates(text).includes(value)) return bounds(words);
+        if (fold(text).includes(fold(value)) || dates(text).includes(value)) return bounds(words);
       }
   }
   return fallback;

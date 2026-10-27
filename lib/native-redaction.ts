@@ -59,7 +59,15 @@ function cleanAuxiliary(document: PDFDocument) {
     const dict =
       object instanceof PDFRawStream ? object.dict : object instanceof PDFDict ? object : undefined;
     if (!dict) continue;
-    for (const key of ['Metadata', 'PieceInfo', 'LastModified', 'AF', 'EF', 'EmbeddedFiles'])
+    for (const key of [
+      'Metadata',
+      'PieceInfo',
+      'LastModified',
+      'Thumb',
+      'AF',
+      'EF',
+      'EmbeddedFiles',
+    ])
       dict.delete(PDFName.of(key));
   }
   document.catalog.delete(PDFName.of('Names'));
@@ -74,6 +82,7 @@ function guard(document: PDFDocument) {
     'OpenAction',
     'AA',
     'Collection',
+    'Threads',
   ])
     if (document.catalog.has(PDFName.of(key))) throw unsupported();
   for (const [, object] of document.context.enumerateIndirectObjects()) {

@@ -49,6 +49,9 @@ export function LargeDocumentPanel({
   useEffect(() => {
     void refresh();
   }, []);
+  useEffect(() => {
+    if (initialFile) setFile(initialFile);
+  }, [initialFile]);
   const update = (job: LargeJob) => {
     setSelected(job.id);
     setJobs((previous) => [job, ...previous.filter((j) => j.id !== job.id)]);
