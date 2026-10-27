@@ -28,24 +28,24 @@
   --harbor-category-shadow: 0 2px 6px #0003, 0 5px 12px -8px #0006;
   background-image: radial-gradient(ellipse at 50% 12%, #29d98008, transparent 52%);
 }
-/* Desktop-only mint and petrol light pools, with a calm center behind the banner. */
+/* A green base keeps the desktop canvas saturated between the soft light pools. */
 @media (min-width: 1001px) {
   :root:not(.dark) .moinpdf-shell.moinpdf-shell {
-    background-color: #f8fdfb;
+    background-color: #c8ead9;
     background-image:
       radial-gradient(
         ellipse 44vw 60vh at 0% 10%,
-        color-mix(in srgb, var(--brand-teal) 45%, transparent),
+        color-mix(in srgb, var(--harbor-light) 20%, transparent),
         transparent 100%
       ),
       radial-gradient(
         ellipse 44vw 62vh at 100% 70%,
-        color-mix(in srgb, var(--harbor-action-end) 38%, transparent),
+        color-mix(in srgb, var(--harbor-action-end) 30%, transparent),
         transparent 100%
       ),
       radial-gradient(
         ellipse 38vw 42vh at 0% 104%,
-        color-mix(in srgb, var(--brand-green) 30%, transparent),
+        color-mix(in srgb, var(--brand-green) 20%, transparent),
         transparent 100%
       );
   }
@@ -55,12 +55,6 @@
       radial-gradient(ellipse 44vw 60vh at 0% 10%, #148b8c60, transparent 100%),
       radial-gradient(ellipse 44vw 62vh at 100% 70%, #148b8c50, transparent 100%),
       radial-gradient(ellipse 38vw 42vh at 0% 104%, #148b8c60, transparent 100%);
-  }
-}
-/* A slightly deeper mint canvas separates desktop panels without changing the palette. */
-@media (min-width: 1101px) {
-  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
-    background-color: #e8f2ee;
   }
 }
 .moinpdf-shell .app-toolbar {
