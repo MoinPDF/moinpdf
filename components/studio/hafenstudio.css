@@ -31,7 +31,7 @@
 .moinpdf-shell.moinpdf-shell {
   --project-bar-height: 88px;
   --legal-footer-height: 90px;
-  --harbor-content-width: min(1180px, calc(100% - 60px));
+  --harbor-content-width: min(1760px, max(1180px, 84vw), calc(100% - 60px));
   background-color: var(--harbor-page);
   background-image:
     radial-gradient(ellipse at 0 0, #7ccab210, transparent 48%),
