@@ -4,6 +4,10 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased
+
+- Large desktop views now use available monitor width responsively (up to 1,760 px instead of a fixed 1,180 px). Navigation, search, upload, categories and quick-access cards gain more readable sizing there. Tablet and mobile layouts and the original PDF rendering remain unchanged. Browser regressions also cover 1,600, 1,920 and 2,560 px wide screens.
+
 ## 0.24.0 – 27 October 2026
 
 - The complete 118-tool workspace receives its own release version. The two additional tools are “Change colors & background” and “Process large PDFs”. Existing 0.23.0 release artifacts remain unchanged.
