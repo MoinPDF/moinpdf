@@ -9,6 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Noch nicht veröffentlicht
+
+- Große Desktopansichten nutzen die Monitorbreite dynamisch (bis 1.760 px statt starrer 1.180 px). Navigation, Suchzeile, Upload, Kategorien und Schnellzugriff erhalten dort besser lesbare Größen. Die Mobil- und Tabletansichten sowie die tatsächliche PDF-Darstellung bleiben unverändert. Browserregressionen prüfen auch 1.600, 1.920 und 2.560 Pixel breite Ansichten.
+
 ## 0.24.0 – 27. Oktober 2026
 
 - Der vollständige Stand mit 118 Werkzeugen erhält eine eigene Version. Die beiden zusätzlichen Werkzeuge sind „Farben & Hintergrund ändern“ und „Große PDFs verarbeiten“. Bestehende 0.23.0-Release-Artefakte bleiben erhalten.
