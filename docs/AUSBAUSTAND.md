@@ -48,6 +48,10 @@ Werkzeuge, eine Dokumentübersicht und eine mobile Aktionsleiste im gemeinsamen
 PDF-Arbeitsbereich. Die wechselnde Seemann-Grafik bleibt auf Mobilgeräten sichtbar;
 in der Desktopansicht ab 1101 Pixeln ist sie ausgeblendet. Die globale Werkzeugsuche
 steht am Desktop in einer eigenen Zeile unter der oberen Leiste.
+Auf großen Desktopfenstern ab 1600 CSS-Pixeln nutzt die Oberfläche bis zu
+1760 Pixel Breite; Navigation, Upload, Kategorien und Schnellzugriff sind dort
+größer und besser lesbar. Der PDF-Inhalt selbst wird nicht künstlich skaliert.
+Tablet- und Mobilansichten bleiben in ihrer Größe und Anordnung unverändert.
 Werkzeugkacheln und Symbole bleiben ruhig. Der Projekt-Button ist dezent weiß-grün.
 Auch Projektstände ohne Seiten bieten Rückgängig und Wiederholen.
 Die Werkzeugseitenleiste ist zunächst eingeklappt. Header und Upload behalten ihre

@@ -76,10 +76,45 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             if theme == 'dark':
                 page.locator('.theme-toggle').click()
                 expect(page.locator('html')).to_have_class('dark')
-            for width in (320, 390, 600, 768, 1000, 1024, 1100, 1101, 1280, 1366, 1440, 1920):
+            for width in (320, 390, 600, 768, 1000, 1024, 1100, 1101, 1280, 1366, 1440, 1600, 1920, 2560):
                 page.set_viewport_size({'width':width, 'height':1000 if width > 1000 else 844})
                 geometry = home_geometry(page, width)
                 within_viewport(page, f'home {theme} {width}')
+                if width >= 1600:
+                    expected = min(1760, max(1180, width * 0.84), width - 60)
+                    # Browser viewport changes and CSS viewport-unit recalculation can
+                    # reach different animation frames. Wait for the matching layout.
+                    settled = page.wait_for_function('''({width, expected}) => {
+                        if (innerWidth !== width) return false;
+                        const rect = selector => document.querySelector(selector).getBoundingClientRect().toJSON();
+                        const font = selector => parseFloat(getComputedStyle(document.querySelector(selector)).fontSize);
+                        const home = rect('.harbor-home');
+                        if (Math.abs(home.width - expected) > 2) return false;
+                        return {
+                            header: rect('.app-toolbar'),
+                            home,
+                            search: rect('.desktop-search-row'),
+                            upload: rect('.harbor-upload'),
+                            card: rect('.tool-mosaic-grid[data-mosaic-kind="quick"] .tool-mosaic-card'),
+                            categoryFont: font('.mosaic-category'),
+                            cardTitleFont: font('.tool-mosaic-grid[data-mosaic-kind="quick"] strong'),
+                            cardDescriptionFont: font('.tool-mosaic-grid[data-mosaic-kind="quick"] small'),
+                            uploadButtonFont: font('.harbor-upload-cta'),
+                        };
+                    }''', arg={'width': width, 'expected': expected}, timeout=15000)
+                    try:
+                        sizes = settled.json_value()
+                    finally:
+                        settled.dispose()
+                    assert abs(sizes['home']['width'] - expected) <= 2, (theme, width, sizes)
+                    assert abs(sizes['header']['width'] - sizes['home']['width']) <= 2
+                    assert abs(sizes['search']['width'] - sizes['home']['width']) <= 2
+                    assert sizes['upload']['height'] >= 212
+                    assert sizes['card']['height'] >= 136
+                    assert sizes['categoryFont'] >= 14
+                    assert sizes['cardTitleFont'] >= 18
+                    assert sizes['cardDescriptionFont'] >= 14
+                    assert sizes['uploadButtonFont'] >= 17
                 category_order(page, f'home {theme} {width}')
                 image, upload, search = (geometry[key] for key in ('image', 'upload', 'search'))
                 assert image['y'] + image['height'] <= upload['y'], (theme, width, 'photo order')
@@ -105,7 +140,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 expect(nav).to_have_count(1)
                 expect(nav.get_by_role('button', name='Start', exact=True)).to_be_visible()
                 expect(nav.get_by_role('button', name='Werkzeuge', exact=True)).to_be_visible()
-                if width in (390, 768, 1440):
+                if width in (390, 768, 1440, 1920):
                     page.screenshot(path=str(out/f'harbor-home-{width}-{theme}.png'), full_page=True)
                 checks.append(f'{width}px {theme}: image, upload, search, cards, navigation, no overflow')
                 if width in (390, 1440):

@@ -806,3 +806,125 @@ dialog.editor-settings-sheet::backdrop {
     max-height: 40vh;
   }
 }
+
+/* Large desktop: use the available monitor space without changing tablet/mobile layouts. */
+@media (min-width: 1600px) {
+  .moinpdf-shell .app-toolbar {
+    padding-inline: 34px;
+  }
+  .moinpdf-shell .harbor-brand {
+    width: 248px;
+  }
+  .moinpdf-shell .harbor-wordmark > span {
+    font-size: 12px;
+  }
+  .moinpdf-shell .harbor-nav-item {
+    min-height: 46px;
+    padding-inline: 16px;
+    font-size: 14px;
+  }
+  .moinpdf-shell .app-toolbar .project-toggle {
+    padding-inline: 15px;
+    font-size: 14px;
+  }
+  .moinpdf-shell .appearance-button {
+    font-size: 13px;
+  }
+  .moinpdf-shell .desktop-search-row .desktop-command-trigger {
+    min-height: 60px;
+    padding: 15px 22px;
+    font-size: 16px;
+  }
+  .moinpdf-shell .upload-entry.harbor-home {
+    gap: 22px;
+    margin-top: 16px;
+  }
+  .moinpdf-shell .harbor-welcome {
+    padding: 23px 23px 12px;
+  }
+  .moinpdf-shell .harbor-upload {
+    min-height: 212px;
+    gap: 12px;
+    padding: 26px 24px;
+  }
+  .moinpdf-shell .harbor-upload-title {
+    font-size: 19px;
+  }
+  .moinpdf-shell .harbor-upload-cta {
+    width: min(100%, 500px);
+    min-height: 56px;
+    font-size: 17px;
+  }
+  .moinpdf-shell .harbor-upload-description {
+    font-size: 13px;
+  }
+  .moinpdf-shell .harbor-home .upload-shortcut {
+    font-size: 13px;
+  }
+  .moinpdf-shell.moinpdf-shell .mosaic-category {
+    min-height: 54px;
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+  .moinpdf-shell.moinpdf-shell .mosaic-category > svg {
+    width: 23px;
+    height: 23px;
+  }
+  .moinpdf-shell .quick-access-heading h2 {
+    font-size: 24px;
+  }
+  .moinpdf-shell .quick-access-settings {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] {
+    gap: 16px;
+  }
+  .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] > .tool-mosaic-card {
+    min-height: 136px;
+    padding: 24px;
+    gap: 20px;
+  }
+  .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] .tool-mosaic-art,
+  .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] .tool-mosaic-art svg {
+    width: 54px;
+    height: 54px;
+  }
+  .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] .tool-mosaic-art {
+    flex-basis: 54px;
+  }
+  .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] strong {
+    font-size: 18px;
+  }
+  .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] small {
+    font-size: 14px;
+  }
+  .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] .tool-mosaic-arrow {
+    flex-basis: 28px;
+    width: 28px;
+    height: 28px;
+  }
+  .moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='category'] {
+    gap: 18px;
+  }
+  .moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='category'] .tool-mosaic-card {
+    min-height: 230px;
+    padding: 28px;
+  }
+  .moinpdf-shell .chooser-content,
+  .moinpdf-shell .chooser-header {
+    max-width: var(--harbor-content-width);
+  }
+  .moinpdf-shell .studio-main {
+    max-width: min(1660px, calc(100% - 64px));
+  }
+  .moinpdf-shell .workspace-tool-description {
+    font-size: 15px;
+  }
+  .moinpdf-shell .apply-button,
+  .moinpdf-shell .conversion-submit,
+  .moinpdf-shell .security-save {
+    min-height: 52px;
+    font-size: 15px;
+  }
+}
