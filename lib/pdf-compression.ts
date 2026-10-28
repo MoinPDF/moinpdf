@@ -196,7 +196,7 @@ export async function shrinkPdfImages(
           dict.set(PDFName.of('Length'), PDFNumber.of(content.length));
           doc.context.assign(candidate.ref, PDFRawStream.of(dict, content));
           changed++;
-        } catch (error) {
+        } catch {
           child.throwIfAborted();
           // Unsupported or damaged individual images retain their original bytes.
           skipped++;
