@@ -92,7 +92,7 @@ with sync_playwright() as api:
                     page.get_by_role('button',name=t('Zurück zur Auswahl','Back to selection'),exact=True).click()
                     page.locator('.chooser-tool[data-tool-id=compress]').click()
                     page.get_by_role('button',name=t('Kleine Datei Zum Teilen','Small file For sharing')).click()
-                    page.locator('.settings-panel').get_by_role('button',name=t('Komprimieren','Compress'),exact=True).click()
+                    page.get_by_role('button',name=t('Komprimieren','Compress'),exact=True).click()
                     download('-scan',advanced=False)
                     page.screenshot(path=str(out/(name+'-scan-result.png')),full_page=True)
                     assert not errors,errors
