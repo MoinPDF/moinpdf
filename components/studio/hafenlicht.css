@@ -53,8 +53,8 @@
   :root:not(.dark) .moinpdf-shell .app-toolbar,
   :root:not(.dark) .moinpdf-shell .chooser-search-dock {
     background: #f5fbf8;
-    backdrop-filter: none;
     -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   :root.dark .moinpdf-shell.moinpdf-shell {
     background-color: #191f22;
