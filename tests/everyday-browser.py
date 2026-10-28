@@ -43,16 +43,28 @@ with pymupdf.open() as doc:
 reports=[]
 with sync_playwright() as api:
     for engine in os.getenv('MOINPDF_TEST_BROWSERS','chromium').split(','):
-        browser=getattr(api,engine).launch()
-        try:
-            for en in (False,True):
+        for en in (False,True):
+            # Each independent device/language case owns a browser process.
+            # A closed WebKit context must not carry focus or graphics state
+            # from the desktop case into the touch-emulated case.
+            browser=getattr(api,engine).launch()
+            try:
                 context=browser.new_context(viewport={'width':390 if en else 1440,'height':950},has_touch=en,accept_downloads=True,reduced_motion='reduce')
+                context.tracing.start(screenshots=True,snapshots=True,sources=True)
                 page=context.new_page();page.set_default_timeout(45000);errors=[]
                 page.on('pageerror',lambda error:errors.append(str(error)))
                 name=f'{engine}-'+('touch-en' if en else 'desktop-de')
                 def t(de,english):return english if en else de
                 def button(de,english):return page.get_by_role('button',name=t(de,english),exact=True)
                 def label(de,english):return page.get_by_label(t(de,english),exact=True)
+                def fill_detail(de,english,value):
+                    control=label(de,english)
+                    # fill() alone does not check stable geometry or hit targets.
+                    # Establish actual user focus before writing, then verify
+                    # both the committed value and its retention after blur.
+                    control.click();expect(control).to_be_focused()
+                    control.fill(value);expect(control).to_have_value(value)
+                    control.press('Tab');expect(control).to_have_value(value)
                 def choose(de,english):
                     page.locator('.chooser-tool').filter(has=page.get_by_text(t(de,english),exact=True)).click()
                     expect(page.get_by_role('heading',name=t(de,english),exact=True)).to_be_visible()
@@ -67,9 +79,9 @@ with sync_playwright() as api:
                     page.locator('input[type=file]').first.set_input_files(str(form_path.resolve()))
                     expect(page.locator('.chooser-tool')).to_have_count(118)
                     choose('Formularhelfer','Form helper')
-                    label('Profilname','Profile name').fill('Fictional family')
-                    label('Vorname','First name').fill('Jörg')
-                    label('Nachname','Last name').fill('Müller')
+                    fill_detail('Profilname','Profile name','Fictional family')
+                    fill_detail('Vorname','First name','Jörg')
+                    fill_detail('Nachname','Last name','Müller')
                     expect(label('Vorname','First name')).to_have_value('Jörg')
                     expect(label('Nachname','Last name')).to_have_value('Müller')
                     # Autofill can deliver several input events before React commits.
@@ -85,8 +97,8 @@ with sync_playwright() as api:
                     }''')
                     expect(label('Vorname','First name')).to_have_value('Jörg Beispiel')
                     expect(label('Nachname','Last name')).to_have_value('Müller Beispiel')
-                    label('Vorname','First name').fill('Jörg')
-                    label('Nachname','Last name').fill('Müller')
+                    fill_detail('Vorname','First name','Jörg')
+                    fill_detail('Nachname','Last name','Müller')
                     button('Profil speichern','Save profile').click()
                     expect(page.get_by_text(t('Profil auf diesem Gerät gespeichert.','Profile saved on this device.'),exact=True)).to_be_visible()
                     expect(label('Vorname','First name')).to_have_value('Jörg')
@@ -159,8 +171,9 @@ with sync_playwright() as api:
                 except Exception as error:
                     reports.append({'case':name,'passed':False,'error':str(error),'pageErrors':errors})
                     page.screenshot(path=str(out/f'{name}-failure.png'),full_page=True)
+                    context.tracing.stop(path=str(out/f'{name}-trace.zip'))
                     raise
                 finally:
                     (out/'report.json').write_text(json.dumps(reports,indent=2,ensure_ascii=False));context.close()
-        finally:browser.close()
+            finally:browser.close()
 print('PASS: form profiles, reviewed PDF export, scan entries, receipt crop/preview/export, real A4 pixels, state restoration and desktop/touch-emulated layouts.')
