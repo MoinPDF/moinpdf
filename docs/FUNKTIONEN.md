@@ -3,7 +3,7 @@
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.25.0**
+**Aktuelle Grenzen aus der Implementierung · 0.25.1**
 
 | Funktion | Wert |
 | --- | --- |

@@ -180,7 +180,19 @@ def cff(page,name):
     return {'scope':'original static CFF outline reuse and independently readable vector export'}
 
 def high_scan(page,name):
-    open_editor(page,'high-scan');target=page.get_by_role('button',name=re.compile(r'^Text bearbeiten: Rechnung')).first;expect(target).to_be_visible(timeout=180000)
+    open_editor(page,'high-scan')
+    # Check decoded pixels before waiting for OCR. A visible <img> can still
+    # contain an incorrectly blank WebKit canvas after a large scan render.
+    page.wait_for_function('''() => {
+        const image=document.querySelector('.editor-sheet > img');
+        if (!image?.complete || !image.naturalWidth) return false;
+        const canvas=document.createElement('canvas');canvas.width=160;canvas.height=224;
+        const context=canvas.getContext('2d');context.drawImage(image,0,0,160,224);
+        const pixels=context.getImageData(0,0,160,224).data;
+        let ink=0;for(let i=0;i<pixels.length;i+=4)if(Math.min(pixels[i],pixels[i+1],pixels[i+2])<180)ink++;
+        canvas.width=canvas.height=0;return ink>40;
+    }''',timeout=120000)
+    target=page.get_by_role('button',name=re.compile(r'^Text bearbeiten: Rechnung')).first;expect(target).to_be_visible(timeout=180000)
     r=target.bounding_box();sheet=page.locator('.editor-sheet').bounding_box();box=[(r['x']-sheet['x'])/sheet['width'],(r['y']-sheet['y'])/sheet['height'],r['width']/sheet['width'],r['height']/sheet['height']];target.click();page.get_by_label('Text direkt in der PDF bearbeiten',exact=True).fill('BELEG');page.get_by_role('toolbar',name='Text direkt formatieren').get_by_label('Textgröße in Punkt',exact=True).fill('12');file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'high-scan.pdf') as before:
         assert after[0].get_text().count('BELEG')==1
@@ -260,11 +272,15 @@ def execute(browser,name,width,callback):
         report['results'].append(result);(out/'adaptive-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8');context.close();print(result['status'].upper()+': '+name,flush=True)
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
-        browser=getattr(api,engine).launch();report[engine]=browser.version
         cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight),('payroll',1440,payroll),('payroll-touch',390,payroll)]
         selected=os.environ.get('MOINPDF_ADAPTIVE_CASES','').split(',')
         for suffix,width,callback in cases:
             if selected!=[''] and suffix not in selected:continue
-            execute(browser,engine+'-adaptive-'+suffix,width,callback)
-        browser.close()
+            # Independent acceptance cases must not inherit accumulated native
+            # canvas/GPU allocations from previous browser contexts. Within-case
+            # editing, undo, export and retained-content assertions still share
+            # their original context and remain unchanged.
+            browser=getattr(api,engine).launch();report[engine]=browser.version
+            try:execute(browser,engine+'-adaptive-'+suffix,width,callback)
+            finally:browser.close()
 raise SystemExit(0 if report['results'] and all(r['status']=='passed'for r in report['results'])else 1)

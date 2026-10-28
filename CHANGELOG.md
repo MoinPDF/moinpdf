@@ -9,7 +9,7 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Noch nicht veröffentlicht – 28. Oktober 2026
+## 0.25.1 – 28. Oktober 2026
 
 - Scan-Komprimierung verarbeitet auch Graustufen-, Flate- und weitere geeignete Bildressourcen mit ihren PDF-Farbdefinitionen. Text, Links, Formularwerte und Seitengeometrie bleiben erhalten; nicht unterstützte Bilder bleiben unangetastet. Reine Strukturverbesserungen werden nicht mehr als Bildverkleinerung beschrieben.
 - Wunschgröße verwendet ebenfalls lokale Bildverkleinerung und zeigt Prozentfortschritt, Komprimierungsstufe, Bildzähler und Abbruch. Jede Ausgabe wird gegen die Zielgröße gemessen.

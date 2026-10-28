@@ -4,7 +4,7 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## Unreleased – 28 October 2026
+## 0.25.1 – 28 October 2026
 
 - Scan compression also handles grayscale, Flate and other compatible image resources using their PDF color definitions. Text, links, form values and page geometry are preserved; unsupported images remain untouched. Structure-only improvements are no longer described as image reduction.
 - Target-size compression uses local image resizing too, with percentage progress, compression stage, image counter and cancellation. Every output is measured against the target.

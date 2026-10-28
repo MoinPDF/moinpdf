@@ -8,7 +8,7 @@ Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvor
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 27. Oktober 2026 · Version 0.25.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 28. Oktober 2026 · Version 0.25.1. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 Der Desktop-Hintergrund im Light Mode verwendet ab 1.001 Pixeln ein durchgehend satteres Mintgrün. Die grünen Verläufe liegen auf einer grünen Grundfläche, sodass auch zwischen ihnen keine blassgrauen Bereiche entstehen. Helle Bedienflächen bleiben klar vom Hintergrund getrennt.
 
