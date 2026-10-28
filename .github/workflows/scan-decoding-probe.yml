@@ -1,0 +1,63 @@
+name: Isolated scan decoding diagnosis
+on:
+  push:
+    branches: [fix/webkit-scan-rendering]
+permissions:
+  contents: read
+concurrency:
+  group: scan-decoding-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  decode:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [webkit, chromium]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Prepare independent renderer
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile --ignore-scripts
+          bash scripts/ci-prepare-apt.sh
+          python -m pip install playwright==1.64.0
+          python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Generate fictional high-resolution scan
+        run: |
+          node --input-type=module <<'JS'
+          import {mkdir, writeFile} from 'node:fs/promises';
+          import {createRequire} from 'node:module';
+          import {PDFDocument} from 'pdf-lib';
+          const require = createRequire(import.meta.url);
+          const pdfRequire = createRequire(require.resolve('pdfjs-dist/package.json'));
+          const {createCanvas} = pdfRequire('@napi-rs/canvas');
+          const c = createCanvas(2500,3500), x = c.getContext('2d');
+          const g = x.createLinearGradient(0,0,2500,3500);
+          g.addColorStop(0,'#eee6d8'); g.addColorStop(1,'#fff8ec');
+          x.fillStyle=g; x.fillRect(0,0,2500,3500);
+          x.fillStyle='#111'; x.font='96px sans-serif';
+          x.fillText('Rechnung 2026',250,500); x.fillText('Betrag 125,50 EUR',250,1000);
+          x.fillRect(200,520,2000,3);
+          const d=await PDFDocument.create(), p=d.addPage([500,700]);
+          p.drawImage(await d.embedPng(c.toBuffer('image/png')),{x:0,y:0,width:500,height:700});
+          await mkdir('.cache/scan-decoding',{recursive:true});
+          await writeFile('.cache/scan-decoding/high-scan.pdf',await d.save({useObjectStreams:false}));
+          JS
+      - name: Compare worker bitmap and raw-pixel decoding
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+        run: python tests/pdf-image-decoding-probe.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: scan-decoding-${{ matrix.browser }}
+          path: .cache/scan-decoding/
+          retention-days: 7
