@@ -223,9 +223,9 @@ export const guides = {
   ], 'Neu geschriebene PDF, sofern die vorhandenen Daten reparierbar sind.', 'Fehlende oder zerstörte Inhalte können nicht zurückgeholt werden. Bewahre die beschädigte Originaldatei auf. Vorhandene digitale Signaturen werden durch das Neuschreiben ungültig.'),
   'optimize-pdf': guide('Eine PDF, die unter ein bestimmtes Dateigrößenlimit passen soll.', [
     'Wähle die Datei und trage die gewünschte maximale Größe in MB ein.',
-    'Wähle verlustfreie Optimierung oder Bildkomprimierung. Starte die Verarbeitung und lies den Hinweis zur tatsächlich erreichten Dateigröße.',
+    'Wähle verlustfreie Optimierung oder Bildkomprimierung. Während der Verarbeitung zeigen Prozentbalken, Komprimierungsstufe und Bildzähler den Fortschritt. Du kannst den Vorgang abbrechen.',
     'Kontrolliere kleine Schrift und Bilder im Ergebnis. Ist das Ziel nicht erreichbar, teile die Datei mit „Nach Dateigröße teilen“ oder nutze vorsichtig stärkere Scan-Komprimierung.'
-  ], 'Optimierte PDF mit Größenangabe; bei unerreichbarem Ziel die kleinste gefundene Variante mit Hinweis.', 'Text, Links und Formulare bleiben erhalten; Bildqualität kann sinken. Die Browser-Ausgabe komprimiert geeignete Bilder ohne Auflösungsreduktion, die vollständige Installation kann sie zusätzlich verkleinern. Eine Zielgröße lässt sich nicht für jede Datei erreichen.'),
+  ], 'Optimierte PDF mit Größenangabe; bei unerreichbarem Ziel die kleinste gefundene Variante mit Hinweis.', 'Text, Links und Formulare bleiben erhalten; Bildqualität kann sinken. Auch lokal im Browser werden geeignete Scanbilder in Auflösung und JPEG-Qualität verkleinert. Jede Variante wird nachgemessen. Eine Zielgröße lässt sich nicht für jede Datei erreichen.'),
   'scan-split': guide('Scans mit mehreren Fotos oder Belegen auf einer Seite.', [
     'Lasse Ausschnitte auf der aktuellen oder allen Seiten erkennen. Passe den freien Abstand zwischen Vorlagen an, wenn Absätze fälschlich getrennt werden.',
     'Prüfe die Rahmen auf jeder markierten Seite. Entferne falsche Vorschläge und ziehe fehlende Ausschnitte selbst auf.',
@@ -477,7 +477,7 @@ export const guides = {
   ], 'Ein Bild pro ausgewählter Seite im ZIP.', 'Die Bilddateien enthalten die sichtbare Seitendarstellung, keine interaktiven Felder, Links oder kopierbare Textebene. PNG eignet sich häufig für scharfe Schrift, JPG für kompakte Fotodarstellungen.'),
   'compress': guide('PDFs mit Text, Grafiken oder Bildern, beispielsweise eingescannte Briefe.', [
     'Wähle „Inhalte erhalten, Bilder verkleinern“ oder „Verlustfrei optimieren“. Für die Bildverkleinerung stehen „Sanft“, „Ausgewogen“ und „Möglichst klein“ bereit.',
-    'Starte die Komprimierung. Geeignete RGB-JPEGs werden einzeln verkleinert; andere Bildformate bleiben erhalten. Verlustfreie Optimierung ändert keine Bildpixel.',
+    'Starte die Komprimierung. Geeignete Farb- und Graustufenbilder, auch Flate-komprimierte Scans, werden einzeln verkleinert. Maskierte Bilder, 1-Bit-Scans, Bilder über 40 Megapixel und nicht unterstützte Farbräume bleiben unverändert. Verlustfreie Optimierung ändert keine Bildpixel.',
     'Vergleiche Größe und Lesbarkeit in der Original-/Ergebnisansicht mit gemeinsamem Zoom. Wähle bei Bedarf eine höhere Qualität. Eine kleinere Ausgabe ist nicht garantiert.'
   ], 'Optimierte PDF; Text, Vektoren, Links und Formularfelder bleiben im Standardmodus erhalten.', 'Bei Dokumenten mit Formularen, Lesezeichen oder Tags jeweils eine vollständige einzelne PDF verwenden. Signierte PDFs werden abgewiesen. Nur der ausdrücklich gewählte Modus „Seiten als Bilder neu aufbauen“ entfernt Text, Links und Formularfunktionen.'),
   'merge': guide('Mehrere PDFs und gegebenenfalls JPG-/PNG-Bilder.', [

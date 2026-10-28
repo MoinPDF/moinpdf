@@ -49,6 +49,13 @@
         transparent 100%
       );
   }
+  /* Opaque light surfaces avoid stale blur/compositing tiles around navigation. */
+  :root:not(.dark) .moinpdf-shell .app-toolbar,
+  :root:not(.dark) .moinpdf-shell .chooser-search-dock {
+    background: #f5fbf8;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
   :root.dark .moinpdf-shell.moinpdf-shell {
     background-color: #191f22;
     background-image:

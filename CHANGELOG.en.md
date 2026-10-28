@@ -4,6 +4,13 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased – 28 October 2026
+
+- Scan compression also handles grayscale, Flate and other compatible image resources using their PDF color definitions. Text, links, form values and page geometry are preserved; unsupported images remain untouched. Structure-only improvements are no longer described as image reduction.
+- Target-size compression uses local image resizing too, with percentage progress, compression stage, image counter and cancellation. Every output is measured against the target.
+- Wide desktop views retain a readable compression workspace. Opaque light navigation surfaces avoid grey blur-layer remnants.
+- Fictional scan regressions cover actual reduction, rendered appearance, preserved content, masks, broken images, target sizes and cancellation; browser checks cover wide and mobile layouts.
+
 ## 0.25.0 – 27 October 2026
 
 - Large desktop views now use available monitor width responsively (up to 1,760 px instead of a fixed 1,180 px). Navigation, search, upload, categories and quick-access cards gain more readable sizing there. Tablet and mobile layouts and the original PDF rendering remain unchanged. Browser regressions also cover 1,600, 1,920 and 2,560 px wide screens.

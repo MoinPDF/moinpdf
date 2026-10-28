@@ -2,6 +2,7 @@ import { openSource, pdfBlob, MAX_BYTES, MAX_PAGES, filenameStem, type Source } 
 import { rewritePdf, optimizePdf, PdfPasswordError } from './pdf-security';
 import { PDFDocument } from 'pdf-lib';
 import type { ExportFile, RunContext } from './advanced-types';
+import { shrinkPdfImages } from './pdf-compression';
 
 export async function repairFile(file: File, ctx: RunContext): Promise<ExportFile> {
   if (!file.size || file.size > MAX_BYTES)
@@ -71,18 +72,42 @@ export async function optimizeBrowser(
     throw new Error('Bitte eine Zielgröße zwischen 0,05 und 80 MB wählen.');
   const target = Math.floor(targetMB * 1024 * 1024);
   let best: Uint8Array = source.bytes;
-  const attempts: (number | undefined)[] = images ? [undefined, 90, 75, 60, 45] : [undefined];
-  if (best.length > target)
+  let resized = false;
+  ctx.signal.throwIfAborted();
+  if (best.length > target) {
+    ctx.report({ percent: 2, label: 'Verlustfrei optimieren …' });
+    const lossless = await optimizePdf(source.bytes, undefined, ctx.signal);
+    if (lossless.length < best.length) best = lossless;
+    const attempts = images ? ['gentle', 'balanced', 'small'] : [];
     for (const [i, quality] of attempts.entries()) {
-      ctx.signal.throwIfAborted();
-      ctx.report({
-        percent: (i / attempts.length) * 95,
-        label: quality ? `Bilder optimieren · Qualität ${quality}` : 'Verlustfrei optimieren …',
-      });
-      const candidate = await optimizePdf(source.bytes, quality, ctx.signal);
-      if (candidate.length < best.length) best = candidate;
       if (best.length <= target) break;
+      ctx.signal.throwIfAborted();
+      const start = 12 + i * 27;
+      ctx.report({
+        percent: start,
+        label: `Komprimierungsstufe ${i + 1} / ${attempts.length} · Bilder vorbereiten …`,
+      });
+      // Each candidate starts from the original to avoid repeated JPEG losses.
+      const candidate = await shrinkPdfImages(source.bytes, quality, ctx.signal, (done, total) =>
+        ctx.report({
+          percent: start + (22 * done) / total,
+          label: `Komprimierungsstufe ${i + 1} / ${attempts.length} · Bild ${done} / ${total}`,
+        }),
+      );
+      if (candidate.bytes.length < best.length) {
+        best = candidate.bytes;
+        resized = candidate.changed > 0;
+      }
+      if (candidate.changed) {
+        ctx.report({ percent: start + 23, label: 'PDF-Struktur und Dateigröße prüfen …' });
+        const optimized = await optimizePdf(candidate.bytes, undefined, ctx.signal);
+        if (optimized.length < best.length) {
+          best = optimized;
+          resized = true;
+        }
+      }
     }
+  }
   ctx.signal.throwIfAborted();
   ctx.report({ percent: 100, label: 'Dateigröße geprüft' });
   const changed = best !== source.bytes;
@@ -91,6 +116,18 @@ export async function optimizeBrowser(
     filename: filenameStem(source.name) + (changed ? '-optimiert' : '-original') + '.pdf',
     kind: 'pdf',
     pages: source.pdf.numPages,
-    note: `${best.length <= target ? 'Zielgröße erreicht.' : 'Zielgröße nicht erreicht; die kleinste gefundene Datei wird ausgegeben.'} ${changed ? `${Math.round((1 - best.length / source.bytes.length) * 100)} % kleiner. Text, Links und Formularfelder bleiben erhalten. Digitale Signaturen werden durch das Neuschreiben ungültig.` : 'Das Original ist bereits die kleinste Variante und bleibt unverändert.'} In dieser Ausgabe werden Bilder bei Bedarf als JPEG komprimiert, jedoch nicht in ihrer Auflösung verkleinert.`,
+    note: [
+      best.length <= target
+        ? 'Zielgröße erreicht.'
+        : 'Zielgröße nicht erreicht; die kleinste gefundene Datei wird ausgegeben.',
+      changed
+        ? `${Math.round((1 - best.length / source.bytes.length) * 100)} % kleiner. Text, Links und Formularfelder bleiben erhalten. Digitale Signaturen werden durch das Neuschreiben ungültig.`
+        : 'Das Original ist bereits die kleinste Variante und bleibt unverändert.',
+      resized
+        ? 'Scanbilder wurden einzeln verkleinert. Bitte die Bildqualität im Ergebnis prüfen.'
+        : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
   };
 }

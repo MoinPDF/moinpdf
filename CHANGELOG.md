@@ -9,6 +9,13 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Noch nicht veröffentlicht – 28. Oktober 2026
+
+- Scan-Komprimierung verarbeitet auch Graustufen-, Flate- und weitere geeignete Bildressourcen mit ihren PDF-Farbdefinitionen. Text, Links, Formularwerte und Seitengeometrie bleiben erhalten; nicht unterstützte Bilder bleiben unangetastet. Reine Strukturverbesserungen werden nicht mehr als Bildverkleinerung beschrieben.
+- Wunschgröße verwendet ebenfalls lokale Bildverkleinerung und zeigt Prozentfortschritt, Komprimierungsstufe, Bildzähler und Abbruch. Jede Ausgabe wird gegen die Zielgröße gemessen.
+- Breite Desktopansichten behalten einen normal breiten Komprimierungsbereich. Deckende helle Navigationsflächen vermeiden graue Reste der Unschärfe-Ebene.
+- Regressionen mit fiktiven Scans prüfen tatsächliche Größenreduktion, Bilddarstellung, Inhaltserhalt, Masken, fehlerhafte Bilder, Zielgrößen und Abbruch; Browserprüfungen decken breite Ansichten und Mobilgrößen ab.
+
 ## 0.25.0 – 27. Oktober 2026
 
 - Große Desktopansichten nutzen die Monitorbreite dynamisch (bis 1.760 px statt starrer 1.180 px). Navigation, Suchzeile, Upload, Kategorien und Schnellzugriff erhalten dort besser lesbare Größen. Die Mobil- und Tabletansichten sowie die tatsächliche PDF-Darstellung bleiben unverändert. Browserregressionen prüfen auch 1.600, 1.920 und 2.560 Pixel breite Ansichten.

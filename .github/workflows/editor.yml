@@ -57,6 +57,13 @@ jobs:
           bash scripts/ci-prepare-apt.sh
           python -m pip install playwright==1.64.0 pymupdf==1.26.6
           python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Scan compression, target-size status and wide layouts
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+          MOINPDF_TEST_START_SERVER: '1'
+        run: |
+          node tests/scan-compression-smoke.mjs
+          python tests/scan-compression-browser.py
       - name: Native redaction, 1000-page output and 81 MiB file-backed input
         env:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
