@@ -72,6 +72,7 @@ def check_pixels(a,b,page_index):
 
 def run_case(browser, name, width, path, scan_case=False, english=False):
     context=browser.new_context(viewport={'width':width,'height':1000},accept_downloads=True,reduced_motion='reduce',locale='en-GB' if english else 'de-DE')
+    context.tracing.start(screenshots=True,snapshots=True,sources=True)
     page=context.new_page();page.set_default_timeout(45000)
     errors=[];blocked=[]
     page.on('pageerror',lambda e:errors.append(str(e)))
@@ -244,6 +245,8 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
             (out/(name+'-failure.txt')).write_text(page.locator('body').inner_text(timeout=5000))
         except Exception as capture_error:result['capture_error']=str(capture_error)
     finally:
+        if result.get('status')=='failed':context.tracing.stop(path=str(out/(name+'-trace.zip')))
+        else:context.tracing.stop()
         if reopen:reopen.close()
         report['results'].append(result);context.close()
         (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
@@ -251,15 +254,17 @@ def run_case(browser, name, width, path, scan_case=False, english=False):
 
 with sync_playwright() as api:
     for kind in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
-        print('Launching '+kind,flush=True)
-        try:browser=getattr(api,kind).launch()
-        except Exception as e:
-            report['results'].append({'case':kind,'status':'unavailable','error':str(e)})
-            (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));continue
-        report[kind]=browser.version
-        run_case(browser,kind+'-desktop',1440,source)
-        run_case(browser,kind+'-mobile',390,source)
-        run_case(browser,kind+'-scan',1440,scan,scan_case=True)
-        run_case(browser,kind+'-english',1440,source,english=True)
-        browser.close()
+        cases=[('desktop',1440,source,False,False),('mobile',390,source,False,False),('scan',1440,scan,True,False),('english',1440,source,False,True)]
+        for suffix,width,path,scan_case,english in cases:
+            # Independent language/device cases must not inherit native worker
+            # and canvas state from earlier contexts. Editing, undo/redo, export
+            # and reopening within each case still use the same browser.
+            print('Launching '+kind+' for '+suffix,flush=True)
+            try:browser=getattr(api,kind).launch()
+            except Exception as e:
+                report['results'].append({'case':kind+'-'+suffix,'status':'unavailable','error':str(e)})
+                (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));continue
+            report[kind]=browser.version
+            try:run_case(browser,kind+'-'+suffix,width,path,scan_case=scan_case,english=english)
+            finally:browser.close()
 raise SystemExit(0 if all(r['status']=='passed' for r in report['results']) else 1)
