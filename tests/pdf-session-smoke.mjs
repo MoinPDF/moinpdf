@@ -29,7 +29,20 @@ globalThis.testPdfRenderer = {
     return { promise: current.load.promise, destroy() { current.destroyCalls++; return current.shutdown.promise; } };
   },
 };
-const { withPdfDocument, PdfTimeoutError } = await import('../.cache/pdf-session/pdf-engine.mjs');
+const { withPdfDocument, PdfTimeoutError, pdfImageOptions } = await import('../.cache/pdf-session/pdf-engine.mjs');
+await test('WebKit uses raw PDF image data, including iOS browser shells', () => {
+  for (const agent of [
+    'Mozilla/5.0 (Macintosh) AppleWebKit/605.1.15 Version/27.2 Safari/605.1.15',
+    'Mozilla/5.0 (iPad) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 CriOS/130.0 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 FxiOS/130.0 Mobile/15E148 Safari/604.1',
+  ]) assert.deepEqual(pdfImageOptions(agent), { isOffscreenCanvasSupported: false });
+  for (const agent of ['', 'Node.js/24', 'Mozilla/5.0 Firefox/143.0',
+    'Mozilla/5.0 AppleWebKit/537.36 Chrome/130.0 Safari/537.36',
+    'Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/130.0 Safari/537.36',
+    'Mozilla/5.0 AppleWebKit/537.36 Chrome/130.0 Safari/537.36 Edg/130.0',
+  ]) assert.deepEqual(pdfImageOptions(agent), {});
+});
 const flush = async () => { for (let i = 0; i < 30; i++) await Promise.resolve(); };
 const setup = t => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
@@ -55,6 +68,18 @@ await test('successful check copies input, preserves options and cleans up', asy
   assert.notEqual(state.options[0].data, bytes); assert.deepEqual(state.options[0].data, bytes);
   assert.equal(state.options[0].worker, state.workers[0]);
   assert.equal(state.options[0].disableFontFace, true); assert.equal(state.destroyCalls, 1);
+});
+await test('document verification actually passes the WebKit image policy to PDF.js', async t => {
+  const parent = setup(t);
+  const navigatorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { userAgent: 'AppleWebKit/605.1.15 Safari/605.1.15' } });
+  t.after(() => {
+    if (navigatorDescriptor) Object.defineProperty(globalThis, 'navigator', navigatorDescriptor);
+    else delete globalThis.navigator;
+  });
+  state.load.resolve({ numPages: 1 }); state.shutdown.resolve();
+  await withPdfDocument(bytes, parent.signal, async pdf => pdf.numPages);
+  assert.equal(state.options[0].isOffscreenCanvasSupported, false);
 });
 await test('cancel during opening survives an unresponsive Terminate acknowledgement', async t => {
   const parent = setup(t); let used = false;

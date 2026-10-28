@@ -9,6 +9,11 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.25.2 – 28. Oktober 2026
+
+- WebKit verarbeitet PDF-Bilddaten ohne den anfälligen Offscreen-Bitmap-Transfer. Das verhindert leere Scanvorschauen und dadurch ausbleibende OCR bei großen Bildern; Originalauflösung und PDF-Inhalte bleiben erhalten.
+- Die Browserabnahme prüft zusätzlich einen gezielt gestörten Bitmap-Transfer mit denselben Scan-, OCR-, Export- und Pixelanforderungen. Bestehende Zeitgrenzen und Veröffentlichungssperren bleiben erhalten. Die bereits veröffentlichte Version 0.25.1 wird nicht verändert.
+
 ## 0.25.1 – 28. Oktober 2026
 
 - Scan-Komprimierung verarbeitet auch Graustufen-, Flate- und weitere geeignete Bildressourcen mit ihren PDF-Farbdefinitionen. Text, Links, Formularwerte und Seitengeometrie bleiben erhalten; nicht unterstützte Bilder bleiben unangetastet. Reine Strukturverbesserungen werden nicht mehr als Bildverkleinerung beschrieben.

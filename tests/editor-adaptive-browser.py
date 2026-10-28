@@ -204,6 +204,40 @@ def high_scan(page,name):
             else:assert aa[start:start+x0*a.n]==bb[start:start+x0*a.n] and aa[start+x1*a.n:end]==bb[start+x1*a.n:end],y
     return {'scope':'8.75-megapixel scan, retained original image dimensions, exact pixels outside bounded correction and searchable replacement'}
 
+def high_scan_bitmap_loss(page,name):
+    # Reproduce the observed all-white scan with one probe pixel in the worker
+    # bitmap, without changing the PDF, renderer, UI, OCR or acceptance checks.
+    # The application must avoid this broken native transfer path on WebKit.
+    page.add_init_script('''(() => {
+        const NativeWorker=window.Worker;
+        window.pdfBitmapFaultWorkers=0;
+        window.Worker=class extends NativeWorker {
+            constructor(url,options) {
+                const target=new URL(url,location.href).href;
+                if(target.endsWith('/vendor/pdf/pdf.worker.min.mjs')) {
+                    window.pdfBitmapFaultWorkers++;
+                    const source=`
+                        const transfer=OffscreenCanvas.prototype.transferToImageBitmap;
+                        OffscreenCanvas.prototype.transferToImageBitmap=function() {
+                            if(this.width===2500 && this.height===3500) {
+                                const blank=new OffscreenCanvas(this.width,this.height);
+                                blank.getContext('2d').fillRect(0,0,1,1);
+                                return transfer.call(blank);
+                            }
+                            return transfer.call(this);
+                        };
+                        await import(${JSON.stringify(target)});
+                    `;
+                    url=URL.createObjectURL(new Blob([source],{type:'text/javascript'}));
+                }
+                super(url,options);
+            }
+        };
+    })()''')
+    result=high_scan(page,name)
+    assert page.evaluate('window.pdfBitmapFaultWorkers')>=1,'PDF worker fault injection was not installed'
+    return result
+
 def preflight(page,name):
     open_editor(page,'flow');field=pick(page,'First paragraph.');field.fill('A longer replacement needs several lines in this narrow frame.');geometry(page,'Objektbreite',160*25.4/72);geometry(page,'Objekthöhe',3)
     check=panel(page,'Änderungen vorprüfen');fix=check.get_by_role('button',name='Höhe sicher anpassen',exact=True);expect(fix).to_be_visible(timeout=90000);expect(check.locator('.editor-preflight-location')).to_have_count(1);expect(check.get_by_role('button',name='Anzeigen',exact=True)).to_have_count(1);expect(check).to_contain_text('A longer replacement');fix.click();expect(fix).to_have_count(0,timeout=90000);check.get_by_role('button',name='Originaltextentfernung testen',exact=True).click();expect(check).to_contain_text('Originaltext lässt sich physisch entfernen',timeout=120000)
@@ -273,6 +307,7 @@ def execute(browser,name,width,callback):
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
         cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight),('payroll',1440,payroll),('payroll-touch',390,payroll)]
+        if engine=='webkit':cases.append(('high-scan-bitmap-loss',390,high_scan_bitmap_loss))
         selected=os.environ.get('MOINPDF_ADAPTIVE_CASES','').split(',')
         for suffix,width,callback in cases:
             if selected!=[''] and suffix not in selected:continue

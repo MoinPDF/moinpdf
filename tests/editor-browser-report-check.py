@@ -29,6 +29,8 @@ def verify(folder, engines):
         report = json.loads((folder / filename).read_text(encoding='utf8'))
         results = report['results']
         expected = {f'{engine}-{suffix}' for engine in engines for suffix in suffixes}
+        if filename=='adaptive-report.json' and 'webkit' in engines:
+            expected.add('webkit-adaptive-high-scan-bitmap-loss')
         names = [result['case'] for result in results]
         if len(names) != len(set(names)) or set(names) != expected:
             raise ValueError(f'{filename}: missing, unexpected or duplicate cases: {names}')
