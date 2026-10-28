@@ -18,6 +18,7 @@ const suites = [
   'pdf-text',
   'pdf-session',
   'compression-presets',
+  'scan-compression',
   'studio',
   'document-check',
   'tool-search',

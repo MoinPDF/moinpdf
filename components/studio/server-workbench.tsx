@@ -88,6 +88,7 @@ function StandardServerWorkbench({
     tool === 'certificate-sign' ? 'validate' : 'create',
   );
   const [progress, setProgress] = useState('');
+  const [progressPercent, setProgressPercent] = useState<number | null>(null);
   const [backgroundAvailable, setBackgroundAvailable] = useState(false);
   const [htmlInput, setHtmlInput] = useToolDraftState(
     'StandardServerWorkbench.htmlInput:' + sources.map((s) => s.id).join(':') + tool,
@@ -371,6 +372,7 @@ function StandardServerWorkbench({
   async function process(signal: AbortSignal) {
     setBackgroundAvailable(false);
     setProgress('');
+    setProgressPercent(null);
     setResult(null);
     setReport('');
     if (localOffice) {
@@ -407,7 +409,11 @@ function StandardServerWorkbench({
       const { optimizeBrowser } = await import('@/lib/pdf-recovery');
       const out = await optimizeBrowser(source, extra.targetMB, extra.optimizeMode === 'images', {
         signal,
-        report: () => {},
+        report: ({ percent, label }) => {
+          if (signal.aborted) return;
+          setProgress(label);
+          setProgressPercent(Math.min(100, Math.max(0, Math.round(percent))));
+        },
       });
       if (!signal.aborted) setResult(out);
       return;
@@ -576,6 +582,43 @@ function StandardServerWorkbench({
           {t('Herunterladen')}
         </li>
       </ol>
+      {busy && (
+        <div
+          className="advanced-progress conversion-progress"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <JobStatusIcon working size={18} />
+          <span>
+            {ui(
+              websiteMode
+                ? 'Die Webseite wird geladen und als PDF gespeichert …'
+                : progress
+                  ? progress
+                  : 'Deine Datei wird verarbeitet …',
+            )}
+          </span>
+          {progressPercent !== null && (
+            <div className="conversion-progress-meter">
+              <progress
+                max={100}
+                value={progressPercent}
+                aria-label={ui('Fortschritt der Komprimierung')}
+              />
+              <strong>{progressPercent} %</strong>
+            </div>
+          )}
+          {backgroundAvailable && (
+            <Button variant="outline" onClick={() => controller.current?.abort('detach')}>
+              {ui('Im Hintergrund fortsetzen')}
+            </Button>
+          )}
+          <Button variant="ghost" onClick={() => controller.current?.abort()}>
+            {t('Abbrechen')}
+          </Button>
+        </div>
+      )}
       <section className="advanced-card conversion-card" aria-label={ui(info.title)}>
         <fieldset disabled={busy} className="advanced-fields conversion-fields">
           {(['office-pdf', 'optimize-pdf'].includes(tool) ||
@@ -790,7 +833,7 @@ function StandardServerWorkbench({
           {localOptimize && (
             <p className="fine-note">
               {ui(
-                'Die Verarbeitung erfolgt lokal. In dieser Ausgabe werden geeignete Bilder als JPEG komprimiert; ihre Auflösung bleibt unverändert. Mit integriertem Dokumentenserver kann MoinPDF zusätzlich die Bildauflösung reduzieren.',
+                'Die Verarbeitung erfolgt lokal. Geeignete Scanbilder werden schrittweise in Auflösung und JPEG-Qualität verkleinert. Text, Links und Formularfelder bleiben erhalten. Nicht unterstützte Bilder bleiben unverändert.',
               )}
             </p>
           )}
@@ -1035,28 +1078,6 @@ function StandardServerWorkbench({
           )}
         </fieldset>
       </section>
-      {busy && (
-        <div className="advanced-progress" role="status">
-          <JobStatusIcon working size={18} />
-          <span>
-            {ui(
-              websiteMode
-                ? 'Die Webseite wird geladen und als PDF gespeichert …'
-                : progress
-                  ? progress
-                  : 'Deine Datei wird verarbeitet …',
-            )}
-          </span>
-          {backgroundAvailable && (
-            <Button variant="outline" onClick={() => controller.current?.abort('detach')}>
-              {ui('Im Hintergrund fortsetzen')}
-            </Button>
-          )}
-          <Button variant="ghost" onClick={() => controller.current?.abort()}>
-            {t('Abbrechen')}
-          </Button>
-        </div>
-      )}
       {error && (
         <p className="error-box" role="alert">
           {ui(error)}

@@ -56,7 +56,7 @@ Export actually removes content, including images and lines inside confirmed are
 
 Many tools run locally in the browser. The complete Docker installation adds an automatically connected document server. Server jobs start only when you press the respective action button. The PDF editor automatically prepares visible pages and recognises scans locally.
 
-The browser edition offers three local PDF-to-Word modes: page layout with images and text boxes, flowing text with recognized tables and images, and plain paragraphs. Standard compression preserves PDF content and reduces compatible JPEG images; the separate target-size tool offers local structural optimization. Advanced conversions and validation require the corresponding server components; see the [server documentation](../server/README.en.md).
+The browser edition offers three local PDF-to-Word modes: page layout with images and text boxes, flowing text with recognized tables and images, and plain paragraphs. Standard compression preserves PDF content and reduces compatible scan images; the target-size tool also reduces image resolution and JPEG quality locally. Advanced conversions and validation require the corresponding server components; see the [server documentation](../server/README.en.md).
 
 ## Pages, editing and OCR
 
@@ -192,7 +192,7 @@ Advanced converters are part of the complete Docker installation, which sets up 
 - Text notes, highlights and signatures preserve existing text unless a raster tool is used on the same page. Drawn signatures are inserted images, not certificate signatures. Text notes support Latin script, including umlauts. Apply visual changes before rotating, then continue with the result.
 - Removing document information deletes the Info dictionary and document/page XMP. It does not anonymise visible content, comments, images or embedded object data.
 - “OCR & text” uses existing readable text and automatically recognises scan regions on mixed pages. “Recognise all pages again” replaces existing OCR results; visible original text is preserved and locked in the OCR correction view. Edited lines are available for TXT, DOCX and clipboard output. Before downloading or continuing with the PDF, choose “Apply corrections” to update its search layer too. The visible page image stays unchanged; use “Edit PDF” for visible text changes.
-- “Compress scans” defaults to “Preserve content, reduce images”: text, vectors, links and form fields are retained while compatible RGB JPEGs are reduced individually. “Optimize losslessly” does not change image pixels. Only “Rebuild pages as images” removes copyable text, links and form functionality. Use a complete single PDF for forms, bookmarks or tags; signed PDFs are rejected. No mode guarantees a smaller file.
+- “Compress scans” defaults to “Preserve content, reduce images”: text, vectors, links and form fields are retained while compatible color and grayscale scan images are reduced individually. “Optimize losslessly” does not change image pixels. Only “Rebuild pages as images” removes copyable text, links and form functionality. Use a complete single PDF for forms, bookmarks or tags; signed PDFs are rejected. No mode guarantees a smaller file.
 - Exports produce new files. Page-based exports may flatten form fields and lose document-wide features such as bookmarks. Form and bookmark tools preserve each other's document features; protect/unlock preserves pages, forms, bookmarks and attachments. Changes may invalidate existing digital signatures.
 - Protected PDFs are decrypted locally after a password prompt. Opening protection uses AES-256; print/copy/edit restrictions also depend on the PDF viewer. Passwords are not stored permanently.
 - E-invoices: at most 5 MB per XML file and 2,000 line items. The basic check covers essential details, date/number formats and selected totals, not full XSD, EN-16931, KoSIT, Peppol or PDF/A compliance. Line items that cannot be calculated are flagged. Payment terms remain visible without separate bank details. The reading PDF and check report attach the unchanged XML; they are not certified ZUGFeRD or PDF/A files.
@@ -218,3 +218,5 @@ These entries describe their release at the time. Current OCR supports up to eig
 ---
 
 [README](../README.en.md) · [Installation](../DOCKER.en.md) · [Development](DEVELOPMENT.en.md)
+
+- Target size: Local image resizing with measured results, a percentage bar, stage/image counters and cancellation. The desktop workspace remains readable on wide monitors. Masked images, 1-bit scans, images above 40 megapixels and unsupported color spaces remain unchanged; unattainable targets are explicitly reported.
