@@ -76,7 +76,7 @@ with sync_playwright() as api:
                         assert style['blur']=='none' and style['color'].startswith('rgb('),style
                     page.screenshot(path=str(out/(name+'-target-layout.png')),full_page=True)
                     page.get_by_label(t('Gewünschte maximale Größe (MB)','Desired maximum size (MB)'),exact=True).fill('0.7')
-                    page.get_by_role('button',name=t('PDF optimieren','Optimize PDF'),exact=True).click()
+                    page.get_by_role('button',name=t('PDF optimieren','Optimise PDF'),exact=True).click()
                     meter=page.get_by_role('progressbar',name=t('Fortschritt der Komprimierung','Compression progress'))
                     expect(meter).to_be_visible(timeout=30000)
                     expect(meter).to_be_in_viewport()
@@ -84,10 +84,10 @@ with sync_playwright() as api:
                     page.screenshot(path=str(out/(name+'-target-progress.png')))
                     page.locator('.conversion-progress').get_by_role('button',name=t('Abbrechen','Cancel'),exact=True).click()
                     expect(page.locator('.conversion-progress')).to_have_count(0,timeout=30000)
-                    expect(page.get_by_role('button',name=t('PDF optimieren','Optimize PDF'),exact=True)).to_be_enabled()
-                    page.get_by_role('button',name=t('PDF optimieren','Optimize PDF'),exact=True).click()
+                    expect(page.get_by_role('button',name=t('PDF optimieren','Optimise PDF'),exact=True)).to_be_enabled()
+                    page.get_by_role('button',name=t('PDF optimieren','Optimise PDF'),exact=True).click()
                     target=download('-target')
-                    expect(page.locator('.advanced-result')).to_contain_text(t('Zielgröße erreicht.','Target size reached.'))
+                    expect(page.locator('.advanced-result')).to_contain_text(t('Zielgröße erreicht.','Target size achieved.'))
                     assert target.stat().st_size<=.7*1024*1024
                     page.get_by_role('button',name=t('Zurück zur Auswahl','Back to selection'),exact=True).click()
                     page.locator('.chooser-tool[data-tool-id=compress]').click()
