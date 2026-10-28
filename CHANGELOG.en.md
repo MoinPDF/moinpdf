@@ -4,6 +4,11 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.25.2 – 28 October 2026
+
+- WebKit decodes PDF image data without the unreliable offscreen bitmap transfer. This prevents blank large-scan previews and missing OCR while retaining original image dimensions and PDF contents.
+- Browser acceptance additionally exercises a deliberately broken bitmap transfer with the same scan, OCR, export and pixel requirements. Existing time limits and publication gates remain intact. The published 0.25.1 release is preserved.
+
 ## 0.25.1 – 28 October 2026
 
 - Scan compression also handles grayscale, Flate and other compatible image resources using their PDF color definitions. Text, links, form values and page geometry are preserved; unsupported images remain untouched. Structure-only improvements are no longer described as image reduction.

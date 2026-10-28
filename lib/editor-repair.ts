@@ -1,5 +1,5 @@
 import { PDFDocument, PDFName } from 'pdf-lib';
-import { MAX_BYTES, MAX_PAGES, renderPage, type Source } from './pdf-engine';
+import { MAX_BYTES, MAX_PAGES, pdfImageOptions, renderPage, type Source } from './pdf-engine';
 import { rejectSignedPdf } from './pdf-signature-guard';
 
 const verified = new WeakMap<Source, Uint8Array>();
@@ -25,6 +25,7 @@ export async function verifyEditorRepair(source: Source, bytes: Uint8Array, sign
     throw new Error('Geschützte PDFs und Formular-PDFs werden nicht automatisch repariert.');
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const task = pdfjs.getDocument({
+    ...pdfImageOptions(),
     data: bytes.slice(),
     cMapUrl: '/vendor/pdf/cmaps/',
     cMapPacked: true,

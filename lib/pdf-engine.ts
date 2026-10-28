@@ -61,6 +61,18 @@ export type ProgressUpdate = { percent: number; label: string };
 type Report = (progress: ProgressUpdate) => void;
 
 let pdfjsPromise: Promise<typeof import('pdfjs-dist/legacy/build/pdf.mjs')> | undefined;
+/** WebKit can complete a large worker ImageBitmap transfer with missing pixels.
+ * Use PDF.js's typed pixel-data path there for previews, OCR and verification.
+ * This changes decoding, never the source image dimensions or PDF contents. */
+export function pdfImageOptions(
+  userAgent = typeof navigator === 'undefined' ? '' : navigator.userAgent,
+) {
+  const webkit =
+    /AppleWebKit\//.test(userAgent) &&
+    (!/(?:Chrome|Chromium|Edg|OPR|SamsungBrowser)\//.test(userAgent) ||
+      /iP(?:ad|hone|od)/.test(userAgent));
+  return webkit ? { isOffscreenCanvasSupported: false } : {};
+}
 // Keep the renderer and local worker on PDF.js's polyfilled build. The modern
 // build needs APIs such as Map.getOrInsertComputed that older browsers lack.
 async function getPdfJs() {
@@ -231,6 +243,7 @@ export async function withPdfDocument<T>(
       range = new LocalFileRange(file.size, initial);
     }
     task = pdfjs.getDocument({
+      ...pdfImageOptions(),
       ...(range
         ? {
             range,
@@ -293,6 +306,7 @@ export async function openSource(
   let wasEncrypted = false;
   for (;;) {
     const task = pdfjs.getDocument({
+      ...pdfImageOptions(),
       data: bytes.slice(),
       cMapUrl: '/vendor/pdf/cmaps/',
       cMapPacked: true,

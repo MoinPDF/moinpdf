@@ -13,7 +13,7 @@ import {
   type PDFPage,
   type PDFImage,
 } from 'pdf-lib';
-import type { PageItem, Source } from './pdf-engine';
+import { pdfImageOptions, type PageItem, type Source } from './pdf-engine';
 import type { Rect } from './studio-engine';
 
 export function drawEditorScanImage(
@@ -207,7 +207,7 @@ export async function readEditorScanGeometry(
       imageTransforms,
       formClips,
     );
-    task = getDocument({ data: await proof.save() });
+    task = getDocument({ ...pdfImageOptions(), data: await proof.save() });
     const proxy = await task.promise,
       proofPage = await proxy.getPage(1);
     // Exact independent renders reject visible text, color effects, and any
