@@ -23,7 +23,7 @@ samples=bytearray(width*height);seed=42
 for y in range(height):
     for x in range(width):
         seed=(seed*1664525+1013904223)&0xffffffff
-        samples[y*width+x]=30 if 100<x<1450 and y%80<14 else 210+(seed>>26)
+        samples[y*width+x]=30 if 100<x<1450 and y%80<14 else (210+(seed>>26))&255
 pix=pymupdf.Pixmap(pymupdf.csGRAY,width,height,bytes(samples),False)
 with pymupdf.open() as doc:
     for n in range(3):
@@ -79,6 +79,7 @@ with sync_playwright() as api:
                     page.get_by_role('button',name=t('PDF optimieren','Optimize PDF'),exact=True).click()
                     meter=page.get_by_role('progressbar',name=t('Fortschritt der Komprimierung','Compression progress'))
                     expect(meter).to_be_visible(timeout=30000)
+                    expect(meter).to_be_in_viewport()
                     expect(page.locator('.conversion-progress')).to_contain_text('%')
                     page.screenshot(path=str(out/(name+'-target-progress.png')))
                     page.locator('.conversion-progress').get_by_role('button',name=t('Abbrechen','Cancel'),exact=True).click()

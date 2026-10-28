@@ -7,6 +7,7 @@ import {
   PDFObjectCopier,
   PDFRawStream,
   PDFRef,
+  type PDFObject,
 } from 'pdf-lib';
 import {
   filenameStem,
@@ -57,6 +58,23 @@ export async function shrinkPdfImages(
         object instanceof PDFRawStream ? object.dict.toString() : object.toString(),
       ),
     );
+  const selfContainedColor = (value: PDFObject | undefined, depth = 0): boolean => {
+    if (depth > 8) return false;
+    const color = doc.context.lookup(value);
+    if (color instanceof PDFName)
+      return ['DeviceRGB', 'DeviceGray', 'DeviceCMYK'].some((name) => color === PDFName.of(name));
+    if (!(color instanceof PDFArray)) return false;
+    const kind = color.lookup(0);
+    if (kind === PDFName.of('CalRGB') || kind === PDFName.of('CalGray')) return true;
+    if (kind === PDFName.of('Indexed')) return selfContainedColor(color.get(1), depth + 1);
+    if (kind === PDFName.of('ICCBased')) {
+      const profile = doc.context.lookup(color.get(1));
+      if (!(profile instanceof PDFRawStream)) return false;
+      const alternate = profile.dict.get(PDFName.of('Alternate'));
+      return !alternate || selfContainedColor(alternate, depth + 1);
+    }
+    return false;
+  };
   const sample = await PDFDocument.create();
   const copier = PDFObjectCopier.for(doc.context, sample.context);
   const candidates: { ref: PDFRef; stream: PDFRawStream; width: number; height: number }[] = [];
@@ -68,13 +86,7 @@ export async function shrinkPdfImages(
     const width = d.lookupMaybe(PDFName.of('Width'), PDFNumber)?.asNumber() || 0;
     const height = d.lookupMaybe(PDFName.of('Height'), PDFNumber)?.asNumber() || 0;
     const bits = d.lookupMaybe(PDFName.of('BitsPerComponent'), PDFNumber)?.asNumber();
-    const color = doc.context.lookup(d.get(PDFName.of('ColorSpace')));
-    const colorName = color instanceof PDFArray ? color.lookup(0) : color;
-    const supportedColor =
-      colorName instanceof PDFName &&
-      ['DeviceRGB', 'DeviceGray', 'DeviceCMYK', 'ICCBased', 'CalRGB', 'CalGray', 'Indexed'].some(
-        (name) => colorName === PDFName.of(name),
-      );
+    const supportedColor = selfContainedColor(d.get(PDFName.of('ColorSpace')));
     if (
       customDefaults ||
       !supportedColor ||
@@ -115,8 +127,9 @@ export async function shrinkPdfImages(
         report(index, candidates.length);
         await new Promise((resolve) => setTimeout(resolve, 0));
         const canvas = document.createElement('canvas');
+        let page: Awaited<ReturnType<typeof pdf.getPage>> | undefined;
         try {
-          const page = await step('scan-image-page', pdf.getPage(index + 1));
+          page = await step('scan-image-page', pdf.getPage(index + 1));
           const operators = await step('scan-image-operators', page.getOperatorList());
           const position = operators.fnArray.indexOf(OPS.paintImageXObject);
           const id = operators.argsArray[position]?.[0];
@@ -189,6 +202,7 @@ export async function shrinkPdfImages(
           skipped++;
         } finally {
           canvas.width = canvas.height = 0;
+          page?.cleanup();
           report(index + 1, candidates.length);
         }
       }

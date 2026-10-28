@@ -259,8 +259,32 @@ try {
     );
   const defaultBytes = new Uint8Array(await defaults.save());
   assert.deepEqual((await shrinkPdfImages(defaultBytes, 'small', signal)).bytes, defaultBytes);
+  const named = await PDFDocument.create();
+  const indexed = addScan(named, 'indexed');
+  const palette = indexed.stream.dict.lookup(PDFName.of('ColorSpace'));
+  palette.set(1, PDFName.of('CustomRGB'));
+  indexed.page.node
+    .Resources()
+    .set(PDFName.of('ColorSpace'), named.context.obj({ CustomRGB: 'DeviceRGB' }));
+  const namedBytes = new Uint8Array(await named.save());
+  assert.deepEqual(
+    (await shrinkPdfImages(namedBytes, 'small', signal)).bytes,
+    namedBytes,
+    'Indexed named base retains original resource context',
+  );
+  const icc = await PDFDocument.create();
+  const profile = icc.context.register(
+    icc.context.stream(new Uint8Array(128), { N: 3, Alternate: 'CustomRGB' }),
+  );
+  addScan(icc, 'gray', { ColorSpace: ['ICCBased', profile] });
+  const iccBytes = new Uint8Array(await icc.save());
+  assert.deepEqual(
+    (await shrinkPdfImages(iccBytes, 'small', signal)).bytes,
+    iccBytes,
+    'ICC named alternate is not detached from its resources',
+  );
   console.log(
-    'PASS: transparency parent AND mask, bilevel, corrupt JPEG and default color spaces stay untouched',
+    'PASS: transparency parent AND mask, bilevel, corrupt JPEG and default/nested named color spaces stay untouched',
   );
 } finally {
   for (const s of opened) await s.pdf.loadingTask.destroy();

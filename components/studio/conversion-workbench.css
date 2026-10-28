@@ -13,7 +13,9 @@
 .conversion-workbench .workbench-title h1 > svg {
   flex-shrink: 0;
 }
-.conversion-progress {
+.conversion-workbench > .conversion-progress {
+  top: calc(var(--project-bar-height, 90px) + 12px);
+  bottom: auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
