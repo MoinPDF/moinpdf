@@ -1,6 +1,145 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  'Unterlagen-Checkliste': 'Document checklist',
+  'Erwartete Unterlagen mit Suchwörtern und Monat prüfen. Fundstellen bestätigen und fehlende oder unklare Zuordnungen dokumentieren.':
+    'Check expected documents by keywords and month. Confirm evidence and document missing or uncertain matches.',
+  'Unterlagen prüfen': 'Check documents',
+  'Termine aus PDFs übernehmen': 'Collect dates from PDFs',
+  'Gedruckte Datumsangaben mit Fundstelle sammeln, korrigieren und bestätigte Termine als Kalenderdatei speichern.':
+    'Collect printed dates with evidence, correct them and save confirmed events as a calendar file.',
+  'Datumsangaben suchen': 'Find dates',
+  Qualitätshinweise: 'Quality hints',
+  'Scan-Qualität prüfen': 'Check scan quality',
+  'Bildanalyse auf mögliche Unschärfe, schwachen Kontrast, Schatten und Randinhalte. Hinweise sind keine Vollständigkeitsprüfung. Fotos, Vollflächen und kleine Schrift am Original beurteilen; bis zu 200 Seiten.':
+    'Image analysis for possible blur, low contrast, shadows and content near edges. Hints do not establish completeness. Review photos, solid areas and small text in the original; up to 200 pages.',
+  'Keine Auffälligkeit in der Bildanalyse; Lesbarkeit dennoch am Original prüfen.':
+    'No issue detected by image analysis; still check readability in the original.',
+  'Verarbeitet die ausgewählten Seiten der gewählten Dateien in ihrer aktuellen Reihenfolge.':
+    'Processes the selected pages of the chosen files in their current order.',
+  'Drei Fassungen vergleichen': 'Compare three versions',
+  'Fassung A': 'Version A',
+  'Fassung B': 'Version B',
+  Ausgangsfassung: 'Base version',
+  'Fassung A ist die erste Bearbeitung, Fassung B die zweite Bearbeitung derselben Ausgangsfassung. Alle drei Dateien müssen verschieden sein.':
+    'Version A is the first edit and version B the second edit of the same base version. All three files must be different.',
+  'Bitte höchstens 200 Seiten auswerten.': 'Please analyze no more than 200 pages.',
+  'Bitte drei verschiedene Dateien auswählen.': 'Please select three different files.',
+  'Bitte auch in der dritten Datei Seiten auswählen.':
+    'Please select pages in the third file as well.',
+  'Bitte höchstens 200 Seiten je Fassung auswählen.':
+    'Please select no more than 200 pages per version.',
+  Vorhanden: 'Present',
+  'Fehlt laut Prüfung': 'Missing after review',
+  'Erwartete Unterlagen festlegen, Fundstellen prüfen und fehlende oder unklare Zuordnungen dokumentieren.':
+    'Define expected documents, review evidence and document missing or uncertain matches.',
+  'Jahr für Monatsvorlage': 'Year for monthly template',
+  Kontoauszug: 'Bank statement',
+  'Vorlage: zwölf Kontoauszüge': 'Template: twelve bank statements',
+  'Alle kommagetrennten Suchwörter müssen auf derselben Seite vorkommen. Der Monat ist optional. Dateinamen allein gelten nicht als Nachweis.':
+    'All comma-separated keywords must occur on the same page. The month is optional. File names alone are not evidence.',
+  Suchwörter: 'Keywords',
+  'Monat (optional)': 'Month (optional)',
+  Prüfpunkt: 'Checklist item',
+  'Prüfpunkt entfernen': 'Remove checklist item',
+  'Prüfpunkt hinzufügen': 'Add checklist item',
+  'mögliche Fundstellen': 'possible matches',
+  'Fundstelle zuordnen': 'Assign evidence',
+  'Keine Zuordnung / fehlt': 'No assignment / missing',
+  'Diesen Prüfpunkt am Original geprüft': 'Reviewed this item against the original',
+  'Bis zu 60 Prüfpunkte und 200 Seiten. Textarme Seiten werden lokal per OCR gelesen. Ein nicht gefundener Treffer beweist nicht, dass eine Unterlage fehlt. Unlesbare Seiten und mehrdeutige Treffer manuell prüfen.':
+    'Up to 60 checklist items and 200 pages. Pages with little text are read using local OCR. No match does not prove that a document is missing. Review unreadable pages and ambiguous matches manually.',
+  'Checkliste als CSV herunterladen': 'Download checklist as CSV',
+  'Gedruckte Datumsangaben mit Fundstelle sammeln. Nur ausdrücklich bestätigte Termine werden als Kalenderdatei ausgegeben.':
+    'Collect printed dates with evidence. Only explicitly confirmed events are exported as a calendar file.',
+  Datumsfundstellen: 'date matches',
+  Termin: 'Event',
+  Termintitel: 'Event title',
+  'Uhrzeit (leer = ganztägig)': 'Time (empty = all day)',
+  'Dauer in Minuten': 'Duration in minutes',
+  'Termin geprüft und für den Export bestätigt': 'Event reviewed and confirmed for export',
+  'Termin entfernen': 'Remove event',
+  'Manuell erfasster Termin': 'Manually entered event',
+  'Termin manuell ergänzen': 'Add event manually',
+  'Bis zu 200 Seiten und 300 Fundstellen. Erkannt werden vollständige Datumsangaben mit Jahr (1900–2199), keine relativen oder rechtlich berechneten Fristen. Mehrdeutige Schrägstrich-Daten manuell erfassen. Uhrzeiten gelten in der lokalen Zeitzone deines Kalenders; die vorgeschlagene Dauer ist 60 Minuten. Es wird nichts automatisch in einen Kalender eingetragen.':
+    'Up to 200 pages and 300 matches. Detects complete dates with a year (1900–2199), not relative or legally calculated deadlines. Enter ambiguous slash-separated dates manually. Times use your calendar’s local time zone; the proposed duration is 60 minutes. Nothing is added to a calendar automatically.',
+  'Bestätigte Termine als ICS herunterladen': 'Download confirmed events as ICS',
+  'Wiederkehrende Logos austauschen': 'Replace recurring logos',
+  'Pixelgleiche Bildobjekte im Dokument finden. Fundstellen auswählen und gemeinsam durch ein neues Bild ersetzen. Text und übrige Seiten bleiben als PDF-Objekte erhalten.':
+    'Find image objects with identical pixels in the document. Select occurrences and replace them together with a new image. Text and other page content remain PDF objects.',
+  'Wiederkehrende Bilder suchen': 'Find recurring images',
+  'Bildobjekte gefunden': 'image objects found',
+  'komplexe oder zu große Bildobjekte ausgelassen': 'complex or oversized image objects skipped',
+  Bildgruppe: 'Image group',
+  'Alle Fundstellen dieser Bildgruppe auswählen': 'Select all occurrences of this image group',
+  'Fundstellen und Ersatzbild geprüft': 'Occurrences and replacement image reviewed',
+  'Ausgewählte Bildobjekte ersetzt. Bildflächen und Drehungen bleiben erhalten. Bitte das Ergebnis visuell prüfen; das Original bleibt unverändert.':
+    'Selected image objects replaced. Image bounds and rotations are preserved. Please inspect the result visually; the original remains unchanged.',
+  'Ausgewählte Logos ersetzen': 'Replace selected logos',
+  'Bis zu 50 Seiten, 80 MB Eingang, 100 Ersetzungen und 160 MB Ausgabe. Analyse bis 1.000 Bildobjekte und insgesamt 48 Megapixel; Ersatzbild bis 4 Megapixel und 20 MB. Erfasst werden pixelgleiche Rasterbilder, keine Vektorlogos oder Logos innerhalb eines Seitenscans. Beschnittene und komplex transparente Objekte werden ausgelassen. Ein abweichendes Seitenverhältnis des Ersatzbildes wird in die vorhandene Fläche eingepasst und kann verzerren. Signierte PDFs und XFA werden abgewiesen.':
+    'Up to 50 pages, 80 MB input, 100 replacements and 160 MB output. Analysis is limited to 1,000 image objects and 48 megapixels in total; replacement images to 4 megapixels and 20 MB. Matches raster images with identical pixels, not vector logos or logos within a page scan. Clipped and complex transparent objects are skipped. A different replacement aspect ratio is fitted into the existing bounds and may distort the image. Signed PDFs and XFA are rejected.',
+  'Bitte 1 bis 60 Prüfpunkte und höchstens 200 Seiten verwenden.':
+    'Please use 1 to 60 checklist items and no more than 200 pages.',
+  'Jeder Prüfpunkt benötigt einen Titel und Suchwörter mit mindestens zwei Zeichen. Monat: JJJJ-MM oder leer.':
+    'Each checklist item needs a title and keywords with at least two characters. Month: YYYY-MM or empty.',
+  'Mehr als 300 Datumsfundstellen. Bitte weniger Seiten verwenden.':
+    'More than 300 date matches. Please use fewer pages.',
+  'Bitte 1 bis 300 Termine ausdrücklich bestätigen.': 'Please explicitly confirm 1 to 300 events.',
+  'Bitte Titel, gültiges Datum, Uhrzeit und Dauer jedes Termins prüfen.':
+    'Please check the title, valid date, time and duration of each event.',
+  'Bitte eine PDF bis 80 MB verwenden.': 'Please use a PDF up to 80 MB.',
+  'Bitte höchstens 50 Seiten für den Bildaustausch verwenden.':
+    'Please use no more than 50 pages for image replacement.',
+  'Dynamische XFA-Formulare werden hier nicht unterstützt.':
+    'Dynamic XFA forms are not supported here.',
+  'Mehr als 1.000 Bildobjekte. Bitte weniger Seiten verwenden.':
+    'More than 1,000 image objects. Please use fewer pages.',
+  'Die Bildanalyse überschreitet 48 Megapixel. Bitte weniger Seiten verwenden.':
+    'Image analysis exceeds 48 megapixels. Please use fewer pages.',
+  'Bitte 1 bis 100 eindeutige Vorkommen einer Bildgruppe auswählen.':
+    'Please select 1 to 100 distinct occurrences of one image group.',
+  'Ungültige Bildfundstelle.': 'Invalid image occurrence.',
+  'Die Bildfundstelle hat sich geändert. Bilder erneut suchen.':
+    'The image occurrence has changed. Search for images again.',
+  'Die Ausgabe überschreitet 160 MB. Bitte ein kleineres Ersatzbild verwenden.':
+    'The output exceeds 160 MB. Please use a smaller replacement image.',
+  'Die Seitenzahl hat sich unerwartet geändert.': 'The page count changed unexpectedly.',
+  'Möglicherweise unscharf': 'Possibly blurred',
+  'Ungleichmäßige Helligkeit / Schatten': 'Uneven brightness / shadows',
+  'Inhalt nahe dem Seitenrand': 'Content near the page edge',
+  'Keine Textänderung': 'No text change',
+  'Gleiche Änderung in A und B': 'Same change in A and B',
+  'Nur Fassung A geändert': 'Only version A changed',
+  'Nur Fassung B geändert': 'Only version B changed',
+  'Widersprüchliche Textänderungen': 'Conflicting text changes',
+  'Entfernung oder Zuordnung unklar': 'Deletion or alignment unclear',
+  'Nicht eindeutig zugeordnete Texte nicht als sichere Löschung oder Übereinstimmung behandeln.':
+    'Do not treat uncertain text alignment as a confirmed deletion or agreement.',
+  'Beide Fassungen ändern denselben Ausgangstext unterschiedlich. Am Original prüfen.':
+    'Both versions change the same base text differently. Check against the original.',
+  'Textvergleich; Position, Bilder und Formatierung zusätzlich am Original prüfen.':
+    'Text comparison; also check positions, images and formatting against the original.',
+  'Gleicher zusätzlicher oder nicht zugeordneter Text': 'Identical additional or unaligned text',
+  'Zusätzlicher oder nicht zugeordneter Text in A': 'Additional or unaligned text in A',
+  'Zusätzlicher oder nicht zugeordneter Text in B': 'Additional or unaligned text in B',
+  'Kein auslesbarer Text. Für Scans zuerst OCR anwenden.':
+    'No readable text. Apply OCR to scans first.',
+  'Ohne Textänderung': 'No text change',
+  'Gleiche Änderungen': 'Identical changes',
+  'Nur A geändert': 'Only A changed',
+  'Nur B geändert': 'Only B changed',
+  'Unklare oder zusätzliche Textstellen': 'Uncertain or additional text passages',
+  Textkonflikte: 'Text conflicts',
+  'Basis: Seite {0} · A: {1} · B: {2}': 'Base: page {0} · A: {1} · B: {2}',
+  'Basis: Seite {0}': 'Base: page {0}',
+  'A: Seite {0} · B: {1}': 'A: page {0} · B: {1}',
+  'A: Seite {0}': 'A: page {0}',
+  'B: Seite {0}': 'B: page {0}',
+  'Basis: {0}': 'Base: {0}',
+  'Beide Bearbeitungen werden derselben Ausgangsfassung zugeordnet. Der Bericht verändert keine Datei. Ähnliche und wiederholte Textstellen bleiben prüfpflichtig; keine automatische Zusammenführung. Bilder, Formatierung und Textverschiebungen sind keine Textkonflikte.':
+    'Both edits are aligned to the same base version. The report changes no files. Similar and repeated text passages require review; no automatic merging. Images, formatting and moved text are not text conflicts.',
+  'Stand: 29. Oktober 2026': 'Updated: 29 October 2026',
+
   'PNG-Bilder': 'PNG images',
   'JPG-Fotos': 'JPG photos',
   Ausgabeformat: 'Output format',

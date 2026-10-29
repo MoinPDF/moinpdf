@@ -72,7 +72,7 @@ with sync_playwright() as api:
                     page.goto(origin+('?lang=en' if en else '?lang=de'))
                     # The same tool accepts ordinary imported image scans and multi-page PDFs.
                     page.locator('input[type=file]').first.set_input_files(str((png if en else fixture).resolve()))
-                    expect(page.locator('.chooser-tool')).to_have_count(118)
+                    expect(page.locator('.chooser-tool')).to_have_count(120)
                     page.locator('.chooser-tool').filter(has=page.get_by_text(t('Scanfotos automatisch trennen','Automatically split scanned photos'),exact=True)).click()
                     label('Kontrastschwelle','Contrast threshold').fill('6')
                     button('Alle Seiten erkennen','Detect items on all pages').click()

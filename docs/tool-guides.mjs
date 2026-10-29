@@ -2,6 +2,27 @@
 // Keep these instructions specific to the controls and outputs of each tool.
 const guide = (input, steps, output, note) => ({input, steps, output, note});
 export const guides = {
+"document-checklist": {
+  "input": "Eine oder mehrere PDFs, Scans oder Bilder im Arbeitsbereich.",
+  "steps": [
+    "Unter Prüfen & finden die Unterlagen-Checkliste öffnen. Eigene Prüfpunkte mit Bezeichnung, kommagetrennten Suchwörtern und optionalem Monat anlegen oder die Vorlage für zwölf Kontoauszüge nutzen.",
+    "Unterlagen prüfen starten. Textarme Seiten werden lokal per OCR gelesen. Mögliche Fundstellen im Original ansehen; bei mehreren Treffern eine Seite zuordnen oder eine andere Seite manuell wählen.",
+    "Jeden Prüfpunkt ausdrücklich bestätigen, auch fehlende Unterlagen. Erst danach die Checkliste als CSV herunterladen. Änderungen und wiederhergestellte Projekte erfordern eine erneute Bestätigung."
+  ],
+  "output": "Eine CSV mit Prüfpunkt, geprüftem Status, Dateiname, Seite und Fundstelle. Originaldateien bleiben unverändert.",
+  "note": "Bis zu 60 Prüfpunkte und 200 Seiten. Alle Suchwörter müssen auf derselben Seite stehen; ein Dateiname ist kein Nachweis. OCR, Monatsangaben und mehrdeutige Treffer können fehlerhaft sein. Ein nicht gefundener Treffer ist kein sicherer Beleg für eine fehlende Unterlage."
+},
+"document-dates": {
+  "input": "PDFs, Scans oder Bilder mit gedruckten Datumsangaben.",
+  "steps": [
+    "Unter Erkennen & konvertieren „Termine aus PDFs übernehmen“ öffnen und Datumsangaben suchen. Die lokale Text-/OCR-Auswertung zeigt die jeweilige Fundstelle.",
+    "Jeden Vorschlag am Original prüfen. Titel, Datum, Uhrzeit und Dauer korrigieren, unpassende Vorschläge entfernen oder einen Termin manuell ergänzen. Eine leere Uhrzeit erzeugt einen ganztägigen Eintrag.",
+    "Gewünschte Termine ausdrücklich bestätigen und als ICS herunterladen. Die Kalenderdatei anschließend selbst in den Kalender importieren; nach einer Änderung oder Projektwiederherstellung erneut bestätigen."
+  ],
+  "output": "Eine ICS-Kalenderdatei ausschließlich mit bestätigten Terminen und ihren Fundstellen. Kein automatischer Kalendereintrag.",
+  "note": "Bis zu 200 Seiten und 300 Fundstellen. Unterstützt vollständige Datumsangaben mit Jahr 1900–2199, numerisch mit Punkten, ISO sowie deutsche und englische Monatsnamen. Keine relativen oder rechtlich berechneten Fristen; mehrdeutige Schrägstrich-Daten manuell eingeben. Uhrzeiten verwenden die lokale Kalenderzeitzone, zunächst 60 Minuten Dauer. Originaldateien bleiben unverändert."
+},
+
   "large-document": {
   "input": "Eine unverschlüsselte PDF bis 256 MB und 1.000 Seiten. Der Browser muss lokale Dateien speichern können; bei eingeschränkter Speicherung ein normales Browserfenster verwenden.",
   "steps": [
@@ -676,3 +697,9 @@ guides['fill-form'].note += ' Für einfache reine XFA-Formulare steht ein separa
 guides['native-objects'].steps.push('Unter „Mehrere Objekte“ ausrichten, verteilen, spiegeln, duplizieren oder aufeinanderfolgende Objekte gruppieren. Im Absatzmodus stehen lokale Schriften, Schreibrichtung, Browser-Rechtschreibprüfung, Listen und Suchen/Ersetzen bereit. Formatbereiche erlauben Hoch- und Tiefstellen.');
 
 guides['native-objects'].steps.push('Für indische und südostasiatische Schriften „Passende Schriften automatisch ergänzen“ eingeschaltet lassen oder eine passende statische TTF wählen. Gruppen im Einzelobjektmodus öffnen, das Unterobjekt ändern und mit „Eine Ebene zurück“ zurückkehren.');
+
+guides["inspect"].steps.push("Für Scan-Qualität prüfen eine lokale Bildanalyse starten. Mögliche Unschärfe, schwacher Kontrast, Schatten und Randinhalte erscheinen als Hinweise mit markierten Bereichen; den Filter Qualitätshinweise nutzen. Bis zu 200 Seiten. Die Analyse verändert keine Datei und ersetzt keine Prüfung der Lesbarkeit oder Vollständigkeit am Original.");
+
+guides["compare"].steps.push("Für zwei parallele Bearbeitungen den Modus Drei Fassungen vergleichen wählen und Ausgangsfassung, Fassung A und Fassung B zuordnen. Bis zu 200 ausgewählte Seiten je Fassung. Der Bericht zeigt gemeinsame, einseitige und widersprüchliche Textänderungen mit Originaltexten; unklare Zuordnungen, fehlender Text und zusätzliche Stellen bleiben ausdrücklich offen. Scans vorher mit OCR versehen. Bilder und Formatierung visuell prüfen; keine automatische Zusammenführung.");
+
+guides["native-objects"].steps.push("Unter Wiederkehrende Logos austauschen pixelgleiche Rasterbilder suchen, eine Bildgruppe wählen und die gewünschten Vorkommen einzeln oder gemeinsam auswählen. Fundstellen in der Seitenvorschau prüfen, ein Ersatzbild laden und die Auswahl bestätigen. Exportiert wird eine neue PDF; nicht ausgewählte Vorkommen bleiben erhalten. Bis zu 50 Seiten, 80 MB Eingang, 100 Ersetzungen und 160 MB Ausgabe; Analyse bis 1.000 Bilder und 48 Megapixel insgesamt. Ersatzbild bis 20 MB und 4 Megapixel. Kein Erkennen von Vektorlogos oder Logos in Seitenscans; beschnittene und komplex transparente Bilder werden ausgelassen. Abweichende Seitenverhältnisse können verzerren. Signierte PDFs und XFA werden abgewiesen.");

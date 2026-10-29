@@ -77,6 +77,26 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'document-checklist',
+    title: 'Unterlagen-Checkliste',
+    description:
+      'Erwartete Unterlagen mit Suchwörtern und Monat prüfen. Fundstellen bestätigen und fehlende oder unklare Zuordnungen dokumentieren.',
+    icon: ClipboardCheck,
+    group: 0,
+    action: 'Unterlagen prüfen',
+    fresh: true,
+  },
+  {
+    id: 'document-dates',
+    title: 'Termine aus PDFs übernehmen',
+    description:
+      'Gedruckte Datumsangaben mit Fundstelle sammeln, korrigieren und bestätigte Termine als Kalenderdatei speichern.',
+    icon: CalendarDays,
+    group: 1,
+    action: 'Datumsangaben suchen',
+    fresh: true,
+  },
+  {
     id: 'large-document',
     title: 'Große PDFs verarbeiten',
     description:

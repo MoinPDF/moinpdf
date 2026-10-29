@@ -1,4 +1,6 @@
 export const advancedToolIds = [
+  'document-checklist',
+  'document-dates',
   'large-document',
   'document-colors',
   'header-footer-cleanup',

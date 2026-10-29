@@ -9,9 +9,13 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Noch nicht veröffentlicht
+## 0.26.0 – 29. Oktober 2026
 
-- Das vorhandene Sammelscan-Werkzeug wird zu „Scanfotos automatisch trennen“: lokale Konturerkennung mit einstellbarer Kontrastschwelle, Schieflagenkorrektur über die gemeinsame Vierpunkt-Transformation, Einzelvorschauen, manuelle Ecken-/Rechteckkorrektur und Drehung. JPG/PNG oder einzelne PDFs im ZIP sowie eine gemeinsame Foto-PDF. Unsichere Erkennung, leere Ergebnisse und Grenzen werden angezeigt; Originale bleiben unverändert. Bestehende Projektausschnitte und der Katalog mit 118 Werkzeugen bleiben erhalten.
+- Zwei neue Werkzeuge: Unterlagen-Checkliste mit prüfbaren Fundstellen und CSV sowie Termine aus PDFs übernehmen mit Korrektur, ausdrücklicher Bestätigung und lokalem ICS-Export. Der Katalog umfasst jetzt 120 Werkzeuge.
+- Drei Erweiterungen: Scan-Qualitätshinweise im Seitenfinder, Textvergleich einer Ausgangsfassung mit zwei Bearbeitungen sowie gezielter Austausch wiederkehrender Rasterlogos in PDF-Objekte bearbeiten.
+- Deutsche/englische Oberfläche, Anleitungen und automatisierte Regressionen für Kalenderdaten, Mehrdeutigkeiten, Originalerhalt, echte Exporte und Browserabläufe. Neue Funktionen verwenden die vorhandene lokale Text-/OCR-, Bild- und PDF-Verarbeitung.
+
+- Das vorhandene Sammelscan-Werkzeug wird zu „Scanfotos automatisch trennen“: lokale Konturerkennung mit einstellbarer Kontrastschwelle, Schieflagenkorrektur über die gemeinsame Vierpunkt-Transformation, Einzelvorschauen, manuelle Ecken-/Rechteckkorrektur und Drehung. JPG/PNG oder einzelne PDFs im ZIP sowie eine gemeinsame Foto-PDF. Unsichere Erkennung, leere Ergebnisse und Grenzen werden angezeigt; Originale bleiben unverändert. Bestehende Projektausschnitte bleiben kompatibel.
 - Deutsche und englische Anleitung sowie Regressionen für schwachen Kontrast, Schieflage, Staub, manuelle Korrekturen, Exportinhalte, Abbruch und Browserbedienung ergänzt.
 
 ## 0.25.2 – 28. Oktober 2026

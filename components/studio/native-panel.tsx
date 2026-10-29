@@ -22,37 +22,11 @@ import { packagePdfs } from '@/lib/pro-tools';
 import { NativeSelectionPanel } from './native-selection-panel';
 import { NativeParagraphPanel } from './native-paragraph-panel';
 import { NativeObjectHandles } from './native-object-handles';
+import { replacementImage } from '@/lib/replacement-image';
+import { RepeatedImagesPanel } from './repeated-images-panel';
 import { OperationPreview } from './operation-preview';
 
-async function replacementImage(file: File) {
-  if (file.size > 20 * 1024 * 1024)
-    throw new Error('Das Ersatzbild darf höchstens 20 MB groß sein.');
-  const url = URL.createObjectURL(file),
-    image = new Image();
-  try {
-    image.src = url;
-    await image.decode();
-    if (image.naturalWidth * image.naturalHeight > 4000000)
-      throw new Error('Das Ersatzbild darf höchstens 4 Megapixel haben.');
-    const canvas = document.createElement('canvas');
-    canvas.width = image.naturalWidth;
-    canvas.height = image.naturalHeight;
-    try {
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(image, 0, 0);
-      return {
-        width: canvas.width,
-        height: canvas.height,
-        rgba: new Uint8Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data),
-      };
-    } finally {
-      canvas.width = canvas.height = 0;
-    }
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
-export function NativePanel(props: PanelProps) {
+export function NativePanel(props: PanelProps & { invalidate: () => void }) {
   useLanguage();
   const [mode, setMode] = useState('object');
   return (
@@ -60,14 +34,20 @@ export function NativePanel(props: PanelProps) {
       <Choice
         label={ui('Bearbeitung')}
         value={mode}
-        onChange={setMode}
+        onChange={(value) => {
+          setMode(value);
+          props.invalidate();
+        }}
         items={[
           ['object', 'Einzelne Objekte'],
           ['selection', 'Mehrere Objekte'],
+          ['repeated', 'Wiederkehrende Logos austauschen'],
           ['paragraph', 'Absatz mit automatischem Umbruch'],
         ]}
       />
-      {mode === 'selection' ? (
+      {mode === 'repeated' ? (
+        <RepeatedImagesPanel {...props} />
+      ) : mode === 'selection' ? (
         <NativeSelectionPanel {...props} />
       ) : mode === 'paragraph' ? (
         <NativeParagraphPanel {...props} />

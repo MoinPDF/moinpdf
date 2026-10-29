@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { analyzeScanQuality } from '@/lib/scan-quality';
 import { inspectPage, pageKey, recognizeForSearch, type PageIndex } from '@/lib/document-check';
-import type { Source, PageItem, ProgressUpdate } from '@/lib/pdf-engine';
+import { renderPage, type Source, type PageItem, type ProgressUpdate } from '@/lib/pdf-engine';
 export function useDocumentIndex(sources: Source[], pages: PageItem[]) {
   const cache = useRef(new Map<string, PageIndex>()),
     refs = useRef({ sources, pages });
@@ -11,6 +12,8 @@ export function useDocumentIndex(sources: Source[], pages: PageItem[]) {
     [ocrBusy, setOcrBusy] = useState(false),
     [progress, setProgress] = useState<ProgressUpdate>({ percent: 0, label: '' }),
     [error, setError] = useState('');
+  const [qualityBusy, setQualityBusy] = useState(false);
+  const quality = useRef<AbortController | null>(null);
   const ocr = useRef<AbortController | null>(null);
   const signature = pages.map((p) => `${p.id}:${pageKey(p)}`).join('|');
   const refresh = () =>
@@ -23,6 +26,7 @@ export function useDocumentIndex(sources: Source[], pages: PageItem[]) {
   useEffect(() => {
     const ctrl = new AbortController();
     ocr.current?.abort();
+    quality.current?.abort();
     setError('');
     const { sources: currentSources, pages: currentPages } = refs.current;
     const keys = new Set(currentPages.map(pageKey));
@@ -83,12 +87,13 @@ export function useDocumentIndex(sources: Source[], pages: PageItem[]) {
   useEffect(
     () => () => {
       ocr.current?.abort();
+      quality.current?.abort();
       cache.current.clear();
     },
     [],
   );
   async function recognize(language: string) {
-    if (ocr.current || checking) return;
+    if (ocr.current || quality.current || checking) return;
     const ctrl = new AbortController();
     ocr.current = ctrl;
     setOcrBusy(true);
@@ -126,14 +131,63 @@ export function useDocumentIndex(sources: Source[], pages: PageItem[]) {
       setOcrBusy(false);
     }
   }
+  async function checkQuality() {
+    if (ocr.current || quality.current || checking) return;
+    const { sources: currentSources, pages: currentPages } = refs.current;
+    if (currentPages.length > 200) {
+      setError('Bitte höchstens 200 Seiten auswerten.');
+      return;
+    }
+    const ctrl = new AbortController();
+    quality.current = ctrl;
+    setQualityBusy(true);
+    setError('');
+    try {
+      for (const [i, page] of currentPages.entries()) {
+        ctrl.signal.throwIfAborted();
+        setProgress({ percent: (i / currentPages.length) * 100, label: 'Scan-Qualität prüfen' });
+        const { canvas } = await renderPage(
+          currentSources.find((s) => s.id === page.sourceId)!,
+          page,
+          1000,
+          ctrl.signal,
+        );
+        try {
+          const result = analyzeScanQuality(
+            canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data,
+            canvas.width,
+            canvas.height,
+          );
+          ctrl.signal.throwIfAborted();
+          const key = pageKey(page),
+            row = cache.current.get(key);
+          if (row) cache.current.set(key, { ...row, quality: result });
+          refresh();
+        } finally {
+          canvas.width = canvas.height = 0;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    } catch (e) {
+      if (!ctrl.signal.aborted) setError((e as Error).message);
+    } finally {
+      if (quality.current === ctrl) quality.current = null;
+      setQualityBusy(false);
+    }
+  }
   return {
     rows,
     checking,
     ocrBusy,
+    qualityBusy,
+    checkQuality,
     progress,
     error,
     recognize,
-    cancel: () => ocr.current?.abort(),
+    cancel: () => {
+      ocr.current?.abort();
+      quality.current?.abort();
+    },
   };
 }
 export type DocumentIndex = ReturnType<typeof useDocumentIndex>;

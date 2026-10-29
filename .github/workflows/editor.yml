@@ -55,8 +55,15 @@ jobs:
         timeout-minutes: 8
         run: |
           bash scripts/ci-prepare-apt.sh
-          python -m pip install playwright==1.64.0 pymupdf==1.26.6
+          python -m pip install playwright==1.64.0 pymupdf==1.26.6 icalendar==6.3.2
           python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Document checklist, dates, three versions, quality and recurring logos
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+          MOINPDF_TEST_START_SERVER: '1'
+        run: |
+          node tests/productivity-smoke.mjs
+          python tests/productivity-browser.py
       - name: Local scan photos, real exports and manual correction
         env:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}

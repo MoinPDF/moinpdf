@@ -291,12 +291,14 @@ function stableOrder(matches: Match[]) {
   for (let i = tails.at(-1) ?? -1; i >= 0; i = previous[i]) stable.add(sorted[i].before);
   return stable;
 }
+export type ContentAlignment = { before: Block[]; after: Block[]; matches: Match[] };
 export async function compareContent(
   beforePages: ComparisonPage[],
   afterPages: ComparisonPage[],
   names: { before: string; after: string },
   signal?: AbortSignal,
   progress?: (value: number) => void,
+  alignment?: (value: ContentAlignment) => void,
 ): Promise<PdfReport> {
   check(signal);
   const before = blocks(beforePages),
@@ -381,6 +383,7 @@ export async function compareContent(
     paired.add(m.before);
   }
   check(signal);
+  alignment?.({ before, after, matches });
   const stable = stableOrder(matches),
     byBefore = new Map(matches.map((m) => [m.before, m]));
   const sections: PdfReport['sections'] = [];

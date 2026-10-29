@@ -70,7 +70,11 @@ export function ExtraSettings({
       duplexError = (error as Error).message;
     }
   }
-  const pairSelect = (position: 'firstSource' | 'secondSource', label: string, value: string) => (
+  const pairSelect = (
+    position: 'firstSource' | 'secondSource' | 'thirdSource',
+    label: string,
+    value: string,
+  ) => (
     <label className="field">
       <span>{ui(label)}</span>
       <Select
@@ -148,10 +152,22 @@ export function ExtraSettings({
         <>
           {pairSelect(
             'firstSource',
-            tool === 'overlay' ? 'Basisdatei' : 'Datei A',
+            tool === 'overlay'
+              ? 'Basisdatei'
+              : options.compareMode === 'three-way'
+                ? 'Ausgangsfassung'
+                : 'Datei A',
             first?.id || '',
           )}
-          {pairSelect('secondSource', tool === 'overlay' ? 'Vorlage' : 'Datei B', second?.id || '')}
+          {pairSelect(
+            'secondSource',
+            tool === 'overlay'
+              ? 'Vorlage'
+              : options.compareMode === 'three-way'
+                ? 'Fassung A'
+                : 'Datei B',
+            second?.id || '',
+          )}
           {sources.length < 2 && (
             <p className="notice">
               {ui('Öffne oben eine zweite Datei, um dieses Werkzeug zu verwenden.')}
@@ -159,7 +175,7 @@ export function ExtraSettings({
           )}
           <p className="fine-note">
             {ui(
-              'Verarbeitet die ausgewählten Seiten dieser beiden Dateien in ihrer aktuellen Reihenfolge.',
+              'Verarbeitet die ausgewählten Seiten der gewählten Dateien in ihrer aktuellen Reihenfolge.',
             )}
           </p>
         </>
@@ -169,7 +185,24 @@ export function ExtraSettings({
           {choice('compareMode', 'Vergleichsart', [
             ['pages', 'Seiten an gleicher Position'],
             ['content', 'Inhalte über Seiten hinweg'],
+            ['three-way', 'Drei Fassungen vergleichen'],
           ])}
+          {options.compareMode === 'three-way' && (
+            <>
+              {pairSelect(
+                'thirdSource',
+                'Fassung B',
+                options.thirdSource ||
+                  sources.find((s) => s.id !== first?.id && s.id !== second?.id)?.id ||
+                  '',
+              )}
+              <p className="fine-note">
+                {ui(
+                  'Fassung A ist die erste Bearbeitung, Fassung B die zweite Bearbeitung derselben Ausgangsfassung. Alle drei Dateien müssen verschieden sein.',
+                )}{' '}
+              </p>
+            </>
+          )}
           <div className="notice">
             {ui(
               'Vergleicht vorhandenen Text. Bilder, Layout und reine Scanänderungen werden nicht geprüft. Scans zuerst mit „OCR & Text“ auslesen und die Ergebnisse öffnen.',

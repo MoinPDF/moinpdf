@@ -5,6 +5,18 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'document-checklist': {
+    title: 'Document checklist',
+    description:
+      'Check expected documents using keywords and a month. Confirm evidence and record missing or unclear assignments.',
+    action: 'Check documents',
+  },
+  'document-dates': {
+    title: 'Collect dates from PDFs',
+    description:
+      'Collect printed dates with evidence, make corrections and save confirmed events as a calendar file.',
+    action: 'Find dates',
+  },
   'large-document': {
     title: 'Process large PDFs',
     description:

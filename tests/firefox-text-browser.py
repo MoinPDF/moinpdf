@@ -34,7 +34,7 @@ with sync_playwright() as api,tempfile.TemporaryDirectory() as temporary:
     def fresh(page,path=source):
         page.goto(origin)
         page.locator('input[type=file]').first.set_input_files(str(path))
-        expect(page.locator('.chooser-tool')).to_have_count(118)
+        expect(page.locator('.chooser-tool')).to_have_count(120)
 
     def tool(page,name):
         page.locator('.chooser-tool').filter(has=page.get_by_text(name,exact=True)).click()

@@ -1,4 +1,5 @@
 'use client';
+import { qualityLabels } from '@/lib/scan-quality';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
 
@@ -23,7 +24,7 @@ import { Progress } from '@/components/ui/progress';
 import { duplicateGroups, findPages, excerpt, searchTerms } from '@/lib/document-check';
 import type { PageItem } from '@/lib/pdf-engine';
 import type { DocumentIndex } from './use-document-index';
-type Filter = 'all' | 'scan' | 'blank' | 'duplicates' | 'formats';
+type Filter = 'all' | 'scan' | 'blank' | 'duplicates' | 'formats' | 'quality';
 export function DocumentCheck({
   index,
   pages,
@@ -49,7 +50,7 @@ export function DocumentCheck({
   const [query, setQuery] = useState(''),
     [filter, setFilter] = useState<Filter>('all'),
     [limit, setLimit] = useState(30);
-  const { rows, checking, ocrBusy } = index,
+  const { rows, checking, ocrBusy, qualityBusy } = index,
     selected = new Set(pages.filter((p) => p.selected).map((p) => p.id)),
     edited = new Set(editedPageIds);
   const duplicates = useMemo(
@@ -65,13 +66,15 @@ export function DocumentCheck({
     isSearch = searchTerms(query).length > 0;
   const shown = isSearch
     ? matches
-    : filter === 'scan'
-      ? scans
-      : filter === 'blank'
-        ? blanks
-        : filter === 'duplicates'
-          ? rows.filter((r) => duplicateIds.has(r.pageId))
-          : rows;
+    : filter === 'quality'
+      ? rows.filter((r) => r.quality?.issues.length)
+      : filter === 'scan'
+        ? scans
+        : filter === 'blank'
+          ? blanks
+          : filter === 'duplicates'
+            ? rows.filter((r) => duplicateIds.has(r.pageId))
+            : rows;
   const extras = duplicates
       .flatMap((group) => group.filter((p) => selected.has(p.pageId)).slice(1))
       .map((p) => p.pageId),
@@ -90,6 +93,12 @@ export function DocumentCheck({
       label: 'Optisch gleiche Seiten',
       value: duplicates.reduce((n, g) => n + g.length - 1, 0),
       icon: Copy,
+    },
+    {
+      id: 'quality',
+      label: 'Qualitätshinweise',
+      value: rows.filter((r) => r.quality?.issues.length).length,
+      icon: Eye,
     },
     { id: 'formats', label: 'Seitenformate', value: formats.length, icon: Maximize },
   ] as const;
@@ -151,14 +160,26 @@ export function DocumentCheck({
             </span>
             <Button
               variant="outline"
-              disabled={locked || checking}
+              disabled={locked || checking || qualityBusy}
               onClick={() => void index.recognize(language)}
             >
               {ui('Scans für die Suche erkennen')}
             </Button>
           </div>
         )}
-        {ocrBusy && (
+        <Button
+          variant="outline"
+          disabled={locked || checking || ocrBusy || qualityBusy || !rows.length}
+          onClick={() => void index.checkQuality()}
+        >
+          {ui('Scan-Qualität prüfen')}
+        </Button>
+        <p className="fine-note">
+          {ui(
+            'Bildanalyse auf mögliche Unschärfe, schwachen Kontrast, Schatten und Randinhalte. Hinweise sind keine Vollständigkeitsprüfung. Fotos, Vollflächen und kleine Schrift am Original beurteilen; bis zu 200 Seiten.',
+          )}
+        </p>
+        {(ocrBusy || qualityBusy) && (
           <div className="index-progress" aria-live="polite">
             <div>
               <span>
@@ -330,7 +351,25 @@ export function DocumentCheck({
                 onClick={() => onOpen(row.pageId)}
                 aria-label={ui(`Arbeitsseite ${row.position + 1} ansehen`)}
               >
-                {row.preview ? <img src={row.preview} alt="" loading="lazy" /> : <File size={23} />}
+                {row.preview ? (
+                  <span className="check-thumbnail-image">
+                    <img src={row.preview} alt="" loading="lazy" />
+                    {row.quality?.issues.map((issue, i) => (
+                      <span
+                        key={i}
+                        className="scan-quality-region"
+                        style={{
+                          left: issue.rect.x * 100 + '%',
+                          top: issue.rect.y * 100 + '%',
+                          width: issue.rect.w * 100 + '%',
+                          height: issue.rect.h * 100 + '%',
+                        }}
+                      />
+                    ))}
+                  </span>
+                ) : (
+                  <File size={23} />
+                )}
               </button>
               <div className="check-page-info">
                 <div>
@@ -361,6 +400,17 @@ export function DocumentCheck({
                               ? ui('Scan · Texterkennung möglich')
                               : ui('Text direkt durchsuchbar'))}
                     {!selected.has(row.pageId) && ui(' · Nicht ausgewählt')}
+                  </p>
+                )}
+                {row.quality && (
+                  <p className="fine-note">
+                    {row.quality.issues.length
+                      ? [...new Set(row.quality.issues.map((i) => ui(qualityLabels[i.kind])))].join(
+                          ' · ',
+                        )
+                      : ui(
+                          'Keine Auffälligkeit in der Bildanalyse; Lesbarkeit dennoch am Original prüfen.',
+                        )}
                   </p>
                 )}
                 {duplicateIds.has(row.pageId) && !isSearch && (

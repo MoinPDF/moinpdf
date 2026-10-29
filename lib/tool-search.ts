@@ -2,6 +2,14 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'document-checklist': [
+    'Unterlagen prüfen',
+    'Vollständigkeit',
+    'Kontoauszüge',
+    'checklist',
+    'missing documents',
+  ],
+  'document-dates': ['Termine', 'Kalender', 'ICS', 'calendar', 'dates', 'appointments'],
   'document-colors': [
     'farbwechsel',
     'textfarbe',

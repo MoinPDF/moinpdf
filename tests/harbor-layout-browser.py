@@ -184,7 +184,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     expect(page.locator('.harbor-home')).to_be_visible()
                 checks.append(f'{width}px: all {len(tool_ids)} {category} tiles open their named tool without a PDF')
             page.locator('.mosaic-all-tools').click()
-            expect(page.locator('.chooser-tool')).to_have_count(118)
+            expect(page.locator('.chooser-tool')).to_have_count(120)
             framed(page.locator('.chooser-tool.tone-1'))
             framed(page.locator('.chooser-tool.tone-1 > span'))
             for tool_id in home_tools:
@@ -201,8 +201,8 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 expect(page.locator('.empty-stage')).to_have_count(0)
                 within_viewport(page, f'catalogue empty tool {width} / {title}')
                 page.get_by_role('button', name='Zurück zur Auswahl', exact=True).click()
-                expect(page.locator('.chooser-tool')).to_have_count(118)
-            checks.append(f'{width}px: all 118 catalogue tools open without a document or JavaScript errors')
+                expect(page.locator('.chooser-tool')).to_have_count(120)
+            checks.append(f'{width}px: all 120 catalogue tools open without a document or JavaScript errors')
             nav.get_by_role('button', name='Start', exact=True).click()
         checks.append('Home and catalogue resolve the same tool identities with visible icons; empty-tool back navigation works')
         # Importing after choosing a core tool must keep that tool selected.
