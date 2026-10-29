@@ -4,6 +4,11 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased
+
+- Expanded the existing combined-scan tool as “Automatically split scanned photos”: local contour detection with an adjustable contrast threshold, skew correction using the shared four-point transform, individual previews, manual corner/rectangle corrections and rotation. JPG/PNG or individual PDFs in a ZIP, plus a combined photo PDF. Uncertain detections, empty results and limits are explicit; originals remain unchanged. Existing project crops and the 118-tool catalogue are preserved.
+- Added German/English guidance and regression coverage for low contrast, skew, noise, manual corrections, export contents, cancellation and browser interaction.
+
 ## 0.25.2 – 28 October 2026
 
 - WebKit decodes PDF image data without the unreliable offscreen bitmap transfer. This prevents blank large-scan previews and missing OCR while retaining original image dimensions and PDF contents.

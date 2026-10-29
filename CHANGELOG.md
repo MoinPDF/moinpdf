@@ -9,6 +9,11 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Noch nicht veröffentlicht
+
+- Das vorhandene Sammelscan-Werkzeug wird zu „Scanfotos automatisch trennen“: lokale Konturerkennung mit einstellbarer Kontrastschwelle, Schieflagenkorrektur über die gemeinsame Vierpunkt-Transformation, Einzelvorschauen, manuelle Ecken-/Rechteckkorrektur und Drehung. JPG/PNG oder einzelne PDFs im ZIP sowie eine gemeinsame Foto-PDF. Unsichere Erkennung, leere Ergebnisse und Grenzen werden angezeigt; Originale bleiben unverändert. Bestehende Projektausschnitte und der Katalog mit 118 Werkzeugen bleiben erhalten.
+- Deutsche und englische Anleitung sowie Regressionen für schwachen Kontrast, Schieflage, Staub, manuelle Korrekturen, Exportinhalte, Abbruch und Browserbedienung ergänzt.
+
 ## 0.25.2 – 28. Oktober 2026
 
 - WebKit verarbeitet PDF-Bilddaten ohne den anfälligen Offscreen-Bitmap-Transfer. Das verhindert leere Scanvorschauen und dadurch ausbleibende OCR bei großen Bildern; Originalauflösung und PDF-Inhalte bleiben erhalten.

@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 const suites = [
+  'scan-photos',
   'native-redaction',
   'large-document',
   'color-page-tools',

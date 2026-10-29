@@ -447,9 +447,9 @@ export const tools = [
   },
   {
     id: 'scan-split',
-    title: 'Sammelscans trennen',
+    title: 'Scanfotos automatisch trennen',
     description:
-      'Mehrere Fotos oder Belege auf einer Seite erkennen. Ausschnitte prüfen und als einzelne PDFs oder Bilder speichern.',
+      'Mehrere Fotos auf einer Scan-Seite erkennen, ausrichten und zuschneiden. Als JPG, PNG oder gemeinsame PDF speichern.',
     icon: Scissors,
     group: 2,
     action: 'Ausschnitte erstellen',

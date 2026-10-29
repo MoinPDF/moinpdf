@@ -221,9 +221,9 @@ export const englishTools: Record<
     action: 'Optimise PDF',
   },
   'scan-split': {
-    title: 'Split combined scans',
+    title: 'Automatically split scanned photos',
     description:
-      'Detect multiple photos or receipts on a page. Review crops and save them as individual PDFs or images.',
+      'Detect, straighten and crop multiple photos on a scan page. Save as JPG, PNG or a combined PDF.',
     action: 'Create crops',
   },
   'pdf-markdown': {

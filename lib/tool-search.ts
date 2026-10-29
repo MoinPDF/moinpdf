@@ -219,6 +219,11 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'Bilder verkleinern',
   ],
   'scan-split': [
+    'Scanfotos automatisch trennen',
+    'Fotoalbum digitalisieren',
+    'Fotos separieren',
+    'Detect split scanned photos',
+    'Automatically split scanned photos',
     'Sammelscans trennen',
     'Fotos auf einem Scan trennen',
     'mehrere Belege auf einer Seite',

@@ -7819,3 +7819,78 @@ html:has(.editor-canvas-wrap) {
     min-width: 24px;
   }
 }
+
+/* Scan photo proposals share the original page geometry with the export. */
+.scan-photo-controls {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.scan-photo-outlines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.scan-photo-outlines polygon {
+  fill: #08a49715;
+  stroke: #008c79;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.scan-photo-outlines .selected polygon {
+  stroke: #e59517;
+  stroke-width: 3;
+}
+.scan-photo-outlines text {
+  fill: #006858;
+  stroke: white;
+  stroke-width: 0.2;
+  paint-order: stroke;
+  font-size: 3px;
+}
+.scan-photo-corner {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #006858;
+  color: white;
+  box-shadow: 0 0 0 2px white;
+  touch-action: none;
+  cursor: move;
+  z-index: 2;
+}
+.scan-photo-corner:focus-visible {
+  outline: 3px solid #e59517;
+  outline-offset: 3px;
+}
+.scan-photo-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.scan-photo-previews button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+}
+.scan-photo-previews button[aria-pressed='true'] {
+  border-color: #008c79;
+}
+.scan-photo-previews img {
+  width: 100%;
+  height: 140px;
+  object-fit: contain;
+}
+.scan-photo-edit {
+  padding: 12px 0;
+}

@@ -52,6 +52,14 @@ Der **Formularhelfer** speichert bis zu zehn Profile nach ausdrücklichem Speich
 
 **Belege auf A4 sammeln** schneidet einzelne Belege aus Fotos oder PDFs zu, auch mehrere Ausschnitte derselben Scan-Seite. Reihenfolge, Beschriftung, Nummerierung und Druckbreiten von 30–190 mm sind wählbar. Die A4-Vorschau verwendet dieselbe Anordnung wie der Export. Lange Belege werden bei gleicher Breite in gekennzeichnete Teile aufgeteilt; zu breite Belege müssen angepasst werden. Die Ausgabe besteht aus zugeschnittenen Seitenbildern ohne ursprüngliche Textebene, Links, Formulare, Anhänge oder Signaturen. Bis zu 200 Belege, 400 platzierte Teile und 80 MB Ausgabe; Ausschnitte werden mit bis zu rund vier Megapixeln gerendert. Mit 100 % / Tatsächliche Größe drucken. Zuschnitte und Anordnung werden im Projekt gespeichert.
 
+## Scanfotos automatisch trennen
+
+Unter **Seiten & Struktur** wird „Sammelscans trennen“ als **Scanfotos automatisch trennen** erweitert. Der Katalog enthält weiterhin 118 Werkzeuge; die Kennung `scan-split` und vorhandene rechteckige Ausschnitte bleiben kompatibel.
+
+Vollständig lokal, ohne KI oder Dokumentenserver. Die Erkennung nutzt Hintergrundfarbe, Zwischenräume und Konturen. Schräge Fotos und unterschiedliche Größen werden unterstützt. Schwache Konturen werden als unsicher markiert; bei fehlenden Vorschlägen manuell markieren. Überlappungen, weiße Fotoränder und ungleichmäßiger Hintergrund sind nicht zuverlässig automatisch trennbar. Bis zu 32 Vorschläge pro Seite, 50 Seiten je Erkennung, 200 Fotos und 160 MB Ausgabe. Analyse bis 1000 Pixel Kantenlänge; Export mit 150/300 dpi, maximal 4096 Pixel Kantenlänge und 16 Megapixel pro gerenderter Scan-Seite (höchstens 4,2-fache PDF-Punktauflösung). Originale bleiben unverändert; Ausgaben enthalten keine ursprüngliche Textebene, Links, Formulare oder Signaturen. Einstellungen und Ausschnitte bleiben im Projekt; die Prüfbestätigung muss neu erfolgen.
+
+Prüfe die nummerierten Konturen und Fotovorschauen auf jeder Seite. Wähle ein Foto, verschiebe seine vier Ecken mit Maus, Touch oder Pfeiltasten, drehe es in 90°-Schritten oder ändere den rechteckigen Zuschnitt über Prozentwerte. Fehlende Fotos als Rahmen aufziehen; falsche Vorschläge entfernen. Bestätige die Prüfung aller Ausschnitte. Wähle JPG/PNG im ZIP, einzelne Bild-PDFs im ZIP oder alle Fotos in einer PDF und lade das Ergebnis herunter.
+
 ## Browser und Dokumentenserver
 
 Viele Werkzeuge arbeiten lokal im Browser. Die vollständige Docker-Installation ergänzt einen automatisch verbundenen Dokumentenserver. Dessen Aufträge starten erst mit dem jeweiligen Aktionsknopf. Der PDF-Editor bereitet sichtbare Seiten und Scan-Texte automatisch lokal vor.

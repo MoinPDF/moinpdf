@@ -52,6 +52,14 @@ Export actually removes content, including images and lines inside confirmed are
 
 **Collect receipts on A4** crops individual receipts from photos or PDFs, including several crops from one scan. Choose order, captions, numbering and print widths of 30–190 mm. The A4 preview uses the export layout. Long receipts are split into numbered parts at the selected width; excessively wide items require correction. Export uses cropped page images, without original text layers, links, forms, attachments or signatures. Up to 200 receipts, 400 placed parts and 80 MB of output; crops are rendered at up to about four megapixels. Print at 100% / Actual size. Crops and layout are saved in projects.
 
+## Automatically split scanned photos
+
+**Pages & structure** now includes the expanded “Split combined scans” tool under the name **Automatically split scanned photos**. The catalogue still contains 118 tools; the `scan-split` ID and existing rectangular crops remain compatible.
+
+Entirely local, without AI or a document server. Detection uses background colour, gaps and contours. Supports skewed photos and different sizes. Weak outlines are marked uncertain; add manual frames when no suggestions appear. Overlaps, white photo borders and uneven backgrounds cannot be separated reliably automatically. Up to 32 suggestions per page, 50 pages per detection, 200 photos and 160 MB of output. Analysis up to 1000 pixels per side; export at 150/300 dpi, up to 4096 pixels per side and 16 megapixels per rendered scan page (at most 4.2 times PDF point resolution). Originals stay unchanged; output has no original text layer, links, forms or signatures. Settings and crops stay in the project; review must be confirmed again.
+
+Check the numbered outlines and photo previews on every page. Select a photo, move its four corners with mouse, touch or arrow keys, rotate it in 90° steps or change its rectangular crop using percentages. Draw frames for missing photos; remove incorrect suggestions. Confirm that you reviewed all crops. Choose JPG/PNG in a ZIP, individual image PDFs in a ZIP or all photos in one PDF, then download the result.
+
 ## Browser and document server
 
 Many tools run locally in the browser. The complete Docker installation adds an automatically connected document server. Server jobs start only when you press the respective action button. The PDF editor automatically prepares visible pages and recognises scans locally.

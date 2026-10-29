@@ -1,6 +1,60 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  'PNG-Bilder': 'PNG images',
+  'JPG-Fotos': 'JPG photos',
+  Ausgabeformat: 'Output format',
+  'Scanfotos automatisch trennen': 'Automatically split scanned photos',
+  'Mehrere Fotos lokal erkennen, einzeln ausrichten und zuschneiden. Die Originaldatei bleibt unverändert.':
+    'Detect multiple photos locally, straighten and crop each one. The original file stays unchanged.',
+  'Mehrere Fotos auf einer Scan-Seite erkennen, ausrichten und zuschneiden. Als JPG, PNG oder gemeinsame PDF speichern.':
+    'Detect, straighten and crop multiple photos on a scan page. Save as JPG, PNG or a combined PDF.',
+  Kontrastschwelle: 'Contrast threshold',
+  'Die Kontrastschwelle muss zwischen 6 und 60 liegen.':
+    'The contrast threshold must be between 6 and 60.',
+  'Kleinere Werte helfen bei blassen Fotos; größere Werte unterdrücken Staub und Schatten. Fotos mit Abstand auf einen möglichst gleichmäßigen Hintergrund legen.':
+    'Lower values help with faint photos; higher values suppress dust and shadows. Leave gaps between photos on a background that is as uniform as possible.',
+  'Vorhandene Ausschnitte bei erneuter Erkennung ersetzen':
+    'Replace existing crops when detecting again',
+  'Mehr als 32 mögliche Fotos. Weitere Fotos manuell ergänzen oder die Seite aufteilen.':
+    'More than 32 possible photos. Add further photos manually or divide the page.',
+  'Keine sichere Erkennung. Kontrastschwelle senken oder einen eigenen Rahmen aufziehen.':
+    'No reliable detection. Lower the contrast threshold or draw your own frame.',
+  'Unsichere Konturen: Helle, angeschnittene oder verbundene Fotos bitte besonders sorgfältig prüfen.':
+    'Uncertain outlines: please check faint, clipped or connected photos especially carefully.',
+  'Vorschläge erkannt. Bitte jedes Foto und seine Ränder am Original prüfen.':
+    'Suggestions found. Please check every photo and its edges against the original.',
+  'Erkennung starten oder einen eigenen Rahmen aufziehen.':
+    'Start detection or draw your own frame.',
+  Fotoecke: 'Photo corner',
+  Fotovorschau: 'Photo preview',
+  'Foto auswählen': 'Select photo',
+  Foto: 'Photo',
+  'Fotoecken prüfen': 'Check photo corners',
+  'Zugeschnittenes Foto': 'Cropped photo',
+  'Die vier Ecken ziehen oder mit Pfeiltasten verschieben. Prozentwerte ermöglichen einen rechteckigen Zuschnitt. Drehung und Vorschau gelten nur für dieses Foto.':
+    'Drag the four corners or move them with arrow keys. Percentage values provide a rectangular crop. Rotation and preview apply only to this photo.',
+  'Die Fotoecken müssen innerhalb der Seite liegen und dürfen sich nicht kreuzen.':
+    'Photo corners must stay inside the page and must not cross.',
+  'Foto um 90° drehen': 'Rotate photo by 90°',
+  'Alle Fotos in einer PDF': 'All photos in one PDF',
+  'JPG und PNG werden als ZIP gespeichert. Bis zu 50 Seiten automatisch erkennen, 200 Fotos und 160 MB ausgeben. Die gerenderte Scan-Seite ist auf 4096 Pixel Kantenlänge und 16 Megapixel begrenzt; die tatsächliche Auflösung kann geringer sein. Weiße Fotoränder, starke Schatten und überlappende Fotos benötigen oft manuelle Korrekturen.':
+    'JPG and PNG are saved as a ZIP. Automatically detect up to 50 pages; export up to 200 photos and 160 MB. The rendered scan page is limited to 4096 pixels per side and 16 megapixels; actual resolution may be lower. White photo borders, strong shadows and overlapping photos often need manual corrections.',
+  'Nur markierte Fotos werden ausgegeben, in Seiten- und Rahmenreihenfolge. Die Ausgabe enthält Bildkopien ohne ursprüngliche Textebene, Links, Formulare oder Signaturen. Die Originaldatei bleibt unverändert.':
+    'Only marked photos are exported, in page and frame order. Output contains image copies without the original text layer, links, forms or signatures. The original file remains unchanged.',
+  'Scans als PDF oder Bilddatei mit mehreren getrennt liegenden Fotos.':
+    'PDF or image scans containing several separately placed photos.',
+  'Wähle „Diese Seite erkennen“ oder „Alle Seiten erkennen“. Senke die Kontrastschwelle bei blassen Fotos; erhöhe sie bei Staub oder Schatten. Erneute Erkennung ersetzt bestehende Ausschnitte nur nach ausdrücklicher Auswahl.':
+    'Choose “Detect items on this page” or “Detect items on all pages”. Lower the contrast threshold for faint photos; raise it for dust or shadows. Detecting again only replaces existing crops after explicit selection.',
+  'Prüfe die nummerierten Konturen und Fotovorschauen auf jeder Seite. Wähle ein Foto, verschiebe seine vier Ecken mit Maus, Touch oder Pfeiltasten, drehe es in 90°-Schritten oder ändere den rechteckigen Zuschnitt über Prozentwerte. Fehlende Fotos als Rahmen aufziehen; falsche Vorschläge entfernen.':
+    'Check the numbered outlines and photo previews on every page. Select a photo, move its four corners with mouse, touch or arrow keys, rotate it in 90° steps or change its rectangular crop using percentages. Draw frames for missing photos; remove incorrect suggestions.',
+  'Bestätige die Prüfung aller Ausschnitte. Wähle JPG/PNG im ZIP, einzelne Bild-PDFs im ZIP oder alle Fotos in einer PDF und lade das Ergebnis herunter.':
+    'Confirm that you reviewed all crops. Choose JPG/PNG in a ZIP, individual image PDFs in a ZIP or all photos in one PDF, then download the result.',
+  'Gerade ausgerichtete Bildkopien der Fotos; nur markierte Seiten und Ausschnitte in Seiten- und Rahmenreihenfolge.':
+    'Straightened image copies of the photos; only marked pages and crops, in page and frame order.',
+  'Vollständig lokal, ohne KI oder Dokumentenserver. Die Erkennung nutzt Hintergrundfarbe, Zwischenräume und Konturen. Schräge Fotos und unterschiedliche Größen werden unterstützt. Schwache Konturen werden als unsicher markiert; bei fehlenden Vorschlägen manuell markieren. Überlappungen, weiße Fotoränder und ungleichmäßiger Hintergrund sind nicht zuverlässig automatisch trennbar. Bis zu 32 Vorschläge pro Seite, 50 Seiten je Erkennung, 200 Fotos und 160 MB Ausgabe. Analyse bis 1000 Pixel Kantenlänge; Export mit 150/300 dpi, maximal 4096 Pixel Kantenlänge und 16 Megapixel pro gerenderter Scan-Seite (höchstens 4,2-fache PDF-Punktauflösung). Originale bleiben unverändert; Ausgaben enthalten keine ursprüngliche Textebene, Links, Formulare oder Signaturen. Einstellungen und Ausschnitte bleiben im Projekt; die Prüfbestätigung muss neu erfolgen.':
+    'Entirely local, without AI or a document server. Detection uses background colour, gaps and contours. Supports skewed photos and different sizes. Weak outlines are marked uncertain; add manual frames when no suggestions appear. Overlaps, white photo borders and uneven backgrounds cannot be separated reliably automatically. Up to 32 suggestions per page, 50 pages per detection, 200 photos and 160 MB of output. Analysis up to 1000 pixels per side; export at 150/300 dpi, up to 4096 pixels per side and 16 megapixels per rendered scan page (at most 4.2 times PDF point resolution). Originals stay unchanged; output has no original text layer, links, forms or signatures. Settings and crops stay in the project; review must be confirmed again.',
+
   'Vorder- und Rückseiten aus zwei Dateien oder zwei Blöcken einer PDF abwechselnd kombinieren.':
     'Alternate fronts and backs from two files or two blocks within one PDF.',
   'Seiten zuschneiden: Randinhalt entfernen oder den sichtbaren Bereich mit Texterhalt ändern.':

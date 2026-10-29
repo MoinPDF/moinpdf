@@ -16,6 +16,13 @@ const doc=await PDFDocument.create();doc.addPage();const bytes=await doc.save();
 const source={id:'source',name:'fictional.pdf',kind:'pdf',size:bytes.length,bytes};
 const viewState={choosingTool:false,zoom:200,view:'pages',scrollX:0,scrollY:650,documentX:40,documentY:900};
 const toolDrafts={'TablePanel.rows:source':[['Item','Amount'],['Fictional invoice','125.50']], 'OcrReviewPanel.corrections:source':{word:'Corrected value'}, 'MeasurePanel.manual:source':{x:.4,y:.5}};
+Object.assign(toolDrafts, {
+  'ScanSplitPanel.regions:source': {0:[{x:.1,y:.1,w:.3,h:.2,corners:[{x:.1,y:.1},{x:.4,y:.12},{x:.38,y:.3},{x:.1,y:.28}],rotation:90,uncertain:true},{x:.6,y:.2,w:.2,h:.2}]},
+  'ScanSplitPanel.gap:source': 3,
+  'ScanSplitPanel.sensitivity:source': 6,
+  'ScanSplitPanel.format:source': 'combined-pdf',
+  'ScanSplitPanel.notices:source': {0:'Fictional uncertain contour notice'},
+});
 assert(toolDraftSchema.safeParse(toolDrafts).success);
 assert(toolDraftSchema.safeParse({'WorkflowPanel.steps:source':[{kind:'ocr',text:undefined,condition:undefined}]}).success,'Optional unset fields can be saved before JSON serialization');
 for(const wrong of [ {'TablePanel.rows:source':[{unexpected:true}]}, {'MeasurePanel.manual:source':{x:'bad',y:0}}, {'Password:source':'never-persist'}, {'OcrReviewPanel.corrections:source':[1,2]}])assert(!toolDraftSchema.safeParse(wrong).success,'Untrusted draft shapes and unknown/secret fields are rejected');
