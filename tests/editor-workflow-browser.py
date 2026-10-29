@@ -103,7 +103,11 @@ def text_table(page,name):
     field.press('Shift+Tab');expect(field).to_have_text('EDIT')
     controls_ui.settings(page, advanced=True)
     changes=page.locator('.editor-workflow-section').filter(has=page.locator('summary').filter(has_text='Änderungen im Dokument'))
-    changes.locator('summary').click()
+    # Finishing the asynchronous preflight changes the sidebar height. Wait for
+    # its final label, then scroll before measuring the real pointer click.
+    expect(page.locator('summary').filter(has_text='Änderungen vorprüfen')).to_contain_text(re.compile(r'\d+ Textstellen'))
+    summary=changes.locator('summary');summary.scroll_into_view_if_needed();summary.click()
+    expect(changes).to_have_attribute('open','')
     entry=changes.locator('.editor-change-entry').filter(has_text='Nachher: EDIT')
     entry.get_by_role('button',name='Diese Änderung zurücknehmen',exact=True).click()
     expect(page.get_by_role('button',name='Tabellenzelle 1, 1: R1C1',exact=True)).to_be_visible()
