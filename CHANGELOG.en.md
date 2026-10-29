@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.26.0 – 29 October 2026
+
+- Two new tools: Document checklist with reviewable evidence and CSV, and Collect dates from PDFs with correction, explicit confirmation and local ICS export. The catalogue now contains 120 tools.
+- Three extensions: scan-quality hints in the page finder, text comparison of a base version against two edits, and selective replacement of recurring raster logos in Edit PDF objects.
+- German/English interface, manuals and automated regressions for calendar dates, ambiguity, preserved originals, real exports and browser workflows. The features reuse existing local text/OCR, image and PDF processing.
+
+- Expanded the existing combined-scan tool as “Automatically split scanned photos”: local contour detection with an adjustable contrast threshold, skew correction using the shared four-point transform, individual previews, manual corner/rectangle corrections and rotation. JPG/PNG or individual PDFs in a ZIP, plus a combined photo PDF. Uncertain detections, empty results and limits are explicit; originals remain unchanged. Existing project crops remain compatible.
+- Added German/English guidance and regression coverage for low contrast, skew, noise, manual corrections, export contents, cancellation and browser interaction.
+
 ## 0.25.2 – 28 October 2026
 
 - WebKit decodes PDF image data without the unreliable offscreen bitmap transfer. This prevents blank large-scan previews and missing OCR while retaining original image dimensions and PDF contents.
@@ -232,7 +241,7 @@ PDF editor improvements already integrated since 0.19.0:
 - Local recovery after reload and a tray of the latest ten results, up to 160 MB.
 - Persistent background conversion jobs in Docker: two workers, 16 outstanding jobs, 15-minute processing, 24-hour retrieval, restart recovery and real subprocess cancellation. Signing secrets are excluded.
 
-## Unreleased
+## 0.26.0 – 29 October 2026
 
 - Repository documentation is available in German and English, with paired language navigation, a redesigned README and bilingual issue templates.
 - Project documentation and release workflows focus on standalone Docker operation.

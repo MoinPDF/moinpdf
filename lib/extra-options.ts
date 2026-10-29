@@ -28,10 +28,11 @@ export const isExtraTool = (id: string): id is ExtraTool =>
 export type ExtraOptions = {
   firstSource: string;
   secondSource: string;
+  thirdSource?: string;
   reverseSecond: boolean;
   interleaveMode?: 'two' | 'single';
   duplexSplit?: number;
-  compareMode?: 'pages' | 'content';
+  compareMode?: 'pages' | 'content' | 'three-way';
   splitMode: 'every' | 'ranges';
   splitEvery: number;
   splitRanges: string;
@@ -53,6 +54,7 @@ export type ExtraOptions = {
 export const extraDefaults: ExtraOptions = {
   firstSource: '',
   secondSource: '',
+  thirdSource: '',
   reverseSecond: false,
   interleaveMode: 'two',
   duplexSplit: 0,

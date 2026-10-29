@@ -60,7 +60,7 @@ const labels = {
   review: 'Bitte prüfen',
   match: 'Übereinstimmung',
 };
-function EvidencePreview({ sources, focus }: { sources: Source[]; focus?: EvidenceRef }) {
+export function EvidencePreview({ sources, focus }: { sources: Source[]; focus?: EvidenceRef }) {
   useLanguage();
   const [sourceId, setSourceId] = useState(focus?.sourceId || sources[0]?.id || ''),
     [page, setPage] = useState(focus?.page || 0),

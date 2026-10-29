@@ -140,7 +140,10 @@ export function PageSelect({
       label={ui('Seite')}
       value={String(page)}
       onChange={(v) => onChange(Number(v))}
-      items={Array.from({ length: source.pdf.numPages }, (_, i) => [String(i), `Seite ${i + 1}`])}
+      items={Array.from({ length: source.pdf.numPages }, (_, i) => [
+        String(i),
+        `${ui('Seite')} ${i + 1}`,
+      ])}
     />
   );
 }

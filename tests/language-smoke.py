@@ -56,7 +56,7 @@ def check(page, name):
 
 def back(page):
     page.get_by_role('button', name=re.compile(r'^(Back to selection|Change tool)$')).click()
-    expect(page.locator('.chooser-tool')).to_have_count(118)
+    expect(page.locator('.chooser-tool')).to_have_count(120)
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
@@ -82,7 +82,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             document.new_page().insert_text((50,60),'Benutzerinhalt bleibt unveraendert. ORIGINAL-123.')
             document.save(pdf)
         page.locator('input[type=file]').first.set_input_files(str(pdf))
-        expect(page.locator('.chooser-tool')).to_have_count(118)
+        expect(page.locator('.chooser-tool')).to_have_count(120)
         titles = page.locator('.chooser-tool strong').all_text_contents()
         for title in titles:
             page.locator('.chooser-tool').filter(has=page.get_by_text(title,exact=True)).click()
@@ -98,7 +98,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     check(page,title+' / menu')
                     page.keyboard.press('Escape')
             back(page)
-        completed.append('All 118 English tool views and available selection menus, with the PDF retained')
+        completed.append('All 120 English tool views and available selection menus, with the PDF retained')
         # Exercise server-authored failures at their actual rendering boundaries.
         job = {'id':'a'*32, 'ticket':'a'*64, 'base':'/api/documents', 'name':'Auftrag Original-123.pdf', 'operation':'/v1/pdf-word', 'created':time.time(), 'expires':time.time()+3600, 'status':'failed', 'error':'Der Auftrag hat das Zeitlimit erreicht.'}
         job_url = origin+job['base']+'/v1/jobs/'+job['id']
@@ -126,7 +126,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 for link in info.locator('a.docs-release').all():
                     expect(link).to_have_attribute('href', release_url)
                     expect(link).to_have_attribute('title', 'Changes in this version on GitHub (new tab)')
-                expect(info.locator('.docs-tool')).to_have_count(118)
+                expect(info.locator('.docs-tool')).to_have_count(120)
                 info.get_by_role('searchbox').fill('Compress to target size')
                 expect(info.locator('#docs-search-status')).to_contain_text('guides')
                 info.get_by_role('searchbox').fill('')

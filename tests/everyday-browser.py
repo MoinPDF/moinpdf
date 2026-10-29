@@ -77,7 +77,7 @@ with sync_playwright() as api:
                 try:
                     page.goto(origin+('?lang=en' if en else '?lang=de'))
                     page.locator('input[type=file]').first.set_input_files(str(form_path.resolve()))
-                    expect(page.locator('.chooser-tool')).to_have_count(118)
+                    expect(page.locator('.chooser-tool')).to_have_count(120)
                     choose('Formularhelfer','Form helper')
                     fill_detail('Profilname','Profile name','Fictional family')
                     fill_detail('Vorname','First name','Jörg')

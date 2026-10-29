@@ -2,6 +2,14 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'document-checklist': [
+    'Unterlagen prüfen',
+    'Vollständigkeit',
+    'Kontoauszüge',
+    'checklist',
+    'missing documents',
+  ],
+  'document-dates': ['Termine', 'Kalender', 'ICS', 'calendar', 'dates', 'appointments'],
   'document-colors': [
     'farbwechsel',
     'textfarbe',
@@ -219,6 +227,11 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'Bilder verkleinern',
   ],
   'scan-split': [
+    'Scanfotos automatisch trennen',
+    'Fotoalbum digitalisieren',
+    'Fotos separieren',
+    'Detect split scanned photos',
+    'Automatically split scanned photos',
     'Sammelscans trennen',
     'Fotos auf einem Scan trennen',
     'mehrere Belege auf einer Seite',

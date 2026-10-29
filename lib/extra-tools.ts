@@ -173,15 +173,32 @@ export async function runSourceTool(
   if (tool === 'compare') {
     const { first, second, a, b } = selectedPair(sources, pages, options),
       total = Math.max(a.length, b.length);
-    if (options.compareMode === 'content') {
+    if (options.compareMode === 'content' || options.compareMode === 'three-way') {
+      const third =
+        options.compareMode === 'three-way'
+          ? sources.find((s) => s.id === options.thirdSource) ||
+            sources.find((s) => s.id !== first.id && s.id !== second.id)
+          : undefined;
+      if (
+        options.compareMode === 'three-way' &&
+        (!third || third.id === first.id || third.id === second.id)
+      )
+        throw new Error('Bitte drei verschiedene Dateien auswählen.');
+      const c = third ? pages.flatMap((p, i) => (p.sourceId === third.id ? [i] : [])) : [];
+      if (third && !c.length) throw new Error('Bitte auch in der dritten Datei Seiten auswählen.');
+      if ([a, b, c].some((v) => v.length > 200))
+        throw new Error('Bitte höchstens 200 Seiten je Fassung auswählen.');
       const { compareContent, comparisonPage } = await import('./content-compare');
       const left: { number: number; text: string }[] = [],
-        right: { number: number; text: string }[] = [];
-      let done = 0;
-      for (const [source, selected, output] of [
+        right: { number: number; text: string }[] = [],
+        branchB: { number: number; text: string }[] = [];
+      const inputs: [Source, number[], { number: number; text: string }[]][] = [
         [first, a, left],
         [second, b, right],
-      ] as const) {
+      ];
+      if (third) inputs.push([third, c, branchB]);
+      let done = 0;
+      for (const [source, selected, output] of inputs) {
         let characters = 0;
         for (const index of selected) {
           check(signal);
@@ -221,11 +238,29 @@ export async function runSourceTool(
             );
           output.push(layout);
           notify({
-            percent: (++done / (a.length + b.length)) * 55,
+            percent: (++done / (a.length + b.length + c.length)) * 55,
             label: `Text aus ${source.name} · Seite ${page.index + 1} lesen …`,
           });
           await tick();
         }
+      }
+      if (third) {
+        const { compareThreeWays } = await import('./three-way-compare');
+        const report = await compareThreeWays(
+          left,
+          right,
+          branchB,
+          { base: first.name, a: second.name, b: third.name },
+          signal,
+          (p) => notify({ percent: 55 + p * 45, label: 'Drei Fassungen vergleichen' }),
+        );
+        check(signal);
+        return reportResult(
+          report,
+          'MoinPDF-3.txt',
+          a.length + b.length + c.length,
+          first.size + second.size + third.size,
+        );
       }
       const report = await compareContent(
         left,

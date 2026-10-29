@@ -77,6 +77,26 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'document-checklist',
+    title: 'Unterlagen-Checkliste',
+    description:
+      'Erwartete Unterlagen mit Suchwörtern und Monat prüfen. Fundstellen bestätigen und fehlende oder unklare Zuordnungen dokumentieren.',
+    icon: ClipboardCheck,
+    group: 0,
+    action: 'Unterlagen prüfen',
+    fresh: true,
+  },
+  {
+    id: 'document-dates',
+    title: 'Termine aus PDFs übernehmen',
+    description:
+      'Gedruckte Datumsangaben mit Fundstelle sammeln, korrigieren und bestätigte Termine als Kalenderdatei speichern.',
+    icon: CalendarDays,
+    group: 1,
+    action: 'Datumsangaben suchen',
+    fresh: true,
+  },
+  {
     id: 'large-document',
     title: 'Große PDFs verarbeiten',
     description:
@@ -447,9 +467,9 @@ export const tools = [
   },
   {
     id: 'scan-split',
-    title: 'Sammelscans trennen',
+    title: 'Scanfotos automatisch trennen',
     description:
-      'Mehrere Fotos oder Belege auf einer Seite erkennen. Ausschnitte prüfen und als einzelne PDFs oder Bilder speichern.',
+      'Mehrere Fotos auf einer Scan-Seite erkennen, ausrichten und zuschneiden. Als JPG, PNG oder gemeinsame PDF speichern.',
     icon: Scissors,
     group: 2,
     action: 'Ausschnitte erstellen',

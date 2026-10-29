@@ -3,7 +3,7 @@
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.25.2**
+**Aktuelle Grenzen aus der Implementierung · 0.26.0**
 
 | Funktion | Wert |
 | --- | --- |
@@ -51,6 +51,14 @@ Der Export entfernt Inhalte tatsächlich; Bilder und Linien innerhalb der bestä
 Der **Formularhelfer** speichert bis zu zehn Profile nach ausdrücklichem Speichern lokal. Eindeutige Feldbezeichnungen liefern Vorschläge für leere Textfelder; vorhandene Werte und unklare Zuordnungen bleiben erhalten. Angaben lassen sich manuell zuordnen oder als transparente Textfelder auf Scans platzieren. Vor dem Export ist die Prüfung am Original zu bestätigen. Optional werden Formularwerte festgeschrieben. Profile bleiben unverschlüsselt im Browserspeicher und werden nicht mit Projektdateien übertragen; Formularentwürfe gehören zum Projekt. Signierte PDFs und dynamische XFA werden abgewiesen. Überlaufende neue Einträge und nicht unterstützte Zeichen sperren den Export.
 
 **Belege auf A4 sammeln** schneidet einzelne Belege aus Fotos oder PDFs zu, auch mehrere Ausschnitte derselben Scan-Seite. Reihenfolge, Beschriftung, Nummerierung und Druckbreiten von 30–190 mm sind wählbar. Die A4-Vorschau verwendet dieselbe Anordnung wie der Export. Lange Belege werden bei gleicher Breite in gekennzeichnete Teile aufgeteilt; zu breite Belege müssen angepasst werden. Die Ausgabe besteht aus zugeschnittenen Seitenbildern ohne ursprüngliche Textebene, Links, Formulare, Anhänge oder Signaturen. Bis zu 200 Belege, 400 platzierte Teile und 80 MB Ausgabe; Ausschnitte werden mit bis zu rund vier Megapixeln gerendert. Mit 100 % / Tatsächliche Größe drucken. Zuschnitte und Anordnung werden im Projekt gespeichert.
+
+## Scanfotos automatisch trennen
+
+Unter **Seiten & Struktur** wird „Sammelscans trennen“ als **Scanfotos automatisch trennen** erweitert. Der Katalog enthält mit Version 0.26.0 insgesamt 120 Werkzeuge; die Kennung `scan-split` und vorhandene rechteckige Ausschnitte bleiben kompatibel.
+
+Vollständig lokal, ohne KI oder Dokumentenserver. Die Erkennung nutzt Hintergrundfarbe, Zwischenräume und Konturen. Schräge Fotos und unterschiedliche Größen werden unterstützt. Schwache Konturen werden als unsicher markiert; bei fehlenden Vorschlägen manuell markieren. Überlappungen, weiße Fotoränder und ungleichmäßiger Hintergrund sind nicht zuverlässig automatisch trennbar. Bis zu 32 Vorschläge pro Seite, 50 Seiten je Erkennung, 200 Fotos und 160 MB Ausgabe. Analyse bis 1000 Pixel Kantenlänge; Export mit 150/300 dpi, maximal 4096 Pixel Kantenlänge und 16 Megapixel pro gerenderter Scan-Seite (höchstens 4,2-fache PDF-Punktauflösung). Originale bleiben unverändert; Ausgaben enthalten keine ursprüngliche Textebene, Links, Formulare oder Signaturen. Einstellungen und Ausschnitte bleiben im Projekt; die Prüfbestätigung muss neu erfolgen.
+
+Prüfe die nummerierten Konturen und Fotovorschauen auf jeder Seite. Wähle ein Foto, verschiebe seine vier Ecken mit Maus, Touch oder Pfeiltasten, drehe es in 90°-Schritten oder ändere den rechteckigen Zuschnitt über Prozentwerte. Fehlende Fotos als Rahmen aufziehen; falsche Vorschläge entfernen. Bestätige die Prüfung aller Ausschnitte. Wähle JPG/PNG im ZIP, einzelne Bild-PDFs im ZIP oder alle Fotos in einer PDF und lade das Ergebnis herunter.
 
 ## Browser und Dokumentenserver
 
@@ -252,3 +260,15 @@ Diese Einträge beschreiben den damaligen Versionsstand. Aktuell unterstützt OC
 [Zur README](../README.md) · [Installation](../DOCKER.md) · [Entwicklung](ENTWICKLUNG.md)
 
 - Wunschgröße: Lokale Bildverkleinerung mit gemessenen Ergebnissen, Prozentbalken, Stufen- und Bildzähler sowie Abbruch. Der Desktop-Arbeitsbereich bleibt auch auf breiten Monitoren lesbar. Maskierte Bilder, 1-Bit-Scans, Bilder über 40 Megapixel und nicht unterstützte Farbräume bleiben unverändert; unerreichbare Ziele werden ausdrücklich gemeldet.
+
+## Unterlagen und Termine, drei Fassungen und Scan-Qualität (0.26.0)
+
+Der Werkzeugkatalog umfasst **120 Werkzeuge**. Neu sind **Unterlagen-Checkliste** unter **Prüfen & finden** und **Termine aus PDFs übernehmen** unter **Erkennen & konvertieren**. Drei vorhandene Werkzeuge erhalten zusätzliche Funktionen. Die Verarbeitung erfolgt lokal; Originaldateien werden nicht überschrieben.
+
+- **Unterlagen-Checkliste:** Bis zu 60 eigene Prüfpunkte mit Suchwörtern und optionalem Monat, einschließlich Vorlage für zwölf Kontoauszüge. Bis zu 200 Seiten werden mit vorhandener Text-/OCR-Erkennung ausgewertet. Alle Begriffe müssen auf derselben Seite vorkommen; Dateinamen gelten nicht als Beleg. Fundstellen können manuell zugeordnet werden. Erst nach Bestätigung jedes Prüfpunkts wird eine CSV exportiert. Nicht gefundene, mehrdeutige oder unlesbare Inhalte sind keine sichere Aussage über Vollständigkeit.
+- **Termine aus PDFs übernehmen:** Vollständige gedruckte Daten (1900–2199; Punkte, ISO, deutsche/englische Monatsnamen), Fundstelle und gegebenenfalls nachfolgende Uhrzeit. Bis zu 200 Seiten und 300 Vorschläge. Titel, Datum, Uhrzeit und Dauer lassen sich korrigieren; nur bestätigte Einträge gelangen in die ICS-Datei. Ganztägige Termine und lokale Kalenderzeiten werden unterstützt, zunächst 60 Minuten Dauer. Keine Berechnung rechtlicher oder relativer Fristen und kein automatischer Kalenderzugriff. Mehrdeutige Schrägstrich-Daten manuell eingeben. Projektentwürfe verlangen erneut Bestätigung.
+- **Check & Seitenfinder:** Zusätzliche lokale Bildanalyse auf mögliche Unschärfe, schwachen Kontrast, ungleichmäßige Helligkeit und Randinhalte mit markierten Bereichen und Filter. Bis zu 200 Seiten. Fotos, Vollflächen und kleine Schrift können Hinweise auslösen; ein unauffälliger Befund garantiert weder Lesbarkeit noch Vollständigkeit.
+- **PDFs vergleichen:** Modus „Drei Fassungen vergleichen“ für Ausgangsfassung und zwei Bearbeitungen, jeweils bis zu 200 ausgewählte Seiten. Gemeinsame, einseitige und widersprüchliche Textänderungen mit Ausgangstexten; unsichere Zuordnungen und zusätzliche Stellen bleiben offen. Scans benötigen vorher OCR. Kein automatisches Zusammenführen; Bilder, Layout und verschobene Texte sind keine Textkonflikte.
+- **PDF-Objekte bearbeiten:** Pixelgleiche Rasterbilder dokumentweit finden und nur ausgewählte Vorkommen ersetzen. Seitenvorschau, explizite Auswahl und Bestätigung. Text, übrige Objekte und nicht ausgewählte Bilder bleiben erhalten. Bis zu 50 Seiten/80 MB Eingang, 100 Ersetzungen/160 MB Ausgabe, Analyse bis 1.000 Bilder/48 Megapixel; Ersatzbild bis 20 MB/4 Megapixel. Kein Vektorlogo- oder Scaninhalt-Matching; beschnittene und komplex transparente Bilder werden ausgelassen. Ein anderes Seitenverhältnis kann verzerren. Signaturen und XFA werden abgewiesen.
+
+Automatisierte Regressionen verwenden fiktive Unterlagen und prüfen Vorschläge, Bestätigungen, echte CSV-/ICS-/PDF-Dateien, Textkonflikte und erhaltene Bildvorkommen. Browserautomation prüft Chromium, Firefox und WebKit mit Desktop- und Touch-Ansichten; daraus folgt keine Prüfung physischer Geräte.

@@ -28,7 +28,7 @@ completed = []
 
 def chooser(page):
     page.get_by_role('heading', name='Was möchtest du tun?', exact=True).wait_for()
-    expect(page.locator('.chooser-tool')).to_have_count(118)
+    expect(page.locator('.chooser-tool')).to_have_count(120)
 
 def back(page):
     mobile_tools = page.locator('.harbor-mobile-nav').get_by_role('button', name='Werkzeuge', exact=True)
@@ -83,7 +83,7 @@ def project_toolbar(page):
 
 def all_views(page, messages, context, empty=False):
     titles = page.locator('.chooser-tool strong').all_text_contents()
-    assert len(titles) == len(set(titles)) == 118
+    assert len(titles) == len(set(titles)) == 120
     for title in titles:
         page.locator('.chooser-tool').filter(has=page.get_by_text(title, exact=True)).click()
         if empty and page.locator('.upload-entry').is_visible():
@@ -98,7 +98,7 @@ def all_views(page, messages, context, empty=False):
         assert not messages, f'JavaScript exception in {context} / {title}: {messages}'
         no_overflow(page, context + ' / ' + title)
         back(page)
-    completed.append(f'{context}: all 118 tool entries checked without losing files')
+    completed.append(f'{context}: all 120 tool entries checked without losing files')
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
@@ -170,7 +170,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             count = page.locator('.chooser-tool').count()
             assert count > 0, f'Empty category {label}'
             total += count
-        assert total == 118
+        assert total == 120
         categories.get_by_role('button', name='Alle', exact=True).click()
         chooser(page)
         search = page.get_by_placeholder('Zum Beispiel: PDF kleiner machen …', exact=True)
@@ -183,7 +183,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('menuitemradio', name='English', exact=True).click()
         expect(page.locator('.chooser-document-count')).to_contain_text('1 file')
         expect(page.locator('.chooser-file')).to_contain_text('moinpdf-ui-test.pdf')
-        expect(page.locator('.chooser-tool')).to_have_count(118)
+        expect(page.locator('.chooser-tool')).to_have_count(120)
         page.get_by_placeholder('For example: make a PDF smaller …', exact=True).fill('word to pdf')
         expect(page.get_by_role('option').first).to_contain_text('Office to PDF')
         page.get_by_placeholder('For example: make a PDF smaller …', exact=True).fill('')
@@ -192,7 +192,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
         page.get_by_role('menuitemradio', name='Deutsch', exact=True).click()
         page.get_by_role('button', name='Hellen Modus einschalten', exact=True).click()
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')
-        completed.append('Theme/language switching keeps imported documents and all 118 tools')
+        completed.append('Theme/language switching keeps imported documents and all 120 tools')
 
         all_views(page, errors, 'Desktop with PDF')
         expect(page.locator('.chooser-document-count')).to_have_text('1 Datei·2 Seiten')

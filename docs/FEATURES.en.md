@@ -3,7 +3,7 @@
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.25.2**
+**Current implementation limits · 0.26.0**
 
 | Capability | Value |
 | --- | --- |
@@ -51,6 +51,14 @@ Export actually removes content, including images and lines inside confirmed are
 **Form helper** stores up to ten profiles locally on explicit save. Exact field labels suggest values for empty text fields; existing values and ambiguous labels are kept unchanged. Manually assign details or place transparent text fields on scans. Review the original before export. Optional flattening makes values permanent. Profiles stay unencrypted in browser storage and are separate from project exports; form drafts are retained in projects. Signed PDFs and dynamic XFA are rejected. New text that does not fit or uses unsupported characters blocks export.
 
 **Collect receipts on A4** crops individual receipts from photos or PDFs, including several crops from one scan. Choose order, captions, numbering and print widths of 30–190 mm. The A4 preview uses the export layout. Long receipts are split into numbered parts at the selected width; excessively wide items require correction. Export uses cropped page images, without original text layers, links, forms, attachments or signatures. Up to 200 receipts, 400 placed parts and 80 MB of output; crops are rendered at up to about four megapixels. Print at 100% / Actual size. Crops and layout are saved in projects.
+
+## Automatically split scanned photos
+
+**Pages & structure** now includes the expanded “Split combined scans” tool under the name **Automatically split scanned photos**. The catalogue contains 120 tools with version 0.26.0; the `scan-split` ID and existing rectangular crops remain compatible.
+
+Entirely local, without AI or a document server. Detection uses background colour, gaps and contours. Supports skewed photos and different sizes. Weak outlines are marked uncertain; add manual frames when no suggestions appear. Overlaps, white photo borders and uneven backgrounds cannot be separated reliably automatically. Up to 32 suggestions per page, 50 pages per detection, 200 photos and 160 MB of output. Analysis up to 1000 pixels per side; export at 150/300 dpi, up to 4096 pixels per side and 16 megapixels per rendered scan page (at most 4.2 times PDF point resolution). Originals stay unchanged; output has no original text layer, links, forms or signatures. Settings and crops stay in the project; review must be confirmed again.
+
+Check the numbered outlines and photo previews on every page. Select a photo, move its four corners with mouse, touch or arrow keys, rotate it in 90° steps or change its rectangular crop using percentages. Draw frames for missing photos; remove incorrect suggestions. Confirm that you reviewed all crops. Choose JPG/PNG in a ZIP, individual image PDFs in a ZIP or all photos in one PDF, then download the result.
 
 ## Browser and document server
 
@@ -220,3 +228,15 @@ These entries describe their release at the time. Current OCR supports up to eig
 [README](../README.en.md) · [Installation](../DOCKER.en.md) · [Development](DEVELOPMENT.en.md)
 
 - Target size: Local image resizing with measured results, a percentage bar, stage/image counters and cancellation. The desktop workspace remains readable on wide monitors. Masked images, 1-bit scans, images above 40 megapixels and unsupported color spaces remain unchanged; unattainable targets are explicitly reported.
+
+## Documents and dates, three versions and scan quality (0.26.0)
+
+The catalogue contains **120 tools**. **Document checklist** under **Check & find** and **Collect dates from PDFs** under **Recognize & convert** are new. Three existing tools gain capabilities. Processing is local; original files are not overwritten.
+
+- **Document checklist:** Up to 60 custom items with keywords and optional month, including a twelve-bank-statements template. Up to 200 pages use existing text/OCR recognition. All terms must occur on one page; file names are not evidence. Evidence can be assigned manually. CSV export requires confirmation of every item. Missing matches, ambiguous results or unreadable content cannot reliably establish completeness.
+- **Collect dates from PDFs:** Complete printed dates (1900–2199; dots, ISO, German/English month names), evidence and any following time. Up to 200 pages and 300 suggestions. Edit title, date, time and duration; only confirmed entries appear in the ICS file. Supports all-day dates and local calendar times, initially lasting 60 minutes. No calculation of legal or relative deadlines and no automatic calendar access. Enter ambiguous slash-separated dates manually. Restored projects require confirmation again.
+- **Check & page finder:** Additional local image analysis for possible blur, low contrast, uneven brightness and edge content with highlighted regions and a filter. Up to 200 pages. Photos, solid areas and small print can trigger hints; a clear result guarantees neither readability nor completeness.
+- **Compare PDFs:** Compare three versions mode for a base and two edits, each with up to 200 selected pages. Shared, one-sided and conflicting text changes include original passages; uncertain alignments and extra passages remain unresolved. Scans require prior OCR. No automatic merging; images, layout and moved text are not text conflicts.
+- **Edit PDF objects:** Find raster images with identical pixels throughout a document and replace only selected occurrences. Page preview, explicit selection and confirmation. Text, other objects and unselected images remain intact. Up to 50 pages/80 MB input, 100 replacements/160 MB output, analysis up to 1,000 images/48 megapixels; replacement up to 20 MB/4 megapixels. No matching of vector logos or content inside scans; clipped and complex transparent images are skipped. Different aspect ratios may distort the image. Signed PDFs and XFA are rejected.
+
+Automated regressions use fictional documents to check suggestions, confirmations, real CSV/ICS/PDF files, text conflicts and preserved image occurrences. Browser automation covers Chromium, Firefox and WebKit with desktop and touch layouts; this does not establish testing on physical devices.

@@ -29,7 +29,6 @@
 
 MoinPDF is a web application for creating, editing and converting PDFs and other documents. Files can be merged and split, pages reordered, text and images edited, and forms filled out. Additional features include text recognition for scanned documents, document comparison, invoice checks and batch processing of multiple files. Many tools run locally in the browser. Installing MoinPDF with Docker adds advanced file conversion, document translation and the creation of audiobooks from PDFs.
 
-Version 0.25.1 includes 118 tools. Large PDFs up to 1,000 pages, resumable local jobs, verified text-preserving redaction and reusable Clear Deck rules are documented with their limits in the [feature descriptions](docs/FEATURES.en.md).
 
 ## What you can do with MoinPDF
 

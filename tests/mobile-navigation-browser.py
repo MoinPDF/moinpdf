@@ -19,14 +19,16 @@ checks, errors = [], []
 
 def on_screen(locator):
     expect(locator).to_be_visible()
-    assert locator.evaluate('''el => {
+    # Resizing acknowledges the viewport before its layout/hit-test tree settles.
+    # Retry the same strict visibility checks for up to five seconds.
+    locator.page.wait_for_function('''el => {
         const r = el.getBoundingClientRect(), v = visualViewport;
         const left = v?.offsetLeft || 0, top = v?.offsetTop || 0;
         return r.width > 0 && r.height > 0 && r.left >= left - 1 && r.top >= top - 1
             && r.right <= left + (v?.width || innerWidth) + 1
             && r.bottom <= top + (v?.height || innerHeight) + 1
             && el.contains(document.elementFromPoint(r.x+r.width/2, r.y+r.height/2));
-    }'''), 'Control is clipped, off screen or covered'
+    }''', arg=locator.element_handle(), timeout=5000)
 
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
@@ -90,7 +92,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             nav.get_by_role('button', name='Home' if en else 'Start', exact=True).tap()
             search.tap()
             sheet.locator('.mobile-search-all').tap()
-            expect(page.locator('.chooser-tool')).to_have_count(118)
+            expect(page.locator('.chooser-tool')).to_have_count(120)
             pdf = Path(temporary) / 'navigation-retained.pdf'
             with pymupdf.open() as document:
                 document.new_page().insert_text((50, 60), 'Navigation retains this PDF')
@@ -126,7 +128,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             assert abs(box['x'] + box['width'] / 2 - 720) <= 2
             page.keyboard.press('Escape')
             page.locator('.harbor-desktop-nav').get_by_role('button', name='Tools' if en else 'Werkzeuge', exact=True).click()
-            expect(page.locator('.chooser-tool')).to_have_count(118)
+            expect(page.locator('.chooser-tool')).to_have_count(120)
             expect(page.locator('.chooser-file')).to_contain_text(pdf.name)
             checks.append(f'{language}: Enter/tap tool selection, all tools, PDF retention, projects/focus, desktop resize and centered dialog')
             if not en:

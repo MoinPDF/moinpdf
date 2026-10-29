@@ -5,6 +5,18 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'document-checklist': {
+    title: 'Document checklist',
+    description:
+      'Check expected documents using keywords and a month. Confirm evidence and record missing or unclear assignments.',
+    action: 'Check documents',
+  },
+  'document-dates': {
+    title: 'Collect dates from PDFs',
+    description:
+      'Collect printed dates with evidence, make corrections and save confirmed events as a calendar file.',
+    action: 'Find dates',
+  },
   'large-document': {
     title: 'Process large PDFs',
     description:
@@ -221,9 +233,9 @@ export const englishTools: Record<
     action: 'Optimise PDF',
   },
   'scan-split': {
-    title: 'Split combined scans',
+    title: 'Automatically split scanned photos',
     description:
-      'Detect multiple photos or receipts on a page. Review crops and save them as individual PDFs or images.',
+      'Detect, straighten and crop multiple photos on a scan page. Save as JPG, PNG or a combined PDF.',
     action: 'Create crops',
   },
   'pdf-markdown': {

@@ -17,15 +17,17 @@ Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(nam
 globalThis.Worker=class{constructor(){this.worker=new NodeWorker(new URL('./security-worker-node.cjs',import.meta.url));this.worker.on('message',data=>this.onmessage?.({data}));this.worker.on('error',error=>this.onerror?.(error));}postMessage(data,transfer){this.worker.postMessage(data,transfer);}terminate(){void this.worker.terminate();}};
 const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs'),assets=dirname(require.resolve('pdfjs-dist/package.json'));
 await mkdir('.cache',{recursive:true});
-for(const name of ['pdf-compression','pdf-signature-guard','pdf-text','ocr-languages','reading-export','pdf-recovery','pdf-security','image-codecs','pdf-engine','scan-split']){
+for(const name of ['pdf-compression','pdf-signature-guard','pdf-text','ocr-languages','reading-export','pdf-recovery','pdf-security','image-codecs','pdf-engine','scan-split','scan-photo-detection','image-perspective']){
  let code=ts.transpileModule(await readFile(`lib/${name}.ts`,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText.replace(/(['"])\.\/([a-z-]+)\1/g,(_,q,n)=>`${q}./${n}-recovery-test.mjs${q}`);
  if(name==='pdf-engine')code=code.replace("'/vendor/pdf/pdf.worker.min.mjs'",JSON.stringify(assets+'/legacy/build/pdf.worker.mjs')).replace("'/vendor/pdf/standard_fonts/'",JSON.stringify(assets+'/standard_fonts/'));
  await writeFile(`.cache/${name}-recovery-test.mjs`,code);
 }
 const {exportReading}=await import('../.cache/reading-export-recovery-test.mjs');
 const {repairFile,optimizeBrowser}=await import('../.cache/pdf-recovery-recovery-test.mjs');
-const {detectScanRegions,exportScanRegions}=await import('../.cache/scan-split-recovery-test.mjs');
+const {exportScanRegions}=await import('../.cache/scan-split-recovery-test.mjs');
 const {optimizePdf}=await import('../.cache/pdf-security-recovery-test.mjs');
+const {detectScanPhotos}=await import('../.cache/scan-photo-detection-recovery-test.mjs');
+const detectScanRegions=(pixels,w,h,gap=18)=>detectScanPhotos(pixels,w,h,gap).regions;
 const ctx={signal:new AbortController().signal,report:()=>{}},opened=[];
 async function source(bytes,name='Grüße.pdf'){const data=new Uint8Array(bytes),pdf=await pdfjs.getDocument({data:data.slice(),standardFontDataUrl:assets+'/standard_fonts/'}).promise;opened.push(pdf);return{id:crypto.randomUUID(),name,bytes:data,size:data.length,pdf,kind:'pdf'};}
 try{
@@ -72,7 +74,7 @@ try{
  const random=new Uint8Array(100000);for(let i=0;i<random.length;i+=60000)crypto.getRandomValues(random.subarray(i,Math.min(i+60000,random.length)));await pdf.attach(random,'random.bin');
  const large=await source(await pdf.save()),limited=await optimizeBrowser(large,.05,false,ctx);assert(limited.blob.size>.05*1024*1024);assert.match(limited.note,/nicht erreicht/);assert(limited.blob.size<=large.bytes.length);
  const image=createCanvas(400,600),g=image.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,400,600);g.fillStyle='#285058';g.fillRect(30,30,145,200);g.fillRect(230,30,140,200);g.fillRect(30,310,145,240);g.fillRect(230,310,140,240);
- const boxes=detectScanRegions(g.getImageData(0,0,400,600).data,400,600,3);assert.equal(boxes.length,4);assert(boxes.every(r=>r.w<.4&&r.h<.45));assert.throws(()=>detectScanRegions(new Uint8ClampedArray(4),1,1,NaN),/Trennabstand/);
+ const boxes=detectScanRegions(g.getImageData(0,0,400,600).data,400,600,18);assert.equal(boxes.length,4);assert(boxes.every(r=>r.w<.4&&r.h<.45));assert.throws(()=>detectScanRegions(new Uint8ClampedArray(4),1,1,NaN),/Kontrastschwelle/);
  const white=new Uint8ClampedArray(100*100*4).fill(255);assert.equal(detectScanRegions(white,100,100).length,0);
  const scan=await PDFDocument.create(),photo=await scan.embedPng(image.toDataURL('image/png'));scan.addPage([400,600]).drawImage(photo,{x:0,y:0,width:400,height:600});const scanSource=await source(await scan.save());
  const zip=await JSZip.loadAsync(await(await exportScanRegions(scanSource,{0:boxes},'pdf',150,ctx)).blob.arrayBuffer());assert.equal(Object.keys(zip.files).length,4);

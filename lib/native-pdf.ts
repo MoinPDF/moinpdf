@@ -104,3 +104,16 @@ export const groupObjects = (
   duplicate: boolean,
   signal?: AbortSignal,
 ) => nativeJob<Uint8Array>(bytes, { action: 'group', page, indices, duplicate }, signal);
+
+export const catalogueImages = (bytes: Uint8Array, signal?: AbortSignal) =>
+  nativeJob<import('./repeated-images-native').ImageCatalogue>(
+    bytes,
+    { action: 'image-catalogue' },
+    signal,
+  );
+export const replaceRepeatedImages = (
+  bytes: Uint8Array,
+  targets: import('./repeated-images-native').RepeatedImage[],
+  replacement: { width: number; height: number; rgba: Uint8Array },
+  signal?: AbortSignal,
+) => nativeJob<Uint8Array>(bytes, { action: 'image-replace-many', targets, replacement }, signal);

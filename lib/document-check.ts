@@ -6,6 +6,7 @@ import {
   type PageItem,
   type ProgressUpdate,
 } from './pdf-engine';
+import type { ScanQuality } from './scan-quality';
 import type { Worker } from 'tesseract.js';
 import { parseOcrLanguages } from './ocr-languages';
 export type PageIndex = {
@@ -23,6 +24,7 @@ export type PageIndex = {
   needsOcr: boolean;
   ocrDone: boolean;
   error?: string;
+  quality?: ScanQuality;
 };
 export const pageKey = (p: PageItem) => `${p.sourceId}:${p.index}:${p.rotation}`;
 export const fold = (value: string) =>

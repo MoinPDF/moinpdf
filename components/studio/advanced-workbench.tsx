@@ -25,6 +25,7 @@ import type { AdvancedTool, ExportFile, RunContext } from '@/lib/advanced-types'
 import { Choice, PageStage, PageSelect } from './advanced-shared';
 import { SplitSizePanel } from './expansion-panels';
 import { RepairPanel, ReadingPanel, ScanSplitPanel } from './recovery-panels';
+import { ChecklistPanel, DocumentDatesPanel } from './intake-panels';
 import { LocalAssistantPanel } from './local-assistant-panel';
 import { FormHelperPanel, ReceiptsPanel } from './everyday-panels';
 import { DocumentColorsPanel } from './document-colors-panel';
@@ -104,7 +105,7 @@ export function AdvancedWorkbench({
   useEffect(() => {
     setResult(null);
     setError('');
-  }, [source?.id, sourceIds, tool, initialFile]);
+  }, [source, sourceIds, tool, initialFile]);
   useEffect(() => {
     if (!result) {
       setUrl('');
@@ -158,6 +159,8 @@ export function AdvancedWorkbench({
     newProps = { ...props, invalidate: () => setResult(null) },
     multi = (
       [
+        'document-checklist',
+        'document-dates',
         'klar-schiff',
         'large-document',
         'receipts-a4',
@@ -245,9 +248,11 @@ export function AdvancedWorkbench({
             {tool === 'header-footer-cleanup' && <HeaderFooterPanel {...newProps} />}
             {tool === 'form-helper' && <FormHelperPanel {...newProps} />}
             {tool === 'receipts-a4' && <ReceiptsPanel {...newProps} />}
+            {tool === 'document-checklist' && <ChecklistPanel {...newProps} />}
+            {tool === 'document-dates' && <DocumentDatesPanel {...newProps} />}
             {tool === 'klar-schiff' && <KlarSchiffPanel {...newProps} />}
             {tool === 'local-assistant' && <LocalAssistantPanel {...props} />}
-            {tool === 'native-objects' && <NativePanel key={source.id} {...props} />}
+            {tool === 'native-objects' && <NativePanel key={source.id} {...newProps} />}
             {isProTool(tool) && <ProPanel {...props} tool={tool} />}
             {tool === 'form-responses' && <FormResponsesPanel {...newProps} />}{' '}
             {tool === 'chronology' && <ChronologyPanel {...newProps} />}{' '}
