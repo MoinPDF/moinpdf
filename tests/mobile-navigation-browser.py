@@ -19,14 +19,16 @@ checks, errors = [], []
 
 def on_screen(locator):
     expect(locator).to_be_visible()
-    assert locator.evaluate('''el => {
+    # Resizing acknowledges the viewport before its layout/hit-test tree settles.
+    # Retry the same strict visibility checks for up to five seconds.
+    locator.page.wait_for_function('''el => {
         const r = el.getBoundingClientRect(), v = visualViewport;
         const left = v?.offsetLeft || 0, top = v?.offsetTop || 0;
         return r.width > 0 && r.height > 0 && r.left >= left - 1 && r.top >= top - 1
             && r.right <= left + (v?.width || innerWidth) + 1
             && r.bottom <= top + (v?.height || innerHeight) + 1
             && el.contains(document.elementFromPoint(r.x+r.width/2, r.y+r.height/2));
-    }'''), 'Control is clipped, off screen or covered'
+    }''', arg=locator.element_handle(), timeout=5000)
 
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
