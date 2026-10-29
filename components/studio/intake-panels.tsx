@@ -4,7 +4,12 @@ import { Button } from '@/components/ui/button';
 import { uid } from '@/lib/pdf-engine';
 import { ui } from '@/lib/ui-language';
 import { readEvidence, coverage, exportRows } from '@/lib/evidence-engine';
-import { pageRef, type EvidencePage, type EvidenceRef } from '@/lib/evidence-model';
+import {
+  pageRef,
+  type EvidencePage,
+  type EvidenceRef,
+  type EvidenceWord,
+} from '@/lib/evidence-model';
 import {
   checkDocuments,
   collectDocumentEvents,
@@ -20,6 +25,16 @@ import { Text, Choice, NumberField, type PanelProps } from './advanced-shared';
 type Props = PanelProps & { invalidate: () => void };
 const refKey = (ref: EvidenceRef) => `${ref.sourceId}:${ref.page}`;
 const newRule = (): ChecklistRule => ({ id: uid(), title: '', keywords: '', month: '' });
+// Text extraction also returns editor metadata. Persist only the evidence schema.
+const draftWord = ({ id, text, x, y, w, h, confidence }: EvidenceWord): EvidenceWord => ({
+  id,
+  text,
+  x,
+  y,
+  w,
+  h,
+  confidence,
+});
 function limitPages(sources: Props['sources']) {
   if (sources.reduce((sum, s) => sum + s.pdf.numPages, 0) > 200)
     throw new Error('Bitte höchstens 200 Seiten auswerten.');
@@ -40,7 +55,8 @@ export function ChecklistPanel({ sources, source, busy, run, invalidate }: Props
     'ChecklistPanel.choices:' + key,
     {},
   );
-  const [confirmed, setConfirmed] = useState<string[]>([]),
+  // Confirm the exact reviewed value. Restored drafts have new identities.
+  const [confirmed, setConfirmed] = useState<ChecklistFinding[]>([]),
     [focus, setFocus] = useState<EvidenceRef>(),
     [year, setYear] = useState(new Date().getFullYear());
   const refs = pages.map(pageRef);
@@ -52,7 +68,7 @@ export function ChecklistPanel({ sources, source, busy, run, invalidate }: Props
     invalidate();
   };
   const state = (finding: ChecklistFinding) =>
-    confirmed.includes(finding.rule.id)
+    confirmed.includes(finding)
       ? choices[finding.rule.id]
         ? 'Vorhanden'
         : 'Fehlt laut Prüfung'
@@ -154,7 +170,17 @@ export function ChecklistPanel({ sources, source, busy, run, invalidate }: Props
                   const next = await readEvidence(sources, 'auto', ctx);
                   const found = checkDocuments(next, rules);
                   ctx.signal.throwIfAborted();
-                  setPages(next);
+                  setPages(
+                    next.map((page) => ({
+                      ...page,
+                      words: page.words.map(draftWord),
+                      lines: page.lines.map((line) => ({
+                        ...line,
+                        rects: line.rects.map(({ x, y, w, h }) => ({ x, y, w, h })),
+                        words: line.words.map(draftWord),
+                      })),
+                    })),
+                  );
                   setFindings(found);
                   setChoices({});
                   setConfirmed([]);
@@ -183,7 +209,7 @@ export function ChecklistPanel({ sources, source, busy, run, invalidate }: Props
                     onClick={() => {
                       setFocus(ref);
                       setChoices({ ...choices, [id]: refKey(ref) });
-                      setConfirmed(confirmed.filter((v) => v !== id));
+                      setConfirmed(confirmed.filter((v) => v.rule.id !== id));
                       invalidate();
                     }}
                   >
@@ -203,7 +229,7 @@ export function ChecklistPanel({ sources, source, busy, run, invalidate }: Props
                   ]}
                   onChange={(v) => {
                     setChoices({ ...choices, [id]: v });
-                    setConfirmed(confirmed.filter((c) => c !== id));
+                    setConfirmed(confirmed.filter((c) => c.rule.id !== id));
                     setFocus(refs.find((r) => refKey(r) === v));
                     invalidate();
                   }}
@@ -212,10 +238,12 @@ export function ChecklistPanel({ sources, source, busy, run, invalidate }: Props
                 <label className="advanced-tick">
                   <input
                     type="checkbox"
-                    checked={confirmed.includes(id)}
+                    checked={confirmed.includes(finding)}
                     onChange={(e) => {
                       setConfirmed(
-                        e.target.checked ? [...confirmed, id] : confirmed.filter((c) => c !== id),
+                        e.target.checked
+                          ? [...confirmed, finding]
+                          : confirmed.filter((c) => c.rule.id !== id),
                       );
                       invalidate();
                     }}
@@ -231,7 +259,7 @@ export function ChecklistPanel({ sources, source, busy, run, invalidate }: Props
             )}
           </p>
           <Button
-            disabled={!findings.length || confirmed.length !== findings.length}
+            disabled={!findings.length || !findings.every((f) => confirmed.includes(f))}
             onClick={() =>
               run(async () =>
                 exportRows(
@@ -270,11 +298,12 @@ export function DocumentDatesPanel({ sources, source, busy, run, invalidate }: P
     [],
   );
   const [note, setNote] = useToolDraftState('DocumentDatesPanel.note:' + key, '');
-  const [confirmed, setConfirmed] = useState<string[]>([]),
+  // A restored or edited proposal must be reviewed again, even with the same ID.
+  const [confirmed, setConfirmed] = useState<DocumentEvent[]>([]),
     [focus, setFocus] = useState<EvidenceRef>();
   const change = (id: string, patch: Partial<DocumentEvent>) => {
     setEvents(events.map((e) => (e.id === id ? { ...e, ...patch, confirmed: false } : e)));
-    setConfirmed(confirmed.filter((c) => c !== id));
+    setConfirmed(confirmed.filter((c) => c.id !== id));
     invalidate();
   };
   return (
@@ -349,12 +378,12 @@ export function DocumentDatesPanel({ sources, source, busy, run, invalidate }: P
               <label className="advanced-tick">
                 <input
                   type="checkbox"
-                  checked={confirmed.includes(event.id)}
+                  checked={confirmed.includes(event)}
                   onChange={(e) => {
                     setConfirmed(
                       e.target.checked
-                        ? [...confirmed, event.id]
-                        : confirmed.filter((c) => c !== event.id),
+                        ? [...confirmed, event]
+                        : confirmed.filter((c) => c.id !== event.id),
                     );
                     invalidate();
                   }}
@@ -365,7 +394,7 @@ export function DocumentDatesPanel({ sources, source, busy, run, invalidate }: P
                 variant="ghost"
                 onClick={() => {
                   setEvents(events.filter((e) => e.id !== event.id));
-                  setConfirmed(confirmed.filter((c) => c !== event.id));
+                  setConfirmed(confirmed.filter((c) => c.id !== event.id));
                   invalidate();
                 }}
               >
@@ -407,11 +436,11 @@ export function DocumentDatesPanel({ sources, source, busy, run, invalidate }: P
             )}
           </p>
           <Button
-            disabled={!confirmed.length}
+            disabled={!events.some((e) => confirmed.includes(e))}
             onClick={() =>
               run(() =>
                 exportDocumentEvents(
-                  events.map((e) => ({ ...e, confirmed: confirmed.includes(e.id) })),
+                  events.map((e) => ({ ...e, confirmed: confirmed.includes(e) })),
                 ),
               )
             }

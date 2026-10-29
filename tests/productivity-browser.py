@@ -1,5 +1,5 @@
 """Fictional inputs, real exports and independent PDF/calendar inspection in three browser engines."""
-import atexit, hashlib, json, os, subprocess, sys, time
+import atexit, hashlib, json, os, re, subprocess, sys, time
 from pathlib import Path
 from urllib.request import urlopen
 import pymupdf
@@ -72,6 +72,16 @@ with sync_playwright() as api:
                     expect(link).to_be_visible(timeout=120000)
                     with page.expect_download() as pending:link.click()
                     path=out/(name+suffix);pending.value.save_as(path);return path
+                def restore_current_project(title):
+                    page.locator('.project-toggle:visible, .harbor-project-toggle:visible').first.click()
+                    dialog=page.get_by_role('dialog',name=t('Lokale PDF-Projekte','Local PDF projects'),exact=True)
+                    dialog.get_by_label(t('Projektname','Project name'),exact=True).fill(title)
+                    save=dialog.get_by_role('button',name=re.compile(t('^(Projekt speichern|Neuen Arbeitsstand speichern)$','^(Save project|Save new snapshot)$')))
+                    save.click();expect(save).to_be_enabled(timeout=30000)
+                    expect(dialog.get_by_role('status').filter(has_text=t('Alles an Bord – gespeichert.','All aboard – saved.'))).to_be_visible(timeout=30000)
+                    section=dialog.locator('.project-list section').filter(has=page.get_by_role('heading',name=re.compile(re.escape(title))))
+                    section.get_by_role('button',name=t('Öffnen','Open'),exact=True).first.click()
+                    expect(dialog).to_have_count(0)
                 try:
                     print(name,'checklist',flush=True)
                     open_tool('Unterlagen-Checkliste','Document checklist',[fixture])
@@ -85,6 +95,8 @@ with sync_playwright() as api:
                     card.get_by_role('button',name='fictional-documents.pdf · '+t('Seite','Page')+' 1',exact=True).click()
                     card.get_by_role('checkbox').check();expect(card).to_contain_text(t('Vorhanden','Present'))
                     export.click();csv=download('-checklist.csv').read_text(encoding='utf-8-sig');assert 'Bank January' in csv and 'fictional-documents.pdf' in csv and t('Vorhanden','Present') in csv
+                    restore_current_project('Fictional checklist review')
+                    expect(export).to_be_disabled();expect(card.get_by_role('checkbox')).not_to_be_checked();expect(page.locator('.advanced-result')).to_have_count(0)
                     label('Suchwörter','Keywords').fill('Missing term');expect(page.locator('.advanced-result')).to_have_count(0)
                     print(name,'dates',flush=True)
                     open_tool('Termine aus PDFs übernehmen','Collect dates from PDFs',[fixture])
@@ -94,6 +106,8 @@ with sync_playwright() as api:
                     cards.nth(0).get_by_role('checkbox').check();export.click();ics=download('-events.ics');events=Calendar.from_ical(ics.read_bytes()).walk('VEVENT');assert len(events)==1 and str(events[0]['summary'])=='Reviewed meeting';assert events[0].decoded('dtstart').isoformat()=='2026-12-31T14:30:00';assert events[0].decoded('duration').total_seconds()==3600
                     cards.nth(0).get_by_label(t('Datum','Date'),exact=True).fill('2027-01-02');expect(export).to_be_disabled();expect(page.locator('.advanced-result')).to_have_count(0)
                     cards.nth(1).get_by_role('checkbox').check();export.click();events=Calendar.from_ical(download('-all-day.ics').read_bytes()).walk('VEVENT');assert len(events)==1 and events[0].decoded('dtstart').isoformat()=='2027-01-05' and events[0].decoded('dtend').isoformat()=='2027-01-06'
+                    restore_current_project('Fictional date review')
+                    expect(export).to_be_disabled();expect(cards.nth(1).get_by_role('checkbox')).not_to_be_checked();expect(page.locator('.advanced-result')).to_have_count(0)
                     page.screenshot(path=str(out/(name+'-dates.png')),full_page=True)
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'intake overflow'
                     print(name,'three versions',flush=True)
@@ -130,7 +144,7 @@ with sync_playwright() as api:
                     page.screenshot(path=str(out/(name+'-logos.png')),full_page=True)
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1'),'logo panel overflow'
                     assert not errors,errors;assert not posts,posts
-                    reports.append({'browser':engine,'language':lang,'touchEmulation':en,'checks':['checklist CSV and confirmation','dates ICS independently parsed','three-way conflict report','scan-quality region','selected logos only; text, forms, links, geometry preserved','no document upload']})
+                    reports.append({'browser':engine,'language':lang,'touchEmulation':en,'checks':['checklist CSV and confirmation','dates ICS independently parsed','restoring identical IDs clears review and result','three-way conflict report','scan-quality region','selected logos only; text, forms, links, geometry preserved','no document upload']})
                 except Exception:
                     page.screenshot(path=str(out/(name+'-failure.png')),full_page=True)
                     (out/(name+'-failure.txt')).write_text(page.locator('body').inner_text())

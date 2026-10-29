@@ -105,7 +105,7 @@ export function AdvancedWorkbench({
   useEffect(() => {
     setResult(null);
     setError('');
-  }, [source?.id, sourceIds, tool, initialFile]);
+  }, [source, sourceIds, tool, initialFile]);
   useEffect(() => {
     if (!result) {
       setUrl('');
