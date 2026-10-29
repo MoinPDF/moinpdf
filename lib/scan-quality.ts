@@ -55,13 +55,27 @@ export function analyzeScanQuality(
           break;
         }
       }
+      // The page-wide percentile used by scanMetrics can be white on both
+      // ends of a sparse text cell. Measure its foreground against its paper
+      // instead, so a few sharp black letters do not become "low contrast".
+      let dark = 255,
+        darkCount = 0;
+      const darkTarget = Math.max(1, Math.ceil(foreground * 0.1));
+      for (let i = 0; i < 245; i++) {
+        darkCount += hist[i];
+        if (darkCount >= darkTarget) {
+          dark = i;
+          break;
+        }
+      }
       const rect = { x: x / width, y: y / height, w: w / width, h: h / height },
         m = scanMetrics(data, w, h),
+        contrast = Math.max(0, background - dark) / 255,
         density = foreground / (w * h);
       cells.push({ rect, background, foreground: density });
       if (density > 0.005 && density < 0.65) {
-        if (m.contrast < 0.22 && m.sharpness > 0.05) issues.push({ kind: 'contrast', rect });
-        if (m.contrast > 0.22 && m.sharpness < 1.6) issues.push({ kind: 'blur', rect });
+        if (contrast < 0.22 && m.sharpness > 0.05) issues.push({ kind: 'contrast', rect });
+        if (contrast > 0.22 && m.sharpness < 1.6) issues.push({ kind: 'blur', rect });
       }
     }
   const bright = Math.max(...cells.map((c) => c.background));
