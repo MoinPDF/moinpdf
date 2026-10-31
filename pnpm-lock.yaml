@@ -137,8 +137,8 @@ importers:
         specifier: ^0.23.0
         version: 0.23.0
       ag-psd:
-        specifier: 31.0.3
-        version: 31.0.3
+        specifier: 33.0.0
+        version: 33.0.0
       asn1js:
         specifier: 3.0.10
         version: 3.0.10
@@ -2324,8 +2324,8 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  ag-psd@31.0.3:
-    resolution: {integrity: sha512-THDYK+WK1F5GOH4G0l4wkQRc0Cyq5tnxIwBezACKwa6idKygphnGgMISr4lmW6n0Q89ceoqpdPZQF3Y7TL1pgg==}
+  ag-psd@33.0.0:
+    resolution: {integrity: sha512-u/RxJx5/bwFn/+Ba/aXL0mMa66c1Sz9NwwE4MNZenDqzyAiuPbaWi1/PSVCiIEYp+kVIvJJBwy4bZuhsFgqF4Q==}
 
   ajv-formats@2.1.1:
     resolution: {integrity: sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==}
@@ -5521,7 +5521,7 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  ag-psd@31.0.3:
+  ag-psd@33.0.0:
     dependencies:
       base64-js: 1.5.1
       pako: 2.1.0
