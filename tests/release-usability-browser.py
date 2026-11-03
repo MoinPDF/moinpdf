@@ -85,6 +85,10 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                             if all(abs(pixels[i + c] - value) <= 2
                                    for c, value in enumerate((22, 203, 115))))
                 assert green > 1000, 'The PNG must retain its color in the downloaded PDF'
+                translucent = sum(1 for i in range(0, len(pixels), 3)
+                                  if all(abs(pixels[i + c] - value) <= 2
+                                         for c, value in enumerate((138, 229, 185))))
+                assert translucent > 1000, 'The PNG alpha channel must survive PDF export'
             result = page.locator('.writer-export')
             expect(result).to_be_visible()
             link = result.locator('a[download]')
