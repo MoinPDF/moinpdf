@@ -71,6 +71,7 @@ Die Browser-Ausgabe bietet für PDF zu Word drei lokale Modi: Seitenlayout mit B
 - Check & Seitenfinder: dateiübergreifende Textsuche, lokale Scan-Erkennung, Trefferseiten als neue PDF; Hinweise auf Scan-Seiten, mögliche Leerseiten, optisch gleiche Seiten und unterschiedliche Papierformate
 - OCR & Text: 21 Sprachen, bis zu acht kombiniert und optionale automatische Sprachprobe; automatische Seiteneinteilung, Textblock, Textspalte, Textzeile oder verstreuter Text; korrigierbare OCR-Zeilen neben der PDF-Vorschau und Übernahme der Korrekturen in die PDF-Suchebene
 - JPG, PNG, WebP, BMP, mehrseitige TIFF, HEIC/HEIF, PSD und eigenständige SVG zu PDF (als Bildseiten); PDF zu PNG/JPG/WebP/TIFF/BMP im ZIP
+- PSD übernimmt das gespeicherte Gesamtbild aus RGB- und Graustufendateien mit 8 Bit; Ebenen bleiben nicht editierbar. Unvollständige Bilddaten werden abgewiesen. CMYK, Lab, PSB und höhere Bittiefen vorher als PNG oder TIFF exportieren. Höchstens 40 Megapixel und 240 MiB Decoderspeicher.
 - Komprimierung mit Inhaltserhalt, verlustfreie Optimierung oder ausdrücklich gewählter Bildneuaufbau; Originalvergleich mit gleichem Zoom
 - Zusammenfügen; einzelne Seiten als PDF im ZIP
 - Seiten organisieren: auswählen, sortieren, drehen, duplizieren, entfernen und Leerseiten ergänzen
