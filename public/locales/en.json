@@ -2432,6 +2432,7 @@
   "Öffnen abgebrochen": "Opening cancelled",
   "200 Seiten": "200 pages",
   "Die Datei konnte nicht gelesen werden. Bitte prüfe, ob sie eine gültige und unbeschädigte PDF ist.": "The file could not be read. Please check if it is a valid and undamaged PDF.",
+  "MoinPDF konnte die geschützte PDF im Browser nicht öffnen. Bitte lade die Seite neu und öffne die Datei erneut.": "MoinPDF could not open the protected PDF in this browser. Please reload the page and open the file again.",
   "Bitte Seiten als 1, 3-5 eingeben.": "Please enter pages as 1, 3-5.",
   "Bitte Seiten zwischen 1 und {0} wählen.": "Please select pages between 1 and {0}.",
   "Bitte wähle mindestens eine Seite aus.": "Please select at least one page.",

@@ -26,8 +26,21 @@ function workerJob(
   signal?: AbortSignal,
 ): Promise<Uint8Array> {
   if (signal?.aborted) return Promise.reject(new DOMException('Abgebrochen', 'AbortError'));
-  return new Promise((resolve, reject) => {
-    const worker = new Worker('/workers/pdf-security.js');
+  // On a first visit the isolated page and a static worker response can have
+  // different embedder policies. A same-origin blob inherits the page policy.
+  // Once our offline worker controls the page, keep its HTTP scope and cache.
+  const offlineWorker = globalThis.navigator?.serviceWorker?.controller;
+  const entry = '/workers/pdf-security.js';
+  const bootstrap =
+    offlineWorker && offlineWorker.scriptURL === new URL('/sw.js', location.href).href
+      ? undefined
+      : URL.createObjectURL(
+          new Blob(["importScripts(self.origin + '/workers/pdf-security.js');"], {
+            type: 'text/javascript',
+          }),
+        );
+  return new Promise<Uint8Array>((resolve, reject) => {
+    const worker = new Worker(bootstrap ?? entry);
     let settled = false;
     const finish = (error?: Error, result?: Uint8Array) => {
       if (settled) return;
@@ -65,7 +78,13 @@ function workerJob(
       else finish(undefined, new Uint8Array(data.bytes));
     };
     const copy = bytes.slice();
-    worker.postMessage({ operation, bytes: copy, settings }, [copy.buffer]);
+    try {
+      worker.postMessage({ operation, bytes: copy, settings }, [copy.buffer]);
+    } catch (error) {
+      finish(error as Error);
+    }
+  }).finally(() => {
+    if (bootstrap) URL.revokeObjectURL(bootstrap);
   });
 }
 export async function protectPdf(
