@@ -3,6 +3,11 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import ts from 'typescript';
 import {PDFDocument,PDFName} from 'pdf-lib';
+import * as asn1 from 'asn1js';
+import {ContentInfo,AlgorithmIdentifier} from 'pkijs';
+// pkijs and the application must construct/check the same ASN.1 classes.
+assert.ok(new ContentInfo({contentType:'1.2.840.113549.1.7.1',content:new asn1.OctetString({valueHex:new Uint8Array([1,2,3]).buffer})}).toSchema() instanceof asn1.Sequence);
+assert.ok(AlgorithmIdentifier.fromBER(new AlgorithmIdentifier({algorithmId:'2.16.840.1.101.3.4.1.42',algorithmParams:new asn1.OctetString({valueHex:new Uint8Array(16).buffer})}).toSchema().toBER(false)).algorithmParams instanceof asn1.OctetString);
 await mkdir('.cache/signature-test',{recursive:true});
 for(const name of ['local-signature-core','pdf-signature-guard'])await writeFile('.cache/signature-test/'+(name==='local-signature-core'?'core':name)+'.mjs',ts.transpileModule((await readFile('lib/'+name+'.ts','utf8')).replace("'./pdf-signature-guard'","'./pdf-signature-guard.mjs'"),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
 const {signPdfLocally}=await import('../.cache/signature-test/core.mjs');
@@ -20,4 +25,16 @@ assert.deepEqual(await readFile(path+'verified.bin'),data);data[100]^=1;await wr
 await assert.rejects(signPdfLocally(original,cert,'wrong'),/Passwort|passwort/);await assert.rejects(signPdfLocally(result,cert,'synthetic-test-only'),/Signatur/);
 const loaded=await PDFDocument.load(result);assert.equal(loaded.getForm().getTextField('preserved').getText(),'KEEP');assert.deepEqual(original,snapshot);
 const direct=await PDFDocument.load(original);direct.catalog.set(PDFName.of('Direct'),direct.context.obj({Type:'Sig'}));await assert.rejects(signPdfLocally(await direct.save(),cert,'synthetic-test-only'),/Signatur/);
-console.log('PASS: local PKCS#12 signing, independent OpenSSL CMS verification, tamper detection, password and existing-signature rejection, form preservation.');
+const damaged=cert.slice();damaged[damaged.length-1]^=1;
+await assert.rejects(signPdfLocally(original,damaged,'synthetic-test-only'));
+const certSnapshot=cert.slice();await signPdfLocally(original,cert,'synthetic-test-only');assert.deepEqual(cert,certSnapshot,'Certificate input remains unchanged');
+// Alternate modern PKCS#12 settings exercise the new ASN.1/PKI dependency pair.
+call(['pkcs12','-export','-out',path+'identity-aes128.p12','-inkey',path+'key.pem','-in',path+'cert.pem','-keypbe','AES-128-CBC','-certpbe','AES-128-CBC','-macalg','SHA512','-passout','pass:synthetic-test-only']);
+const alternate=await signPdfLocally(original,new Uint8Array(await readFile(path+'identity-aes128.p12')),'synthetic-test-only');
+const alternateText=Buffer.from(alternate).toString('latin1'),alternateRange=/\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/.exec(alternateText).slice(1).map(Number);
+assert.equal(alternateRange[2]+alternateRange[3],alternate.length);
+await writeFile(path+'alternate-data.bin',Buffer.concat([alternate.subarray(0,alternateRange[1]),alternate.subarray(alternateRange[2])]));
+await writeFile(path+'alternate.der',Buffer.from(alternateText.slice(alternateRange[1]+1,alternateRange[2]-1),'hex'));
+call(['cms','-verify','-binary','-inform','DER','-in',path+'alternate.der','-content',path+'alternate-data.bin','-noverify','-out',path+'alternate-verified.bin']);
+assert.deepEqual(await readFile(path+'alternate-verified.bin'),await readFile(path+'alternate-data.bin'));
+console.log('PASS: shared ASN.1 class identity; AES-128/256 PKCS#12 signing and independent OpenSSL CMS verification; tamper, damaged certificate, password and existing-signature rejection; form/input preservation.');
