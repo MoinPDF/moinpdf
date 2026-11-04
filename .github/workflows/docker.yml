@@ -77,6 +77,10 @@ jobs:
         env:
           MOINPDF_TEST_URL: http://localhost:8080
         run: python tests/xfa-browser.py
+      - name: Local certificate signatures in the production browser
+        env:
+          MOINPDF_TEST_URL: http://localhost:8080
+        run: python tests/local-signature-browser.py
       - name: Real local Office conversion without document uploads
         id: office
         env:
