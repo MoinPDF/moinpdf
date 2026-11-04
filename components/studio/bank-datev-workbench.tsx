@@ -196,6 +196,7 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
               <label>
                 {t('Kontenrahmen', 'Chart of accounts')}
                 <select
+                  aria-label={t('Kontenrahmen', 'Chart of accounts')}
                   value={settings.account_framework}
                   onChange={(e) =>
                     update({

@@ -1,6 +1,5 @@
 """Exercise real PDF extraction, manual CSV download and an explicitly simulated AI service."""
 import csv
-import json
 import tempfile
 from pathlib import Path
 
@@ -10,6 +9,7 @@ from playwright.sync_api import expect
 
 def verify_bank_datev(browser, origin):
     context = browser.new_context(viewport={'width': 390, 'height': 844}, service_workers='block')
+    context.add_init_script("Object.defineProperty(Crypto.prototype, 'randomUUID', {value: undefined})")
     page = context.new_page()
     requests = []
     context.route('**/api/datev/status', lambda route: route.fulfill(json={'enabled': True}))
@@ -48,6 +48,10 @@ def verify_bank_datev(browser, origin):
             form.get_by_label('Kontenrahmen', exact=True).select_option('03')
             expect(account).to_have_value('24680')
             expect(rows.nth(0).get_by_label('Gegenkonto', exact=True)).to_have_value('53124')
+            form.get_by_role('button', name='Buchung ergänzen').click()
+            expect(rows).to_have_count(3)
+            form.get_by_role('button', name='Buchung entfernen 3').click()
+            expect(rows).to_have_count(2)
             confirm = form.get_by_role('checkbox')
             download = form.get_by_role('button', name='DATEV-Datei herunterladen')
             expect(download).to_be_disabled()

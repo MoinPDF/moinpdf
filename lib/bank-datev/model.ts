@@ -1,4 +1,4 @@
-import type { Source } from '../pdf-engine';
+import { uid, type Source } from '../pdf-engine';
 import { exportFiles, parseStatement } from './converter.mjs';
 import { bankMoney, draftToStatement, extractDraft, positionedLines } from './universal.mjs';
 import columns from './datev-columns.json';
@@ -171,7 +171,7 @@ export function exportEntries(entries: Entry[]): ExportFile[] {
 
 export function blankRow(): Row {
   return {
-    id: crypto.randomUUID(),
+    id: uid(),
     booking_date: '',
     value_date: '',
     amount: '',
