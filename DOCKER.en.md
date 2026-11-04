@@ -142,3 +142,19 @@ The service defaults to 1 GiB of RAM (`MOINPDF_WEBSITE_MEMORY`). Chromium comes 
 ## Offline app and local backups
 
 Projects includes storage usage, an explicit persistent-storage request and offline packages. Offline use requires HTTPS or localhost, a supported browser and a completed download of the app and selected languages/runtimes. Every program file is integrity-checked. Updates activate once all older app tabs close. Server tools still need the user's document server. Removing offline files does not delete projects or results.
+
+## Optional OpenAI posting suggestions for Bank2DATEV
+
+The browser handles extraction and DATEV export. AI suggestions require an OpenAI API key and a separate private access code of at least 20 characters. Anyone with the code can request billable suggestions. Set your own values in the git-ignored `.env` beside `compose.yaml`.
+
+```dotenv
+OPENAI_API_KEY=
+MOINPDF_DATEV_ACCESS_TOKEN=
+OPENAI_MODEL=gpt-5-mini
+```
+
+**Local development.** From the repository root with Node 24, run `node --env-file=.env docker/datev/server.mjs` and then `pnpm dev` in a second terminal. The service listens on 127.0.0.1:8766. The development server proxies only `/api/datev` to it.
+
+**Docker.** Run `docker compose -f compose.yaml -f compose.datev.yaml up -d --build`. For direct HTTPS also pass `-f compose.https.yaml` before `up`. The separate service has no published port and is the only container that receives the OpenAI key. Use HTTPS for remote access.
+
+Open **Recognize & convert → Bank statement to DATEV → AI posting suggestions** and enter the private access code. Review the editable outgoing text, directions, chart and optional account list. The original PDF and client detail fields are never uploaded to OpenAI. There is a maximum of 20 entries per request, two concurrent requests and 60 requests per hour per instance. Review suggested accounts against the source records before exporting.

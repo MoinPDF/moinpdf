@@ -1,5 +1,10 @@
 # Funktionen und Grenzen
 
+## Kontoauszug zu DATEV
+
+Kontoauszug zu DATEV übernimmt die lokale Auszugserkennung und Saldenprüfung aus Bank2DATEV. SKR03/SKR04 bleiben wählbar. Bankkonto, Gegenkonten, Berater- und Mandantennummer sowie BU-Schlüssel sind freie Eingaben. Ein separater, optionaler Dienst erzeugt nach Freigabe prüfbare Kontierungsvorschläge über die OpenAI API.
+
+
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->

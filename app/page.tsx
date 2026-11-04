@@ -170,6 +170,7 @@ const SecurityWorkbench = lazy(() =>
     default: module.SecurityWorkbench,
   })),
 );
+const BankDatevWorkbench = lazy(() => import('@/components/studio/bank-datev-workbench'));
 const InvoiceWorkbench = lazy(() =>
   import('@/components/studio/invoice-workbench').then((module) => ({
     default: module.InvoiceWorkbench,
@@ -978,7 +979,7 @@ function Studio() {
       (isAdvancedTool(id) ||
         isServerTool(id) ||
         isDocumentTool(id) ||
-        ['protect', 'unlock', 'invoice-read', 'invoice-check'].includes(id)) &&
+        ['protect', 'unlock', 'invoice-read', 'invoice-check', 'bank-datev'].includes(id)) &&
       sources.length &&
       hasWorkspaceChanges(sources, pages, edits, documentSessions)
     ) {
@@ -2105,6 +2106,17 @@ function Studio() {
             pages.some((p) => countEdits(edits, [p]) > 0 || p.rotation !== 0) ||
             Object.values(documentSessions).some((s) => s.past.length > 0)
           }
+        />
+      </>
+    );
+  if (toolId === 'bank-datev')
+    return (
+      <>
+        {fileInput}
+        <BankDatevWorkbench
+          sources={sources}
+          onBack={returnToTools}
+          onAdd={() => picker.current?.click()}
         />
       </>
     );

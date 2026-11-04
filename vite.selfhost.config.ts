@@ -10,6 +10,7 @@ const root = fileURLToPath(new URL('.', import.meta.url));
 export default defineConfig({
   worker: {format: 'es'},
   root: fileURLToPath(new URL('./selfhost', import.meta.url)),
+  server: {proxy: {'/api/datev': 'http://127.0.0.1:8766'}},
   publicDir: root + 'public',
   plugins: [react(), {
     name: 'moinpdf-bundle-budget',

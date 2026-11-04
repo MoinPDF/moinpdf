@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 const suites = [
+  'bank-datev',
   'dependency-compatibility',
   'productivity',
   'scan-photos',

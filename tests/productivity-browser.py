@@ -65,7 +65,7 @@ with sync_playwright() as api:
                 def open_tool(de,eng,files):
                     page.goto(origin+'?lang='+lang)
                     page.locator('input[type=file]').first.set_input_files([str(p.resolve()) for p in files])
-                    expect(page.locator('.chooser-tool')).to_have_count(120)
+                    expect(page.locator('.chooser-tool')).to_have_count(121)
                     page.locator('.chooser-tool').filter(has=page.get_by_text(t(de,eng),exact=True)).click()
                 def download(suffix,advanced=True):
                     link=page.locator(('.advanced-result ' if advanced else '')+'a[download][href^="blob:"]').first

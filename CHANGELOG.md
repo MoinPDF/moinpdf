@@ -11,6 +11,8 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Noch nicht veröffentlicht
 
+- Kontoauszug zu DATEV übernimmt die lokale Auszugserkennung und Saldenprüfung aus Bank2DATEV. SKR03/SKR04 bleiben wählbar. Bankkonto, Gegenkonten, Berater- und Mandantennummer sowie BU-Schlüssel sind freie Eingaben. Ein separater, optionaler Dienst erzeugt nach Freigabe prüfbare Kontierungsvorschläge über die OpenAI API.
+
 - PSD-Import: `ag-psd` 33.0.0 mit geprüften RGB-/Graustufenbildern, RLE-Komprimierung und transparenten Gesamtbildern. Beschädigte bzw. abgeschnittene PSD-Bilddaten werden abgewiesen, statt fehlende Pixel als schwarzes Bild zu übernehmen. Die bisherigen Format- und Speichergrenzen bleiben bestehen.
 
 ## 0.26.0 – 29. Oktober 2026

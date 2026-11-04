@@ -2,6 +2,17 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'bank-datev': [
+    'Bank2DATEV',
+    'Kontoauszüge',
+    'Kontoauszug',
+    'Buchungsstapel',
+    'SKR03',
+    'SKR04',
+    'Kontierung',
+    'bank statements',
+    'accounting',
+  ],
   'document-checklist': [
     'Unterlagen prüfen',
     'Vollständigkeit',

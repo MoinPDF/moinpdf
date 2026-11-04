@@ -6,6 +6,8 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased
 
+- Bank statement to DATEV integrates local Bank2DATEV extraction and balance checks. Choose SKR03/SKR04 and enter custom bank and offset accounts, advisor and client numbers and tax keys. An optional, separate service provides reviewable OpenAI posting suggestions on explicit request.
+
 - PSD import: `ag-psd` 33.0.0 with verified RGB/grayscale images, RLE compression and transparent composite images. Damaged or truncated PSD image data is rejected instead of importing missing pixels as a black image. Existing format and memory limits remain in place.
 
 ## 0.26.0 – 29 October 2026

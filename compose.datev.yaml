@@ -1,0 +1,27 @@
+# Optional OpenAI suggestions. The ordinary DATEV conversion runs in the browser.
+services:
+  app:
+    environment:
+      MOINPDF_DATEV_ENABLED: "1"
+    depends_on:
+      datev-ai:
+        condition: service_started
+
+  datev-ai:
+    build: ./docker/datev
+    restart: unless-stopped
+    init: true
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY in .env eintragen}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-5-mini}
+      MOINPDF_DATEV_ACCESS_TOKEN: ${MOINPDF_DATEV_ACCESS_TOKEN:?Privaten KI-Zugangscode mit mindestens 20 Zeichen setzen}
+      MOINPDF_DATEV_BIND: 0.0.0.0
+    networks: [web]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    pids_limit: 32
+    logging:
+      driver: local
+      options: {max-size: "2m", max-file: "2"}
