@@ -1,0 +1,66 @@
+name: Dependency review with a runner-local registry
+on:
+  push:
+    branches: [review/dependabot-100-104-ci-492c9ee]
+permissions:
+  contents: read
+jobs:
+  build:
+    name: Verify ${{ matrix.name }} on amd64 and arm64
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: web
+            context: .
+          - name: documents
+            context: ./server
+          - name: translation
+            context: ./docker/translation
+          - name: website
+            context: ./docker/website
+    env:
+      IMAGE: localhost:5000/review/moinpdf-${{ matrix.name }}:candidate
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Start the temporary loopback registry
+        run: |
+          docker run -d --name review-registry -p 127.0.0.1:5000:5000 registry:3
+          curl --fail --retry 10 --retry-all-errors --retry-delay 1 http://127.0.0.1:5000/v2/
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v4
+        with:
+          driver-opts: network=host
+      - name: Build both production architectures and push to localhost
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE }}
+          build-args: MOINPDF_UID=1000
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=moinpdf-${{ matrix.name }}
+      - name: Confirm the digest and both manifests in the registry
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          docker buildx imagetools inspect "$IMAGE@$DIGEST" --raw > index.json
+          jq -e 'any(.manifests[]; .platform.os == "linux" and .platform.architecture == "amd64") and any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")' index.json
+          curl -fsS -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json' "http://127.0.0.1:5000/v2/review/moinpdf-${{ matrix.name }}/manifests/candidate" -o registry-index.json
+          echo "${DIGEST#sha256:}  registry-index.json" | sha256sum --check -
+      - name: Check the production document service dependency set
+        if: matrix.name == 'documents'
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          docker pull "$IMAGE@$DIGEST"
+          docker run --rm --read-only --network none "$IMAGE@$DIGEST" python -m pip check
+          docker run --rm --read-only --network none "$IMAGE@$DIGEST" python -c 'from importlib.metadata import version; assert [version(p) for p in ("extract-msg","fastapi","XlsxWriter")] == ["0.57.1","0.162.0","3.3.0"]'
