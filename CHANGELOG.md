@@ -9,9 +9,12 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Noch nicht veröffentlicht
+## 0.27.0 – 4. November 2026
 
+- „Kontoauszug zu DATEV“ erweitert MoinPDF auf 121 Werkzeuge. Kontoauszüge werden im Browser ausgelesen und die Salden geprüft. Für den DATEV-Buchungsstapel sind SKR03 und SKR04 wählbar. Bankkonto, Gegenkonten, Beraternummer, Mandantennummer und BU-Schlüssel werden frei eingegeben. Buchungen lassen sich vor dem CSV-Export einzeln bearbeiten. Auszugsdaten und Salden werden automatisch erkannt, bei Bildseiten per lokaler OCR. Sachkontenlänge und Kalenderwirtschaftsjahr bestimmt der Export automatisch.
+- Für selbst gehostete Installationen lässt sich die OpenAI API über eine lokale `.env` oder Docker Compose einrichten. Erst nach Freigabe der angezeigten Buchungstexte und Zahlungsrichtungen entstehen Gegenkontovorschläge. Die vorgeschlagenen Gegenkonten lassen sich prüfen, in den Stapel übernehmen und dort je Buchung ändern.
 - PSD-Import: `ag-psd` 33.0.0 mit geprüften RGB-/Graustufenbildern, RLE-Komprimierung und transparenten Gesamtbildern. Beschädigte bzw. abgeschnittene PSD-Bilddaten werden abgewiesen, statt fehlende Pixel als schwarzes Bild zu übernehmen. Die bisherigen Format- und Speichergrenzen bleiben bestehen.
+- Digitale PDF-Signaturen verwenden gemeinsam aktualisierte Versionen von PKI.js und ASN1.js. Weitere Abhängigkeiten für die lokale Verarbeitung, den Dokumentendienst und die Build-Pipeline wurden aktualisiert, darunter `minimatch` 11.0.1.
 
 ## 0.26.0 – 29. Oktober 2026
 

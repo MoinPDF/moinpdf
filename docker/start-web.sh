@@ -8,6 +8,11 @@ fi
 export MOINPDF_API_KEY
 test "${#MOINPDF_API_KEY}" -ge 32
 umask 077
+if [ "${MOINPDF_DATEV_ENABLED:-}" = 1 ]; then
+    printf '%s\n' 'reverse_proxy datev-ai:8766' > /tmp/datev.caddy
+else
+    printf '%s\n' 'respond 404' > /tmp/datev.caddy
+fi
 : > /tmp/access.caddy
 if [ -n "${MOINPDF_PASSWORD:-}" ]; then
     export MOINPDF_USERNAME="${MOINPDF_USERNAME:-moinpdf}"

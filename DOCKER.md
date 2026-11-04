@@ -138,3 +138,19 @@ Der neue Dienst hat standardmäßig 1 GiB Arbeitsspeicher (`MOINPDF_WEBSITE_MEMO
 ## Offline-App und lokale Sicherungen
 
 Unter Projekte stehen Speicherbelegung, Anfrage dauerhafter Speicherung und Offline-Pakete zur Verfügung. Offline benötigt HTTPS oder localhost, einen unterstützten Browser und einen abgeschlossenen Download der App sowie der gewählten Sprachen/Laufzeiten. Der Download prüft die Integrität jeder Programmdatei. App-Updates werden nach dem Schließen aller älteren Tabs aktiv. Serverwerkzeuge brauchen weiter den eigenen Server. Offline-Dateien entfernen löscht keine Projekte oder Ergebnisse.
+
+## Optionale OpenAI-Kontierung für Bank2DATEV
+
+Für Erkennung und DATEV-Export genügt der Browser. Die KI-Erweiterung benötigt einen eigenen OpenAI-API-Schlüssel und einen privaten Zugangscode mit mindestens 20 Zeichen. Nur Personen mit diesem separaten Code können kostenpflichtige Vorschläge anfordern. In der Git-ignorierten Datei `.env` neben `compose.yaml` die eigenen Werte setzen.
+
+```dotenv
+OPENAI_API_KEY=
+MOINPDF_DATEV_ACCESS_TOKEN=
+OPENAI_MODEL=gpt-5-mini
+```
+
+**Lokal entwickeln.** Mit Node 24 im Projektordner `node --env-file=.env docker/datev/server.mjs` starten, in einem zweiten Terminal `pnpm dev` ausführen und die lokale Webadresse öffnen. Der Dienst lauscht auf 127.0.0.1:8766. Vite leitet ausschließlich `/api/datev` dorthin weiter.
+
+**Mit Docker starten.** `docker compose -f compose.yaml -f compose.datev.yaml up -d --build` aktiviert den getrennten KI-Dienst. Bei direktem HTTPS zusätzlich `-f compose.https.yaml` vor `up` angeben. Der Dienst hat keinen veröffentlichten Port. Nur er erhält den OpenAI-Schlüssel. Für einen extern erreichbaren Arbeitsplatz HTTPS verwenden.
+
+Unter **Erkennen & konvertieren → Kontoauszug zu DATEV → KI-Kontierung** den privaten Zugangscode eingeben. Vor jedem Auftrag werden Buchungstexte, Zahlungsrichtungen, Kontenrahmen und die optional eingegebene Kontenliste angezeigt. Die Original-PDF und die Stammdatenfelder werden nicht an OpenAI gesendet. Freitext vor dem Senden prüfen. Bis zu 20 offene Buchungen je Anfrage, zwei parallele Anfragen und 60 Anfragen je Stunde und Instanz. Die Vorschläge vor dem Export am Beleg prüfen.

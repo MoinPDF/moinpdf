@@ -1,0 +1,116 @@
+.bank-datev {
+  max-width: 78rem;
+  margin: auto;
+  min-width: 0;
+}
+.bank-datev .bank-card {
+  margin-block: 1rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+  color: var(--card-foreground);
+}
+.bank-datev h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.bank-datev p {
+  margin-block: 0.55rem;
+  overflow-wrap: anywhere;
+}
+.bank-datev .bank-heading,
+.bank-datev .bank-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.bank-datev .bank-actions {
+  justify-content: start;
+  margin-block: 0.8rem;
+}
+.bank-datev .bank-actions button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  height: auto;
+  min-height: 2.4rem;
+}
+.bank-datev .bank-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 0.7rem;
+  margin-block: 0.7rem;
+}
+.bank-datev label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.87rem;
+  font-weight: 600;
+}
+.bank-datev input:not([type='checkbox']),
+.bank-datev select,
+.bank-datev textarea {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 400;
+}
+.bank-datev summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding-block: 0.4rem;
+}
+.bank-datev pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bank-datev .bank-row {
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  padding-block: 0.6rem;
+  margin-top: 1rem;
+}
+.bank-datev legend {
+  font-weight: 700;
+  padding-right: 0.6rem;
+}
+.bank-datev .bank-confirm {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.bank-datev .bank-ai-fields {
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.bank-datev .bank-reading {
+  align-items: baseline;
+}
+.bank-datev .bank-reading dl {
+  display: grid;
+  gap: 0.35rem 1.2rem;
+  margin: 0.4rem 0;
+}
+.bank-datev .bank-reading dl div {
+  display: grid;
+  grid-template-columns: minmax(6rem, auto) 1fr;
+  gap: 1rem;
+}
+.bank-datev .bank-reading dt {
+  color: var(--muted-foreground);
+}
+.bank-datev .bank-reading dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}

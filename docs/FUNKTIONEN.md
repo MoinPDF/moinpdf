@@ -1,9 +1,15 @@
 # Funktionen und Grenzen
 
+## Kontoauszug zu DATEV
+
+Kontoauszug zu DATEV übernimmt die lokale Auszugserkennung und Saldenprüfung aus Bank2DATEV. SKR03/SKR04 bleiben wählbar. Bankkonto, Gegenkonten, Berater- und Mandantennummer sowie BU-Schlüssel sind freie Eingaben. Ein separater, optionaler Dienst erzeugt nach Freigabe prüfbare Kontierungsvorschläge über die OpenAI API.
+
+Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF aus dem PDF. Bildseiten werden lokal per OCR gelesen. Erkannte Angaben erscheinen in einer kompakten Übersicht. Der Export verwendet Kalenderwirtschaftsjahre und ermittelt die Sachkontenlänge aus dem Bankkonto. Fehlende oder widersprüchliche Salden werden angezeigt und verhindern den Export.
+
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.26.0**
+**Aktuelle Grenzen aus der Implementierung · 0.27.0**
 
 | Funktion | Wert |
 | --- | --- |

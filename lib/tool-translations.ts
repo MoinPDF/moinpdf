@@ -5,6 +5,12 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'bank-datev': {
+    title: 'Bank statement to DATEV',
+    description:
+      'Read PDF bank statements, review entries and balances, and export a DATEV posting batch with your own accounts.',
+    action: 'Review bank statement',
+  },
   'document-checklist': {
     title: 'Document checklist',
     description:

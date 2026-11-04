@@ -77,6 +77,16 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'bank-datev',
+    title: 'Kontoauszug zu DATEV',
+    description:
+      'PDF-Kontoauszüge einlesen, Buchungen und Salden prüfen und mit eigenen Konten als DATEV-Buchungsstapel exportieren.',
+    icon: FileSpreadsheet,
+    group: 1,
+    action: 'Kontoauszug prüfen',
+    fresh: true,
+  },
+  {
     id: 'document-checklist',
     title: 'Unterlagen-Checkliste',
     description:

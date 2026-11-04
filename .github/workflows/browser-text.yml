@@ -27,12 +27,11 @@ jobs:
       matrix:
         include:
           - browser: safari
-            # Keep native Safari on the documented Intel pool. The macos-15
-            # ARM pool has repeatedly cancelled jobs before assigning a runner.
-            os: macos-15-intel
+            os: macos-26-intel
           - browser: firefox
             os: ubuntu-24.04
-    runs-on: ${{ matrix.os }}
+    # Use the other native Safari Intel image on retry if a pool cannot start the job.
+    runs-on: ${{ matrix.browser == 'safari' && github.run_attempt != '1' && 'macos-15-intel' || matrix.os }}
     timeout-minutes: 20
     env:
       MOINPDF_TEST_URL: http://127.0.0.1:8765
