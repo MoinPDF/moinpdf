@@ -141,7 +141,9 @@ Unter Projekte stehen Speicherbelegung, Anfrage dauerhafter Speicherung und Offl
 
 ## Optionale OpenAI-Kontierung für Bank2DATEV
 
-Für Erkennung und DATEV-Export genügt der Browser. Die KI-Erweiterung benötigt einen eigenen OpenAI-API-Schlüssel und einen privaten Zugangscode mit mindestens 20 Zeichen. Nur Personen mit diesem separaten Code können kostenpflichtige Vorschläge anfordern. In der Git-ignorierten Datei `.env` neben `compose.yaml` die eigenen Werte setzen.
+Persönliche Schlüssel funktionieren im normalen Web-Image. MoinPDF über HTTPS oder localhost öffnen und unter **Kontoauszug zu DATEV → KI-Kontierung** den eigenen OpenAI-API-Schlüssel eingeben. Jeder Auftrag verwendet den zugehörigen Schlüssel. Für die spätere Nutzung lässt sich der Schlüssel auf diesem Gerät mit einem eigenen Passwort verschlüsselt speichern.
+
+Für einen zusätzlichen betreiberfinanzierten Zugang die folgenden Werte in der lokalen `.env` setzen und die Compose-Erweiterung aktivieren. Der separate Zugangscode muss mindestens 20 Zeichen haben.
 
 ```dotenv
 OPENAI_API_KEY=

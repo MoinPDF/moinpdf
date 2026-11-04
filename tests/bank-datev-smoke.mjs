@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { parseStatement, exportFiles } from '../lib/bank-datev/converter.mjs';
+import { recoverVolksbankOcrSigns } from '../lib/bank-datev/volksbank.mjs';
 import { extractDraft, draftToStatement } from '../lib/bank-datev/universal.mjs';
 import columns from '../lib/bank-datev/datev-columns.json' with { type: 'json' };
 import { createDatevServer } from '../docker/datev/server.mjs';
@@ -53,6 +54,8 @@ for (const framework of ['03', '04']) {
     assert.equal(posting[8], i ? '' : '"0009"');
     assert.equal(posting[0], i ? '1,00' : '2,50');
     assert.equal(posting[1], i ? '"S"' : '"H"');
+    assert.equal(headings[10], '"Belegfeld 1"');
+    assert.equal(posting[10], '');
     assert.equal(posting[9], i ? '0201' : '3112');
   }
 }
@@ -136,6 +139,44 @@ const specialised = parseStatement(
   'test-digest-2',
 );
 assert.equal(specialised.transactions[0].counteraccount, '');
+const vrHeader = (page) =>
+  'Volksbank Muster eG\nEUR-Konto   Kontonummer 111\nKontoauszug Nr. 1/2026\nerstellt am 02.01.2026   Blatt ' +
+  page +
+  ' von 2\nBu-Tag Wert Vorgang';
+const vr = [
+  vrHeader(1) +
+    '\nalter Kontostand vom 30.12.2025 20,00 S\n31.12. 02.01. Musterumsatz 30,00 H\n31.12.2025 um 08:45 Uhr GA 123456\nÜbertrag auf Blatt 2 10,00 H',
+  vrHeader(2) +
+    '\nÜbertrag von Blatt 1 10,00 H\n02.01. 31.12. siehe Anlage 1 2,50 S\n────────────────\nneuer Kontostand vom 02.01.2026 7,50 H\nAbschluss 2,50 S',
+  'Kundeninformation zum Rechnungsabschluss',
+];
+const geno = parseStatement(vr, 'Fiktiv.pdf', 'fictional-vr');
+assert.deepEqual(
+  geno.transactions.map((t) => [t.booking_date, t.value_date, t.amount]),
+  [
+    ['2025-12-31', '2026-01-02', '30.00'],
+    ['2026-01-02', '2025-12-31', '-2.50'],
+  ],
+);
+assert.equal(geno.check.difference, '0.00');
+for (const broken of [
+  [vr[0]],
+  [vr[1], vr[0]],
+  [vr[0], vr[1].replace('10,00 H', '11,00 H')],
+  [vr[0], vr[1].replace('2,50 S', '2,SO S')],
+  [vr[0], vr[1].replace('7,50 H', '7,51 H')],
+])
+  assert.throws(() => parseStatement(broken, 'Fiktiv.pdf', 'bad-vr'));
+const printed = [
+  ['Bu-Tag Wert Vorgang', 0],
+  ['05.04. 05.04. Einkauf 12,00 S', 440],
+  ['06.04. 06.04. Zahlung 15,00 H', 500],
+  ['07.04. 07.04. Entgelt 1,50 5', 441],
+  ['08.04. 08.04. Unklar 2,50 5', 500],
+].map(([text, x]) => ({ text, spans: [{ x }] }));
+const recovered = recoverVolksbankOcrSigns(printed);
+assert.match(recovered[3].text, /1,50 S$/);
+assert.match(recovered[4].text, /2,50 5$/);
 const token = 'fictional-access-code-for-tests';
 const env = { OPENAI_API_KEY: 'fictional-test-only', MOINPDF_DATEV_ACCESS_TOKEN: token };
 const batch = {
@@ -149,6 +190,8 @@ const server = createDatevServer(env, async (url, options) => {
   upstreamCalls++;
   assert.equal(url, 'https://api.openai.com/v1/responses');
   const body = JSON.parse(options.body);
+  if (!options.headers.Authorization.startsWith('Bearer sk-'))
+    assert.equal(options.headers.Authorization, 'Bearer fictional-test-only');
   assert.equal(body.store, false);
   assert.deepEqual(JSON.parse(body.input), batch);
   const suggestions = [
@@ -184,6 +227,7 @@ const base = await listen(server),
 try {
   assert.deepEqual(await (await fetch(offBase + '/status', { headers })).json(), {
     enabled: false,
+    personal: true,
   });
   const post = (data, extra = {}) =>
     fetch(base + '/suggest', {
@@ -203,6 +247,60 @@ try {
     { id: 1, account: '54321', reason: 'Synthetic' },
   ]);
   for (mode of ['bad id', 'unlisted', 'incomplete']) assert.equal((await post(batch)).status, 502);
+  const personal = (key, extraHeaders = {}, data = batch) =>
+    fetch(base + '/personal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-MoinPDF-Client': 'web', ...extraHeaders },
+      body: JSON.stringify({ key, batch: data }),
+    });
+  assert.equal((await personal('bad')).status, 401);
+  assert.equal(
+    (await personal('sk-fictional-sample-A', { Origin: 'https://unrelated.example' })).status,
+    403,
+  );
+  assert.equal(
+    (await personal('sk-fictional-sample-A', {}, { ...batch, iban: 'private' })).status,
+    400,
+  );
+  const used = [];
+  const independent = createDatevServer({}, async (_url, options) => {
+    used.push(options.headers.Authorization);
+    assert.deepEqual(JSON.parse(JSON.parse(options.body).input), batch);
+    assert.ok(!options.body.includes('sk-fictional'));
+    return new Response(null, { status: 401 });
+  });
+  const separate = await listen(independent);
+  try {
+    const submit = (key) =>
+      fetch(separate + '/personal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-MoinPDF-Client': 'web' },
+        body: JSON.stringify({ key, batch }),
+      });
+    const keys = ['sk-fictional-private-A', 'sk-fictional-private-B'];
+    const replies = await Promise.all(keys.map(submit));
+    assert.deepEqual(
+      replies.map((r) => r.status),
+      [401, 401],
+    );
+    assert.deepEqual(
+      used.sort(),
+      keys.map((k) => 'Bearer ' + k),
+    );
+    assert.deepEqual(await replies[0].json(), {});
+    assert.equal(
+      (await fetch(separate + '/suggest', { method: 'POST', headers, body: JSON.stringify(batch) }))
+        .status,
+      503,
+    );
+  } finally {
+    independent.close();
+  }
+  mode = 'ok';
+  assert.equal(
+    (await (await personal('sk-fictional-private-A')).json()).suggestions[0].account,
+    '54321',
+  );
   mode = 'unclear';
   assert.equal((await (await post(batch)).json()).suggestions[0].account, null);
 } finally {

@@ -145,7 +145,9 @@ Projects includes storage usage, an explicit persistent-storage request and offl
 
 ## Optional OpenAI posting suggestions for Bank2DATEV
 
-The browser handles extraction and DATEV export. AI suggestions require an OpenAI API key and a separate private access code of at least 20 characters. Anyone with the code can request billable suggestions. Set your own values in the git-ignored `.env` beside `compose.yaml`.
+Personal keys work with the standard web image. Over HTTPS or localhost, open **Bank statement to DATEV → AI posting suggestions** and enter the personal OpenAI API key. Each request uses only the key supplied for it. To use the key again after closing the tool, select encrypted storage on this device and choose a passphrase.
+
+For an optional shared operator account configure the following values in the local `.env` and enable the Compose extension. Its separate access code must be at least 20 characters long.
 
 ```dotenv
 OPENAI_API_KEY=

@@ -328,7 +328,7 @@ function ocrScore(data: OcrPage) {
   return good.reduce((n, w) => n + (w.text.length * w.confidence) / 100, 0);
 }
 
-function imageCoverage(
+export function imageCoverage(
   ops: { fnArray: number[]; argsArray: unknown[][] },
   codes: Record<string, number>,
   viewport: { transform: number[]; width: number; height: number },

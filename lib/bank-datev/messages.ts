@@ -4,7 +4,16 @@ export function bankMessage(message: string) {
   if (!uiLocale().startsWith('en')) return message;
   const row = /^Buchung (\d+): (.*)$/.exec(message);
   if (row) return 'Posting ' + row[1] + ': ' + ui(row[2]);
+  if (
+    message ===
+    'Keine lesbaren Buchungen gefunden. Bitte die Original-PDF der Bank oder einen schärferen Scan öffnen.'
+  )
+    return 'No legible postings found. Open the original bank PDF or a clearer scan.';
   const messages: [RegExp, string][] = [
+    [
+      /^Seite (\d+) des Kontoauszugs ist nicht lesbar\..*$/,
+      'Statement page $1 is unreadable. Open the original bank PDF or a clearer scan.',
+    ],
     [
       /^Gegenkonto bei „(.*)“ prüfen\. Es muss sich vom Bankkonto (\d+) unterscheiden\.$/s,
       'Check the offset account for “$1”. Enter a valid number different from bank account $2.',
