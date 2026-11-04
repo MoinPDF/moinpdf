@@ -6,11 +6,11 @@ export const guides = {
   "input": "Ein oder mehrere EUR-Kontoauszüge als PDF und die individuellen Buchhaltungsdaten.",
   "steps": [
     "Kontoauszüge öffnen und unter „Erkennen & konvertieren“ das Werkzeug „Kontoauszug zu DATEV“ wählen. Für jeden Auszug SKR03 oder SKR04 wählen und Bankkonto, Beraternummer und Mandantennummer eintragen.",
-    "Zeitraum, Salden, Auszugsnummer, Kontowährung und IBAN werden aus dem PDF gelesen. Bildseiten werden lokal per OCR erkannt. Unter „Erkannte Auszugsdaten“ lassen sich die Werte einsehen. Jede Buchung prüfen und das Gegenkonto sowie bei Bedarf den BU-Schlüssel eingeben.",
-    "Bei eingerichteter KI-Kontierung die Sendevorschau prüfen und ausdrücklich an OpenAI senden. Optional die zulässigen Gegenkonten mit Bezeichnungen eingrenzen. Vorschläge prüfen und übernehmen. Unklare Buchungen manuell kontieren.",
+    "Zeitraum, Salden, Auszugsnummer, Kontowährung und IBAN werden aus dem PDF gelesen. Bei Volksbank- und Raiffeisenbank-Auszügen werden auch die Blattüberträge geprüft. Bildseiten liest MoinPDF automatisch lokal. Unter „Buchungen prüfen“ die Buchungsliste ausklappen und Gegenkonten ergänzen.",
+    "Optional unter „KI-Kontierung“ den eigenen OpenAI-API-Schlüssel eingeben. Er lässt sich mit einem Gerätepasswort verschlüsselt merken. Texte und erlaubte Gegenkonten prüfen, dann den Auftrag senden. Kontierungsvorschläge lassen sich einzeln in den Buchungen bearbeiten.",
     "Die Prüfung bestätigen und den DATEV-Buchungsstapel herunterladen. Mehrere Wirtschaftsjahre werden getrennt. Alle geprüften Auszüge lassen sich gemeinsam als ZIP speichern."
   ],
-  "output": "DATEV-EXTF-Buchungsstapel im CSV-Format (125 Spalten, Windows-1252). Konto, Gegenkonto und optionale Steuerschlüssel stammen aus den geprüften Eingaben.",
+  "output": "DATEV-EXTF-Buchungsstapel im CSV-Format (125 Spalten, Windows-1252). Belegfeld 1 bleibt leer. Konto, Gegenkonto und optionale Steuerschlüssel stammen aus den geprüften Eingaben.",
   "note": "Nur EUR, bis 25 MB und 250 Seiten je Auszug innerhalb der Arbeitsplatzgrenzen. Der Export verwendet Kalenderwirtschaftsjahre und leitet die Sachkontenlänge vom eingegebenen Bankkonto ab (mindestens vier Stellen). Auszugsnummer und IBAN sind optional. Ein unlesbarer Saldo, eine Saldendifferenz oder ein fehlendes Gegenkonto verhindert den Export."
 },
 "document-checklist": {

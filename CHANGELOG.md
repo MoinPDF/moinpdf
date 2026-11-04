@@ -9,6 +9,11 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.27.1 – 4. November 2026
+
+- Volksbank- und Raiffeisenbank-Auszüge im Format „Bu-Tag / Wert / Vorgang“ werden mit Soll/Haben-Kennzeichen und Blattüberträgen geprüft. Bildseiten werden automatisch im Browser gelesen. Bei unlesbaren Seiten erscheint ein Hinweis.
+- „Buchungen prüfen“ startet eingeklappt. Belegfeld 1 bleibt bei jeder Buchung leer. Unter „KI-Kontierung“ kann jede Person ihren eigenen OpenAI-Schlüssel verwenden und auf Wunsch mit einem Gerätepasswort verschlüsselt speichern.
+
 ## 0.27.0 – 4. November 2026
 
 - „Kontoauszug zu DATEV“ erweitert MoinPDF auf 121 Werkzeuge. Kontoauszüge werden im Browser ausgelesen und die Salden geprüft. Für den DATEV-Buchungsstapel sind SKR03 und SKR04 wählbar. Bankkonto, Gegenkonten, Beraternummer, Mandantennummer und BU-Schlüssel werden frei eingegeben. Buchungen lassen sich vor dem CSV-Export einzeln bearbeiten. Auszugsdaten und Salden werden automatisch erkannt, bei Bildseiten per lokaler OCR. Sachkontenlänge und Kalenderwirtschaftsjahr bestimmt der Export automatisch.

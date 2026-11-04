@@ -14,9 +14,11 @@ FROM caddy:2.11.7-alpine
 ARG MOINPDF_UID=10001
 # We use unprivileged container ports. Remove the upstream binary's file
 # capability so it can execute with cap_drop: ALL and no-new-privileges.
-RUN setcap -r /usr/bin/caddy \
+RUN apk add --no-cache nodejs \
+    && setcap -r /usr/bin/caddy \
     && mkdir -p /data /config /srv && chown -R ${MOINPDF_UID}:${MOINPDF_UID} /data /config /srv
 COPY --from=build /app/dist/selfhost /srv
+COPY docker/datev/*.mjs /opt/datev/
 COPY docker/Caddyfile /etc/caddy/Caddyfile
 COPY --chmod=755 docker/start-web.sh /usr/local/bin/start-web
 USER ${MOINPDF_UID}:${MOINPDF_UID}

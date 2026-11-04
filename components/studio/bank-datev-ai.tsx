@@ -9,12 +9,16 @@ import {
   previewText,
   type Suggestion,
 } from '@/lib/bank-datev/suggestions';
+import { BankDatevKey } from './bank-datev-key';
+import { personalKeyFormat } from '@/lib/bank-datev/key-vault';
 import { ui } from '@/lib/ui-language';
 
 export function BankDatevAI({
   rows,
   settings,
   onApply,
+  personalKey,
+  setPersonalKey,
   token,
   setToken,
   accounts,
@@ -22,6 +26,8 @@ export function BankDatevAI({
 }: {
   rows: Row[];
   settings: Settings;
+  personalKey: string;
+  setPersonalKey: (value: string) => void;
   token: string;
   setToken: (value: string) => void;
   accounts: string;
@@ -29,7 +35,12 @@ export function BankDatevAI({
   onApply: (values: Map<string, string>) => void;
 }) {
   const { t } = useLanguage();
-  const [availability, setAvailability] = useState<'idle' | 'enabled' | 'off'>('idle');
+  const [availability, setAvailability] = useState<
+    'idle' | 'personal' | 'operator' | 'both' | 'off'
+  >('idle');
+  const [operator, setOperator] = useState(false);
+  const useOperator = availability === 'operator' || (availability === 'both' && operator);
+  const secure = typeof window !== 'undefined' && window.isSecureContext;
   const [offset, setOffset] = useState(0);
   const [edits, setEdits] = useState<Record<string, string>>({}),
     [results, setResults] = useState<Suggestion[]>([]);
@@ -59,8 +70,10 @@ export function BankDatevAI({
         cache: 'no-store',
         signal: lifecycle.current?.signal,
       });
-      const ok = r.ok && (await r.json()).enabled === true;
-      setAvailability(ok ? 'enabled' : 'off');
+      const info = r.ok && (await r.json());
+      setAvailability(
+        info?.personal ? (info.enabled ? 'both' : 'personal') : info?.enabled ? 'operator' : 'off',
+      );
     } catch {
       if (!lifecycle.current?.signal.aborted) setAvailability('off');
     }
@@ -71,7 +84,12 @@ export function BankDatevAI({
     setError('');
     try {
       const candidates = parseAccounts(accounts);
-      const r = await fetch('/api/datev/suggest', {
+      const batch = {
+        framework: settings.account_framework,
+        accounts: candidates,
+        rows: payloadRows,
+      };
+      const r = await fetch(useOperator ? '/api/datev/suggest' : '/api/datev/personal', {
         method: 'POST',
         cache: 'no-store',
         redirect: 'error',
@@ -79,27 +97,29 @@ export function BankDatevAI({
         headers: {
           'Content-Type': 'application/json',
           'X-MoinPDF-Client': 'web',
-          'X-Datev-Access': token,
+          ...(useOperator && { 'X-Datev-Access': token }),
         },
-        body: JSON.stringify({
-          framework: settings.account_framework,
-          accounts: candidates,
-          rows: payloadRows,
-        }),
+        referrerPolicy: 'no-referrer',
+        body: JSON.stringify(useOperator ? batch : { key: personalKey, batch }),
       });
       if (!r.ok)
         throw Error(
-          r.status === 403
-            ? t('KI-Zugangscode prüfen.', 'Check the AI access code.')
-            : r.status === 429
-              ? t(
-                  'Anfragelimit erreicht. Bitte später erneut versuchen.',
-                  'Request limit reached. Try again later.',
-                )
-              : t(
-                  'KI-Dienst nicht erreichbar oder Antwort unbrauchbar. Die manuelle Kontierung ist verfügbar.',
-                  'The AI service is unavailable or returned an unusable response. Manual entry is available.',
-                ),
+          r.status === 401
+            ? t(
+                'Der persönliche OpenAI-Schlüssel wurde abgelehnt. Bitte Schlüssel und API-Berechtigungen prüfen.',
+                'The personal OpenAI key was rejected. Check the key and API permissions.',
+              )
+            : r.status === 403
+              ? t('KI-Zugangscode prüfen.', 'Check the AI access code.')
+              : r.status === 429
+                ? t(
+                    'Anfragelimit erreicht. Bitte später erneut versuchen.',
+                    'Request limit reached. Try again later.',
+                  )
+                : t(
+                    'KI-Dienst nicht erreichbar oder Antwort unbrauchbar. Die manuelle Kontierung ist verfügbar.',
+                    'The AI service is unavailable or returned an unusable response. Manual entry is available.',
+                  ),
         );
       const { suggestions } = (await r.json()) as { suggestions: Suggestion[] };
       if (!Array.isArray(suggestions) || suggestions.length !== page.length)
@@ -119,17 +139,43 @@ export function BankDatevAI({
       }}
     >
       <summary>{t('KI-Kontierung · optional', 'AI posting suggestions · optional')}</summary>
-      {availability !== 'enabled' ? (
+      {availability === 'idle' || availability === 'off' ? (
         <p>
           {availability === 'idle'
             ? t('Verfügbarkeit wird geprüft.', 'Checking availability.')
             : t(
-                'Auf dieser Installation ist die KI-Kontierung deaktiviert.',
-                'AI suggestions are disabled on this installation.',
+                'Die KI-Kontierung ist auf dieser Installation nicht erreichbar.',
+                'AI suggestions are unavailable on this installation.',
               )}
+        </p>
+      ) : !secure ? (
+        <p role="alert">
+          {t(
+            'Für die KI-Kontierung MoinPDF über HTTPS oder localhost öffnen.',
+            'Open MoinPDF over HTTPS or localhost for AI suggestions.',
+          )}
         </p>
       ) : (
         <>
+          {availability === 'both' && (
+            <label>
+              {t('KI-Zugang', 'AI credentials')}
+              <select
+                value={useOperator ? 'operator' : 'personal'}
+                onChange={(e) => {
+                  setOperator(e.target.value === 'operator');
+                  setResults([]);
+                  setError('');
+                }}
+                disabled={busy}
+              >
+                <option value="personal">{t('Eigener API-Schlüssel', 'Personal API key')}</option>
+                <option value="operator">
+                  {t('Zugang dieser Installation', 'Installation access')}
+                </option>
+              </select>
+            </label>
+          )}
           <p>
             {t(
               'Prüfe und kürze die Texte vor dem Senden. OpenAI erhält den Kontenrahmen, die angezeigten Buchungstexte und Zahlungsrichtungen sowie eine eventuell eingegebene Kontenliste. Namen können im Freitext enthalten sein.',
@@ -137,15 +183,26 @@ export function BankDatevAI({
             )}
           </p>
           <fieldset disabled={busy} className="bank-ai-fields">
-            <label>
-              {t('Privater KI-Zugangscode', 'Private AI access code')}
-              <input
-                type="password"
-                autoComplete="off"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
+            {useOperator ? (
+              <label>
+                {t('Privater KI-Zugangscode', 'Private AI access code')}
+                <input
+                  type="password"
+                  autoComplete="off"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                />
+              </label>
+            ) : (
+              <BankDatevKey
+                value={personalKey}
+                onChange={(value) => {
+                  setPersonalKey(value);
+                  setError('');
+                  setResults([]);
+                }}
               />
-            </label>
+            )}
             <label>
               {t(
                 'Zulässige Gegenkonten mit Bezeichnung (optional, eines je Zeile)',
@@ -204,7 +261,13 @@ export function BankDatevAI({
                 )}
               </p>
             ) : (
-              <Button disabled={!token || payloadRows.some((r) => !r.text)} onClick={suggest}>
+              <Button
+                disabled={
+                  (useOperator ? !token : !personalKeyFormat.test(personalKey)) ||
+                  payloadRows.some((r) => !r.text)
+                }
+                onClick={suggest}
+              >
                 {busy
                   ? t('Vorschläge werden erstellt …', 'Generating suggestions…')
                   : t('Angezeigte Daten an OpenAI senden', 'Send displayed data to OpenAI')}

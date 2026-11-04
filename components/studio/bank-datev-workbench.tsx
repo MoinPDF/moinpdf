@@ -29,6 +29,7 @@ type Props = { sources: Source[]; onBack: () => void; onAdd: () => void };
 export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
   const { t, language } = useLanguage();
   const [accessCode, setAccessCode] = useState('');
+  const [personalKey, setPersonalKey] = useState('');
   const [accountLists, setAccountLists] = useState<Record<string, string>>({});
 
   const [entries, setEntries] = useState<Entries>({}),
@@ -40,7 +41,6 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
     [search, setSearch] = useState('');
   const source = sources.find((s) => s.id === selected) ?? sources[0],
     entry = entries[source?.id];
-  const [ocrPage, setOcrPage] = useState<{ id: string; page: number }>();
   const [original, setOriginal] = useState('');
   useEffect(() => {
     if (!source) return;
@@ -56,11 +56,7 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
       for (const s of sources) {
         if (controller.signal.aborted) break;
         try {
-          const e =
-            memory.get(s) ??
-            (await readStatement(s, controller.signal, (page) => {
-              if (!controller.signal.aborted) setOcrPage({ id: s.id, page });
-            }));
+          const e = memory.get(s) ?? (await readStatement(s, controller.signal));
           if (controller.signal.aborted) break;
           memory.set(s, e);
           setEntries((old) => ({ ...old, [s.id]: e }));
@@ -206,16 +202,10 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
       {!source ? (
         <p role="status">{t('Kontoauszug als PDF hinzufügen.', 'Add a bank statement PDF.')}</p>
       ) : !d ? (
-        <p role="status">
+        <p role={failures[source.id] ? 'alert' : 'status'}>
           {failures[source.id]
             ? ui(failures[source.id])
-            : ocrPage?.id === source.id
-              ? t('Lokale Texterkennung · Seite', 'Local text recognition · Page') +
-                ' ' +
-                ocrPage.page +
-                ' / ' +
-                source.pdf.numPages
-              : t('Kontoauszug wird gelesen …', 'Reading bank statement…')}
+            : t('Kontoauszug wird gelesen …', 'Reading bank statement…')}
         </p>
       ) : (
         <>
@@ -274,11 +264,11 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
               <p key={i}>{ui(warning)}</p>
             ))}
           </section>
-          <section className="bank-card">
+          <details className="bank-card bank-postings" key={source.id}>
+            <summary>
+              {t('Buchungen prüfen', 'Review postings')} ({d.rows.length})
+            </summary>
             <div className="bank-heading">
-              <h2>
-                {t('Buchungen prüfen', 'Review postings')} ({d.rows.length})
-              </h2>
               <Button
                 variant="outline"
                 onClick={() => {
@@ -388,9 +378,11 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
                   </div>
                 </fieldset>
               ))}
-          </section>
+          </details>
           <BankDatevAI
             key={source.id + '-' + revision}
+            personalKey={personalKey}
+            setPersonalKey={setPersonalKey}
             token={accessCode}
             setToken={setAccessCode}
             accounts={accountLists[source.id + settings.account_framework] || ''}

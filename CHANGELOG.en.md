@@ -4,6 +4,11 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.27.1 – 4 November 2026
+
+- Volksbank and Raiffeisenbank statements with a “Bu-Tag / Wert / Vorgang” table are verified against debit/credit markers and page carry-forwards. Image pages are read automatically in the browser. Unreadable pages display a message.
+- “Review postings” starts collapsed. Document field 1 is empty for every posting. Each user can enter a personal OpenAI key under “AI posting suggestions” and optionally save it encrypted with a device passphrase.
+
 ## 0.27.0 – 4 November 2026
 
 - Bank statement to DATEV brings the catalogue to 121 tools. Statements are read and balances checked in the browser. Select SKR03 or SKR04 and enter your own bank account, offset accounts, advisor number, client number and tax keys. Individual bookings can be edited before exporting the DATEV batch as CSV. Statement details and balances are detected automatically, using local OCR on image pages. The export determines the account length and calendar fiscal year automatically.
