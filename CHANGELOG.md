@@ -9,6 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.27.2 – 4. November 2026
+
+- Der gemeinsame Import öffnet auch beim ersten Aufruf der Web-App berechtigungsgeschützte PDFs, etwa Kontoauszüge der Volksbank. Wenn der lokale PDF-Prozessor ausfällt, weist MoinPDF auf den Öffnungsfehler hin.
+
 ## 0.27.1 – 4. November 2026
 
 - Volksbank- und Raiffeisenbank-Auszüge im Format „Bu-Tag / Wert / Vorgang“ werden mit Soll/Haben-Kennzeichen und Blattüberträgen geprüft. Bildseiten werden automatisch im Browser gelesen. Bei unlesbaren Seiten erscheint ein Hinweis.

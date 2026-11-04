@@ -4,6 +4,8 @@
 
 Bank statement to DATEV integrates local Bank2DATEV extraction and balance checks. Choose SKR03/SKR04 and enter custom bank and offset accounts, advisor and client numbers and tax keys. An optional, separate service provides reviewable OpenAI posting suggestions on explicit request.
 
+Statements with permissions protection open from the home page and the tool. MoinPDF prompts for a password only when the PDF requires one to open.
+
 Volksbank and Raiffeisenbank statements with a “Bu-Tag / Wert / Vorgang” table are verified against debit/credit markers and page carry-forwards. Image pages are read automatically in the browser. Unreadable pages display a message. “Review postings” starts collapsed. Document field 1 is empty for every posting. Each user can enter a personal OpenAI key under “AI posting suggestions” and optionally save it encrypted with a device passphrase.
 
 MoinPDF reads the period, opening and closing balances, statement number, currency and IBAN from the PDF. Image pages are read using local OCR. Detected details are available in a compact summary. Export uses calendar fiscal years and derives the ledger account length from the bank account. Missing or inconsistent balances are shown and block export.
@@ -11,7 +13,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.27.1**
+**Current implementation limits · 0.27.2**
 
 | Capability | Value |
 | --- | --- |

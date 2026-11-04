@@ -7,6 +7,50 @@ import pymupdf
 from playwright.sync_api import expect
 
 
+def verify_protected_uploads(browser, origin, pdf, locked):
+    # Mirror the hosted first visit: the document sets COEP, static JS does
+    # not, and a service worker cannot supply missing headers yet.
+    context = browser.new_context(service_workers='block')
+    def isolated_page(route):
+        response = route.fetch()
+        headers = {**response.headers, 'cross-origin-opener-policy': 'same-origin',
+                   'cross-origin-embedder-policy': 'require-corp'}
+        route.fulfill(response=response, headers=headers)
+
+    context.route(origin + '/', isolated_page)
+    page = context.new_page()
+    upload = page.locator('input[type=file]').first
+    bank = page.locator('.chooser-tool[data-tool-id=bank-datev]')
+    worker_path = '**/workers/pdf-security.js'
+    try:
+        page.goto(origin)
+        assert page.evaluate('crossOriginIsolated')
+        page.route(worker_path, lambda route: route.abort())
+        upload.set_input_files(str(pdf))
+        expect(page.get_by_text('MoinPDF konnte die geschützte PDF im Browser nicht öffnen.', exact=False)).to_be_visible()
+        expect(page.get_by_role('button', name='PDF reparieren')).to_have_count(0)
+        page.unroute(worker_path)
+        page.reload()
+        upload.set_input_files(str(pdf))
+        bank.click()
+        expect(page.locator('.bank-row')).to_have_count(2)
+        expect(page.get_by_label('PDF-Passwort')).to_have_count(0)
+
+        page.reload()
+        page.locator('.mosaic-all-tools').click()
+        bank.click()
+        upload.set_input_files(str(locked))
+        dialog = page.get_by_role('dialog')
+        dialog.get_by_label('PDF-Passwort', exact=True).fill('incorrect')
+        dialog.get_by_role('button', name='PDF öffnen').click()
+        expect(dialog.get_by_role('alert')).to_contain_text('Passwort war nicht korrekt')
+        dialog.get_by_label('PDF-Passwort', exact=True).fill('fictional-reader')
+        dialog.get_by_role('button', name='PDF öffnen').click()
+        expect(page.locator('.bank-row')).to_have_count(2)
+    finally:
+        context.close()
+
+
 def verify_bank_datev(browser, origin):
     context = browser.new_context(viewport={'width': 390, 'height': 844}, service_workers='block')
     context.add_init_script("Object.defineProperty(Crypto.prototype, 'randomUUID', {value: undefined})")
@@ -32,6 +76,11 @@ def verify_bank_datev(browser, origin):
                 original_page = doc.new_page()
                 original_page.insert_text((50, 55), '\n'.join(lines), fontsize=15, lineheight=1.5)
                 doc.save(pdf)
+                restricted = Path(directory) / 'Fiktiv-Berechtigungsschutz.pdf'
+                locked = Path(directory) / 'Fiktiv-Passwortschutz.pdf'
+                for target, password in [(restricted, ''), (locked, 'fictional-reader')]:
+                    doc.save(target, encryption=pymupdf.PDF_ENCRYPT_AES_128,
+                             user_pw=password, owner_pw='fictional-owner', permissions=-1036)
                 scan = Path(directory) / 'Fiktiver-Scan.pdf'
                 bitmap = original_page.get_pixmap(matrix=pymupdf.Matrix(2, 2)).tobytes('png')
                 with pymupdf.open() as scanned:
@@ -47,6 +96,7 @@ def verify_bank_datev(browser, origin):
                 with pymupdf.open() as empty:
                     empty.new_page()
                     empty.save(bad)
+            verify_protected_uploads(browser, origin, restricted, locked)
             page.goto(origin)
             page.locator('input[type=file]').first.set_input_files(str(pdf))
             page.locator('.chooser-tool').filter(has_text='Kontoauszug zu DATEV').click()

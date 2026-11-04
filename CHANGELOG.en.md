@@ -4,6 +4,10 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.27.2 – 4 November 2026
+
+- Permissions-protected PDFs, including Volksbank statements, open from the home page and tools on a first visit to the web app. A failure of the local PDF processor now has its own import message.
+
 ## 0.27.1 – 4 November 2026
 
 - Volksbank and Raiffeisenbank statements with a “Bu-Tag / Wert / Vorgang” table are verified against debit/credit markers and page carry-forwards. Image pages are read automatically in the browser. Unreadable pages display a message.

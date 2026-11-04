@@ -222,6 +222,7 @@ import {
 } from '@/components/studio/canvas';
 import {
   openSource,
+  PdfPreparationError,
   sourcePages,
   formatSize,
   selectRange,
@@ -853,7 +854,7 @@ function Studio() {
               toast.error(file.name, {
                 description: ui((err as Error).message),
                 duration: 8000,
-                ...(/\.pdf$/i.test(file.name)
+                ...(/\.pdf$/i.test(file.name) && !(err instanceof PdfPreparationError)
                   ? {
                       action: {
                         label: ui(

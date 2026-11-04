@@ -282,6 +282,16 @@ export async function withPdfDocument<T>(
     discard();
   }
 }
+export class PdfPreparationError extends Error {
+  constructor(cause: unknown) {
+    super(
+      'MoinPDF konnte die geschützte PDF im Browser nicht öffnen. Bitte lade die Seite neu und öffne die Datei erneut.',
+      { cause },
+    );
+    this.name = 'PdfPreparationError';
+  }
+}
+
 export async function openSource(
   file: File,
   options: { requestPassword?: (name: string, failed: boolean) => Promise<string | null> } = {},
@@ -320,23 +330,17 @@ export async function openSource(
         await pdf.loadingTask.destroy();
         throw new Error('Bitte öffne höchstens 200 Seiten auf einmal.');
       }
-      if (!wasEncrypted && (await pdf.getPermissions()) !== null) {
-        await task.destroy();
-        const { unlockPdf } = await import('./pdf-security');
-        bytes = await unlockPdf(bytes, '');
-        wasEncrypted = true;
-        continue;
-      }
-      return {
-        id: uid(),
-        name: file.name,
-        bytes,
-        pdf,
-        size: file.size,
-        kind,
-        wasEncrypted,
-        invoiceOriginal,
-      };
+      if (wasEncrypted || (await pdf.getPermissions()) === null)
+        return {
+          id: uid(),
+          name: file.name,
+          bytes,
+          pdf,
+          size: file.size,
+          kind,
+          wasEncrypted,
+          invoiceOriginal,
+        };
     } catch (error) {
       await task.destroy();
       if (error instanceof Error && error.name === 'PasswordException') {
@@ -358,7 +362,7 @@ export async function openSource(
               failed = true;
               continue;
             }
-            throw e;
+            throw new PdfPreparationError(e);
           }
         }
         continue;
@@ -368,6 +372,16 @@ export async function openSource(
         : new Error(
             'Die Datei konnte nicht gelesen werden. Bitte prüfe, ob sie eine gültige und unbeschädigte PDF ist.',
           );
+    }
+    // PDF.js successfully opened a permissions-protected file without a
+    // password. Prepare a local working copy for tools that also use pdf-lib.
+    await task.destroy();
+    try {
+      const { unlockPdf } = await import('./pdf-security');
+      bytes = await unlockPdf(bytes, '');
+      wasEncrypted = true;
+    } catch (error) {
+      throw new PdfPreparationError(error);
     }
   }
 }
