@@ -14,7 +14,7 @@ self.onmessage = async ({data}) => {
       check(view.getUint32(18),view.getUint32(14));
       importScripts('/vendor/images/ag-psd.js');
       self.agPsd.initializeCanvas(()=>{throw new Error('PSD enthält nicht unterstützte Bilddaten.');},(width,height)=>{check(width,height);return {width,height,data:new Uint8ClampedArray(width*height*4)};});
-      const psd=self.agPsd.readPsd(bytes,{skipLayerImageData:true,skipThumbnail:true,skipLinkedFilesData:true,useImageData:true,totalMemoryLimit:240*1024*1024});
+      const psd=self.agPsd.readPsd(bytes,{skipLayerImageData:true,skipThumbnail:true,skipLinkedFilesData:true,useImageData:true,strict:true,totalMemoryLimit:240*1024*1024});
       if(!psd.imageData)throw new Error('Die PSD enthält kein gespeichertes Gesamtbild. Bitte in Photoshop mit maximaler Kompatibilität speichern.');
       output=psd.imageData;
     } else if(data.kind==='heic'){
