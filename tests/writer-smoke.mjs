@@ -5,6 +5,7 @@ import ts from 'typescript';
 import { JSDOM } from 'jsdom';
 import { indexedDB } from 'fake-indexeddb';
 import { createRequire } from 'node:module';
+import { installBlobWorkerRuntime } from './blob-worker-node.mjs';
 const require = createRequire(import.meta.url);
 await mkdir('.cache', { recursive: true });
 for (const name of ['local-font-bytes','writer-model', 'writer-extensions', 'writer-pdf']) {
@@ -64,6 +65,9 @@ const { createCanvas, DOMMatrix, Path2D, ImageData } = canvasRequire('@napi-rs/c
 Object.assign(globalThis, { DOMMatrix, Path2D, ImageData });
 const imageCanvas = createCanvas(120, 60);
 imageCanvas.getContext('2d').fillStyle = '#16cb73'; imageCanvas.getContext('2d').fillRect(0, 0, 120, 60);
+imageCanvas.getContext('2d').clearRect(60, 0, 60, 60);
+imageCanvas.getContext('2d').fillStyle = 'rgba(22, 203, 115, 0.5)';
+imageCanvas.getContext('2d').fillRect(60, 0, 60, 60);
 const image = imageCanvas.toDataURL('image/png');
 const p = text => ({ type: 'paragraph', content: [{ type: 'text', text }] });
 const rich = { ...base, settings: { ...base.settings, header: 'Kopfzeile – MoinPDF', footer: 'Vertraulicher Entwurf', pageNumbers: true }, content: { type: 'doc', content: [
@@ -85,6 +89,7 @@ globalThis.fetch = async url => {
   const bytes = await readFile('public' + url);
   return new Response(process.env.MOINPDF_TEST_COMPRESSED_FONTS ? gzipSync(bytes) : bytes);
 };
+const blobWorkers = installBlobWorkerRuntime();
 const { createWriterPdf, writerPdfDefinition } = await import('../.cache/writer-pdf-test.mjs');
 const blob = await createWriterPdf(rich);
 const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -109,6 +114,16 @@ for (let i = 0; i < texts.length; i++) {
 assert.match(texts.join(' '), /Absatz 65:/);
 const first = await source.getPage(1), viewport = first.getViewport({ scale: 1.3 }), preview = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
 await first.render({ canvas: preview, viewport }).promise;
+const pixels = preview.getContext('2d').getImageData(0, 0, preview.width, preview.height).data;
+let greenPixels = 0;
+let translucentPixels = 0;
+for (let i = 0; i < pixels.length; i += 4) {
+  if (Math.abs(pixels[i] - 22) <= 2 && Math.abs(pixels[i + 1] - 203) <= 2 && Math.abs(pixels[i + 2] - 115) <= 2 && pixels[i + 3] === 255) greenPixels++;
+  if (Math.abs(pixels[i] - 138) <= 2 && Math.abs(pixels[i + 1] - 229) <= 2 && Math.abs(pixels[i + 2] - 185) <= 2 && pixels[i + 3] === 255) translucentPixels++;
+}
+assert(greenPixels > 1000, 'The PNG image must be present in the independently rendered PDF');
+assert(translucentPixels > 1000, 'The PNG alpha channel must composite correctly on the PDF page');
+assert(blobWorkers.created > 0, 'The browser PNG decoder must execute its real Blob worker');
 await writeFile('.cache/writer-proof.png', preview.toBuffer('image/png'));
 await source.loadingTask.destroy();
 for (const paper of ['A4', 'A5', 'LETTER']) for (const landscape of [false, true]) {
@@ -123,6 +138,7 @@ for (const paper of ['A4', 'A5', 'LETTER']) for (const landscape of [false, true
   await pdf.loadingTask.destroy();
 }
 globalThis.fetch = originalFetch;
+await blobWorkers.restore();
 dom.window.close();
 await import('./writer-ui-smoke.mjs');
 console.log('PASS: real editor formatting/undo/table schema; safe paste; local draft save/reopen/delete; draft file roundtrip; selectable multilingual PDF text, fonts, lists, tables, image, explicit and automatic page breaks, repeated headers/footers, complete multi-page content; empty documents in all 6 page formats/orientations.');

@@ -1,8 +1,11 @@
-const {parentPort}=require('node:worker_threads');
+const {parentPort,workerData}=require('node:worker_threads');
 const fs=require('node:fs'),vm=require('node:vm');
 global.self=global;
 global.importScripts=path=>{
- if(path==='/vendor/images/ag-psd.js')global.agPsd=require('ag-psd');
+ if(path==='/vendor/images/ag-psd.js'){
+  if(workerData?.psdBundle)vm.runInThisContext(fs.readFileSync(require.resolve('ag-psd/dist/bundle.js'),'utf8'));
+  else global.agPsd=require('ag-psd');
+ }
  else if(path==='/vendor/images/libheif.js'){
   const factory=require('libheif-js/libheif-wasm/libheif.js');
   global.libheif=options=>factory({...options,locateFile:()=>require.resolve('libheif-js/libheif-wasm/libheif.wasm')});
