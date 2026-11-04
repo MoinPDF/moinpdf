@@ -9,6 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Noch nicht veröffentlicht
+
+- PSD-Import: `ag-psd` 33.0.0 mit geprüften RGB-/Graustufenbildern, RLE-Komprimierung und transparenten Gesamtbildern. Beschädigte bzw. abgeschnittene PSD-Bilddaten werden abgewiesen, statt fehlende Pixel als schwarzes Bild zu übernehmen. Die bisherigen Format- und Speichergrenzen bleiben bestehen.
+
 ## 0.26.0 – 29. Oktober 2026
 
 - Zwei neue Werkzeuge: Unterlagen-Checkliste mit prüfbaren Fundstellen und CSV sowie Termine aus PDFs übernehmen mit Korrektur, ausdrücklicher Bestätigung und lokalem ICS-Export. Der Katalog umfasst jetzt 120 Werkzeuge.
