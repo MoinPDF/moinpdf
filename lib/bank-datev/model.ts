@@ -1,7 +1,7 @@
 import { renderPage, uid, type Source } from '../pdf-engine';
 import { readPdfText } from '../pdf-text';
 import { createEditorRecognizer, imageCoverage, readableEditorText } from '../editor-analysis';
-import { isVolksbankStatement, recoverVolksbankOcrSigns } from './volksbank.mjs';
+import { isVolksbankStatement, normalizeVolksbankOcr } from './volksbank.mjs';
 import { exportFiles, parseStatement } from './converter.mjs';
 import {
   bankMoney,
@@ -111,7 +111,7 @@ async function scanPage(
         ),
       ),
     );
-    const recognized = recoverVolksbankOcrSigns(positionedLines(items)),
+    const recognized = normalizeVolksbankOcr(positionedLines(items)),
       ocr = pageEvidence(recognized);
     if (ocr.letters < 3 && !native.postings && !native.balances) return [];
     // Use one layout. Combining both text layers could double-post a transaction.

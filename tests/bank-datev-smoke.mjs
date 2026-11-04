@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { parseStatement, exportFiles } from '../lib/bank-datev/converter.mjs';
-import { recoverVolksbankOcrSigns } from '../lib/bank-datev/volksbank.mjs';
+import { normalizeVolksbankOcr } from '../lib/bank-datev/volksbank.mjs';
 import { extractDraft, draftToStatement } from '../lib/bank-datev/universal.mjs';
 import columns from '../lib/bank-datev/datev-columns.json' with { type: 'json' };
 import { createDatevServer } from '../docker/datev/server.mjs';
@@ -174,9 +174,18 @@ const printed = [
   ['07.04. 07.04. Entgelt 1,50 5', 441],
   ['08.04. 08.04. Unklar 2,50 5', 500],
 ].map(([text, x]) => ({ text, spans: [{ x }] }));
-const recovered = recoverVolksbankOcrSigns(printed);
+const recovered = normalizeVolksbankOcr(printed);
 assert.match(recovered[3].text, /1,50 S$/);
 assert.match(recovered[4].text, /2,50 5$/);
+const labels = normalizeVolksbankOcr([
+  printed[0],
+  { text: '04.02. 04.02. Uberweisungsqutschr. Muster 2,30 H', spans: [] },
+  { text: '05.02. 05.02. Echtzeitlberweisung Muster 1,10 S', spans: [] },
+  { text: 'Referenz Echtzeitlberweisung S.00', spans: [] },
+]);
+assert.equal(labels[1].text, '04.02. 04.02. Überweisungsgutschr. Muster 2,30 H');
+assert.equal(labels[2].text, '05.02. 05.02. Echtzeitüberweisung Muster 1,10 S');
+assert.equal(labels[3].text, 'Referenz Echtzeitlberweisung S.00');
 const token = 'fictional-access-code-for-tests';
 const env = { OPENAI_API_KEY: 'fictional-test-only', MOINPDF_DATEV_ACCESS_TOKEN: token };
 const batch = {
