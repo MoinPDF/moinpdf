@@ -4,6 +4,7 @@
 
 Bank statement to DATEV integrates local Bank2DATEV extraction and balance checks. Choose SKR03/SKR04 and enter custom bank and offset accounts, advisor and client numbers and tax keys. An optional, separate service provides reviewable OpenAI posting suggestions on explicit request.
 
+MoinPDF reads the period, opening and closing balances, statement number, currency and IBAN from the PDF. Image pages are read using local OCR. Detected details are available in a compact summary. Export uses calendar fiscal years and derives the ledger account length from the bank account. Missing or inconsistent balances are shown and block export.
 
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 

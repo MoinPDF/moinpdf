@@ -51,8 +51,7 @@ export function BankDatevAI({
   const acceptable = (account: string | null) =>
     account &&
     account !== settings.bank_account &&
-    account.length <=
-      Number(settings.account_length || Math.max(4, settings.bank_account.length)) + 1;
+    account.length <= Math.max(4, settings.bank_account.length) + 1;
   async function status() {
     try {
       const r = await fetch('/api/datev/status', {

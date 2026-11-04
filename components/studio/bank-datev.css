@@ -92,3 +92,25 @@
   gap: 0.7rem;
   min-width: 0;
 }
+
+.bank-datev .bank-reading {
+  align-items: baseline;
+}
+.bank-datev .bank-reading dl {
+  display: grid;
+  gap: 0.35rem 1.2rem;
+  margin: 0.4rem 0;
+}
+.bank-datev .bank-reading dl div {
+  display: grid;
+  grid-template-columns: minmax(6rem, auto) 1fr;
+  gap: 1rem;
+}
+.bank-datev .bank-reading dt {
+  color: var(--muted-foreground);
+}
+.bank-datev .bank-reading dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}

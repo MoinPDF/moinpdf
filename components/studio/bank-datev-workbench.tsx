@@ -40,6 +40,7 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
     [search, setSearch] = useState('');
   const source = sources.find((s) => s.id === selected) ?? sources[0],
     entry = entries[source?.id];
+  const [ocrPage, setOcrPage] = useState<{ id: string; page: number }>();
   const [original, setOriginal] = useState('');
   useEffect(() => {
     if (!source) return;
@@ -55,7 +56,11 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
       for (const s of sources) {
         if (controller.signal.aborted) break;
         try {
-          const e = memory.get(s) ?? (await readStatement(s, controller.signal));
+          const e =
+            memory.get(s) ??
+            (await readStatement(s, controller.signal, (page) => {
+              if (!controller.signal.aborted) setOcrPage({ id: s.id, page });
+            }));
           if (controller.signal.aborted) break;
           memory.set(s, e);
           setEntries((old) => ({ ...old, [s.id]: e }));
@@ -113,35 +118,52 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
   const d = entry?.draft,
     settings = entry?.settings;
   const difference = d && balanceDifference(d);
-  const field = (key: keyof Settings, label: string, mode: 'numeric' | 'text' = 'numeric') => (
+  const ready = (value?: Entry) =>
+    value?.draft.confirmed &&
+    value.draft.currency === 'EUR' &&
+    !!value.draft.period_start &&
+    !!value.draft.period_end &&
+    value.draft.rows.length > 0 &&
+    balanceDifference(value.draft) === 0;
+  const field = (key: keyof Settings, label: string) => (
     <label key={key}>
       {label}
       <input
-        inputMode={mode}
-        type={key === 'fiscal' ? 'date' : 'text'}
+        inputMode="numeric"
+        type="text"
         value={settings[key]}
         autoComplete="off"
         onChange={(e) => update({ ...entry, settings: { ...settings, [key]: e.target.value } })}
       />
     </label>
   );
-  const meta = (
-    key:
-      | 'period_start'
-      | 'period_end'
-      | 'opening_balance'
-      | 'closing_balance'
-      | 'statement_number'
-      | 'currency'
-      | 'iban',
-    label: string,
-    type = 'text',
-  ) => (
-    <label key={key}>
-      {label}
-      <input type={type} value={d[key]} onChange={(e) => changeDraft({ [key]: e.target.value })} />
-    </label>
-  );
+  const date = (iso: string) =>
+    iso &&
+    new Intl.DateTimeFormat(language === 'de' ? 'de-DE' : 'en-GB', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(iso));
+  const money = (value: string) =>
+    value &&
+    new Intl.NumberFormat(language === 'de' ? 'de-DE' : 'en-GB', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(value.replace(',', '.')));
+  const facts = d
+    ? [
+        [
+          t('Zeitraum', 'Period'),
+          [date(d.period_start), date(d.period_end)].filter(Boolean).join(' – '),
+        ],
+        [t('Anfangssaldo', 'Opening balance'), money(d.opening_balance)],
+        [t('Endsaldo', 'Closing balance'), money(d.closing_balance)],
+        [t('Auszugsnummer', 'Statement number'), d.statement_number],
+        [t('Kontowährung', 'Account currency'), d.currency],
+        ['IBAN', d.iban],
+      ].filter(([, value]) => value)
+    : [];
   return (
     <main className="document-workbench bank-datev">
       <WorkspaceContext sources={sources} locked={exporting} onAdd={onAdd} />
@@ -181,11 +203,19 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
           ))}
         </nav>
       )}
-      {!d ? (
+      {!source ? (
+        <p role="status">{t('Kontoauszug als PDF hinzufügen.', 'Add a bank statement PDF.')}</p>
+      ) : !d ? (
         <p role="status">
           {failures[source.id]
             ? ui(failures[source.id])
-            : t('Kontoauszug wird gelesen …', 'Reading bank statement…')}
+            : ocrPage?.id === source.id
+              ? t('Lokale Texterkennung · Seite', 'Local text recognition · Page') +
+                ' ' +
+                ocrPage.page +
+                ' / ' +
+                source.pdf.numPages
+              : t('Kontoauszug wird gelesen …', 'Reading bank statement…')}
         </p>
       ) : (
         <>
@@ -220,45 +250,29 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
               {field('adviser', t('Beraternummer', 'Advisor number'))}
               {field('client', t('Mandantennummer', 'Client number'))}
             </div>
-            <details>
-              <summary>{t('Weitere Exportangaben', 'Additional export settings')}</summary>
-              <div className="bank-fields">
-                {field(
-                  'account_length',
-                  t('Sachkontenlänge (optional)', 'General ledger account length (optional)'),
-                )}
-                {field(
-                  'fiscal',
-                  t(
-                    'Beginn des ersten Wirtschaftsjahrs (optional)',
-                    'Start of first fiscal year (optional)',
-                  ),
-                  'text',
-                )}
-              </div>
-            </details>
-          </section>
-          <section className="bank-card">
-            <div className="bank-heading">
-              <h2>{t('Auszugsdaten und Salden', 'Statement details and balances')}</h2>
+            <div className="bank-heading bank-reading">
+              {facts.length > 0 && (
+                <details>
+                  <summary>{t('Erkannte Auszugsdaten', 'Detected statement details')}</summary>
+                  <dl>
+                    {facts.map(([label, value]) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </details>
+              )}
               {original && (
                 <a href={original} target="_blank" rel="noreferrer">
                   {t('Original-PDF öffnen', 'Open original PDF')}
                 </a>
               )}
             </div>
-            {d.warnings.map((w, i) => (
-              <p key={i}>{ui(w)}</p>
+            {d.warnings.map((warning, i) => (
+              <p key={i}>{ui(warning)}</p>
             ))}
-            <div className="bank-fields">
-              {meta('period_start', t('Zeitraum von', 'Period start'), 'date')}
-              {meta('period_end', t('Zeitraum bis', 'Period end'), 'date')}
-              {meta('opening_balance', t('Anfangssaldo (€)', 'Opening balance (€)'))}
-              {meta('closing_balance', t('Endsaldo (€)', 'Closing balance (€)'))}
-              {meta('statement_number', t('Auszugsnummer', 'Statement number'))}
-              {meta('currency', t('Kontowährung', 'Account currency'))}
-              {meta('iban', t('IBAN (optional)', 'IBAN (optional)'))}
-            </div>
           </section>
           <section className="bank-card">
             <div className="bank-heading">
@@ -404,8 +418,8 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
               {' · '}
               {difference == null
                 ? t(
-                    'Beträge, Vorzeichen und Salden vervollständigen.',
-                    'Complete amounts, signs and balances.',
+                    'Kein Abgleich möglich. Erkannten Auszug und Buchungen prüfen.',
+                    'Unable to reconcile. Check the detected statement and postings.',
                   )
                 : new Intl.NumberFormat(language === 'de' ? 'de-DE' : 'en-GB', {
                     style: 'currency',
@@ -425,13 +439,13 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
               )}
             </label>
             <div className="bank-actions">
-              <Button disabled={!d.confirmed || exporting} onClick={() => save(false)}>
+              <Button disabled={!ready(entry) || exporting} onClick={() => save(false)}>
                 {t('DATEV-Datei herunterladen', 'Download DATEV file')}
               </Button>
               {sources.length > 1 && (
                 <Button
                   variant="outline"
-                  disabled={exporting || !sources.every((s) => entries[s.id]?.draft.confirmed)}
+                  disabled={exporting || !sources.every((s) => ready(entries[s.id]))}
                   onClick={() => save(true)}
                 >
                   {t('Alle Auszüge als ZIP', 'Download all statements as ZIP')}

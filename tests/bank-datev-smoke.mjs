@@ -69,6 +69,56 @@ for (const patch of [
   assert.throws(() => exportFiles(statement, columns, { ...settings, ...patch }));
 assert.throws(() => draftToStatement({ ...draft, closing_balance: '8,49' }), /0,01/);
 assert.throws(() => draftToStatement({ ...draft, detected_currency: 'USD' }), /USD/);
+const yearEnd = [
+  'Übungsbank Kontoauszug Nr. 12/2026',
+  'Geschäftsgirokonto DE89 3704 0044 0532 0130 00 BIC: FIKTIV',
+  'Auszugszeitraum vom 01.12. bis 31.01.2027',
+  'Kontowährung EUR',
+  'Saldo am 30.11.2026',
+  '10,00',
+  'Datum Text Betrag',
+  '31.12. Abschluss -2,50',
+  '02.01. Erstattung +1,00',
+  'Saldo am 31.01.2027',
+  '8,50',
+].join('\n');
+const extracted = extractDraft([yearEnd], 'Fiktiv.pdf', 'year-end');
+assert.deepEqual(
+  [
+    extracted.period_start,
+    extracted.period_end,
+    extracted.iban,
+    extracted.statement_number,
+    extracted.currency,
+    extracted.opening_balance,
+    extracted.closing_balance,
+  ],
+  ['2026-12-01', '2027-01-31', 'DE89370400440532013000', '12/2026', 'EUR', '10,00', '8,50'],
+);
+assert.deepEqual(
+  extracted.rows.map((r) => r.booking_date),
+  ['2026-12-31', '2027-01-02'],
+);
+const unnumbered = extractDraft(
+  [
+    text
+      .replace('Kontoauszug 15', 'Kontoauszug')
+      .replace('Büromaterial -2,50', 'Büromaterial -2,50\nIBAN DE89 3704 0044 0532 0130 00'),
+  ],
+  'Fiktiv.pdf',
+  'unnumbered',
+);
+assert.equal(unnumbered.iban, '');
+assert.equal(unnumbered.statement_number, '');
+const unnamedStatement = draftToStatement({ ...unnumbered, confirmed: true });
+unnamedStatement.transactions.forEach((t) => (t.counteraccount = '54321'));
+const unnamedFile = exportFiles(unnamedStatement, columns, settings)[0];
+assert.ok(!unnamedFile.name.includes('_KA'));
+assert.equal(decoder.decode(unnamedFile.bytes).split('\r\n')[2].split(';')[10], '');
+assert.throws(
+  () => draftToStatement({ ...unnumbered, opening_balance: '', confirmed: true }),
+  /Saldenabgleich/,
+);
 const specialised = parseStatement(
   [
     [

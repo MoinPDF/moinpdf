@@ -1,6 +1,15 @@
-import { uid, type Source } from '../pdf-engine';
+import { renderPage, uid, type Source } from '../pdf-engine';
+import { readPdfText } from '../pdf-text';
+import { createEditorRecognizer } from '../editor-analysis';
 import { exportFiles, parseStatement } from './converter.mjs';
-import { bankMoney, draftToStatement, extractDraft, positionedLines } from './universal.mjs';
+import {
+  bankMoney,
+  draftToStatement,
+  extractDraft,
+  positionedLines,
+  statementHeader,
+  statementPeriod,
+} from './universal.mjs';
 import columns from './datev-columns.json';
 
 export interface Row {
@@ -43,8 +52,6 @@ export const emptySettings = {
   counteraccount: '',
   adviser: '',
   client: '',
-  account_length: '',
-  fiscal: '',
 };
 export type Settings = typeof emptySettings;
 export interface Entry {
@@ -54,26 +61,76 @@ export interface Entry {
 export type Entries = Record<string, Entry>;
 export type ExportFile = { name: string; bytes: Uint8Array<ArrayBuffer> };
 
-export async function readStatement(source: Source, signal: AbortSignal): Promise<Entry> {
+export async function readStatement(
+  source: Source,
+  signal: AbortSignal,
+  onOcr: (page: number) => void,
+): Promise<Entry> {
   if (source.size > 25 * 1024 * 1024 || source.pdf.numPages > 250)
     throw new Error('Höchstens 25 MB und 250 Seiten je Auszug.');
   const pages: string[] = [],
     layouts = [];
-  for (let i = 1; i <= source.pdf.numPages; i++) {
-    signal.throwIfAborted();
-    const page = await source.pdf.getPage(i);
-    const content = await page.getTextContent();
-    const lines = positionedLines(content.items);
-    layouts.push(lines);
-    pages.push(lines.map((line: { text: string }) => line.text).join('\n'));
+  const recognizer = createEditorRecognizer(signal);
+  try {
+    for (let i = 1; i <= source.pdf.numPages; i++) {
+      signal.throwIfAborted();
+      const page = await source.pdf.getPage(i);
+      const content = await readPdfText(page);
+      let lines = positionedLines(content.items);
+      // A scan can still have a short digital page label or watermark.
+      if (
+        !page.isPureXfa &&
+        lines
+          .map((line) => line.text)
+          .join('')
+          .replace(/\s/g, '').length < 80 &&
+        !lines.some((line) => /(?<![\d.,])\d+[,.]\d{2}(?![\d.,])/.test(line.text))
+      ) {
+        onOcr(i);
+        const { canvas } = await renderPage(source, { index: i - 1, rotation: 0 }, 2400, signal);
+        try {
+          const result = await recognizer.recognize(canvas, 'deu+eng', () => {});
+          const scale = page.getViewport({ scale: 1 }).width / canvas.width;
+          const items = (result.blocks || []).flatMap((block) =>
+            block.paragraphs.flatMap((paragraph) =>
+              paragraph.lines.flatMap((line) =>
+                line.words.map((word) => ({
+                  str: word.text,
+                  transform: [
+                    1,
+                    0,
+                    0,
+                    1,
+                    word.bbox.x0 * scale,
+                    (canvas.height - line.bbox.y1) * scale,
+                  ],
+                  width: (word.bbox.x1 - word.bbox.x0) * scale,
+                })),
+              ),
+            ),
+          );
+          const recognized = positionedLines(items);
+          if (recognized.length) lines = recognized;
+        } finally {
+          canvas.width = canvas.height = 0;
+        }
+      }
+      layouts.push(lines);
+      pages.push(lines.map((line) => line.text).join('\n'));
+    }
+  } finally {
+    await recognizer.dispose();
   }
   signal.throwIfAborted();
   const digest = source.originalDigest || source.id;
   let draft: Draft;
   try {
     const parsed = parseStatement(pages, source.name, digest);
+    const period = statementPeriod(statementHeader(pages[0]));
     draft = {
       ...parsed,
+      period_start: period?.start ?? parsed.period_start,
+      period_end: period?.end ?? parsed.period_end,
       detected_currency: 'EUR',
       currency: 'EUR',
       source_pages: pages,

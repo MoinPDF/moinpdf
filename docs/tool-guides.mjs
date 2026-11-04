@@ -6,12 +6,12 @@ export const guides = {
   "input": "Ein oder mehrere EUR-Kontoauszüge als PDF und die individuellen Buchhaltungsdaten.",
   "steps": [
     "Kontoauszüge öffnen und unter „Erkennen & konvertieren“ das Werkzeug „Kontoauszug zu DATEV“ wählen. Für jeden Auszug SKR03 oder SKR04 wählen und Bankkonto, Beraternummer und Mandantennummer eintragen.",
-    "Zeitraum, Anfangs- und Endsaldo sowie jede Buchung am Original prüfen. Fehlende Zeilen ergänzen, Zahlungsrichtung mit + oder − angeben und Gegenkonto sowie bei Bedarf BU-Schlüssel eingeben. Eine eigene Gegenkontovorgabe gilt für leere Zeilen.",
+    "Zeitraum, Salden, Auszugsnummer, Kontowährung und IBAN werden aus dem PDF gelesen. Bildseiten werden lokal per OCR erkannt. Unter „Erkannte Auszugsdaten“ lassen sich die Werte einsehen. Jede Buchung prüfen und das Gegenkonto sowie bei Bedarf den BU-Schlüssel eingeben.",
     "Bei eingerichteter KI-Kontierung die Sendevorschau prüfen und ausdrücklich an OpenAI senden. Optional die zulässigen Gegenkonten mit Bezeichnungen eingrenzen. Vorschläge prüfen und übernehmen. Unklare Buchungen manuell kontieren.",
     "Die Prüfung bestätigen und den DATEV-Buchungsstapel herunterladen. Mehrere Wirtschaftsjahre werden getrennt. Alle geprüften Auszüge lassen sich gemeinsam als ZIP speichern."
   ],
   "output": "DATEV-EXTF-Buchungsstapel im CSV-Format (125 Spalten, Windows-1252). Konto, Gegenkonto und optionale Steuerschlüssel stammen aus den geprüften Eingaben.",
-  "note": "Nur EUR, bis 25 MB und 250 Seiten je Auszug innerhalb der Arbeitsplatzgrenzen. Bei Scans zuerst OCR verwenden oder Buchungen manuell erfassen. Eine Saldendifferenz, fehlende Pflichtangaben oder ein fehlendes Gegenkonto verhindern die Ausgabe. Die manuelle Umwandlung läuft lokal."
+  "note": "Nur EUR, bis 25 MB und 250 Seiten je Auszug innerhalb der Arbeitsplatzgrenzen. Der Export verwendet Kalenderwirtschaftsjahre und leitet die Sachkontenlänge vom eingegebenen Bankkonto ab (mindestens vier Stellen). Auszugsnummer und IBAN sind optional. Ein unlesbarer Saldo, eine Saldendifferenz oder ein fehlendes Gegenkonto verhindert den Export."
 },
 "document-checklist": {
   "input": "Eine oder mehrere PDFs, Scans oder Bilder im Arbeitsbereich.",
