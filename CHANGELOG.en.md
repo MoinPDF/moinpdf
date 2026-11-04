@@ -4,11 +4,12 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## Unreleased
+## 0.27.0 – 4 November 2026
 
-- Bank statement to DATEV integrates local Bank2DATEV extraction and balance checks. Choose SKR03/SKR04 and enter custom bank and offset accounts, advisor and client numbers and tax keys. An optional, separate service provides reviewable OpenAI posting suggestions on explicit request.
-
+- Bank statement to DATEV brings the catalogue to 121 tools. Statements are read and balances checked in the browser. Select SKR03 or SKR04 and enter your own bank account, offset accounts, advisor number, client number and tax keys. Individual bookings can be edited before exporting the DATEV batch as CSV.
+- Self-hosted installations can configure the OpenAI API in a local `.env` or with Docker Compose. Users review the displayed booking descriptions and payment directions before sending them, then review the suggestions and apply them to the batch. Offset accounts remain editable for each booking before export.
 - PSD import: `ag-psd` 33.0.0 with verified RGB/grayscale images, RLE compression and transparent composite images. Damaged or truncated PSD image data is rejected instead of importing missing pixels as a black image. Existing format and memory limits remain in place.
+- Digital PDF signatures use matching updates of PKI.js and ASN1.js. Updates also cover dependencies for local processing, document services and builds, including `minimatch` 11.0.1.
 
 ## 0.26.0 – 29 October 2026
 
