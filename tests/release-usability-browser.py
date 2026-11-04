@@ -12,6 +12,7 @@ import tempfile
 from pathlib import Path
 
 import pymupdf
+from PIL import Image
 from playwright.sync_api import expect, sync_playwright
 
 origin = os.getenv('MOINPDF_TEST_URL', 'http://localhost:8080').rstrip('/')
@@ -33,6 +34,11 @@ def back(page):
 
 
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
+    # Exercise pdfmake's real browser Blob worker for RGBA PNG decoding.
+    writer_image = Path(temporary) / 'writer-png-worker.png'
+    image = Image.new('RGBA', (120, 60), (22, 203, 115, 255))
+    image.paste((22, 203, 115, 128), (60, 0, 120, 60))
+    image.save(writer_image)
     browser = api.chromium.launch()
     page = None
     try:
@@ -59,6 +65,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             expect(editor).to_be_visible()
             title.fill('Umbrel release check')
             editor.fill('A new document created over local HTTP. Umlauts: ÄÖÜ.')
+            editor.press('Control+End')
+            page.get_by_label('Choose image' if en else 'Bild auswählen', exact=True).set_input_files(str(writer_image))
+            expect(editor.locator('img')).to_have_count(1)
             page.get_by_role('button', name='Save draft' if en else 'Entwurf speichern', exact=True).click()
             expect(page.locator('.writer-save-state')).to_have_attribute('data-state', 'saved')
             no_overflow(page)
@@ -70,6 +79,16 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             with pymupdf.open(target) as pdf:
                 assert len(pdf) == 1 and 'created over local HTTP' in pdf[0].get_text()
                 assert 'ÄÖÜ' in pdf[0].get_text()
+                assert pdf[0].get_images(), 'The inserted PNG must be embedded'
+                pixels = pdf[0].get_pixmap(colorspace=pymupdf.csRGB, alpha=False).samples
+                green = sum(1 for i in range(0, len(pixels), 3)
+                            if all(abs(pixels[i + c] - value) <= 2
+                                   for c, value in enumerate((22, 203, 115))))
+                assert green > 1000, 'The PNG must retain its color in the downloaded PDF'
+                translucent = sum(1 for i in range(0, len(pixels), 3)
+                                  if all(abs(pixels[i + c] - value) <= 2
+                                         for c, value in enumerate((138, 229, 185))))
+                assert translucent > 1000, 'The PNG alpha channel must survive PDF export'
             result = page.locator('.writer-export')
             expect(result).to_be_visible()
             link = result.locator('a[download]')

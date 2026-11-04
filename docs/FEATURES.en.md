@@ -71,6 +71,7 @@ The browser edition offers three local PDF-to-Word modes: page layout with image
 - Check & page finder: cross-file text search, local scan recognition, matching pages exported as a new PDF; hints for scan pages, possible blank pages, visually identical pages and mixed paper sizes
 - OCR & text: 21 languages, up to eight combined, with optional automatic language sampling; automatic page segmentation, text block, column, line or sparse text; editable OCR lines beside the PDF preview and corrections applied to the PDF search layer
 - JPG, PNG, WebP, BMP, multipage TIFF, HEIC/HEIF, PSD and standalone SVG to PDF as image pages; PDF to PNG/JPG/WebP/TIFF/BMP in a ZIP
+- PSD imports the saved composite image from 8-bit RGB and grayscale files; layers do not remain editable. Incomplete image data is rejected. Export CMYK, Lab, PSB and higher bit depths as PNG or TIFF first. Maximum 40 megapixels and 240 MiB of decoder memory.
 - Compression preserving content, lossless optimization or explicitly selected page images; comparison at shared zoom
 - Merge; individual pages as PDFs in a ZIP
 - Organise pages: select, reorder, rotate, duplicate, remove and add blank pages

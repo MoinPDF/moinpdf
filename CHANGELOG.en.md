@@ -4,6 +4,10 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased
+
+- PSD import: `ag-psd` 33.0.0 with verified RGB/grayscale images, RLE compression and transparent composite images. Damaged or truncated PSD image data is rejected instead of importing missing pixels as a black image. Existing format and memory limits remain in place.
+
 ## 0.26.0 – 29 October 2026
 
 - Two new tools: Document checklist with reviewable evidence and CSV, and Collect dates from PDFs with correction, explicit confirmation and local ICS export. The catalogue now contains 120 tools.
