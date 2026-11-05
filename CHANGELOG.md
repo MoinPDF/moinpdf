@@ -9,6 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.27.3 – 5. November 2026
+
+- „Mit Beispielkontoauszug ausprobieren“ öffnet im DATEV-Werkzeug einen fiktiven Kontoauszug mit vier Buchungen und passenden Salden. Der Beispielauszug wird passend zur Sprache auf Deutsch oder Englisch erstellt und lässt sich nach Eingabe der Buchhaltungsdaten als DATEV-Datei exportieren.
+
 ## 0.27.2 – 4. November 2026
 
 - Der gemeinsame Import öffnet auch beim ersten Aufruf der Web-App berechtigungsgeschützte PDFs, etwa Kontoauszüge der Volksbank. Wenn der lokale PDF-Prozessor ausfällt, weist MoinPDF auf den Öffnungsfehler hin.

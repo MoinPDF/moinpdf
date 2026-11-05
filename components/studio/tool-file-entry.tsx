@@ -105,7 +105,11 @@ export function ToolFileEntry({
           </Button>
           <div className="tool-file-alternatives">
             <button type="button" disabled={locked} onClick={onDemo}>
-              {t('Mit Beispieldokument ausprobieren')}
+              {t(
+                tool.id === 'bank-datev'
+                  ? 'Mit Beispielkontoauszug ausprobieren'
+                  : 'Mit Beispieldokument ausprobieren',
+              )}
             </button>
             <button type="button" disabled={locked} onClick={onBlank}>
               <FilePlus2 size={16} aria-hidden="true" />

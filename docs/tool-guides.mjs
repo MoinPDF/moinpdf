@@ -5,7 +5,7 @@ export const guides = {
   "bank-datev": {
   "input": "Ein oder mehrere EUR-Kontoauszüge als PDF und die individuellen Buchhaltungsdaten.",
   "steps": [
-    "Kontoauszüge öffnen und unter „Erkennen & konvertieren“ das Werkzeug „Kontoauszug zu DATEV“ wählen. Für jeden Auszug SKR03 oder SKR04 wählen und Bankkonto, Beraternummer und Mandantennummer eintragen.",
+    "Unter „Erkennen & konvertieren“ das Werkzeug „Kontoauszug zu DATEV“ wählen und eigene Kontoauszüge öffnen oder „Mit Beispielkontoauszug ausprobieren“ anklicken. Der fiktive Beispielauszug enthält vier Buchungen. Für jeden Auszug SKR03 oder SKR04 wählen und Bankkonto, Beraternummer und Mandantennummer eintragen.",
     "Zeitraum, Salden, Auszugsnummer, Kontowährung und IBAN werden aus dem PDF gelesen. Bei Volksbank- und Raiffeisenbank-Auszügen werden auch die Blattüberträge geprüft. Bildseiten liest MoinPDF automatisch lokal. Unter „Buchungen prüfen“ die Buchungsliste ausklappen und Gegenkonten ergänzen.",
     "Optional unter „KI-Kontierung“ den eigenen OpenAI-API-Schlüssel eingeben. Er lässt sich mit einem Gerätepasswort verschlüsselt merken. Texte und erlaubte Gegenkonten prüfen, dann den Auftrag senden. Kontierungsvorschläge lassen sich einzeln in den Buchungen bearbeiten.",
     "Die Prüfung bestätigen und den DATEV-Buchungsstapel herunterladen. Mehrere Wirtschaftsjahre werden getrennt. Alle geprüften Auszüge lassen sich gemeinsam als ZIP speichern."

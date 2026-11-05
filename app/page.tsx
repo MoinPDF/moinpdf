@@ -1359,7 +1359,11 @@ function Studio() {
   async function demo() {
     if (locked) return;
     try {
-      await addFiles([await makeDemoFile(language)], false);
+      const sample =
+        toolId === 'bank-datev'
+          ? await (await import('@/lib/bank-datev/sample')).makeBankStatementDemo(language)
+          : await makeDemoFile(language);
+      await addFiles([sample], false);
     } catch {
       toast.error(ui('Das Beispieldokument konnte nicht geöffnet werden.'));
     }

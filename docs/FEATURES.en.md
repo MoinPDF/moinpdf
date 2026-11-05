@@ -2,6 +2,8 @@
 
 ## Bank statement to DATEV
 
+“Try a sample bank statement” opens a fictional statement with four postings and matching balances in the selected language. Enter the bank and offset accounts, advisor and client numbers, review the postings and download the DATEV booking batch.
+
 Bank statement to DATEV integrates local Bank2DATEV extraction and balance checks. Choose SKR03/SKR04 and enter custom bank and offset accounts, advisor and client numbers and tax keys. An optional, separate service provides reviewable OpenAI posting suggestions on explicit request.
 
 Statements with permissions protection open from the home page and the tool. MoinPDF prompts for a password only when the PDF requires one to open.
@@ -13,7 +15,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.27.2**
+**Current implementation limits · 0.27.3**
 
 | Capability | Value |
 | --- | --- |

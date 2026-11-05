@@ -51,7 +51,52 @@ def verify_protected_uploads(browser, origin, pdf, locked):
         context.close()
 
 
+def verify_bank_demo(browser, origin):
+    for language in ('de', 'en'):
+        context = browser.new_context(viewport={'width': 390, 'height': 844}, service_workers='block')
+        try:
+            page = context.new_page()
+            page.goto(origin)
+            english = language == 'en'
+            if english:
+                page.locator('.language-trigger').click()
+                page.get_by_role('menuitemradio', name='English', exact=True).click()
+            page.locator('.mosaic-all-tools').click()
+            page.locator('.chooser-tool[data-tool-id=bank-datev]').click()
+            page.get_by_role('button', name='Try a sample bank statement' if english else
+                             'Mit Beispielkontoauszug ausprobieren', exact=True).click()
+            form = page.locator('.bank-datev')
+            expect(form.locator('.arrival-file-name')).to_have_text(
+                'Sample-Bank-Statement.pdf' if english else 'Beispiel-Kontoauszug.pdf')
+            expect(form.locator('.bank-row')).to_have_count(4)
+            expect(form.locator('.bank-row').first).to_be_hidden()
+            for de, en, value in [
+                ('Konto (Bankkonto)', 'Account (bank account)', '24680'),
+                ('Gegenkonto für leere Zeilen (optional)', 'Offset account for empty entries (optional)', '54321'),
+                ('Beraternummer', 'Advisor number', '39821'),
+                ('Mandantennummer', 'Client number', '643'),
+            ]:
+                form.get_by_label(en if english else de, exact=True).fill(value)
+            form.get_by_role('checkbox').check()
+            with page.expect_download() as received:
+                form.get_by_role('button', name='Download DATEV file' if english else
+                                 'DATEV-Datei herunterladen', exact=True).click()
+            with open(received.value.path(), encoding='cp1252', newline='') as handle:
+                header, columns, *rows = csv.reader(handle, delimiter=';')
+            assert header[10:12] == ['39821', '643'] and header[14:16] == ['20261001', '20261031']
+            assert columns[10] == 'Belegfeld 1' and len(columns) == 125
+            assert [(row[0], row[1], row[9]) for row in rows] == [
+                ('500,00', 'S', '0210'), ('85,50', 'H', '0610'),
+                ('24,50', 'H', '1410'), ('5,00', 'H', '3010')]
+            assert all(len(row) == 125 and not row[10] and row[6:8] == ['24680', '54321'] for row in rows)
+            assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+            print(f'PASS: {language} sample bank statement opens and exports four balanced DATEV postings.', flush=True)
+        finally:
+            context.close()
+
+
 def verify_bank_datev(browser, origin):
+    verify_bank_demo(browser, origin)
     context = browser.new_context(viewport={'width': 390, 'height': 844}, service_workers='block')
     context.add_init_script("Object.defineProperty(Crypto.prototype, 'randomUUID', {value: undefined})")
     page = context.new_page()
