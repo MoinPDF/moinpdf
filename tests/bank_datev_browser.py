@@ -66,8 +66,9 @@ def verify_bank_demo(browser, origin):
             page.get_by_role('button', name='Try a sample bank statement' if english else
                              'Mit Beispielkontoauszug ausprobieren', exact=True).click()
             form = page.locator('.bank-datev')
-            expect(page.locator('.file-tab').first).to_contain_text(
-                'Sample-Bank-Statement.pdf' if english else 'Beispiel-Kontoauszug.pdf')
+            expect(form.get_by_text(
+                'Sample-Bank-Statement.pdf' if english else 'Beispiel-Kontoauszug.pdf',
+                exact=True)).to_be_visible()
             expect(form.locator('.bank-row')).to_have_count(4)
             expect(form.locator('.bank-row').first).to_be_hidden()
             for de, en, value in [
