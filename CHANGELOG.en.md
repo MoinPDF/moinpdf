@@ -4,6 +4,10 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.27.3 – 5 November 2026
+
+- “Try a sample bank statement” opens a fictional statement with four postings and matching balances in the DATEV tool. The sample uses the selected German or English language and can be exported as a DATEV file after entering the accounting details.
+
 ## 0.27.2 – 4 November 2026
 
 - Permissions-protected PDFs, including Volksbank statements, open from the home page and tools on a first visit to the web app. A failure of the local PDF processor now has its own import message.

@@ -448,6 +448,7 @@ export const english: Record<string, string> = {
   'Danach kannst du sie bearbeiten.': 'Then start editing.',
   'Dateien auswählen': 'Choose files',
   'Mit Beispieldokument ausprobieren': 'Try a sample document',
+  'Mit Beispielkontoauszug ausprobieren': 'Try a sample bank statement',
   '80 MB / 200 Seiten': '80 MB / 200 pages',
   Drehen: 'Rotate',
   Umkehren: 'Reverse',
