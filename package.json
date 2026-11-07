@@ -65,7 +65,7 @@
     "@tesseract.js-data/ukr": "1.0.0",
     "@wllama/wllama": "3.8.1",
     "@zxing/library": "^0.23.0",
-    "ag-psd": "33.0.0",
+    "ag-psd": "34.1.0",
     "asn1js": "4.0.0",
     "bidi-js": "1.1.0",
     "class-variance-authority": "0.7.1",
