@@ -89,6 +89,53 @@ def verify_bank_demo(browser, origin):
                 ('500,00', 'S', '0210'), ('85,50', 'H', '0610'),
                 ('24,50', 'H', '1410'), ('5,00', 'H', '3010')]
             assert all(len(row) == 125 and not row[10] and row[6:8] == ['24680', '54321'] for row in rows)
+            # Correctable posting errors must identify and open the actual row,
+            # even when it is hidden by search and the list is collapsed.
+            postings = form.locator('.bank-postings')
+            postings.locator('summary').first.click()
+            amount = form.locator('.bank-row').first.get_by_label('Amount (€)' if english else 'Betrag (€)', exact=True)
+            amount.fill('-bad')
+            form.get_by_label('Search postings' if english else 'Buchungen durchsuchen').fill('no matching posting')
+            postings.locator('summary').first.click()
+            review = form.locator('.bank-review')
+            expect(review).to_contain_text('Amount is missing' if english else 'Betrag fehlt')
+            review.get_by_role('button', name='Posting 1' if english else 'Buchung 1', exact=True).click()
+            expect(amount).to_be_focused()
+            expect(form.get_by_label('Search postings' if english else 'Buchungen durchsuchen')).to_have_value('')
+            form.get_by_role('checkbox').check()
+            expect(form.get_by_role('button', name='Download DATEV file' if english else 'DATEV-Datei herunterladen', exact=True)).to_be_disabled()
+            amount.fill('+500,00')
+            expect(review).to_have_count(0)
+            form.get_by_role('checkbox').check()
+            expect(form.get_by_role('button', name='Download DATEV file' if english else 'DATEV-Datei herunterladen', exact=True)).to_be_enabled()
+
+            # Only the explicitly mocked service is called. No real credentials
+            # or bank details leave this browser test.
+            context.route('**/api/datev/status', lambda route: route.fulfill(json={'enabled': False, 'personal': True}))
+            replies = [
+                {'error': {'code': 'openai_credit_exhausted'}, 'retryAfterSeconds': 0},
+                {'error': {'code': 'openai_rate_limit'}, 'retryAfterSeconds': 2},
+                {},
+            ]
+            calls = []
+            def limit_response(route):
+                calls.append(route.request.post_data_json)
+                route.fulfill(status=429, json=replies[len(calls) - 1])
+            context.route('**/api/datev/personal', limit_response)
+            form.get_by_text('AI posting suggestions · optional' if english else 'KI-Kontierung · optional', exact=True).click()
+            form.get_by_label('Personal OpenAI API key' if english else 'Eigener OpenAI-API-Schlüssel', exact=True).fill('sk-fictional-browser-key')
+            send = form.get_by_role('button', name='Send displayed data to OpenAI' if english else 'Angezeigte Daten an OpenAI senden', exact=True)
+            send.click()
+            expect(form.get_by_role('alert')).to_contain_text('credit balance is exhausted' if english else 'API-Guthaben ist aufgebraucht')
+            expect(send).to_be_enabled()
+            send.click()
+            expect(form.get_by_role('alert')).to_contain_text('temporarily limiting' if english else 'vorübergehend')
+            expect(send).to_be_disabled()
+            expect(send).to_be_enabled(timeout=6000)
+            assert len(calls) == 2, 'The app must not automatically resend customer data.'
+            send.click()
+            expect(form.get_by_role('alert')).to_contain_text('does not report a specific reason' if english else 'keinen genauen Grund')
+            assert len(calls) == 3
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
             print(f'PASS: {language} sample bank statement opens and exports four balanced DATEV postings.', flush=True)
         finally:
@@ -121,6 +168,10 @@ def verify_bank_datev(browser, origin):
                 original_page = doc.new_page()
                 original_page.insert_text((50, 55), '\n'.join(lines), fontsize=15, lineheight=1.5)
                 doc.save(pdf)
+                missing_balance = Path(directory) / 'Fiktiv-ohne-Endsaldo.pdf'
+                with pymupdf.open() as incomplete:
+                    incomplete.new_page().insert_text((50, 55), '\n'.join(lines[:-1]), fontsize=15, lineheight=1.5)
+                    incomplete.save(missing_balance)
                 restricted = Path(directory) / 'Fiktiv-Berechtigungsschutz.pdf'
                 locked = Path(directory) / 'Fiktiv-Passwortschutz.pdf'
                 for target, password in [(restricted, ''), (locked, 'fictional-reader')]:
@@ -226,13 +277,20 @@ def verify_bank_datev(browser, origin):
             expect(download).to_be_disabled()
             expect(form.get_by_text('Saldendifferenz').locator('..')).to_contain_text('0,01')
             assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
-            for next_pdf in [scan, mixed, bad]:
+            for next_pdf in [scan, mixed, bad, missing_balance]:
                 page.reload()
                 page.locator('input[type=file]').first.set_input_files(str(next_pdf))
                 page.locator('.chooser-tool').filter(has_text='Kontoauszug zu DATEV').click()
                 if next_pdf == bad:
                     expect(form.get_by_role('alert')).to_contain_text('nicht lesbar', timeout=90000)
                     expect(form.get_by_role('button', name='DATEV-Datei herunterladen')).to_have_count(0)
+                elif next_pdf == missing_balance:
+                    expect(form.locator('.bank-row')).to_have_count(2)
+                    expect(form.locator('.bank-review')).to_contain_text('Endsaldo fehlt oder ist nicht lesbar.')
+                    expect(form.locator('.bank-review')).not_to_contain_text('Anfangssaldo fehlt')
+                    form.get_by_role('checkbox').check()
+                    expect(form.get_by_role('button', name='DATEV-Datei herunterladen')).to_be_disabled()
+                    assert not form.get_by_label('Endsaldo (€)', exact=True).count()
                 else:
                     expect(form.locator('.bank-row')).to_have_count(2, timeout=90000)
                     expect(form.locator('.bank-row').first).to_be_hidden()

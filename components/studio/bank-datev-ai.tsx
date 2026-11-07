@@ -12,6 +12,7 @@ import {
 import { BankDatevKey } from './bank-datev-key';
 import { personalKeyFormat } from '@/lib/bank-datev/key-vault';
 import { ui } from '@/lib/ui-language';
+import { datevAiError } from '@/lib/bank-datev/ai-errors';
 
 export function BankDatevAI({
   rows,
@@ -46,6 +47,18 @@ export function BankDatevAI({
     [results, setResults] = useState<Suggestion[]>([]);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const [retryAt, setRetryAt] = useState(0),
+    [waiting, setWaiting] = useState(0);
+  const sending = useRef(false);
+  useEffect(() => {
+    if (!retryAt) return;
+    const timer = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((retryAt - Date.now()) / 1000));
+      setWaiting(remaining);
+      if (!remaining) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [retryAt]);
   const lifecycle = useRef<AbortController | null>(null);
   useEffect(() => {
     const c = new AbortController();
@@ -79,6 +92,8 @@ export function BankDatevAI({
     }
   }
   async function suggest() {
+    if (sending.current || Date.now() < retryAt) return;
+    sending.current = true;
     setBusy(true);
     setResults([]);
     setError('');
@@ -102,25 +117,14 @@ export function BankDatevAI({
         referrerPolicy: 'no-referrer',
         body: JSON.stringify(useOperator ? batch : { key: personalKey, batch }),
       });
-      if (!r.ok)
-        throw Error(
-          r.status === 401
-            ? t(
-                'Der persönliche OpenAI-Schlüssel wurde abgelehnt. Bitte Schlüssel und API-Berechtigungen prüfen.',
-                'The personal OpenAI key was rejected. Check the key and API permissions.',
-              )
-            : r.status === 403
-              ? t('KI-Zugangscode prüfen.', 'Check the AI access code.')
-              : r.status === 429
-                ? t(
-                    'Anfragelimit erreicht. Bitte später erneut versuchen.',
-                    'Request limit reached. Try again later.',
-                  )
-                : t(
-                    'KI-Dienst nicht erreichbar oder Antwort unbrauchbar. Die manuelle Kontierung ist verfügbar.',
-                    'The AI service is unavailable or returned an unusable response. Manual entry is available.',
-                  ),
-        );
+      if (!r.ok) {
+        const problem = datevAiError(r.status, await r.json().catch(() => null));
+        if (problem.retryAfterSeconds) {
+          setRetryAt(Date.now() + problem.retryAfterSeconds * 1000);
+          setWaiting(problem.retryAfterSeconds);
+        }
+        throw Error(t(problem.message[0], problem.message[1]));
+      }
       const { suggestions } = (await r.json()) as { suggestions: Suggestion[] };
       if (!Array.isArray(suggestions) || suggestions.length !== page.length)
         throw Error(t('Unvollständige KI-Antwort.', 'Incomplete AI response.'));
@@ -128,6 +132,7 @@ export function BankDatevAI({
     } catch (e) {
       if (!lifecycle.current?.signal.aborted) setError(ui((e as Error).message));
     } finally {
+      sending.current = false;
       if (!lifecycle.current?.signal.aborted) setBusy(false);
     }
   }
@@ -263,6 +268,8 @@ export function BankDatevAI({
             ) : (
               <Button
                 disabled={
+                  busy ||
+                  waiting > 0 ||
                   (useOperator ? !token : !personalKeyFormat.test(personalKey)) ||
                   payloadRows.some((r) => !r.text)
                 }
@@ -275,6 +282,12 @@ export function BankDatevAI({
             )}
           </fieldset>
           {error && <p role="alert">{error}</p>}
+          {waiting > 0 && (
+            <p role="status">
+              {t('Erneut senden möglich in', 'You can send again in')} {waiting}{' '}
+              {t('Sekunden.', 'seconds.')}
+            </p>
+          )}
           {results.length > 0 && (
             <div>
               <h3>{t('Kontierungsvorschläge prüfen', 'Review suggestions')}</h3>

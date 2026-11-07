@@ -4,6 +4,11 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.27.4 – 7 November 2026
+
+- AI posting suggestions distinguish exhausted API credits, spend/usage limits, temporary OpenAI rate limits and installation limits. Reported waiting times are displayed and block resubmission; requests are never retried automatically. Unknown causes remain explicitly unknown.
+- Balance checks identify missing or unreadable balances, period and currency, and invalid amounts or missing payment directions with a clickable posting number. Statement details remain automatically extracted; incomplete or unbalanced statements remain blocked from export.
+
 ## 0.27.3 – 5 November 2026
 
 - “Try a sample bank statement” opens a fictional statement with four postings and matching balances in the DATEV tool. The sample uses the selected German or English language and can be exported as a DATEV file after entering the accounting details.

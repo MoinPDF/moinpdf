@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import './bank-datev-errors-smoke.mjs';
 import { once } from 'node:events';
 import { parseStatement, exportFiles } from '../lib/bank-datev/converter.mjs';
 import { normalizeVolksbankOcr } from '../lib/bank-datev/volksbank.mjs';

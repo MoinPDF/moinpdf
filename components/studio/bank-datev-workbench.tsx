@@ -1,11 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, FileSpreadsheet, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { downloadBlob, pdfBlob, type Source } from '@/lib/pdf-engine';
 import { bankMessage as ui } from '@/lib/bank-datev/messages';
 import {
-  balanceDifference,
   blankRow,
   exportEntries,
   readStatement,
@@ -20,6 +19,7 @@ import {
 import { useLanguage } from './appearance';
 import { WorkspaceContext } from './workspace-context';
 import { BankDatevAI } from './bank-datev-ai';
+import { reviewDraft } from '@/lib/bank-datev/universal.mjs';
 import './bank-datev.css';
 
 // Reviewed entries stay in memory when returning to the toolbox. Removing a
@@ -39,6 +39,7 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
     [exporting, setExporting] = useState(false);
   const [revision, setRevision] = useState(0),
     [search, setSearch] = useState('');
+  const postingsRef = useRef<HTMLDetailsElement>(null);
   const source = sources.find((s) => s.id === selected) ?? sources[0],
     entry = entries[source?.id];
   const [original, setOriginal] = useState('');
@@ -113,14 +114,70 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
   }
   const d = entry?.draft,
     settings = entry?.settings;
-  const difference = d && balanceDifference(d);
-  const ready = (value?: Entry) =>
-    value?.draft.confirmed &&
-    value.draft.currency === 'EUR' &&
-    !!value.draft.period_start &&
-    !!value.draft.period_end &&
-    value.draft.rows.length > 0 &&
-    balanceDifference(value.draft) === 0;
+  const review = d && reviewDraft(d),
+    difference = review?.difference;
+  const ready = (value?: Entry) => {
+    if (!value?.draft.confirmed) return false;
+    const check = reviewDraft(value.draft);
+    return check.issues.length === 0 && check.difference === 0;
+  };
+  const issueText = (field: string) => {
+    switch (field) {
+      case 'opening_balance':
+        return t(
+          'Anfangssaldo fehlt oder ist nicht lesbar.',
+          'Opening balance is missing or unreadable.',
+        );
+      case 'closing_balance':
+        return t(
+          'Endsaldo fehlt oder ist nicht lesbar.',
+          'Closing balance is missing or unreadable.',
+        );
+      case 'direction':
+        return t(
+          'Zahlungsrichtung fehlt. Betrag mit + für Einzahlung oder − für Auszahlung prüfen.',
+          'Payment direction is missing. Check the amount: + for inflow or − for outflow.',
+        );
+      case 'amount':
+        return t(
+          'Betrag fehlt, ist ungültig oder 0,00. Am Original prüfen und mit zwei Nachkommastellen korrigieren.',
+          'Amount is missing, invalid or 0.00. Check the original and correct it using two decimal places.',
+        );
+      case 'period':
+        return t(
+          'Auszugszeitraum fehlt oder ist nicht eindeutig lesbar.',
+          'Statement period is missing or not clearly readable.',
+        );
+      case 'currency':
+        return t(
+          'Kontowährung wurde nicht eindeutig als EUR erkannt.',
+          'Account currency was not clearly recognized as EUR.',
+        );
+      case 'unsupported_currency':
+        return t(
+          'Die erkannte Kontowährung wird nicht unterstützt. Der DATEV-Export benötigt ein EUR-Konto.',
+          'The detected currency is not supported. DATEV export requires a EUR account.',
+        );
+      case 'rows':
+        return t('Es sind keine Buchungen vorhanden.', 'There are no postings.');
+      default:
+        return t(
+          'Die Beträge sind für einen sicheren Saldenabgleich zu groß.',
+          'The amounts are too large for a reliable balance check.',
+        );
+    }
+  };
+  function showPosting(index: number) {
+    if (!d?.rows[index]) return;
+    const id = 'bank-posting-' + d.rows[index].id;
+    setSearch('');
+    if (postingsRef.current) postingsRef.current.open = true;
+    requestAnimationFrame(() => {
+      const row = document.getElementById(id);
+      row?.scrollIntoView({ block: 'center' });
+      row?.querySelector<HTMLInputElement>('[data-bank-amount]')?.focus({ preventScroll: true });
+    });
+  }
   const field = (key: keyof Settings, label: string) => (
     <label key={key}>
       {label}
@@ -264,7 +321,7 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
               <p key={i}>{ui(warning)}</p>
             ))}
           </section>
-          <details className="bank-card bank-postings" key={source.id}>
+          <details className="bank-card bank-postings" key={source.id} ref={postingsRef}>
             <summary>
               {t('Buchungen prüfen', 'Review postings')} ({d.rows.length})
             </summary>
@@ -303,7 +360,7 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
                     .includes(search.toLowerCase()),
               )
               .map(([r, i]) => (
-                <fieldset className="bank-row" key={r.id}>
+                <fieldset className="bank-row" key={r.id} id={'bank-posting-' + r.id}>
                   <legend>
                     {t('Buchung', 'Posting')} {i + 1}
                   </legend>
@@ -327,6 +384,7 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
                     <label>
                       {t('Betrag (€)', 'Amount (€)')}
                       <input
+                        data-bank-amount
                         type="text"
                         value={signedAmount(r)}
                         onChange={(e) => changeRow(r, updateAmount(e.target.value))}
@@ -409,16 +467,57 @@ export default function BankDatevWorkbench({ sources, onBack, onAdd }: Props) {
               <strong>{t('Saldendifferenz', 'Balance difference')}</strong>
               {' · '}
               {difference == null
-                ? t(
-                    'Kein Abgleich möglich. Erkannten Auszug und Buchungen prüfen.',
-                    'Unable to reconcile. Check the detected statement and postings.',
-                  )
+                ? t('Noch nicht berechenbar.', 'Not yet calculable.')
                 : new Intl.NumberFormat(language === 'de' ? 'de-DE' : 'en-GB', {
                     style: 'currency',
                     currency: 'EUR',
                   }).format(difference)}
             </p>
 
+            {!!review?.issues.length && (
+              <div className="bank-review" role="status">
+                <p>
+                  <strong>{t('Für den Export noch prüfen:', 'Check before exporting:')}</strong>
+                </p>
+                <ul>
+                  {review.issues.map((issue, i) => (
+                    <li key={i}>
+                      {issue.row >= 0 && (
+                        <button type="button" onClick={() => showPosting(issue.row)}>
+                          {t('Buchung', 'Posting')} {issue.row + 1}
+                        </button>
+                      )}{' '}
+                      {issueText(issue.field)}
+                    </li>
+                  ))}
+                </ul>
+                {review.issues.some((issue) =>
+                  ['opening_balance', 'closing_balance', 'period', 'currency'].includes(
+                    issue.field,
+                  ),
+                ) && (
+                  <p>
+                    {t(
+                      'Die Angaben werden automatisch aus dem PDF gelesen. Prüfe, ob alle Auszugsseiten enthalten sind. Öffne möglichst die Original-PDF der Bank oder einen besser lesbaren Scan.',
+                      'These details are read automatically from the PDF. Check that all statement pages are included. Open the original bank PDF or a clearer scan where possible.',
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+            {difference != null && difference !== 0 && (
+              <p>
+                {t(
+                  'Anfangssaldo und Buchungen ergeben nicht den Endsaldo. Beträge, Zahlungsrichtungen sowie fehlende oder doppelte Buchungen mit dem Original abgleichen.',
+                  'The opening balance and postings do not match the closing balance. Check amounts, payment directions, and missing or duplicate postings against the original.',
+                )}
+              </p>
+            )}
+            {(!!review?.issues.length || difference !== 0) && original && (
+              <a href={original} target="_blank" rel="noreferrer">
+                {t('Original-PDF öffnen', 'Open original PDF')}
+              </a>
+            )}
             <label className="bank-confirm">
               <input
                 type="checkbox"
