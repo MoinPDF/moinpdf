@@ -2,6 +2,8 @@
 
 ## Kontoauszug zu DATEV
 
+Bei KI-Fehlern unterscheidet MoinPDF fehlendes OpenAI-API-Guthaben, Ausgaben-/Nutzungslimits, vorübergehende Anfragelimits und die Auslastung dieser Installation. Eine gemeldete Wartezeit sperrt erneutes Senden bis zum Ablauf; es gibt keine automatische Wiederholung. Fehlende Angaben für den Saldenabgleich werden einzeln benannt. Bei ungültigem Betrag oder fehlender Zahlungsrichtung führt die Buchungsnummer direkt zur betroffenen Zeile. Fehlende Salden werden nicht aus Buchungen errechnet; alle Auszugsseiten müssen vollständig und lesbar vorliegen.
+
 „Mit Beispielkontoauszug ausprobieren“ öffnet einen fiktiven Kontoauszug mit vier Buchungen und passenden Salden in der gewählten Sprache. Bankkonto, Gegenkonto, Berater- und Mandantennummer eingeben, die Buchungen prüfen und den DATEV-Buchungsstapel herunterladen.
 
 Kontoauszug zu DATEV übernimmt die lokale Auszugserkennung und Saldenprüfung aus Bank2DATEV. SKR03/SKR04 bleiben wählbar. Bankkonto, Gegenkonten, Berater- und Mandantennummer sowie BU-Schlüssel sind freie Eingaben. Ein separater, optionaler Dienst erzeugt nach Freigabe prüfbare Kontierungsvorschläge über die OpenAI API.
@@ -15,7 +17,7 @@ Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF 
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.27.3**
+**Aktuelle Grenzen aus der Implementierung · 0.27.4**
 
 | Funktion | Wert |
 | --- | --- |

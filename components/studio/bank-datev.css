@@ -87,6 +87,21 @@
   align-items: center;
   gap: 0.6rem;
 }
+.bank-datev .bank-review ul {
+  list-style: disc;
+  padding-left: 1.2rem;
+  margin-block: 0.5rem;
+}
+.bank-datev .bank-review li {
+  margin-block: 0.5rem;
+  overflow-wrap: anywhere;
+}
+.bank-datev .bank-review button {
+  font-weight: 700;
+  color: var(--foreground);
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+}
 .bank-datev .bank-ai-fields {
   display: grid;
   gap: 0.7rem;

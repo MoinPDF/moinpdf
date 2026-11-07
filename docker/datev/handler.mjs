@@ -110,11 +110,49 @@ async function readBody(request) {
   }
   return JSON.parse(new TextDecoder().decode(body));
 }
-const send = (status, data = {}) =>
+const send = (status, data = {}, retryAfterSeconds = 0) =>
   Response.json(data, {
     status,
-    headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' },
+    headers: {
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+      ...(retryAfterSeconds > 0 && { 'Retry-After': String(retryAfterSeconds) }),
+    },
   });
+
+const limited = (code, retryAfterSeconds = 0) =>
+  send(429, { error: { code }, retryAfterSeconds }, retryAfterSeconds);
+function retryDelay(value) {
+  if (!value) return 0;
+  const seconds = /^\d+$/.test(value)
+    ? Number(value)
+    : Math.ceil((Date.parse(value) - Date.now()) / 1000);
+  return Number.isSafeInteger(seconds) && seconds > 0 ? seconds : 0;
+}
+async function upstreamLimit(response) {
+  // Provider messages may contain credentials or customer text. Only relay known codes.
+  let error;
+  try {
+    error = (await readBody(response)).error;
+  } catch {
+    /* Empty/proxy response. */
+  }
+  const billing = {
+    credit_balance_exhausted: 'openai_credit_exhausted',
+    organization_spend_limit_exceeded: 'openai_spend_limit',
+    project_spend_limit_exceeded: 'openai_spend_limit',
+    organization_usage_limit_exceeded: 'openai_usage_limit',
+    insufficient_quota: 'openai_quota_exceeded',
+  };
+  if (Object.hasOwn(billing, error?.code)) return limited(billing[error.code]);
+  if (error?.type === 'insufficient_quota') return limited('openai_quota_exceeded');
+  if (
+    ['rate_limit_exceeded', 'slow_down'].includes(error?.code) ||
+    error?.type === 'rate_limit_error'
+  )
+    return limited('openai_rate_limit', retryDelay(response.headers.get('Retry-After')));
+  return limited('openai_limit_unknown');
+}
 
 // Personal credentials live only in the invocation that supplied them.
 export function createDatevHandler(
@@ -163,12 +201,17 @@ export function createDatevHandler(
     const batch = personal ? data.batch : data;
     if (!validBatch(batch)) return send(400);
     if (personal) {
-      if (activePersonal >= 12) return send(429);
+      if (activePersonal >= 12) return limited('installation_busy', 5);
       activePersonal++;
     } else {
       const now = Date.now();
       hourly = hourly.filter((time) => time > now - 3600000);
-      if (activeOwner >= 2 || hourly.length >= 60) return send(429);
+      if (hourly.length >= 60)
+        return limited(
+          'installation_rate_limit',
+          Math.max(1, Math.ceil((hourly[0] + 3600000 - now) / 1000)),
+        );
+      if (activeOwner >= 2) return limited('installation_busy', 5);
       hourly.push(now);
       activeOwner++;
     }
@@ -191,7 +234,7 @@ export function createDatevHandler(
         }),
       });
       if (!response.ok) {
-        if (response.status === 429) return send(429);
+        if (response.status === 429) return await upstreamLimit(response);
         if (personal && [401, 403].includes(response.status)) return send(401);
         return send(502);
       }

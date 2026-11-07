@@ -4,7 +4,7 @@ import { createEditorRecognizer, imageCoverage, readableEditorText } from '../ed
 import { isVolksbankStatement, normalizeVolksbankOcr } from './volksbank.mjs';
 import { exportFiles, parseStatement } from './converter.mjs';
 import {
-  bankMoney,
+  reviewDraft,
   draftToStatement,
   extractDraft,
   positionedLines,
@@ -281,19 +281,7 @@ export function updateAmount(input: string) {
 }
 
 export function balanceDifference(draft: Draft): number | null {
-  try {
-    let balance = bankMoney(draft.opening_balance).cents;
-    for (const row of draft.rows) {
-      if (!['debit', 'credit'].includes(row.direction)) return null;
-      const cents = bankMoney(row.amount).cents;
-      if (cents <= 0) return null;
-      balance += row.direction === 'debit' ? -cents : cents;
-      if (!Number.isSafeInteger(balance)) return null;
-    }
-    return (balance - bankMoney(draft.closing_balance).cents) / 100;
-  } catch {
-    return null;
-  }
+  return reviewDraft(draft).difference;
 }
 
 export function exportEntries(entries: Entry[]): ExportFile[] {
