@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Require successful complete verification for this exact main commit
         id: verify
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
         with:
