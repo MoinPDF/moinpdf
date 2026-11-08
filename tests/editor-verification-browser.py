@@ -141,7 +141,9 @@ def verify_download(page, name):
 results = []
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS', 'webkit').split(','):
-        browser = getattr(api, engine).launch()
+        # Keep in-progress trace files inside the uploaded evidence directory if
+        # the process watchdog must stop an unresponsive browser protocol call.
+        browser = getattr(api, engine).launch(traces_dir=str((out / 'traces').resolve()))
         cases = [f'form-{i + 1:02}' for i in range(repeats)] + (['worker-cancel'] if baseline else ['worker-cancel', 'worker-retry', 'worker-timeout', 'font-retry'])
         for case in cases:
             fault = not case.startswith('form-')
