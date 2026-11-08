@@ -5,11 +5,15 @@ import ts from 'typescript';
 import { JSDOM } from 'jsdom';
 
 await mkdir('.cache/startup-animation', { recursive: true });
+await writeFile('.cache/startup-animation/sound.mjs', ts.transpileModule(
+  await readFile('lib/startup-sound.ts', 'utf8'),
+  { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } },
+).outputText);
 await writeFile('.cache/startup-animation/component.mjs', ts.transpileModule(
   await readFile('components/studio/startup-animation.tsx', 'utf8'),
   { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022, jsx: ts.JsxEmit.ReactJSX } },
-).outputText);
-const dom = new JSDOM('<!doctype html><div id="root"></div>', { url: 'https://moinpdf.test' });
+).outputText.replace('../../lib/startup-sound', './sound.mjs'));
+const dom = new JSDOM('<!doctype html><div id="root"></div>', { url: 'https://moinpdf.test', pretendToBeVisual: true });
 for (const key of ['window', 'document', 'HTMLElement', 'Element', 'Node', 'Event']) globalThis[key] = dom.window[key];
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // jsdom has no AnimationEvent constructor; advertise the standard event name to React.
@@ -37,9 +41,9 @@ const { StartupAnimation } = await import('../.cache/startup-animation/component
 const root = createRoot(document.getElementById('root'));
 const visible = () => document.querySelector('.moinpdf-startup');
 let opened = 0;
-const app = (label = 'Open PDF') => React.createElement(React.StrictMode, null,
-  React.createElement(StartupAnimation),
-  React.createElement('button', { onClick: () => opened++ }, label),
+const app = (label = 'Open PDF', language = 'de') => React.createElement(React.StrictMode, null,
+  React.createElement(StartupAnimation, { language }),
+  React.createElement('button', { id: 'workspace-action', onClick: () => opened++ }, label),
 );
 const advance = async ms => {
   now += ms;
@@ -60,15 +64,15 @@ try {
   await fresh();
   assert(visible());
   assert.equal(timers.size, 1, 'StrictMode retains one timer');
-  assert.equal(document.querySelector('button').textContent, 'Open PDF', 'Workspace mounts in parallel');
-  await advance(2749);
+  assert.equal(document.querySelector('#workspace-action').textContent, 'Open PDF', 'Workspace mounts in parallel');
+  await advance(2999);
   assert(visible(), 'Entrance remains until its full duration');
   await act(async () => root.render(app('Choose PDF')));
   await advance(1);
-  assert.equal(Boolean(visible()), false, 'Rerender does not reset the 2.75-second deadline');
+  assert.equal(Boolean(visible()), false, 'Rerender does not reset the 3-second deadline');
   await act(async () => root.render(app('Another tool')));
   assert.equal(Boolean(visible()), false, 'A tool/theme rerender does not replay the entrance');
-  await act(async () => document.querySelector('button').click());
+  await act(async () => document.querySelector('#workspace-action').click());
   assert.equal(opened, 1, 'Workspace remains usable');
 
   await fresh();
@@ -97,7 +101,7 @@ try {
 
   elapsed = 2000;
   await fresh();
-  await advance(749);
+  await advance(999);
   assert(visible());
   await advance(1);
   assert.equal(Boolean(visible()), false, 'Hydration preserves the CSS animation deadline');
@@ -106,7 +110,7 @@ try {
   await advance(0);
   assert.equal(Boolean(visible()), false, 'Late hydration never replays a completed entrance');
 
-  elapsed = 2740;
+  elapsed = 2990;
   await fresh();
   // Let real time pass while deliberately withholding the window timer.
   await new Promise(resolve => setTimeout(resolve, 30));
@@ -130,7 +134,75 @@ try {
   assert.equal(Boolean(visible()), false, 'The actual CSS end also releases the overlay');
   assert.equal(timers.size, 0);
   assert.equal(motionListeners.size, 0);
-  console.log('PASS: 2.75 s entrance, parallel app mount, StrictMode, no replay, keyboard/tap skip, reduced motion, hydration and background-tab cleanup.');
+  // Real sound-controller behavior with an autoplay gate, without an audio device.
+  const { createStartupSound, startupSoundSamples } = await import('../.cache/startup-animation/sound.mjs');
+  const samples = startupSoundSamples();
+  assert(samples.every(Number.isFinite));
+  assert.equal(samples.slice(0, Math.floor(0.44 * 22050)).every(v => v === 0), true);
+  assert(Math.max(...samples) <= 0.24 && Math.min(...samples) >= -0.24, 'Quiet peak ceiling');
+  assert(samples.slice(22050, 30000).some(v => Math.abs(v) > 0.04), 'Paper tear is audible');
+  assert(samples.slice(47000, 51000).some(v => Math.abs(v) > 0.004), 'Shimmer accompanies the logo');
+  let blocked = false;
+  const contexts = [], starts = [];
+  class TestAudioContext {
+    state = 'suspended'; currentTime = 10; destination = {}; pending = [];
+    constructor() { contexts.push(this); }
+    resume() {
+      if (blocked) return new Promise(resolve => this.pending.push(resolve));
+      this.state = 'running'; return Promise.resolve();
+    }
+    unlock() { this.state = 'running'; for (const resolve of this.pending.splice(0)) resolve(); }
+    close() { this.state = 'closed'; return Promise.resolve(); }
+    createBuffer() { return { copyToChannel() {} }; }
+    createBufferSource() {
+      return { connect() {}, disconnect() {}, stop() { this.stopped = true; },
+        start(...args) { starts.push(args); }, onended: null, buffer: null };
+    }
+  }
+  window.AudioContext = TestAudioContext;
+  let audioTime = 700, active = false;
+  const audio = createStartupSound(() => audioTime, value => active = value);
+  audio.enable(); await Promise.resolve();
+  assert.equal(active, true);
+  assert.equal(starts.at(-1)[1], 0.7, 'Sound begins at the matching visual time');
+  audio.mute(); assert.equal(contexts.at(-1).state, 'closed'); assert.equal(active, false);
+  audio.dispose();
+
+  blocked = true;
+  const cancelled = createStartupSound(() => 500, () => {});
+  cancelled.enable(); const waiting = contexts.at(-1); const before = starts.length;
+  cancelled.dispose(); waiting.unlock(); await Promise.resolve();
+  assert.equal(starts.length, before, 'A blocked sound cannot play after dismissal');
+  const late = createStartupSound(() => audioTime, () => {});
+  audioTime = 500; late.enable(); audioTime = 2900; contexts.at(-1).unlock(); await Promise.resolve();
+  assert.equal(starts.length, before, 'A late autoplay unlock never replays the startup');
+  assert.equal(contexts.at(-1).state, 'closed'); late.dispose();
+
+  audioTime = 400;
+  const tapped = createStartupSound(() => audioTime, () => {});
+  tapped.enable(); const pending = contexts.at(-1);
+  audioTime = 1200; blocked = false; tapped.enable(); pending.unlock(); await Promise.resolve();
+  assert.equal(starts.length, before + 1, 'A gesture unlock starts one source only');
+  assert.equal(starts.at(-1)[1], 1.2);
+  tapped.dispose();
+
+  await fresh();
+  let soundButton = document.querySelector('.moinpdf-startup-sound');
+  assert.equal(soundButton.getAttribute('aria-pressed'), 'true');
+  await act(async () => soundButton.click());
+  assert(visible(), 'Sound control does not dismiss the intro');
+  assert.equal(window.localStorage.getItem('moinpdf-startup-sound'), 'off');
+  await fresh();
+  soundButton = document.querySelector('.moinpdf-startup-sound');
+  assert.equal(soundButton.getAttribute('aria-pressed'), 'false', 'Mute preference survives reopening');
+  await act(async () => soundButton.click());
+  assert.equal(soundButton.getAttribute('aria-pressed'), 'true');
+  await act(async () => root.render(app('Open PDF', 'en')));
+  assert.equal(soundButton.getAttribute('aria-label'), 'Mute startup sound');
+  await act(async () => visible().click());
+  assert.equal(contexts.at(-1).state, 'closed', 'Skipping closes the audio device immediately');
+  window.localStorage.removeItem('moinpdf-startup-sound');
+  console.log('PASS: 3 s entrance, parallel app mount, StrictMode, no replay, keyboard/tap skip, reduced motion, hydration, background-tab cleanup, synchronized audio, autoplay cancellation, mute preference and DE/EN sound controls.');
 } finally {
   await act(async () => root.unmount());
   dom.window.close();

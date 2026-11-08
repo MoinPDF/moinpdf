@@ -1,4 +1,4 @@
-/* One 2.75 s entrance per page opening; no media download or artificial loading. */
+/* One 3 s entrance per page opening; the workspace keeps loading in parallel. */
 .moinpdf-startup {
   position: fixed;
   inset: 0;
@@ -47,19 +47,35 @@
 }
 .startup-sailor {
   position: relative;
-  width: 100%;
+  width: 90%;
+  margin-inline: auto;
   aspect-ratio: 1;
   overflow: hidden;
   filter: drop-shadow(0 9px 9px #123b3614);
 }
 .startup-sailor-atlas {
+  position: absolute;
+  inset: 0 auto auto 0;
   display: block;
   width: 400%;
   max-width: none;
   height: auto;
   user-select: none;
   pointer-events: none;
-  animation: moinpdf-startup-tear var(--startup-duration) steps(1, end) both;
+  animation: moinpdf-startup-tear 1800ms 350ms steps(1, end) both;
+}
+.startup-sailor-blend {
+  animation:
+    moinpdf-startup-tear-next 1800ms 350ms steps(1, end) both,
+    moinpdf-startup-frame-blend 120ms 350ms linear 15 both;
+}
+@keyframes moinpdf-startup-frame-blend {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .moinpdf-startup-logo {
   position: relative;
@@ -78,6 +94,108 @@
 }
 .dark .moinpdf-startup-logo .startup-logo-dark {
   display: block;
+}
+.startup-logo-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mask: url('/branding/moinpdf-logo.svg') center / contain no-repeat;
+  background: linear-gradient(105deg, transparent 42%, #fffdf0e6 49%, white 51%, transparent 58%)
+    140% 0 / 260% 100%;
+  animation: moinpdf-startup-shine var(--startup-duration) ease-in-out both;
+}
+.startup-sparkle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+  background: #fffde8;
+  clip-path: polygon(50% 0, 59% 40%, 100% 50%, 59% 59%, 50% 100%, 41% 59%, 0 50%, 41% 40%);
+  filter: drop-shadow(0 0 3px #ffe6a6);
+  animation: moinpdf-startup-sparkle var(--startup-duration) ease-out both;
+}
+.startup-sparkle-one {
+  left: 15%;
+  top: 24%;
+}
+.startup-sparkle-two {
+  left: 55%;
+  top: 45%;
+  width: 12px;
+  height: 12px;
+  animation-delay: 90ms;
+}
+.startup-sparkle-three {
+  left: 83%;
+  top: 18%;
+  animation-delay: 160ms;
+}
+@keyframes moinpdf-startup-shine {
+  0%,
+  63% {
+    opacity: 0;
+    background-position: 140% 0;
+  }
+  65% {
+    opacity: 0.9;
+    background-position: 140% 0;
+  }
+  82% {
+    opacity: 0.9;
+    background-position: -40% 0;
+  }
+  85%,
+  100% {
+    opacity: 0;
+    background-position: -40% 0;
+  }
+}
+@keyframes moinpdf-startup-sparkle {
+  0%,
+  64% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-25deg);
+  }
+  69% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+  77%,
+  100% {
+    opacity: 0;
+    transform: scale(0.25) rotate(45deg);
+  }
+}
+.moinpdf-startup-sound {
+  position: absolute;
+  right: max(20px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #416e5f60;
+  border-radius: 24px;
+  color: #244c3f;
+  background: #f4faf6b3;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.moinpdf-startup-sound svg {
+  width: 19px;
+  height: 19px;
+}
+.moinpdf-startup-sound:focus-visible {
+  outline: 3px solid #167454;
+  outline-offset: 3px;
+}
+.dark .moinpdf-startup-sound {
+  color: #dceee5;
+  background: #122824b3;
+  border-color: #a5d0bc66;
 }
 @keyframes moinpdf-startup-arrive {
   0% {
@@ -102,32 +220,105 @@
     transform: translateY(0);
   }
 }
-/* Eight registered photographic poses: grip, tear, separate, then settle. */
+/* Sixteen registered poses, with a second layer blending every transition. */
 @keyframes moinpdf-startup-tear {
   0% {
-    transform: translate(0, 0);
+    transform: translate(0%, 0%);
   }
-  22% {
-    transform: translate(-25%, 0);
+  6.66667% {
+    transform: translate(-25%, 0%);
   }
-  28% {
-    transform: translate(-50%, 0);
+  13.3333% {
+    transform: translate(-50%, 0%);
   }
-  34% {
-    transform: translate(-75%, 0);
+  20% {
+    transform: translate(-75%, 0%);
+  }
+  26.6667% {
+    transform: translate(0%, -25%);
+  }
+  33.3333% {
+    transform: translate(-25%, -25%);
   }
   40% {
-    transform: translate(0, -50%);
+    transform: translate(-50%, -25%);
   }
-  46% {
+  46.6667% {
+    transform: translate(-75%, -25%);
+  }
+  53.3333% {
+    transform: translate(0%, -50%);
+  }
+  60% {
     transform: translate(-25%, -50%);
   }
-  52% {
+  66.6667% {
     transform: translate(-50%, -50%);
   }
-  60%,
-  100% {
+  73.3333% {
     transform: translate(-75%, -50%);
+  }
+  80% {
+    transform: translate(0%, -75%);
+  }
+  86.6667% {
+    transform: translate(-25%, -75%);
+  }
+  93.3333% {
+    transform: translate(-50%, -75%);
+  }
+  100% {
+    transform: translate(-75%, -75%);
+  }
+}
+@keyframes moinpdf-startup-tear-next {
+  0% {
+    transform: translate(-25%, 0%);
+  }
+  6.66667% {
+    transform: translate(-50%, 0%);
+  }
+  13.3333% {
+    transform: translate(-75%, 0%);
+  }
+  20% {
+    transform: translate(0%, -25%);
+  }
+  26.6667% {
+    transform: translate(-25%, -25%);
+  }
+  33.3333% {
+    transform: translate(-50%, -25%);
+  }
+  40% {
+    transform: translate(-75%, -25%);
+  }
+  46.6667% {
+    transform: translate(0%, -50%);
+  }
+  53.3333% {
+    transform: translate(-25%, -50%);
+  }
+  60% {
+    transform: translate(-50%, -50%);
+  }
+  66.6667% {
+    transform: translate(-75%, -50%);
+  }
+  73.3333% {
+    transform: translate(0%, -75%);
+  }
+  80% {
+    transform: translate(-25%, -75%);
+  }
+  86.6667% {
+    transform: translate(-50%, -75%);
+  }
+  93.3333% {
+    transform: translate(-75%, -75%);
+  }
+  100% {
+    transform: translate(-75%, -75%);
   }
 }
 /* CSS also removes hit testing if hydration or the JS timer is delayed. */

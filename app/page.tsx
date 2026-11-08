@@ -273,7 +273,7 @@ export default function Home() {
   useLanguage();
   return (
     <AppearanceProvider>
-      <StartupAnimation />
+      <StartupEntrance />
       <ToolBrowserMemory>
         <WorkspaceResultsProvider>
           <WorkspaceShell />
@@ -282,6 +282,11 @@ export default function Home() {
     </AppearanceProvider>
   );
 }
+function StartupEntrance() {
+  const { language } = useLanguage();
+  return <StartupAnimation language={language} />;
+}
+
 function WorkspaceShell() {
   const { t } = useLanguage();
   return (

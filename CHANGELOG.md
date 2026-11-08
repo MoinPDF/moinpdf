@@ -11,7 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Noch nicht veröffentlicht – 8. November 2026
 
-- Beim Öffnen der App zerreißt der fotorealistische Seemann aus dem Header ein Blatt Papier; darunter erscheint das MoinPDF-Logo. Die Startanimation endet nach 2,75 Sekunden, während der Arbeitsbereich bereits lädt. Antippen, Escape oder Tab überspringen sie; bei reduzierter Bewegung wird sie ausgeblendet.
+- Drei Sekunden lange Startanimation mit 16 fotorealistischen Posen des Seemanns, weichen Übergängen, kurzem Funkeln des MoinPDF-Logos und leisem Papierreiß-/Glanzton. Der Tonschalter merkt die Auswahl; bei blockierter automatischer Wiedergabe aktiviert ein Antippen den Ton. Überspringen und reduzierte Bewegung stoppen auch den Ton.
 - Dunklerer mintgrüner Hintergrund im Light Theme auf Desktop, Tablet und Smartphone für einen deutlicheren Kontrast zu hellen Karten, Eingabefeldern und Werkzeugbereichen.
 
 ## 0.27.5 – 8. November 2026
