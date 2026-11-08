@@ -104,6 +104,36 @@ class SpecialFormatsTests(unittest.TestCase):
 
 
 class FolderTests(unittest.TestCase):
+    def test_unreadable_inputs_and_profile_reports_do_not_block_other_jobs(self):
+        import watch_folders
+        calls = []
+        def processor(source, folder, cancel):
+            calls.append(source.read_bytes())
+            process(source, folder)
+            return (folder / 'output.pdf').read_bytes(), {}
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            broken = root / 'aaa-broken'
+            broken.mkdir()
+            profile = root / 'valid'
+            (profile / 'inbox').mkdir(parents=True)
+            (profile / 'workflow.json').write_text(json.dumps({'version': 1, 'name': 'Valid', 'steps': [{'kind': 'metadata'}]}))
+            for name in ['a-unreadable.pdf', 'b-valid.pdf']:
+                (profile / 'inbox' / name).write_bytes(fictional_pdf())
+            original_read, original_write = watch_folders.read_regular, watch_folders.atomic_write
+            def read(path, limit):
+                if path.name == 'a-unreadable.pdf': raise PermissionError()
+                return original_read(path, limit)
+            def write(path, data):
+                if path.parent == broken: raise PermissionError()
+                return original_write(path, data)
+            watch = WatchFolders(root, processor, stable_seconds=0)
+            with patch('watch_folders.read_regular', side_effect=read), patch('watch_folders.atomic_write', side_effect=write), self.assertLogs('moinpdf.watch', level='WARNING'):
+                watch.scan(); watch.scan()
+            self.assertEqual(len(calls), 1)
+            reports = [json.loads(path.read_text()) for path in (profile / 'status').glob('*.json')]
+            self.assertEqual(sorted(item['status'] for item in reports), ['done', 'error'])
+
     def test_server_runs_bounded_worker(self):
         import app as service
         import threading
@@ -201,6 +231,23 @@ class FolderTests(unittest.TestCase):
                 watcher.close()
             next_watcher = WatchFolders(temp, lambda *_: None).start()
             next_watcher.close()
+
+    def test_signature_fields_are_rejected_without_sigflags(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            source = folder / 'input.pdf'
+            with fitz.open() as pdf:
+                page = pdf.new_page()
+                widget = fitz.Widget()
+                widget.field_name = 'Signature'
+                widget.field_type = fitz.PDF_WIDGET_TYPE_SIGNATURE
+                widget.rect = fitz.Rect(20, 20, 200, 60)
+                page.add_widget(widget)
+                pdf.xref_set_key(pdf.pdf_catalog(), 'AcroForm/SigFlags', '0')
+                pdf.save(source)
+            (folder / 'workflow.json').write_text(json.dumps({'version': 1, 'name': 'No signing', 'steps': [{'kind': 'metadata'}]}))
+            with self.assertRaisesRegex(ValueError, 'Signaturfeldern'): process(source, folder)
+            self.assertFalse((folder / 'output.pdf').exists())
 
 
 if __name__ == '__main__': unittest.main()

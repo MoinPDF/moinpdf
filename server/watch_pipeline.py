@@ -23,7 +23,9 @@ def process(source, directory):
     with fitz.open(source) as document:
         if not document.is_pdf or document.needs_pass or not 0 < len(document) <= 200:
             raise ValueError('Bitte eine ungeschützte PDF mit 1 bis 200 Seiten verwenden.')
-        if document.get_sigflags() > 0:
+        if document.get_sigflags() > 0 or document.xref_get_key(document.pdf_catalog(), 'Perms')[0] != 'null' or any(
+            widget.field_type == fitz.PDF_WIDGET_TYPE_SIGNATURE for page in document for widget in page.widgets() or []
+        ):
             raise ValueError('PDFs mit Signaturfeldern werden nicht automatisch verändert.')
         if document.xref_get_key(document.pdf_catalog(), 'AcroForm/XFA')[0] != 'null':
             raise ValueError('XFA-Formulare werden nicht automatisch verändert.')

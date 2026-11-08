@@ -113,14 +113,20 @@ class WatchFolders:
                     directory(folder)
                 (profile / 'configuration-error.json').unlink(missing_ok=True)
             except Exception:
-                atomic_write(profile / 'configuration-error.json', json.dumps({'status': 'error', 'detail': 'Ablauf oder Verzeichnis ungültig. workflow.json, unterstützte Schritte, inbox und Dateirechte prüfen.'}).encode())
+                try:
+                    atomic_write(profile / 'configuration-error.json', json.dumps({'status': 'error', 'detail': 'Ablauf oder Verzeichnis ungültig. workflow.json, unterstützte Schritte, inbox und Dateirechte prüfen.'}).encode())
+                except OSError:
+                    logger.warning('Fehlerbericht nicht schreibbar; Profilrechte prüfen. Andere Profile werden weiterverarbeitet.')
                 continue
             for source in sorted(inbox.iterdir()):
                 if self.stop.is_set():
                     break
                 if source.suffix.lower() != '.pdf' or source.is_symlink():
                     continue
-                info = source.stat()
+                try:
+                    info = source.stat()
+                except OSError:
+                    continue
                 if not stat.S_ISREG(info.st_mode):
                     continue
                 seen.add(source)
@@ -135,7 +141,16 @@ class WatchFolders:
                 if cached and cached[:2] == (snapshot, configuration) and cached[2].is_file():
                     continue
                 # Oversized files receive one persistent error receipt, without reading them.
-                data = read_regular(source, MAX_BYTES) if 0 < info.st_size <= MAX_BYTES else None
+                read_error = None
+                try:
+                    data = read_regular(source, MAX_BYTES) if 0 < info.st_size <= MAX_BYTES else None
+                except ValueError:
+                    # A producer changed the file after the stability check. Start over.
+                    self.observed.pop(source, None)
+                    continue
+                except OSError:
+                    data = None
+                    read_error = 'Die Eingabedatei konnte nicht gelesen werden. Dateirechte prüfen.'
                 digest = hashlib.sha256(configuration + source.name.encode() + (data if data is not None else repr(snapshot).encode())).hexdigest()
                 stem = re.sub(r'[^\w.-]', '_', source.stem)[:80] or 'Dokument'
                 name = f'{stem}-{digest[:16]}'
@@ -146,7 +161,7 @@ class WatchFolders:
                 report = {'id': digest, 'source': source.name, 'workflow': workflow['name'], 'time': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
                 try:
                     if data is None:
-                        raise ValueError('PDF-Dateien müssen zwischen 1 Byte und 80 MB groß sein.')
+                        raise ValueError(read_error or 'PDF-Dateien müssen zwischen 1 Byte und 80 MB groß sein.')
                     with tempfile.TemporaryDirectory(prefix='moinpdf-watch-') as temporary:
                         workspace = Path(temporary)
                         copied = workspace / 'input.pdf'
@@ -163,7 +178,11 @@ class WatchFolders:
                     # Only controlled worker errors are reported, never a traceback or secrets.
                     detail = str(error) if isinstance(error, ValueError) else 'Verarbeitung fehlgeschlagen. PDF, Ablauf und Serverausstattung prüfen.'
                     report.update(status='error', detail=detail[:500])
-                atomic_write(receipt, json.dumps(report, ensure_ascii=False, indent=2).encode())
+                try:
+                    atomic_write(receipt, json.dumps(report, ensure_ascii=False, indent=2).encode())
+                except OSError:
+                    logger.warning('Auftragsbericht nicht schreibbar; Profil pausiert bis zum nächsten Durchlauf. Andere Profile werden weiterverarbeitet.')
+                    break
                 self.completed[source] = (snapshot, configuration, receipt)
         self.observed = {path: value for path, value in self.observed.items() if path in seen}
         self.completed = {path: value for path, value in self.completed.items() if path in seen}
