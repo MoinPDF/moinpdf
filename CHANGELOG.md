@@ -9,7 +9,9 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Noch nicht veröffentlicht – 8. November 2026
+## 0.28.0 – 8. November 2026
+
+- Die native Safari-Prüfung startet wieder auf dem bewährten Intel-Mac-Prüfrechner. Alle Browser-, Dokumentenserver-, Übersetzungs- und Release-Prüfungen bleiben Voraussetzung für die Veröffentlichung.
 
 - 3,75 Sekunden lange Startanimation des Original-MoinPDF-Logos mit Wellenaufbau, sanften Wasserringen, Lichtschein und kurzem Funkeln. Das Seemann-Video und sein Vorschaubild entfallen vollständig. Ein dezenter Wellen-/Glanzklang ersetzt den Papierreißton; Tonschalter, Überspringen und reduzierte Bewegung bleiben erhalten.
 - Dunklerer mintgrüner Hintergrund im Light Theme auf Desktop, Tablet und Smartphone für einen deutlicheren Kontrast zu hellen Karten, Eingabefeldern und Werkzeugbereichen.

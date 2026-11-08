@@ -6,6 +6,15 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.28.0
+
+- 71 Engine-/DOM-Suiten prüfen unter anderem PDF-Bearbeitung, OCR, Komprimierung, Konvertierung, Wiederherstellung, Projekte, DATEV-Export und die Logoanimation einschließlich Ton, Abbruch und reduzierter Bewegung.
+- Alle 121 Werkzeugansichten und verfügbaren Auswahlmenüs werden auf englische Texte geprüft. Sprachwechsel und Neuladen müssen Originaldokumente und Einstellungen erhalten. Die deutschen und englischen Informationsseiten werden einschließlich Suche, Druck und Downloads geprüft; schmale Ansichten reichen bis 320 Pixel.
+- Die Browsermatrix prüft echte Ausgaben in Chromium, Firefox und WebKit. Native Safari-Prüfungen laufen auf `macos-15-intel`; dieser Prüfstand ist von WebKit und physischen iPhones/iPads getrennt. Ein Betriebssystem-Dateidialog gilt nicht als geprüft, wenn SafariDriver nur den dokumentierten In-Memory-Dateipfad unterstützt.
+- Die vollständige Docker-Prüfung umfasst Dokumentenserver, Übersetzung in sieben Sprachen, lokale Sprachausgabe und KI, Netzwerkschutz, Zugriffsschutz, echte Konvertierungen und den Erhalt von Modellen und Zugangsdaten beim Neustart.
+- Eine Freigabe erfordert erfolgreiche Prüfungen des Pull Requests und des tatsächlichen `main`-Commits. Erst danach werden die vier Images für amd64/arm64 und der Release mit festen Image-Digests veröffentlicht. Der Store übernimmt genau diese freigegebenen Image-Referenzen.
+- Physische Endgeräte, native Teilen-Dialoge und die konkrete Installation beim Betreiber sind durch die automatisierte Prüfung nicht abgedeckt. Frühere Nachweise gelten nur für ihre angegebenen Commits; die Links zum jeweiligen Release und seinen Actions-Läufen liefern den aktuellen Ausführungsnachweis.
+
 ## Prüfplan für 0.24.0
 
 - 66 Engine-/DOM-Suiten einschließlich Klar Schiff, Formularprofilen, A4-Belegen und Kopf-/Fußzeilenbereinigung. Die neuen Browserabläufe prüfen tatsächliche PDF-Downloads in Chromium, Firefox und WebKit auf Desktop und mit schmaler Touch-Emulation.
@@ -81,8 +90,8 @@ und erneuten Export. Maßgeblich bleibt der erfolgreiche Lauf des jeweiligen Com
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| PDF-Engines und DOM | 66 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
-| Dokumentenserver | 65 Tests: native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
+| PDF-Engines und DOM | 71 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| Dokumentenserver | Tests für native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |
 | Dokumentation und Medien | Suche, Kategorien, Druck, Downloads, Video, keine horizontalen Überläufe und erhaltene Arbeitsdateien |
