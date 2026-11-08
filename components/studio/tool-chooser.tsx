@@ -251,7 +251,7 @@ export function ToolChooser({
                 disabled={locked}
                 onClick={() => setActiveGroup(group)}
               >
-                {t(categoryNames[group] ?? label)}
+                {t(categoryNames[group] ?? label, group === 2 ? 'Pages' : undefined)}
               </button>
             ))}
           </div>

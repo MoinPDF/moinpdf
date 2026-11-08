@@ -6,6 +6,8 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## 0.28.0 – 8 November 2026
 
+- Standardized the “Pages” category label and corrected the English compression description to reflect content-preserving compression.
+
 - Native Safari verification uses the established Intel Mac runner again. All browser, document-server, translation and release checks remain required for publication.
 
 - A 3.75-second entrance animates the original MoinPDF logo with a wave reveal, gentle water ripples, a light sweep and brief sparkles. The sailor video and poster are removed entirely. A subtle wave/shimmer sound replaces the paper tear; sound preference, skipping and reduced-motion support remain.

@@ -11,6 +11,8 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## 0.28.0 – 8. November 2026
 
+- Englische Kategorie „Pages“ vereinheitlicht und die Beschreibung der Komprimierung an den inhaltserhaltenden Modus angepasst.
+
 - Die native Safari-Prüfung startet wieder auf dem bewährten Intel-Mac-Prüfrechner. Alle Browser-, Dokumentenserver-, Übersetzungs- und Release-Prüfungen bleiben Voraussetzung für die Veröffentlichung.
 
 - 3,75 Sekunden lange Startanimation des Original-MoinPDF-Logos mit Wellenaufbau, sanften Wasserringen, Lichtschein und kurzem Funkeln. Das Seemann-Video und sein Vorschaubild entfallen vollständig. Ein dezenter Wellen-/Glanzklang ersetzt den Papierreißton; Tonschalter, Überspringen und reduzierte Bewegung bleiben erhalten.
