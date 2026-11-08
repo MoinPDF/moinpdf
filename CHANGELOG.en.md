@@ -8,6 +8,8 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 - “Discard” deletes the selected recovery snapshot, confirms success and does not immediately offer an older snapshot. Other workspaces remain available in the chooser; this tab remembers the decision across reloads. Storage errors remain visible and can be retried.
 - “Clear” is marked in red in both the workspace and tool chooser confirmation dialogs.
+- Applied compatible dependency updates, including Pydantic 2.14.2 with matching Core 2.50.2 and SoupSieve 4.0.1. The IndexedDB test driver remains on 6.2.5 because of a reproduced transaction regression; the incompatible certificate validator update is not included.
+- Container builds can retrieve the same pinned tools through their official asset API after temporary GitHub download failures. Existing SHA-256 checks remain mandatory; corrupt files and authorization failures still fail the build.
 
 ## 0.27.4 – 7 November 2026
 
