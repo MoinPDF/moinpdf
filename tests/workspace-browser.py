@@ -31,7 +31,7 @@ def check_clear_dialog(page):
     clear = dialog.get_by_role('button', name='Leeren', exact=True)
     expect(clear).to_have_attribute('data-variant', 'destructive')
     color = clear.evaluate('(button) => getComputedStyle(button).backgroundColor')
-    assert color != 'rgba(0, 0, 0, 0)', color
+    assert color in ['rgb(195, 39, 70)', 'rgb(169, 29, 57)'], color
     dialog.get_by_role('button', name='Behalten', exact=True).click()
     expect(dialog).not_to_be_visible()
 

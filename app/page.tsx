@@ -2321,7 +2321,11 @@ function Studio() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>{t('Behalten')}</AlertDialogCancel>
-                  <AlertDialogAction variant="destructive" onClick={clear}>
+                  <AlertDialogAction
+                    className="workspace-clear-action"
+                    variant="destructive"
+                    onClick={clear}
+                  >
                     {t('Leeren')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
