@@ -115,6 +115,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
+      - name: Verify pinned tool download fallback
+        run: python -m unittest discover -s server -p test_install_tools.py -v
       - name: Audit pinned document-server dependencies
         run: |
           python -m pip install pip-audit==2.10.1
