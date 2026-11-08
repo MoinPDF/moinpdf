@@ -9,13 +9,12 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Noch nicht veröffentlicht – 8. November 2026
+## 0.27.5 – 8. November 2026
 
 - „Verwerfen“ löscht den gewählten automatischen Arbeitsstand, bestätigt den Erfolg und bietet nicht sofort eine ältere Sicherung an. Andere Arbeitsstände bleiben im Auswahlmenü verfügbar; die Entscheidung gilt in diesem Tab auch nach dem Neuladen. Speicherfehler bleiben sichtbar und können erneut versucht werden.
 - „Leeren“ ist im Bestätigungsdialog des Arbeitsbereichs und der Werkzeugauswahl rot gekennzeichnet.
 - Kompatible Paketupdates einschließlich Pydantic 2.14.2 mit passendem Core 2.50.2 und SoupSieve 4.0.1 übernommen. Der bewährte IndexedDB-Testtreiber bleibt wegen eines reproduzierten Transaktionsfehlers auf 6.2.5; die inkompatible Zertifikatsprüfer-Version wird nicht übernommen.
 - Container-Builds können bei vorübergehenden GitHub-Downloadfehlern dieselben festgelegten Werkzeuge über deren offizielle Asset-API laden. Die bisherigen SHA-256-Prüfsummen bleiben zwingend; fehlerhafte Dateien oder fehlende Berechtigungen brechen den Build weiterhin ab.
-
 - Die sieben MiniSBD-Sprachmodelle werden vor der Übersetzungseinrichtung mit festgelegten Größen und SHA-256-Prüfsummen vorbereitet. Bei vorübergehenden Downloadfehlern steht die offizielle GitHub-Asset-API bereit; bestätigte Dateien werden atomar gespeichert und bei späteren Starts ohne erneuten Download verwendet.
 
 ## 0.27.4 – 7. November 2026
