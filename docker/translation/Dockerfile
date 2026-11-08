@@ -5,6 +5,6 @@ USER root
 RUN mkdir -p /home/libretranslate/.cache \
     && chown -R ${MOINPDF_UID}:${MOINPDF_UID} /home/libretranslate \
     && chown ${MOINPDF_UID}:${MOINPDF_UID} /app
-COPY ensure_models.py healthcheck.py /opt/moinpdf/
+COPY ensure_models.py healthcheck.py sentence_models.py sentence-models.lock.json /opt/moinpdf/
 COPY --chmod=755 start-translation.sh /opt/moinpdf/
 USER ${MOINPDF_UID}:${MOINPDF_UID}

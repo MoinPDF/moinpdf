@@ -16,6 +16,8 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Kompatible Paketupdates einschließlich Pydantic 2.14.2 mit passendem Core 2.50.2 und SoupSieve 4.0.1 übernommen. Der bewährte IndexedDB-Testtreiber bleibt wegen eines reproduzierten Transaktionsfehlers auf 6.2.5; die inkompatible Zertifikatsprüfer-Version wird nicht übernommen.
 - Container-Builds können bei vorübergehenden GitHub-Downloadfehlern dieselben festgelegten Werkzeuge über deren offizielle Asset-API laden. Die bisherigen SHA-256-Prüfsummen bleiben zwingend; fehlerhafte Dateien oder fehlende Berechtigungen brechen den Build weiterhin ab.
 
+- Die sieben MiniSBD-Sprachmodelle werden vor der Übersetzungseinrichtung mit festgelegten Größen und SHA-256-Prüfsummen vorbereitet. Bei vorübergehenden Downloadfehlern steht die offizielle GitHub-Asset-API bereit; bestätigte Dateien werden atomar gespeichert und bei späteren Starts ohne erneuten Download verwendet.
+
 ## 0.27.4 – 7. November 2026
 
 - Die KI-Kontierung unterscheidet fehlendes API-Guthaben, Ausgaben-/Nutzungslimits, vorübergehende OpenAI-Begrenzungen und die Grenzen dieser Installation. Gemeldete Wartezeiten werden angezeigt und sperren erneutes Senden; es gibt keine automatische Wiederholung. Unbekannte Ursachen bleiben ausdrücklich unbekannt.

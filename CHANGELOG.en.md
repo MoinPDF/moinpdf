@@ -11,6 +11,8 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Applied compatible dependency updates, including Pydantic 2.14.2 with matching Core 2.50.2 and SoupSieve 4.0.1. The IndexedDB test driver remains on 6.2.5 because of a reproduced transaction regression; the incompatible certificate validator update is not included.
 - Container builds can retrieve the same pinned tools through their official asset API after temporary GitHub download failures. Existing SHA-256 checks remain mandatory; corrupt files and authorization failures still fail the build.
 
+- The seven MiniSBD sentence models are prepared before translation initialization with pinned sizes and SHA-256 hashes. Temporary download failures can use the official GitHub asset API; verified files are stored atomically and reused without another download on later starts.
+
 ## 0.27.4 – 7 November 2026
 
 - AI posting suggestions distinguish exhausted API credits, spend/usage limits, temporary OpenAI rate limits and installation limits. Reported waiting times are displayed and block resubmission; requests are never retried automatically. Unknown causes remain explicitly unknown.
