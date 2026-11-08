@@ -9,6 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Noch nicht veröffentlicht – 8. November 2026
+
+- Dunklerer mintgrüner Hintergrund im Light Theme auf Desktop, Tablet und Smartphone für einen deutlicheren Kontrast zu hellen Karten, Eingabefeldern und Werkzeugbereichen.
+
 ## 0.27.5 – 8. November 2026
 
 - „Verwerfen“ löscht den gewählten automatischen Arbeitsstand, bestätigt den Erfolg und bietet nicht sofort eine ältere Sicherung an. Andere Arbeitsstände bleiben im Auswahlmenü verfügbar; die Entscheidung gilt in diesem Tab auch nach dem Neuladen. Speicherfehler bleiben sichtbar und können erneut versucht werden.

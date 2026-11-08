@@ -10,7 +10,7 @@ Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvor
 
 Stand: 28. Oktober 2026 · Version 0.25.1. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
-Der Desktop-Hintergrund im Light Mode verwendet ab 1.001 Pixeln ein durchgehend satteres Mintgrün. Die grünen Verläufe liegen auf einer grünen Grundfläche, sodass auch zwischen ihnen keine blassgrauen Bereiche entstehen. Helle Bedienflächen bleiben klar vom Hintergrund getrennt.
+Der Hintergrund im Light Mode verwendet auf Desktop, Tablet und Smartphone ein dunkleres Mintgrün. Die grünen Verläufe liegen auf derselben dunkleren Grundfläche, sodass helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
 
 Seit 0.22.0 stehen beim Word-Export zwei Ziele im Vordergrund: „Aussehen möglichst erhalten“ und „Text und Tabellen bearbeiten“. Text-only-Ausgabe und Serverwahl liegen unter „Weitere Optionen“. Die Vorprüfung bündelt Hinweise je Textstelle. Schriftvergleiche berücksichtigen gedrehte Geometrie, Unicode-Zeichenabstände und horizontale Skalierung. Sichtbare Vorschauen werden vor wartenden Nachbarseiten verarbeitet; zusätzliche OCR-Vorbereitung pausiert bei Eingaben. Die Cursorführung berücksichtigt horizontales Scrollen und Bewegungen des mobilen Sichtbereichs.
 

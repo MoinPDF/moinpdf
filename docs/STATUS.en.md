@@ -10,7 +10,7 @@ Form helper and receipt collection on A4 are integrated browser tools. Profile s
 
 As of 28 October 2026 · Version 0.25.1. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
-From 1,001 pixels, the desktop light-mode background uses a consistently richer mint green. Its soft green gradients sit on a green base, preventing pale grey areas between them. Light controls remain clearly separated from the background.
+The light-mode background uses a darker mint green on desktop, tablet and mobile. Its soft green gradients share the same darker base, making light cards, input fields and tool panels stand out more clearly.
 
 Since 0.22.0, Word export presents two goals: “Preserve appearance as closely as possible” and “Edit text and tables”. Text-only output and server selection are under “Other options”. Preflight groups notices by text location. Font comparison accounts for rotated geometry, Unicode tracking and horizontal scaling. Visible previews precede queued neighbours; additional OCR preparation pauses during input. Caret following accounts for horizontal scrolling and mobile viewport movement.
 

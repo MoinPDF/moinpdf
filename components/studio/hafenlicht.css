@@ -31,7 +31,7 @@
 /* A green base keeps the desktop canvas saturated between the soft light pools. */
 @media (min-width: 1001px) {
   :root:not(.dark) .moinpdf-shell.moinpdf-shell {
-    background-color: #c8ead9;
+    background-color: var(--harbor-page);
     background-image:
       radial-gradient(
         ellipse 44vw 60vh at 0% 10%,

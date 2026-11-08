@@ -1,6 +1,6 @@
 /* Shared Harbor Studio palette for the app and its information pages. */
 :root:root {
-  --harbor-page: #f5faf8;
+  --harbor-page: #b3d4c4;
   --harbor-panel: rgba(255, 255, 255, 0.9);
   --harbor-glass: rgba(248, 252, 250, 0.96);
   --harbor-shadow: 0 8px 30px -14px #164b3d20, 0 1px 4px #123b3604;

@@ -4,6 +4,10 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased – 8 November 2026
+
+- Darker mint-green background in the light theme on desktop, tablet and mobile, increasing contrast with light cards, input fields and tool panels.
+
 ## 0.27.5 – 8 November 2026
 
 - “Discard” deletes the selected recovery snapshot, confirms success and does not immediately offer an older snapshot. Other workspaces remain available in the chooser; this tab remembers the decision across reloads. Storage errors remain visible and can be retried.
