@@ -577,3 +577,12 @@ body {
     gap: 14px;
   }
 }
+
+/* Destructive workspace confirmation stays red with readable white text in both themes. */
+.workspace-clear-action[data-slot='alert-dialog-action'] {
+  background-color: #c32746;
+  color: #fff;
+}
+.workspace-clear-action[data-slot='alert-dialog-action']:hover {
+  background-color: #a91d39;
+}

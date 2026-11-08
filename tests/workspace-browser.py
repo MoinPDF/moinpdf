@@ -9,6 +9,32 @@ from playwright.sync_api import expect, sync_playwright
 origin = os.getenv('MOINPDF_TEST_URL', 'http://localhost:8080').rstrip('/')
 out = Path('web-evidence'); out.mkdir(exist_ok=True)
 
+def recovery_summaries(page):
+    return page.evaluate('''() => new Promise((resolve, reject) => {
+        const request = indexedDB.open('moinpdf.workspace.v1');
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+            const db = request.result;
+            const tx = db.transaction('recovery');
+            const get = tx.objectStore('recovery').getAll();
+            tx.oncomplete = () => {
+                db.close();
+                resolve(get.result.map(({id, updated}) => ({id, updated})).sort((a,b) => b.updated-a.updated));
+            };
+            tx.onerror = () => { db.close(); reject(tx.error); };
+        };
+    })''')
+
+def check_clear_dialog(page):
+    page.get_by_role('button', name='Arbeitsbereich leeren', exact=True).click()
+    dialog = page.get_by_role('alertdialog')
+    clear = dialog.get_by_role('button', name='Leeren', exact=True)
+    expect(clear).to_have_attribute('data-variant', 'destructive')
+    color = clear.evaluate('(button) => getComputedStyle(button).backgroundColor')
+    assert color in ['rgb(195, 39, 70)', 'rgb(169, 29, 57)'], color
+    dialog.get_by_role('button', name='Behalten', exact=True).click()
+    expect(dialog).not_to_be_visible()
+
 with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
     browser = api.chromium.launch()
     source = Path(temporary) / 'workspace.pdf'
@@ -33,7 +59,9 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             try:
                 page.goto(origin)
                 page.locator('input[type=file]').first.set_input_files(str(source))
+                check_clear_dialog(page)
                 page.get_by_role('button', name='Seiten organisieren', exact=True).click()
+                check_clear_dialog(page)
                 page.get_by_role('button', name='Seite 2 entfernen', exact=True).click()
                 page.get_by_role('button', name='Seiten speichern', exact=True).click()
                 page.get_by_role('button', name='Ergebnis weiterbearbeiten', exact=True).click()
@@ -83,10 +111,30 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                 with pymupdf.open(download.value.path()) as pdf:
                     assert len(pdf) == 1
                     assert 'First original page' in pdf[0].get_text()
+                page.keyboard.press('Escape')
+                # Multiple document snapshots used to make Discard immediately
+                # reappear with an indistinguishable older workspace.
+                page.reload()
+                expect(page.get_by_role('button', name='Verwerfen', exact=True)).to_be_visible()
+                before = recovery_summaries(page)
+                assert len(before) >= 2, before
+                page.get_by_role('button', name='Verwerfen', exact=True).click()
+                expect(page.get_by_role('button', name='Verwerfen', exact=True)).to_have_count(0)
+                expect(page.get_by_text('Arbeitsstand verworfen.', exact=True)).to_be_visible()
+                after = recovery_summaries(page)
+                assert after == before[1:], (before, after)
+                page.reload()
+                saved = page.get_by_role('button', name='Gesicherte Arbeitsstände', exact=True)
+                expect(saved).to_be_visible()
+                expect(page.get_by_role('button', name='Verwerfen', exact=True)).to_have_count(0)
+                assert recovery_summaries(page) == after
+                saved.click()
+                page.get_by_role('menuitemradio').first.click()
+                expect(page.get_by_role('button', name='Verwerfen', exact=True)).to_be_visible()
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
                 assert not errors, errors
                 page.screenshot(path=str(out / f'workspace-{width}.png'), full_page=True)
-                print(f'PASS: {width}px result adoption undo/redo, persisted source history, reload recovery and result download')
+                print(f'PASS: {width}px result adoption undo/redo, reload recovery, actual snapshot deletion, reload dismissal, other-snapshot selection, destructive dialogs and result download')
             except Exception:
                 page.screenshot(path=str(out / f'workspace-failure-{width}.png'), full_page=True)
                 print(page.locator('body').inner_text(), flush=True)

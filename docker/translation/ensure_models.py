@@ -10,6 +10,8 @@ from pathlib import Path
 
 from argostranslate import package
 from libretranslate.init import check_and_install_models
+from minisbd.models import cache_dir as sentence_cache
+from sentence_models import ensure_sentence_models
 
 languages = set(os.environ['LT_LOAD_ONLY'].split(','))
 required = {(a, b) for code in languages - {'en'} for a, b in [('en', code), (code, 'en')]}
@@ -43,6 +45,7 @@ def warm_models():
 
 while True:
     try:
+        ensure_sentence_models(languages, Path(sentence_cache))
         if missing_pairs():
             print('Installiere fehlende Sprachpaare:', sorted(missing_pairs()), flush=True)
             check_and_install_models(load_only_lang_codes=sorted(languages), update=True)

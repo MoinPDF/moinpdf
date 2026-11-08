@@ -2,12 +2,14 @@
   "kosit": {
     "version": "1.6.3",
     "url": "https://github.com/itplr-kosit/validator/releases/download/v1.6.3/validator-1.6.3-standalone.jar",
-    "sha256": "799e64befca97d4080e03608c80b85dd5a5ecc5f4ae4f35d1116ec2855b9a7c9"
+    "sha256": "799e64befca97d4080e03608c80b85dd5a5ecc5f4ae4f35d1116ec2855b9a7c9",
+    "fallback_url": "https://api.github.com/repos/itplr-kosit/validator/releases/assets/522497986"
   },
   "xrechnung": {
     "version": "3.0.2 / 2026-08-31",
     "url": "https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/download/v2026-08-31/xrechnung-3.0.2-validator-configuration-2026-08-31.zip",
-    "sha256": "2530cd107c414511c5d0462ec10f886910395abfca820db82e83d70bf01221a8"
+    "sha256": "2530cd107c414511c5d0462ec10f886910395abfca820db82e83d70bf01221a8",
+    "fallback_url": "https://api.github.com/repos/itplr-kosit/validator-configuration-xrechnung/releases/assets/541277964"
   },
   "verapdf": {
     "version": "1.30.2",
@@ -17,6 +19,7 @@
   "mustang": {
     "version": "2.26.0",
     "url": "https://github.com/ZUGFeRD/mustangproject/releases/download/core-2.26.0/Mustang-CLI-2.26.0.jar",
-    "sha256": "42d7868cb68264874a7b8cab4c3587b03b23ccc7cd72373da917f66758bb9736"
+    "sha256": "42d7868cb68264874a7b8cab4c3587b03b23ccc7cd72373da917f66758bb9736",
+    "fallback_url": "https://api.github.com/repos/ZUGFeRD/mustangproject/releases/assets/529126253"
   }
 }

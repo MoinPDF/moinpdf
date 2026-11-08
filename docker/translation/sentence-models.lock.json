@@ -1,0 +1,47 @@
+{
+  "version": "0.0.1",
+  "models": {
+    "de": {
+      "url": "https://github.com/LibreTranslate/MiniSBD/releases/download/v0.0.1/de.onnx",
+      "fallback_url": "https://api.github.com/repos/LibreTranslate/MiniSBD/releases/assets/336220734",
+      "sha256": "00320fe47a79269bf4a85b4e3aa9a4b367fcc2528af23aa41cbad0203b35d1e7",
+      "size": 189791
+    },
+    "en": {
+      "url": "https://github.com/LibreTranslate/MiniSBD/releases/download/v0.0.1/en.onnx",
+      "fallback_url": "https://api.github.com/repos/LibreTranslate/MiniSBD/releases/assets/336220739",
+      "sha256": "6fa9f3a3b201687bd43e329b2b0736789efc97b37883b5b759b31988dca9f353",
+      "size": 188043
+    },
+    "es": {
+      "url": "https://github.com/LibreTranslate/MiniSBD/releases/download/v0.0.1/es.onnx",
+      "fallback_url": "https://api.github.com/repos/LibreTranslate/MiniSBD/releases/assets/336220741",
+      "sha256": "9774dd5ed1bd2d0566fa8d12ee59fd1d2c57b97127d004e03aa2b7b1cc6b2652",
+      "size": 193234
+    },
+    "fr": {
+      "url": "https://github.com/LibreTranslate/MiniSBD/releases/download/v0.0.1/fr.onnx",
+      "fallback_url": "https://api.github.com/repos/LibreTranslate/MiniSBD/releases/assets/336220757",
+      "sha256": "f9392ffd67104d9d633c9254e5095048ce64da6a04212d3dc02940425f8c3af4",
+      "size": 193461
+    },
+    "it": {
+      "url": "https://github.com/LibreTranslate/MiniSBD/releases/download/v0.0.1/it.onnx",
+      "fallback_url": "https://api.github.com/repos/LibreTranslate/MiniSBD/releases/assets/336220799",
+      "sha256": "ada440b5097f2099a6e9cf0673674805f8f95236a02910466c54f6afd8dd218f",
+      "size": 182756
+    },
+    "nl": {
+      "url": "https://github.com/LibreTranslate/MiniSBD/releases/download/v0.0.1/nl.onnx",
+      "fallback_url": "https://api.github.com/repos/LibreTranslate/MiniSBD/releases/assets/336220893",
+      "sha256": "b04ea4f625abd5ee3097f1a54490dc95bca0a6ef1920c38c1239784e6892aaf7",
+      "size": 181569
+    },
+    "pl": {
+      "url": "https://github.com/LibreTranslate/MiniSBD/releases/download/v0.0.1/pl.onnx",
+      "fallback_url": "https://api.github.com/repos/LibreTranslate/MiniSBD/releases/assets/336220899",
+      "sha256": "884e77a008668f67df61e44836ade2ef16764a0ff922d3b7b30c3249c5896fcc",
+      "size": 183035
+    }
+  }
+}

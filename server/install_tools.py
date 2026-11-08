@@ -4,10 +4,36 @@ import json
 import os
 import subprocess
 import tempfile
+import urllib.error
 import urllib.request
 import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape
+
+
+def download_verified(name: str, spec: dict) -> bytes:
+    urls = [spec["url"]]
+    if spec.get("fallback_url"):
+        urls.append(spec["fallback_url"])
+    for index, url in enumerate(urls):
+        request = urllib.request.Request(url, headers={
+            "User-Agent": "MoinPDF-build/1", "Accept": "application/octet-stream",
+        })
+        try:
+            with urllib.request.urlopen(request, timeout=120) as response:
+                data = response.read(128 * 1024 * 1024)
+        except (urllib.error.URLError, TimeoutError) as error:
+            transient = not isinstance(error, urllib.error.HTTPError) or error.code in {
+                408, 429, 500, 502, 503, 504,
+            }
+            if not transient or index == len(urls) - 1:
+                raise
+            print(f"Temporary download failure for {name}; trying its pinned upstream asset.", flush=True)
+            continue
+        if hashlib.sha256(data).hexdigest() != spec["sha256"]:
+            raise ValueError(f"SHA-256 mismatch: {name}")
+        return data
+    raise RuntimeError(f"No download source: {name}")
 
 
 def extract(archive: Path, destination: Path):
@@ -27,11 +53,7 @@ def install(root: Path):
     with tempfile.TemporaryDirectory() as directory:
         temporary = Path(directory)
         for name, spec in lock.items():
-            request = urllib.request.Request(spec["url"], headers={"User-Agent": "MoinPDF-build/1"})
-            with urllib.request.urlopen(request, timeout=120) as response:
-                data = response.read(128 * 1024 * 1024)
-            if hashlib.sha256(data).hexdigest() != spec["sha256"]:
-                raise ValueError(f"SHA-256 mismatch: {name}")
+            data = download_verified(name, spec)
             path = temporary / name
             path.write_bytes(data)
             if name == "kosit":
