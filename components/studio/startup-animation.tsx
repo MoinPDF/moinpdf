@@ -3,45 +3,20 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createStartupSound, type StartupSound } from '../../lib/startup-sound';
 
-export const STARTUP_DURATION_MS = 3000;
-
-/** Photographic poses derived from the original sailor in the kettenzug header. */
-export function StartupSailor() {
-  return (
-    <div className="startup-sailor" aria-hidden="true">
-      <img
-        className="startup-sailor-atlas"
-        src="/branding/startup-sailor-tear-16.webp"
-        width="1254"
-        height="1254"
-        alt=""
-        fetchPriority="high"
-        decoding="sync"
-        draggable={false}
-      />
-      <img
-        className="startup-sailor-atlas startup-sailor-blend"
-        src="/branding/startup-sailor-tear-16.webp"
-        width="1254"
-        height="1254"
-        alt=""
-        decoding="sync"
-        draggable={false}
-      />
-    </div>
-  );
-}
+export const STARTUP_DURATION_MS = 4000;
 
 export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }) {
   const [visible, setVisible] = useState(true);
   const [soundActive, setSoundActive] = useState(false);
   const [soundAvailable, setSoundAvailable] = useState(false);
   const overlay = useRef<HTMLDivElement>(null);
+  const video = useRef<HTMLVideoElement>(null);
   const sound = useRef<StartupSound | null>(null);
 
   useEffect(() => {
     if (!visible) return;
     const element = overlay.current;
+    const clip = video.current;
     const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     // CSS may already have started during server rendering. Never restart its clock.
     const animation = element
@@ -51,6 +26,19 @@ export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }
     const remaining = Math.max(0, STARTUP_DURATION_MS - elapsed);
     const deadline = performance.now() + remaining;
     const started = deadline - STARTUP_DURATION_MS;
+    // The supplied eight-second clip is encoded at 2× speed (192 frames / 48 fps).
+    // A delayed download or hydration joins the existing clock instead of replaying it.
+    const syncVideo = () => {
+      if (!clip || clip.readyState < 1 || motion?.matches) return;
+      const position = Math.max(0, Math.min(3.99, (performance.now() - started) / 1000));
+      if (Math.abs(clip.currentTime - position) > 0.15) {
+        try {
+          clip.currentTime = position;
+        } catch {
+          /* The poster remains available while metadata loads. */
+        }
+      }
+    };
     const audio = motion?.matches
       ? null
       : createStartupSound(() => performance.now() - started, setSoundActive);
@@ -65,9 +53,19 @@ export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }
     if (audio && playSound) audio.enable();
     const finish = () => {
       audio?.dispose();
+      clip?.pause();
       sound.current = null;
       setVisible(false);
     };
+    clip?.addEventListener('loadedmetadata', syncVideo);
+    clip?.addEventListener('playing', syncVideo);
+    clip?.addEventListener('error', finish);
+    if (clip && !motion?.matches && remaining > 0) {
+      clip.muted = true;
+      syncVideo();
+      // Muted inline playback supports mobile autoplay; rejection keeps the poster.
+      void clip.play()?.catch(() => {});
+    }
     const timeout = window.setTimeout(finish, motion?.matches ? 0 : remaining);
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' || event.key === 'Tab') finish();
@@ -84,6 +82,10 @@ export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }
     motion?.addEventListener?.('change', onMotion);
     return () => {
       audio?.dispose();
+      clip?.pause();
+      clip?.removeEventListener('loadedmetadata', syncVideo);
+      clip?.removeEventListener('playing', syncVideo);
+      clip?.removeEventListener('error', finish);
       sound.current = null;
       window.clearTimeout(timeout);
       document.removeEventListener('keydown', onKey);
@@ -110,8 +112,19 @@ export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }
     >
       <div className="moinpdf-startup-lockup" aria-hidden="true">
         <div className="moinpdf-startup-illustration">
-          <div className="moinpdf-startup-halo" />
-          <StartupSailor />
+          <video
+            ref={video}
+            className="startup-sailor-video"
+            src="/branding/startup-sailor-firefly-4s.mp4"
+            poster="/branding/startup-sailor-firefly-poster.webp"
+            width="720"
+            height="1280"
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+          />
         </div>
         <div className="moinpdf-startup-logo">
           <img

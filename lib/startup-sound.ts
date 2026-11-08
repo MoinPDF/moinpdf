@@ -1,9 +1,9 @@
 /** Quiet, locally synthesized paper tear and a short shimmer; no media request. */
 export function startupSoundSamples(sampleRate = 22050) {
-  const samples = new Float32Array(Math.ceil(2.65 * sampleRate));
+  const samples = new Float32Array(Math.ceil(3.9 * sampleRate));
   const chimes = [
-    [2.04, 1568, 0.028],
-    [2.13, 2093, 0.021],
+    [3.28, 1568, 0.028],
+    [3.37, 2093, 0.021],
   ] as const;
   let seed = 0x4d4f494e,
     low = 0;
@@ -14,14 +14,14 @@ export function startupSoundSamples(sampleRate = 22050) {
     const noise = (seed >>> 0) / 2147483648 - 1;
     low += 0.16 * (noise - low);
     const t = i / sampleRate;
-    const tear = t - 0.68;
+    const tear = t - 1.05;
     let value = 0;
-    if (tear >= 0 && tear < 1.2) {
-      const envelope = Math.min(1, tear / 0.035, (1.2 - tear) / 0.12);
+    if (tear >= 0 && tear < 1.4) {
+      const envelope = Math.min(1, tear / 0.035, (1.4 - tear) / 0.12);
       const grain = 0.24 + 0.76 * Math.pow(Math.sin(tear * 113) * Math.sin(tear * 37), 2);
       value += (noise - low) * envelope * grain * 0.16;
     }
-    const rustle = t - 0.44;
+    const rustle = t - 0.6;
     if (rustle >= 0 && rustle < 0.22)
       value += (noise - low) * Math.sin((Math.PI * rustle) / 0.22) * 0.028;
     for (const [start, frequency, volume] of chimes) {
@@ -75,7 +75,7 @@ export function createStartupSound(
   };
   return {
     enable() {
-      if (disposed || source || elapsed() >= 2650) return;
+      if (disposed || source || elapsed() >= 3900) return;
       try {
         context ??= new Audio({ latencyHint: 'interactive' });
         const current = context,
@@ -85,7 +85,7 @@ export function createStartupSound(
           .resume()
           .then(() => {
             if (disposed || request !== generation || context !== current) return;
-            if (current.state !== 'running' || document.hidden || elapsed() >= 2650) {
+            if (current.state !== 'running' || document.hidden || elapsed() >= 3900) {
               stop(true);
               return;
             }
