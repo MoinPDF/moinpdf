@@ -35,7 +35,7 @@ jobs:
           path: ${{ runner.temp }}/image-reference
       - name: Verify tests, exact image source and release version
         id: verify
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           IMAGE_RUN_ID: ${{ github.event.workflow_run.id || inputs.image_run_id }}
         with:
