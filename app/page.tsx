@@ -26,6 +26,7 @@ import { completePdfSelection } from '@/lib/result-details';
 
 import { useLanguage } from '@/components/studio/appearance';
 import { AppearanceProvider, AppearanceControls, useTools } from '@/components/studio/appearance';
+import { StartupAnimation } from '@/components/studio/startup-animation';
 
 import {
   WorkspaceResultsProvider,
@@ -272,6 +273,7 @@ export default function Home() {
   useLanguage();
   return (
     <AppearanceProvider>
+      <StartupAnimation />
       <ToolBrowserMemory>
         <WorkspaceResultsProvider>
           <WorkspaceShell />

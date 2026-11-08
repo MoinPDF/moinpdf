@@ -14,6 +14,7 @@
 @import '../components/studio/result-actions.css';
 @import '../components/studio/ui-efficiency.css';
 @import '../components/studio/mobile-navigation.css';
+@import '../components/studio/startup-animation.css';
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

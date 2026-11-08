@@ -321,7 +321,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     assert info.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), (route, theme, width)
                     if width == 320:
                         info.screenshot(path=str(out/f'harbor-{route}-{theme}.png'))
-                assert info.evaluate('getComputedStyle(document.body).backgroundColor') == ('rgb(28, 35, 38)' if theme == 'dark' else 'rgb(245, 250, 248)')
+                assert info.evaluate('getComputedStyle(document.body).backgroundColor') == ('rgb(28, 35, 38)' if theme == 'dark' else 'rgb(179, 212, 196)')
                 info.close()
                 checks.append(f'{route}: {theme}, 320/768/1440px, shared palette')
         assert not errors, errors

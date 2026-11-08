@@ -12,6 +12,8 @@ Stand: 28. Oktober 2026 · Version 0.25.1. Frühere, datierte Prüfberichte weit
 
 Der Hintergrund im Light Mode verwendet auf Desktop, Tablet und Smartphone ein dunkleres Mintgrün. Die grünen Verläufe liegen auf derselben dunkleren Grundfläche, sodass helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
 
+Beim Öffnen oder Neuladen der App läuft einmalig eine 2,75 Sekunden lange Startanimation: Der Seemann zerreißt ein Blatt Papier über dem MoinPDF-Logo. Der Arbeitsbereich lädt währenddessen weiter. Werkzeug- und Theme-Wechsel starten die Animation nicht erneut. Antippen, Escape oder Tab überspringen sie; bei aktivierter Einstellung für reduzierte Bewegung entfällt sie.
+
 Seit 0.22.0 stehen beim Word-Export zwei Ziele im Vordergrund: „Aussehen möglichst erhalten“ und „Text und Tabellen bearbeiten“. Text-only-Ausgabe und Serverwahl liegen unter „Weitere Optionen“. Die Vorprüfung bündelt Hinweise je Textstelle. Schriftvergleiche berücksichtigen gedrehte Geometrie, Unicode-Zeichenabstände und horizontale Skalierung. Sichtbare Vorschauen werden vor wartenden Nachbarseiten verarbeitet; zusätzliche OCR-Vorbereitung pausiert bei Eingaben. Die Cursorführung berücksichtigt horizontales Scrollen und Bewegungen des mobilen Sichtbereichs.
 
 - Exportprüfungen haben begrenzte Wartezeiten, bleiben abbrechbar und starten nach einer Zeitüberschreitung höchstens einmal vollständig neu. Ungeprüfte Ausgaben bleiben gesperrt; die Bearbeitung bleibt für einen erneuten Versuch geöffnet.

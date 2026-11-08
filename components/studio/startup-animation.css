@@ -1,0 +1,248 @@
+/* One 2.75 s entrance per page opening; no media download or artificial loading. */
+.moinpdf-startup {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: radial-gradient(ellipse at 50% 40%, #e6f2e8 0, #c6e0d1 44%, #b3d4c4 100%);
+  cursor: default;
+  isolation: isolate;
+  animation: moinpdf-startup-exit var(--startup-duration) linear both;
+}
+.dark .moinpdf-startup {
+  background: radial-gradient(ellipse at 50% 40%, #20413f 0, #182e30 44%, #152124 100%);
+}
+.moinpdf-startup-lockup {
+  width: min(380px, 80vw, 68svh);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateY(-3svh);
+}
+.moinpdf-startup-illustration {
+  position: relative;
+  width: 100%;
+  animation: moinpdf-startup-arrive var(--startup-duration) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.moinpdf-startup-halo {
+  position: absolute;
+  inset: 19% 12% 9%;
+  border: 1px solid #fff9;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ffffff80, #ffffff0a);
+  box-shadow:
+    0 0 0 14px #ffffff0c,
+    0 0 0 15px #ffffff20;
+}
+.dark .moinpdf-startup-halo {
+  border-color: #94e7ca20;
+  background: linear-gradient(145deg, #8fe4c31a, #8fe4c303);
+  box-shadow:
+    0 0 0 14px #9debd604,
+    0 0 0 15px #9debd60a;
+}
+.startup-sailor {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 9px 9px #123b3614);
+}
+.startup-sailor-head {
+  transform-origin: 200px 204px;
+  animation: moinpdf-startup-nod var(--startup-duration) ease-in-out both;
+}
+.startup-sailor-eyes {
+  transform-origin: 200px 137px;
+  animation: moinpdf-startup-blink var(--startup-duration) linear both;
+}
+.startup-grip {
+  transform-origin: 200px 326px;
+  animation: moinpdf-startup-tear-left var(--startup-duration) cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.startup-grip-right {
+  animation-name: moinpdf-startup-tear-right;
+}
+.startup-paper-fibres {
+  transform-origin: 200px 310px;
+  animation: moinpdf-startup-fibres var(--startup-duration) ease-out both;
+}
+.startup-tear-lines {
+  animation: moinpdf-startup-tear-lines var(--startup-duration) ease-out both;
+}
+.moinpdf-startup-logo {
+  position: relative;
+  width: 78%;
+  margin-top: 16px;
+  animation: moinpdf-startup-logo var(--startup-duration) ease-out both;
+}
+.moinpdf-startup-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.moinpdf-startup-logo .startup-logo-dark,
+.dark .moinpdf-startup-logo .startup-logo-light {
+  display: none;
+}
+.dark .moinpdf-startup-logo .startup-logo-dark {
+  display: block;
+}
+@keyframes moinpdf-startup-arrive {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  12%,
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes moinpdf-startup-logo {
+  0%,
+  4% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  18%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes moinpdf-startup-nod {
+  0%,
+  24% {
+    transform: rotate(0);
+  }
+  34% {
+    transform: translateY(3px) rotate(-3deg);
+  }
+  48% {
+    transform: translateY(0) rotate(2deg);
+  }
+  63%,
+  100% {
+    transform: rotate(0);
+  }
+}
+@keyframes moinpdf-startup-blink {
+  0%,
+  22%,
+  26%,
+  100% {
+    transform: scaleY(1);
+  }
+  24% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes moinpdf-startup-tear-left {
+  0%,
+  26% {
+    transform: translate(0, 0) rotate(0);
+  }
+  32% {
+    transform: translate(2px, -3px) rotate(2deg);
+  }
+  39% {
+    transform: rotate(-7deg);
+  }
+  46% {
+    transform: rotate(-12deg);
+  }
+  53% {
+    transform: translate(-22px, -6px) rotate(-20deg);
+  }
+  66%,
+  100% {
+    transform: translate(-18px, 1px) rotate(-15deg);
+  }
+}
+@keyframes moinpdf-startup-tear-right {
+  0%,
+  26% {
+    transform: translate(0, 0) rotate(0);
+  }
+  32% {
+    transform: translate(-2px, -3px) rotate(-2deg);
+  }
+  39% {
+    transform: rotate(7deg);
+  }
+  46% {
+    transform: rotate(12deg);
+  }
+  53% {
+    transform: translate(22px, -6px) rotate(20deg);
+  }
+  66%,
+  100% {
+    transform: translate(18px, 1px) rotate(15deg);
+  }
+}
+@keyframes moinpdf-startup-fibres {
+  0%,
+  44% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  48% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  65%,
+  100% {
+    opacity: 0;
+    transform: translateY(28px) rotate(24deg);
+  }
+}
+@keyframes moinpdf-startup-tear-lines {
+  0%,
+  35% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.8;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+/* CSS also removes hit testing if hydration or the JS timer is delayed. */
+@keyframes moinpdf-startup-exit {
+  0%,
+  88% {
+    opacity: 1;
+    visibility: visible;
+  }
+  99.99% {
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moinpdf-startup {
+    display: none;
+    animation: none;
+  }
+  .moinpdf-startup * {
+    animation: none !important;
+  }
+}
+@media print {
+  .moinpdf-startup {
+    display: none;
+  }
+}

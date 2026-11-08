@@ -14,6 +14,7 @@ def ready(page):
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(origin)
     expect(page.locator('.harbor-home')).to_be_visible()
+    expect(page.locator('.moinpdf-startup')).to_have_count(0)
     page.evaluate('document.fonts.ready')
     expect(page.locator('.harbor-photo img')).to_have_js_property('complete', True)
 
