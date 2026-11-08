@@ -107,7 +107,9 @@ export function ToolChooser({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{t('Behalten')}</AlertDialogCancel>
-                <AlertDialogAction onClick={onClear}>{t('Leeren')}</AlertDialogAction>
+                <AlertDialogAction variant="destructive" onClick={onClear}>
+                  {t('Leeren')}
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

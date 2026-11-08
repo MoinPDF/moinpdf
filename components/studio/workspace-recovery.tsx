@@ -26,6 +26,30 @@ import {
 import { useLanguage } from './appearance';
 import { createRecoveryWriter, type RecoveryStatus } from '@/lib/recovery-writer';
 
+const dismissedKey = 'moinpdf.recovery.dismissed.v1';
+function dismissedRecoveries(): Pick<RecoverySummary, 'id' | 'updated'>[] {
+  try {
+    const value: unknown = JSON.parse(window.sessionStorage.getItem(dismissedKey) || '[]');
+    return Array.isArray(value)
+      ? value.filter(
+          (item) => item && typeof item.id === 'string' && typeof item.updated === 'number',
+        )
+      : [];
+  } catch {
+    return [];
+  }
+}
+function dismissRecoveryPrompts(values: RecoverySummary[]) {
+  try {
+    window.sessionStorage.setItem(
+      dismissedKey,
+      JSON.stringify(values.map(({ id, updated }) => ({ id, updated }))),
+    );
+  } catch {
+    // The snapshots remain accessible even when session preferences are unavailable.
+  }
+}
+
 export function WorkspaceRecovery({
   sources,
   state,
@@ -46,6 +70,7 @@ export function WorkspaceRecovery({
     [working, setWorking] = useState(false),
     [host, setHost] = useState<HTMLElement | null>(null);
   const warned = useRef(false),
+    discarding = useRef(false),
     live = useRef(false),
     writable = useRef(false),
     callbacks = useRef({ t, onStatus });
@@ -99,7 +124,11 @@ export function WorkspaceRecovery({
     let active = true;
     void listRecoveries()
       .then((values) => {
-        const value = values[0];
+        const dismissed = dismissedRecoveries();
+        const value = values.find(
+          (saved) =>
+            !dismissed.some((item) => item.id === saved.id && item.updated === saved.updated),
+        );
         if (active) {
           setSaved(values);
           setPending(value || null);
@@ -149,24 +178,44 @@ export function WorkspaceRecovery({
     };
   }, []);
   async function discard(id = pending?.id || activeKey.current) {
+    if (discarding.current) return;
+    discarding.current = true;
+    const selected = pending?.id === id;
     writable.current = false;
     setReady(false);
-    setPending(null);
-    let next: RecoverySummary | null = null;
-    await writers.current.get(id)?.cancel();
+    setWorking(true);
+    let removed = false;
     try {
+      await writers.current.get(id)?.cancel();
       if (id) await clearRecovery(id);
-      const values = await listRecoveries();
-      next = pending?.id === id ? values[0] || null : null;
+      removed = true;
+      const values = saved.filter((value) => value.id !== id);
+      // Do not immediately replace the discarded prompt with an older snapshot.
+      // Remember the decision in this tab across reloads, without deleting other
+      // workspaces or suppressing a newer revision saved by another tab.
+      if (selected) dismissRecoveryPrompts(values);
       if (live.current) {
         setSaved(values);
-        setPending(next);
-        callbacks.current.onStatus?.({ phase: next ? 'restore' : 'idle' });
+        setPending(null);
+        callbacks.current.onStatus?.({ phase: 'idle' });
+        if (selected) toast.success(t('Arbeitsstand verworfen.', 'Workspace discarded.'));
       }
     } catch {
-      if (live.current) callbacks.current.onStatus?.({ phase: 'error' });
+      if (live.current) {
+        callbacks.current.onStatus?.({ phase: 'error' });
+        toast.error(
+          t(
+            'Arbeitsstand konnte nicht gelöscht werden. Bitte erneut versuchen.',
+            'Could not delete the workspace. Please try again.',
+          ),
+        );
+      }
     } finally {
-      if (live.current) setReady(!next);
+      discarding.current = false;
+      if (live.current) {
+        setReady(removed || !pending);
+        setWorking(false);
+      }
     }
   }
   const discardRef = useRef(discard);
@@ -210,43 +259,61 @@ export function WorkspaceRecovery({
       setWorking(false);
     }
   }
-  if (!host || !pending) return null;
+  if (!host || (!pending && (!saved.length || sources.length > 0))) return null;
   return createPortal(
     <div className="advanced-actions workspace-recovery">
-      <Button
-        variant="outline"
-        size="sm"
-        disabled={locked || working || sources.length > 0}
-        onClick={() => void restore()}
-      >
-        {pending.id === saved[0]?.id
-          ? t('Letzten Arbeitsstand wiederherstellen', 'Restore previous workspace')
-          : t('Arbeitsstand wiederherstellen', 'Restore workspace')}
-      </Button>
-      <Button variant="ghost" size="sm" disabled={working} onClick={() => void discard()}>
-        {t('Verwerfen', 'Discard')}
-      </Button>
+      {pending && (
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={locked || working || sources.length > 0}
+            onClick={() => void restore()}
+          >
+            {pending.id === saved[0]?.id
+              ? t('Letzten Arbeitsstand wiederherstellen', 'Restore previous workspace')
+              : t('Arbeitsstand wiederherstellen', 'Restore workspace')}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={locked || working}
+            onClick={() => void discard()}
+          >
+            {t('Verwerfen', 'Discard')}
+          </Button>
+        </>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="icon-sm"
+            size={pending ? 'icon-sm' : 'sm'}
             disabled={locked || working}
-            aria-label={t('Weitere Optionen zur Wiederherstellung', 'More recovery options')}
+            aria-label={
+              pending
+                ? t('Weitere Optionen zur Wiederherstellung', 'More recovery options')
+                : t('Gesicherte Arbeitsstände', 'Saved workspaces')
+            }
             title={t('Weitere Optionen zur Wiederherstellung', 'More recovery options')}
           >
             <MoreHorizontal aria-hidden="true" />
+            {!pending && t('Gesicherte Arbeitsstände', 'Saved workspaces')}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" collisionPadding={12} className="workspace-recovery-menu">
-          {saved.length > 1 && (
+          {saved.length > 0 && (
             <>
               <DropdownMenuLabel>
                 {t('Gesicherte Arbeitsstände', 'Saved workspaces')}
               </DropdownMenuLabel>
               <DropdownMenuRadioGroup
-                value={pending.id}
-                onValueChange={(id) => setPending(saved.find((value) => value.id === id) || null)}
+                value={pending?.id || ''}
+                onValueChange={(id) => {
+                  setPending(saved.find((value) => value.id === id) || null);
+                  setReady(false);
+                  callbacks.current.onStatus?.({ phase: 'restore' });
+                }}
               >
                 {saved.map((value, index) => (
                   <DropdownMenuRadioItem key={value.id} value={value.id}>
@@ -263,6 +330,7 @@ export function WorkspaceRecovery({
           )}
           <DropdownMenuItem
             onSelect={() => {
+              dismissRecoveryPrompts(saved);
               setPending(null);
               setReady(true);
               callbacks.current.onStatus?.({ phase: 'idle' });

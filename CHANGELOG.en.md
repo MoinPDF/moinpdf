@@ -4,6 +4,11 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased – 8 November 2026
+
+- “Discard” deletes the selected recovery snapshot, confirms success and does not immediately offer an older snapshot. Other workspaces remain available in the chooser; this tab remembers the decision across reloads. Storage errors remain visible and can be retried.
+- “Clear” is marked in red in both the workspace and tool chooser confirmation dialogs.
+
 ## 0.27.4 – 7 November 2026
 
 - AI posting suggestions distinguish exhausted API credits, spend/usage limits, temporary OpenAI rate limits and installation limits. Reported waiting times are displayed and block resubmission; requests are never retried automatically. Unknown causes remain explicitly unknown.

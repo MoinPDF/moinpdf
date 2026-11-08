@@ -9,6 +9,11 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Noch nicht veröffentlicht – 8. November 2026
+
+- „Verwerfen“ löscht den gewählten automatischen Arbeitsstand, bestätigt den Erfolg und bietet nicht sofort eine ältere Sicherung an. Andere Arbeitsstände bleiben im Auswahlmenü verfügbar; die Entscheidung gilt in diesem Tab auch nach dem Neuladen. Speicherfehler bleiben sichtbar und können erneut versucht werden.
+- „Leeren“ ist im Bestätigungsdialog des Arbeitsbereichs und der Werkzeugauswahl rot gekennzeichnet.
+
 ## 0.27.4 – 7. November 2026
 
 - Die KI-Kontierung unterscheidet fehlendes API-Guthaben, Ausgaben-/Nutzungslimits, vorübergehende OpenAI-Begrenzungen und die Grenzen dieser Installation. Gemeldete Wartezeiten werden angezeigt und sperren erneutes Senden; es gibt keine automatische Wiederholung. Unbekannte Ursachen bleiben ausdrücklich unbekannt.

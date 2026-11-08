@@ -119,6 +119,8 @@ Results can be adopted as new working documents. OCR exports searchable PDF, TXT
 
 **Projects** locally restore files and working states, including editing history, forms and bookmarks, from the last five saved states. Storage is unencrypted browser storage; the current session is saved before switching projects. The latest ten results are saved locally up to 160 MB in total, and the workspace is automatically saved for recovery after reloading. A chosen state can be transferred as an optionally password-encrypted `.moinpdf` file including originals and history, using “Download project file” or “Open project file”. Project files are not sanitised final PDFs. Limits: 80 MB of active source files, 200 active pages and 240 MB including undo history. Extensive OCR can be slow on mobile devices.
 
+**Automatic recovery:** “Discard” deletes the selected workspace and confirms deletion. Older snapshots remain accessible through “Saved workspaces” but are not automatically offered again in this tab, including after a reload. Newer changes from other tabs can still be offered. If deletion fails, the snapshot remains available with an error message and can be retried. “Clear workspace” requires confirmation using the red “Clear” button; “Keep” cancels.
+
 ## Website link to PDF
 
 “HTML & websites to PDF” accepts a public website address. A separate web converter in the complete Docker installation renders images, fonts, CSS and publicly loadable JavaScript content. Choose A4/Letter, portrait/landscape, backgrounds and screen/print rendering. Download the result or continue editing it directly.
