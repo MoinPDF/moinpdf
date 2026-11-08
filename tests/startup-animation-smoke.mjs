@@ -18,14 +18,6 @@ for (const key of ['window', 'document', 'HTMLElement', 'Element', 'Node', 'Even
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // jsdom has no AnimationEvent constructor; advertise the standard event name to React.
 window.AnimationEvent = window.Event;
-let videoReady = 1, rejectVideo = false, videoStarts = 0;
-Object.defineProperty(window.HTMLMediaElement.prototype, 'readyState', { get: () => videoReady });
-window.HTMLMediaElement.prototype.play = function () {
-  videoStarts++;
-  this.testPlaying = !rejectVideo;
-  return rejectVideo ? Promise.reject(new Error('Autoplay denied')) : Promise.resolve();
-};
-window.HTMLMediaElement.prototype.pause = function () { this.testPlaying = false; };
 let now = 0, nextTimer = 0, elapsed = 0, reduced = false;
 const timers = new Map(), motionListeners = new Set();
 window.setTimeout = (callback, delay) => {
@@ -71,21 +63,15 @@ const fresh = async () => {
 try {
   await fresh();
   assert(visible());
-  const initialClip = document.querySelector('video');
-  assert.equal(initialClip.muted, true, 'Visual playback stays muted independently of sound preference');
-  assert.equal(initialClip.playsInline, true, 'Mobile playback stays within the page');
-  assert.equal(initialClip.autoplay, true);
-  assert.equal(initialClip.loop, false);
-  assert.equal(initialClip.controls, false);
-  assert(initialClip.poster.endsWith('startup-sailor-firefly-poster.webp'));
+  assert.equal(document.querySelector('video'), null, 'The logo entrance never loads a video');
+  assert(document.querySelector('.startup-logo-light').src.endsWith('/branding/moinpdf-logo.svg'), 'The original brand remains available');
   assert.equal(timers.size, 1, 'StrictMode retains one timer');
   assert.equal(document.querySelector('#workspace-action').textContent, 'Open PDF', 'Workspace mounts in parallel');
-  await advance(3999);
+  await advance(3749);
   assert(visible(), 'Entrance remains until its full duration');
   await act(async () => root.render(app('Choose PDF')));
   await advance(1);
-  assert.equal(Boolean(visible()), false, 'Rerender does not reset the 4-second deadline');
-  assert.equal(initialClip.testPlaying, false, 'Finishing releases video playback');
+  assert.equal(Boolean(visible()), false, 'Rerender does not reset the 3.75-second deadline');
   await act(async () => root.render(app('Another tool')));
   assert.equal(Boolean(visible()), false, 'A tool/theme rerender does not replay the entrance');
   await act(async () => document.querySelector('#workspace-action').click());
@@ -105,9 +91,7 @@ try {
   }
 
   reduced = true;
-  const startsBeforeReduced = videoStarts;
   await fresh();
-  assert.equal(videoStarts, startsBeforeReduced, 'Reduced motion never starts video');
   await advance(0);
   assert.equal(Boolean(visible()), false, 'Reduced motion adds no delay');
   reduced = false;
@@ -118,24 +102,17 @@ try {
   reduced = false;
 
   elapsed = 2000;
-  videoReady = 0;
   await fresh();
-  const delayedClip = document.querySelector('video');
-  videoReady = 1;
-  await act(async () => delayedClip.dispatchEvent(new window.Event('loadedmetadata')));
-  assert(delayedClip.currentTime >= 2 && delayedClip.currentTime < 2.15, 'A delayed video joins the intro clock');
-  await advance(1999);
+  await advance(1749);
   assert(visible());
   await advance(1);
   assert.equal(Boolean(visible()), false, 'Hydration preserves the CSS animation deadline');
-  elapsed = 5000;
-  const startsBeforeLate = videoStarts;
+  elapsed = 4000;
   await fresh();
-  assert.equal(videoStarts, startsBeforeLate, 'Expired hydration does not start a late video');
   await advance(0);
   assert.equal(Boolean(visible()), false, 'Late hydration never replays a completed entrance');
 
-  elapsed = 3990;
+  elapsed = 3740;
   await fresh();
   // Let real time pass while deliberately withholding the window timer.
   await new Promise(resolve => setTimeout(resolve, 30));
@@ -153,30 +130,20 @@ try {
     Object.defineProperty(event, 'animationName', { value: name });
     target.dispatchEvent(event);
   };
-  await act(async () => end(document.querySelector('.startup-logo-shine'), 'moinpdf-startup-shine'));
+  await act(async () => end(document.querySelector('.startup-logo-wave'), 'moinpdf-wave-rise'));
   assert(visible(), 'A child animation cannot end the entrance early');
   await act(async () => end(visible(), 'moinpdf-startup-exit'));
   assert.equal(Boolean(visible()), false, 'The actual CSS end also releases the overlay');
   assert.equal(timers.size, 0);
   assert.equal(motionListeners.size, 0);
-  rejectVideo = true;
-  await fresh();
-  await advance(4000);
-  assert.equal(Boolean(visible()), false, 'Rejected video autoplay cannot hold the app closed');
-  rejectVideo = false;
-  await fresh();
-  const failedClip = document.querySelector('video');
-  await act(async () => failedClip.dispatchEvent(new window.Event('error')));
-  assert.equal(Boolean(visible()), false, 'A missing or undecodable video releases the workspace');
-  assert.equal(failedClip.testPlaying, false);
   // Real sound-controller behavior with an autoplay gate, without an audio device.
   const { createStartupSound, startupSoundSamples } = await import('../.cache/startup-animation/sound.mjs');
   const samples = startupSoundSamples();
   assert(samples.every(Number.isFinite));
-  assert.equal(samples.slice(0, Math.floor(0.6 * 22050)).every(v => v === 0), true);
-  assert(Math.max(...samples) <= 0.24 && Math.min(...samples) >= -0.24, 'Quiet peak ceiling');
-  assert(samples.slice(28000, 42000).some(v => Math.abs(v) > 0.04), 'Paper tear is audible');
-  assert(samples.slice(73000, 78000).some(v => Math.abs(v) > 0.004), 'Shimmer accompanies the logo');
+  assert.equal(samples.slice(0, Math.floor(0.3 * 22050)).every(v => v === 0), true);
+  assert(Math.max(...samples) <= 0.16 && Math.min(...samples) >= -0.16, 'Quiet peak ceiling');
+  assert(samples.slice(15000, 30000).some(v => Math.abs(v) > 0.005), 'Wave whoosh is audible');
+  assert(samples.slice(57000, 62000).some(v => Math.abs(v) > 0.004), 'Shimmer accompanies the logo');
   let blocked = false;
   const contexts = [], starts = [];
   class TestAudioContext {
@@ -209,7 +176,7 @@ try {
   cancelled.dispose(); waiting.unlock(); await Promise.resolve();
   assert.equal(starts.length, before, 'A blocked sound cannot play after dismissal');
   const late = createStartupSound(() => audioTime, () => {});
-  audioTime = 500; late.enable(); audioTime = 3950; contexts.at(-1).unlock(); await Promise.resolve();
+  audioTime = 500; late.enable(); audioTime = 3600; contexts.at(-1).unlock(); await Promise.resolve();
   assert.equal(starts.length, before, 'A late autoplay unlock never replays the startup');
   assert.equal(contexts.at(-1).state, 'closed'); late.dispose();
 
@@ -237,7 +204,7 @@ try {
   await act(async () => visible().click());
   assert.equal(contexts.at(-1).state, 'closed', 'Skipping closes the audio device immediately');
   window.localStorage.removeItem('moinpdf-startup-sound');
-  console.log('PASS: 4 s Firefly video, muted inline playback, delayed-media synchronization, blocked/error cleanup, parallel app mount, StrictMode, no replay, keyboard/tap skip, reduced motion, hydration, background-tab cleanup, synchronized audio, autoplay cancellation, mute preference and DE/EN sound controls.');
+  console.log('PASS: 3.75 s logo entrance, no video, original branding, parallel app mount, StrictMode, no replay, keyboard/tap skip, reduced motion, hydration, background-tab cleanup, synchronized audio, autoplay cancellation, mute preference and DE/EN sound controls.');
 } finally {
   await act(async () => root.unmount());
   dom.window.close();

@@ -6,7 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased – 8 November 2026
 
-- The supplied Firefly video replaces the startup poses: the full eight-second clip is accelerated to four seconds, retaining 192 frames at 48 fps, paper tearing and the final wink. The MoinPDF logo, brief sparkle and quiet paper-tear/shimmer sound remain. The sound control remembers the preference; a tap enables sound if autoplay is blocked. Skipping and reduced motion also stop the audio.
+- A 3.75-second entrance animates the original MoinPDF logo with a wave reveal, gentle water ripples, a light sweep and brief sparkles. The sailor video and poster are removed entirely. A subtle wave/shimmer sound replaces the paper tear; sound preference, skipping and reduced-motion support remain.
 - Darker mint-green background in the light theme on desktop, tablet and mobile, increasing contrast with light cards, input fields and tool panels.
 
 ## 0.27.5 – 8 November 2026

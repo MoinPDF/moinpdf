@@ -1,4 +1,4 @@
-/* One 4 s entrance per page opening; the workspace keeps loading in parallel. */
+/* A single 3.75 s logo entrance. All movement stays in SVG/CSS. */
 .moinpdf-startup {
   position: fixed;
   inset: 0;
@@ -8,43 +8,63 @@
   overflow: hidden;
   padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
     max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
-  background: radial-gradient(ellipse at 50% 40%, #e6f2e8 0, #c6e0d1 44%, #b3d4c4 100%);
+  background: radial-gradient(ellipse at 50% 44%, #e4f2e8 0, #c4dfd0 46%, #b3d4c4 100%);
+  --startup-water: #169e8b;
+  --startup-glow: #40d6ae38;
   cursor: default;
   isolation: isolate;
   animation: moinpdf-startup-exit var(--startup-duration) linear both;
 }
 .dark .moinpdf-startup {
-  background: radial-gradient(ellipse at 50% 40%, #20413f 0, #182e30 44%, #152124 100%);
+  background: radial-gradient(ellipse at 50% 44%, #1e403d 0, #152d2e 46%, #101d21 100%);
+  --startup-water: #79e8d0;
+  --startup-glow: #43f0bd32;
 }
 .moinpdf-startup-lockup {
-  width: min(300px, 76vw, 38svh);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translateY(-1svh);
+  position: relative;
+  width: min(680px, 88vw, 120svh);
+  aspect-ratio: 36 / 19;
+  transform: translateY(-3svh);
+  isolation: isolate;
 }
-.moinpdf-startup-illustration {
-  width: 100%;
-  aspect-ratio: 9 / 16;
-  overflow: hidden;
-  border-radius: 24px;
-  background: #c6e0d1;
-  box-shadow:
-    0 12px 36px #123b361c,
-    0 0 0 1px #ffffff60;
+.startup-logo-aura {
+  position: absolute;
+  inset: -24% -12%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--startup-glow), transparent 64%);
+  animation: moinpdf-logo-aura var(--startup-duration) ease-out both;
 }
-.startup-sailor-video {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
+.startup-logo-ripple {
+  position: absolute;
+  inset: 9% 4%;
+  border: 1px solid var(--startup-water);
+  border-radius: 50%;
+  animation: moinpdf-logo-ripple var(--startup-duration) ease-out both;
+}
+.startup-logo-ripple-two {
+  inset: 18% 12%;
+  animation-delay: 140ms;
 }
 .moinpdf-startup-logo {
-  position: relative;
-  width: 88%;
-  margin-top: 16px;
-  animation: moinpdf-startup-logo var(--startup-duration) ease-out both;
+  position: absolute;
+  z-index: 2;
+  inset: 27% 2% auto;
+  aspect-ratio: 680 / 225;
+  animation: moinpdf-logo-settle var(--startup-duration) cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.startup-logo-outline,
+.startup-logo-shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mask: url('/branding/moinpdf-logo.svg') center / contain no-repeat;
+}
+.startup-logo-outline {
+  background: var(--startup-water);
+  animation: moinpdf-logo-outline var(--startup-duration) ease-out both;
+}
+.startup-logo-reveal {
+  animation: moinpdf-logo-reveal var(--startup-duration) cubic-bezier(0.3, 0.6, 0.25, 1) both;
 }
 .moinpdf-startup-logo img {
   display: block;
@@ -58,19 +78,47 @@
 .dark .moinpdf-startup-logo .startup-logo-dark {
   display: block;
 }
-.startup-logo-shine {
+.startup-logo-wave {
   position: absolute;
-  inset: 0;
+  z-index: 1;
+  left: -1%;
+  top: 24%;
+  width: 102%;
+  height: 48%;
+  overflow: visible;
+  stroke: var(--startup-water);
+  stroke-linecap: round;
+  animation: moinpdf-wave-rise var(--startup-duration) ease-out both;
+}
+.startup-wave-trail {
+  stroke-width: 2;
+  stroke-dasharray: 100;
+  animation: moinpdf-wave-trail var(--startup-duration) ease-in-out both;
+}
+.startup-wave-crest {
+  stroke-width: 4;
+  stroke-dasharray: 12 88;
+  animation: moinpdf-wave-crest var(--startup-duration) ease-in-out both;
+}
+.startup-light-sweep {
+  position: absolute;
+  z-index: 3;
+  inset: 4% -12%;
+  background: linear-gradient(108deg, transparent 42%, #c4fff11c 47%, #fff7 50%, transparent 56%);
+  mix-blend-mode: screen;
+  mask-image: radial-gradient(ellipse at center, #000 28%, transparent 72%);
   pointer-events: none;
-  mask: url('/branding/moinpdf-logo.svg') center / contain no-repeat;
+  animation: moinpdf-light-sweep var(--startup-duration) ease-in-out both;
+}
+.startup-logo-shine {
   background: linear-gradient(105deg, transparent 42%, #fffdf0e6 49%, white 51%, transparent 58%)
     140% 0 / 260% 100%;
   animation: moinpdf-startup-shine var(--startup-duration) ease-in-out both;
 }
 .startup-sparkle {
   position: absolute;
-  width: 18px;
-  height: 18px;
+  width: clamp(10px, 2.7vw, 22px);
+  aspect-ratio: 1;
   pointer-events: none;
   background: #fffde8;
   clip-path: polygon(50% 0, 59% 40%, 100% 50%, 59% 59%, 50% 100%, 41% 59%, 0 50%, 41% 40%);
@@ -78,36 +126,204 @@
   animation: moinpdf-startup-sparkle var(--startup-duration) ease-out both;
 }
 .startup-sparkle-one {
-  left: 15%;
-  top: 24%;
+  left: 18%;
+  top: 16%;
 }
 .startup-sparkle-two {
-  left: 55%;
-  top: 45%;
-  width: 12px;
-  height: 12px;
-  animation-delay: 90ms;
+  left: 66%;
+  top: 30%;
+  width: clamp(8px, 2vw, 16px);
+  animation-delay: 100ms;
 }
 .startup-sparkle-three {
-  left: 83%;
-  top: 18%;
-  animation-delay: 160ms;
+  left: 88%;
+  top: 45%;
+  animation-delay: 190ms;
+}
+.startup-spray {
+  position: absolute;
+  width: clamp(4px, 0.8vw, 6px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--startup-water);
+  box-shadow: 0 0 10px var(--startup-glow);
+  animation: moinpdf-spray var(--startup-duration) ease-out both;
+}
+.startup-spray-one {
+  left: 10%;
+  top: 53%;
+}
+.startup-spray-two {
+  left: 34%;
+  top: 20%;
+  animation-delay: 120ms;
+}
+.startup-spray-three {
+  left: 71%;
+  top: 17%;
+  animation-delay: 260ms;
+}
+.startup-spray-four {
+  left: 92%;
+  top: 51%;
+  animation-delay: 380ms;
+}
+@keyframes moinpdf-logo-aura {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  24% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  68% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.16);
+  }
+}
+@keyframes moinpdf-logo-ripple {
+  0%,
+  9% {
+    opacity: 0;
+    transform: scale(0.55) rotate(-12deg);
+  }
+  23% {
+    opacity: 0.2;
+  }
+  65%,
+  100% {
+    opacity: 0;
+    transform: scale(1.18) rotate(5deg);
+  }
+}
+@keyframes moinpdf-logo-settle {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.88) rotate(-3deg);
+  }
+  8% {
+    opacity: 1;
+  }
+  47% {
+    transform: translateY(-3px) scale(1.035) rotate(0.7deg);
+  }
+  63%,
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
+@keyframes moinpdf-logo-outline {
+  0% {
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.14;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes moinpdf-logo-reveal {
+  0%,
+  11% {
+    clip-path: polygon(0 -10%, -16% -10%, -12% 20%, -18% 48%, -12% 80%, -16% 110%, 0 110%);
+  }
+  52%,
+  100% {
+    clip-path: polygon(0 -10%, 116% -10%, 120% 20%, 114% 48%, 120% 80%, 116% 110%, 0 110%);
+  }
+}
+@keyframes moinpdf-wave-rise {
+  0% {
+    transform: translateY(18px) scaleY(0.7);
+  }
+  36% {
+    transform: translateY(-3px) scaleY(1);
+  }
+  68%,
+  100% {
+    transform: translateY(12px) scaleY(0.5);
+  }
+}
+@keyframes moinpdf-wave-trail {
+  0%,
+  7% {
+    opacity: 0;
+    stroke-dashoffset: 100;
+  }
+  14% {
+    opacity: 0.35;
+  }
+  47% {
+    opacity: 0.35;
+    stroke-dashoffset: 0;
+  }
+  64%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -8;
+  }
+}
+@keyframes moinpdf-wave-crest {
+  0%,
+  9% {
+    opacity: 0;
+    stroke-dashoffset: 12;
+  }
+  17% {
+    opacity: 0.9;
+  }
+  49% {
+    opacity: 0.9;
+    stroke-dashoffset: -88;
+  }
+  60%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -100;
+  }
+}
+@keyframes moinpdf-light-sweep {
+  0%,
+  51% {
+    opacity: 0;
+    transform: translateX(-64%) rotate(-8deg);
+  }
+  59% {
+    opacity: 0.48;
+  }
+  76% {
+    opacity: 0.48;
+    transform: translateX(64%) rotate(-8deg);
+  }
+  82%,
+  100% {
+    opacity: 0;
+    transform: translateX(76%) rotate(-8deg);
+  }
 }
 @keyframes moinpdf-startup-shine {
   0%,
-  74% {
+  54% {
     opacity: 0;
     background-position: 140% 0;
   }
-  76% {
+  57% {
     opacity: 0.9;
     background-position: 140% 0;
   }
-  92% {
+  77% {
     opacity: 0.9;
     background-position: -40% 0;
   }
-  96%,
+  82%,
   100% {
     opacity: 0;
     background-position: -40% 0;
@@ -115,18 +331,64 @@
 }
 @keyframes moinpdf-startup-sparkle {
   0%,
-  77% {
+  66% {
     opacity: 0;
     transform: scale(0.2) rotate(-25deg);
   }
-  83% {
+  72% {
     opacity: 1;
     transform: scale(1) rotate(0);
   }
-  92%,
+  82%,
   100% {
     opacity: 0;
     transform: scale(0.25) rotate(45deg);
+  }
+}
+@keyframes moinpdf-spray {
+  0%,
+  14% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.25);
+  }
+  22% {
+    opacity: 0.65;
+    transform: translateY(0) scale(1);
+  }
+  45%,
+  100% {
+    opacity: 0;
+    transform: translateY(-22px) scale(0.15);
+  }
+}
+/* CSS removes hit testing at 3.75 s even if hydration or JS is delayed. */
+@keyframes moinpdf-startup-exit {
+  0%,
+  92% {
+    opacity: 1;
+    visibility: visible;
+  }
+  99.99% {
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moinpdf-startup {
+    display: none;
+    animation: none;
+  }
+  .moinpdf-startup * {
+    animation: none !important;
+  }
+}
+@media print {
+  .moinpdf-startup {
+    display: none;
   }
 }
 .moinpdf-startup-sound {
@@ -159,45 +421,4 @@
   color: #dceee5;
   background: #122824b3;
   border-color: #a5d0bc66;
-}
-@keyframes moinpdf-startup-logo {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  5%,
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-/* CSS also removes hit testing if hydration or the JS timer is delayed. */
-@keyframes moinpdf-startup-exit {
-  0%,
-  98% {
-    opacity: 1;
-    visibility: visible;
-  }
-  99.99% {
-    visibility: visible;
-  }
-  100% {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .moinpdf-startup {
-    display: none;
-    animation: none;
-  }
-  .moinpdf-startup * {
-    animation: none !important;
-  }
-}
-@media print {
-  .moinpdf-startup {
-    display: none;
-  }
 }

@@ -11,7 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## Noch nicht veröffentlicht – 8. November 2026
 
-- Das bereitgestellte Firefly-Video ersetzt die Einzelbilder der Startanimation: vollständig von acht auf vier Sekunden beschleunigt, mit 192 Bildern bei 48 fps, Papierzerreißen und abschließendem Zwinkern. MoinPDF-Logo, kurzes Funkeln und leiser Papierreiß-/Glanzton bleiben erhalten. Der Tonschalter merkt die Auswahl; bei blockierter automatischer Wiedergabe aktiviert ein Antippen den Ton. Überspringen und reduzierte Bewegung stoppen auch den Ton.
+- 3,75 Sekunden lange Startanimation des Original-MoinPDF-Logos mit Wellenaufbau, sanften Wasserringen, Lichtschein und kurzem Funkeln. Das Seemann-Video und sein Vorschaubild entfallen vollständig. Ein dezenter Wellen-/Glanzklang ersetzt den Papierreißton; Tonschalter, Überspringen und reduzierte Bewegung bleiben erhalten.
 - Dunklerer mintgrüner Hintergrund im Light Theme auf Desktop, Tablet und Smartphone für einen deutlicheren Kontrast zu hellen Karten, Eingabefeldern und Werkzeugbereichen.
 
 ## 0.27.5 – 8. November 2026
