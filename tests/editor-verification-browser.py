@@ -4,6 +4,7 @@ Fault injection is explicitly reported; it is not a claim to reproduce a browser
 vendor's internal failure. Run against the actual production application.
 """
 import atexit
+import faulthandler
 import json
 import os
 import re
@@ -93,25 +94,40 @@ INSTRUMENT = r"""(() => {
 })();"""
 
 
+def progress(stage):
+    current = {'case': name, 'stage': stage, 'seconds': round(time.monotonic() - started, 2)}
+    (out / 'progress.json').write_text(json.dumps(current, indent=2))
+    print('PROGRESS: ' + json.dumps(current), flush=True)
+
+
 def prepare(page):
+    progress('navigate')
     page.goto(origin)
+    progress('import-form')
     page.locator('input[type=file]').first.set_input_files(str(fixture))
+    progress('open-editor')
     page.locator('.chooser-tool').filter(has=page.get_by_text('PDF bearbeiten', exact=True)).click()
+    progress('wait-for-original-text')
     button = page.get_by_role('button', name='Text bearbeiten: Original heading', exact=True)
     expect(button).to_be_visible(timeout=120000)
     button.click()
+    progress('edit-original-text')
     page.get_by_label('Text direkt in der PDF bearbeiten', exact=True).fill('Edited heading')
 
 
 def verify_download(page, name):
+    progress('wait-for-verified-download')
     link = page.get_by_role('link', name='PDF herunterladen', exact=True).first
     expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=180000)
     assert link.is_visible(), page.locator('.error-box').inner_text()
     expect(link).to_have_attribute('href', re.compile(r'^blob:'), timeout=45000)
+    progress('download')
     with page.expect_download() as download:
         link.click()
     path = out / (name + '.pdf')
+    progress('save-download')
     download.value.save_as(path)
+    progress('independent-pdf-readback')
     with pymupdf.open(path) as after, pymupdf.open(fixture) as before:
         assert len(after) == 2
         assert 'Edited heading' in after[0].get_text() and 'Original heading' not in after[0].get_text()
@@ -125,11 +141,20 @@ def verify_download(page, name):
 results = []
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS', 'webkit').split(','):
-        browser = getattr(api, engine).launch()
+        # Keep in-progress trace files inside the uploaded evidence directory if
+        # the process watchdog must stop an unresponsive browser protocol call.
+        browser = getattr(api, engine).launch(traces_dir=str((out / 'traces').resolve()))
         cases = [f'form-{i + 1:02}' for i in range(repeats)] + (['worker-cancel'] if baseline else ['worker-cancel', 'worker-retry', 'worker-timeout', 'font-retry'])
         for case in cases:
             fault = not case.startswith('form-')
             name = f'{engine}-verification-' + case
+            started = time.monotonic()
+            # Browser protocol calls and diagnostic evaluation can otherwise hang
+            # beyond locator timeouts. Fail closed, print the Python stack and
+            # retain the last stage/report for the CI evidence upload. The same
+            # browser and all repeated exports/acceptance assertions are retained.
+            faulthandler.dump_traceback_later(300, exit=True)
+            progress('create-context')
             context = browser.new_context(accept_downloads=True, viewport={'width': 1440, 'height': 1000}, reduced_motion='reduce')
             context.add_init_script(INSTRUMENT)
             context.tracing.start(screenshots=True, snapshots=True, sources=True)
@@ -137,12 +162,12 @@ with sync_playwright() as api:
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
             result = {'case': name, 'engine': browser.version, 'fault_injection': fault}
-            started = time.monotonic()
             print('START: ' + name, flush=True)
             try:
                 prepare(page)
                 if fault:
                     page.evaluate('mode => {if(mode === "font-retry") window.holdVerificationFonts = true; else window.holdVerificationWorker = mode === "worker-retry" ? "once" : "all";}', case)
+                progress('start-export')
                 page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True).click()
                 if case == 'worker-cancel':
                     page.wait_for_function('window.heldVerificationMessages?.length > 0', timeout=60000)
@@ -181,6 +206,9 @@ with sync_playwright() as api:
                 result['status'] = 'passed'
             except Exception as error:
                 result.update(status='failed', error=str(error), traceback=traceback.format_exc(), page_errors=errors)
+                # Save the original failure before attempting browser diagnostics.
+                (out / 'report.json').write_text(json.dumps(results + [result], ensure_ascii=False, indent=2))
+                progress('failure-diagnostics')
                 try:
                     result['page'] = page.locator('body').inner_text(timeout=5000)
                     page.screenshot(path=str(out / (name + '.png')), full_page=True, timeout=10000)
@@ -188,17 +216,22 @@ with sync_playwright() as api:
                     pass
             finally:
                 result['seconds'] = round(time.monotonic() - started, 2)
+                (out / 'report.json').write_text(json.dumps(results + [result], ensure_ascii=False, indent=2))
+                progress('collect-worker-events')
                 try:
                     result['events'] = page.evaluate('window.verificationEvents')
                 except Exception:
                     pass
+                progress('stop-tracing')
                 if result['status'] == 'failed':
                     context.tracing.stop(path=str(out / (name + '-trace.zip')))
                 else:
                     context.tracing.stop()
                 results.append(result)
                 (out / 'report.json').write_text(json.dumps(results, ensure_ascii=False, indent=2))
+                progress('close-context')
                 context.close()
+                faulthandler.cancel_dump_traceback_later()
                 print(json.dumps({k: result[k] for k in ('case', 'status', 'seconds', 'reproduced', 'error') if k in result}), flush=True)
             if result['status'] == 'failed':
                 break

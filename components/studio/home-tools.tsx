@@ -45,7 +45,7 @@ export function HomeTools({
     { value: 'quick', label: t('Schnellzugriff', 'Quick access'), icon: MosaicHomeIcon },
     ...groups.map((name, index) => ({
       value: String(index),
-      label: t(categoryNames[index] ?? name),
+      label: t(categoryNames[index] ?? name, index === 2 ? 'Pages' : undefined),
       icon: mosaicCategoryIcons[index] ?? Files,
     })),
   ];

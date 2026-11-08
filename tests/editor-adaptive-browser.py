@@ -33,7 +33,11 @@ def panel(page,title):
     if options.get_by_text(title, exact=True).count() and options.get_attribute('open') is None: options.locator(':scope > summary').click()
     # Only the direct summary identifies this panel; never select an ancestor.
     box=page.locator('details').filter(has=page.locator(':scope > summary',has_text=title))
-    if box.get_attribute('open') is None:box.locator(':scope > summary').click()
+    # Preflight results above this panel can arrive between pointer-down and
+    # pointer-up. Keyboard activation targets the focused summary even while
+    # that layout settles; the native disclosure and all output checks remain.
+    if box.get_attribute('open') is None:box.locator(':scope > summary').press('Enter')
+    expect(box).to_have_attribute('open', '')
     return box
 
 def open_editor(page,name):

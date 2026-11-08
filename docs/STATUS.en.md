@@ -8,7 +8,7 @@ Form helper and receipt collection on A4 are integrated browser tools. Profile s
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 28 October 2026 · Version 0.25.1. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 8 November 2026 · Version 0.28.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 The light-mode background uses a darker mint green on desktop, tablet and mobile. Its soft green gradients share the same darker base, making light cards, input fields and tool panels stand out more clearly.
 

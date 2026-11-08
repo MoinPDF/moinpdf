@@ -4,6 +4,15 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification scope for 0.28.0
+
+- 71 engine/DOM suites cover PDF editing, OCR, compression, conversion, recovery, projects, DATEV export and the logo entrance including sound, cancellation and reduced motion.
+- All 121 tool views and available selection menus are checked for English copy. Language changes and reloads must preserve original documents and settings. German and English information pages cover search, printing and downloads, including narrow layouts down to 320 pixels.
+- The browser matrix inspects actual outputs in Chromium, Firefox and WebKit. Native Safari runs on `macos-15-intel`, separately from WebKit and physical iPhones/iPads. Native file selection is not claimed when SafariDriver requires the documented in-memory file path.
+- Complete Docker verification includes the document server, seven-language translation, local speech and AI, network isolation, authentication, real conversions and models/credentials surviving a restart.
+- Publication requires successful pull-request checks and fresh checks of the actual `main` commit. Only then are all four amd64/arm64 images and the release with immutable digests published. The store uses exactly those verified image references.
+- Physical devices, native sharing dialogs and the operator's actual installation are outside this automated coverage. Historical evidence applies only to its stated commit; the corresponding release and Actions runs provide the current execution evidence.
+
 ## Verification scope for 0.24.0
 
 - 66 engine/DOM suites include Clear Deck, form profiles, A4 receipts and header/footer cleanup. New browser flows inspect actual PDF downloads in Chromium, Firefox and WebKit on desktop and with narrow touch emulation.
@@ -61,8 +70,8 @@ run for the exact source commit remains authoritative.
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| PDF engines and DOM | 66 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
-| Document server | 65 tests: native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
+| PDF engines and DOM | 71 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| Document server | Tests covering native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and narrow touch viewports, PDF/EPUB/audio downloads |
 | Documentation and media | Search, categories, printing, downloads, video, no horizontal overflow and preserved working files |

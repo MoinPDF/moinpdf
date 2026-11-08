@@ -515,7 +515,7 @@ export const englishTools: Record<
   },
   compress: {
     title: 'Compress scans',
-    description: 'Save image-based documents with reduced resolution and JPEG compression.',
+    description: 'Preserve PDF content and reduce images, or optimize losslessly.',
     action: 'Compress',
   },
   merge: {
