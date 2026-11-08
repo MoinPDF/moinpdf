@@ -104,6 +104,23 @@ class SpecialFormatsTests(unittest.TestCase):
 
 
 class FolderTests(unittest.TestCase):
+    def test_server_runs_bounded_worker(self):
+        import app as service
+        import threading
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            source = folder / 'input.pdf'
+            source.write_bytes(fictional_pdf())
+            (folder / 'workflow.json').write_text(json.dumps({'version': 1, 'name': 'Worker', 'steps': [{'kind': 'metadata'}]}))
+            output, report = service.watched_conversion(source, folder, threading.Event())
+            self.assertEqual(report['pages'], 2)
+            with fitz.open(stream=output, filetype='pdf') as pdf:
+                self.assertEqual(pdf.metadata['title'], '')
+                self.assertIn('FIRST', pdf[0].get_text())
+            cancel = threading.Event()
+            cancel.set()
+            with self.assertRaises(ValueError): service.watched_conversion(source, folder, cancel)
+
     def test_pipeline_preserves_text_forms_and_original(self):
         with tempfile.TemporaryDirectory() as temp:
             folder = Path(temp)

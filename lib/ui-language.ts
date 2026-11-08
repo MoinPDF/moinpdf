@@ -1,6 +1,11 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  'Schematische Reihenfolge auf dem Druckbogen. Das Ergebnis enthält die ausgewählten Seiten.':
+    'Schematic order on the print sheet. The result contains the selected pages.',
+  'Import fehlgeschlagen.': 'Import failed.',
+  'Export fehlgeschlagen.': 'Export failed.',
+  'JSON herunterladen': 'Download JSON',
   'Ungültige Anzahl Seiten pro Blatt.': 'Invalid number of pages per sheet.',
   'Seitenrand und Abstand müssen zwischen 0 und 72 Punkten liegen.':
     'Page margin and spacing must be between 0 and 72 points.',
