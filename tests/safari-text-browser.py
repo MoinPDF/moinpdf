@@ -119,6 +119,7 @@ def probe_file_access():
 def fresh(path=None):
     driver.get(origin)
     visible('.upload-entry')
+    WebDriverWait(driver, 10).until(EC.invisibility_of_element_located((By.CSS_SELECTOR, '.moinpdf-startup')))
     if driver.find_element(By.TAG_NAME, 'html').get_attribute('lang') == 'en':
         click(visible('.language-trigger'))
         click(WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.XPATH, '//*[@role="menuitemradio" and normalize-space(.)="Deutsch"]'))))
