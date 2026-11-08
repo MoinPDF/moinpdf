@@ -41,6 +41,16 @@ try{
  const annotation=emptyEdits();annotation.marks.p0=[{id:'t',kind:'text',x:.1,y:.55,w:.8,h:.15,fontScale:.06,text:'Freigegeben'}];const annotated=await fromResult(await execute('annotate',annotation,[pages[0]]));assert.match(await textOf(annotated),/SECRET 4815/);assert.match(await textOf(annotated),/Freigegeben/);
  const annotatedNup=await fromResult(await execute('nup',annotation));assert.match(await textOf(annotatedNup),/Freigegeben/);
  const nup=await fromResult(await execute('nup'));assert.equal(nup.pdf.numPages,2);const nupDoc=await PDFDocument.load(nup.bytes);assert.equal(nupDoc.getPage(0).getWidth(),595.28);assert.match(await textOf(nup),/SECRET 4815/);assert.match(await textOf(nup),/SAFE PAGE/);
+ const manyDoc=await PDFDocument.create();for(let i=0;i<17;i++)manyDoc.addPage([200,300]).drawText('SHEET_ITEM_'+i,{x:20,y:150,size:12});
+ const many=await source(await manyDoc.save(),'nup-17.pdf'),manyPages=Array.from({length:17},(_,i)=>({id:'many'+i,sourceId:many.id,index:i,rotation:i%2?90:0,selected:true}));
+ for(const perSheet of ['2','4','6','8','9','16'])for(const orientation of ['portrait','landscape']){
+  const output=await fromResult(await runStudioJob('nup',[many],manyPages,{...options,perSheet,orientation,nupMargin:18,nupGap:8,nupBorder:true},emptyEdits(),()=>{},new AbortController().signal));
+  assert.equal(output.pdf.numPages,Math.ceil(17/Number(perSheet)));
+  const texts=await Promise.all(Array.from({length:output.pdf.numPages},(_,i)=>textOf(output,i)));
+  assert.equal((texts.join(' ').match(/SHEET_ITEM_\d+/g)||[]).length,17,'Every original text appears exactly once');
+  for(let i=0;i<17;i++)assert.match(texts[Math.floor(i/Number(perSheet))],new RegExp('SHEET_ITEM_'+i+'(?![0-9])'));
+ }
+ await assert.rejects(()=>execute('nup',emptyEdits(),pages,{...options,nupGap:NaN}),/Abstand/);
  const sized=await fromResult(await execute('resize',emptyEdits(),pages,{...options,pageSize:'letter',orientation:'landscape'}));const sizedDoc=await PDFDocument.load(sized.bytes);assert(sizedDoc.getPages().every(p=>p.getWidth()===792&&p.getHeight()===612));assert.equal(sizedDoc.getPageCount(),3);
  const infoResult=await fromResult(await execute('metadata'));const info=await PDFDocument.load(infoResult.bytes,{updateMetadata:false});assert.equal(info.context.trailerInfo.Info,undefined);assert.equal(info.catalog.has(PDFName.of('Metadata')),false);assert.match(await textOf(infoResult),/SECRET/);
  const fixed=await fromResult(await execute('flatten',emptyEdits(),[pages[0]]));assert.equal(await textOf(fixed),'');

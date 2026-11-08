@@ -49,6 +49,32 @@ export type WorkflowStep = WorkflowAction & {
   otherwise?: WorkflowAction;
 };
 export type SavedWorkflow = { version: 1; name: string; steps: WorkflowStep[] };
+export const watchedStepKinds: readonly StepKind[] = [
+  'rotate90',
+  'rotate180',
+  'reverse',
+  'flattenForms',
+  'optimizeLossless',
+  'metadata',
+  'remove-annotations',
+];
+export function watchFolderWorkflow(value: unknown): SavedWorkflow {
+  const workflow = validateWorkflow(value);
+  if (
+    workflow.steps.some(
+      (step) =>
+        !watchedStepKinds.includes(step.kind) ||
+        step.condition ||
+        step.otherwise ||
+        step.text !== undefined ||
+        step.number !== undefined,
+    )
+  )
+    throw new Error(
+      'Eingangsordner unterstützen nur Drehen, Umkehren, Formulare festschreiben, verlustfreies Optimieren sowie das Entfernen von Dokumentinfos und Kommentaren. Bedingungen sind noch nicht verfügbar.',
+    );
+  return workflow;
+}
 export const workflowTemplates: SavedWorkflow[] = [
   {
     version: 1,

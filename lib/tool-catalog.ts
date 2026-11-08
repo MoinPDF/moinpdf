@@ -517,9 +517,9 @@ export const tools = [
   },
   {
     id: 'ebook-pdf',
-    title: 'E-Book zu PDF',
+    title: 'E-Books & Spezialformate zu PDF',
     description:
-      'Ungeschützte EPUB-Dateien in eine PDF mit wählbarer Schriftgröße und Seitenformat umwandeln.',
+      'EPUB, FB2, Comicarchive (CBZ), XPS und OXPS in PDF umwandeln. E-Books mit wählbarer Schriftgröße und Seitenformat.',
     icon: BookOpen,
     group: 1,
     action: 'PDF erstellen',
@@ -1002,7 +1002,8 @@ export const tools = [
   {
     id: 'nup',
     title: 'Mehrere Seiten pro Blatt',
-    description: 'Zwei oder vier Dokumentseiten auf einem Blatt anordnen.',
+    description:
+      '2, 4, 6, 8, 9 oder 16 Seiten auf einem Druckbogen anordnen. Ränder, Abstände und Rahmen einstellen.',
     icon: Grid2X2,
     group: 2,
     action: 'Seiten anordnen',

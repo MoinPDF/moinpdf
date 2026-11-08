@@ -457,7 +457,10 @@ const options = z
     overlayLayer: z.enum(['front', 'back']),
     pageSize: z.enum(['a4', 'letter']),
     orientation: z.enum(['portrait', 'landscape']),
-    perSheet: z.enum(['2', '4']),
+    perSheet: z.enum(['2', '4', '6', '8', '9', '16']),
+    nupMargin: z.number().finite().min(0).max(72),
+    nupGap: z.number().finite().min(0).max(72),
+    nupBorder: z.boolean(),
   })
   .partial()
   .strict();

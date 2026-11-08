@@ -44,10 +44,31 @@ slots = threading.BoundedSemaphore(2)
 @asynccontextmanager
 async def lifespan(_app):
     store = background_queue()
-    try: yield
-    finally: store.close()
+    watcher = None
+    try:
+        if os.getenv('MOINPDF_WATCH_DIR'):
+            module = importlib.import_module((__package__ + '.' if __package__ else '') + 'watch_folders')
+            watcher = module.WatchFolders(os.environ['MOINPDF_WATCH_DIR'], watched_conversion).start()
+        yield
+    finally:
+        if watcher: watcher.close()
+        store.close()
 
 app = FastAPI(title="MoinPDF Dokumentenserver", docs_url=None, redoc_url=None, lifespan=lifespan)
+
+
+def watched_conversion(source, directory, cancel):
+    queue_context.cancel = cancel
+    queue_context.deadline = time.monotonic() + TIMEOUT
+    try:
+        with job():
+            convert_worker('watch', source, directory)
+        return (directory / 'output.pdf').read_bytes(), json.loads((directory / 'report.json').read_text())
+    except HTTPException as error:
+        raise ValueError(str(error.detail)) from None
+    finally:
+        del queue_context.cancel
+        del queue_context.deadline
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -600,9 +621,10 @@ def extended_document(action: str, file: UploadFile = File(...), options: str = 
     with job() as directory:
         if action=='html' and Path(file.filename or '').suffix.lower() not in {'.html','.htm'}:
             raise HTTPException(422,'Bitte eine gespeicherte HTML-Webseite auswählen.')
-        if action=='ebook' and Path(file.filename or '').suffix.lower()!='.epub':
-            raise HTTPException(422,'Bitte eine EPUB-Datei auswählen.')
-        source=upload(file,directory/('input.html' if action=='html' else 'input.epub' if action=='ebook' else 'input.pdf'),maximum=40*1024*1024 if action=='ebook' else MAX_BYTES)
+        extension = Path(file.filename or '').suffix.lower()
+        if action=='ebook' and extension not in {'.epub', '.fb2', '.cbz', '.xps', '.oxps'}:
+            raise HTTPException(422,'Bitte EPUB, FB2, CBZ, XPS oder OXPS auswählen.')
+        source=upload(file,directory/('input.html' if action=='html' else 'input'+extension if action=='ebook' else 'input.pdf'),maximum=40*1024*1024 if action=='ebook' else MAX_BYTES)
         if action not in {'html','ebook'}:require_pdf(source)
         (directory/'settings.json').write_text(json.dumps(settings))
         convert_worker(action,source,directory)

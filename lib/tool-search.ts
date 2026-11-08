@@ -252,7 +252,16 @@ const aliases: Record<WorkspaceTool, string[]> = {
   'pdf-markdown': ['PDF zu Markdown', 'PDF als MD', 'Markdown exportieren'],
   'pdf-html': ['PDF zu HTML', 'PDF als Webseite', 'PDF Text zu HTML'],
   'pdf-epub': ['PDF zu E-Book', 'PDF zu EPUB', 'PDF als eBook', 'EPUB exportieren'],
-  'ebook-pdf': ['E-Book zu PDF', 'EPUB zu PDF', 'eBook in PDF umwandeln'],
+  'ebook-pdf': [
+    'E-Book zu PDF',
+    'EPUB zu PDF',
+    'eBook in PDF umwandeln',
+    'FB2 zu PDF',
+    'CBZ zu PDF',
+    'XPS zu PDF',
+    'OXPS zu PDF',
+    'Comicarchiv',
+  ],
   'pdf-powerpoint': ['PDF zu PowerPoint', 'PDF zu PPTX', 'PDF als Folien'],
   'html-pdf': [
     'HTML zu PDF',

@@ -149,7 +149,10 @@ export type StudioOptions = JobOptions &
     redactionMode?: 'raster' | 'preserve';
     pageSize: 'a4' | 'letter';
     orientation: 'portrait' | 'landscape';
-    perSheet: '2' | '4';
+    perSheet: '2' | '4' | '6' | '8' | '9' | '16';
+    nupMargin?: number;
+    nupGap?: number;
+    nupBorder?: boolean;
   };
 export const emptyEdits = (): Edits => ({ marks: {}, crops: {} });
 export const visualTools = [
@@ -195,6 +198,19 @@ export function countEdits(edits: Edits, pages: PageItem[]) {
 export function paperSize(options: StudioOptions): [number, number] {
   const size: [number, number] = options.pageSize === 'letter' ? [612, 792] : [595.28, 841.89];
   return options.orientation === 'landscape' ? [size[1], size[0]] : size;
+}
+export function nupGrid(perSheet: string, landscape = false): [number, number] {
+  const grids: Record<string, [number, number]> = {
+    '2': [1, 2],
+    '4': [2, 2],
+    '6': [2, 3],
+    '8': [2, 4],
+    '9': [3, 3],
+    '16': [4, 4],
+  };
+  const grid = grids[perSheet];
+  if (!grid) throw new Error('Ungültige Anzahl Seiten pro Blatt.');
+  return landscape ? [grid[1], grid[0]] : grid;
 }
 // Embed just the visible crop box and normalize PDF rotation to match the preview.
 export async function normalizedPage(dest: PDFDocument, source: PDFPage, addedRotation = 0) {
@@ -1012,10 +1028,12 @@ export async function runStudioJob(
     const output = await PDFDocument.create(),
       size = paperSize(options),
       per = tool === 'nup' ? Number(options.perSheet) : 1;
-    const columns = per === 4 ? 2 : 1,
-      rows = per === 1 ? 1 : 2,
-      margin = 20,
-      gap = per > 1 ? 12 : 0;
+    const [columns, rows] =
+      tool === 'nup' ? nupGrid(options.perSheet, options.orientation === 'landscape') : [1, 1];
+    const margin = tool === 'nup' ? (options.nupMargin ?? 20) : 20,
+      gap = tool === 'nup' ? (options.nupGap ?? 12) : 0;
+    if (![margin, gap].every((value) => Number.isFinite(value) && value >= 0 && value <= 72))
+      throw new Error('Seitenrand und Abstand müssen zwischen 0 und 72 Punkten liegen.');
     const cellW = (size[0] - margin * 2 - gap * (columns - 1)) / columns,
       cellH = (size[1] - margin * 2 - gap * (rows - 1)) / rows;
     let sheet: PDFPage | undefined;
@@ -1024,13 +1042,22 @@ export async function runStudioJob(
       if (i % per === 0) sheet = output.addPage(size);
       const page = normalized.getPage(i),
         slot = i % per;
+      const col = slot % columns,
+        row = Math.floor(slot / columns);
+      if (tool === 'nup' && options.nupBorder)
+        sheet!.drawRectangle({
+          x: margin + col * (cellW + gap),
+          y: size[1] - margin - row * (cellH + gap) - cellH,
+          width: cellW,
+          height: cellH,
+          borderWidth: 0.5,
+          borderColor: rgb(0.35, 0.35, 0.35),
+        });
       if (!page.node.Contents()) continue;
       const embedded = await output.embedPage(page),
         scale = Math.min(cellW / page.getWidth(), cellH / page.getHeight());
       const w = page.getWidth() * scale,
-        h = page.getHeight() * scale,
-        col = slot % columns,
-        row = Math.floor(slot / columns);
+        h = page.getHeight() * scale;
       sheet!.drawPage(embedded, {
         x: margin + col * (cellW + gap) + (cellW - w) / 2,
         y: size[1] - margin - row * (cellH + gap) - cellH + (cellH - h) / 2,
