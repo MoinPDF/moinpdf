@@ -6,7 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## Unreleased – 8 November 2026
 
-- On opening the app, the sailor tears a sheet of paper above the MoinPDF logo. The entrance ends after 2.75 seconds while the workspace loads in parallel. A tap, Escape or Tab skips it; reduced-motion preferences hide it.
+- On opening the app, the photorealistic sailor from the header tears a sheet of paper above the MoinPDF logo. The entrance ends after 2.75 seconds while the workspace loads in parallel. A tap, Escape or Tab skips it; reduced-motion preferences hide it.
 - Darker mint-green background in the light theme on desktop, tablet and mobile, increasing contrast with light cards, input fields and tool panels.
 
 ## 0.27.5 – 8 November 2026

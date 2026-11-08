@@ -124,7 +124,7 @@ try {
     Object.defineProperty(event, 'animationName', { value: name });
     target.dispatchEvent(event);
   };
-  await act(async () => end(document.querySelector('.startup-grip'), 'moinpdf-startup-tear-left'));
+  await act(async () => end(document.querySelector('.startup-sailor-atlas'), 'moinpdf-startup-tear'));
   assert(visible(), 'A child animation cannot end the entrance early');
   await act(async () => end(visible(), 'moinpdf-startup-exit'));
   assert.equal(Boolean(visible()), false, 'The actual CSS end also releases the overlay');

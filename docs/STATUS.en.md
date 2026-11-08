@@ -12,7 +12,7 @@ As of 28 October 2026 · Version 0.25.1. Earlier dated verification reports belo
 
 The light-mode background uses a darker mint green on desktop, tablet and mobile. Its soft green gradients share the same darker base, making light cards, input fields and tool panels stand out more clearly.
 
-Opening or reloading the app plays one 2.75-second entrance: the sailor tears a sheet of paper above the MoinPDF logo. The workspace continues loading in parallel. Switching tools or themes does not replay it. A tap, Escape or Tab skips it; it is omitted when reduced motion is enabled.
+Opening or reloading the app plays one 2.75-second entrance: the photorealistic sailor from the header tears a sheet of paper above the MoinPDF logo. The workspace continues loading in parallel. Switching tools or themes does not replay it. A tap, Escape or Tab skips it; it is omitted when reduced motion is enabled.
 
 Since 0.22.0, Word export presents two goals: “Preserve appearance as closely as possible” and “Edit text and tables”. Text-only output and server selection are under “Other options”. Preflight groups notices by text location. Font comparison accounts for rotated geometry, Unicode tracking and horizontal scaling. Visible previews precede queued neighbours; additional OCR preparation pauses during input. Caret following accounts for horizontal scrolling and mobile viewport movement.
 
