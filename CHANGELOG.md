@@ -9,7 +9,7 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Unveröffentlicht
+## 0.29.0 – 9. November 2026
 
 - Mehrere Seiten pro Blatt: 2, 4, 6, 8, 9 und 16 Seiten, Hoch-/Querformat, einstellbare Ränder und Abstände, optionale Rahmen und Anordnungsschema.
 - Lesezeichen als CSV/JSON importieren und exportieren, Vorschau sowie ausdrückliches Ergänzen oder Ersetzen mit Rückgängig. Bis 1000 Einträge und 2 MB.

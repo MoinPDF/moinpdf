@@ -6,9 +6,11 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
-## Prüfplan für 0.28.0
+## Prüfplan für 0.29.0
 
-- 71 Engine-/DOM-Suiten prüfen unter anderem PDF-Bearbeitung, OCR, Komprimierung, Konvertierung, Wiederherstellung, Projekte, DATEV-Export und die Logoanimation einschließlich Ton, Abbruch und reduzierter Bewegung.
+- 72 Engine-/DOM-Suiten prüfen unter anderem PDF-Bearbeitung, OCR, Komprimierung, Konvertierung, Wiederherstellung, Projekte, DATEV-Export und die Logoanimation einschließlich Ton, Abbruch und reduzierter Bewegung.
+- Die Drucklayout-Prüfungen lesen echte Ausgaben für 2/4/6/8/9/16 Seiten pro Blatt im Hoch- und Querformat. Lesezeichen-Tests prüfen CSV-/JSON-Rundläufe, Seitengrenzen, Hierarchie und sichere Tabellenwerte.
+- 73 Dokumentenserver-Tests umfassen acht neue Prüfungen für FB2/CBZ/XPS/OXPS sowie Eingangsordner: reale Konvertierungen, Archiv-/XML-Abweisung, Originalerhalt, Neustarts, Wiederholungen, Abbruch, Signaturfelder und isolierte Dateizugriffsfehler.
 - Alle 121 Werkzeugansichten und verfügbaren Auswahlmenüs werden auf englische Texte geprüft. Sprachwechsel und Neuladen müssen Originaldokumente und Einstellungen erhalten. Die deutschen und englischen Informationsseiten werden einschließlich Suche, Druck und Downloads geprüft; schmale Ansichten reichen bis 320 Pixel.
 - Die Browsermatrix prüft echte Ausgaben in Chromium, Firefox und WebKit. Native Safari-Prüfungen laufen auf `macos-15-intel`; dieser Prüfstand ist von WebKit und physischen iPhones/iPads getrennt. Ein Betriebssystem-Dateidialog gilt nicht als geprüft, wenn SafariDriver nur den dokumentierten In-Memory-Dateipfad unterstützt.
 - Die vollständige Docker-Prüfung umfasst Dokumentenserver, Übersetzung in sieben Sprachen, lokale Sprachausgabe und KI, Netzwerkschutz, Zugriffsschutz, echte Konvertierungen und den Erhalt von Modellen und Zugangsdaten beim Neustart.
