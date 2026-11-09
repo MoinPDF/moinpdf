@@ -5,6 +5,41 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'text-pdf': {
+    title: 'Text & data to PDF',
+    description:
+      'Convert Markdown, TXT, CSV and XML locally to PDF with page, table and character encoding options.',
+    action: 'Create PDF',
+  },
+  'pdf-json': {
+    title: 'Convert PDF & JSON',
+    description:
+      'Export the complete PDF object structure with inline data and rebuild PDFs from QPDF JSON.',
+    action: 'Convert PDF and JSON',
+  },
+  'scan-effect': {
+    title: 'Scanner effect',
+    description: 'Create an image PDF with adjustable noise, slight rotation, blur and grayscale.',
+    action: 'Apply scanner effect',
+  },
+  'pdf-comic': {
+    title: 'PDF to comic archive',
+    description:
+      'Export PDF pages as CBZ with JPEG or PNG images; CBR requires an optional server converter.',
+    action: 'Create comic archive',
+  },
+  'pdf-ai': {
+    title: 'Prepare PDF for AI',
+    description:
+      'Export text and page metadata locally as LlamaIndex documents. No AI API required.',
+    action: 'Create LlamaIndex JSON',
+  },
+  'pdf-javascript': {
+    title: 'View PDF JavaScript',
+    description:
+      'Inspect and export embedded JavaScript actions as text without executing scripts.',
+    action: 'View JavaScript',
+  },
   'payment-match': {
     title: 'Match receipts to payments',
     description:
@@ -155,9 +190,8 @@ export const englishTools: Record<
     action: 'Flatten layers',
   },
   'structured-export': {
-    title: 'PDF to structured JSON',
-    description:
-      'Export text, pages and source locations as structured data for further processing.',
+    title: 'PDF text to JSON & XML',
+    description: 'Export text, pages and source locations as JSON or XML for further processing.',
     action: 'Export JSON',
   },
   'form-responses': {
@@ -293,20 +327,19 @@ export const englishTools: Record<
   },
   'pdf-epub': {
     title: 'PDF to e-book',
-    description:
-      'Export extractable text as an EPUB with an adjustable font and a table of contents.',
+    description: 'Export extractable text as EPUB or as AZW3 for Kindle using your own server.',
     action: 'Create EPUB',
   },
   'ebook-pdf': {
     title: 'E-books & special formats to PDF',
     description:
-      'Convert EPUB, FB2, comic archives (CBZ), XPS and OXPS to PDF. Choose font size and page format for e-books.',
+      'Convert EPUB, FB2, MOBI, AZW3, comic archives (CBZ/CBR), XPS and OXPS to PDF. Choose font size and page format for e-books.',
     action: 'Create PDF',
   },
   'pdf-powerpoint': {
     title: 'PDF to PowerPoint',
     description:
-      'Transfer PDF pages to PowerPoint slides as slide images or individually editable text objects.',
+      'Export PDF pages as PPTX slide images or editable text objects; export ODP using your own server.',
     action: 'Create PowerPoint file',
   },
   'html-pdf': {
@@ -377,7 +410,7 @@ export const englishTools: Record<
   },
   'pdf-word': {
     title: 'PDF to Word',
-    description: 'Create an editable Word file from your PDF.',
+    description: 'Create an editable DOCX file; export RTF and ODT using your own server.',
     action: 'Create Word file',
   },
   'email-pdf': {
@@ -467,7 +500,8 @@ export const englishTools: Record<
   },
   'office-pdf': {
     title: 'Office to PDF',
-    description: 'Save Word, Excel, PowerPoint and OpenDocument files as PDF.',
+    description:
+      'Save Office files as PDF; convert WordPerfect, Microsoft Works and ODG using your own server.',
     action: 'Create PDF',
   },
   pdfa: {

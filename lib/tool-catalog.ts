@@ -77,6 +77,66 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'text-pdf',
+    title: 'Text & Daten zu PDF',
+    description:
+      'Markdown, TXT, CSV und XML lokal mit Seitenformat, Tabellen und Zeichensatz in PDF umwandeln.',
+    icon: FileInput,
+    group: 1,
+    action: 'PDF erstellen',
+    fresh: true,
+  },
+  {
+    id: 'pdf-json',
+    title: 'PDF & JSON umwandeln',
+    description:
+      'Vollständige PDF-Objektstruktur mit eingebetteten Daten exportieren und aus QPDF-JSON wiederherstellen.',
+    icon: FileInput,
+    group: 1,
+    action: 'PDF und JSON umwandeln',
+    fresh: true,
+  },
+  {
+    id: 'scan-effect',
+    title: 'Scannereffekt',
+    description:
+      'Eine Bild-PDF mit einstellbarem Rauschen, leichter Drehung, Unschärfe und Graustufen erstellen.',
+    icon: Scan,
+    group: 3,
+    action: 'Scannereffekt anwenden',
+    fresh: true,
+  },
+  {
+    id: 'pdf-comic',
+    title: 'PDF zu Comicarchiv',
+    description:
+      'PDF-Seiten als CBZ mit JPEG- oder PNG-Bildern exportieren; CBR mit optionalem Serverkonverter.',
+    icon: Images,
+    group: 1,
+    action: 'Comicarchiv erstellen',
+    fresh: true,
+  },
+  {
+    id: 'pdf-ai',
+    title: 'PDF für KI vorbereiten',
+    description:
+      'Text und Seitenmetadaten lokal als LlamaIndex-Dokumente exportieren. Keine KI-API erforderlich.',
+    icon: FilePenLine,
+    group: 1,
+    action: 'LlamaIndex-JSON erstellen',
+    fresh: true,
+  },
+  {
+    id: 'pdf-javascript',
+    title: 'PDF-JavaScript anzeigen',
+    description:
+      'Eingebettete JavaScript-Aktionen als Text ansehen und exportieren, ohne Skripte auszuführen.',
+    icon: FileSearch,
+    group: 0,
+    action: 'JavaScript anzeigen',
+    fresh: true,
+  },
+  {
     id: 'payment-match',
     title: 'Belege mit Zahlungen abgleichen',
     description:
@@ -337,9 +397,9 @@ export const tools = [
   },
   {
     id: 'structured-export',
-    title: 'PDF zu strukturiertem JSON',
+    title: 'PDF-Text zu JSON & XML',
     description:
-      'Text, Seiten und Fundstellen als strukturierte Daten zur Weiterverarbeitung exportieren.',
+      'Text, Seiten und Fundstellen als JSON oder XML zur Weiterverarbeitung exportieren.',
     icon: FileInput,
     group: 1,
     action: 'JSON exportieren',
@@ -570,7 +630,7 @@ export const tools = [
     id: 'pdf-epub',
     title: 'PDF zu E-Book',
     description:
-      'Auslesbaren Text als EPUB mit anpassbarer Schrift und Inhaltsverzeichnis exportieren.',
+      'Auslesbaren Text als EPUB oder über den eigenen Server als AZW3 für Kindle exportieren.',
     icon: BookOpen,
     group: 1,
     action: 'EPUB erstellen',
@@ -580,7 +640,7 @@ export const tools = [
     id: 'ebook-pdf',
     title: 'E-Books & Spezialformate zu PDF',
     description:
-      'EPUB, FB2, Comicarchive (CBZ), XPS und OXPS in PDF umwandeln. E-Books mit wählbarer Schriftgröße und Seitenformat.',
+      'EPUB, FB2, MOBI, AZW3, Comicarchive (CBZ/CBR), XPS und OXPS in PDF umwandeln. E-Books mit wählbarer Schriftgröße und Seitenformat.',
     icon: BookOpen,
     group: 1,
     action: 'PDF erstellen',
@@ -590,7 +650,7 @@ export const tools = [
     id: 'pdf-powerpoint',
     title: 'PDF zu PowerPoint',
     description:
-      'PDF-Seiten als Folienbilder oder mit einzeln bearbeitbaren Textobjekten auf PowerPoint-Folien übernehmen.',
+      'PDF-Seiten als PPTX-Folienbilder oder bearbeitbare Textobjekte exportieren; ODP über den eigenen Server.',
     icon: FileImage,
     group: 1,
     action: 'PowerPoint-Datei erstellen',
@@ -710,7 +770,8 @@ export const tools = [
   {
     id: 'pdf-word',
     title: 'PDF zu Word',
-    description: 'Eine bearbeitbare Word-Datei aus deiner PDF erstellen.',
+    description:
+      'Eine bearbeitbare DOCX-Datei erstellen; RTF und ODT über den eigenen Server exportieren.',
     icon: FilePenLine,
     group: 1,
     action: 'Word-Datei erstellen',
@@ -868,7 +929,8 @@ export const tools = [
   {
     id: 'office-pdf',
     title: 'Office zu PDF',
-    description: 'Word, Excel, PowerPoint und OpenDocument als PDF speichern.',
+    description:
+      'Office-Dateien als PDF speichern; WordPerfect, Microsoft Works und ODG über den eigenen Server.',
     icon: FileInput,
     group: 1,
     action: 'PDF erstellen',

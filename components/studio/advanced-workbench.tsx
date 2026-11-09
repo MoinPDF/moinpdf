@@ -2,6 +2,14 @@
 import { InvoiceCreatePanel, PortfolioPanel, PaymentMatchPanel } from './growth-panels';
 import { HandwritingPanel, PdfxPanel } from './growth-server-panels';
 import './growth-workbench.css';
+import {
+  TextImportPanel,
+  PdfJsonPanel,
+  ScanEffectPanel,
+  ComicPanel,
+  JavaScriptPanel,
+  AiExportPanel,
+} from './format-panels';
 import { sourcePages } from '@/lib/pdf-engine';
 import { ResultActions, ResultSummary, useResultName, useResultAuditGate } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
@@ -203,7 +211,13 @@ export function AdvancedWorkbench({
           <span className="device-tag">
             <ShieldCheck size={14} />
             {ui(
-              ['invoice-create', 'handwriting-ocr', 'pdfx-create'].includes(tool)
+              [
+                'invoice-create',
+                'handwriting-ocr',
+                'pdfx-create',
+                'pdf-comic',
+                'pdf-epub',
+              ].includes(tool)
                 ? 'BROWSER / EIGENER DOKUMENTENSERVER'
                 : 'LOKAL AUF DEINEM GERÄT',
             )}
@@ -273,7 +287,11 @@ export function AdvancedWorkbench({
         }}
         key={`${tool}-${multi ? 'all' : source?.id || 'camera'}-${sources.map((s) => s.id).join(':')}`}
       >
-        {tool === 'invoice-create' ? (
+        {tool === 'text-pdf' ? (
+          <TextImportPanel busy={busy} run={run} initialFile={initialFile} />
+        ) : tool === 'pdf-json' ? (
+          <PdfJsonPanel source={source} busy={busy} run={run} initialFile={initialFile} />
+        ) : tool === 'invoice-create' ? (
           <InvoiceCreatePanel {...props} />
         ) : tool === 'pdf-portfolio' ? (
           <PortfolioPanel {...props} />
@@ -287,6 +305,10 @@ export function AdvancedWorkbench({
           <div className="advanced-empty">{ui('Bitte zuerst eine PDF öffnen.')}</div>
         ) : (
           <>
+            {tool === 'scan-effect' && <ScanEffectPanel {...props} />}
+            {tool === 'pdf-comic' && <ComicPanel {...props} />}
+            {tool === 'pdf-javascript' && <JavaScriptPanel {...props} />}
+            {tool === 'pdf-ai' && <AiExportPanel {...props} />}
             {tool === 'payment-match' && <PaymentMatchPanel {...props} />}
             {tool === 'personal-data' && <PseudonymPanel {...props} automatic />}
             {tool === 'handwriting-ocr' && <HandwritingPanel {...props} />}

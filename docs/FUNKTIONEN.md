@@ -1,5 +1,24 @@
 # Funktionen und Grenzen
 
+## Formate und Werkzeuge in 0.31.0
+
+Der Katalog enthält 133 Werkzeuge. Neue Formate ergänzen vorhandene Konverter; sechs eigenständige Werkzeuge kommen hinzu.
+
+| Funktion | Verarbeitung und Grenzen |
+| --- | --- |
+| Text & Daten zu PDF | Lokal: Markdown, TXT, CSV und allgemeines XML, bis 300.000 Zeichen. UTF-8, Windows-1252 oder UTF-16LE; CSV bis 12 Spalten/2.000 Zeilen. Markdown enthält Überschriften, Listen, Auszeichnungen, Code und Tabellen; Bilder werden als Alternativtext und HTML als Text ausgegeben. Externe Inhalte werden nicht geladen. XML als Pfade/Werte oder Tabelle, ohne DTD/Entitäten. |
+| PDF & JSON umwandeln | Lokal: vollständiges QPDF-JSON v2 mit eingebetteten Streams; keine beliebige JSON-Datei und kein CPDF-JSON. Import bis 80 MB und 200 PDF-Seiten. Dokumentobjekte und aktive Inhalte können enthalten sein; digitale Signaturen werden nicht wiederhergestellt. |
+| Scannereffekt | Lokal: Bild-PDF mit einstellbarer Auflösung, Körnung, Unschärfe, Drehung und Graustufen. Text, Links und Formularfunktion gehen in der Ausgabe verloren; Original bleibt erhalten. |
+| PDF zu Comicarchiv | CBZ lokal, CBR über eigenen Server mit separat bereitgestelltem RAR. PNG/JPEG, 72–300 dpi, höchstens 16 Megapixel je Seite und 80 MB Bilddaten. Ausgabe enthält Seitenbilder. |
+| PDF-JavaScript anzeigen | Lokal, nur lesen: Zeichenketten und lesbare Skriptstreams mit Fundstellen; keine Ausführung. Bis 500 Skripte, 1 Million Zeichen je Skript und 8 Millionen insgesamt. Nicht lesbare Streams werden gekennzeichnet; keine vollständige Sicherheitsfreigabe. |
+| PDF für KI vorbereiten | Lokal: LlamaIndex-Dokument-JSON pro Seite mit Text, Dateiname und Seitenangaben. Bis 2 Millionen Zeichen. Leere/ungelesene Seiten bleiben als leere Einträge enthalten; reine Scans brauchen OCR. Kein Modell/API-Aufruf, keine Bilder oder Tabellengeometrie. |
+| WPD/WPS/ODG zu PDF | Eigener Server mit LibreOffice. WPS bezeichnet Microsoft Works, nicht das gleichnamige moderne Office-Produkt. Layout und verfügbare Schriften begrenzen die Wiedergabe. |
+| MOBI/AZW3/CBR zu PDF | Eigener Server: DRM-freie Kindle-Dateien über Calibre, CBR über libarchive. CBR bis 200 PNG-/JPEG-Seiten, 80 MB entpackt, 30 MP je Bild/200 MP insgesamt. Keine DRM-Entfernung. |
+| PDF zu RTF/ODT/ODP/AZW3 | Eigener Server. RTF/ODT aus rekonstruiertem Word-Dokument, ODP aus dem vorhandenen Folienexport; Layout kann abweichen. AZW3 ist ein Text-E-Book ohne ursprüngliches Seitenlayout; Seiten ohne auslesbaren Text benötigen vorher OCR. |
+| PDF-Text zu JSON & XML | Lokal: lesbarer Text mit Seiten, Positionen und Schriftangaben im Schema `moinpdf-document/1`. Kein vollständiger PDF-Objekt-Rundlauf. |
+
+Für Serverformate gelten zusätzlich die bestehenden Jobgrenzen von 80 MB, 200 Seiten für die neuen PDF-Exporte und drei Minuten. Verbindungen können vorübergehend mit eigenem Server und Schlüssel eingerichtet werden; die vollständige Docker-Installation bindet ihn automatisch an. [Installation und optionales RAR](../server/README.md#zusätzliche-formate-in-0310).
+
 ## Dokumentenwerkzeuge in 0.30.0
 
 Der Katalog umfasst 127 Werkzeuge. Sechs neue Werkzeuge und zwei Erweiterungen ergänzen die vorhandenen Funktionen:
@@ -44,7 +63,7 @@ Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF 
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.30.0**
+**Aktuelle Grenzen aus der Implementierung · 0.31.0**
 
 | Funktion | Wert |
 | --- | --- |

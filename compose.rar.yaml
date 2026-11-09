@@ -1,0 +1,11 @@
+# Optional operator-supplied, appropriately licensed Linux executable.
+# MOINPDF_RAR_BINARY=/absolute/path/rar docker compose -f compose.yaml -f compose.rar.yaml up -d --build
+services:
+  documents:
+    volumes:
+      - type: bind
+        source: ${MOINPDF_RAR_BINARY:?Provide an absolute path to a compatible licensed RAR executable}
+        target: /usr/local/bin/rar
+        read_only: true
+        bind:
+          create_host_path: false

@@ -1,5 +1,24 @@
 # Features and limitations
 
+## Formats and tools in 0.31.0
+
+The catalogue contains 133 tools. New formats extend existing converters; six standalone tools are added.
+
+| Feature | Processing and limits |
+| --- | --- |
+| Text & data to PDF | Local: Markdown, TXT, CSV and generic XML, up to 300,000 characters. UTF-8, Windows-1252 or UTF-16LE; CSV up to 12 columns/2,000 rows. Markdown supports headings, lists, emphasis, code and tables; images become alternative text and HTML becomes literal text. No external resources are loaded. XML supports paths/values or tables, without DTD/entities. |
+| Convert PDF & JSON | Local: complete QPDF JSON v2 with inline streams, not arbitrary JSON or CPDF JSON. Import up to 80 MB and 200 PDF pages. Document objects and active content may be preserved; digital signatures are not restored. |
+| Scanner effect | Local: image PDF with resolution, grain, blur, rotation and grayscale controls. Output loses searchable text, links and form functionality; the original is retained. |
+| PDF to comic archive | Local CBZ; CBR through an own server with separately supplied RAR. PNG/JPEG, 72–300 dpi, at most 16 megapixels per page and 80 MB of image data. Output contains page images. |
+| Inspect PDF JavaScript | Local read-only display of strings and readable script streams with locations; no execution. Up to 500 scripts, 1 million characters each and 8 million total. Unreadable streams are marked; this is not a complete security clearance. |
+| Prepare PDF for AI | Local LlamaIndex document JSON per page with text, filename and page metadata. Up to 2 million characters. Blank/unreadable pages remain empty entries; scanned documents need OCR. No model/API call, images or table geometry. |
+| WPD/WPS/ODG to PDF | Own server with LibreOffice. WPS means Microsoft Works, not the similarly named modern Office product. Layout and available fonts limit fidelity. |
+| MOBI/AZW3/CBR to PDF | Own server: DRM-free Kindle files via Calibre, CBR via libarchive. CBR allows up to 200 PNG/JPEG pages, 80 MB expanded, 30 MP per image/200 MP total. No DRM removal. |
+| PDF to RTF/ODT/ODP/AZW3 | Own server. RTF/ODT from reconstructed Word content, ODP from the existing slide export; layout may differ. AZW3 is a text e-book without the original page layout; pages without extractable text require OCR first. |
+| PDF text to JSON & XML | Local readable text with pages, positions and fonts in the `moinpdf-document/1` schema. This is not a complete PDF-object roundtrip. |
+
+Server formats also retain the existing 80 MB/three-minute job limits and a 200-page limit for the new PDF exports. Temporary own-server URL/key connections are supported; full Docker installations connect automatically. [Installation and optional RAR](../server/README.en.md#additional-formats-in-0310).
+
 ## Document tools in 0.30.0
 
 The catalogue contains 127 tools. Six new tools and two extensions complement existing features:
@@ -44,7 +63,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.30.0**
+**Current implementation limits · 0.31.0**
 
 | Capability | Value |
 | --- | --- |

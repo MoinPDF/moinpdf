@@ -1,4 +1,7 @@
 'use client';
+import { ServerConnection } from './growth-panels';
+import { integratedDocumentServer } from '@/lib/document-server';
+import { runFormatExport } from '@/lib/format-server';
 import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
@@ -88,6 +91,9 @@ export function ReadingPanel({
   busy,
 }: PanelProps & { format: ReadingFormat }) {
   useLanguage();
+  const [ebookFormat, setEbookFormat] = useState('epub'),
+    [base, setBase] = useState(integratedDocumentServer || ''),
+    [token, setToken] = useState('');
   const [title, setTitle] = useToolDraftState(
       'ReadingPanel.title:' + source.id + '',
       filenameStem(source.name),
@@ -95,6 +101,29 @@ export function ReadingPanel({
     [language, setLanguage] = useToolDraftState('ReadingPanel.language:' + source.id + '', 'de');
   return (
     <section className="advanced-card">
+      {format === 'epub' && (
+        <>
+          <Choice
+            label="E-Book-Format"
+            value={ebookFormat}
+            onChange={setEbookFormat}
+            items={[
+              ['epub', 'EPUB'],
+              ['azw3', 'AZW3 (Kindle)'],
+            ]}
+          />
+          {ebookFormat === 'azw3' && (
+            <>
+              <p className="fine-note">
+                {ui(
+                  'AZW3 wird auf dem eigenen Dokumentenserver mit Calibre erstellt. Die PDF wird erst beim Start dorthin übertragen.',
+                )}
+              </p>
+              <ServerConnection base={base} token={token} setBase={setBase} setToken={setToken} />
+            </>
+          )}
+        </>
+      )}
       <Text label={ui('Dokumenttitel')} value={title} onChange={setTitle} />
       <Choice
         label={ui('Dokumentsprache')}
@@ -116,10 +145,25 @@ export function ReadingPanel({
         )}
       </p>
       <Button
-        disabled={busy}
-        onClick={() => run((ctx) => exportReading(source, format, title, language, ctx))}
+        disabled={
+          busy ||
+          (format === 'epub' &&
+            ebookFormat === 'azw3' &&
+            (!base.trim() || (!integratedDocumentServer && !token.trim())))
+        }
+        onClick={() =>
+          run((ctx) =>
+            format === 'epub' && ebookFormat === 'azw3'
+              ? runFormatExport(source, 'azw3', { title, language }, base, token, ctx)
+              : exportReading(source, format, title, language, ctx),
+          )
+        }
       >
-        {format === 'markdown' ? ui('Markdown') : format === 'html' ? ui('HTML') : ui('EPUB')}{' '}
+        {format === 'markdown'
+          ? ui('Markdown')
+          : format === 'html'
+            ? ui('HTML')
+            : ui(ebookFormat.toUpperCase())}{' '}
         {ui(' erstellen')}
       </Button>
     </section>

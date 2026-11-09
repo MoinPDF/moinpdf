@@ -6,6 +6,14 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.31.0
+
+- `format-tools-smoke.mjs` prüft echte Text-/CSV-/Markdown-/XML-PDFs, vollständigen QPDF-Rundlauf mit Formularwert und unverändertem Anhang, sichere Skriptanzeige, LlamaIndex-Seiten, XML-Textpositionen, Comicbilder, Scannereffekt und Abbruch. Exporte werden unabhängig wieder eingelesen.
+- `server.test_formats031` prüft echte WordPerfect-/Microsoft-Works-Dateien, synthetisches ODG, RTF/ODT/ODP mit Rückkonvertierung, Calibre-AZW3/MOBI, echte RAR-Archive und manipulierte Eingaben. Im Docker-Prüfstand sind Calibre, LibreOffice und libarchive zwingend; fehlende Konverter dürfen dort keine Prüfung überspringen.
+- `formats-031-browser.py` prüft deutsche Desktop- und englische Touch-Abläufe mit echten Downloads in Chromium, Firefox und WebKit. Alle 133 Ansichten bleiben in den Sprach-/Layoutprüfungen. Native Safari prüft die bestehenden Abläufe einschließlich des erweiterten strukturierten Exports; physische Geräte sind nicht abgedeckt.
+- Die optionale CBR-Erstellung wird mit dem Prozessvertrag, einem echten RAR-Testarchiv und unabhängigem Entpacken geprüft. Ein kommerzielles RAR-Programm wird weder mitgeliefert noch durch diesen Test als auf allen Betreiberarchitekturen geprüft bezeichnet. Jede reale CBR-Ausgabe wird vor Auslieferung vollständig gegen die erzeugten Bilder geprüft.
+- Die gesamte vorhandene Regression, PR-Workflows, tatsächliche main-Prüfungen und nachgelagerte Image-/Release-Veröffentlichung bleiben Freigabebedingungen. Dieses Dokument beschreibt den Prüfumfang; erfolgreiche Actions-Läufe am Release-Commit sind der Ausführungsnachweis.
+
 ## Prüfplan für 0.30.0
 
 - 73 Engine-/DOM-Suiten; neu sind centgenauer Zahlungsabgleich, Rundung und Fehlerfälle beim Rechnungsentwurf, unveränderte Portfolio-Anlagen mit SHA-256 sowie native Ebenenzuordnung mit unabhängiger Pixelprüfung.
@@ -102,7 +110,7 @@ und erneuten Export. Maßgeblich bleibt der erfolgreiche Lauf des jeweiligen Com
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| PDF-Engines und DOM | 73 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| PDF-Engines und DOM | 74 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
 | Dokumentenserver | Tests für native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |

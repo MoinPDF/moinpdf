@@ -4,6 +4,8 @@
 
 Der Compose-Aufbau im **Repository-Hauptverzeichnis** enthält die Web-App, den Dokumentenserver, den Webseiten-Konverter und LibreTranslate. Alle Werkzeugansichten sind enthalten. Der Browser verbindet sich automatisch mit dem eigenen Dokumentenserver; Serveradressen und API-Schlüssel müssen nicht eingetragen werden. Die dokumentbezogenen Grenzen der einzelnen Werkzeuge gelten auch in Docker.
 
+Seit 0.31.0 enthält der Dokumentenserver Calibre und libarchive für DRM-freie Kindle-Dateien und CBR-Import. RTF/ODT/ODP, Works, WordPerfect und ODG nutzen LibreOffice. CBR-Erstellung benötigt ein separat bereitgestelltes RAR-Programm; [Einrichtung](server/README.md#optionale-cbr-erstellung).
+
 ## Start
 
 Voraussetzungen: Docker Engine mit Compose v2 oder Docker Desktop, Internet beim ersten Aufbau und für Website-Link-Konvertierungen sowie ausreichend Speicher. Für den vollständigen Stack sind **8 GB verfügbarer RAM und 20 GB freier Plattenplatz** als Ausgangspunkt vorgesehen. Die Containergrenzen sind in `.env.example` anpassbar. Die Installation baut lokal; es werden keine privaten Container-Registry-Zugangsdaten benötigt. Der Quellcode ist öffentlich; zum Klonen des Repositorys ist keine GitHub-Anmeldung erforderlich.
@@ -123,7 +125,7 @@ docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /rep
 
 Bei aktiviertem Login zusätzlich `--env MOINPDF_TEST_USERNAME=... --env MOINPDF_TEST_PASSWORD=...` übergeben. Diesen Test nur mit dem enthaltenen synthetischen Testmaterial verwenden.
 
-Die eigenständige Dokumenten-API bleibt unter [server/README.md](server/README.md) beschrieben. Die Benutzeroberfläche bietet ab 0.2.0 keine manuelle API-Verbindung mehr an; für sämtliche Konverter die vollständige Docker-Ausgabe verwenden. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.9.6](https://github.com/LibreTranslate/LibreTranslate/tree/v1.9.6); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).
+Die eigenständige Dokumenten-API bleibt unter [server/README.md](server/README.md) beschrieben. Die vollständige Docker-App verbindet sich automatisch; alternativ kann in den Serverwerkzeugen ein eigener Server vorübergehend angebunden werden. Versionen der Konverter und Python-Abhängigkeiten sind dort dokumentiert. LibreTranslate basiert auf [v1.9.6](https://github.com/LibreTranslate/LibreTranslate/tree/v1.9.6); Hinweise zu Modellen und Lizenzen stehen in der [Upstream-Dokumentation](https://docs.libretranslate.com/guides/build_from_sources/).
 
 ## Website-Link zu PDF
 

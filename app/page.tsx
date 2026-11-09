@@ -187,7 +187,12 @@ const ServerWorkbench = lazy(() =>
     default: module.ServerWorkbench,
   })),
 );
-import { isAdvancedTool, isServerTool, type ServerTool } from '@/lib/advanced-types';
+import {
+  isAdvancedTool,
+  isServerTool,
+  type ServerTool,
+  type AdvancedTool,
+} from '@/lib/advanced-types';
 import { conversionToolForFile, documentAccept } from '@/lib/import-routing';
 import { isDocumentTool, type DocumentSessions } from '@/lib/document-tools';
 import { ToolChooser } from '@/components/studio/tool-chooser';
@@ -557,9 +562,10 @@ function Studio() {
   const [browseEmpty, setBrowseEmpty] = useState(false);
   const [homeRequested, setHomeRequested] = useState(false);
   const [repairInput, setRepairInput] = useState<File | null>(null);
-  const [conversionInput, setConversionInput] = useState<{ tool: ServerTool; file: File } | null>(
-    null,
-  );
+  const [conversionInput, setConversionInput] = useState<{
+    tool: ServerTool | AdvancedTool;
+    file: File;
+  } | null>(null);
   const [importState, setImportState] = useState<ImportState>({
     phase: 'idle',
     name: '',
@@ -773,7 +779,19 @@ function Studio() {
   const addFiles = useCallback(
     async (files: File[], showToolChoice = true) => {
       if (!files.length || refs.current.busy || uploadLock.current) return;
-      const conversionFile = files.find((file) => conversionToolForFile(file.name));
+      let conversionFile = files.find((file) => conversionToolForFile(file.name));
+      let genericXml = false;
+      if (
+        !conversionFile &&
+        files.length === 1 &&
+        /\.xml$/i.test(files[0].name) &&
+        files[0].size <= 2 * 1024 * 1024
+      ) {
+        const root = new DOMParser().parseFromString(await files[0].text(), 'application/xml')
+          .documentElement.localName;
+        genericXml = !['Invoice', 'CreditNote', 'CrossIndustryInvoice'].includes(root);
+        if (genericXml) conversionFile = files[0];
+      }
       if (conversionFile) {
         if (files.length !== 1) {
           toast.error(
@@ -787,7 +805,7 @@ function Studio() {
           toast.error(ui('Bitte eine Datei mit höchstens 80 MB auswählen.'));
           return;
         }
-        const nextTool = conversionToolForFile(conversionFile.name)!;
+        const nextTool = genericXml ? 'text-pdf' : conversionToolForFile(conversionFile.name)!;
         setHomeRequested(false);
         setConversionInput({ tool: nextTool, file: conversionFile });
         fileArrivals.mark([conversionFile]);
@@ -1641,6 +1659,9 @@ function Studio() {
         if (
           !refs.current.sources.length &&
           ![
+            'text-pdf',
+            'pdf-json',
+            'ebook-pdf',
             'invoice-create',
             'pdf-portfolio',
             'camera-scan',
@@ -2020,7 +2041,13 @@ function Studio() {
         {fileInput}
         <AdvancedWorkbench
           key={toolId}
-          initialFile={toolId === 'pdf-repair' || toolId === 'large-document' ? repairInput : null}
+          initialFile={
+            toolId === 'pdf-repair' || toolId === 'large-document'
+              ? repairInput
+              : conversionInput?.tool === toolId
+                ? conversionInput.file
+                : null
+          }
           tool={toolId}
           sources={sources}
           onBack={returnToTools}

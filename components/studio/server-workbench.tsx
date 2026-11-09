@@ -38,6 +38,7 @@ import {
 } from './server-extra-fields';
 import { Text, Choice, Tick, PageStage, PageSelect } from './advanced-shared';
 import './conversion-workbench.css';
+import { ServerConnection } from './growth-panels';
 import { AudioWorkbench } from './audio-workbench';
 import { AccessibleEditor, initialAccessibleDocument } from './accessible-editor';
 import { validateAccessibleDocument } from '@/lib/accessible-document';
@@ -87,6 +88,13 @@ function StandardServerWorkbench({
     'StandardServerWorkbench.mode:' + sources.map((s) => s.id).join(':') + tool,
     tool === 'certificate-sign' ? 'validate' : 'create',
   );
+  const [formatOutput, setFormatOutput] = useState(tool === 'pdf-word' ? 'docx' : 'pptx');
+  const [customBase, setCustomBase] = useState(''),
+    [serverToken, setServerToken] = useState('');
+  const [file, setFile] = useState<File | null>(initialFile || null);
+  const specialOutput =
+    (tool === 'pdf-word' && formatOutput !== 'docx') ||
+    (tool === 'pdf-powerpoint' && formatOutput === 'odp');
   const [progress, setProgress] = useState('');
   const [progressPercent, setProgressPercent] = useState<number | null>(null);
   const [backgroundAvailable, setBackgroundAvailable] = useState(false);
@@ -103,10 +111,13 @@ function StandardServerWorkbench({
     initialWebsiteSettings,
   );
   const websiteMode = tool === 'html-pdf' && htmlInput === 'url';
-  const serverBase = websiteMode ? integratedWebsiteServer : integratedDocumentServer;
-  const localOffice = tool === 'office-pdf' && processing === 'local';
+  const serverBase = websiteMode ? integratedWebsiteServer : integratedDocumentServer || customBase;
+  const serverOnlyOffice =
+    tool === 'office-pdf' && /\.(wpd|wps|odg|pages|vsd|vsdx|pub)$/i.test(file?.name || '');
+  const localOffice = tool === 'office-pdf' && processing === 'local' && !serverOnlyOffice;
   const localCertificate = tool === 'certificate-sign' && mode === 'sign' && processing === 'local';
-  const localWord = tool === 'pdf-word' && (!integratedDocumentServer || processing === 'local');
+  const localWord =
+    tool === 'pdf-word' && !specialOutput && (!serverBase || processing === 'local');
   const localOptimize = processing === 'local' && tool === 'optimize-pdf',
     localMode = localWord || localOptimize || localOffice || localCertificate;
   const [capabilities, setCapabilities] = useState<ServerCapabilities | null>(null);
@@ -115,8 +126,7 @@ function StandardServerWorkbench({
   );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
-  const [sourceId, setSourceId] = useState(sources[0]?.id || ''),
-    [file, setFile] = useState<File | null>(initialFile || null);
+  const [sourceId, setSourceId] = useState(sources[0]?.id || '');
   const [cert, setCert] = useState<File | null>(null),
     [password, setPassword] = useState('');
   const [profile, setProfile] = useToolDraftState(
@@ -166,15 +176,17 @@ function StandardServerWorkbench({
   const available =
     localMode ||
     capabilities?.capabilities[
-      tool === 'accessibility-check' && uaMode !== 'basic'
-        ? uaMode === 'create'
-          ? 'pdfuaCreate'
-          : uaMode === 'repair'
-            ? 'pdfuaRepair'
-            : 'pdfuaValidate'
-        : websiteMode
-          ? 'website'
-          : serverCapabilityKey[tool]
+      specialOutput
+        ? 'formatOffice'
+        : tool === 'accessibility-check' && uaMode !== 'basic'
+          ? uaMode === 'create'
+            ? 'pdfuaCreate'
+            : uaMode === 'repair'
+              ? 'pdfuaRepair'
+              : 'pdfuaValidate'
+          : websiteMode
+            ? 'website'
+            : serverCapabilityKey[tool]
     ] === true;
   const fileInputTool = [
     'office-pdf',
@@ -214,7 +226,7 @@ function StandardServerWorkbench({
     connection.current = abort;
     setStatus('checking');
     try {
-      const value = await serverCapabilities(serverBase, '', abort.signal);
+      const value = await serverCapabilities(serverBase, serverToken, abort.signal);
       if (!abort.signal.aborted) {
         setCapabilities(value);
         setStatus('ready');
@@ -225,7 +237,7 @@ function StandardServerWorkbench({
         setStatus('unavailable');
       }
     }
-  }, [localMode, serverBase]);
+  }, [localMode, serverBase, serverToken]);
   useEffect(() => {
     void checkConnection();
     return () => {
@@ -247,8 +259,9 @@ function StandardServerWorkbench({
     if (initialFile) {
       setFile(initialFile);
       setHtmlInput('file');
+      if (/\.(wpd|wps|odg|pages|vsd|vsdx|pub)$/i.test(initialFile.name)) setProcessing('server');
     }
-  }, [initialFile, setHtmlInput]);
+  }, [initialFile, setHtmlInput, setProcessing]);
   useEffect(() => {
     onBusy(busy);
     return () => onBusy(false);
@@ -265,6 +278,9 @@ function StandardServerWorkbench({
     profile,
     processing,
     wordOutput,
+    formatOutput,
+    customBase,
+    serverToken,
     attachments,
     extra,
     spreadsheet,
@@ -488,7 +504,10 @@ function StandardServerWorkbench({
         new Blob([new Uint8Array(source.bytes)], { type: 'application/pdf' }),
         source.name,
       );
-      if (tool === 'pdf-word') path = '/v1/pdf-to-word';
+      if (specialOutput) {
+        path = '/v1/formats/' + formatOutput;
+        body.append('options', JSON.stringify(extra));
+      } else if (tool === 'pdf-word') path = '/v1/pdf-to-word';
       else if (tool === 'accessibility-check' && uaMode === 'validate') {
         path = '/v1/pdfua/validate';
         body.append('profile', uaProfile);
@@ -532,8 +551,8 @@ function StandardServerWorkbench({
     try {
       setBackgroundAvailable(Boolean(capabilities?.jobQueue?.operations.includes(path)));
       const out = capabilities?.jobQueue?.operations.includes(path)
-        ? await runQueuedServerJob(serverBase, '', path, body, signal, setProgress)
-        : await runServerJob(serverBase, '', path, body, signal);
+        ? await runQueuedServerJob(serverBase, serverToken, path, body, signal, setProgress)
+        : await runServerJob(serverBase, serverToken, path, body, signal);
       if (signal.aborted) return;
       setResult(out);
       if (out.blob.type.includes('json'))
@@ -621,18 +640,55 @@ function StandardServerWorkbench({
       )}
       <section className="advanced-card conversion-card" aria-label={ui(info.title)}>
         <fieldset disabled={busy} className="advanced-fields conversion-fields">
+          {['pdf-word', 'pdf-powerpoint'].includes(tool) && (
+            <Choice
+              label="Ausgabeformat"
+              value={formatOutput}
+              onChange={setFormatOutput}
+              items={
+                tool === 'pdf-word'
+                  ? [
+                      ['docx', 'DOCX'],
+                      ['rtf', 'RTF'],
+                      ['odt', 'ODT'],
+                    ]
+                  : [
+                      ['pptx', 'PPTX'],
+                      ['odp', 'ODP'],
+                    ]
+              }
+            />
+          )}
+          {!localMode && !websiteMode && !integratedDocumentServer && (
+            <ServerConnection
+              base={customBase}
+              token={serverToken}
+              setBase={setCustomBase}
+              setToken={setServerToken}
+            />
+          )}
+          {specialOutput && (
+            <p className="fine-note">
+              {ui(
+                'Die Konvertierung erfolgt auf dem eigenen Dokumentenserver. Layout und bearbeitbare Inhalte bitte an der Ausgabe prüfen.',
+              )}
+            </p>
+          )}
+
           {(['office-pdf', 'optimize-pdf'].includes(tool) ||
             (tool === 'certificate-sign' && mode === 'sign')) && (
             <Choice
               label={ui('Verarbeitung')}
-              value={processing}
+              value={serverOnlyOffice ? 'server' : processing}
               onChange={setProcessing}
-              items={[
-                ['local', 'Lokal im Browser'],
-                ...(integratedDocumentServer
-                  ? [['server', 'Eigener Dokumentenserver'] as [string, string]]
-                  : []),
-              ]}
+              items={
+                serverOnlyOffice
+                  ? [['server', 'Eigener Dokumentenserver']]
+                  : [
+                      ['local', 'Lokal im Browser'],
+                      ['server', 'Eigener Dokumentenserver'],
+                    ]
+              }
             />
           )}
           {localOffice && (
@@ -649,24 +705,24 @@ function StandardServerWorkbench({
             pick(
               localOffice
                 ? 'Word, Excel, PowerPoint, OpenDocument oder RTF'
-                : 'Office, Pages, Visio oder Publisher',
+                : 'Office, Pages, Visio, Publisher, WordPerfect, Works oder Draw',
               localOffice
                 ? '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.rtf'
-                : '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.rtf,.pages,.vsd,.vsdx,.pub',
+                : '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.rtf,.pages,.vsd,.vsdx,.pub,.wpd,.wps,.odg',
               file,
               setFile,
             )
           ) : tool === 'ebook-pdf' ? (
             <>
               {pick(
-                'EPUB, FB2, CBZ, XPS oder OXPS',
-                '.epub,.fb2,.cbz,.xps,.oxps,application/epub+zip',
+                'EPUB, FB2, MOBI, AZW3, CBZ, CBR, XPS oder OXPS',
+                '.epub,.fb2,.cbz,.xps,.oxps,.mobi,.azw3,.cbr,application/epub+zip',
                 file,
                 setFile,
               )}
               <p className="fine-note">
                 {ui(
-                  'EPUB und FB2 werden neu gesetzt. CBZ, XPS und OXPS behalten ihr Seitenformat. Höchstens 40 MB und 200 Seiten; CBZ mit PNG- oder JPEG-Bildern. Kein DRM.',
+                  'EPUB, FB2, MOBI und AZW3 werden neu gesetzt. Comicarchive, XPS und OXPS behalten ihr Seitenformat. Höchstens 40 MB und 200 Seiten; Comicarchive mit PNG- oder JPEG-Bildern. Kein DRM.',
                 )}
               </p>
             </>
@@ -849,11 +905,11 @@ function StandardServerWorkbench({
               )}
             </p>
           )}
-          {tool === 'pdf-word' && (
+          {tool === 'pdf-word' && !specialOutput && (
             <WordExportOptions
               mode={wordOutput}
               local={localWord}
-              serverAvailable={!!integratedDocumentServer}
+              serverAvailable={!!serverBase}
               disabled={busy}
               onModeChange={setWordOutput}
               onProcessingChange={setProcessing}

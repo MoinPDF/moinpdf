@@ -34,7 +34,7 @@ with sync_playwright() as api,tempfile.TemporaryDirectory() as temporary:
     def fresh(page,path=source):
         page.goto(origin)
         page.locator('input[type=file]').first.set_input_files(str(path))
-        expect(page.locator('.chooser-tool')).to_have_count(127)
+        expect(page.locator('.chooser-tool')).to_have_count(133)
 
     def tool(page,name):
         page.locator('.chooser-tool').filter(has=page.get_by_text(name,exact=True)).click()
@@ -73,7 +73,7 @@ with sync_playwright() as api,tempfile.TemporaryDirectory() as temporary:
         target.click();expect(page.get_by_label('Textinhalt',exact=True)).to_have_value(re.compile('FIREFOX ORIGINAL 123'))
 
     def structured(page):
-        fresh(page);tool(page,'PDF zu strukturiertem JSON');page.get_by_role('button',name='JSON exportieren',exact=True).click()
+        fresh(page);tool(page,'PDF-Text zu JSON & XML');page.get_by_role('button',name='JSON exportieren',exact=True).click()
         data=json.loads(output(page,'firefox-structure.json').read_text())
         pages=data['documents'][0]['pages'];assert len(pages)==2
         assert 'FIREFOX ORIGINAL 123' in ' '.join(i['text'] for i in pages[0]['items'])

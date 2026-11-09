@@ -21,7 +21,15 @@ export function checkNewPassword(password: string) {
 }
 function workerJob(
   bytes: Uint8Array,
-  operation: 'encrypt' | 'decrypt' | 'rewrite' | 'redactRewrite' | 'optimize' | 'linearize',
+  operation:
+    | 'encrypt'
+    | 'decrypt'
+    | 'rewrite'
+    | 'redactRewrite'
+    | 'optimize'
+    | 'linearize'
+    | 'jsonExport'
+    | 'jsonImport',
   settings: Partial<SecuritySettings> & { jpegQuality?: number },
   signal?: AbortSignal,
 ): Promise<Uint8Array> {
@@ -116,6 +124,12 @@ export function rewriteRedactedPdf(bytes: Uint8Array, signal?: AbortSignal) {
 }
 export function linearizePdf(bytes: Uint8Array, signal?: AbortSignal) {
   return workerJob(bytes, 'linearize', {}, signal);
+}
+export function pdfJson(bytes: Uint8Array, signal?: AbortSignal) {
+  return workerJob(bytes, 'jsonExport', {}, signal);
+}
+export function pdfFromJson(bytes: Uint8Array, signal?: AbortSignal) {
+  return workerJob(bytes, 'jsonImport', {}, signal);
 }
 export function optimizePdf(
   bytes: Uint8Array,

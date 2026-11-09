@@ -4,6 +4,8 @@
 
 The Compose setup in the **repository root** includes the web app, document server, website converter and LibreTranslate. All tool views are included. The browser connects automatically to your document server; you do not need to enter server addresses or API keys. Each tool's document-related limitations still apply in Docker.
 
+Since 0.31.0 the document server includes Calibre and libarchive for DRM-free Kindle files and CBR import. RTF/ODT/ODP, Works, WordPerfect and ODG use LibreOffice. CBR creation requires a separately supplied RAR executable; see [setup](server/README.en.md#optional-cbr-creation).
+
 ## Start
 
 Requirements: Docker Engine with Compose v2 or Docker Desktop, internet access for the first build and website-link conversions, and sufficient resources. For the complete stack, start with **8 GB of available RAM and 20 GB of free disk space**. Container limits can be adjusted in `.env.example`. The installation builds locally and does not require private container-registry credentials. The source code is public; cloning the repository does not require a GitHub login.
@@ -123,7 +125,7 @@ docker compose run --rm --no-deps --volume "$PWD:/repo:ro" documents python /rep
 
 When login is enabled, also pass `--env MOINPDF_TEST_USERNAME=... --env MOINPDF_TEST_PASSWORD=...`. Use this test only with its included synthetic test material.
 
-The standalone document API is documented in [server/README.en.md](server/README.en.md). Since 0.2.0, the interface no longer offers a manual API connection; use the complete Docker edition for all converters. Converter and Python dependency versions are documented there. LibreTranslate is based on [v1.9.6](https://github.com/LibreTranslate/LibreTranslate/tree/v1.9.6); see the [upstream documentation](https://docs.libretranslate.com/guides/build_from_sources/) for model and licence information.
+The standalone document API is documented in [server/README.en.md](server/README.en.md). The full Docker app connects automatically; alternatively, server tools support temporary own-server connections. Converter and Python dependency versions are documented there. LibreTranslate is based on [v1.9.6](https://github.com/LibreTranslate/LibreTranslate/tree/v1.9.6); see the [upstream documentation](https://docs.libretranslate.com/guides/build_from_sources/) for model and licence information.
 
 ## Website link to PDF
 

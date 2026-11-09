@@ -35,7 +35,7 @@ with sync_playwright() as api:
      offenders=page.evaluate('Array.from(document.querySelectorAll("body *")).map(e=>({tag:e.tagName,css:e.className,text:e.textContent?.slice(0,100),right:e.getBoundingClientRect().right,width:e.getBoundingClientRect().width})).filter(e=>e.width>0 && e.right>innerWidth+2).slice(-20)')
      raise AssertionError(case+' horizontal overflow: '+json.dumps(offenders,ensure_ascii=False))
    try:
-    page.goto(origin+('?lang=en' if en else '?lang=de'));button('Alle Werkzeuge').click();expect(page.locator('.chooser-tool')).to_have_count(127)
+    page.goto(origin+('?lang=en' if en else '?lang=de'));button('Alle Werkzeuge').click();expect(page.locator('.chooser-tool')).to_have_count(133)
     choose('E-Rechnung erstellen');expect(button('Angaben aus der geöffneten PDF vorschlagen')).to_be_disabled()
     # Real controlled inputs: verify that date and address values survive later changes.
     for key,title in [('number','Rechnungsnummer'),('date','Rechnungsdatum'),('delivery','Leistungsdatum'),('due','Fällig am'),('reference','Käuferreferenz'),('iban','IBAN')]:label(title).fill(draft[key]);label(title).press('Tab')
@@ -67,7 +67,7 @@ with sync_playwright() as api:
      assert len(pdf.embfile_names())==2
      for name in ['invoice.pdf','xrechnung-standard.xml']:assert pdf.embfile_get(name)==(fixtures/name).read_bytes()
      assert pdf.xref_get_key(pdf.pdf_catalog(),'Collection')[0]!='null'
-    button('Zurück zur Auswahl').click();page.locator('input[type=file]').first.set_input_files(str((fixtures/'invoice.pdf').resolve()));expect(page.locator('.chooser-tool')).to_have_count(127);choose('PDF-Ebenen verwalten')
+    button('Zurück zur Auswahl').click();page.locator('input[type=file]').first.set_input_files(str((fixtures/'invoice.pdf').resolve()));expect(page.locator('.chooser-tool')).to_have_count(133);choose('PDF-Ebenen verwalten')
     panel=page.locator('details').filter(has=page.locator('summary').get_by_text(t('Neue Ebenen und Objektzuordnung'),exact=True));panel.locator('summary').click();button('Objekte und Ebenen laden').click();expect(panel.locator('input[type=checkbox]').first).to_be_visible();panel.locator('input[type=checkbox]').first.check();label('Name der neuen Ebene').fill('CI layer');button('Ebene erstellen / Objekte zuordnen').click()
     with fitz.open(download('layer.pdf')) as pdf:assert any(v['name']=='CI layer' for v in pdf.get_ocgs().values());assert '129.70' in ''.join(p.get_text() for p in pdf)
     button('Zurück zur Auswahl').click();choose('Arbeitsabläufe');label('Vorlage laden').select_option('1');page.locator('summary').get_by_text(t('Eingangsordner: OCR, Trennung und Ablage'),exact=True).click();label('Sammeldateien trennen').select_option('page');label('Dateinamensmuster').fill('{original}-{part}');button('Für Eingangsordner exportieren').click();flow=json.loads(download('workflow.json').read_text());assert flow['version']==2 and flow['split']['mode']=='page';assert flow['steps']

@@ -65,3 +65,5 @@ flatbuffers==25.12.19
 packaging==26.3
 protobuf==7.36.2
 pypdf==6.21.4
+
+libarchive-c==5.3

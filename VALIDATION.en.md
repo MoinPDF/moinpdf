@@ -4,6 +4,14 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification plan for 0.31.0
+
+- `format-tools-smoke.mjs` checks real text/CSV/Markdown/XML PDFs, a complete QPDF roundtrip with form values and unchanged attachment bytes, safe script inspection, LlamaIndex page entries, XML text positions, comic images, scanner effect and cancellation. Outputs are independently reopened.
+- `server.test_formats031` checks genuine WordPerfect/Microsoft Works files, synthetic ODG, RTF/ODT/ODP with reverse conversion, Calibre AZW3/MOBI, real RAR archives and hostile inputs. Calibre, LibreOffice and libarchive are mandatory in Docker verification; missing converters cannot skip checks there.
+- `formats-031-browser.py` exercises German desktop and English touch journeys with actual downloads in Chromium, Firefox and WebKit. All 133 views remain in language/layout checks. Native Safari covers existing journeys including the extended structured exporter; physical devices are not covered.
+- Optional CBR creation is checked through its process contract, a real RAR test archive and independent extraction. A commercial RAR executable is neither bundled nor represented as tested across all operator architectures. Every actual CBR output is fully compared with the generated images before delivery.
+- The complete existing regression, PR workflows, actual main checks and downstream image/release publication remain release gates. This document describes scope; successful Actions runs at the release commit are the execution evidence.
+
 ## Verification plan for 0.30.0
 
 - 73 engine/DOM suites; additions cover exact payment allocation, invoice rounding and invalid drafts, unchanged portfolio attachments with SHA-256, and native layer assignment with independent pixel comparison.
@@ -82,7 +90,7 @@ run for the exact source commit remains authoritative.
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| PDF engines and DOM | 73 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| PDF engines and DOM | 74 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
 | Document server | Tests covering native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and narrow touch viewports, PDF/EPUB/audio downloads |
