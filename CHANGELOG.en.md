@@ -4,6 +4,11 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.31.1 — 2026-11-09
+
+- E-book import preserves SVG cover images in EPUB, MOBI and AZW3 after sanitization. A renamed XML reference could previously produce a white cover page; external image sources remain blocked.
+- Regression checks now verify rendered cover pixels, alternate XML prefixes, removal of external references and every PDF page after an AZW3/MOBI roundtrip.
+
 ## 0.31.0 — 2026-11-09
 
 - Local Office conversion: a worker cancelled during startup cannot resume native initialization after delayed WASM or thread readiness. Cancellation remains effective throughout shutdown.

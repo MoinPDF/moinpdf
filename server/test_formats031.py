@@ -118,6 +118,9 @@ class FormatTests(unittest.TestCase):
                 with pymupdf.open(stream=result.content, filetype='pdf') as pdf:
                     self.assertIn('Fictional MoinPDF', ''.join(p.get_text() for p in pdf))
                     self.assertEqual(round(pdf[0].rect.width), 420)
+                    self.assertIn('Second page', ''.join(p.get_text() for p in pdf))
+                    for page in pdf:
+                        self.assertGreater(sum(v < 245 for v in page.get_pixmap().samples), 100, f'Blank Kindle page {page.number + 1}')
 
     def test_real_cbr_streams_and_adversarial_members(self):
         images = []

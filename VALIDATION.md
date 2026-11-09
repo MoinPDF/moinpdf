@@ -6,6 +6,12 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.31.1
+
+- `server.test_recovery` prüft ein rein fiktives EPUB mit blauem SVG-Titelbild, relativer interner Bildreferenz und zwei XML-Präfixen. Die PDF muss das blaue Cover und den Folgetext enthalten; HTTP- und Dateisystemreferenzen werden weiterhin entfernt.
+- `server.test_formats031` verlangt nach echten Calibre-AZW3-/MOBI-Rundläufen sichtbaren Inhalt auf jeder PDF-Seite und den Text beider Eingabeseiten. Die Store-Prüfung deckt denselben Rundlauf auf amd64 und arm64 ab.
+- Die vollständigen Release-Prüfungen für den exakten Commit bleiben erforderlich.
+
 ## Prüfplan für 0.31.0
 
 - `format-tools-smoke.mjs` prüft echte Text-/CSV-/Markdown-/XML-PDFs, vollständigen QPDF-Rundlauf mit Formularwert und unverändertem Anhang, sichere Skriptanzeige, LlamaIndex-Seiten, XML-Textpositionen, Comicbilder, Scannereffekt und Abbruch. Exporte werden unabhängig wieder eingelesen.

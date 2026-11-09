@@ -17,6 +17,10 @@ from PIL import Image
 
 from extended_documents import open_pdf, settings
 
+# MuPDF's SVG image loader requires the literal xlink prefix. ElementTree's
+# generated nsN prefix otherwise makes a valid local cover image render blank.
+ET.register_namespace('xlink', 'http://www.w3.org/1999/xlink')
+
 
 def number(value, minimum, maximum):
     if isinstance(value, bool) or not isinstance(value, (float, int)) or not math.isfinite(value) or not minimum <= value <= maximum:

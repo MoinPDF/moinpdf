@@ -4,6 +4,12 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification plan for 0.31.1
+
+- `server.test_recovery` checks a fictional EPUB containing a blue SVG cover, a relative internal image reference and two XML prefixes. The PDF must retain the blue cover and following text; HTTP and filesystem references must still be removed.
+- `server.test_formats031` requires visible content on every PDF page and text from both input pages after genuine Calibre AZW3/MOBI roundtrips. Store verification exercises the same roundtrip on amd64 and arm64.
+- Complete release checks for the exact commit remain mandatory.
+
 ## Verification plan for 0.31.0
 
 - `format-tools-smoke.mjs` checks real text/CSV/Markdown/XML PDFs, a complete QPDF roundtrip with form values and unchanged attachment bytes, safe script inspection, LlamaIndex page entries, XML text positions, comic images, scanner effect and cancellation. Outputs are independently reopened.
