@@ -66,6 +66,37 @@ class RecoveryTests(unittest.TestCase):
             source.write_bytes(b'bad zip')
             with self.assertRaises(ValueError):ebook(source,directory)
 
+
+    def test_svg_cover_survives_sanitizing_and_pdf_rendering(self):
+        image = io.BytesIO()
+        Image.new('RGB', (60, 80), (0, 0, 255)).save(image, format='PNG')
+        for prefix in ['xlink', 'bookimage']:
+            with self.subTest(prefix=prefix), tempfile.TemporaryDirectory() as temp:
+                directory = Path(temp)
+                source = directory / 'input.epub'
+                source.write_bytes(book_bytes({
+                    'book.opf': '<package xmlns="http://www.idpf.org/2007/opf" version="2.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">fictional-cover</dc:identifier><dc:title>Fictional cover</dc:title><dc:language>en</dc:language></metadata><manifest><item id="cover" href="Text/cover.xhtml" media-type="application/xhtml+xml"/><item id="image" href="Images/cover.png" media-type="image/png"/><item id="text" href="chapter.xhtml" media-type="application/xhtml+xml"/></manifest><spine><itemref idref="cover"/><itemref idref="text"/></spine></package>',
+                    'Text/cover.xhtml': '<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Fictional cover</title></head><body style="margin:0"><svg xmlns="http://www.w3.org/2000/svg" xmlns:' + prefix + '="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="0 0 60 80"><image width="60" height="80" ' + prefix + ':href="../Images/cover.png"/><image width="1" height="1" ' + prefix + ':href="https://example.invalid/tracker.png"/><image width="1" height="1" ' + prefix + ':href="file:///private.png"/></svg></body></html>',
+                    'Images/cover.png': image.getvalue(),
+                }))
+                (directory / 'settings.json').write_text('{"paper":"a5","fontSize":14}')
+                ebook(source, directory)
+                with zipfile.ZipFile(directory / 'book.epub') as archive:
+                    self.assertEqual(archive.read('Images/cover.png'), image.getvalue())
+                    cover = archive.read('Text/cover.xhtml').decode()
+                    self.assertNotIn('example.invalid', cover)
+                    self.assertNotIn('file://', cover)
+                with fitz.open(directory / 'output.pdf') as pdf:
+                    self.assertEqual(len(pdf), 2)
+                    self.assertIn('Moin aus dem Norden', pdf[1].get_text())
+                    pixmap = pdf[0].get_pixmap()
+                    red, green, blue = pixmap.pixel(pixmap.width // 2, pixmap.height // 3)
+                    self.assertLess(red, 20)
+                    self.assertLess(green, 20)
+                    self.assertGreater(blue, 235)
+                    for page in pdf:
+                        self.assertGreater(sum(v < 245 for v in page.get_pixmap().samples), 100)
+
     def test_api_worker_and_note(self):
         from fastapi.testclient import TestClient
         import app as service

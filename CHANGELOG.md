@@ -9,6 +9,11 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.31.1 — 2026-11-09
+
+- E-Book-Import: SVG-Titelbilder in EPUB, MOBI und AZW3 bleiben nach der Sicherheitsbereinigung sichtbar. Eine umbenannte XML-Referenz konnte zuvor ein weißes Titelblatt erzeugen; externe Bildquellen bleiben gesperrt.
+- Zusätzliche Regression prüft das tatsächliche Cover-Bild, abweichende XML-Präfixe, entfernte externe Referenzen sowie jede PDF-Seite nach dem AZW3-/MOBI-Rundlauf.
+
 ## 0.31.0 — 2026-11-09
 
 - Lokale Office-Konvertierung: Ein während des Starts abgebrochener Worker setzt die native Initialisierung nach verspäteter WASM- oder Thread-Bereitschaft nicht fort. Der Abbruch wird bis zum vollständigen Herunterfahren beibehalten.
