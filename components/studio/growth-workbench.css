@@ -20,3 +20,7 @@
 .evidence-finding strong {
   overflow-wrap: anywhere;
 }
+
+.growth-invoice-layout:has(> section:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}

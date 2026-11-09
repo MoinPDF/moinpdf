@@ -4,6 +4,15 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification plan for 0.30.0
+
+- 73 engine/DOM suites; additions cover exact payment allocation, invoice rounding and invalid drafts, unchanged portfolio attachments with SHA-256, and native layer assignment with independent pixel comparison.
+- Six additional server tests exercise real KoSIT scenarios with rounding/exemption and deliberately invalid details, Mustang plus both PDF/A checks, licensed German handwriting, PDF/X with independent partial checks, and OCR/splitting/filing in watched folders. Container tests run without networking; ONNX runtime telemetry is explicitly disabled.
+- New production-browser journeys check invoice inputs and PDF output, review invalidation after edits, exact portfolio files, saved layers and watched-folder export in Chromium, Firefox and WebKit. German desktop and English narrow touch emulation; no physical devices.
+- 127 tool views and German/English information pages remain covered by language and layout checks. Native Safari is a separate test environment and is not equivalent to WebKit.
+- The pull request and actual main commit must pass every verification workflow before images and the release are published. A local or interrupted partial test does not constitute release approval.
+- Handwriting fixtures originate from a model training source: integration evidence, not an independent accuracy benchmark. PDF/X remains a partial technical check without full ISO certification. E-invoice validation is not an individual tax assessment.
+
 ## Verification scope for 0.29.0
 
 - 72 engine/DOM suites cover PDF editing, OCR, compression, conversion, recovery, projects, DATEV export and the logo entrance including sound, cancellation and reduced motion.

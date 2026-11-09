@@ -47,7 +47,7 @@ class GrowthTests(unittest.TestCase):
         bad=self.client.post('/v1/xrechnung/validate',headers=self.headers,files={'file':('invoice.xml',b'<!DOCTYPE x [<!ENTITY bad SYSTEM "file:///etc/passwd">]><x>&bad;</x>')});self.assertEqual(bad.status_code,422)
     def test_real_hybrid_mustang_verapdf_declared_profile_and_exact_xml(self):
         xml=(FIXTURES/'zugferd-standard.xml').read_bytes();original=(FIXTURES/'invoice.pdf').read_bytes()
-        archive=self.post('/v1/zugferd/create',{'file':('invoice.pdf',original),'invoice':('invoice.xml',xml)},{'profile':'E'})
+        archive=self.post('/v1/zugferd/create',{'file':('invoice.pdf',original),'invoice':('invoice.xml',xml)},{'profile':'T'})
         report=json.loads(archive.read('Ergebnis.json'));self.assertTrue(report['compliant'],report);self.assertTrue(report['mustangValid']);self.assertTrue(report['pdfa3b']);self.assertTrue(report['declaredPdfaValid']);self.assertIn('PDF/A-3',report['declaredPdfaProfile'])
         with fitz.open(stream=archive.read('ZUGFeRD-geprueft.pdf'),filetype='pdf') as result,fitz.open(stream=original,filetype='pdf') as before:
             self.assertEqual(len(result),len(before));self.assertTrue(any(result.embfile_get(n)==xml for n in result.embfile_names()));self.assertIn('129.70',''.join(p.get_text() for p in result))

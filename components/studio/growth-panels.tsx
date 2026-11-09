@@ -180,7 +180,7 @@ export function InvoiceCreatePanel({ source, sources, busy, run }: PanelProps) {
     setReviewed(false);
   };
   return (
-    <div className="evidence-layout">
+    <div className="evidence-layout growth-invoice-layout">
       <section className="advanced-card">
         <h2>{ui('Rechnungsdaten erfassen und prüfen')}</h2>
         <p>
