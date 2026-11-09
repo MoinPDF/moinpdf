@@ -98,7 +98,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
                     check(page,title+' / menu')
                     page.keyboard.press('Escape')
             back(page)
-        completed.append('All 121 English tool views and available selection menus, with the PDF retained')
+        completed.append('All 127 English tool views and available selection menus, with the PDF retained')
         # Exercise server-authored failures at their actual rendering boundaries.
         job = {'id':'a'*32, 'ticket':'a'*64, 'base':'/api/documents', 'name':'Auftrag Original-123.pdf', 'operation':'/v1/pdf-word', 'created':time.time(), 'expires':time.time()+3600, 'status':'failed', 'error':'Der Auftrag hat das Zeitlimit erreicht.'}
         job_url = origin+job['base']+'/v1/jobs/'+job['id']

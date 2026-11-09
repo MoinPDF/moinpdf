@@ -149,7 +149,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temp:
         categories.get_by_role('button', name='Prüfen', exact=True).click()
         search.fill('CSV')
         assert manual.locator('.docs-tool:visible').count() > 0
-        completed.append('All 121 guides, accent-insensitive search, empty state, reset and five category filters')
+        completed.append('All 127 guides, accent-insensitive search, empty state, reset and five category filters')
 
         manual.goto(origin + '/dokumentation.html#werkzeug-pdf-audio')
         audio = manual.locator('#werkzeug-pdf-audio')

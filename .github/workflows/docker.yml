@@ -193,6 +193,7 @@ jobs:
           path: |
             web-evidence/
             documentation-evidence/
+            .cache/editor-browser/growth030/
           if-no-files-found: ignore
           retention-days: 14
       - name: Optional login protects the app and API

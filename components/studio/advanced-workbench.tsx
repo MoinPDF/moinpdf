@@ -240,7 +240,20 @@ export function AdvancedWorkbench({
       )}
       <fieldset
         disabled={busy}
-        className="advanced-fields"
+        className={`advanced-fields ${
+          [
+            'payment-match',
+            'invoice-create',
+            'pdf-portfolio',
+            'personal-data',
+            'handwriting-ocr',
+            'pdfx-create',
+            'pdf-layers',
+            'workflows',
+          ].includes(tool)
+            ? 'growth-tool'
+            : ''
+        }`}
         onChangeCapture={() => setResult(null)}
         onClickCapture={(e) => {
           if (

@@ -24,3 +24,16 @@
 .growth-invoice-layout:has(> section:only-child) {
   grid-template-columns: minmax(0, 1fr);
 }
+
+.growth-tool button {
+  max-width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 36px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.growth-tool .advanced-tick > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
