@@ -1659,6 +1659,9 @@ function Studio() {
         if (
           !refs.current.sources.length &&
           ![
+            'text-pdf',
+            'pdf-json',
+            'ebook-pdf',
             'invoice-create',
             'pdf-portfolio',
             'camera-scan',

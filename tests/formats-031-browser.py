@@ -97,6 +97,12 @@ with sync_playwright() as api:
                 # Format selections remain available even when this static test host has no document server.
                 for tool, fmt in [('PDF zu Word', 'odt'), ('PDF zu PowerPoint', 'odp')]:
                     back(); choose(tool); label('Ausgabeformat').select_option(fmt); overflow()
+                back()
+                page.locator('input[type=file]').first.set_input_files({'name': 'routing-only.wpd', 'mimeType': 'application/octet-stream', 'buffer': b'\xffWPCrouting-only'})
+                expect(page.get_by_role('heading', name=t('Office zu PDF'), exact=True)).to_be_visible()
+                expect(label('Verarbeitung')).to_have_value('server')
+                assert label('Verarbeitung').locator('option').all_text_contents() == [t('Eigener Dokumentenserver')]
+                overflow()
                 assert not errors, errors
                 reports.append({'browser': engine, 'language': 'en' if en else 'de', 'touch_emulation': en, 'status': 'passed'})
                 page.screenshot(path=str(out / (case + '.png')), full_page=True)

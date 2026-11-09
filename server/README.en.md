@@ -2,7 +2,7 @@
 
 [Deutsch](README.md) · **English** · [← Project README](../README.en.md)
 
-> **For the complete app including translation:** run `docker compose up -d --build` in the repository root. See the [Docker guide](../DOCKER.en.md). The guide below covers a separate document API for an independently hosted web app or API client. In 0.30.0, e-invoice creation, handwriting recognition and PDF/X preparation also offer a temporary custom-server connection. Other server tools use the configured integration/proxy.
+> **For the complete app including translation:** run `docker compose up -d --build` in the repository root. See the [Docker guide](../DOCKER.en.md). The guide below covers a separate document API for an independently hosted web app or API client. In 0.30.0, e-invoice creation, handwriting recognition and PDF/X preparation also offer a temporary custom-server connection. Version 0.31.0 extends this connection to other server converters.
 
 Many tools process files locally in the browser. This server adds the conversions and checks described below:
 

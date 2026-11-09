@@ -91,6 +91,7 @@ function StandardServerWorkbench({
   const [formatOutput, setFormatOutput] = useState(tool === 'pdf-word' ? 'docx' : 'pptx');
   const [customBase, setCustomBase] = useState(''),
     [serverToken, setServerToken] = useState('');
+  const [file, setFile] = useState<File | null>(initialFile || null);
   const specialOutput =
     (tool === 'pdf-word' && formatOutput !== 'docx') ||
     (tool === 'pdf-powerpoint' && formatOutput === 'odp');
@@ -111,10 +112,9 @@ function StandardServerWorkbench({
   );
   const websiteMode = tool === 'html-pdf' && htmlInput === 'url';
   const serverBase = websiteMode ? integratedWebsiteServer : integratedDocumentServer || customBase;
-  const localOffice =
-    tool === 'office-pdf' &&
-    processing === 'local' &&
-    !/\.(wpd|wps|odg|pages|vsd|vsdx|pub)$/i.test(initialFile?.name || '');
+  const serverOnlyOffice =
+    tool === 'office-pdf' && /\.(wpd|wps|odg|pages|vsd|vsdx|pub)$/i.test(file?.name || '');
+  const localOffice = tool === 'office-pdf' && processing === 'local' && !serverOnlyOffice;
   const localCertificate = tool === 'certificate-sign' && mode === 'sign' && processing === 'local';
   const localWord =
     tool === 'pdf-word' && !specialOutput && (!serverBase || processing === 'local');
@@ -126,8 +126,7 @@ function StandardServerWorkbench({
   );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
-  const [sourceId, setSourceId] = useState(sources[0]?.id || ''),
-    [file, setFile] = useState<File | null>(initialFile || null);
+  const [sourceId, setSourceId] = useState(sources[0]?.id || '');
   const [cert, setCert] = useState<File | null>(null),
     [password, setPassword] = useState('');
   const [profile, setProfile] = useToolDraftState(
@@ -680,12 +679,16 @@ function StandardServerWorkbench({
             (tool === 'certificate-sign' && mode === 'sign')) && (
             <Choice
               label={ui('Verarbeitung')}
-              value={processing}
+              value={serverOnlyOffice ? 'server' : processing}
               onChange={setProcessing}
-              items={[
-                ['local', 'Lokal im Browser'],
-                ['server', 'Eigener Dokumentenserver'],
-              ]}
+              items={
+                serverOnlyOffice
+                  ? [['server', 'Eigener Dokumentenserver']]
+                  : [
+                      ['local', 'Lokal im Browser'],
+                      ['server', 'Eigener Dokumentenserver'],
+                    ]
+              }
             />
           )}
           {localOffice && (
