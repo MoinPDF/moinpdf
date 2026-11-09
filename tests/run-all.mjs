@@ -43,6 +43,7 @@ const suites = [
   'editor-resilience',
   'extra-tools',
   'document-tools',
+  'bookmark-transfer',
   'security-invoice',
   'advanced-tools',
   'size-split',

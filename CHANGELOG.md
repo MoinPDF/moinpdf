@@ -9,6 +9,13 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Unveröffentlicht
+
+- Mehrere Seiten pro Blatt: 2, 4, 6, 8, 9 und 16 Seiten, Hoch-/Querformat, einstellbare Ränder und Abstände, optionale Rahmen und Anordnungsschema.
+- Lesezeichen als CSV/JSON importieren und exportieren, Vorschau sowie ausdrückliches Ergänzen oder Ersetzen mit Rückgängig. Bis 1000 Einträge und 2 MB.
+- FB2, CBZ, XPS und OXPS zusätzlich zu EPUB über den Dokumentenserver in PDF umwandeln; Dateiauswahl und Suche erweitert.
+- Optionale automatische Eingangsordner für unterstützte PDF-Abläufe, mit Originalerhalt, Neustartschutz und Fehlerberichten. Einrichtung: [Eingangsordner](docs/WATCH-FOLDERS.md).
+
 ## 0.28.0 – 8. November 2026
 
 - Englische Kategorie „Pages“ vereinheitlicht und die Beschreibung der Komprimierung an den inhaltserhaltenden Modus angepasst.

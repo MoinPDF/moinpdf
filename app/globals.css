@@ -7945,3 +7945,41 @@ html:has(.editor-canvas-wrap) {
   max-height: 63px;
   object-fit: contain;
 }
+.nup-preview {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  width: 130px;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 5px;
+}
+.nup-preview span {
+  display: grid;
+  place-items: center;
+  color: #175d54;
+  background: #e2eeea;
+  border: 1px solid #9fbfb6;
+  font-size: 11px;
+  min-height: 10px;
+}
+.bookmark-transfer {
+  margin: 14px 0;
+}
+.bookmark-transfer summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.bookmark-transfer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.bookmark-import-preview {
+  max-height: 240px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding-left: 24px;
+}

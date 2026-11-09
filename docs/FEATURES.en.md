@@ -1,5 +1,15 @@
 # Features and limitations
 
+## Extended print layouts, bookmarks and input formats
+
+“Multiple pages per sheet” supports 2/4/6/8/9/16 pages, portrait/landscape, margins and spacing (0–72 pt each), and optional borders. A diagram shows the arrangement; output retains text and vectors. Forms do not become new interactive fields.
+
+“Edit bookmarks” imports/exports CSV/JSON with titles, target pages, hierarchy and expanded state. CSV uses `title,page,level` and optional `open,escaped`; pages and levels start at 1. Up to 2 MB/1,000 entries, valid internal targets and consecutive hierarchy levels. Preview before explicit append/replace, with undo. Zoom/viewport targets are not transferred; assign external targets first.
+
+“E-books & special formats to PDF” supports EPUB, FB2, CBZ, XPS and OXPS through the optional document server. Up to 40 MB input/200 pages, archives up to 80 MB expanded/1,500 entries. EPUB/FB2: A4/A5 and 8–24 pt base font; CBZ/XPS/OXPS: original page dimensions. CBZ uses PNG/JPEG in natural file-name order. No DRM; external resources are removed or rejected.
+
+Optional [watched folders](WATCH-FOLDERS.en.md) run supported linear workflows on a self-hosted document server. Originals are retained, with separate results and error reports. OCR, conditions and graphs are not yet supported in this automation.
+
 ## Bank statement to DATEV
 
 For AI errors, MoinPDF distinguishes exhausted OpenAI API credits, spend/usage limits, temporary rate limits and installation capacity. A reported waiting time blocks resubmission until it expires; requests are never retried automatically. Missing balance-check details are listed individually. For an invalid amount or missing payment direction, the posting number opens the affected row. Missing balances are not inferred from postings; all statement pages must be complete and readable.

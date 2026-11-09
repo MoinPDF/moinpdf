@@ -1,5 +1,7 @@
 # Implementation status
 
+New development after 0.28.0: 6/8/9/16 pages per sheet with margins, spacing and borders; bookmark CSV/JSON with preview; FB2/CBZ/XPS/OXPS conversion; optional [watched folders](WATCH-FOLDERS.en.md). Converters and folder automation require the document server. Watched folders initially support seven simple step types without conditions, OCR or graphs. See [features and limitations](FEATURES.en.md#extended-print-layouts-bookmarks-and-input-formats).
+
 The next comparison gaps are covered: colors and background with presets/preview, selective unlocking of read-only form fields, text-preserving crop and single-PDF duplex collation. Limits: backgrounds sit behind opaque content; image color adjustments lose text/fields/links; CropBox only hides margins. Single-PDF duplex accepts up to 200 selected pages.
 
 Clean up headers and footers adds recurring margin detection, individual exceptions and manual scan areas to Edit & clean up. See [Features](FEATURES.en.md#clean-up-headers-and-footers) for usage and limits.

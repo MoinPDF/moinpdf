@@ -1,5 +1,15 @@
 # Funktionen und Grenzen
 
+## Erweiterte Drucklayouts, Lesezeichen und Eingangsformate
+
+„Mehrere Seiten pro Blatt“ bietet 2/4/6/8/9/16 Seiten, Hoch-/Querformat, Seitenrand und Abstand (je 0–72 pt) sowie optionale Rahmen. Das Schema zeigt die Anordnung; die PDF behält Text und Vektoren. Formulare werden dabei nicht zu neuen interaktiven Feldern.
+
+„Lesezeichen bearbeiten“ importiert und exportiert CSV/JSON mit Titel, Zielseite, Ebene und Aufklappzustand. CSV nutzt `title,page,level` und optional `open,escaped`; Seite und Ebene beginnen bei 1. Bis 2 MB/1000 Einträge, gültige interne Zielseiten und lückenlose Hierarchie. Vorschau vor ausdrücklichem Ergänzen/Ersetzen, Rückgängig möglich. Zoom-/Ausschnittziele werden nicht übertragen; externe Ziele zuerst zuordnen.
+
+„E-Books & Spezialformate zu PDF“ unterstützt EPUB, FB2, CBZ, XPS und OXPS über den optionalen Dokumentenserver. Bis 40 MB Eingang/200 Seiten, Archive bis 80 MB entpackt/1500 Einträge. EPUB/FB2: A4/A5 und 8–24 pt Grundschrift; CBZ/XPS/OXPS: ursprüngliches Seitenformat. CBZ verwendet PNG/JPEG und natürliche Dateinamensortierung. Keine DRM-Inhalte; externe Ressourcen werden entfernt oder abgewiesen.
+
+Die optionale [Ordnerautomatik](WATCH-FOLDERS.md) verarbeitet unterstützte lineare Abläufe auf einem selbst betriebenen Dokumentenserver. Originale bleiben erhalten; Ergebnisse und Fehlerberichte werden getrennt gespeichert. OCR, Bedingungen und Diagramme werden in dieser Automatik noch nicht unterstützt.
+
 ## Kontoauszug zu DATEV
 
 Bei KI-Fehlern unterscheidet MoinPDF fehlendes OpenAI-API-Guthaben, Ausgaben-/Nutzungslimits, vorübergehende Anfragelimits und die Auslastung dieser Installation. Eine gemeldete Wartezeit sperrt erneutes Senden bis zum Ablauf; es gibt keine automatische Wiederholung. Fehlende Angaben für den Saldenabgleich werden einzeln benannt. Bei ungültigem Betrag oder fehlender Zahlungsrichtung führt die Buchungsnummer direkt zur betroffenen Zeile. Fehlende Salden werden nicht aus Buchungen errechnet; alle Auszugsseiten müssen vollständig und lesbar vorliegen.

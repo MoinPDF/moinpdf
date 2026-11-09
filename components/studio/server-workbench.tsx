@@ -657,7 +657,19 @@ function StandardServerWorkbench({
               setFile,
             )
           ) : tool === 'ebook-pdf' ? (
-            pick('E-Book (.epub)', '.epub,application/epub+zip', file, setFile)
+            <>
+              {pick(
+                'EPUB, FB2, CBZ, XPS oder OXPS',
+                '.epub,.fb2,.cbz,.xps,.oxps,application/epub+zip',
+                file,
+                setFile,
+              )}
+              <p className="fine-note">
+                {ui(
+                  'EPUB und FB2 werden neu gesetzt. CBZ, XPS und OXPS behalten ihr Seitenformat. Höchstens 40 MB und 200 Seiten; CBZ mit PNG- oder JPEG-Bildern. Kein DRM.',
+                )}
+              </p>
+            </>
           ) : tool === 'html-pdf' ? (
             <>
               <Choice

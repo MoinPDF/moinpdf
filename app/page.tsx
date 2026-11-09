@@ -246,6 +246,7 @@ import {
   countEdits,
   makeBlankFile,
   normalizedRect,
+  nupGrid,
   type StudioOptions,
   type Edits,
   type Mark,
@@ -3530,6 +3531,10 @@ function Studio() {
                       renderChoice('perSheet', 'Seiten pro Blatt', [
                         ['2', '2 Seiten'],
                         ['4', '4 Seiten'],
+                        ['6', '6 Seiten'],
+                        ['8', '8 Seiten'],
+                        ['9', '9 Seiten'],
+                        ['16', '16 Seiten'],
                       ])}
                     {renderChoice('pageSize', 'Papierformat', [
                       ['a4', 'DIN A4'],
@@ -3539,6 +3544,64 @@ function Studio() {
                       ['portrait', 'Hochformat'],
                       ['landscape', 'Querformat'],
                     ])}
+                    {toolId === 'nup' && (
+                      <>
+                        <div
+                          className="nup-preview"
+                          aria-label={ui('Drucklayout')}
+                          style={{
+                            gridTemplateColumns: `repeat(${nupGrid(options.perSheet, options.orientation === 'landscape')[0]}, 1fr)`,
+                            aspectRatio: options.orientation === 'landscape' ? '1.414' : '0.707',
+                          }}
+                        >
+                          {Array.from({ length: Number(options.perSheet) }, (_, i) => (
+                            <span key={i}>{i + 1}</span>
+                          ))}
+                        </div>
+                        <p className="fine-note">
+                          {ui(
+                            'Schematische Reihenfolge auf dem Druckbogen. Das Ergebnis enthält die ausgewählten Seiten.',
+                          )}
+                        </p>
+                        <label className="field">
+                          <span>{ui('Seitenrand (pt)')}</span>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={72}
+                            value={options.nupMargin ?? 20}
+                            disabled={locked}
+                            onChange={(e) =>
+                              setOptions({ ...options, nupMargin: Number(e.target.value) })
+                            }
+                          />
+                        </label>
+                        <label className="field">
+                          <span>{ui('Abstand (pt)')}</span>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={72}
+                            value={options.nupGap ?? 12}
+                            disabled={locked}
+                            onChange={(e) =>
+                              setOptions({ ...options, nupGap: Number(e.target.value) })
+                            }
+                          />
+                        </label>
+                        <label className="switch-field">
+                          <span>{ui('Rahmen um jede Seite')}</span>
+                          <Switch
+                            checked={options.nupBorder ?? false}
+                            disabled={locked}
+                            onCheckedChange={(value) =>
+                              setOptions({ ...options, nupBorder: value })
+                            }
+                            aria-label={ui('Rahmen um jede Seite')}
+                          />
+                        </label>
+                      </>
+                    )}
                     <p className="fine-note">
                       {t(
                         'Inhalte werden proportional verkleinert oder vergrößert. Text bleibt kopierbar, soweit er im Original vorhanden ist.',

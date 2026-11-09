@@ -262,9 +262,9 @@ export const englishTools: Record<
     action: 'Create EPUB',
   },
   'ebook-pdf': {
-    title: 'E-book to PDF',
+    title: 'E-books & special formats to PDF',
     description:
-      'Convert unprotected EPUB files to PDF with a choice of font size and page format.',
+      'Convert EPUB, FB2, comic archives (CBZ), XPS and OXPS to PDF. Choose font size and page format for e-books.',
     action: 'Create PDF',
   },
   'pdf-powerpoint': {
@@ -545,7 +545,8 @@ export const englishTools: Record<
   },
   nup: {
     title: 'Multiple pages per sheet',
-    description: 'Arrange two or four document pages on one sheet.',
+    description:
+      'Arrange 2, 4, 6, 8, 9 or 16 pages on a print sheet. Adjust margins, spacing and borders.',
     action: 'Arrange pages',
   },
   'edit-text': {

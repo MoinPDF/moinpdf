@@ -4,6 +4,13 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased
+
+- Multiple pages per sheet: 2, 4, 6, 8, 9 and 16 pages, portrait/landscape, configurable margins and gaps, optional borders and a layout diagram.
+- Bookmark CSV/JSON import/export with preview, explicit append/replace and undo. Up to 1,000 entries and 2 MB.
+- Convert FB2, CBZ, XPS and OXPS to PDF through the document server in addition to EPUB, with expanded file routing and search.
+- Optional watched input folders for supported PDF workflows, preserving originals with restart deduplication and error reports. Setup: [Watched folders](docs/WATCH-FOLDERS.en.md).
+
 ## 0.28.0 – 8 November 2026
 
 - Standardized the “Pages” category label and corrected the English compression description to reflect content-preserving compression.

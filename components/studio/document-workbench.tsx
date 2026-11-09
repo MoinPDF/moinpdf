@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { XfaDataPanel } from './xfa-data-panel';
+import { BookmarkTransfer } from './bookmark-transfer';
 import { FormCanvas } from './form-canvas';
 import { PagePreview } from './canvas';
 import {
@@ -727,6 +728,13 @@ export function DocumentWorkbench({
                 )}
                 {isBookmarks ? (
                   <>
+                    <BookmarkTransfer
+                      key={source.id}
+                      bookmarks={draft.bookmarks}
+                      pages={source.pdf.numPages}
+                      locked={locked}
+                      onApply={(bookmarks) => change({ ...draft, bookmarks })}
+                    />
                     <Button
                       variant="outline"
                       className="add-bookmark"

@@ -1,6 +1,67 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  'Schematische Reihenfolge auf dem Druckbogen. Das Ergebnis enthält die ausgewählten Seiten.':
+    'Schematic order on the print sheet. The result contains the selected pages.',
+  'Import fehlgeschlagen.': 'Import failed.',
+  'Export fehlgeschlagen.': 'Export failed.',
+  'JSON herunterladen': 'Download JSON',
+  'Ungültige Anzahl Seiten pro Blatt.': 'Invalid number of pages per sheet.',
+  'Seitenrand und Abstand müssen zwischen 0 und 72 Punkten liegen.':
+    'Page margin and spacing must be between 0 and 72 points.',
+  Drucklayout: 'Print layout',
+  'Seitenrand (pt)': 'Page margin (pt)',
+  'Abstand (pt)': 'Spacing (pt)',
+  'Rahmen um jede Seite': 'Border around each page',
+  'Lesezeichen importieren / exportieren': 'Import / export bookmarks',
+  'CSV: title, page, level. Seiten und Ebenen beginnen bei 1. Importierte Ziele zeigen auf die ganze Seite; vorhandene Lesezeichen bleiben bis zur Übernahme erhalten.':
+    'CSV: title, page, level. Pages and levels start at 1. Imported targets show the whole page; existing bookmarks remain until you apply the import.',
+  Lesezeichendatei: 'Bookmark file',
+  'Lesezeichen vorbereitet': 'bookmarks prepared',
+  'Vorschau zeigt die ersten 20 Einträge.': 'Preview shows the first 20 entries.',
+  'Lesezeichen ergänzen': 'Append bookmarks',
+  'Vorhandene Lesezeichen ersetzen': 'Replace existing bookmarks',
+  'Bitte eine CSV- oder JSON-Datei mit höchstens 2 MB auswählen.':
+    'Select a CSV or JSON file up to 2 MB.',
+  'Ungültige Lesezeichendatei. Titel, Zielseiten und Ebenen prüfen.':
+    'Invalid bookmark file. Check titles, target pages and levels.',
+  'Die Lesezeichendatei darf höchstens 2 MB groß sein.': 'The bookmark file must not exceed 2 MB.',
+  'Der Lesezeichenexport benötigt gültige interne Zielseiten. Externe Ziele zuerst zuordnen.':
+    'Bookmark export requires valid internal target pages. Assign external targets to pages first.',
+  'Für Eingangsordner exportieren': 'Export for watched folders',
+  'workflow.json im Profilordner des Dokumentenservers speichern. PDFs in dessen inbox ablegen.':
+    'Save workflow.json in a profile folder on the document server. Place PDFs in its inbox.',
+  'Die Ordnerautomatik benötigt einen selbst betriebenen Dokumentenserver mit eingerichtetem Eingangsordner. Sie unterstützt Drehen, Umkehren, Formulare festschreiben, verlustfreies Optimieren sowie das Entfernen von Dokumentinfos und Kommentaren. Originale bleiben erhalten.':
+    'Watched folders require a self-hosted document server with a configured input folder. They support rotation, reversing pages, flattening forms, lossless optimization and removal of document information and comments. Originals are retained.',
+  'Eingangsordner unterstützen nur Drehen, Umkehren, Formulare festschreiben, verlustfreies Optimieren sowie das Entfernen von Dokumentinfos und Kommentaren. Bedingungen sind noch nicht verfügbar.':
+    'Watched folders only support rotation, reversing pages, flattening forms, lossless optimization and removal of document information and comments. Conditions are not yet available.',
+  'EPUB, FB2, CBZ, XPS oder OXPS': 'EPUB, FB2, CBZ, XPS or OXPS',
+  'EPUB und FB2 werden neu gesetzt. CBZ, XPS und OXPS behalten ihr Seitenformat. Höchstens 40 MB und 200 Seiten; CBZ mit PNG- oder JPEG-Bildern. Kein DRM.':
+    'EPUB and FB2 are reflowed. CBZ, XPS and OXPS keep their page format. Up to 40 MB and 200 pages; CBZ with PNG or JPEG images. No DRM.',
+  'Bitte EPUB, FB2, CBZ, XPS oder OXPS auswählen.': 'Select an EPUB, FB2, CBZ, XPS or OXPS file.',
+  'Die Datei ist beschädigt oder konnte nicht als PDF umgewandelt werden.':
+    'The file is damaged or could not be converted to PDF.',
+  'Die Datei ergibt mehr als 200 Seiten oder enthält keine lesbaren Seiten.':
+    'The file produces more than 200 pages or contains no readable pages.',
+  'Verschlüsselte oder DRM-geschützte Dateien werden nicht unterstützt.':
+    'Encrypted or DRM-protected files are not supported.',
+  'Die Eingabedatei darf höchstens 40 MB groß sein.': 'The input file must not exceed 40 MB.',
+  'CBZ unterstützt ausschließlich PNG- und JPEG-Seiten.': 'CBZ only supports PNG and JPEG pages.',
+  'CBZ-Dateien dürfen höchstens 200 Bildseiten enthalten.':
+    'CBZ files must not contain more than 200 image pages.',
+  'Die CBZ-Datei enthält keine PNG- oder JPEG-Seiten.':
+    'The CBZ file contains no PNG or JPEG pages.',
+  'Externe Ressourcen in XPS-Dateien werden nicht unterstützt.':
+    'External resources in XPS files are not supported.',
+  'Die XPS-Paketbeschreibung fehlt.': 'The XPS package description is missing.',
+  'Die Datei ist kein FictionBook-E-Book.': 'The file is not a FictionBook e-book.',
+  'Das Archiv überschreitet 80 MB entpackten Inhalt oder 1500 Einträge.':
+    'The archive exceeds 80 MB of expanded content or 1,500 entries.',
+  'Das Archiv enthält doppelte Dateinamen.': 'The archive contains duplicate file names.',
+  'Das Archiv enthält unzulässige oder verschlüsselte Einträge.':
+    'The archive contains invalid or encrypted entries.',
+  'Das Archiv enthält zu große Bilder (30 Megapixel je Bild, 200 Megapixel insgesamt).':
+    'The archive contains oversized images (30 megapixels per image, 200 megapixels in total).',
   'Unterlagen-Checkliste': 'Document checklist',
   'Erwartete Unterlagen mit Suchwörtern und Monat prüfen. Fundstellen bestätigen und fehlende oder unklare Zuordnungen dokumentieren.':
     'Check expected documents by keywords and month. Confirm evidence and document missing or uncertain matches.',

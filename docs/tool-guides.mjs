@@ -279,11 +279,11 @@ export const guides = {
     'Trage Titel und Sprache ein und starte „EPUB erstellen“.',
     'Öffne die Datei in deiner Lese-App und prüfe Inhaltsverzeichnis, Absatzfolge und Sonderzeichen.'
   ], 'EPUB mit anpassbarer Schrift und Inhaltsverzeichnis.', 'Der Text wird neu angeordnet. Bilder sowie das ursprüngliche Tabellen- und Seitenlayout entfallen. Mehrspaltige Dokumente können eine Nachbearbeitung der Lesereihenfolge erfordern.'),
-  'ebook-pdf': guide('Eine ungeschützte EPUB-Datei.', [
-    'Wähle die EPUB-Datei direkt im Werkzeug oder über die Dateiauswahl der App.',
-    'Stelle A4 oder A5 und eine Grundschriftgröße zwischen 8 und 24 Punkt ein. Starte die Umwandlung.',
+  'ebook-pdf': guide('Eine ungeschützte EPUB-, FB2-, CBZ-, XPS- oder OXPS-Datei und der Dokumentenserver.', [
+    'Wähle die Datei direkt im Werkzeug oder über die Dateiauswahl der App.',
+    'Für EPUB und FB2 wähle A4 oder A5 und 8 bis 24 Punkt. CBZ, XPS und OXPS behalten ihr Seitenformat.',
     'Prüfe den Seitenumbruch und die Lesbarkeit der erzeugten PDF, insbesondere bei Tabellen oder langen Überschriften.'
-  ], 'PDF mit neu umbrochenem Text und eingebetteten Bildern.', 'Bis 40 MB und 200 Ausgabeseiten. Verschlüsselte Inhalte und geschützte Schriftdateien werden nicht unterstützt. Buchvorgaben können die Grundschriftgröße übersteuern; externe Ressourcen, interaktive Inhalte und Links werden nicht übernommen.'),
+  ], 'PDF aus E-Book, Comicarchiv oder XPS-Dokument.', 'Bis 40 MB Eingang und 200 Seiten. CBZ benötigt PNG- oder JPEG-Seiten und verwendet natürliche Dateinamensortierung (2 vor 10). Keine DRM-Inhalte. EPUB/FB2 werden neu umbrochen; externe Ressourcen werden entfernt oder abgewiesen. Archive: höchstens 80 MB entpackt und 1500 Einträge.'),
   'pdf-powerpoint': guide('Eine PDF mit höchstens 100 Seiten.', [
     'Wähle die PDF und starte die PowerPoint-Erstellung.',
     'Jede Seite wird als Bild proportional auf eine Folie im Format 16:9 eingepasst.',
@@ -364,7 +364,8 @@ export const guides = {
   'workflows': guide('PDFs und eine wiederkehrende Abfolge von Bearbeitungsschritten.', [
     'Benenne den Ablauf und füge die gewünschten Schritte hinzu, zum Beispiel OCR, Leerseiten entfernen und Nummerieren.',
     'Ordne die Schritte mit den Pfeilen. Passwortschutz muss am Ende stehen. Kontrolliere die jeweiligen Einstellungen und führe den Ablauf aus.',
-    'Speichere den Ablauf im Browser oder exportiere ihn als JSON, um ihn später wieder zu laden. Prüfe die PDFs im Ergebnis-ZIP.'
+    'Speichere den Ablauf im Browser oder exportiere ihn als JSON, um ihn später wieder zu laden. Prüfe die PDFs im Ergebnis-ZIP.',
+    'Für automatische Eingangsordner exportiere einen unterstützten linearen Ablauf als workflow.json. Der selbst betriebene Dokumentenserver muss dafür eingerichtet sein; Originale bleiben erhalten.'
   ], 'ZIP mit verarbeiteten PDFs; optional wiederverwendbare JSON-Ablaufdatei.', 'Bis zu zwölf lineare Schritte oder 60 Diagrammknoten sind möglich. JSON-Abläufe enthalten keine Dokumente oder Passwörter. Während der Ausführung werden PDF-Zwischenstände lokal gespeichert; Fortsetzen, Teildownload und Fehlerwiederholung sind auch im Knotendiagramm verfügbar. Ergebnisse prüfen.'),
   'auto-rename': guide('Mehrere PDFs mit erkennbaren Daten, Rechnungsnummern oder Titeln.', [
     'Öffne die Dokumente und lege ein Namensmuster fest, etwa {datum}_{nummer}_{titel}. Lasse daraus Dateinamen vorschlagen.',
@@ -480,8 +481,9 @@ export const guides = {
   'bookmarks': guide('Eine PDF, die eine Kapitelstruktur erhalten soll.', [
     'Lade vorhandene Lesezeichen und ergänze oder ändere ihre Titel.',
     'Ordne jedem Eintrag die richtige Zielseite zu und rücke Unterkapitel passend ein.',
+    'Unter „Lesezeichen importieren / exportieren“ lade CSV oder JSON, prüfe die Vorschau und ergänze oder ersetze ausdrücklich. CSV-Spalten: title, page, level; Seiten und Ebenen beginnen bei 1.',
     'Speichere die vollständige Datei und teste die Navigation in einem PDF-Programm.'
-  ], 'PDF mit aktualisierter Lesezeichenstruktur.', 'Lesezeichen sind Navigationspunkte im PDF-Programm, kein gedrucktes Inhaltsverzeichnis. Wenn du sichtbare Verzeichnisseiten brauchst, nutze „Deckblatt & Inhaltsverzeichnis“.'),
+  ], 'PDF mit aktualisierter Lesezeichenstruktur; zusätzlich CSV-/JSON-Export.', 'Import: höchstens 2 MB und 1000 Einträge. Interne Zielseiten erforderlich; externe Ziele vor dem Export zuordnen. CSV/JSON überträgt Titel, Zielseite, Ebene und Aufklappzustand, keine Zoom- oder Ausschnittziele. Übernahmen lassen sich rückgängig machen.'),
   'extract-images': guide('Eine PDF mit eingebetteten Bildobjekten.', [
     'Wähle das Dokument und die zu untersuchenden Seiten.',
     'Starte die Bildextraktion.',
@@ -540,7 +542,7 @@ export const guides = {
   ], 'PDF mit proportional in das gewählte Format eingepassten Seiten.', 'Die Inhalte bleiben vollständig erhalten, können aber kleiner werden. Für das Entfernen von Außenbereichen nutze „Zuschneiden“.'),
   'nup': guide('Mehrere PDF-Seiten, die gemeinsam auf ein Blatt passen sollen.', [
     'Wähle die Seiten und kontrolliere ihre Reihenfolge.',
-    'Stelle zwei oder vier Seiten pro Blatt ein.',
+    'Wähle 2, 4, 6, 8, 9 oder 16 Seiten pro Blatt. Passe Seitenrand, Abstand und Rahmen an; das Schema zeigt die Anordnung.',
     'Erstelle die Ausgabe und kontrolliere die Lesbarkeit, bevor du sie druckst.'
   ], 'PDF mit mehreren verkleinerten Dokumentseiten auf einem Ausgabeblatt.', 'Kleine Schrift wird entsprechend kleiner. Eine gefaltete Druckbroschüre benötigt eine andere Seitenreihenfolge; dafür gibt es „Broschüre erstellen“.'),
   'edit-text': guide('Eine PDF mit digitalem Text, vorhandener OCR-Ebene, gescannten Seiten oder einer Mischung daraus.', [

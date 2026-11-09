@@ -1,0 +1,7 @@
+# Optional: docker compose -f compose.yaml -f compose.watch.yaml up -d --build
+services:
+  documents:
+    environment:
+      MOINPDF_WATCH_DIR: /watchfolders
+    volumes:
+      - ./watchfolders:/watchfolders

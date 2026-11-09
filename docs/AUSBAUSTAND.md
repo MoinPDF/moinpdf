@@ -1,5 +1,7 @@
 # Ausbau nach dem Funktionsvergleich
 
+Neu im Entwicklungsstand nach 0.28.0: 6/8/9/16 Seiten pro Druckblatt mit Rändern, Abständen und Rahmen; Lesezeichen-CSV/JSON mit Vorschau; FB2/CBZ/XPS/OXPS-Konvertierung; optionale [Eingangsordner](WATCH-FOLDERS.md). Konverter und Ordnerautomatik benötigen den Dokumentenserver. Die Ordnerautomatik unterstützt zunächst sieben einfache Schrittarten ohne Bedingungen, OCR oder Diagramme. Details und Grenzen: [Funktionen](FUNKTIONEN.md#erweiterte-drucklayouts-lesezeichen-und-eingangsformate).
+
 Die nächsten Vergleichslücken sind geschlossen: Farben & Hintergrund mit Vorlagen/Vorschau, gezielte Freigabe schreibgeschützter Formularfelder, Text erhaltender Zuschnitt und Duplex-Sortierung innerhalb einer PDF. Grenzen: Hintergrund liegt hinter deckenden Inhalten; Bildfarbkorrekturen verlieren Text/Felder/Links; CropBox blendet Randinhalte nur aus. Einzel-PDF-Duplex verarbeitet höchstens 200 ausgewählte Seiten.
 
 „Kopf- und Fußzeilen bereinigen“ ergänzt Bearbeiten & bereinigen: wiederkehrende Randtexte, einzeln prüfbare Ausnahmen und manuelle Scan-Bereiche. Bedienung und Grenzen: [Funktionen](FUNKTIONEN.md#kopf--und-fußzeilen-bereinigen).
