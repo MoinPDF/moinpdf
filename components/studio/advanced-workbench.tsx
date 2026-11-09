@@ -1,4 +1,7 @@
 'use client';
+import { InvoiceCreatePanel, PortfolioPanel, PaymentMatchPanel } from './growth-panels';
+import { HandwritingPanel, PdfxPanel } from './growth-server-panels';
+import './growth-workbench.css';
 import { sourcePages } from '@/lib/pdf-engine';
 import { ResultActions, ResultSummary, useResultName, useResultAuditGate } from './result-actions';
 import { WorkspaceContext } from './workspace-context';
@@ -159,6 +162,9 @@ export function AdvancedWorkbench({
     newProps = { ...props, invalidate: () => setResult(null) },
     multi = (
       [
+        'payment-match',
+        'pdf-portfolio',
+        'personal-data',
         'document-checklist',
         'document-dates',
         'klar-schiff',
@@ -196,7 +202,11 @@ export function AdvancedWorkbench({
           </Button>
           <span className="device-tag">
             <ShieldCheck size={14} />
-            {ui('LOKAL AUF DEINEM GERÄT')}
+            {ui(
+              ['invoice-create', 'handwriting-ocr', 'pdfx-create'].includes(tool)
+                ? 'BROWSER / EIGENER DOKUMENTENSERVER'
+                : 'LOKAL AUF DEINEM GERÄT',
+            )}
           </span>
         </div>
       </header>
@@ -230,11 +240,44 @@ export function AdvancedWorkbench({
       )}
       <fieldset
         disabled={busy}
-        className="advanced-fields"
+        className={`advanced-fields ${
+          [
+            'payment-match',
+            'invoice-create',
+            'pdf-portfolio',
+            'personal-data',
+            'handwriting-ocr',
+            'pdfx-create',
+            'pdf-layers',
+            'workflows',
+          ].includes(tool)
+            ? 'growth-tool'
+            : ''
+        }`}
         onChangeCapture={() => setResult(null)}
+        onClickCapture={(e) => {
+          if (
+            [
+              'payment-match',
+              'invoice-create',
+              'pdf-portfolio',
+              'personal-data',
+              'handwriting-ocr',
+              'pdfx-create',
+              'pdf-layers',
+              'workflows',
+            ].includes(tool) &&
+            (e.target as HTMLElement).closest('button')
+          )
+            setResult(null);
+        }}
         key={`${tool}-${multi ? 'all' : source?.id || 'camera'}-${sources.map((s) => s.id).join(':')}`}
       >
-        {tool === 'large-document' ? (
+        {tool === 'invoice-create' ? (
+          <InvoiceCreatePanel {...props} />
+        ) : tool === 'pdf-portfolio' ? (
+          <PortfolioPanel {...props} />
+        ) : tool === 'large-document' ? (
           <LargeDocumentPanel busy={busy} run={run} initialFile={initialFile} />
         ) : tool === 'pdf-repair' ? (
           <RepairPanel source={source} busy={busy} run={run} initialFile={initialFile} />
@@ -244,6 +287,10 @@ export function AdvancedWorkbench({
           <div className="advanced-empty">{ui('Bitte zuerst eine PDF öffnen.')}</div>
         ) : (
           <>
+            {tool === 'payment-match' && <PaymentMatchPanel {...props} />}
+            {tool === 'personal-data' && <PseudonymPanel {...props} automatic />}
+            {tool === 'handwriting-ocr' && <HandwritingPanel {...props} />}
+            {tool === 'pdfx-create' && <PdfxPanel {...props} />}
             {tool === 'document-colors' && <DocumentColorsPanel {...newProps} />}
             {tool === 'header-footer-cleanup' && <HeaderFooterPanel {...newProps} />}
             {tool === 'form-helper' && <FormHelperPanel {...newProps} />}

@@ -1,4 +1,6 @@
 'use client';
+
+import { detectPersonalData } from '@/lib/personal-data';
 import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
@@ -837,7 +839,12 @@ export function OcrReviewPanel({ source, sources, busy, run }: PanelProps) {
   );
 }
 
-export function PseudonymPanel({ sources, busy, run }: PanelProps) {
+export function PseudonymPanel({
+  sources,
+  busy,
+  run,
+  automatic = false,
+}: PanelProps & { automatic?: boolean }) {
   useLanguage();
   const [input, setInput] = useToolDraftState(
       'PseudonymPanel.input:' + sources.map((s) => s.id).join(':') + '',
@@ -867,6 +874,35 @@ export function PseudonymPanel({ sources, busy, run }: PanelProps) {
     <EvidenceLayout sources={sources} focus={focus}>
       <section className="advanced-card">
         <h2>{ui('Gleiche Angaben überall gleich ersetzen')}</h2>
+        {automatic && (
+          <>
+            <p>
+              {ui(
+                'Lokale Erkennung schlägt E-Mails, IBANs und beschriftete Namen, Telefonnummern, Steuerangaben, Geburtstage und Anschriften vor. Freie Namen und abweichende Schreibweisen können fehlen. Jeden Bereich am Original prüfen.',
+              )}
+            </p>
+            <Button
+              disabled={busy}
+              onClick={() =>
+                run(async (ctx) => {
+                  clear();
+                  const data = await readEvidence(sources, 'ocr', ctx),
+                    candidates = detectPersonalData(data);
+                  if (!candidates.length)
+                    throw new Error(
+                      'Keine eindeutigen Angaben erkannt. Begriffe manuell ergänzen.',
+                    );
+                  setInput(candidates.map((c) => `${c.term} = ${c.replacement}`).join('\n'));
+                  setRules(candidates);
+                  setPages(data);
+                  setHits(findPseudonyms(data, candidates));
+                })
+              }
+            >
+              {ui('Personenbezogene Angaben vorschlagen')}
+            </Button>
+          </>
+        )}
         <Field label={ui('Ein Originalbegriff = Platzhalter pro Zeile')}>
           <textarea
             rows={7}

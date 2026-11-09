@@ -1,0 +1,25 @@
+Public German handwriting fixtures
+
+Source: FH Suedwestfalen, fhswf/german_handwriting dataset on Hugging Face.
+Dataset: https://huggingface.co/datasets/fhswf/german_handwriting
+Revision: f08067881aafb8ad50f0ca14c1e57314438b79a2
+License declared by the dataset publisher: Academic Free License 3.0 (AFL-3.0).
+License text: https://opensource.org/license/afl-3.0
+Files fixture-0.jpg, fixture-1.jpg, fixture-2.jpg are unmodified image downloads
+from default/train rows 0, 1 and 2 of the public dataset viewer.
+The images are verified against their SHA256 hashes recorded before the reset.
+Exact hashes, transcripts and stable row URLs are recorded in fixtures.json.
+The source dataset README is preserved in dataset-README.md.
+
+These short images contain no user-provided documents. This dataset was a
+training source for the model, so prior inference results are integration
+evidence only, not an independent accuracy benchmark on unseen writers.
+
+Model: naeyn/de-htr-web-v2
+Revision: 6241c1ff0fd42725e0dc46fcd3217469cac851bb
+Weights Apache-2.0 for rights held by the publisher. Original license and
+NOTICE-training-data.md are preserved. The notice attributes ScaDS.AI German
+handwriting (CC BY 4.0) and FH Suedwestfalen handwriting (AFL-3.0).
+
+The raw model previously emitted a dash on an empty white 128x64 line.
+Application integration needs blank-content rejection and human review.

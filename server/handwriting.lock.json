@@ -1,0 +1,36 @@
+{
+  "model": "naeyn/de-htr-web-v2",
+  "revision": "6241c1ff0fd42725e0dc46fcd3217469cac851bb",
+  "files": [
+    {
+      "name": "model.onnx",
+      "url": "https://huggingface.co/naeyn/de-htr-web-v2/resolve/6241c1ff0fd42725e0dc46fcd3217469cac851bb/model.onnx",
+      "bytes": 10396365,
+      "sha256": "b576a0a1281b9be46b2574028b75575e041b7d7cb650f063886e733467cc1499"
+    },
+    {
+      "name": "config.json",
+      "url": "https://huggingface.co/naeyn/de-htr-web-v2/resolve/6241c1ff0fd42725e0dc46fcd3217469cac851bb/config.json",
+      "bytes": 1362,
+      "sha256": "4ebd69d9d27b398ea3997b031318accc13123f6a8950def1fedc6e364cb758fa"
+    },
+    {
+      "name": "NOTICE-training-data.md",
+      "url": "https://huggingface.co/naeyn/de-htr-web-v2/resolve/6241c1ff0fd42725e0dc46fcd3217469cac851bb/NOTICE-training-data.md",
+      "bytes": 3454,
+      "sha256": "189ca72a041dc992c1d85db3bf5158dd9e0ddd7ae11454488d0d7a020d297bf6"
+    },
+    {
+      "name": "README.md",
+      "url": "https://huggingface.co/naeyn/de-htr-web-v2/resolve/6241c1ff0fd42725e0dc46fcd3217469cac851bb/README.md",
+      "bytes": 8314,
+      "sha256": "8917218b8fe3a5e37fe59d2bd106a70b2b11503b32bf795de657e363fd32ada6"
+    },
+    {
+      "name": "LICENSE-model",
+      "url": "https://raw.githubusercontent.com/naeyn/de-htr-web/5e9749c4d9686e287fb52d4a90434f7bb6d4e86d/LICENSE",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    }
+  ]
+}

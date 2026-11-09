@@ -1,0 +1,32 @@
+[
+  {
+    "row": 0,
+    "file": "fixture-0.jpg",
+    "bytes": 98028,
+    "sha256": "bdefa933eb67657142ca6e9411bd7f979343c17066b5d5b44b6eeb6e15d9a5ed",
+    "expected": "- Terminvorschlag bis",
+    "license": "AFL-3.0",
+    "source": "https://huggingface.co/datasets/fhswf/german_handwriting/viewer/default/train?row=0",
+    "possible_training_data": true
+  },
+  {
+    "row": 1,
+    "file": "fixture-1.jpg",
+    "bytes": 113519,
+    "sha256": "4c359d163de0cd95b1b7120be79dcd5bb01addb6e56b8ecc4ad8806a551c861d",
+    "expected": "- Module an Michael",
+    "license": "AFL-3.0",
+    "source": "https://huggingface.co/datasets/fhswf/german_handwriting/viewer/default/train?row=1",
+    "possible_training_data": true
+  },
+  {
+    "row": 2,
+    "file": "fixture-2.jpg",
+    "bytes": 59400,
+    "sha256": "bb6be2eec6437c79de7f3c1bc79047b282bf73e5d44da13bf4c99af51d17f2ab",
+    "expected": "Handschrift",
+    "license": "AFL-3.0",
+    "source": "https://huggingface.co/datasets/fhswf/german_handwriting/viewer/default/train?row=2",
+    "possible_training_data": true
+  }
+]

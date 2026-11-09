@@ -57,6 +57,11 @@ jobs:
           bash scripts/ci-prepare-apt.sh
           python -m pip install playwright==1.64.0 pymupdf==1.26.6 icalendar==6.3.2
           python -m playwright install --with-deps ${{ matrix.browser }}
+      - name: Invoices, portfolios, layers and watched-folder export
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+          MOINPDF_TEST_START_SERVER: '1'
+        run: python tests/growth-030-browser.py
       - name: Document checklist, dates, three versions, quality and recurring logos
         env:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}

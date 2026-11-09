@@ -17,46 +17,55 @@ self.onmessage = async ({ data }) => {
     if (!response.ok) throw new Error('Der lokale PDF-Prozessor konnte nicht geladen werden.');
     const api = await createNativeEngine(new Uint8Array(await response.arrayBuffer()));
     const value =
-      data.action === 'image-catalogue'
-        ? await (await import('../lib/repeated-images-native')).catalogueImages(api, data.bytes)
-        : data.action === 'image-replace-many'
-          ? await (
-              await import('../lib/repeated-images-native')
-            ).replaceRepeatedImages(api, data.bytes, data.targets, data.replacement)
-          : data.action === 'colors'
+      data.action === 'assign-layer'
+        ? await (
+            await import('../lib/pdf-layer-edit')
+          ).assignPdfLayer(api, data.bytes, data.settings)
+        : data.action === 'image-catalogue'
+          ? await (await import('../lib/repeated-images-native')).catalogueImages(api, data.bytes)
+          : data.action === 'image-replace-many'
             ? await (
-                await import('../lib/document-color-native')
-              ).recolorDocumentText(api, data.bytes, data.pages, data.color)
-            : data.action === 'image'
-              ? readNativeImage(
-                  api,
-                  data.bytes,
-                  data.page,
-                  data.index,
-                  data.path || [],
-                  data.region,
-                )
-              : data.action === 'tree'
-                ? inspectNativeObjectTree(api, data.bytes, data.page)
-                : data.action === 'group'
-                  ? groupNativeObjects(api, data.bytes, data.page, data.indices, data.duplicate)
-                  : data.action === 'inspect'
-                    ? inspectNativeObjects(api, data.bytes, data.page, data.path || [])
-                    : data.action === 'edit'
-                      ? await (
-                          await import('../lib/nested-native')
-                        ).editNativeDocument(
-                          api,
-                          data.bytes,
-                          data.page,
-                          data.changes,
-                          data.path || [],
-                        )
-                      : data.action === 'redact'
-                        ? removeNativeRegions(api, data.bytes, data.removals)
-                        : data.action === 'paragraph'
-                          ? await replaceNativeParagraph(api, data.bytes, data.page, data.settings)
-                          : null;
+                await import('../lib/repeated-images-native')
+              ).replaceRepeatedImages(api, data.bytes, data.targets, data.replacement)
+            : data.action === 'colors'
+              ? await (
+                  await import('../lib/document-color-native')
+                ).recolorDocumentText(api, data.bytes, data.pages, data.color)
+              : data.action === 'image'
+                ? readNativeImage(
+                    api,
+                    data.bytes,
+                    data.page,
+                    data.index,
+                    data.path || [],
+                    data.region,
+                  )
+                : data.action === 'tree'
+                  ? inspectNativeObjectTree(api, data.bytes, data.page)
+                  : data.action === 'group'
+                    ? groupNativeObjects(api, data.bytes, data.page, data.indices, data.duplicate)
+                    : data.action === 'inspect'
+                      ? inspectNativeObjects(api, data.bytes, data.page, data.path || [])
+                      : data.action === 'edit'
+                        ? await (
+                            await import('../lib/nested-native')
+                          ).editNativeDocument(
+                            api,
+                            data.bytes,
+                            data.page,
+                            data.changes,
+                            data.path || [],
+                          )
+                        : data.action === 'redact'
+                          ? removeNativeRegions(api, data.bytes, data.removals)
+                          : data.action === 'paragraph'
+                            ? await replaceNativeParagraph(
+                                api,
+                                data.bytes,
+                                data.page,
+                                data.settings,
+                              )
+                            : null;
     if (value === null) throw new Error('Unbekannter Auftrag.');
     if (value instanceof Uint8Array) self.postMessage({ value }, { transfer: [value.buffer] });
     else if (value && typeof value === 'object' && 'bytes' in value)

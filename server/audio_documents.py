@@ -72,12 +72,13 @@ def text_chunks(text, size=350):
 
 
 def synthesize(request, directory: Path):
+    import onnxruntime
+    onnxruntime.disable_telemetry_events()
     from piper import PiperVoice, SynthesisConfig
     request = validate_request(request)
     spec = VOICES[request["voice"]]
     model = voice_root() / spec["model"]
     # Explicitly bound ONNX CPU threads inside the same per-job process limit.
-    import onnxruntime
     session = onnxruntime.SessionOptions()
     session.intra_op_num_threads = 2
     session.inter_op_num_threads = 1

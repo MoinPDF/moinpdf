@@ -1,4 +1,6 @@
 'use client';
+
+import { WatchFolderExport } from './watch-folder-export';
 import { BatchProgress } from './batch-progress';
 import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
@@ -11,7 +13,6 @@ import {
   stepLabels,
   workflowTemplates,
   validateWorkflow,
-  watchFolderWorkflow,
   type StepKind,
   type WorkflowStep,
   type SavedWorkflow,
@@ -405,27 +406,11 @@ export function WorkflowPanel({
               <Button variant="outline" onClick={() => input.current?.click()}>
                 {ui('JSON importieren')}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  run(async () => {
-                    const value = watchFolderWorkflow(workflow());
-                    downloadBlob(
-                      new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }),
-                      'workflow.json',
-                    );
-                    setNotice(
-                      'workflow.json im Profilordner des Dokumentenservers speichern. PDFs in dessen inbox ablegen.',
-                    );
-                  })
-                }
-              >
-                {ui('Für Eingangsordner exportieren')}
-              </Button>
+              <WatchFolderExport workflow={workflow} run={run} busy={busy} />
             </div>
             <p className="fine-note">
               {ui(
-                'Die Ordnerautomatik benötigt einen selbst betriebenen Dokumentenserver mit eingerichtetem Eingangsordner. Sie unterstützt Drehen, Umkehren, Formulare festschreiben, verlustfreies Optimieren sowie das Entfernen von Dokumentinfos und Kommentaren. Originale bleiben erhalten.',
+                'Die Ordnerautomatik benötigt einen selbst betriebenen Dokumentenserver mit eingerichtetem Eingangsordner. Sie unterstützt OCR, Leerseiten, Bedingungen, Trennung, Umbenennung und Ablage sowie Drehen und Bereinigen. Originale bleiben erhalten.',
               )}
             </p>
             <input

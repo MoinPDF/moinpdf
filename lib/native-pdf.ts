@@ -105,6 +105,12 @@ export const groupObjects = (
   signal?: AbortSignal,
 ) => nativeJob<Uint8Array>(bytes, { action: 'group', page, indices, duplicate }, signal);
 
+export const assignLayer = (
+  bytes: Uint8Array,
+  settings: import('./pdf-layer-edit').LayerAssignment,
+  signal?: AbortSignal,
+) => nativeJob<Uint8Array>(bytes, { action: 'assign-layer', settings }, signal);
+
 export const catalogueImages = (bytes: Uint8Array, signal?: AbortSignal) =>
   nativeJob<import('./repeated-images-native').ImageCatalogue>(
     bytes,

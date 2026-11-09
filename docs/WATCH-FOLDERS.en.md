@@ -24,7 +24,10 @@ Without Compose, set `MOINPDF_WATCH_DIR` to an existing writable profile root. O
 ## Supported steps and limits
 
 - Rotate by 90°/180°, reverse page order, flatten forms, optimize losslessly, remove document metadata or comments.
-- Version-1 workflows with 1–12 steps; no conditions, graphs, OCR or password steps. These remain available in interactive workflows.
+- Versions 1 and 2 support 1–12 steps, OCR (deu+eng) and conservative blank-page removal. Conditions inspect filenames, readable text or page count, with an optional else step. Run OCR first for scans. Graphs and password steps are not exported.
+- Version 2 splits at each page or a literal text match on the first page of a document. The matching page is retained. Filing rules use literal text; multiple different matching folders route to `Pruefen`, no match to `Unsortiert`.
+- Filename placeholders: `{original}`, `{date}`, `{part}`, `{invoice}`. Dates and invoice numbers require an unambiguous match; otherwise `ohne-Datum`/`ohne-Nummer` is used. A job suffix prevents name collisions.
+- OCR replaces text-poor scanned pages with a page image and recognised text. Forms or comments on those pages stop the job; existing links on those pages are not transferred. Blank pages are removed only without text/forms/comments or clearly visible content; removing every page is rejected.
 - Unencrypted PDFs up to 80 MB and 200 pages. Signature fields and XFA are rejected. Up to 180 seconds per job, sharing the capacity limit with interactive server jobs.
 - Text, vectors and ordinary form fields are retained by applicable steps. **Flatten forms** explicitly removes editability. Metadata removal is not comprehensive security sanitization.
 - Inputs must remain unchanged for at least five seconds. Originals stay in `inbox` and are never automatically deleted. Results and reports are each written atomically.

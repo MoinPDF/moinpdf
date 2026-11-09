@@ -6,6 +6,16 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.30.0
+
+- 73 Engine-/DOM-Suiten; neu sind centgenauer Zahlungsabgleich, Rundung und Fehlerfälle beim Rechnungsentwurf, unveränderte Portfolio-Anlagen mit SHA-256 sowie native Ebenenzuordnung mit unabhängiger Pixelprüfung.
+- Sechs zusätzliche Servertests prüfen reale KoSIT-Szenarien einschließlich Rundung/Befreiung und absichtlich falscher Angaben, Mustang plus beide PDF/A-Prüfungen, lizenzierte deutsche Handschrift, PDF/X mit unabhängigen Teilprüfungen und OCR/Trennung/Ablage in Eingangsordnern. Die Containerprüfungen laufen ohne Netzwerk; Laufzeit-Telemetrie wird bei ONNX ausdrücklich deaktiviert.
+- Neue Produktions-Browserabläufe prüfen Rechnungseingaben und PDF-Ausgabe, Entwertung einer Prüfbestätigung nach Änderungen, bytegenaue Portfolio-Dateien, gespeicherte Ebenen und den Export der Ordnerautomatik in Chromium, Firefox und WebKit. Deutsch auf Desktop, Englisch mit schmaler Touch-Emulation; keine physischen Geräte.
+- Im vollständigen Containeraufbau prüfen zusätzliche Browserabläufe echte XRechnung-/ZUGFeRD-Downloads, PDF/X mit Teilprüfbericht sowie korrigierte Handschrift mit bestätigtem Suchtext. Änderungen entwerten vorherige Prüfbestätigungen und Ergebnisse.
+- 127 Werkzeugansichten und deutsche/englische Informationsseiten bleiben Teil der Sprach- und Layoutprüfungen. Native Safari-Tests sind ein separater Prüfstand und nicht mit WebKit gleichzusetzen.
+- Pull Request und tatsächlicher main-Commit müssen alle Verifikationsworkflows bestehen. Images und Release folgen erst danach. Ein lokaler oder abgebrochener Teiltest ersetzt keine Freigabe.
+- Handschrift-Testbilder stammen aus einer Trainingsquelle des Modells: Integrationsnachweis, kein unabhängiger Qualitätsbenchmark. PDF/X bleibt eine technische Teilprüfung ohne vollständiges ISO-Zertifikat. E-Rechnungsvalidierung ist keine steuerliche Einzelfallprüfung.
+
 ## Prüfplan für 0.29.0
 
 - 72 Engine-/DOM-Suiten prüfen unter anderem PDF-Bearbeitung, OCR, Komprimierung, Konvertierung, Wiederherstellung, Projekte, DATEV-Export und die Logoanimation einschließlich Ton, Abbruch und reduzierter Bewegung.
@@ -92,7 +102,7 @@ und erneuten Export. Maßgeblich bleibt der erfolgreiche Lauf des jeweiligen Com
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| PDF-Engines und DOM | 71 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| PDF-Engines und DOM | 73 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
 | Dokumentenserver | Tests für native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |

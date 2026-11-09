@@ -37,7 +37,8 @@ try{
  }
  for(const template of pipeline.workflowTemplates)assert.doesNotThrow(()=>pipeline.validateWorkflow(template));
  assert.doesNotThrow(()=>pipeline.watchFolderWorkflow(pipeline.workflowTemplates[1]));
- for(const steps of [[{kind:'ocr'}],[{kind:'metadata',condition:{field:'pages',operator:'gte',value:'1'}}],[{kind:'rotate90',number:2}]])assert.throws(()=>pipeline.watchFolderWorkflow({version:1,name:'Folders',steps}),/Eingangsordner/);
+ assert.doesNotThrow(()=>pipeline.watchFolderWorkflow({version:1,name:'OCR and conditions',steps:[{kind:'ocr'},{kind:'metadata',condition:{field:'pages',operator:'gte',value:'1'}}]}));
+ for(const steps of [[{kind:'stamp',text:'test'}],[{kind:'rotate90',number:2}]])assert.throws(()=>pipeline.watchFolderWorkflow({version:1,name:'Folders',steps}),/Eingangsordner/);
  // CSV preserves quoted separators/newlines, XLSX uses inline text (no formula execution).
  assert.deepEqual(table.parseDelimited('Name;Wert\r\n"Müller; Team";"Zeile 1\nZeile 2"'),[['Name','Wert'],['Müller; Team','Zeile 1\nZeile 2']]);assert.throws(()=>table.parseDelimited('A;"offen'),/Anführungszeichen/);
  assert.match(table.csvText([['=HYPERLINK("x")']]),/'=HYPERLINK/);const xlsx=await JSZip.loadAsync(await(await table.makeXlsx([['Name','Wert'],['Öl','=1+1']])).arrayBuffer());const sheet=await xlsx.file('xl/worksheets/sheet1.xml').async('string');assert.match(sheet,/inlineStr/);assert(!sheet.includes('<f>'));assert.match(sheet,/Öl/);

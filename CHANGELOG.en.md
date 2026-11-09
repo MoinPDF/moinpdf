@@ -4,6 +4,15 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.30.0 — 2026-11-09
+
+- Match receipts and payments with confirmed partial allocations and a traceable Excel report.
+- Create independently validated XRechnung/ZUGFeRD invoices, actual PDF portfolios and local personal-data suggestions.
+- Create PDF layers and assign original objects.
+- Watched folders support OCR, conditions, splitting, filenames and routing.
+- Recognize and correct modern German handwriting line by line; produce PDF/X-3 with independent technical partial checks.
+- 127 tools with German and English guidance, explicit server requirements and documented limitations.
+
 ## 0.29.0 – 9 November 2026
 
 - Multiple pages per sheet: 2, 4, 6, 8, 9 and 16 pages, portrait/landscape, configurable margins and gaps, optional borders and a layout diagram.

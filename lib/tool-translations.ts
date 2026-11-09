@@ -5,6 +5,42 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'payment-match': {
+    title: 'Match receipts to payments',
+    description:
+      'Review transactions and receipts, allocate partial payments and find missing receipts or overpayments.',
+    action: 'Match receipts to payments',
+  },
+  'invoice-create': {
+    title: 'Create e-invoice',
+    description: 'Enter invoice data and create XRechnung or ZUGFeRD with independent validation.',
+    action: 'Create e-invoice',
+  },
+  'pdf-portfolio': {
+    title: 'Create PDF portfolio',
+    description:
+      'Collect PDFs, spreadsheets, emails and images as unchanged individual files in a portfolio.',
+    action: 'Create PDF portfolio',
+  },
+  'personal-data': {
+    title: 'Find personal data',
+    description:
+      'Review local detection suggestions and replace matching data with consistent placeholders across documents.',
+    action: 'Find personal data',
+  },
+  'handwriting-ocr': {
+    title: 'Recognize handwriting',
+    description:
+      'Recognize modern German handwriting line by line, correct against the original and export searchable text.',
+    action: 'Recognize handwriting',
+  },
+  'pdfx-create': {
+    title: 'Create PDF/X print file',
+    description:
+      'Set a CMYK profile and trim size; create PDF/X-3 with an independent technical partial-check report.',
+    action: 'Create PDF/X print file',
+  },
+
   'bank-datev': {
     title: 'Bank statement to DATEV',
     description:

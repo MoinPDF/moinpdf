@@ -1640,9 +1640,15 @@ function Studio() {
         if (refs.current.busy) throw new Error('Verarbeitung läuft.');
         if (
           !refs.current.sources.length &&
-          !['camera-scan', 'office-pdf', 'email-pdf', 'html-pdf', 'word-mail-merge'].includes(
-            v.tool,
-          )
+          ![
+            'invoice-create',
+            'pdf-portfolio',
+            'camera-scan',
+            'office-pdf',
+            'email-pdf',
+            'html-pdf',
+            'word-mail-merge',
+          ].includes(v.tool)
         )
           throw new Error('Bitte zuerst ein Dokument öffnen.');
         if (v.pageRange !== undefined) {

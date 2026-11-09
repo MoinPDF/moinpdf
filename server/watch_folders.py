@@ -167,11 +167,32 @@ class WatchFolders:
                         copied = workspace / 'input.pdf'
                         copied.write_bytes(data)
                         (workspace / 'workflow.json').write_bytes(configuration)
+                        (workspace / 'source-name.txt').write_text(source.name)
                         pdf, details = self.processor(copied, workspace, self.stop)
-                        if not 0 < len(pdf) <= MAX_BYTES or not pdf.startswith(b'%PDF-'):
-                            raise ValueError('Kein gültiges PDF-Ergebnis innerhalb von 80 MB.')
-                        atomic_write(output / (name + '.pdf'), pdf)
-                        report.update(status='done', result=name + '.pdf', **details)
+                        items=[('',name+'.pdf',pdf)] if isinstance(pdf,bytes) else pdf
+                        if not isinstance(items,list) or not 1<=len(items)<=200:raise ValueError('Ungültige Ergebnisdateien.')
+                        total=0;prepared=[];written=[];previous={}
+                        for i,item in enumerate(items,1):
+                            if not isinstance(item,(list,tuple)) or len(item)!=3:raise ValueError('Ungültige Ergebnisdatei.')
+                            folder,filename,data=item
+                            if not isinstance(folder,str) or folder and not re.fullmatch(r'[A-Za-z0-9_-]{1,64}',folder) or not isinstance(filename,str) or filename!=Path(filename).name or '..' in filename or not filename.lower().endswith('.pdf') or not isinstance(data,bytes) or not data.startswith(b'%PDF-') or not 0<len(data)<=MAX_BYTES:raise ValueError('Ungültiger Ergebnispfad oder PDF-Inhalt.')
+                            total+=len(data)
+                            if total>MAX_BYTES:raise ValueError('Die Gesamtausgabe überschreitet 80 MB.')
+                            parent=output/folder if folder else output
+                            parent.mkdir(exist_ok=True,mode=0o700);directory(parent)
+                            target=parent/(f'{Path(filename).stem}-{digest[:16]}-{i:03d}.pdf' if folder else filename)
+                            if target.is_symlink():raise ValueError('Symbolische Ergebnisdateien werden nicht überschrieben.')
+                            if target.exists():previous[target]=read_regular(target,MAX_BYTES)
+                            prepared.append((target,data))
+                        try:
+                            for target,data in prepared:atomic_write(target,data);written.append(target)
+                        except Exception:
+                            for target in written:
+                                if target in previous:atomic_write(target,previous[target])
+                                else:target.unlink(missing_ok=True)
+                            raise
+                        report.update(**details)
+                        report.update(status='done',result=[str(p.relative_to(output)) for p in written] if not isinstance(pdf,bytes) else name+'.pdf')
                 except Exception as error:
                     if self.stop.is_set():
                         return

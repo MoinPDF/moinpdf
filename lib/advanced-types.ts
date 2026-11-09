@@ -1,4 +1,11 @@
 export const advancedToolIds = [
+  'payment-match',
+  'invoice-create',
+  'pdf-portfolio',
+  'personal-data',
+  'handwriting-ocr',
+  'pdfx-create',
+
   'document-checklist',
   'document-dates',
   'large-document',

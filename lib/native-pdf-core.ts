@@ -1174,6 +1174,58 @@ export function markNativeObject(
     }
   });
 }
+/** Assign a distinct mark to selected top-level objects without changing painting order. */
+export function markNativeLayerObjects(
+  api: WrappedPdfiumModule,
+  bytes: Uint8Array,
+  index: number,
+  indices: number[],
+  marker: string,
+) {
+  if (!/^MoinLayer[a-f0-9]{32}$/.test(marker) || indices.length > 500)
+    throw new Error('Ungültige Ebenenobjekte.');
+  return open(api, bytes, (ctx) => {
+    const page = pageHandle(ctx, index);
+    try {
+      requireSerializablePage(ctx, page);
+      const count = api.FPDFPage_CountObjects(page),
+        handles = Array.from({ length: count }, (_, i) => api.FPDFPage_GetObject(page, i)),
+        members = clusterMembers(ctx, handles),
+        selected = new Set<number>();
+      for (const i of indices) {
+        if (!Number.isInteger(i) || i < 0 || i >= count)
+          throw new Error('Ungültiges Seitenobjekt.');
+        for (const n of members.get(i) || [i]) selected.add(n);
+      }
+      const buffer = ctx.alloc(256),
+        length = ctx.alloc(4);
+      try {
+        for (const i of selected) {
+          const obj = handles[i];
+          if (![1, 2, 3, 5].includes(api.FPDFPageObj_GetType(obj)))
+            throw new Error('Dieses Objekt wird nicht für Ebenenzuordnungen unterstützt.');
+          for (let n = api.FPDFPageObj_CountMarks(obj) - 1; n >= 0; n--) {
+            const mark = api.FPDFPageObj_GetMark(obj, n);
+            if (!api.FPDFPageObjMark_GetName(mark, buffer, 256, length))
+              throw new Error('Eine Objektmarkierung konnte nicht gelesen werden.');
+            if (api.pdfium.UTF16ToString(buffer) === 'OC' && !api.FPDFPageObj_RemoveMark(obj, mark))
+              throw new Error('Die bisherige Ebenenzuordnung konnte nicht entfernt werden.');
+          }
+          if (!api.FPDFPageObj_AddMark(obj, marker))
+            throw new Error('Die Ebenenzuordnung konnte nicht vorbereitet werden.');
+        }
+      } finally {
+        ctx.free(buffer);
+        ctx.free(length);
+      }
+      if (!api.FPDFPage_GenerateContent(page))
+        throw new Error('Die Ebenenzuordnung konnte nicht gespeichert werden.');
+      return saved(ctx);
+    } finally {
+      api.FPDF_ClosePage(page);
+    }
+  });
+}
 /** Disposable document: move direct children, retaining resolved inherited graphics state. */
 export function extractNativeForm(
   api: WrappedPdfiumModule,

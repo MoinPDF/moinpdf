@@ -147,7 +147,7 @@ jobs:
           docker build --target test -t moinpdf-document-tests ./server
           docker run --rm --network none --read-only --tmpfs /tmp:mode=1777,size=1g \
             --volume "$PWD:/repo:ro" --workdir /repo moinpdf-document-tests \
-            python -m unittest server.test_job_queue server.test_background_jobs server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats server.test_upload_security server.test_tool_growth -v
+            python -m unittest server.test_job_queue server.test_background_jobs server.test_service server.test_expansion server.test_extended_documents server.test_key_file server.test_translation_ready server.test_recovery server.test_audio server.test_accessible server.test_expansion_documents server.test_tags server.test_signatures server.test_import_formats server.test_upload_security server.test_tool_growth server.test_growth030 -v
       - name: Start complete stack with all seven languages
         id: start
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
@@ -178,7 +178,7 @@ jobs:
           MOINPDF_TEST_NONLOCAL_HTTP: "1"
         run: |
           status=0
-          for test in xfa-browser published-web-smoke hafenlicht-browser harbor-layout-browser website-browser; do
+          for test in growth-030-browser xfa-browser published-web-smoke hafenlicht-browser harbor-layout-browser website-browser; do
             python "tests/$test.py" || status=1
           done
           for test in language-smoke documentation-smoke accessibility-browser; do
@@ -193,6 +193,7 @@ jobs:
           path: |
             web-evidence/
             documentation-evidence/
+            .cache/editor-browser/growth030/
           if-no-files-found: ignore
           retention-days: 14
       - name: Optional login protects the app and API
