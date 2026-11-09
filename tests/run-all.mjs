@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 const suites = [
+  'format-tools',
   'growth-030',
   'bank-datev',
   'productivity',

@@ -145,7 +145,7 @@ def chooser():
     def ready(_):
         toasts=driver.execute_script('return (window.__qaToasts||[]).filter(t=>t.type==="error")')
         if toasts: raise AssertionError('Upload errors: '+json.dumps(toasts,ensure_ascii=False))
-        return len(driver.find_elements(By.CSS_SELECTOR, '.chooser-tool')) == 127
+        return len(driver.find_elements(By.CSS_SELECTOR, '.chooser-tool')) == 133
     WebDriverWait(driver, 45).until(ready)
 
 
@@ -310,7 +310,7 @@ try:
         check('Editor finds text and preserves font-based target geometry',editor)
 
         def structured():
-            fresh(source);tool('PDF zu strukturiertem JSON');click(button('JSON exportieren'))
+            fresh(source);tool('PDF-Text zu JSON & XML');click(button('JSON exportieren'))
             data=json.loads(output_bytes('a[download]','safari-structure.json'))
             pages=data['documents'][0]['pages'];assert len(pages)==2
             assert 'SAFARI ORIGINAL 123' in ' '.join(i['text'] for i in pages[0]['items'])

@@ -239,6 +239,11 @@ def capabilities():
                 "html": importlib.util.find_spec("pymupdf") is not None,
                 "optimize": importlib.util.find_spec("pymupdf") is not None,
                 "ebook": importlib.util.find_spec("pymupdf") is not None,
+                "kindleImport": bool(shutil.which("ebook-convert")),
+                "cbrImport": importlib.util.find_spec("libarchive") is not None,
+                "formatOffice": bool(office_binary() and importlib.util.find_spec("pdf2docx")),
+                "formatAzw3": bool(shutil.which("ebook-convert")),
+                "formatCbr": bool(shutil.which("rar")),
                 "orient": bool(shutil.which("tesseract") and importlib.util.find_spec("pymupdf")),
                 "formDetect": importlib.util.find_spec("cv2") is not None,
                 "documentChecks": importlib.util.find_spec("pymupdf") is not None,
@@ -292,10 +297,36 @@ def translation_status():
         return "starting"
 
 
+@app.post("/v1/formats/{format_name}", dependencies=[Depends(authorize)])
+def format_export(format_name: str, file: UploadFile = File(...), options: str = Form('{}')):
+    media = {'rtf': 'application/rtf', 'odt': 'application/vnd.oasis.opendocument.text',
+             'odp': 'application/vnd.oasis.opendocument.presentation', 'azw3': 'application/vnd.amazon.ebook',
+             'cbr': 'application/vnd.comicbook-rar'}
+    if format_name not in media:
+        raise HTTPException(404, 'Unbekanntes Ausgabeformat.')
+    try:
+        settings = json.loads(options)
+        if not isinstance(settings, dict) or len(options) > 10000: raise ValueError()
+    except (ValueError, TypeError):
+        raise HTTPException(422, 'Ungültige Ausgabeoptionen.')
+    if format_name == 'cbr' and not shutil.which('rar'):
+        raise HTTPException(503, 'CBR-Erstellung benötigt einen separat installierten und passend lizenzierten RAR-Konverter.')
+    with job() as directory:
+        source = upload(file, directory / 'input.pdf')
+        require_pdf(source)
+        settings['format'] = format_name
+        (directory / 'settings.json').write_text(json.dumps(settings))
+        convert_worker('format-export', source, directory)
+        output = directory / ('output.' + format_name)
+        if not output.is_file() or not 0 < output.stat().st_size <= MAX_BYTES:
+            raise HTTPException(422, 'Der Konverter hat keine gültige Ausgabe bis 80 MB erzeugt.')
+        return result(output.read_bytes(), 'PDF-Export.' + format_name, media[format_name])
+
+
 @app.post("/v1/office", dependencies=[Depends(authorize)])
 def office(file: UploadFile = File(...)):
     suffix = Path(file.filename or "").suffix.lower()
-    if suffix not in {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods", ".odp", ".pages", ".vsd", ".vsdx", ".pub"}:
+    if suffix not in {".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".odt", ".ods", ".odp", ".pages", ".vsd", ".vsdx", ".pub", ".wpd", ".wps", ".odg", ".rtf"}:
         raise HTTPException(422, "Bitte eine unterstützte Office-Datei auswählen.")
     with job() as directory:
         source = upload(file, directory / ("input" + suffix))
@@ -307,7 +338,26 @@ def office(file: UploadFile = File(...)):
 def require_office_container(source: Path):
     """Prevent LibreOffice's plain-text fallback from accepting corrupt new formats."""
     suffix = source.suffix.lower()
-    if suffix in {'.pub', '.vsd'}:
+    if suffix == '.wpd':
+        if not source.read_bytes().startswith(b'\xffWPC'):
+            raise HTTPException(422, 'Die Datei enthält kein gültiges WordPerfect-Dokument.')
+    elif suffix == '.wps':
+        header = source.read_bytes()[:8]
+        if header != bytes.fromhex('d0cf11e0a1b11ae1') and not (len(header) >= 4 and header[:4] == b'\x01\xfe\x01\x00'):
+            raise HTTPException(422, 'Die Datei enthält kein unterstütztes Microsoft-Works-Dokument.')
+    elif suffix == '.rtf':
+        if not source.read_bytes().startswith(b'{\\rtf'):
+            raise HTTPException(422, 'Die Datei enthält kein gültiges RTF-Dokument.')
+    elif suffix == '.odg':
+        try:
+            with zipfile.ZipFile(source) as bundle:
+                if len(bundle.infolist()) > 10000 or sum(e.file_size for e in bundle.infolist()) > 80 * 1024 * 1024:
+                    raise ValueError('size')
+                if bundle.read('mimetype').strip() != b'application/vnd.oasis.opendocument.graphics' or 'content.xml' not in bundle.namelist():
+                    raise ValueError('structure')
+        except (KeyError, ValueError, zipfile.BadZipFile):
+            raise HTTPException(422, 'Die Datei enthält kein gültiges OpenDocument-Zeichnungsdokument.')
+    elif suffix in {'.pub', '.vsd'}:
         with source.open('rb') as stream:
             if stream.read(8) != bytes.fromhex('d0cf11e0a1b11ae1'):
                 raise HTTPException(422, 'Die Datei enthält kein gültiges Publisher-/Visio-Dokument.')
@@ -341,7 +391,7 @@ def convert_office(source: Path, directory: Path, timeout=TIMEOUT, pdfua=False):
         'SelectPdfVersion': {'type': 'long', 'value': '17'},
         'ExportBookmarks': {'type': 'boolean', 'value': 'true'},
     }) if pdfua else 'pdf'
-    command([executable, f"-env:UserInstallation={(profile.parent).as_uri()}", "--headless", "--nologo", "--nodefault", "--norestore", "--convert-to", export_filter, "--outdir", str(directory), str(source)], directory, timeout=timeout)
+    command([executable, f"-env:UserInstallation={(profile.parent).as_uri()}", "--headless", "--nologo", "--nodefault", "--norestore", *( ["--infilter=WordPerfect"] if source.suffix.lower() == ".wpd" else ["--infilter=MS_Works"] if source.suffix.lower() == ".wps" else [] ), "--convert-to", export_filter, "--outdir", str(directory), str(source)], directory, timeout=timeout)
     output = source.with_suffix(".pdf")
     if not output.is_file():
         raise HTTPException(422, "LibreOffice hat keine PDF erzeugt. Bitte Dateiformat und Datei prüfen.")
@@ -653,7 +703,7 @@ def extended_document(action: str, file: UploadFile = File(...), options: str = 
         if action=='html' and Path(file.filename or '').suffix.lower() not in {'.html','.htm'}:
             raise HTTPException(422,'Bitte eine gespeicherte HTML-Webseite auswählen.')
         extension = Path(file.filename or '').suffix.lower()
-        if action=='ebook' and extension not in {'.epub', '.fb2', '.cbz', '.xps', '.oxps'}:
+        if action=='ebook' and extension not in {'.epub', '.fb2', '.cbz', '.xps', '.oxps', '.mobi', '.azw3', '.cbr'}:
             raise HTTPException(422,'Bitte EPUB, FB2, CBZ, XPS oder OXPS auswählen.')
         source=upload(file,directory/('input.html' if action=='html' else 'input'+extension if action=='ebook' else 'input.pdf'),maximum=40*1024*1024 if action=='ebook' else MAX_BYTES)
         if action not in {'html','ebook'}:require_pdf(source)

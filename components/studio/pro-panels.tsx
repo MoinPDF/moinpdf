@@ -19,6 +19,7 @@ import { OperationPreview } from './operation-preview';
 
 export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { tool: ProTool }) {
   useLanguage();
+  const [structureFormat, setStructureFormat] = useState<'json' | 'xml'>('json');
   const [batesRules, setBatesRules] = useState<BatesRule[]>([{ ...defaultBatesRule }]),
     [start, setStart] = useState(1);
   const [print, setPrint] = useState<PosterPrint>({
@@ -55,7 +56,7 @@ export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { to
     'continuous-page': 'Lange Seite erstellen',
     'poster-print': 'Poster aufteilen',
     linearize: 'Webansicht optimieren',
-    'structured-export': 'JSON exportieren',
+    'structured-export': structureFormat === 'xml' ? 'XML exportieren' : 'JSON exportieren',
   };
   return (
     <section className="advanced-card">
@@ -263,11 +264,22 @@ export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { to
         </p>
       )}
       {tool === 'structured-export' && (
-        <p>
-          {ui(
-            'Exportiert auslesbaren Text mit Seitenzahlen, Positionen und Schriftreferenzen. Geeignet zur Weiterverarbeitung. Scans zuvor mit OCR durchsuchbar machen.',
-          )}
-        </p>
+        <>
+          <Choice
+            label="Ausgabeformat"
+            value={structureFormat}
+            onChange={(v) => setStructureFormat(v as 'json' | 'xml')}
+            items={[
+              ['json', 'JSON'],
+              ['xml', 'XML'],
+            ]}
+          />
+          <p>
+            {ui(
+              'Exportiert auslesbaren Text mit Seitenzahlen, Positionen und Schriftreferenzen. Geeignet zur Weiterverarbeitung. Scans zuvor mit OCR durchsuchbar machen.',
+            )}
+          </p>
+        </>
       )}
       <Button
         disabled={busy}
@@ -280,7 +292,7 @@ export function ProPanel({ tool, source, sources, busy, run }: PanelProps & { to
                 ctx,
               );
             if (tool === 'linearize') return linearizeSources(sources, ctx);
-            return structuredExport(sources, ctx);
+            return structuredExport(sources, ctx, structureFormat);
           })
         }
       >

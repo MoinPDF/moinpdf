@@ -15,6 +15,24 @@ Many tools process files locally in the browser. This server adds the conversion
 
 The complete Docker installation connects the web app and document server automatically. Separately hosted integrations must configure server access and authentication themselves. Capability checks do not transfer documents. Files are sent only when the corresponding processing job starts.
 
+## Additional formats in 0.31.0
+
+- `POST /v1/office`: adds WPD (WordPerfect), WPS (Microsoft Works), ODG and RTF; LibreOffice runs with macros disabled and a temporary profile. Valid document structure is required; renaming a file does not create a supported format.
+- `POST /v1/documents/ebook`: adds DRM-free MOBI/AZW3 through Calibre and CBR through libarchive. CBR contains PNG/JPEG page images only, up to 200 pages/80 MB expanded. EPUB, FB2, CBZ, XPS and OXPS remain supported.
+- `POST /v1/formats/{format}`: PDF as `file`, optional JSON form field `options`; `format` is `rtf`, `odt`, `odp`, `azw3` or `cbr`. Output up to 80 MB, input up to 200 PDF pages. AZW3 accepts `title` and `language` (`de/en/fr/es/it/nl/pl`); CBR accepts `dpi` (`72/100/150/200/300`) and `imageFormat` (`png/jpg`).
+- Capabilities `kindleImport`, `cbrImport`, `formatOffice`, `formatAzw3` and `formatCbr` are reported separately. Calibre and libarchive are included in the new Docker image. Older servers require an image update.
+- Server tools allow a temporary connection to an own server. URL/key are not exported in project files. Full Docker installations retain their automatic connection.
+
+### Optional CBR creation
+
+CBZ creation and CBR import work without a RAR licence. **CBR creation** requires the operator to supply a lawfully usable Linux RAR executable matching the document container's processor architecture. MoinPDF neither downloads nor bundles it. Example for the repository-root Compose installation:
+
+```bash
+MOINPDF_RAR_BINARY=/absolute/path/to/rar docker compose -f compose.yaml -f compose.rar.yaml up -d --build
+```
+
+The file must be executable, compatible with the container runtime and appropriately licensed. No blanket ARM64 support is promised for this external program. Without it the server reports CBR creation as unavailable; CBZ remains usable. Every generated CBR is independently extracted and compared byte for byte with all generated page images. Licence/source notices: [FORMATS-NOTICES.md](FORMATS-NOTICES.md).
+
 ## Additional services in 0.30.0
 
 - `POST /v1/documents/handwriting`: PDF and JSON `options` with 1–50 `{page, rect:{x,y,w,h}}` line selections. Zero-based pages and normalised coordinates. Offline German HTR; every output needs correction/review. Model checksums and licences: `handwriting.lock.json`, `HANDWRITING-NOTICES.md`.

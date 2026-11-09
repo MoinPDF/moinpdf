@@ -494,7 +494,11 @@ export async function linearizeSources(sources: Source[], ctx: RunContext) {
     'Die Dateistruktur ist für die schnelle Webansicht vorbereitet. Spätere Bearbeitungen können diese Optimierung aufheben.',
   );
 }
-export async function structuredExport(sources: Source[], ctx: RunContext) {
+export async function structuredExport(
+  sources: Source[],
+  ctx: RunContext,
+  format: 'json' | 'xml' = 'json',
+) {
   const documents = [];
   let done = 0;
   const total = sources.reduce((n, s) => n + s.pdf.numPages, 0);
@@ -527,6 +531,48 @@ export async function structuredExport(sources: Source[], ctx: RunContext) {
       });
     }
     documents.push({ name: source.name, pages });
+  }
+  if (format === 'xml') {
+    const esc = (s: string) =>
+      s
+        .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g, '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    const xml =
+      '<?xml version="1.0" encoding="UTF-8"?>\n' +
+      '<documents schema="moinpdf-document/1">' +
+      documents
+        .map(
+          (d) =>
+            '<document name="' +
+            esc(d.name) +
+            '">' +
+            d.pages
+              .map(
+                (p) =>
+                  `<page number="${p.page}" width="${p.width}" height="${p.height}" rotation="${p.rotation}">` +
+                  p.items
+                    .map(
+                      (i) =>
+                        `<text font="${esc(i.font)}" transform="${i.transform.join(' ')}" width="${i.width}" height="${i.height}" end-of-line="${i.endOfLine}">${esc(i.text)}</text>`,
+                    )
+                    .join('') +
+                  '</page>',
+              )
+              .join('') +
+            '</document>',
+        )
+        .join('') +
+      '</documents>';
+    return {
+      blob: new Blob([xml], { type: 'application/xml' }),
+      filename: 'MoinPDF-Dokumentstruktur.xml',
+      pages: total,
+      kind: 'data' as const,
+      note: 'Auslesbarer PDF-Text mit Fundstellen. Reine Scans zuerst mit OCR durchsuchbar machen.',
+    };
   }
   return {
     blob: new Blob(

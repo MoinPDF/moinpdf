@@ -719,3 +719,73 @@ guides["inspect"].steps.push("Für Scan-Qualität prüfen eine lokale Bildanalys
 guides["compare"].steps.push("Für zwei parallele Bearbeitungen den Modus Drei Fassungen vergleichen wählen und Ausgangsfassung, Fassung A und Fassung B zuordnen. Bis zu 200 ausgewählte Seiten je Fassung. Der Bericht zeigt gemeinsame, einseitige und widersprüchliche Textänderungen mit Originaltexten; unklare Zuordnungen, fehlender Text und zusätzliche Stellen bleiben ausdrücklich offen. Scans vorher mit OCR versehen. Bilder und Formatierung visuell prüfen; keine automatische Zusammenführung.");
 
 guides["native-objects"].steps.push("Unter Wiederkehrende Logos austauschen pixelgleiche Rasterbilder suchen, eine Bildgruppe wählen und die gewünschten Vorkommen einzeln oder gemeinsam auswählen. Fundstellen in der Seitenvorschau prüfen, ein Ersatzbild laden und die Auswahl bestätigen. Exportiert wird eine neue PDF; nicht ausgewählte Vorkommen bleiben erhalten. Bis zu 50 Seiten, 80 MB Eingang, 100 Ersetzungen und 160 MB Ausgabe; Analyse bis 1.000 Bilder und 48 Megapixel insgesamt. Ersatzbild bis 20 MB und 4 Megapixel. Kein Erkennen von Vektorlogos oder Logos in Seitenscans; beschnittene und komplex transparente Bilder werden ausgelassen. Abweichende Seitenverhältnisse können verzerren. Signierte PDFs und XFA werden abgewiesen.");
+
+// Format additions in 0.31.0.
+Object.assign(guides, {
+  "text-pdf": {
+    "input": "Markdown-, TXT-, CSV- oder XML-Datei bis 2 MB und 300.000 Zeichen.",
+    "steps": [
+      "Datei und Eingabeformat wählen; bei Bedarf die Zeichenkodierung ändern.",
+      "Papierformat, Ausrichtung und bei CSV Trennzeichen und Tabellenkopf festlegen. XML kann Pfade und Werte oder einfache gleichartige Datensätze zeigen.",
+      "PDF erstellen und Seitenumbrüche sowie alle Spalten in der Ergebnisvorschau prüfen."
+    ],
+    "output": "Neue PDF mit eingebetteten Schriften, Text und Tabellen.",
+    "note": "Bis 12 Spalten und 2.000 Tabellenzeilen. Markdown-Bilder werden als Alternativtext ausgegeben; HTML wird nicht ausgeführt. XML mit DTD oder Entitäten wird abgelehnt. Rechnungs-XML kann weiterhin im Rechnungsarbeitsplatz geöffnet werden."
+  },
+  "pdf-json": {
+    "input": "PDF oder vollständiger QPDF-JSON-Export der Version 2.",
+    "steps": [
+      "Richtung PDF zu JSON oder JSON zu PDF wählen.",
+      "PDF öffnen beziehungsweise JSON-Datei auswählen.",
+      "Exportieren beziehungsweise PDF wiederherstellen und das Ergebnis prüfen."
+    ],
+    "output": "Vollständige PDF-Objektstruktur mit eingebetteten Stream-Daten oder daraus wiederhergestellte PDF.",
+    "note": "Bis 80 MB und 200 Seiten. Beliebige JSON-Dateien, Bento-/CPDF-JSON und externe Stream-Dateien sind nicht unterstützt. Aktive Inhalte bleiben möglicherweise erhalten; digitale Signaturen werden ungültig."
+  },
+  "scan-effect": {
+    "input": "Eine PDF mit höchstens 200 Seiten.",
+    "steps": [
+      "Auflösung, Bildrauschen, Drehung, Unschärfe und Graustufen einstellen.",
+      "Scannereffekt anwenden und die fertigen Seiten in der Vorschau prüfen.",
+      "Bei Bedarf Einstellungen ändern; anschließend PDF herunterladen oder übernehmen."
+    ],
+    "output": "Neue Bild-PDF im Scannerstil.",
+    "note": "Textsuche, Links, Formulare, Anlagen und digitale Signaturen entfallen. Drehung wird ohne abgeschnittene Seitenecken eingepasst. Höchstens 16 Megapixel je Seite und 80 MB Bilddaten."
+  },
+  "pdf-comic": {
+    "input": "Eine PDF; für CBR zusätzlich ein eigener Server mit RAR-Konverter.",
+    "steps": [
+      "CBZ oder optional CBR auswählen.",
+      "Bildformat und Auflösung festlegen. CBR benötigt eine verfügbare Serverkomponente.",
+      "Comicarchiv erstellen und im gewünschten Comicreader prüfen."
+    ],
+    "output": "CBZ- oder CBR-Datei mit einer nummerierten Bilddatei pro Seite.",
+    "note": "CBZ läuft lokal. RAR wird nicht mitgeliefert; Betreiber müssen ein kompatibles, passend lizenziertes Programm installieren. Bis 200 Seiten und 80 MB Bilddaten."
+  },
+  "pdf-ai": {
+    "input": "PDF mit auslesbarem Text; Scans vorher mit OCR bearbeiten.",
+    "steps": [
+      "PDF auswählen und LlamaIndex-JSON erstellen.",
+      "Seitenmetadaten und Hinweise auf Seiten ohne Text prüfen.",
+      "JSON in einer eigenen Verarbeitung mit LlamaIndex Document.from_dict einlesen."
+    ],
+    "output": "JSON-Liste mit einem LlamaIndex-Dokument pro PDF-Seite.",
+    "note": "Keine KI-Abfrage, kein Upload und kein API-Schlüssel. Bis zwei Millionen Zeichen; Bilder und Tabellenlayout entfallen. Seiten ohne Text bleiben als leere Einträge erhalten."
+  },
+  "pdf-javascript": {
+    "input": "Eine PDF, auch mit eingebetteten Skriptaktionen.",
+    "steps": [
+      "PDF auswählen und JavaScript anzeigen.",
+      "Fundstellen aufklappen und Skripte als Text lesen. Nicht dekodierbare Einträge werden gekennzeichnet.",
+      "Bei Bedarf den Bericht als JSON herunterladen."
+    ],
+    "output": "Skripttexte mit Fundstelle in der PDF-Objektstruktur.",
+    "note": "Keine Skriptausführung und keine Sicherheitsfreigabe. Bis 500 Einträge, eine Million Zeichen je Skript und acht Millionen insgesamt. Eingebettete andere Dokumente werden nicht rekursiv untersucht."
+  }
+});
+guides["office-pdf"].steps.push("WordPerfect (WPD), Microsoft Works (WPS) und OpenDocument Draw (ODG) über den eigenen Dokumentenserver importieren. WPS bezeichnet Microsoft Works, nicht WPS Office.");
+guides["ebook-pdf"].steps.push("Zusätzlich werden ungeschützte MOBI- und AZW3-Dateien sowie CBR-Comicarchive unterstützt. Calibre und libarchive sind im Dokumentenserver enthalten.");
+guides["pdf-word"].steps.push("Als Ausgabeformat zusätzlich RTF oder ODT wählen. Diese Formate benötigen den eigenen Dokumentenserver und werden aus der rekonstruierten Word-Datei erzeugt.");
+guides["pdf-powerpoint"].steps.push("Als Ausgabeformat zusätzlich ODP wählen. Der gewählte Bild- oder Bearbeitungsmodus wird übernommen; die Konvertierung benötigt LibreOffice auf dem eigenen Server.");
+guides["pdf-epub"].steps.push("EPUB wird lokal erstellt. AZW3 benötigt den eigenen Dokumentenserver; jede Seite muss Text enthalten. Bilder und ursprüngliches Layout werden bei dieser Textausgabe nicht übernommen.");
+guides["structured-export"].steps.push("JSON oder XML als Ausgabeformat wählen. XML verwendet das Schema moinpdf-document/1 mit Dokumenten, Seiten und Textpositionen; ursprüngliche XML-Daten werden nicht rekonstruiert.");

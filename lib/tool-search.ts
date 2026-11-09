@@ -2,6 +2,12 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'text-pdf': ['Markdown zu PDF', 'TXT zu PDF', 'CSV zu PDF', 'XML zu PDF'],
+  'pdf-json': ['JSON zu PDF', 'PDF zu JSON', 'QPDF JSON'],
+  'scan-effect': ['Scannereffekt', 'Scanner effect', 'PDF wie gescannt'],
+  'pdf-comic': ['PDF zu CBZ', 'PDF zu CBR', 'comic archive'],
+  'pdf-ai': ['LlamaIndex', 'KI Export', 'AI export'],
+  'pdf-javascript': ['PDF JavaScript', 'Skripte anzeigen'],
   'payment-match': ['Zahlungsabgleich', 'Teilzahlung', 'missing receipts', 'payment matching'],
   'invoice-create': ['XRechnung erstellen', 'ZUGFeRD erstellen', 'create invoice'],
   'pdf-portfolio': ['Portfolio', 'PDF Collection', 'Dokumentencontainer'],
@@ -128,7 +134,15 @@ const aliases: Record<WorkspaceTool, string[]> = {
   'continuous-page': ['lange Seite', 'Scrollen', 'Endlosseite', 'untereinander'],
   'poster-print': ['Poster', 'Kacheln', 'Drucken', 'Überlappung'],
   linearize: ['Webansicht', 'linearisieren', 'schnell laden'],
-  'structured-export': ['JSON', 'Daten', 'Fundstellen', 'KI', 'RAG'],
+  'structured-export': [
+    'PDF zu XML',
+    'XML exportieren',
+    'JSON',
+    'Daten',
+    'Fundstellen',
+    'KI',
+    'RAG',
+  ],
 
   'form-responses': [
     'Formularrückläufe auswerten',
@@ -258,8 +272,11 @@ const aliases: Record<WorkspaceTool, string[]> = {
   ],
   'pdf-markdown': ['PDF zu Markdown', 'PDF als MD', 'Markdown exportieren'],
   'pdf-html': ['PDF zu HTML', 'PDF als Webseite', 'PDF Text zu HTML'],
-  'pdf-epub': ['PDF zu E-Book', 'PDF zu EPUB', 'PDF als eBook', 'EPUB exportieren'],
+  'pdf-epub': ['PDF zu AZW3', 'PDF zu E-Book', 'PDF zu EPUB', 'PDF als eBook', 'EPUB exportieren'],
   'ebook-pdf': [
+    'MOBI zu PDF',
+    'AZW3 zu PDF',
+    'CBR zu PDF',
     'E-Book zu PDF',
     'EPUB zu PDF',
     'eBook in PDF umwandeln',
@@ -269,7 +286,7 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'OXPS zu PDF',
     'Comicarchiv',
   ],
-  'pdf-powerpoint': ['PDF zu PowerPoint', 'PDF zu PPTX', 'PDF als Folien'],
+  'pdf-powerpoint': ['PDF zu ODP', 'PDF zu PowerPoint', 'PDF zu PPTX', 'PDF als Folien'],
   'html-pdf': [
     'HTML zu PDF',
     'Webseite zu PDF',
@@ -326,6 +343,8 @@ const aliases: Record<WorkspaceTool, string[]> = {
     'nach MB trennen',
   ],
   'pdf-word': [
+    'PDF zu RTF',
+    'PDF zu ODT',
     'PDF zu Word',
     'PDF in Word umwandeln',
     'PDF zu DOCX',
@@ -429,6 +448,9 @@ const aliases: Record<WorkspaceTool, string[]> = {
   ],
   'camera-scan': ['Kamera Scanner', 'Foto scannen', 'Handy Scan', 'Perspektive korrigieren'],
   'office-pdf': [
+    'WPD zu PDF',
+    'WPS zu PDF',
+    'ODG zu PDF',
     'Office zu PDF',
     'Word zu PDF',
     'Excel zu PDF',

@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](README.en.md) · [← README](../README.md)
 
-> **Für die vollständige App inklusive Übersetzungen:** `docker compose up -d --build` im Repository-Hauptverzeichnis ausführen. Siehe [Docker-Anleitung](../DOCKER.md). Die nachfolgende Anleitung betrifft eine separate Dokumenten-API für eine anderweitig gehostete Web-App oder einen API-Client. Seit 0.30.0 bieten E-Rechnungserstellung, Handschrifterkennung und PDF/X-Vorbereitung zusätzlich eine vorübergehende Verbindung mit einem eigenen Server. Andere Serverwerkzeuge verwenden die eingerichtete Integration beziehungsweise einen Proxy.
+> **Für die vollständige App inklusive Übersetzungen:** `docker compose up -d --build` im Repository-Hauptverzeichnis ausführen. Siehe [Docker-Anleitung](../DOCKER.md). Die nachfolgende Anleitung betrifft eine separate Dokumenten-API für eine anderweitig gehostete Web-App oder einen API-Client. Seit 0.30.0 bieten E-Rechnungserstellung, Handschrifterkennung und PDF/X-Vorbereitung zusätzlich eine vorübergehende Verbindung mit einem eigenen Server. Seit 0.31.0 unterstützen auch weitere Serverkonverter diese Verbindung.
 
 Viele Werkzeuge verarbeiten Dateien lokal im Browser. Dieser Server ergänzt die unten beschriebenen Konvertierungen und Prüfungen:
 
@@ -14,6 +14,24 @@ Viele Werkzeuge verarbeiten Dateien lokal im Browser. Dieser Server ergänzt die
 | Zertifikatssignaturen | pyHanko, PKCS#12 und Prüfung bestehender Signaturen | Signierte PDF bzw. JSON-Bericht |
 
 Die vollständige Docker-Installation verbindet Web-App und Dokumentenserver automatisch. Separat gehostete Integrationen müssen Serverzugriff und Authentifizierung selbst einrichten. Die Funktionsprüfung überträgt keine Dokumente. Dateien werden erst mit dem jeweiligen Verarbeitungsauftrag gesendet.
+
+## Zusätzliche Formate in 0.31.0
+
+- `POST /v1/office`: zusätzlich WPD (WordPerfect), WPS (Microsoft Works), ODG und RTF; LibreOffice mit deaktivierten Makros und eigenem temporärem Profil. Gültige Dateistruktur ist Voraussetzung; eine Umbenennung erzeugt kein unterstütztes Format.
+- `POST /v1/documents/ebook`: zusätzlich DRM-freie MOBI/AZW3 über Calibre und CBR über libarchive. CBR enthält nur PNG/JPEG-Bildseiten, höchstens 200 Seiten/80 MB entpackt. EPUB, FB2, CBZ, XPS und OXPS bleiben unterstützt.
+- `POST /v1/formats/{format}`: PDF als `file`, optionales JSON-Formularfeld `options`; `format` ist `rtf`, `odt`, `odp`, `azw3` oder `cbr`. Ausgabe bis 80 MB, Eingabe bis 200 PDF-Seiten. AZW3 akzeptiert `title` und `language` (`de/en/fr/es/it/nl/pl`); CBR `dpi` (`72/100/150/200/300`) und `imageFormat` (`png/jpg`).
+- Die Fähigkeiten `kindleImport`, `cbrImport`, `formatOffice`, `formatAzw3` und `formatCbr` werden einzeln gemeldet. Calibre und libarchive sind im neuen Docker-Image enthalten. Ein alter Server braucht ein Image-Update.
+- Die Oberfläche unterstützt bei Serverwerkzeugen vorübergehend die Verbindung zu einem eigenen Server. Adresse und Schlüssel werden nicht in Projektdateien exportiert. In der vollständigen Docker-App bleibt die automatische Anbindung bestehen.
+
+### Optionale CBR-Erstellung
+
+CBZ-Erstellung und CBR-Import funktionieren ohne RAR-Lizenz. Für **CBR-Erstellung** muss der Betreiber eine rechtmäßig nutzbare Linux-RAR-Datei für die Prozessorarchitektur seines Dokumentencontainers bereitstellen. MoinPDF lädt sie nicht herunter und liefert sie nicht mit. Beispiel für die Compose-Installation im Repository-Hauptverzeichnis:
+
+```bash
+MOINPDF_RAR_BINARY=/absoluter/pfad/rar docker compose -f compose.yaml -f compose.rar.yaml up -d --build
+```
+
+Die Datei muss ausführbar, mit der Container-Laufzeit kompatibel und passend lizenziert sein. Keine pauschale ARM64-Unterstützung des externen Programms wird zugesagt. Ohne Programm meldet der Server CBR-Erstellung als nicht verfügbar; CBZ bleibt nutzbar. Die fertige CBR-Datei wird unabhängig entpackt und bytegenau mit allen erzeugten Seitenbildern verglichen. Lizenz- und Quellenhinweise: [FORMATS-NOTICES.md](FORMATS-NOTICES.md).
 
 ## Zusätzliche Dienste in 0.30.0
 

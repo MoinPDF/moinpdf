@@ -92,7 +92,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             nav.get_by_role('button', name='Home' if en else 'Start', exact=True).tap()
             search.tap()
             sheet.locator('.mobile-search-all').tap()
-            expect(page.locator('.chooser-tool')).to_have_count(127)
+            expect(page.locator('.chooser-tool')).to_have_count(133)
             pdf = Path(temporary) / 'navigation-retained.pdf'
             with pymupdf.open() as document:
                 document.new_page().insert_text((50, 60), 'Navigation retains this PDF')
@@ -128,7 +128,7 @@ with sync_playwright() as api, tempfile.TemporaryDirectory() as temporary:
             assert abs(box['x'] + box['width'] / 2 - 720) <= 2
             page.keyboard.press('Escape')
             page.locator('.harbor-desktop-nav').get_by_role('button', name='Tools' if en else 'Werkzeuge', exact=True).click()
-            expect(page.locator('.chooser-tool')).to_have_count(127)
+            expect(page.locator('.chooser-tool')).to_have_count(133)
             expect(page.locator('.chooser-file')).to_contain_text(pdf.name)
             checks.append(f'{language}: Enter/tap tool selection, all tools, PDF retention, projects/focus, desktop resize and centered dialog')
             if not en:

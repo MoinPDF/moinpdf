@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Neu in 0.30.0: Zahlungsabgleich, E-Rechnungserstellung, PDF-Portfolios, lokale Erkennung personenbezogener Angaben, zeilenweise Handschrifterkennung und PDF/X-Druckvorbereitung. Bestehende Ebenenbearbeitung und Eingangsordner sind erweitert. Der Katalog enthält 127 Werkzeuge. Umfang und Grenzen stehen in [Funktionen](FUNKTIONEN.md#dokumentenwerkzeuge-in-0300).
+Neu in 0.31.0: sechs zusätzliche Werkzeuge und Formatoptionen für Text/Daten, PDF-JSON, Scannereffekt, Comics, JavaScript-Anzeige, KI-Daten sowie Office- und Kindle-Dateien. Der Katalog enthält 133 Werkzeuge. Verarbeitung und Grenzen stehen in [Funktionen](FUNKTIONEN.md#formate-und-werkzeuge-in-0310).
 
 Die nächsten Vergleichslücken sind geschlossen: Farben & Hintergrund mit Vorlagen/Vorschau, gezielte Freigabe schreibgeschützter Formularfelder, Text erhaltender Zuschnitt und Duplex-Sortierung innerhalb einer PDF. Grenzen: Hintergrund liegt hinter deckenden Inhalten; Bildfarbkorrekturen verlieren Text/Felder/Links; CropBox blendet Randinhalte nur aus. Einzel-PDF-Duplex verarbeitet höchstens 200 ausgewählte Seiten.
 
@@ -10,7 +10,7 @@ Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvor
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 9. November 2026 · Version 0.30.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 9. November 2026 · Version 0.31.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 Der Hintergrund im Light Mode verwendet auf Desktop, Tablet und Smartphone ein dunkleres Mintgrün. Die grünen Verläufe liegen auf derselben dunkleren Grundfläche, sodass helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
 

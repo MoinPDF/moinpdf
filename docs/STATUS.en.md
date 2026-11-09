@@ -1,6 +1,6 @@
 # Implementation status
 
-New in 0.30.0: payment matching, e-invoice creation, PDF portfolios, local personal-data detection, line-by-line handwriting recognition and PDF/X print preparation. Existing layer editing and watched folders are extended. The catalogue contains 127 tools. See [features and limits](FEATURES.en.md#document-tools-in-0300).
+New in 0.31.0: six additional tools and format options for text/data, PDF JSON, scanner effects, comics, JavaScript inspection, AI data, Office and Kindle files. The catalogue contains 133 tools. See [features and limits](FEATURES.en.md#formats-and-tools-in-0310).
 
 The next comparison gaps are covered: colors and background with presets/preview, selective unlocking of read-only form fields, text-preserving crop and single-PDF duplex collation. Limits: backgrounds sit behind opaque content; image color adjustments lose text/fields/links; CropBox only hides margins. Single-PDF duplex accepts up to 200 selected pages.
 
@@ -10,7 +10,7 @@ Form helper and receipt collection on A4 are integrated browser tools. Profile s
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 9 November 2026 · Version 0.30.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 9 November 2026 · Version 0.31.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 The light-mode background uses a darker mint green on desktop, tablet and mobile. Its soft green gradients share the same darker base, making light cards, input fields and tool panels stand out more clearly.
 

@@ -1,6 +1,730 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  'Seiten ohne auslesbaren Text sind mit leerem Text enthalten. Bei Bedarf zuerst OCR ausführen.':
+    'Pages without extractable text are included with empty text. Run OCR first if needed.',
+  'AZW3 wird auf dem eigenen Dokumentenserver mit Calibre erstellt. Die PDF wird erst beim Start dorthin übertragen.':
+    'AZW3 is created on your own document server using Calibre. The PDF is only transferred when you start.',
+  'Office-Dateien als PDF speichern; WordPerfect, Microsoft Works und ODG über den eigenen Server.':
+    'Save Office files as PDF; convert WordPerfect, Microsoft Works and ODG using your own server.',
+  'Eine bearbeitbare DOCX-Datei erstellen; RTF und ODT über den eigenen Server exportieren.':
+    'Create an editable DOCX file; export RTF and ODT using your own server.',
+  'PDF-Seiten als PPTX-Folienbilder oder bearbeitbare Textobjekte exportieren; ODP über den eigenen Server.':
+    'Export PDF pages as PPTX slide images or editable text objects; export ODP using your own server.',
+  'Auslesbaren Text als EPUB oder über den eigenen Server als AZW3 für Kindle exportieren.':
+    'Export extractable text as EPUB or as AZW3 for Kindle using your own server.',
+  'Text, Seiten und Fundstellen als JSON oder XML zur Weiterverarbeitung exportieren.':
+    'Export text, pages and source locations as JSON or XML for further processing.',
+  'PDF-Text zu JSON & XML': 'PDF text to JSON & XML',
+  'Text- oder Datendatei': 'Text or data file',
+  Eingabeformat: 'Input format',
+  Zeichenkodierung: 'Character encoding',
+  'CSV-Trennzeichen': 'CSV delimiter',
+  'Erste Zeile als Tabellenkopf': 'First row as table header',
+  'XML-Darstellung': 'XML presentation',
+  'Pfade und Werte': 'Paths and values',
+  'Datensätze als Tabelle': 'Records as a table',
+  Tabulator: 'Tab',
+  Richtung: 'Direction',
+  'PDF zu JSON': 'PDF to JSON',
+  'JSON zu PDF': 'JSON to PDF',
+  'PDF-JSON-Datei': 'PDF JSON file',
+  'PDF-Struktur exportieren': 'Export PDF structure',
+  'PDF wiederherstellen': 'Rebuild PDF',
+  Comicformat: 'Comic format',
+  'CBR (RAR, optional)': 'CBR (RAR, optional)',
+  'Comicarchiv erstellen': 'Create comic archive',
+  Bildrauschen: 'Image noise',
+  'Leichte Drehung (Grad)': 'Slight rotation (degrees)',
+  'Unschärfe (Pixel)': 'Blur (pixels)',
+  'Scannereffekt anwenden': 'Apply scanner effect',
+  'JavaScript anzeigen': 'View JavaScript',
+  'LlamaIndex-JSON erstellen': 'Create LlamaIndex JSON',
+  'E-Book-Format': 'E-book format',
+  'XML exportieren': 'Export XML',
+  'Lokal im Browser. Bis 300.000 Zeichen, Tabellen mit höchstens 12 Spalten und 2.000 Zeilen. Markdown unterstützt Überschriften, Listen, Tabellen und Code; Bilder erscheinen als Alternativtext, HTML als Text. Externe Inhalte werden nicht geladen.':
+    'Locally in the browser. Up to 300,000 characters, tables with up to 12 columns and 2,000 rows. Markdown supports headings, lists, tables and code; images appear as alternative text and HTML as text. External content is not loaded.',
+  'Vollständige PDF-Objektstruktur im QPDF-JSON-Format 2, einschließlich eingebetteter Stream-Daten. Unterstützt die Rückumwandlung dieses Formats; beliebige JSON-Dateien und Bento-/CPDF-JSON werden nicht unterstützt.':
+    'Complete PDF object structure in QPDF JSON format 2, including inline stream data. Supports rebuilding PDFs from this format; arbitrary JSON and Bento/CPDF JSON are not supported.',
+  'Bis 80 MB und 200 PDF-Seiten. Enthält möglicherweise aktive Inhalte. Eine Rückumwandlung bewahrt keine gültigen digitalen Signaturen und ist keine Bereinigung.':
+    'Up to 80 MB and 200 PDF pages. May contain active content. Rebuilding does not preserve valid digital signatures and does not sanitize the document.',
+  'Eine Bilddatei pro Seite in natürlicher Lesereihenfolge. Bis 200 Seiten, 80 MB Bilddaten und 16 Megapixel je Seite. Textsuche und interaktive Elemente werden nicht übernommen.':
+    'One image per page in natural reading order. Up to 200 pages, 80 MB of image data and 16 megapixels per page. Searchable text and interactive elements are not retained.',
+  'CBR benötigt einen eigenen Dokumentenserver mit separat installiertem und passend lizenziertem RAR-Konverter. CBZ wird lokal im Browser erstellt.':
+    'CBR requires your own document server with a separately installed and appropriately licensed RAR converter. CBZ is created locally in the browser.',
+  'Erzeugt eine Bild-PDF im Scannerstil. Die Vorschau zeigt die fertige Ausgabe. Textsuche, Links, Formulare, Anhänge und digitale Signaturen werden nicht übernommen.':
+    'Creates an image PDF with a scanner effect. The preview shows the finished output. Searchable text, links, forms, attachments and digital signatures are not retained.',
+  'Zeigt JavaScript-Aktionen aus der PDF-Objektstruktur als Text. Skripte werden nicht ausgeführt. Dies ist keine Prüfung der Sicherheit des Dokuments.':
+    'Shows JavaScript actions from the PDF object structure as text. Scripts are not executed. This does not assess document safety.',
+  'Keine JavaScript-Einträge in der untersuchten PDF-Objektstruktur gefunden.':
+    'No JavaScript entries found in the inspected PDF object structure.',
+  'Dieser Skripteintrag konnte nicht dekodiert werden.': 'This script entry could not be decoded.',
+  'Exportiert ein LlamaIndex-Dokument je PDF-Seite mit Text, Dateiname und Seitenangaben. Keine KI-Abfrage und kein Upload. Bilder und Tabellenlayout werden nicht übernommen; Scans vorher mit OCR bearbeiten.':
+    'Exports one LlamaIndex document per PDF page with text, file name and page metadata. No AI request and no upload. Images and table layout are not included; run OCR on scans first.',
+  'PDF aus vollständiger Objektstruktur wiederhergestellt. Aktive Inhalte können enthalten sein; bestehende digitale Signaturen werden nicht wiederhergestellt.':
+    'PDF rebuilt from its complete object structure. Active content may be present; existing digital signatures are not restored.',
+  'LlamaIndex-Dokumente mit einem Texteintrag pro PDF-Seite. Bilder, Tabellenlayout und eingebettete Dateien sind nicht enthalten.':
+    'LlamaIndex documents with one text entry per PDF page. Images, table layout and embedded files are not included.',
+  'Neue Bild-PDF: Textsuche, Links, Formulare, Anhänge und digitale Signaturen werden nicht übernommen.':
+    'New image PDF: searchable text, links, forms, attachments and digital signatures are not retained.',
+  'Die Konvertierung erfolgt auf dem eigenen Dokumentenserver. Layout und bearbeitbare Inhalte bitte an der Ausgabe prüfen.':
+    'Conversion runs on your own document server. Check layout and editable content in the output.',
+  'Office, Pages, Visio, Publisher, WordPerfect, Works oder Draw':
+    'Office, Pages, Visio, Publisher, WordPerfect, Works or Draw',
+  'EPUB, FB2, MOBI, AZW3, CBZ, CBR, XPS oder OXPS': 'EPUB, FB2, MOBI, AZW3, CBZ, CBR, XPS or OXPS',
+  'EPUB, FB2, MOBI und AZW3 werden neu gesetzt. Comicarchive, XPS und OXPS behalten ihr Seitenformat. Höchstens 40 MB und 200 Seiten; Comicarchive mit PNG- oder JPEG-Bildern. Kein DRM.':
+    'EPUB, FB2, MOBI and AZW3 are reflowed. Comic archives, XPS and OXPS retain their page format. Up to 40 MB and 200 pages; comic archives with PNG or JPEG images. No DRM.',
+  'Bitte eine Textdatei mit höchstens 2 MB auswählen.': 'Select a text file up to 2 MB.',
+  'Die Zeichenkodierung passt nicht zur Datei. Bitte eine andere Kodierung wählen.':
+    'The character encoding does not match the file. Select another encoding.',
+  'Bitte eine Textdatei mit 1 bis 300.000 Zeichen verwenden.':
+    'Use a text file containing 1 to 300,000 characters.',
+  'Bitte höchstens 12 Spalten und 2.000 Datensätze verwenden.':
+    'Use up to 12 columns and 2,000 records.',
+  'Bitte höchstens 12 Spalten verwenden.': 'Use up to 12 columns.',
+  'Bitte höchstens 2.000 Tabellenzeilen verwenden.': 'Use up to 2,000 table rows.',
+  'Das Markdown ist zu stark verschachtelt.': 'The Markdown is nested too deeply.',
+  'Die CSV konnte nicht gelesen werden. Bitte Trennzeichen und Anführungszeichen prüfen.':
+    'The CSV could not be read. Check delimiters and quotation marks.',
+  'Die CSV-Zeilen haben unterschiedlich viele Spalten. Bitte das Trennzeichen prüfen.':
+    'The CSV rows have different column counts. Check the delimiter.',
+  'Die Markdown-Tabelle ist zu groß.': 'The Markdown table is too large.',
+  'Die Tabelle enthält keine Daten.': 'The table contains no data.',
+  'Die XML-Datei enthält keine Werte.': 'The XML file contains no values.',
+  'Die XML-Datei ist nicht wohlgeformt.': 'The XML file is not well formed.',
+  'Die XML-Datei ist zu groß oder zu stark verschachtelt.':
+    'The XML file is too large or nested too deeply.',
+  'Eine CSV-Zelle hat kein schließendes Anführungszeichen.':
+    'A CSV cell is missing its closing quotation mark.',
+  'Für eine XML-Tabelle müssen die direkten Unterelemente gleichartige Datensätze sein.':
+    'An XML table requires direct child elements containing records of the same type.',
+  'Gemischte XML-Inhalte bitte als Baum ausgeben.': 'Export mixed XML content as paths and values.',
+  'Unbekanntes Textformat.': 'Unknown text format.',
+  'Ungültige CSV-Anführungszeichen.': 'Invalid CSV quotation marks.',
+  'Ungültiges CSV-Trennzeichen.': 'Invalid CSV delimiter.',
+  'Verschachtelte oder wiederholte XML-Felder bitte als Baum ausgeben.':
+    'Export nested or repeated XML fields as paths and values.',
+  'XML mit DTD oder Entitäten wird nicht unterstützt.':
+    'XML with a DTD or entities is not supported.',
+  'Bitte eine JSON-Datei mit höchstens 80 MB verwenden.': 'Use a JSON file up to 80 MB.',
+  'Bitte einen vollständigen QPDF-JSON-Export auswählen.': 'Select a complete QPDF JSON export.',
+  'Das Comicarchiv überschreitet 80 MB. Bitte die Auflösung verringern.':
+    'The comic archive exceeds 80 MB. Reduce the resolution.',
+  'Der JSON-Export enthält keine vollständigen eingebetteten Stream-Daten.':
+    'The JSON export does not contain complete inline stream data.',
+  'Die Ausgabe überschreitet 80 MB. Bitte die Auflösung verringern.':
+    'The output exceeds 80 MB. Reduce the resolution.',
+  'Die JSON-Ausgabe überschreitet 80 MB.': 'The JSON output exceeds 80 MB.',
+  'Die JSON-Datei ist nicht gültig.': 'The JSON file is invalid.',
+  'Die PDF-JSON-Struktur ist zu groß oder zu tief verschachtelt.':
+    'The PDF JSON structure is too large or nested too deeply.',
+  'Die PDF-Struktur ist zu umfangreich für die Skriptprüfung.':
+    'The PDF structure is too large for script inspection.',
+  'Die eingebetteten Skripte überschreiten die Anzeigegrenze.':
+    'The embedded scripts exceed the display limit.',
+  'Die wiederhergestellte PDF überschreitet 80 MB oder 200 Seiten.':
+    'The rebuilt PDF exceeds 80 MB or 200 pages.',
+  'Eine Seite überschreitet 16 Megapixel. Bitte eine niedrigere Auflösung wählen.':
+    'A page exceeds 16 megapixels. Select a lower resolution.',
+  'Externe Stream-Dateien sind nicht erlaubt. Bitte einen JSON-Export mit eingebetteten Daten verwenden.':
+    'External stream files are not allowed. Use a JSON export with inline data.',
+  'Ungültige Bildauflösung.': 'Invalid image resolution.',
+  'Ungültige Einstellungen für den Scannereffekt.': 'Invalid scanner effect settings.',
+  'Ungültiger QPDF-JSON-Export (Version 2 erforderlich).':
+    'Invalid QPDF JSON export (version 2 required).',
+  'Ungültiges Bildformat.': 'Invalid image format.',
+  'Der Server unterstützt den AZW3-Export noch nicht. Bitte den Dokumentenserver aktualisieren.':
+    'This server does not support AZW3 export yet. Update the document server.',
+  'CBR unterstützt ausschließlich PNG- und JPEG-Seiten.': 'CBR only supports PNG and JPEG pages.',
+  'CBR-Erstellung benötigt einen separat installierten und passend lizenzierten RAR-Konverter.':
+    'Creating CBR requires a separately installed and appropriately licensed RAR converter.',
+  'Comicarchive dürfen höchstens 200 Bildseiten enthalten.':
+    'Comic archives must not contain more than 200 image pages.',
+  'Das CBR-Archiv enthält unzulässige oder zu viele Einträge.':
+    'The CBR archive contains invalid or too many entries.',
+  'Das CBR-Archiv ist beschädigt, verschlüsselt oder nicht unterstützt.':
+    'The CBR archive is damaged, encrypted or unsupported.',
+  'Das Comicarchiv enthält keine Bildseiten.': 'The comic archive contains no image pages.',
+  'Das Comicarchiv enthält zu große oder ungültige Bilder.':
+    'The comic archive contains oversized or invalid images.',
+  'Das Format konnte nicht konvertiert werden. Datei, DRM-Schutz und Serverkonverter prüfen.':
+    'The format could not be converted. Check the file, DRM protection and server converter.',
+  'Das entpackte Comicarchiv überschreitet 80 MB.': 'The expanded comic archive exceeds 80 MB.',
+  'Der E-Book-Export überschreitet zwei Millionen Zeichen.':
+    'The e-book export exceeds two million characters.',
+  'Der Konverter hat keine gültige Ausgabe bis 80 MB erzeugt.':
+    'The converter did not produce valid output up to 80 MB.',
+  'Der benötigte Formatkonverter ist auf diesem Server nicht installiert.':
+    'The required format converter is not installed on this server.',
+  'Die CBR-Datei enthält kein RAR-Archiv.': 'The CBR file does not contain a RAR archive.',
+  'Die Datei enthält kein unterstütztes MOBI-/AZW3-E-Book.':
+    'The file does not contain a supported MOBI/AZW3 e-book.',
+  'Mindestens eine Seite enthält keinen auslesbaren Text. Bitte vor dem AZW3-Export OCR ausführen.':
+    'At least one page contains no readable text. Run OCR before exporting AZW3.',
+  'Ungültige AZW3-Ausgabe.': 'Invalid AZW3 output.',
+  'Ungültige Comic-Einstellungen.': 'Invalid comic settings.',
+  'Ungültige E-Book-Sprache.': 'Invalid e-book language.',
+  'Ungültige OpenDocument-Ausgabe.': 'Invalid OpenDocument output.',
+  'Ungültige RAR-Ausgabe.': 'Invalid RAR output.',
+  'Ungültige RTF-Ausgabe.': 'Invalid RTF output.',
+  'Ungültiger Archivname.': 'Invalid archive name.',
+  'Unzulässiger CBR-Eintrag.': 'Invalid CBR entry.',
+  'Verknüpfungen im CBR-Archiv werden nicht unterstützt.':
+    'Links in CBR archives are not supported.',
+  'Die Datei enthält kein gültiges WordPerfect-Dokument.':
+    'The file does not contain a valid WordPerfect document.',
+  'Die Datei enthält kein unterstütztes Microsoft-Works-Dokument.':
+    'The file does not contain a supported Microsoft Works document.',
+  'Die Datei enthält kein gültiges RTF-Dokument.':
+    'The file does not contain a valid RTF document.',
+  'Die Datei enthält kein gültiges OpenDocument-Zeichnungsdokument.':
+    'The file does not contain a valid OpenDocument drawing.',
+  'Ungültige Ausgabeoptionen.': 'Invalid output options.',
+  'Markdown-, TXT-, CSV- oder XML-Datei bis 2 MB und 300.000 Zeichen.':
+    'A Markdown, TXT, CSV or XML file up to 2 MB and 300,000 characters.',
+  'Datei und Eingabeformat wählen; bei Bedarf die Zeichenkodierung ändern.':
+    'Choose a file and input format; change the character encoding if necessary.',
+  'Papierformat, Ausrichtung und bei CSV Trennzeichen und Tabellenkopf festlegen. XML kann Pfade und Werte oder einfache gleichartige Datensätze zeigen.':
+    'Set paper size, orientation and CSV delimiter and header. XML can show paths and values or simple uniform records.',
+  'PDF erstellen und Seitenumbrüche sowie alle Spalten in der Ergebnisvorschau prüfen.':
+    'Create the PDF and check page breaks and all columns in the result preview.',
+  'Neue PDF mit eingebetteten Schriften, Text und Tabellen.':
+    'New PDF with embedded fonts, text and tables.',
+  'Bis 12 Spalten und 2.000 Tabellenzeilen. Markdown-Bilder werden als Alternativtext ausgegeben; HTML wird nicht ausgeführt. XML mit DTD oder Entitäten wird abgelehnt. Rechnungs-XML kann weiterhin im Rechnungsarbeitsplatz geöffnet werden.':
+    'Up to 12 columns and 2,000 table rows. Markdown images are represented by alternative text; HTML is not executed. XML with DTDs or entities is rejected. Invoice XML can still be opened in the invoice workspace.',
+  'PDF oder vollständiger QPDF-JSON-Export der Version 2.':
+    'A PDF or complete QPDF JSON version 2 export.',
+  'Richtung PDF zu JSON oder JSON zu PDF wählen.': 'Choose PDF to JSON or JSON to PDF.',
+  'PDF öffnen beziehungsweise JSON-Datei auswählen.': 'Open the PDF or select the JSON file.',
+  'Exportieren beziehungsweise PDF wiederherstellen und das Ergebnis prüfen.':
+    'Export or rebuild the PDF and inspect the result.',
+  'Vollständige PDF-Objektstruktur mit eingebetteten Stream-Daten oder daraus wiederhergestellte PDF.':
+    'Complete PDF object structure with inline stream data, or a PDF rebuilt from it.',
+  'Bis 80 MB und 200 Seiten. Beliebige JSON-Dateien, Bento-/CPDF-JSON und externe Stream-Dateien sind nicht unterstützt. Aktive Inhalte bleiben möglicherweise erhalten; digitale Signaturen werden ungültig.':
+    'Up to 80 MB and 200 pages. Arbitrary JSON, Bento/CPDF JSON and external stream files are unsupported. Active content may be retained; digital signatures become invalid.',
+  'Eine PDF mit höchstens 200 Seiten.': 'A PDF with up to 200 pages.',
+  'Auflösung, Bildrauschen, Drehung, Unschärfe und Graustufen einstellen.':
+    'Set resolution, image noise, rotation, blur and grayscale.',
+  'Scannereffekt anwenden und die fertigen Seiten in der Vorschau prüfen.':
+    'Apply the scanner effect and inspect the finished pages in the preview.',
+  'Bei Bedarf Einstellungen ändern; anschließend PDF herunterladen oder übernehmen.':
+    'Adjust settings if needed, then download or adopt the PDF.',
+  'Neue Bild-PDF im Scannerstil.': 'New image PDF with a scanner effect.',
+  'Textsuche, Links, Formulare, Anlagen und digitale Signaturen entfallen. Drehung wird ohne abgeschnittene Seitenecken eingepasst. Höchstens 16 Megapixel je Seite und 80 MB Bilddaten.':
+    'Searchable text, links, forms, attachments and digital signatures are removed. Rotated sheets are fitted without cutting off corners. Up to 16 megapixels per page and 80 MB of image data.',
+  'Eine PDF; für CBR zusätzlich ein eigener Server mit RAR-Konverter.':
+    'A PDF; CBR additionally requires your own server with a RAR converter.',
+  'CBZ oder optional CBR auswählen.': 'Choose CBZ or optional CBR.',
+  'Bildformat und Auflösung festlegen. CBR benötigt eine verfügbare Serverkomponente.':
+    'Set image format and resolution. CBR requires an available server component.',
+  'Comicarchiv erstellen und im gewünschten Comicreader prüfen.':
+    'Create the comic archive and inspect it in a comic reader.',
+  'CBZ- oder CBR-Datei mit einer nummerierten Bilddatei pro Seite.':
+    'CBZ or CBR file with one numbered image per page.',
+  'CBZ läuft lokal. RAR wird nicht mitgeliefert; Betreiber müssen ein kompatibles, passend lizenziertes Programm installieren. Bis 200 Seiten und 80 MB Bilddaten.':
+    'CBZ runs locally. RAR is not bundled; operators must install a compatible, appropriately licensed program. Up to 200 pages and 80 MB of image data.',
+  'PDF mit auslesbarem Text; Scans vorher mit OCR bearbeiten.':
+    'PDF with readable text; run OCR on scans first.',
+  'PDF auswählen und LlamaIndex-JSON erstellen.': 'Select a PDF and create LlamaIndex JSON.',
+  'Seitenmetadaten und Hinweise auf Seiten ohne Text prüfen.':
+    'Check page metadata and notices about pages without text.',
+  'JSON in einer eigenen Verarbeitung mit LlamaIndex Document.from_dict einlesen.':
+    'Import JSON into your own processing with LlamaIndex Document.from_dict.',
+  'JSON-Liste mit einem LlamaIndex-Dokument pro PDF-Seite.':
+    'JSON list containing one LlamaIndex document per PDF page.',
+  'Keine KI-Abfrage, kein Upload und kein API-Schlüssel. Bis zwei Millionen Zeichen; Bilder und Tabellenlayout entfallen. Seiten ohne Text bleiben als leere Einträge erhalten.':
+    'No AI request, upload or API key. Up to two million characters; images and table layout are omitted. Pages without text remain as empty entries.',
+  'Eine PDF, auch mit eingebetteten Skriptaktionen.':
+    'A PDF, including PDFs with embedded script actions.',
+  'PDF auswählen und JavaScript anzeigen.': 'Select a PDF and view JavaScript.',
+  'Fundstellen aufklappen und Skripte als Text lesen. Nicht dekodierbare Einträge werden gekennzeichnet.':
+    'Expand locations and read scripts as text. Undecodable entries are marked.',
+  'Bei Bedarf den Bericht als JSON herunterladen.': 'Download the JSON report if needed.',
+  'Skripttexte mit Fundstelle in der PDF-Objektstruktur.':
+    'Script text with its location in the PDF object structure.',
+  'Keine Skriptausführung und keine Sicherheitsfreigabe. Bis 500 Einträge, eine Million Zeichen je Skript und acht Millionen insgesamt. Eingebettete andere Dokumente werden nicht rekursiv untersucht.':
+    'No script execution or security clearance. Up to 500 entries, one million characters per script and eight million in total. Other embedded documents are not recursively inspected.',
+  'WordPerfect (WPD), Microsoft Works (WPS) und OpenDocument Draw (ODG) über den eigenen Dokumentenserver importieren. WPS bezeichnet Microsoft Works, nicht WPS Office.':
+    'Import WordPerfect (WPD), Microsoft Works (WPS) and OpenDocument Draw (ODG) through your own document server. WPS means Microsoft Works, not WPS Office.',
+  'Zusätzlich werden ungeschützte MOBI- und AZW3-Dateien sowie CBR-Comicarchive unterstützt. Calibre und libarchive sind im Dokumentenserver enthalten.':
+    'Unprotected MOBI and AZW3 files and CBR comic archives are also supported. Calibre and libarchive are included in the document server.',
+  'Als Ausgabeformat zusätzlich RTF oder ODT wählen. Diese Formate benötigen den eigenen Dokumentenserver und werden aus der rekonstruierten Word-Datei erzeugt.':
+    'You can also choose RTF or ODT output. These formats require your own document server and are produced from the reconstructed Word file.',
+  'Als Ausgabeformat zusätzlich ODP wählen. Der gewählte Bild- oder Bearbeitungsmodus wird übernommen; die Konvertierung benötigt LibreOffice auf dem eigenen Server.':
+    'You can also choose ODP output. The selected image or editable mode is retained; conversion requires LibreOffice on your own server.',
+  'EPUB wird lokal erstellt. AZW3 benötigt den eigenen Dokumentenserver; jede Seite muss Text enthalten. Bilder und ursprüngliches Layout werden bei dieser Textausgabe nicht übernommen.':
+    'EPUB is created locally. AZW3 requires your own document server; every page must contain text. Images and original layout are not retained in this text export.',
+  'JSON oder XML als Ausgabeformat wählen. XML verwendet das Schema moinpdf-document/1 mit Dokumenten, Seiten und Textpositionen; ursprüngliche XML-Daten werden nicht rekonstruiert.':
+    'Choose JSON or XML output. XML uses the moinpdf-document/1 schema with documents, pages and text positions; original XML data is not reconstructed.',
+  'Text & Daten zu PDF': 'Text & data to PDF',
+  'Markdown, TXT, CSV und XML lokal mit Seitenformat, Tabellen und Zeichensatz in PDF umwandeln.':
+    'Convert Markdown, TXT, CSV and XML locally to PDF with page, table and character encoding options.',
+  'PDF erstellen': 'Create PDF',
+  'PDF & JSON umwandeln': 'Convert PDF & JSON',
+  'Vollständige PDF-Objektstruktur mit eingebetteten Daten exportieren und aus QPDF-JSON wiederherstellen.':
+    'Export the complete PDF object structure with inline data and rebuild PDFs from QPDF JSON.',
+  'PDF und JSON umwandeln': 'Convert PDF and JSON',
+  Scannereffekt: 'Scanner effect',
+  'Eine Bild-PDF mit einstellbarem Rauschen, leichter Drehung, Unschärfe und Graustufen erstellen.':
+    'Create an image PDF with adjustable noise, slight rotation, blur and grayscale.',
+  'PDF zu Comicarchiv': 'PDF to comic archive',
+  'PDF-Seiten als CBZ mit JPEG- oder PNG-Bildern exportieren; CBR mit optionalem Serverkonverter.':
+    'Export PDF pages as CBZ with JPEG or PNG images; CBR requires an optional server converter.',
+  'PDF für KI vorbereiten': 'Prepare PDF for AI',
+  'Text und Seitenmetadaten lokal als LlamaIndex-Dokumente exportieren. Keine KI-API erforderlich.':
+    'Export text and page metadata locally as LlamaIndex documents. No AI API required.',
+  'PDF-JavaScript anzeigen': 'View PDF JavaScript',
+  'Eingebettete JavaScript-Aktionen als Text ansehen und exportieren, ohne Skripte auszuführen.':
+    'Inspect and export embedded JavaScript actions as text without executing scripts.',
+  'Belege mit Zahlungen abgleichen': 'Match receipts to payments',
+  'Buchungen und Belege prüfen, Teilzahlungen zuordnen und fehlende Belege oder Überzahlungen erkennen.':
+    'Review transactions and receipts, allocate partial payments and find missing receipts or overpayments.',
+  'E-Rechnung erstellen': 'Create e-invoice',
+  'Rechnungsdaten erfassen und als XRechnung oder ZUGFeRD mit unabhängiger Prüfung ausgeben.':
+    'Enter invoice data and create XRechnung or ZUGFeRD with independent validation.',
+  'PDF-Portfolio erstellen': 'Create PDF portfolio',
+  'PDFs, Tabellen, E-Mails und Bilder als unveränderte Einzeldateien in einem Portfolio sammeln.':
+    'Collect PDFs, spreadsheets, emails and images as unchanged individual files in a portfolio.',
+  'Personenbezogene Angaben erkennen': 'Find personal data',
+  'Lokale Erkennungsvorschläge prüfen und gleiche Angaben dokumentübergreifend durch Platzhalter ersetzen.':
+    'Review local detection suggestions and replace matching data with consistent placeholders across documents.',
+  'Handschrift erkennen': 'Recognize handwriting',
+  'Moderne deutsche Handschrift zeilenweise erkennen, am Original korrigieren und als Suchtext ausgeben.':
+    'Recognize modern German handwriting line by line, correct against the original and export searchable text.',
+  'PDF/X-Druckdatei erstellen': 'Create PDF/X print file',
+  'CMYK-Profil und Endformat festlegen; PDF/X-3 mit unabhängigem technischen Teilprüfbericht erzeugen.':
+    'Set a CMYK profile and trim size; create PDF/X-3 with an independent technical partial-check report.',
+  'Kontoauszug zu DATEV': 'Bank statement to DATEV',
+  'PDF-Kontoauszüge einlesen, Buchungen und Salden prüfen und mit eigenen Konten als DATEV-Buchungsstapel exportieren.':
+    'Read PDF bank statements, review entries and balances, and export a DATEV posting batch with your own accounts.',
+  'Kontoauszug prüfen': 'Review bank statement',
+  'Große PDFs verarbeiten': 'Process large PDFs',
+  'Bis 1.000 Seiten in lokal gespeicherten Abschnitten bearbeiten, unterbrechen und fortsetzen. Alle Seiten vor der Gesamtausgabe prüfen.':
+    'Process up to 1,000 pages in locally saved sections, pause and resume. Verify every page before exporting the complete file.',
+  'Große PDF vorbereiten': 'Prepare large PDF',
+  'Kopf- und Fußzeilen bereinigen': 'Clean up headers and footers',
+  'Wiederkehrende Randtexte und Seitenzahlen erkennen, Fundstellen prüfen und ausgewählte Kopf- oder Fußbereiche entfernen.':
+    'Find recurring margin text and page numbers, review matches and remove selected header or footer areas.',
+  'Randbereiche bereinigen': 'Clean up margins',
+  Formularhelfer: 'Form helper',
+  'Wiederkehrende Angaben in lokalen Profilen speichern, Formularfelder zuordnen und Einträge auf Scans platzieren.':
+    'Save recurring details in local profiles, match form fields and place entries on scans.',
+  'Formular vorbereiten': 'Prepare form',
+  'Belege auf A4 sammeln': 'Collect receipts on A4',
+  'Kassenbons und Quittungen zuschneiden, beschriften und in lesbarer Größe auf A4-Blättern anordnen.':
+    'Crop and label receipts, then arrange them at a readable size on A4 sheets.',
+  'Belege zusammenstellen': 'Arrange receipts',
+  'Klar Schiff': 'Clear Deck',
+  'Dokumentenstapel automatisch erkennen, sortieren und aufteilen. Zuordnungen prüfen und als einzelne PDFs oder geordnete Mappe mitnehmen.':
+    'Recognise, organise and split document piles. Review assignments and download individual PDFs or an organised bundle.',
+  'Stapel erkennen': 'Recognise documents',
+  'Lokaler PDF-Assistent': 'Local PDF assistant',
+  'Fragen mit einem lokalen Sprachmodell beantworten und Originalzitate direkt auf den PDF-Seiten überprüfen.':
+    'Answer questions with a local language model and check quotations directly on the original PDF pages.',
+  'Lokal beantworten': 'Answer locally',
+  'PDF-Objekte bearbeiten': 'Edit PDF objects',
+  'Originaltexte ändern, Absätze mit Schriftwahl neu umbrechen sowie Bilder und Grafiken bearbeiten.':
+    'Edit original text, reflow paragraphs with your chosen font, and edit images and graphics.',
+  'Objekte bearbeiten': 'Edit objects',
+  'Bates-Nummerierung': 'Bates numbering',
+  'Mehrere PDFs fortlaufend mit Aktennummern, Dateinamen und Kopf- oder Fußzeilen kennzeichnen.':
+    'Apply continuous numbering across multiple PDFs with case numbers, filenames and headers or footers.',
+  'Nummerierung anwenden': 'Apply numbering',
+  Seitenbezeichnungen: 'Page labels',
+  'Römische, alphabetische oder eigene Seitenbezeichnungen für die PDF-Navigation festlegen.':
+    'Set Roman, alphabetic or custom page labels for document navigation.',
+  'Bezeichnungen speichern': 'Save labels',
+  'Frei drehen': 'Rotate freely',
+  'Seiten um beliebige Winkel drehen und die Seitengröße automatisch anpassen.':
+    'Rotate pages by any angle and automatically adjust the page size.',
+  'Seiten drehen': 'Rotate pages',
+  'Lange PDF-Seite': 'Continuous PDF page',
+  'Mehrere Seiten als durchgehende Seite zum Scrollen verbinden. Text und Vektorgrafiken erhalten.':
+    'Combine multiple pages into one continuous page for scrolling. Preserve text and vector graphics.',
+  'Lange Seite erstellen': 'Create continuous page',
+  Posterdruck: 'Poster printing',
+  'Große Seiten auf mehrere Druckkacheln verteilen, mit einstellbarer Überlappung.':
+    'Split large pages across multiple print tiles with adjustable overlap.',
+  'Poster aufteilen': 'Split poster',
+  'Schnelle Webansicht': 'Fast web view',
+  'PDFs so vorbereiten, dass die erste Seite vor der vollständigen Datei geladen werden kann.':
+    'Prepare PDFs so the first page can load before the whole file.',
+  'Webansicht optimieren': 'Optimise web view',
+  'PDF zu Vektor-SVG': 'PDF to vector SVG',
+  'Jede PDF-Seite als eigenständige SVG-Datei exportieren. Vektorgrafiken und Schriftkonturen bleiben scharf.':
+    'Export each PDF page as a standalone SVG file. Vector graphics and glyph outlines remain sharp.',
+  'SVG-Dateien exportieren': 'Export SVG files',
+  'Schriften in Pfade': 'Fonts to outlines',
+  'Schriftzeichen als feste Vektorkonturen exportieren, unabhängig von installierten Schriften.':
+    'Export characters as fixed vector outlines, independent of installed fonts.',
+  'Schriftkonturen erstellen': 'Create outlines',
+  'Ebenen dauerhaft reduzieren': 'Flatten layers',
+  'Die anfänglich sichtbaren Ebenen als feste PDF-Ansicht speichern und ausgeblendete Ebenen entfernen.':
+    'Save the initially visible layers as a fixed PDF view and remove hidden layers.',
+  'Ebenen reduzieren': 'Flatten layers',
+  'PDF zu strukturiertem JSON': 'PDF to structured JSON',
+  'Text, Seiten und Fundstellen als strukturierte Daten zur Weiterverarbeitung exportieren.':
+    'Export text, pages and source locations as structured data for further processing.',
+  'JSON exportieren': 'Export JSON',
+  'Formularrückläufe auswerten': 'Collect form responses',
+  'Ausgefüllte PDF-Formulare gemeinsam auslesen, Pflichtwerte prüfen und korrigierte Antworten als Excel oder CSV exportieren.':
+    'Read completed PDF forms together, check required values and export corrected responses to Excel or CSV.',
+  'Formularwerte auslesen': 'Read form values',
+  'Dokumente chronologisch ordnen': 'Document chronology',
+  'Datumsangaben im Inhalt finden, Reihenfolge prüfen und eine Dokumentenmappe mit anklickbarem Inhaltsverzeichnis erstellen.':
+    'Find dates in document content, check the order and create a document bundle with a clickable table of contents.',
+  'Daten suchen': 'Find dates',
+  'PDF-Rechenprüfung': 'Check calculations',
+  'Zahlenbereiche auswählen, Summanden korrigieren und die Summe mit einer angegebenen Gesamtsumme vergleichen.':
+    'Select number ranges, correct the values to add and compare their sum with a stated total.',
+  'Zahlen übernehmen': 'Collect numbers',
+  'PDF-Sicherheitsbereinigung': 'Sanitize PDF',
+  'Skripte und riskante Aktionen entfernen. Anhänge, Kommentare und Dokumentmetadaten auf Wunsch ebenfalls bereinigen.':
+    'Remove scripts and risky actions. Optionally remove attachments, comments and document metadata too.',
+  'Inhalte prüfen': 'Review content',
+  'PDF-Ebenen verwalten': 'Manage PDF layers',
+  'PDF-Ebenen umbenennen, ihre Reihenfolge und Sichtbarkeit speichern oder die Ansicht als Seitenbilder festschreiben.':
+    'Rename PDF layers, save their order and visibility, or flatten the view into page images.',
+  'Ebenen laden': 'Load layers',
+  'PDF-Maßband': 'PDF measuring tool',
+  'Seiten anhand einer bekannten Strecke kalibrieren. Entfernungen und Flächen messen und als markierte PDF oder CSV speichern.':
+    'Calibrate pages using a known distance. Measure distances and areas and save them as an annotated PDF or CSV.',
+  'Messpunkte setzen': 'Set measurement points',
+  'PDF als Hörbuch': 'PDF to audio',
+  'Text und OCR-Ergebnisse prüfen. Mit lokalen deutschen oder englischen Stimmen als WAV oder nach Seiten und Kapiteln als Audio-ZIP ausgeben.':
+    'Review text and OCR results. Export audio with local German or English voices as WAV or as an audio ZIP organised by pages and chapters.',
+  'Vorlesetext vorbereiten': 'Prepare narration text',
+  Zahlenvergleich: 'Compare numbers',
+  'Geänderte Beträge, Prozentwerte, Daten und IBANs zwischen zwei Fassungen mit Fundstellen anzeigen.':
+    'Show changes to amounts, percentages, dates and IBANs between two versions, with source locations.',
+  'Zahlen vergleichen': 'Compare numbers',
+  'Belegfelder sammeln': 'Collect document fields',
+  'Eigene Felder aus mehreren PDFs auslesen, Werte am Original prüfen und gemeinsam nach Excel oder CSV exportieren.':
+    'Extract custom fields from multiple PDFs, check values against the original and export them together to Excel or CSV.',
+  'Rechnung und XML abgleichen': 'Compare invoice and XML',
+  'Sichtbare Rechnungsangaben per OCR mit eingebetteter UBL- oder CII-XML vergleichen. Unklare Werte mit Fundstelle prüfen.':
+    'Use OCR to compare visible invoice details with embedded UBL or CII XML. Check uncertain values at their source locations.',
+  'Rechnung abgleichen': 'Compare invoice',
+  'Dokumentlücken finden': 'Find missing pages',
+  'Gedruckte Seitenzählungen wie „Seite 3 von 7“ auf Lücken, Wiederholungen und Sprünge prüfen.':
+    'Check printed page numbering, such as “Page 3 of 7”, for gaps, repeats and jumps.',
+  'Dokumentlücken suchen': 'Find gaps',
+  'OCR-Korrekturhilfe': 'Review OCR',
+  'Unsichere Wörter und Zahlen am vergrößerten Originalausschnitt prüfen. Korrigierten Suchtext als PDF oder TXT speichern.':
+    'Review uncertain words and numbers in enlarged crops of the original. Save corrected searchable text as PDF or TXT.',
+  'OCR prüfen': 'Review OCR',
+  'Mehrere Dateien pseudonymisieren': 'Pseudonymize files',
+  'Angegebene Namen und andere Begriffe durch einheitliche Platzhalter ersetzen. Treffer prüfen und neue Seitenbilder exportieren.':
+    'Replace specified names and other terms with consistent placeholders. Review matches and export new page images.',
+  'Platzhalter einsetzen': 'Apply placeholders',
+  'Anlagen automatisch verknüpfen': 'Link attachments',
+  'Anlagenverweise erkennen, Zielseiten zuordnen und ein PDF-Paket mit anklickbaren Verweisen erstellen.':
+    'Detect attachment references, assign target pages and create a PDF bundle with clickable references.',
+  'Anlagen verknüpfen': 'Link attachments',
+  'Beste Scan-Seiten kombinieren': 'Combine best scans',
+  'Ähnliche Seiten aus mehreren Scans vergleichen. Qualitätsvorschläge kontrollieren und Originalseiten neu zusammenstellen.':
+    'Compare similar pages from several scans. Review quality suggestions and reassemble the original pages.',
+  'Scan-Seiten auswählen': 'Select scan pages',
+  'Angebot, Auftrag und Rechnung abgleichen': 'Reconcile business documents',
+  'Positionsvorschläge prüfen und Mengen, Einzelpreise und Beträge zwischen zusammengehörigen Dokumenten vergleichen.':
+    'Review suggested line items and compare quantities, unit prices and amounts between related documents.',
+  'Positionen abgleichen': 'Compare line items',
+  'Kommentare als Arbeitsliste exportieren': 'Export comments as tasks',
+  'PDF-Kommentare und Markierungen mit Autor, Textauszug und Seite sammeln. Aufgaben bearbeiten und als Excel, CSV oder Markdown speichern.':
+    'Collect PDF comments and highlights with author, text excerpt and page. Edit tasks and save them as Excel, CSV or Markdown.',
+  'Kommentare sammeln': 'Collect comments',
+  'PDF reparieren': 'Repair PDF',
+  'Die Struktur beschädigter PDFs wiederherstellen. Direkter Upload auch ohne funktionierende Vorschau.':
+    'Restore the structure of damaged PDFs. Upload directly even when a preview is unavailable.',
+  'PDF auf Wunschgröße komprimieren': 'Compress to target size',
+  'Verlustfrei optimieren oder Bilder verkleinern. Text und Formulare erhalten und die Zielgröße nachmessen.':
+    'Optimise losslessly or reduce image sizes. Preserve text and forms and check the output against the target size.',
+  'PDF optimieren': 'Optimise PDF',
+  'Ausschnitte erstellen': 'Create crops',
+  'PDF zu Markdown': 'PDF to Markdown',
+  'Auslesbaren Text mit Überschriften und Seitenabschnitten als bearbeitbare Markdown-Datei ausgeben.':
+    'Export extractable text with headings and page sections as an editable Markdown file.',
+  'Markdown erstellen': 'Create Markdown',
+  'PDF zu HTML': 'PDF to HTML',
+  'Auslesbaren Text als eigenständige, lesbare HTML-Datei mit Seitennavigation speichern.':
+    'Save extractable text as a standalone, readable HTML file with page navigation.',
+  'HTML erstellen': 'Create HTML',
+  'PDF zu E-Book': 'PDF to e-book',
+  'Auslesbaren Text als EPUB mit anpassbarer Schrift und Inhaltsverzeichnis exportieren.':
+    'Export extractable text as an EPUB with an adjustable font and a table of contents.',
+  'EPUB erstellen': 'Create EPUB',
+  'E-Books & Spezialformate zu PDF': 'E-books & special formats to PDF',
+  'EPUB, FB2, MOBI, AZW3, Comicarchive (CBZ/CBR), XPS und OXPS in PDF umwandeln. E-Books mit wählbarer Schriftgröße und Seitenformat.':
+    'Convert EPUB, FB2, MOBI, AZW3, comic archives (CBZ/CBR), XPS and OXPS to PDF. Choose font size and page format for e-books.',
+  'PDF zu PowerPoint': 'PDF to PowerPoint',
+  'PDF-Seiten als Folienbilder oder mit einzeln bearbeitbaren Textobjekten auf PowerPoint-Folien übernehmen.':
+    'Transfer PDF pages to PowerPoint slides as slide images or individually editable text objects.',
+  'PowerPoint-Datei erstellen': 'Create PowerPoint file',
+  'HTML & Webseiten zu PDF': 'HTML & web pages to PDF',
+  'Website-Link einfügen und mit Bildern und Seitengestaltung als PDF speichern. Auch gespeicherte HTML-Dateien umwandeln.':
+    'Paste a website link and save it as PDF with images and page styling. Also convert saved HTML files.',
+  'Seiten automatisch ausrichten': 'Auto-orient pages',
+  'Verdrehte Textseiten erkennen und um 90, 180 oder 270 Grad korrigieren. Unsichere Seiten im Bericht kennzeichnen.':
+    'Detect rotated text pages and correct them by 90, 180 or 270 degrees. Flag uncertain pages in the report.',
+  'Seiten ausrichten': 'Orient pages',
+  'Buchscans entzerren': 'Dewarp book scans',
+  'Gebogene Textzeilen am Buchfalz mit einstellbarer Kurvenkorrektur glätten. Neue Seitenbilder erzeugen.':
+    'Straighten curved text lines near the book gutter with adjustable curve correction. Create new page images.',
+  'Buchscan entzerren': 'Dewarp scan',
+  'Formularfelder erkennen': 'Detect form fields',
+  'Leere Kästchen und Eingabelinien erkennen und als ausfüllbare Felder anlegen. Vorschläge anschließend prüfen.':
+    'Detect empty boxes and input lines and create fillable fields. Review the suggestions afterwards.',
+  'Schwärzungen prüfen': 'Check redactions',
+  'Nach weiterhin auslesbaren Begriffen und möglichen dunklen Überdeckungen suchen. Mit Befundbericht.':
+    'Look for terms that can still be extracted and possible dark overlays. Includes a findings report.',
+  'Druckqualität prüfen': 'Check print quality',
+  'Bildauflösung, eingebettete Schriften und Seitenboxen prüfen. Hinweise für die Druckvorbereitung sammeln.':
+    'Check image resolution, embedded fonts and page boxes. Collect notes for print preparation.',
+  'Barrierefreiheit prüfen': 'Check accessibility',
+  'PDF/UA prüfen und neue strukturierte PDFs mit Überschriften, Lesereihenfolge und Bildbeschreibungen erstellen.':
+    'Check PDF/UA and create new structured PDFs with headings, reading order and image descriptions.',
+  'PDF übersetzen': 'Translate PDF',
+  'Auslesbaren Text in eine andere Sprache übersetzen. Original und Übersetzung nebeneinander exportieren.':
+    'Translate extractable text into another language. Export the original and translation side by side.',
+  'ZUGFeRD-Assistent': 'ZUGFeRD assistant',
+  'Rechnungs-PDF und passende CII-XML zu einer hybriden Rechnung verbinden. Mit Mustang und veraPDF prüfen.':
+    'Combine an invoice PDF with matching CII XML into a hybrid invoice. Validate with Mustang and veraPDF.',
+  'Rechnung verarbeiten': 'Process invoice',
+  'Word-Serienbriefe': 'Word mail merge',
+  'DOCX-Vorlagen mit Excel-Datensätzen füllen. Für jede Zeile eine eigene PDF erstellen und im ZIP sammeln.':
+    'Fill DOCX templates with Excel records. Create a separate PDF for each row and collect them in a ZIP.',
+  'Serienbriefe erstellen': 'Create merged documents',
+  'Nach Dateigröße teilen': 'Split by file size',
+  'Eine PDF in aufeinanderfolgende Teile innerhalb eines MB-Limits aufteilen. Jede Ausgabedatei wird nachgemessen.':
+    'Split a PDF into consecutive parts within an MB limit. Check the size of every output file.',
+  'Teildateien berechnen': 'Calculate split files',
+  'PDF zu Word': 'PDF to Word',
+  'Eine bearbeitbare Word-Datei aus deiner PDF erstellen.':
+    'Create an editable Word file from your PDF.',
+  'Word-Datei erstellen': 'Create Word file',
+  'EML- und Outlook-MSG-Dateien mit Absender, Betreff und Nachricht als PDF speichern. Anlagen optional im ZIP beilegen.':
+    'Save EML and Outlook MSG files as PDFs with the sender, subject and message. Optionally include attachments in a ZIP.',
+  Stapelverarbeitung: 'Batch processing',
+  'Viele PDFs einzeln stempeln, nummerieren, schützen oder bereinigen. Ein ZIP mit allen Ergebnissen.':
+    'Stamp, number, protect or clean multiple PDFs individually. Get all results in one ZIP.',
+  'Stapel verarbeiten': 'Process batch',
+  Arbeitsabläufe: 'Workflows',
+  'Mehrere Schritte verbinden: zum Beispiel OCR, Leerseiten entfernen und nummerieren. Abläufe speichern und wiederverwenden.':
+    'Combine steps such as OCR, blank page removal and numbering. Save and reuse workflows.',
+  'Arbeitsablauf ausführen': 'Run workflow',
+  'Automatisch umbenennen': 'Rename automatically',
+  'Dateinamen aus Datum, Rechnungsnummer und Titel vorschlagen. Vorschläge prüfen und bearbeiten.':
+    'Suggest filenames from dates, invoice numbers and titles. Review and edit the suggestions.',
+  'Namen vorschlagen': 'Suggest names',
+  'Intelligent teilen': 'Smart split',
+  'PDFs anhand von Text, Lesezeichen, leeren Seiten oder QR-/Barcode-Trennblättern aufteilen.':
+    'Split PDFs based on text, bookmarks, blank pages or QR/barcode separator sheets.',
+  'Trennstellen suchen': 'Find split points',
+  'Tabelle zu Excel': 'Table to Excel',
+  'Tabellenbereiche mit Text oder OCR auslesen. Spalten und Werte korrigieren und als Excel oder CSV speichern.':
+    'Extract table areas using text or OCR. Correct columns and values and save them as Excel or CSV.',
+  'Tabelle erkennen': 'Detect table',
+  'Suchen & schwärzen': 'Search & redact',
+  'Suchbegriffe, Namen, E-Mail-Adressen und mögliche IBANs finden. Bereiche prüfen und dauerhaft aus der Ausgabe entfernen.':
+    'Find search terms, names, email addresses and possible IBANs. Review areas and permanently remove them from the output.',
+  'Fundstellen suchen': 'Find matches',
+  'Visueller PDF-Vergleich': 'Visual PDF comparison',
+  'Unterschiede in Scans, Bildern, Stempeln und Text farbig auf den Seiten sichtbar machen.':
+    'Use colour to highlight differences in scans, images, stamps and text on the pages.',
+  'Visuell vergleichen': 'Compare visually',
+  'Scans verbessern': 'Enhance scans',
+  'Schieflagen korrigieren, Kontrast anheben und helle Hintergründe bereinigen. Mit Vorschau.':
+    'Correct skew, increase contrast and clean up light backgrounds, with a preview.',
+  'Deckblatt & Inhaltsverzeichnis': 'Cover & table of contents',
+  'Ein Deckblatt und ein klickbares Verzeichnis mit automatisch angepassten Seitenzahlen ergänzen.':
+    'Add a cover page and a clickable table of contents with automatically adjusted page numbers.',
+  'Verzeichnis erstellen': 'Create table of contents',
+  Serienformulare: 'Form mail merge',
+  'PDF-Formularfelder mit CSV- oder TSV-Datensätzen füllen. Ein individuelles PDF pro Zeile.':
+    'Fill PDF form fields with CSV or TSV records. Create an individual PDF for each row.',
+  'Serienformulare erstellen': 'Create forms',
+  'QR- & Barcodes': 'QR & barcodes',
+  'Codes aus PDF-Seiten auslesen. QR, Code 128 oder EAN-13 erstellen und in PDFs platzieren.':
+    'Read codes from PDF pages. Create QR, Code 128 or EAN-13 codes and place them in PDFs.',
+  'Codes bearbeiten': 'Edit codes',
+  'Links bearbeiten': 'Edit links',
+  'Verweise auf Webseiten, E-Mails und PDF-Seiten hinzufügen, ändern und entfernen.':
+    'Add, edit and remove links to websites, email addresses and PDF pages.',
+  'Links speichern': 'Save links',
+  'Anhänge verwalten': 'Manage attachments',
+  'Eingebettete Dateien hinzufügen, umbenennen, ersetzen und aus der Ausgabe entfernen.':
+    'Add, rename, replace and remove embedded files from the output.',
+  'Anhänge speichern': 'Save attachments',
+  'Fotos aufnehmen, Dokumente perspektivisch entzerren und mehrere Seiten als PDF sammeln.':
+    'Take photos, correct document perspective and combine multiple pages into a PDF.',
+  'Scan erstellen': 'Create scan',
+  'Word, Excel, PowerPoint und OpenDocument als PDF speichern.':
+    'Save Word, Excel, PowerPoint and OpenDocument files as PDF.',
+  'PDF/A erstellen & prüfen': 'Create & check PDF/A',
+  'Eine Archivkopie deiner PDF erstellen oder eine vorhandene PDF/A prüfen.':
+    'Create an archival copy of your PDF or check an existing PDF/A.',
+  'PDF/A verarbeiten': 'Process PDF/A',
+  'XRechnung vollständig validieren': 'Validate XRechnung',
+  'Eine XRechnung nach den KoSIT-Regeln prüfen und den Prüfbericht herunterladen.':
+    'Check an XRechnung against KoSIT rules and download the validation report.',
+  'XRechnung validieren': 'Validate XRechnung',
+  Zertifikatssignaturen: 'Certificate signatures',
+  'PDFs mit einem PKCS#12-Zertifikat signieren und Signaturen prüfen.':
+    'Sign PDFs with a PKCS#12 certificate and verify signatures.',
+  'Signatur verarbeiten': 'Process signature',
+  'PDF schützen': 'Protect PDF',
+  'PDFs mit AES-256 verschlüsseln. Öffnungspasswort und Berechtigungen festlegen.':
+    'Encrypt PDFs with AES-256. Set an opening password and permissions.',
+  'PDF entsperren': 'Unlock PDF',
+  'Mit bekanntem Passwort geöffnete PDFs als ungeschützte Kopie speichern.':
+    'Save PDFs opened with a known password as unprotected copies.',
+  'E-Rechnung lesen': 'Read e-invoice',
+  'UBL- und CII-Rechnungen aus XML oder PDF-Anhängen anzeigen. Als Lese-PDF, XML oder CSV speichern.':
+    'Display UBL and CII invoices from XML or PDF attachments. Save them as a readable PDF, XML or CSV.',
+  'E-Rechnung prüfen': 'Check e-invoice',
+  'Grundlegende Angaben, Datumsformate und Summen prüfen. Basischeck mit exportierbarem Bericht.':
+    'Check basic details, date formats and totals. A basic check with an exportable report.',
+  'Formular ausfüllen': 'Fill form',
+  'Interaktive PDF-Felder ausfüllen. Als ausfüllbare oder fixierte PDF speichern.':
+    'Fill in interactive PDF fields. Save as a fillable or flattened PDF.',
+  'Formular speichern': 'Save form',
+  'Formular erstellen': 'Create form',
+  'Textfelder, Checkboxen und Auswahllisten direkt auf deiner PDF platzieren.':
+    'Place text fields, checkboxes and dropdown lists directly on your PDF.',
+  'Lesezeichen bearbeiten': 'Edit bookmarks',
+  'Kapitel strukturieren, einrücken und mit den passenden Seiten verknüpfen.':
+    'Structure chapters, indent them and link them to the appropriate pages.',
+  'Lesezeichen speichern': 'Save bookmarks',
+  'Bilder extrahieren': 'Extract images',
+  'Eingebettete Bilder aus ausgewählten Seiten einzeln als PNG im ZIP speichern.':
+    'Save embedded images from selected pages as individual PNG files in a ZIP.',
+  'Check & Seitenfinder': 'Check & page finder',
+  'Dein gesamtes Dokumentenpaket prüfen, gemeinsam durchsuchen und passende Seiten in einer PDF sammeln.':
+    'Check your entire document bundle, search across all files and collect matching pages in a single PDF.',
+  'Auswahl als PDF speichern': 'Save selection as PDF',
+  'OCR & Text': 'OCR & text',
+  'Scans auslesen. Text korrigieren und als Word, TXT oder durchsuchbare PDF exportieren.':
+    'Extract text from scans. Correct the text and export it as Word, TXT or a searchable PDF.',
+  'Text erkennen': 'Recognise text',
+  'Bilder zu PDF': 'Images to PDF',
+  'JPG und PNG proportional auf A4 in ein PDF-Dokument übernehmen.':
+    'Fit JPG and PNG images proportionally onto A4 pages in a single PDF document.',
+  'PDF zu Bildern': 'PDF to images',
+  'Jede ausgewählte Seite als JPG oder PNG exportieren. Gemeinsam als ZIP.':
+    'Export each selected page as JPG or PNG, together in a ZIP.',
+  'Bilder exportieren': 'Export images',
+  'Scans komprimieren': 'Compress scans',
+  'PDF-Inhalte erhalten und Bilder verkleinern oder verlustfrei optimieren.':
+    'Preserve PDF content and reduce images, or optimize losslessly.',
+  Komprimieren: 'Compress',
+  Zusammenfügen: 'Merge PDFs',
+  'Aus mehreren Dateien ein Dokument machen. PDFs und Bilder lassen sich mischen.':
+    'Merge multiple files into one document. PDFs and images can be mixed.',
+  'PDF teilen': 'Split PDF',
+  'Jede ausgewählte Seite als eigene PDF exportieren. Alle Dateien im ZIP.':
+    'Export each selected page as a separate PDF. All files in one ZIP.',
+  'Einzelseiten erstellen': 'Create individual pages',
+  'Seiten organisieren': 'Organize pages',
+  'Sortieren, drehen, duplizieren und entfernen. Auch Leerseiten kannst du einfügen.':
+    'Reorder, rotate, duplicate and remove pages. You can also insert blank pages.',
+  'Seiten speichern': 'Save pages',
+  Seitennummern: 'Page numbers',
+  'Ausgewählte Seiten in ihrer aktuellen Reihenfolge unten mittig nummerieren.':
+    'Number selected pages in their current order at the bottom centre.',
+  Nummerieren: 'Add numbers',
+  Seitenformat: 'Page format',
+  'Seiten proportional auf ein einheitliches Format einpassen. Inhalte bleiben vollständig erhalten.':
+    'Fit pages proportionally to a uniform format. Preserve all content.',
+  'Format anpassen': 'Adjust format',
+  'Mehrere Seiten pro Blatt': 'Multiple pages per sheet',
+  '2, 4, 6, 8, 9 oder 16 Seiten auf einem Druckbogen anordnen. Ränder, Abstände und Rahmen einstellen.':
+    'Arrange 2, 4, 6, 8, 9 or 16 pages on a print sheet. Adjust margins, spacing and borders.',
+  'Seiten anordnen': 'Arrange pages',
+  'PDF bearbeiten': 'Edit PDF',
+  'PDF-Texte direkt ändern und Scans automatisch erkennen. Text ersetzen, ergänzen, verschieben und formatieren.':
+    'Edit PDF text and automatically recognise scans. Replace, add, move and format text.',
+  'Bearbeitete PDF erstellen': 'Create edited PDF',
+  'Inhalte entfernen': 'Remove content',
+  'Text oder Bildbereiche aus der Ausgabe entfernen. Mit wählbarer Füllfarbe und genauer Bereichsauswahl.':
+    'Remove text or image areas from the output, with a choice of fill colour and precise area selection.',
+  'Bereinigte PDF erstellen': 'Create cleaned PDF',
+  'Bild einfügen': 'Insert image',
+  'Bilder und Logos in bestehende Seiten einfügen, verschieben und proportional skalieren.':
+    'Insert images and logos into existing pages, move them and resize them proportionally.',
+  'PDF mit Bildern erstellen': 'Create PDF with images',
+  Schwärzen: 'Redact',
+  'Vertrauliche Bereiche markieren und aus den exportierten Seitenbildern entfernen.':
+    'Mark confidential areas and remove them from the exported page images.',
+  'Geschwärzte PDF erstellen': 'Create redacted PDF',
+  Zuschneiden: 'Crop',
+  'Text & Markierungen': 'Text & annotations',
+  'Textnotizen platzieren und wichtige Stellen hervorheben.':
+    'Add text notes and highlight important passages.',
+  'Änderungen anwenden': 'Apply changes',
+  Unterschrift: 'Signature',
+  'Mit Maus oder Finger unterschreiben und die Unterschrift im Dokument platzieren.':
+    'Draw your signature with a mouse or finger and place it in the document.',
+  'Unterschrift einfügen': 'Insert signature',
+  'Einen transparenten Texthinweis mittig auf den Seiten ergänzen.':
+    'Add a transparent text note centred on the pages.',
+  'Wasserzeichen hinzufügen': 'Add watermark',
+  Graustufen: 'Grayscale',
+  'Farbige Seiten in eine neue PDF mit grauen Seitenbildern umwandeln.':
+    'Convert colour pages into a new PDF with greyscale page images.',
+  'In Graustufen umwandeln': 'Convert to greyscale',
+  'PDF fixieren': 'Flatten PDF',
+  'Seiten als feste Bilder speichern. Sichtbare Inhalte bleiben erhalten.':
+    'Save pages as fixed images. Visible content is preserved.',
+  'Dokumentinfos entfernen': 'Remove document info',
+  'Titel, Autor, Betreff, Stichwörter, Ersteller, Datumsfelder und XMP-Dokumentinfos entfernen.':
+    'Remove title, author, subject, keywords, creator, date fields and XMP document information.',
+  'PDFs vergleichen': 'Compare PDFs',
+  'Texte seitenweise oder über Seiten hinweg vergleichen. Verschobene Textblöcke und geänderte Wörter erkennen.':
+    'Compare text page by page or across pages. Detect moved text blocks and changed words.',
+  'Text vergleichen': 'Compare text',
+  'PDF-Informationen': 'PDF information',
+  'Metadaten, PDF-Version, Dateigröße und die Formate aller Seiten als Bericht ansehen.':
+    'View a report of metadata, PDF version, file size and the formats of all pages.',
+  'Bericht erstellen': 'Create report',
+  'Anhänge extrahieren': 'Extract attachments',
+  'Eingebettete Dateianhänge aus PDFs als ZIP speichern, zum Beispiel Rechnungs-XML.':
+    'Save embedded file attachments from PDFs as a ZIP, such as invoice XML.',
+  'In Abschnitte teilen': 'Split into sections',
+  'Nach einer festen Seitenanzahl oder eigenen Bereichen mehrere Teildokumente erstellen.':
+    'Create multiple documents using a fixed page count or custom page ranges.',
+  'Teildokumente erstellen': 'Create sections',
+  'Abwechselnd zusammenfügen': 'Interleave PDFs',
+  'Broschüre erstellen': 'Create booklet',
+  'Seiten als Druckbögen für eine gefaltete Broschüre anordnen. Leerseiten werden ergänzt.':
+    'Arrange pages as print sheets for a folded booklet. Blank pages are added.',
+  'Seiten aufteilen': 'Divide pages',
+  'Jede Seite in zwei, vier oder neun gleichgroße Ausschnitte zerlegen.':
+    'Split each page into two, four or nine equally sized crops.',
+  'Weiße Ränder entfernen': 'Remove white margins',
+  'Weiße Außenränder automatisch erkennen und mit einem einstellbaren Abstand abschneiden.':
+    'Automatically detect white outer margins and trim them with adjustable spacing.',
+  'Ränder entfernen': 'Remove margins',
+  'Schwarzweiß-Scan': 'Black & white scan',
+  'Scans mit einstellbarem Schwellenwert in reines Schwarz und Weiß umwandeln.':
+    'Convert scans to pure black and white with an adjustable threshold.',
+  'Schwarzweiß erstellen': 'Convert to black and white',
+  'Farben umkehren': 'Invert colors',
+  'Alle Seitenfarben invertieren, zum Beispiel helle Schrift auf dunklem Hintergrund.':
+    'Invert all page colours, for example to show light text on a dark background.',
+  'Stempel hinzufügen': 'Add stamp',
+  'Einen klar lesbaren Stempel mit eigenem Text, optionalem Datum und gewählter Position setzen.':
+    'Add a clearly legible stamp with custom text, an optional date and a chosen position.',
+  'Metadaten bearbeiten': 'Edit metadata',
+  'Titel, Autor, Betreff und Stichwörter der Ausgabe festlegen.':
+    'Set the title, author, subject and keywords for the output.',
+  'Metadaten speichern': 'Save metadata',
+  'Anmerkungen entfernen': 'Remove annotations',
+  'PDF-Kommentare, Markierungen und optional Links aus den ausgewählten Seiten entfernen.':
+    'Remove PDF comments, highlights and optionally links from selected pages.',
+  'PDFs überlagern': 'Overlay PDFs',
+  'Eine Vorlagenseite mit einstellbarer Deckkraft vor oder hinter die Seiten einer zweiten PDF legen.':
+    'Place a template page with adjustable opacity in front of or behind the pages of a second PDF.',
+  'Überlagerung erstellen': 'Create overlay',
   'Schematische Reihenfolge auf dem Druckbogen. Das Ergebnis enthält die ausgewählten Seiten.':
     'Schematic order on the print sheet. The result contains the selected pages.',
   'Import fehlgeschlagen.': 'Import failed.',

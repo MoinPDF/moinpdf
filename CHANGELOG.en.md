@@ -4,6 +4,13 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.31.0 — 2026-11-09
+
+- 133 tools: Markdown, TXT, CSV and generic XML to PDF; complete QPDF JSON import/export; scanner effect; comic archives; embedded JavaScript inspection; PDF text preparation for LlamaIndex.
+- Existing converters extended: WPD, Microsoft Works WPS and ODG to PDF; DRM-free MOBI/AZW3 and CBR to PDF; PDF to RTF, ODT, ODP and AZW3 using the owner's document server. Structured text export also supports XML.
+- CBZ is created locally. CBR import uses libarchive; CBR creation requires a separately installed, appropriately licensed RAR executable. Calibre is included in the document server.
+- Own-server connections, format selection, German/English guidance and content, boundary, browser and container checks added. Local tools do not upload documents; LlamaIndex export does not call an AI service.
+
 ## 0.30.0 — 2026-11-09
 
 - Match receipts and payments with confirmed partial allocations and a traceable Excel report.

@@ -5,6 +5,9 @@ import urllib.request
 
 COMMIT = '31277556d122f217825b1e25477db9ffda976ab1'
 FIXTURES = [
+    ('writer/libwpd/pass/WP6.wpd', 'dc8aceca527075916a4d527e0b3961cbd7e87d2d'),
+    ('writer/libwps/pass/Works_6.0.wps', 'd0a40c4c0300e4c6b4b5f975994b065cb4d6278f'),
+    ('writer/libwps/pass/Works_2.00A_DOS.wps', '4bccbbd18ce685055e475105b750e78c47e25f0e'),
     ('draw/libmspub/pass/fdo59355-1.pub', '607a07ae2d362e4a1f6e779dfff88726fe74f910'),
     ('draw/libvisio/pass/fdo57117-1.vsd', '3d7387766755c6304f04d1d2ebd576a099c221f0'),
     ('draw/libvisio/pass/Visio2013drawing.vsdx', 'bc6fa2cb7b0be9295736eb893b18c534ab9c73ad'),
@@ -23,3 +26,13 @@ for relative, digest in FIXTURES:
     data = target.read_bytes()
     assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() == digest, target.name
     print('Verified Office fixture:', target.name)
+
+# Apache Tika's nonblank Microsoft Works sample (Apache-2.0 test repository).
+TIKA_COMMIT = '3d2a7592d47c378962bf24040b7d764d83c0bda7'
+target = directory / 'testWORKS.wps'
+if not target.exists():
+    url = f'https://raw.githubusercontent.com/apache/tika/{TIKA_COMMIT}/tika-parsers/tika-parsers-standard/tika-parsers-standard-integration-tests/src/test/resources/test-documents/testWORKS.wps'
+    with urllib.request.urlopen(url, timeout=40) as response: target.write_bytes(response.read(2*1024*1024))
+data = target.read_bytes()
+assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest() == '1326aa0d5df1b4be5a0138d7669fccddf5bee930'
+print('Verified nonblank Works fixture:', target.name)

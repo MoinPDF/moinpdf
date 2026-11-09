@@ -1,4 +1,10 @@
 export const advancedToolIds = [
+  'text-pdf',
+  'pdf-json',
+  'scan-effect',
+  'pdf-comic',
+  'pdf-ai',
+  'pdf-javascript',
   'payment-match',
   'invoice-create',
   'pdf-portfolio',

@@ -9,6 +9,13 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.31.0 — 2026-11-09
+
+- 133 Werkzeuge: Markdown, TXT, CSV und allgemeines XML zu PDF; vollständige QPDF-JSON-Struktur importieren/exportieren; Scannereffekt; Comicarchive; eingebettetes JavaScript anzeigen; PDF-Text für LlamaIndex vorbereiten.
+- Bestehende Konverter erweitert: WPD, Microsoft-Works-WPS und ODG zu PDF; DRM-freie MOBI/AZW3 und CBR zu PDF; PDF zu RTF, ODT, ODP und AZW3 über den eigenen Dokumentenserver. Strukturierter Textexport unterstützt zusätzlich XML.
+- CBZ entsteht lokal. CBR-Import verwendet libarchive; CBR-Erstellung benötigt ein separat installiertes, passend lizenziertes RAR-Programm. Calibre ist im Dokumentenserver enthalten.
+- Eigene Serververbindungen, Formatwahl, deutsche und englische Anleitungen sowie Inhalts-, Grenzfall-, Browser- und Containerprüfungen ergänzt. Kein Dokumentenversand für die lokalen Werkzeuge; kein KI-Dienst für den LlamaIndex-Export.
+
 ## 0.30.0 — 2026-11-09
 
 - Beleg-/Zahlungsabgleich mit bestätigten Teilzahlungen und nachvollziehbarem Excel-Bericht.
