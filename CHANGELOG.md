@@ -1,15 +1,5 @@
 # Änderungen
 
-## 0.30.0 — 2026-11-09
-
-- Beleg-/Zahlungsabgleich mit bestätigten Teilzahlungen und nachvollziehbarem Excel-Bericht.
-- XRechnung und ZUGFeRD erstellen; echte PDF-Portfolios und lokale Erkennung personenbezogener Angaben.
-- Neue PDF-Ebenen anlegen und Originalobjekte zuordnen.
-- Eingangsordner mit OCR, Bedingungen, Aufteilung, Benennung und Ablage.
-- Moderne deutsche Handschrift zeilenweise erkennen und korrigieren; PDF/X-3 erstellen mit unabhängiger technischer Teilprüfung.
-- 127 Werkzeuge, deutsche und englische Anleitung. Serverfunktionen und Grenzen werden ausdrücklich gekennzeichnet.
-
-
 **Deutsch** · [English](CHANGELOG.en.md) · [← README](README.md)
 
 MoinPDF verwendet semantische Versionsnummern (`MAJOR.MINOR.PATCH`). Die zentrale
@@ -18,6 +8,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
+
+## 0.30.0 — 2026-11-09
+
+- Beleg-/Zahlungsabgleich mit bestätigten Teilzahlungen und nachvollziehbarem Excel-Bericht.
+- XRechnung und ZUGFeRD erstellen; echte PDF-Portfolios und lokale Erkennung personenbezogener Angaben.
+- Neue PDF-Ebenen anlegen und Originalobjekte zuordnen.
+- Eingangsordner mit OCR, Bedingungen, Aufteilung, Benennung und Ablage.
+- Moderne deutsche Handschrift zeilenweise erkennen und korrigieren; PDF/X-3 erstellen mit unabhängiger technischer Teilprüfung.
+- 127 Werkzeuge, deutsche und englische Anleitung. Serverfunktionen und Grenzen werden ausdrücklich gekennzeichnet.
 
 ## 0.29.0 – 9. November 2026
 
