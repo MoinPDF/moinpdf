@@ -2,6 +2,13 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'payment-match': ['Zahlungsabgleich', 'Teilzahlung', 'missing receipts', 'payment matching'],
+  'invoice-create': ['XRechnung erstellen', 'ZUGFeRD erstellen', 'create invoice'],
+  'pdf-portfolio': ['Portfolio', 'PDF Collection', 'Dokumentencontainer'],
+  'personal-data': ['personenbezogene Daten', 'PII', 'automatisch anonymisieren', 'personal data'],
+  'handwriting-ocr': ['Handschrift', 'HTR', 'handwriting OCR'],
+  'pdfx-create': ['PDF/X', 'PDFX', 'CMYK', 'Druckerei', 'print production'],
+
   'bank-datev': [
     'Bank2DATEV',
     'Kontoauszüge',

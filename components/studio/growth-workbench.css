@@ -1,0 +1,22 @@
+.growth-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+}
+.growth-form-grid > * {
+  min-width: 0;
+}
+.advanced-card details {
+  margin-block: 16px;
+}
+.advanced-card summary {
+  cursor: pointer;
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+.advanced-card input[type='file'] {
+  max-width: 100%;
+}
+.evidence-finding strong {
+  overflow-wrap: anywhere;
+}

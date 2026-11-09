@@ -63,7 +63,9 @@ def watched_conversion(source, directory, cancel):
     try:
         with job():
             convert_worker('watch', source, directory)
-        return (directory / 'output.pdf').read_bytes(), json.loads((directory / 'report.json').read_text())
+        report=json.loads((directory/'report.json').read_text())
+        if 'outputs' in report:return [(v['folder'],v['name'],(directory/v['file']).read_bytes()) for v in report['outputs']],report
+        return (directory/'output.pdf').read_bytes(),report
     except HTTPException as error:
         raise ValueError(str(error.detail)) from None
     finally:
@@ -226,6 +228,8 @@ def capabilities():
             "translationStatus": translation,
             "capabilities": {
                 "speech": bool(voices),
+                "handwriting": (TOOLS / 'handwriting/model.onnx').is_file(),
+                "pdfx": bool(shutil.which('gs') and importlib.util.find_spec('pypdf')),
                 "office": bool(office_binary()),
                 "pdfWord": importlib.util.find_spec("pdf2docx") is not None,
                 "email": bool(office_binary() and importlib.util.find_spec("extract_msg")),
@@ -408,6 +412,30 @@ def pdfa_report(source: Path, profile: str, directory: Path):
     return {"profile": profile, "compliant": compliant, "engine": "veraPDF", "versions": versions()}, data
 
 
+def declared_pdfa_report(source, directory):
+    code,data=command([VERAPDF,'--format','xml',str(source)],directory,accepted=(0,1))
+    try:
+        root=SafeET.fromstring(data,forbid_dtd=True,forbid_entities=True,forbid_external=True)
+        reports=[n for n in root.iter() if n.tag.split('}')[-1]=='validationReport'];batches=[n for n in root.iter() if n.tag.split('}')[-1]=='batchSummary']
+        if len(reports)!=1 or len(batches)!=1 or batches[0].get('totalJobs')!='1' or 'PDF/A-3' not in reports[0].get('profileName',''):raise ValueError()
+        if any(int(batches[0].get(k,'0')) for k in ('failedToParse','encrypted','outOfMemory','veraExceptions')):raise ValueError()
+        return {'compliant':code==0 and reports[0].get('isCompliant')=='true','profile':reports[0].get('profileName'),'engine':'veraPDF'},data
+    except Exception:raise HTTPException(422,'Das deklarierte PDF/A-Profil der hybriden Rechnung konnte nicht eindeutig geprüft werden.')
+
+
+@app.post('/v1/print-pdfx',dependencies=[Depends(authorize)])
+def print_pdfx(file: UploadFile = File(...),options: str = Form('{}'),icc: UploadFile | None = File(None)):
+    try:
+        settings=json.loads(options)
+        if not isinstance(settings,dict) or len(options)>10000:raise ValueError()
+    except ValueError:raise HTTPException(422,'Ungültige Einstellungen.')
+    with job() as directory:
+        source=upload(file,directory/'input.pdf');require_pdf(source)
+        if icc is not None:upload(icc,directory/'custom.icc',maximum=4*1024*1024)
+        (directory/'settings.json').write_text(json.dumps(settings));convert_worker('pdfx',source,directory)
+        return archive({'Druckdatei-PDFX3.pdf':(directory/'output.pdf').read_bytes(),'Technische-Pruefung.json':(directory/'report.json').read_bytes()},'PDFX3-mit-technischer-Pruefung.zip')
+
+
 @app.post("/v1/pdfa/validate", dependencies=[Depends(authorize)])
 def validate_pdfa(file: UploadFile = File(...), profile: str = Form("2b")):
     with job() as directory:
@@ -557,7 +585,10 @@ def validate_invoice(file: UploadFile = File(...)):
             SafeET.fromstring(raw)
         except Exception:
             raise HTTPException(422, "KoSIT hat keinen auswertbaren XML-Bericht geliefert.")
-        report = {"accepted": code == 0, "engine": "KoSIT", "versions": versions(), "checks": "XSD und Schematron der installierten XRechnung-Konfiguration"}
+        module=importlib.import_module((__package__+'.' if __package__ else '')+'invoice_validation')
+        try:report=module.summarize(raw,source.read_bytes(),code)
+        except (ValueError,TypeError,KeyError):raise HTTPException(422,'Der KoSIT-Bericht konnte nicht eindeutig dem Dokument und Prüfprofil zugeordnet werden.')
+        report.update(engineName=report['engine'],engine='KoSIT',versions=versions(),checks='XSD und Schematron des erkannten Szenarios')
         return archive({"Ergebnis.json": json.dumps(report, ensure_ascii=False, indent=2).encode(), "KoSIT-Pruefbericht.xml": raw}, "XRechnung-Pruefbericht.zip")
 
 
@@ -608,7 +639,7 @@ def renew_signatures(file: UploadFile = File(...)):
 
 @app.post('/v1/documents/{action}', dependencies=[Depends(authorize)])
 def extended_document(action: str, file: UploadFile = File(...), options: str = Form('{}')):
-    allowed={'powerpoint','html','orient','form','print','accessibility','redaction','dewarp','translate','optimize','ebook','svg','font-outlines','flatten-layers'}
+    allowed={'powerpoint','html','orient','form','print','accessibility','redaction','dewarp','translate','optimize','ebook','svg','font-outlines','flatten-layers','handwriting'}
     if action not in allowed:
         raise HTTPException(404,'Unbekanntes Werkzeug.')
     try:
@@ -628,6 +659,7 @@ def extended_document(action: str, file: UploadFile = File(...), options: str = 
         if action not in {'html','ebook'}:require_pdf(source)
         (directory/'settings.json').write_text(json.dumps(settings))
         convert_worker(action,source,directory)
+        if action=='handwriting':return result((directory/'report.json').read_bytes(),'Handschrift-Erkennung.json','application/json')
         if action in {'print','accessibility','redaction'}:
             return result((directory/'report.json').read_bytes(),{'print':'Druckqualitaet','accessibility':'Barrierefreiheit','redaction':'Schwaerzungspruefung'}[action]+'.json','application/json')
         if action=='svg':
@@ -703,9 +735,10 @@ def zugferd(mode: str, file: UploadFile = File(...), invoice: UploadFile | None 
             source=output
         valid,raw=mustang_validate(source,directory)
         pdfa,vera=pdfa_report(source,'3b',directory)
-        compliant=valid and pdfa['compliant']
-        summary={'compliant':compliant,'mustangValid':valid,'pdfa3b':pdfa['compliant'],'versions':versions(),'note':'Sichtbare Rechnungsangaben und eingebettete XML müssen inhaltlich übereinstimmen. Diese Übereinstimmung wird nicht automatisch bestätigt.'}
-        files={'Ergebnis.json':json.dumps(summary,ensure_ascii=False,indent=2).encode(),'Mustang-Pruefbericht.xml':raw,'veraPDF-Pruefbericht.xml':vera}
+        declared,declared_raw=declared_pdfa_report(source,directory)
+        compliant=valid and pdfa['compliant'] and declared['compliant']
+        summary={'compliant':compliant,'mustangValid':valid,'pdfa3b':pdfa['compliant'],'declaredPdfaValid':declared['compliant'],'declaredPdfaProfile':declared['profile'],'versions':versions(),'note':'Sichtbare Rechnungsangaben und eingebettete XML müssen inhaltlich übereinstimmen. Diese Übereinstimmung wird nicht automatisch bestätigt.'}
+        files={'Ergebnis.json':json.dumps(summary,ensure_ascii=False,indent=2).encode(),'Mustang-Pruefbericht.xml':raw,'veraPDF-Pruefbericht.xml':vera,'veraPDF-deklariertes-Profil.xml':declared_raw}
         if mode=='create':files['ZUGFeRD-geprueft.pdf' if compliant else 'NICHT-VALIDIERT-Rechnung.pdf']=source.read_bytes()
         return archive(files,'ZUGFeRD-Ergebnis.zip')
 

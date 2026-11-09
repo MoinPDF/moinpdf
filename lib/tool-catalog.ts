@@ -77,6 +77,67 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'payment-match',
+    title: 'Belege mit Zahlungen abgleichen',
+    description:
+      'Buchungen und Belege prüfen, Teilzahlungen zuordnen und fehlende Belege oder Überzahlungen erkennen.',
+    icon: FileSpreadsheet,
+    group: 0,
+    action: 'Belege mit Zahlungen abgleichen',
+    fresh: true,
+  },
+  {
+    id: 'invoice-create',
+    title: 'E-Rechnung erstellen',
+    description:
+      'Rechnungsdaten erfassen und als XRechnung oder ZUGFeRD mit unabhängiger Prüfung ausgeben.',
+    icon: ReceiptText,
+    group: 1,
+    action: 'E-Rechnung erstellen',
+    fresh: true,
+  },
+  {
+    id: 'pdf-portfolio',
+    title: 'PDF-Portfolio erstellen',
+    description:
+      'PDFs, Tabellen, E-Mails und Bilder als unveränderte Einzeldateien in einem Portfolio sammeln.',
+    icon: Files,
+    group: 2,
+    action: 'PDF-Portfolio erstellen',
+    fresh: true,
+  },
+  {
+    id: 'personal-data',
+    title: 'Personenbezogene Angaben erkennen',
+    description:
+      'Lokale Erkennungsvorschläge prüfen und gleiche Angaben dokumentübergreifend durch Platzhalter ersetzen.',
+    icon: Eraser,
+    group: 3,
+    action: 'Personenbezogene Angaben erkennen',
+    fresh: true,
+  },
+  {
+    id: 'handwriting-ocr',
+    title: 'Handschrift erkennen',
+    description:
+      'Moderne deutsche Handschrift zeilenweise erkennen, am Original korrigieren und als Suchtext ausgeben.',
+    icon: TextSearch,
+    group: 1,
+    action: 'Handschrift erkennen',
+    fresh: true,
+  },
+  {
+    id: 'pdfx-create',
+    title: 'PDF/X-Druckdatei erstellen',
+    description:
+      'CMYK-Profil und Endformat festlegen; PDF/X-3 mit unabhängigem technischen Teilprüfbericht erzeugen.',
+    icon: FileCheck2,
+    group: 1,
+    action: 'PDF/X-Druckdatei erstellen',
+    fresh: true,
+  },
+
+  {
     id: 'bank-datev',
     title: 'Kontoauszug zu DATEV',
     description:

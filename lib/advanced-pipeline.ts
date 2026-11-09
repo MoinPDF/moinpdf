@@ -50,6 +50,8 @@ export type WorkflowStep = WorkflowAction & {
 };
 export type SavedWorkflow = { version: 1; name: string; steps: WorkflowStep[] };
 export const watchedStepKinds: readonly StepKind[] = [
+  'ocr',
+  'removeBlank',
   'rotate90',
   'rotate180',
   'reverse',
@@ -64,14 +66,16 @@ export function watchFolderWorkflow(value: unknown): SavedWorkflow {
     workflow.steps.some(
       (step) =>
         !watchedStepKinds.includes(step.kind) ||
-        step.condition ||
-        step.otherwise ||
+        (step.otherwise &&
+          (!watchedStepKinds.includes(step.otherwise.kind) ||
+            step.otherwise.text !== undefined ||
+            step.otherwise.number !== undefined)) ||
         step.text !== undefined ||
         step.number !== undefined,
     )
   )
     throw new Error(
-      'Eingangsordner unterstützen nur Drehen, Umkehren, Formulare festschreiben, verlustfreies Optimieren sowie das Entfernen von Dokumentinfos und Kommentaren. Bedingungen sind noch nicht verfügbar.',
+      'Eingangsordner unterstützen OCR, Leerseiten, Drehen, Umkehren, Formulare, Optimierung, Dokumentinfos und Kommentare mit Bedingungen. Dieser Ablauf enthält andere Schritte.',
     );
   return workflow;
 }

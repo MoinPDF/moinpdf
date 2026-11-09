@@ -1,4 +1,5 @@
-'use client';
+import { LayerObjectsPanel } from './layer-objects-panel';
+('use client');
 import { useToolDraftState } from './workspace-drafts';
 import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
@@ -750,7 +751,7 @@ export function SanitizePanel({ source, busy, run }: Props) {
   );
 }
 
-export function LayersPanel({ source, busy, run, invalidate }: Props) {
+export function LayersPanel({ source, sources, busy, run, invalidate }: Props) {
   useLanguage();
   const [layers, setLayers] = useState<LayerChoice[] | null>(null),
     [page, setPage] = useState(0),
@@ -779,6 +780,7 @@ export function LayersPanel({ source, busy, run, invalidate }: Props) {
   return (
     <div className="century-columns">
       <section className="advanced-card">
+        <LayerObjectsPanel source={source} sources={sources} busy={busy} run={run} />
         <h2>{ui('Ebenen ein- und ausblenden')}</h2>
         <Button
           disabled={busy}
