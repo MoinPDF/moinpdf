@@ -417,9 +417,9 @@ def declared_pdfa_report(source, directory):
     try:
         root=SafeET.fromstring(data,forbid_dtd=True,forbid_entities=True,forbid_external=True)
         reports=[n for n in root.iter() if n.tag.split('}')[-1]=='validationReport'];batches=[n for n in root.iter() if n.tag.split('}')[-1]=='batchSummary']
-        if len(reports)!=1 or len(batches)!=1 or batches[0].get('totalJobs')!='1' or 'PDF/A-3' not in reports[0].get('profileName',''):raise ValueError()
+        if len(reports)!=1 or len(batches)!=1 or batches[0].get('totalJobs')!='1':raise ValueError()
         if any(int(batches[0].get(k,'0')) for k in ('failedToParse','encrypted','outOfMemory','veraExceptions')):raise ValueError()
-        return {'compliant':code==0 and reports[0].get('isCompliant')=='true','profile':reports[0].get('profileName'),'engine':'veraPDF'},data
+        return {'compliant':code==0 and reports[0].get('isCompliant')=='true' and 'PDF/A-3' in reports[0].get('profileName',''),'profile':reports[0].get('profileName'),'engine':'veraPDF'},data
     except Exception:raise HTTPException(422,'Das deklarierte PDF/A-Profil der hybriden Rechnung konnte nicht eindeutig geprüft werden.')
 
 
