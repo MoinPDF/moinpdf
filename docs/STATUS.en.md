@@ -1,6 +1,6 @@
 # Implementation status
 
-New development after 0.28.0: 6/8/9/16 pages per sheet with margins, spacing and borders; bookmark CSV/JSON with preview; FB2/CBZ/XPS/OXPS conversion; optional [watched folders](WATCH-FOLDERS.en.md). Converters and folder automation require the document server. Watched folders initially support seven simple step types without conditions, OCR or graphs. See [features and limitations](FEATURES.en.md#extended-print-layouts-bookmarks-and-input-formats).
+New in 0.29.0: 6/8/9/16 pages per sheet with margins, spacing and borders; bookmark CSV/JSON with preview; FB2/CBZ/XPS/OXPS conversion; optional [watched folders](WATCH-FOLDERS.en.md). Converters and folder automation require the document server. Watched folders initially support seven simple step types without conditions, OCR or graphs. See [features and limitations](FEATURES.en.md#extended-print-layouts-bookmarks-and-input-formats).
 
 The next comparison gaps are covered: colors and background with presets/preview, selective unlocking of read-only form fields, text-preserving crop and single-PDF duplex collation. Limits: backgrounds sit behind opaque content; image color adjustments lose text/fields/links; CropBox only hides margins. Single-PDF duplex accepts up to 200 selected pages.
 
@@ -10,7 +10,7 @@ Form helper and receipt collection on A4 are integrated browser tools. Profile s
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 8 November 2026 · Version 0.28.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 9 November 2026 · Version 0.29.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 The light-mode background uses a darker mint green on desktop, tablet and mobile. Its soft green gradients share the same darker base, making light cards, input fields and tool panels stand out more clearly.
 

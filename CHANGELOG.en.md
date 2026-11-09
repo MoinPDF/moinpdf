@@ -4,7 +4,7 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
-## Unreleased
+## 0.29.0 – 9 November 2026
 
 - Multiple pages per sheet: 2, 4, 6, 8, 9 and 16 pages, portrait/landscape, configurable margins and gaps, optional borders and a layout diagram.
 - Bookmark CSV/JSON import/export with preview, explicit append/replace and undo. Up to 1,000 entries and 2 MB.

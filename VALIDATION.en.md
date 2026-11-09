@@ -4,9 +4,11 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
-## Verification scope for 0.28.0
+## Verification scope for 0.29.0
 
-- 71 engine/DOM suites cover PDF editing, OCR, compression, conversion, recovery, projects, DATEV export and the logo entrance including sound, cancellation and reduced motion.
+- 72 engine/DOM suites cover PDF editing, OCR, compression, conversion, recovery, projects, DATEV export and the logo entrance including sound, cancellation and reduced motion.
+- Print-layout checks read real 2/4/6/8/9/16-up outputs in portrait and landscape. Bookmark tests cover CSV/JSON round trips, page bounds, hierarchy and safe spreadsheet values.
+- The 73 document-server tests include eight new checks for FB2/CBZ/XPS/OXPS and watched folders: actual conversions, archive/XML rejection, original preservation, restarts, retries, cancellation, signature fields and isolated file-access failures.
 - All 121 tool views and available selection menus are checked for English copy. Language changes and reloads must preserve original documents and settings. German and English information pages cover search, printing and downloads, including narrow layouts down to 320 pixels.
 - The browser matrix inspects actual outputs in Chromium, Firefox and WebKit. Native Safari runs on `macos-15-intel`, separately from WebKit and physical iPhones/iPads. Native file selection is not claimed when SafariDriver requires the documented in-memory file path.
 - Complete Docker verification includes the document server, seven-language translation, local speech and AI, network isolation, authentication, real conversions and models/credentials surviving a restart.
