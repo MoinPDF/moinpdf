@@ -2,7 +2,7 @@
 
 **Deutsch** · [English](README.en.md) · [← README](../README.md)
 
-> **Für die vollständige App inklusive Übersetzungen:** `docker compose up -d --build` im Repository-Hauptverzeichnis ausführen. Siehe [Docker-Anleitung](../DOCKER.md). Die nachfolgende Anleitung betrifft eine separate Dokumenten-API für eine anderweitig gehostete Web-App oder einen API-Client. Seit 0.2.0 bietet die Standardoberfläche keine manuelle Eingabe von Serveradresse und API-Schlüssel mehr; separate Installationen benötigen eine passend eingerichtete Integration bzw. einen Proxy.
+> **Für die vollständige App inklusive Übersetzungen:** `docker compose up -d --build` im Repository-Hauptverzeichnis ausführen. Siehe [Docker-Anleitung](../DOCKER.md). Die nachfolgende Anleitung betrifft eine separate Dokumenten-API für eine anderweitig gehostete Web-App oder einen API-Client. Seit 0.30.0 bieten E-Rechnungserstellung, Handschrifterkennung und PDF/X-Vorbereitung zusätzlich eine vorübergehende Verbindung mit einem eigenen Server. Andere Serverwerkzeuge verwenden die eingerichtete Integration beziehungsweise einen Proxy.
 
 Viele Werkzeuge verarbeiten Dateien lokal im Browser. Dieser Server ergänzt die unten beschriebenen Konvertierungen und Prüfungen:
 
@@ -14,6 +14,13 @@ Viele Werkzeuge verarbeiten Dateien lokal im Browser. Dieser Server ergänzt die
 | Zertifikatssignaturen | pyHanko, PKCS#12 und Prüfung bestehender Signaturen | Signierte PDF bzw. JSON-Bericht |
 
 Die vollständige Docker-Installation verbindet Web-App und Dokumentenserver automatisch. Separat gehostete Integrationen müssen Serverzugriff und Authentifizierung selbst einrichten. Die Funktionsprüfung überträgt keine Dokumente. Dateien werden erst mit dem jeweiligen Verarbeitungsauftrag gesendet.
+
+## Zusätzliche Dienste in 0.30.0
+
+- `POST /v1/documents/handwriting`: PDF und JSON-`options` mit 1–50 Zeilenbereichen `{page, rect:{x,y,w,h}}`. Seiten beginnen bei 0, Koordinaten sind normiert. Deutsche Offline-Handschrifterkennung; jedes Ergebnis muss korrigiert/geprüft werden. Modellprüfsummen und Lizenzen: `handwriting.lock.json`, `HANDWRITING-NOTICES.md`.
+- `POST /v1/print-pdfx`: PDF, `options` (`trimInsetMm` 0–20, `allowFontSubstitution` standardmäßig false), optionales CMYK-Druckerprofil `icc` bis 4 MB. ZIP mit PDF/X-3:2002-Ausgabe und unabhängigem technischen Teilprüfbericht, niemals ein vollständiges ISO-Zertifikat.
+- XRechnung-Berichte unterscheiden allgemeine EN16931-Annahme von einem angenommenen XRechnung-Szenario und prüfen den Dokumenthash des Berichts. ZUGFeRD wird zusätzlich gegen das deklarierte PDF/A-Profil der endgültigen Datei geprüft.
+- Eingangsordner unterstützen Bedingungen, OCR und Leerseiten in v1/v2; v2 ergänzt Trennung, Benennung und Ablage. Siehe [Eingangsordner](../docs/WATCH-FOLDERS.md).
 
 ## Separaten Dokumentenserver mit Docker Compose starten
 

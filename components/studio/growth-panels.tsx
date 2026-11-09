@@ -235,16 +235,14 @@ export function InvoiceCreatePanel({ source, sources, busy, run }: PanelProps) {
               d.iban = candidate(pages, ['IBAN'], 'iban');
               const positions = extractPositions(pages);
               if (positions.length)
-                d.lines = positions
-                  .slice(0, 100)
-                  .map((p) => ({
-                    name: p.label,
-                    quantity: numericValue(p.quantity),
-                    price: numericValue(p.price),
-                    tax: '',
-                    exemption: '',
-                    unit: 'C62',
-                  }));
+                d.lines = positions.slice(0, 100).map((p) => ({
+                  name: p.label,
+                  quantity: numericValue(p.quantity),
+                  price: numericValue(p.price),
+                  tax: '',
+                  exemption: '',
+                  unit: 'C62',
+                }));
               change(d);
               setFocus(pages[0]?.lines[0]);
             })

@@ -1,5 +1,6 @@
+'use client';
+
 import { WatchFolderExport } from './watch-folder-export';
-('use client');
 import { BatchProgress } from './batch-progress';
 import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';

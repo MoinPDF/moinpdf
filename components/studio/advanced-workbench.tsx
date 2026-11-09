@@ -202,7 +202,11 @@ export function AdvancedWorkbench({
           </Button>
           <span className="device-tag">
             <ShieldCheck size={14} />
-            {ui('LOKAL AUF DEINEM GERÄT')}
+            {ui(
+              ['invoice-create', 'handwriting-ocr', 'pdfx-create'].includes(tool)
+                ? 'BROWSER / EIGENER DOKUMENTENSERVER'
+                : 'LOKAL AUF DEINEM GERÄT',
+            )}
           </span>
         </div>
       </header>

@@ -1,0 +1,51 @@
+{
+  "number": "FICTIONAL-030",
+  "date": "2026-11-09",
+  "due": "2026-12-09",
+  "delivery": "2026-11-08",
+  "reference": "TEST-REVIEW",
+  "iban": "DE89370400440532013000",
+  "note": "Fiktives Testdokument – keine echte Forderung.",
+  "seller": {
+    "name": "Fiktive Küstenwerkstatt GmbH",
+    "street": "Musterstraße 1",
+    "postcode": "28195",
+    "city": "Bremen",
+    "country": "DE",
+    "email": "invoice@example.org",
+    "taxId": "",
+    "vatId": "DE123456789",
+    "contact": "Erika Muster",
+    "phone": "+49 421 000000"
+  },
+  "buyer": {
+    "name": "Fiktiver Kunde & Partner",
+    "street": "Beispielweg 2",
+    "postcode": "20095",
+    "city": "Hamburg",
+    "country": "DE",
+    "email": "buyer@example.org",
+    "taxId": "",
+    "vatId": "",
+    "contact": "",
+    "phone": ""
+  },
+  "lines": [
+    {
+      "name": "Fiktive Dienstleistung",
+      "quantity": "2",
+      "price": "50.00",
+      "tax": "19",
+      "unit": "HUR",
+      "exemption": ""
+    },
+    {
+      "name": "Fiktive Lieferung",
+      "quantity": "1",
+      "price": "10.00",
+      "tax": "7",
+      "unit": "C62",
+      "exemption": ""
+    }
+  ]
+}

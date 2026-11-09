@@ -1,5 +1,22 @@
 # Funktionen und Grenzen
 
+## Dokumentenwerkzeuge in 0.30.0
+
+Der Katalog umfasst 127 Werkzeuge. Sechs neue Werkzeuge und zwei Erweiterungen ergänzen die vorhandenen Funktionen:
+
+| Werkzeug | Verarbeitung und Grenzen |
+| --- | --- |
+| Belege mit Zahlungen abgleichen | Lokal; bis 3.000 Buchungen und 500 einzelne Beleg-PDFs. Centgenaue Teilzahlungen, Überzahlungen und offene Beträge. Vorschläge zählen erst nach ausdrücklicher Bestätigung. Excel enthält Einzelzuordnungen und Quelldateien. |
+| E-Rechnung erstellen | Lokaler EUR-Entwurf mit bis 100 positiven Nettopositionen, mehreren Steuersätzen oder begründeter Befreiung. PDF-Vorschau und CII entstehen aus denselben bestätigten Daten. XRechnung wird mit KoSIT geprüft; ZUGFeRD mit Mustang und veraPDF einschließlich des deklarierten PDF/A-Profils. Prüfung auf dem eigenen Server. Keine Rabatte, Gutschriften oder Vorauszahlungen. |
+| PDF-Portfolio erstellen | Lokal; echte PDF-Collection mit unveränderten Anlagen, Beschreibung, Inhaltsverzeichnis und SHA-256. Bis 100 Dateien/80 MB. Browser zeigen häufig nur das Verzeichnis; Einzeldateien in einem geeigneten PDF-Programm entnehmen. |
+| Personenbezogene Angaben erkennen | Lokale Vorschläge für E-Mails, IBANs und beschriftete Namen, Telefonnummern, Steuerangaben, Geburtstage und Straßenanschriften. Alle Treffer am Original prüfen. Konsistente Platzhalter über mehrere Dokumente; Ausgabe als neue Seitenbilder ohne alte Textebene, Metadaten oder Anlagen. Erkennung ist nicht vollständig. |
+| Handschrift erkennen | Eigenes lokales ONNX-Modell auf dem Dokumentenserver, ohne API-Abonnement. Moderne deutsche Einzelzeilen markieren, korrigieren und bestätigen; höchstens 50 Bereiche pro Auftrag. Keine historischen Schriften oder ganze Seiten. TXT oder neue Suchtext-PDF ausschließlich mit bestätigtem Text; Links, Formulare und Anlagen entfallen. |
+| PDF/X-Druckdatei erstellen | Eigener Server; PDF/X-3:2002 mit CMYK-Profil und technischem Teilprüfbericht. Keine vollständige ISO-Konformitätsprüfung. Eigenes Druckerprofil empfohlen, sonst Artifex Standard-CMYK ohne FOGRA-Zusicherung. Farben können sich ändern und Transparenzen rastern; fehlender Beschnitt wird nicht ergänzt. |
+| PDF-Ebenen bearbeiten | Echte Ebenen anlegen und Text, Bilder, Vektoren oder ganze Gruppen zuordnen beziehungsweise herauslösen. Zeichenreihenfolge bleibt erhalten. Ebenen innerhalb einer Gruppe behalten ihre Zuordnung. Ausblenden entfernt keine vertraulichen Inhalte. |
+| Automatische Eingangsordner | OCR, konservative Leerseitenerkennung, Bedingungen mit Sonst-Schritt, Trennung, sichere Dateinamen und Ablageregeln. Mehrdeutige Ablage landet in Pruefen, ohne Treffer in Unsortiert. Originale bleiben erhalten. [Einrichtung und Grenzen](WATCH-FOLDERS.md). |
+
+Ein Serverauftrag beginnt erst nach dem jeweiligen Aktionsknopf. In separat gehosteten Oberflächen können die drei neuen Serverwerkzeuge einen eigenen Server mit nicht dauerhaft gespeichertem API-Schlüssel verwenden. Eine Prüfbestätigung ersetzt keine fachliche, steuerliche oder drucktechnische Freigabe.
+
 ## Erweiterte Drucklayouts, Lesezeichen und Eingangsformate
 
 „Mehrere Seiten pro Blatt“ bietet 2/4/6/8/9/16 Seiten, Hoch-/Querformat, Seitenrand und Abstand (je 0–72 pt) sowie optionale Rahmen. Das Schema zeigt die Anordnung; die PDF behält Text und Vektoren. Formulare werden dabei nicht zu neuen interaktiven Feldern.
@@ -27,7 +44,7 @@ Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF 
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.29.0**
+**Aktuelle Grenzen aus der Implementierung · 0.30.0**
 
 | Funktion | Wert |
 | --- | --- |

@@ -2,7 +2,7 @@
 
 [Deutsch](README.md) · **English** · [← Project README](../README.en.md)
 
-> **For the complete app including translation:** run `docker compose up -d --build` in the repository root. See the [Docker guide](../DOCKER.en.md). The guide below covers a separate document API for an independently hosted web app or API client. Since 0.2.0, the standard interface no longer offers fields for manually entering a server address and API key; separate deployments must configure the appropriate integration/proxy.
+> **For the complete app including translation:** run `docker compose up -d --build` in the repository root. See the [Docker guide](../DOCKER.en.md). The guide below covers a separate document API for an independently hosted web app or API client. In 0.30.0, e-invoice creation, handwriting recognition and PDF/X preparation also offer a temporary custom-server connection. Other server tools use the configured integration/proxy.
 
 Many tools process files locally in the browser. This server adds the conversions and checks described below:
 
@@ -14,6 +14,13 @@ Many tools process files locally in the browser. This server adds the conversion
 | Certificate signatures | pyHanko, PKCS#12 and verification of existing signatures | Signed PDF or JSON report |
 
 The complete Docker installation connects the web app and document server automatically. Separately hosted integrations must configure server access and authentication themselves. Capability checks do not transfer documents. Files are sent only when the corresponding processing job starts.
+
+## Additional services in 0.30.0
+
+- `POST /v1/documents/handwriting`: PDF and JSON `options` with 1–50 `{page, rect:{x,y,w,h}}` line selections. Zero-based pages and normalised coordinates. Offline German HTR; every output needs correction/review. Model checksums and licences: `handwriting.lock.json`, `HANDWRITING-NOTICES.md`.
+- `POST /v1/print-pdfx`: PDF, `options` (`trimInsetMm` 0–20, `allowFontSubstitution` default false), optional CMYK printer `icc` up to 4 MB. ZIP includes PDF/X-3:2002 output and an independent partial technical report; never a full ISO certificate.
+- XRechnung reports now distinguish generic EN16931 acceptance from an accepted XRechnung scenario and verify the report’s document hash. ZUGFeRD also validates the final file against its declared PDF/A profile.
+- Watched folders support v1/v2 conditions, OCR and blank pages; v2 adds splitting, naming and routing. See [watched folders](../docs/WATCH-FOLDERS.en.md).
 
 ## Start a separate document server with Docker Compose
 

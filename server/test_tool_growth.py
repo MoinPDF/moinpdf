@@ -221,7 +221,7 @@ class FolderTests(unittest.TestCase):
             self.assertTrue((profile / 'configuration-error.json').is_file())
 
     def test_unsupported_steps_and_single_watcher(self):
-        for step in [{'kind': 'ocr'}, {'kind': 'metadata', 'condition': {}}, {'kind': 'rotate90', 'number': 2}]:
+        for step in [{'kind': 'unsupported'}, {'kind': 'metadata', 'condition': {}}, {'kind': 'rotate90', 'number': 2}]:
             with self.assertRaises(ValueError): validate_workflow({'version': 1, 'name': 'Bad', 'steps': [step]})
         with tempfile.TemporaryDirectory() as temp:
             watcher = WatchFolders(temp, lambda *_: None).start()

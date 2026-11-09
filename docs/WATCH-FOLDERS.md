@@ -6,7 +6,7 @@ Der optionale Dokumentenserver kann lokale PDF-Eingangsordner ohne geöffneten B
 
 ## Einrichten
 
-1. Unter **Arbeitsabläufe** einen unterstützten linearen Ablauf wählen, beispielsweise **Zum Teilen vorbereiten**. **Für Eingangsordner exportieren** erzeugt `workflow.json`. Der Export weist nicht unterstützte Schritte ausdrücklich zurück.
+1. Unter **Arbeitsabläufe** einen unterstützten linearen Ablauf wählen, beispielsweise **Zum Teilen vorbereiten**. Unter **Eingangsordner: OCR, Trennung und Ablage** die Zusatzregeln setzen. **Für Eingangsordner exportieren** erzeugt `workflow.json`. Der Export weist nicht unterstützte Schritte ausdrücklich zurück.
 2. Im Verzeichnis der Compose-Dateien `watchfolders/ablage/inbox` anlegen. `workflow.json` unter `watchfolders/ablage/` speichern. Weitere Profile erhalten eigene Ordner mit Namen aus Buchstaben, Ziffern, `_` und `-` (höchstens 64 Zeichen).
 3. Dem Dokumentenserver (Standard-UID/GID `10001:10001`) Lese- und Schreibrechte auf diesen Ordner geben. Bei einer neuen, ausschließlich dafür angelegten Ablage beispielsweise:
 
@@ -24,7 +24,10 @@ Ohne Compose setzt der Betreiber `MOINPDF_WATCH_DIR` auf einen vorhandenen, besc
 ## Unterstützte Schritte und Grenzen
 
 - Drehen um 90°/180°, Seitenreihenfolge umkehren, Formulare festschreiben, verlustfrei optimieren, Dokumentinfos oder Kommentare entfernen.
-- Version-1-Abläufe mit 1 bis 12 Schritten; keine Bedingungen, Diagramme, OCR oder Passwortschritte. Diese bleiben in den bisherigen interaktiven Arbeitsabläufen verfügbar.
+- Version 1 und 2 mit 1 bis 12 Schritten. OCR (deu+eng) und konservative Leerseitenerkennung sind möglich. Bedingungen prüfen Dateiname, auslesbaren Text oder Seitenzahl; optional folgt ein Sonst-Schritt. Für Scans zuerst OCR ausführen. Diagramme und Passwortschritte werden nicht exportiert.
+- Version 2 trennt nach jeder Seite oder bei einem wörtlichen Suchtext auf der ersten Seite eines Dokuments. Diese Seite bleibt enthalten. Ablageregeln verwenden wörtliche Suchtexte; mehrere unterschiedliche Zielordner ergeben `Pruefen`, kein Treffer `Unsortiert`.
+- Dateinamensmuster: `{original}`, `{date}`, `{part}`, `{invoice}`. Datum und Rechnungsnummer werden nur bei eindeutigem Treffer eingesetzt; sonst `ohne-Datum`/`ohne-Nummer`. Ein Auftragszusatz schützt vor Namenskollisionen.
+- OCR ersetzt textarme Scan-Seiten durch ein Seitenbild mit erkanntem Suchtext. Formulare und Kommentare auf solchen Seiten sperren den Auftrag; vorhandene Links werden dort nicht übertragen. Leerseiten werden nur ohne Text/Felder/Kommentare und ohne deutlich sichtbaren Inhalt entfernt; ein vollständig leeres Ergebnis wird abgewiesen.
 - Ungeschützte PDFs mit höchstens 80 MB und 200 Seiten. PDFs mit Signaturfeldern und XFA werden abgewiesen. Höchstens 180 Sekunden je Auftrag, innerhalb derselben Kapazitätsbegrenzung wie interaktive Serveraufträge.
 - Text, Vektoren und normale Formularfelder bleiben bei den dafür geeigneten Schritten erhalten. **Formulare festschreiben** entfernt die Bearbeitbarkeit ausdrücklich. Metadatenbereinigung ersetzt keine umfassende Sicherheitsbereinigung.
 - Ein Eingang muss mindestens fünf Sekunden unverändert sein. Originaldateien bleiben im `inbox`; es gibt keine automatische Löschung. Ausgabe und Bericht werden jeweils atomar geschrieben.

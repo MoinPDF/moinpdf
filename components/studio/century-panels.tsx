@@ -1,5 +1,6 @@
+'use client';
+
 import { LayerObjectsPanel } from './layer-objects-panel';
-('use client');
 import { useToolDraftState } from './workspace-drafts';
 import { ui, uiLocale } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';

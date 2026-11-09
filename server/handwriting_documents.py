@@ -25,6 +25,8 @@ def decode(logits,config):
 
 def handwriting(source,directory):
     import onnxruntime as ort
+    # Local document processing must not emit runtime telemetry. Disable before creating any session.
+    ort.disable_telemetry_events()
     settings=json.loads((directory/'settings.json').read_text());lines=settings.get('lines')
     if set(settings)!={'lines'} or not isinstance(lines,list) or not 1<=len(lines)<=50:raise ValueError('Bitte 1 bis 50 einzelne Handschriftzeilen auswählen.')
     root=Path(os.getenv('MOINPDF_TOOLS','/opt/moinpdf-tools'))/'handwriting';config=json.loads((root/'config.json').read_text());options=ort.SessionOptions();options.intra_op_num_threads=1;options.inter_op_num_threads=1;options.execution_mode=ort.ExecutionMode.ORT_SEQUENTIAL

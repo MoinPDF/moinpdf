@@ -1,5 +1,6 @@
+'use client';
+
 import { detectPersonalData } from '@/lib/personal-data';
-('use client');
 import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';

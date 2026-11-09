@@ -49,7 +49,7 @@ def step(doc,kind,directory):
         blank=[]
         for page in doc:
             if page.get_text().strip() or page.first_annot or page.first_widget:continue
-            pix=page.get_pixmap(colorspace=fitz.csGRAY,alpha=False)
+            scale=min(1,3200/max(page.rect.width,page.rect.height));pix=page.get_pixmap(matrix=fitz.Matrix(scale,scale),colorspace=fitz.csGRAY,alpha=False)
             if min(pix.samples,default=255)>=250:blank.append(page.number)
         if len(blank)==len(doc):raise ValueError('Die Ausgabe darf nicht ausschließlich aus entfernten Leerseiten bestehen.')
         for i in reversed(blank):doc.delete_page(i)

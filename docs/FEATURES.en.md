@@ -1,5 +1,22 @@
 # Features and limitations
 
+## Document tools in 0.30.0
+
+The catalogue contains 127 tools. Six new tools and two extensions complement existing features:
+
+| Tool | Processing and limits |
+| --- | --- |
+| Match receipts to payments | Local; up to 3,000 transactions and 500 individual receipt PDFs. Exact cents for partial payments, overpayments and outstanding amounts. Suggestions count only after explicit confirmation. Excel includes individual allocations and source files. |
+| Create an e-invoice | Local EUR draft with up to 100 positive net items, multiple tax rates or documented exemption. PDF preview and CII use the same confirmed data. KoSIT validates XRechnung; Mustang and veraPDF validate ZUGFeRD including its declared PDF/A profile. Validation uses your own server. No discounts, credit notes or prepayments. |
+| Create a PDF portfolio | Local; real PDF Collection with unchanged attachments, descriptions, contents and SHA-256. Up to 100 files/80 MB. Browsers often display only the contents page; extract files with a suitable PDF application. |
+| Detect personal details | Local suggestions for emails, IBANs and labelled names, phone numbers, tax details, birthdays and street addresses. Review all matches against the original. Consistent placeholders across documents; new page images without old text layers, metadata or attachments. Detection is incomplete. |
+| Recognise handwriting | Own local ONNX model on the document server, without an API subscription. Mark, correct and confirm modern German single lines; up to 50 areas per job. No historical scripts or whole pages. TXT or a new searchable PDF with confirmed text only; links, forms and attachments are removed. |
+| Create a PDF/X print file | Own server; PDF/X-3:2002 with CMYK profile and a partial technical validation report. No full ISO conformance validation. A printer profile is recommended; otherwise Artifex default CMYK is used without a FOGRA guarantee. Colours may change, transparency may rasterise and missing bleed is not added. |
+| Edit PDF layers | Create real layers and assign or remove text, images, vectors or whole groups. Drawing order is retained. Layers inside a group keep their assignment. Hiding content does not remove confidential data. |
+| Watched folders | OCR, conservative blank-page detection, conditions with an else step, splitting, safe filenames and filing rules. Ambiguous routing goes to Pruefen; no match goes to Unsortiert. Originals are retained. [Setup and limits](WATCH-FOLDERS.en.md). |
+
+Server jobs start only after the corresponding action button is pressed. On separately hosted interfaces, the three new server tools can use a custom server with an API key that is not persisted. Successful validation does not replace professional, tax or print approval.
+
 ## Extended print layouts, bookmarks and input formats
 
 “Multiple pages per sheet” supports 2/4/6/8/9/16 pages, portrait/landscape, margins and spacing (0–72 pt each), and optional borders. A diagram shows the arrangement; output retains text and vectors. Forms do not become new interactive fields.

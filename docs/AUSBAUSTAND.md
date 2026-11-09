@@ -1,6 +1,6 @@
 # Ausbau nach dem Funktionsvergleich
 
-Neu in 0.29.0: 6/8/9/16 Seiten pro Druckblatt mit Rändern, Abständen und Rahmen; Lesezeichen-CSV/JSON mit Vorschau; FB2/CBZ/XPS/OXPS-Konvertierung; optionale [Eingangsordner](WATCH-FOLDERS.md). Konverter und Ordnerautomatik benötigen den Dokumentenserver. Die Ordnerautomatik unterstützt zunächst sieben einfache Schrittarten ohne Bedingungen, OCR oder Diagramme. Details und Grenzen: [Funktionen](FUNKTIONEN.md#erweiterte-drucklayouts-lesezeichen-und-eingangsformate).
+Neu in 0.30.0: Zahlungsabgleich, E-Rechnungserstellung, PDF-Portfolios, lokale Erkennung personenbezogener Angaben, zeilenweise Handschrifterkennung und PDF/X-Druckvorbereitung. Bestehende Ebenenbearbeitung und Eingangsordner sind erweitert. Der Katalog enthält 127 Werkzeuge. Umfang und Grenzen stehen in [Funktionen](FUNKTIONEN.md#dokumentenwerkzeuge-in-0300).
 
 Die nächsten Vergleichslücken sind geschlossen: Farben & Hintergrund mit Vorlagen/Vorschau, gezielte Freigabe schreibgeschützter Formularfelder, Text erhaltender Zuschnitt und Duplex-Sortierung innerhalb einer PDF. Grenzen: Hintergrund liegt hinter deckenden Inhalten; Bildfarbkorrekturen verlieren Text/Felder/Links; CropBox blendet Randinhalte nur aus. Einzel-PDF-Duplex verarbeitet höchstens 200 ausgewählte Seiten.
 
@@ -10,7 +10,7 @@ Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvor
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 9. November 2026 · Version 0.29.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 9. November 2026 · Version 0.30.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 Der Hintergrund im Light Mode verwendet auf Desktop, Tablet und Smartphone ein dunkleres Mintgrün. Die grünen Verläufe liegen auf derselben dunkleren Grundfläche, sodass helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
 
