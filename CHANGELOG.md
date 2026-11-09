@@ -11,6 +11,8 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## 0.31.0 — 2026-11-09
 
+- Lokale Office-Konvertierung: Ein während des Starts abgebrochener Worker setzt die native Initialisierung nach verspäteter WASM- oder Thread-Bereitschaft nicht fort. Der Abbruch wird bis zum vollständigen Herunterfahren beibehalten.
+
 - 133 Werkzeuge: Markdown, TXT, CSV und allgemeines XML zu PDF; vollständige QPDF-JSON-Struktur importieren/exportieren; Scannereffekt; Comicarchive; eingebettetes JavaScript anzeigen; PDF-Text für LlamaIndex vorbereiten.
 - Bestehende Konverter erweitert: WPD, Microsoft-Works-WPS und ODG zu PDF; DRM-freie MOBI/AZW3 und CBR zu PDF; PDF zu RTF, ODT, ODP und AZW3 über den eigenen Dokumentenserver. Strukturierter Textexport unterstützt zusätzlich XML.
 - CBZ entsteht lokal. CBR-Import verwendet libarchive; CBR-Erstellung benötigt ein separat installiertes, passend lizenziertes RAR-Programm. Calibre ist im Dokumentenserver enthalten.

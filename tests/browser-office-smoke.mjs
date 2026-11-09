@@ -51,6 +51,47 @@ for (const converter of [true, false]) {
   }
 }
 
+// Reproduce cancellation while startup is suspended, then deliver the pending
+// WASM/pthread readiness event before the delayed self.close() callback. The
+// shipped handler must not resurrect native initialization after acknowledging
+// destroy; page-side late-message filtering alone does not prevent that race.
+for (const stage of ['wasm', 'pthread']) {
+  const messages = [], timers = [];
+  let nativeStarts = 0;
+  const self = {
+    postMessage: data => messages.push(data),
+    close() {},
+    PThread: {unusedWorkers: [{loaded: stage !== 'pthread'}], runningWorkers: []},
+    startNative: () => { nativeStarts++; },
+  };
+  const context = vm.createContext({
+    self, TextEncoder, TextDecoder, console: {log() {}, error() {}},
+    setTimeout: (fn, delay) => { timers.push({fn, delay}); return timers.length; },
+    importScripts: () => Object.assign(self.Module, {ENV: {}, FS: {mkdir() {}}, calledRun: false}),
+  });
+  const probe = `Z.prototype.initializeWithModule=async function(){self.startNative();};
+    Z.prototype.getLokBindings=function(){return {};};`;
+  vm.runInContext(runtime.replace(loaded, probe + loaded), context);
+  const startup = self.onmessage({data: {type: 'init', id: 1,
+    sofficeJs: 'runtime.js', sofficeWasm: 'runtime.wasm', sofficeData: 'runtime.data', sofficeWorkerJs: 'thread.js'}});
+  if (stage === 'pthread') {
+    self.Module.onRuntimeInitialized();
+    await Promise.resolve();
+    assert(timers.some(timer => timer.delay === 10), 'Startup must be suspended at the real pthread readiness barrier');
+  }
+  await self.onmessage({data: {type: 'destroy', id: 3}});
+  assert(messages.some(data => data.type === 'ready' && data.id === 3));
+  if (stage === 'wasm') self.Module.onRuntimeInitialized();
+  else {
+    self.PThread.unusedWorkers[0].loaded = true;
+    timers.find(timer => timer.delay === 10).fn();
+  }
+  await startup;
+  assert.equal(nativeStarts, 0, 'Destroyed startup must never resume native LibreOffice initialization: ' + stage);
+  assert(!messages.some(data => data.id === 1 && ['ready', 'error'].includes(data.type)), 'Cancelled startup must stay silent');
+  assert(!messages.some(data => data.progress?.phase === 'lok-init'), 'No native startup after destruction');
+}
+
 await mkdir('.cache', { recursive: true });
 const code = ts.transpileModule(await readFile('lib/browser-office.ts', 'utf8'), {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 },

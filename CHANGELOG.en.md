@@ -6,6 +6,8 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## 0.31.0 — 2026-11-09
 
+- Local Office conversion: a worker cancelled during startup cannot resume native initialization after delayed WASM or thread readiness. Cancellation remains effective throughout shutdown.
+
 - 133 tools: Markdown, TXT, CSV and generic XML to PDF; complete QPDF JSON import/export; scanner effect; comic archives; embedded JavaScript inspection; PDF text preparation for LlamaIndex.
 - Existing converters extended: WPD, Microsoft Works WPS and ODG to PDF; DRM-free MOBI/AZW3 and CBR to PDF; PDF to RTF, ODT, ODP and AZW3 using the owner's document server. Structured text export also supports XML.
 - CBZ is created locally. CBR import uses libarchive; CBR creation requires a separately installed, appropriately licensed RAR executable. Calibre is included in the document server.
