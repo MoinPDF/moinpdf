@@ -1,0 +1,47 @@
+name: Investigate WebKit preview recovery
+on:
+  push:
+    branches: [diagnose/webkit-preview-030]
+permissions:
+  contents: read
+jobs:
+  repeat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ac7310b2d7e662390f33080e198171131193d455
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Build the unchanged release source
+        run: |
+          test "$(git rev-parse HEAD)" = "ac7310b2d7e662390f33080e198171131193d455"
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+          pnpm run build:selfhost
+      - name: Prepare the same WebKit engine
+        run: |
+          bash scripts/ci-prepare-apt.sh
+          python -m pip install playwright==1.64.0 pymupdf==1.26.6
+          python -m playwright install --with-deps webkit
+      - name: Repeat the unchanged acceptance test five times
+        env:
+          MOINPDF_TEST_BROWSERS: webkit
+          MOINPDF_TEST_START_SERVER: '1'
+        run: |
+          status=0
+          for attempt in 1 2 3 4 5; do
+            MOINPDF_BROWSER_OUTPUT=".cache/webkit-probe/$attempt" python tests/release-021-browser.py || status=1
+          done
+          exit "$status"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: webkit-preview-recovery-five-runs
+          path: .cache/webkit-probe/
+          retention-days: 14
