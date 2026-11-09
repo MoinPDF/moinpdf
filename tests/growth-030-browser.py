@@ -1,5 +1,5 @@
 """Real new-tool journeys in CI browsers, fictional inputs and independently read downloads."""
-import atexit,json,os,subprocess,sys,time
+import atexit,io,json,os,subprocess,sys,time,zipfile
 from pathlib import Path
 from urllib.request import urlopen
 import pymupdf as fitz
@@ -42,7 +42,22 @@ with sync_playwright() as api:
     button('Lokale PDF-Vorschau erstellen').click()
     with fitz.open(download('invoice.pdf')) as pdf:
      text=' '.join(p.get_text() for p in pdf);assert '119.00' in text and 'Fictional service' in text and 'Küstenwerkstatt' in text,text
-    review='Ich habe Anschriften, Positionen, Steuerarten und Zahlungsdaten am Original geprüft.';label(review).check();label('Netto-Einzelpreis').fill('60.00');expect(label(review)).not_to_be_checked();expect(page.locator('.advanced-result')).to_have_count(0)
+    review='Ich habe Anschriften, Positionen, Steuerarten und Zahlungsdaten am Original geprüft.';label(review).check()
+    if os.getenv('MOINPDF_REQUIRE_SERVER')=='1':
+     for profile in ('xrechnung','zugferd'):
+      label('Ausgabeformat').select_option(profile);label(review).check();button('E-Rechnung erstellen und unabhängig prüfen').click()
+      with zipfile.ZipFile(download(profile+'.zip')) as archive:
+       report=json.loads(archive.read('Ergebnis.json'))
+       if profile=='xrechnung':
+        assert report['xrechnungAccepted'] and report['documentHashVerified'],report
+        assert b'119.00' in archive.read('XRechnung.xml')
+        with fitz.open(stream=archive.read('Rechnung-Leseansicht.pdf'),filetype='pdf') as result:assert '119.00' in ''.join(p.get_text() for p in result)
+       else:
+        assert report['compliant'] and report['mustangValid'] and report['pdfa3b'] and report['declaredPdfaValid'],report
+        with fitz.open(stream=archive.read('ZUGFeRD-geprueft.pdf'),filetype='pdf') as result:
+         assert '119.00' in ''.join(p.get_text() for p in result)
+         assert any(b'119.00' in result.embfile_get(n) for n in result.embfile_names())
+    label('Netto-Einzelpreis').fill('60.00');expect(label(review)).not_to_be_checked();expect(page.locator('.advanced-result')).to_have_count(0)
     button('Zurück zur Auswahl').click();choose('PDF-Portfolio erstellen');label('Titel des Portfolios').fill('Fictional portfolio');label('Dateien für das Portfolio').set_input_files([str((fixtures/'invoice.pdf').resolve()),str((fixtures/'xrechnung-standard.xml').resolve())]);button('PDF-Portfolio erstellen').click()
     with fitz.open(download('portfolio.pdf')) as pdf:
      assert len(pdf.embfile_names())==2
@@ -52,8 +67,26 @@ with sync_playwright() as api:
     panel=page.locator('details').filter(has=page.locator('summary').get_by_text(t('Neue Ebenen und Objektzuordnung'),exact=True));panel.locator('summary').click();button('Objekte und Ebenen laden').click();expect(panel.locator('input[type=checkbox]').first).to_be_visible();panel.locator('input[type=checkbox]').first.check();label('Name der neuen Ebene').fill('CI layer');button('Ebene erstellen / Objekte zuordnen').click()
     with fitz.open(download('layer.pdf')) as pdf:assert any(v['name']=='CI layer' for v in pdf.get_ocgs().values());assert '129.70' in ''.join(p.get_text() for p in pdf)
     button('Zurück zur Auswahl').click();choose('Arbeitsabläufe');label('Vorlage laden').select_option('1');page.locator('summary').get_by_text(t('Eingangsordner: OCR, Trennung und Ablage'),exact=True).click();label('Sammeldateien trennen').select_option('page');label('Dateinamensmuster').fill('{original}-{part}');button('Für Eingangsordner exportieren').click();flow=json.loads(download('workflow.json').read_text());assert flow['version']==2 and flow['split']['mode']=='page';assert flow['steps']
+    if os.getenv('MOINPDF_REQUIRE_SERVER')=='1':
+     button('Zurück zur Auswahl').click();choose('PDF/X-Druckdatei erstellen');label('Beschnitt innerhalb der Seite (mm)').fill('3');expect(button('Druckdatei mit Teilprüfbericht erstellen')).to_be_disabled();label('Ich habe Druckprofil und Endformat mit der Druckerei abgestimmt.').check();button('Druckdatei mit Teilprüfbericht erstellen').click()
+     with zipfile.ZipFile(download('pdfx.zip')) as archive:
+      report=json.loads(archive.read('Technische-Pruefung.json'));assert report['technicalChecksPassed'] and report['isoConformanceVerified'] is False,report
+      with fitz.open(stream=archive.read('Druckdatei-PDFX3.pdf'),filetype='pdf') as result:assert '129.70' in ''.join(p.get_text() for p in result)
+     label('Beschnitt innerhalb der Seite (mm)').fill('4');expect(label('Ich habe Druckprofil und Endformat mit der Druckerei abgestimmt.')).not_to_be_checked();expect(page.locator('.advanced-result')).to_have_count(0)
+     # A fresh browser context gives handwriting its own original document.
+     scan=out/'handwriting.pdf'
+     with fitz.open() as doc:
+      pix=fitz.Pixmap(fixtures/'fixture-2.jpg');sheet=doc.new_page(width=pix.width,height=pix.height);sheet.insert_image(sheet.rect,filename=str(fixtures/'fixture-2.jpg'));doc.save(scan)
+     with browser.new_context(viewport={'width':390 if en else 1440,'height':950},has_touch=en,accept_downloads=True,reduced_motion='reduce') as hc:
+      hand=hc.new_page();hand.set_default_timeout(120000);hand.goto(origin+('?lang=en' if en else '?lang=de'));hand.locator('input[type=file]').first.set_input_files(str(scan.resolve()));hand.locator('.chooser-tool[data-tool-id="handwriting-ocr"]').click()
+      for name,value in [('Links (%)','0'),('Oben (%)','0'),('Breite (%)','100'),('Höhe (%)','100')]:hand.get_by_label(t(name),exact=True).fill(value)
+      hand.get_by_role('button',name=t('Markierte Zeile erkennen'),exact=True).click();recognized=hand.get_by_label(t('Erkannten Text korrigieren'),exact=True);expect(recognized).to_have_value('Handschrift');expect(hand.get_by_role('button',name=t('PDF mit geprüftem Suchtext erstellen'),exact=True)).to_be_disabled();recognized.fill('Geprüfte Handschrift');hand.get_by_label(t('Diese Zeile ist am Original geprüft.'),exact=True).check();hand.get_by_role('button',name=t('PDF mit geprüftem Suchtext erstellen'),exact=True).click();link=hand.locator('.advanced-result a[download][href^="blob:"]').first;expect(link).to_be_visible()
+      with hand.expect_download() as event:link.click()
+      path=out/(case+'-handwriting.pdf');event.value.save_as(path)
+      with fitz.open(path) as result:assert 'Geprüfte Handschrift' in ''.join(p.get_text() for p in result)
+      recognized.fill('Noch nicht bestätigt');expect(hand.get_by_label(t('Diese Zeile ist am Original geprüft.'),exact=True)).not_to_be_checked();expect(hand.locator('.advanced-result')).to_have_count(0);hand.screenshot(path=str(out/(case+'-handwriting.png')),full_page=True)
     if en:page.set_viewport_size({'width':320,'height':950})
-    overflow();page.screenshot(path=str(out/(case+'.png')),full_page=True);assert not errors,errors;reports.append({'case':case,'invoice':True,'portfolio':True,'layers':True,'watchExport':True,'physicalDevice':False})
+    overflow();page.screenshot(path=str(out/(case+'.png')),full_page=True);assert not errors,errors;reports.append({'case':case,'invoice':True,'portfolio':True,'layers':True,'watchExport':True,'integratedServer':os.getenv('MOINPDF_REQUIRE_SERVER')=='1','physicalDevice':False})
    finally:
     context.tracing.stop(path=str(out/(case+'-trace.zip')));context.close();browser.close()
 (out/'report.json').write_text(json.dumps(reports,indent=2));print('PASS: invoice input and output, explicit review invalidation, exact portfolio attachments, real layers and watched-folder v2 export in '+str(len(reports))+' browser/language cases.')

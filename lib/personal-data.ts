@@ -16,8 +16,14 @@ export function detectPersonalData(pages: EvidencePage[]) {
     for (const line of page.lines) {
       const s = line.text;
       for (const m of s.matchAll(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g)) add(m[0], 'E-Mail');
-      for (const m of s.matchAll(/\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]){11,30}\b/g))
+      // German account numbers have a fixed length; a following BIC or label
+      // must not become part of the value and prevent checksum validation.
+      for (const m of s.matchAll(/\bDE\d{2}(?:[ \t]?\d){18}\b/gi))
         if (validIban(m[0])) add(m[0], 'IBAN');
+      for (const m of s.matchAll(/\b(?!DE)[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]){11,30}\b/g)) {
+        const term = m[0].split(/\s+(?:BIC|SWIFT|Währung|Currency)\b/i)[0].trim();
+        if (validIban(term)) add(term, 'IBAN');
+      }
       for (const [pattern, kind] of [
         [
           /(?:Name|Ansprechpartner|Kontaktperson|Kunde|Patient)\s*:\s*([\p{L}][\p{L} .'-]{3,70})/giu,
@@ -25,7 +31,7 @@ export function detectPersonalData(pages: EvidencePage[]) {
         ],
         [/(?:Telefon|Tel\.?|Mobil)\s*:?\s*([+\d][\d ()/.-]{6,24})/giu, 'Telefon'],
         [
-          /(?:Steuernummer|Steuer-ID|IdNr\.?|USt-IdNr\.?)\s*:?\s*([A-Z\d][\d /.-]{7,22})/giu,
+          /(?:Steuernummer|Steuer-ID|IdNr\.?|USt-IdNr\.?)\s*:?\s*((?:[A-Z]{2}[ \t]*)?\d[\d /.-]{6,22})/giu,
           'Steuerangabe',
         ],
         [/(?:Geburtsdatum|geboren am|Geb\.)\s*:?\s*(\d{1,2}\.\d{1,2}\.\d{4})/giu, 'Geburtsdatum'],

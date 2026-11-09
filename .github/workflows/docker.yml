@@ -178,7 +178,7 @@ jobs:
           MOINPDF_TEST_NONLOCAL_HTTP: "1"
         run: |
           status=0
-          for test in xfa-browser published-web-smoke hafenlicht-browser harbor-layout-browser website-browser; do
+          for test in growth-030-browser xfa-browser published-web-smoke hafenlicht-browser harbor-layout-browser website-browser; do
             python "tests/$test.py" || status=1
           done
           for test in language-smoke documentation-smoke accessibility-browser; do
