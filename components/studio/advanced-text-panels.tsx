@@ -1,4 +1,5 @@
 'use client';
+import './advanced-workbench.css';
 import {
   analyseTableLayout,
   combineTableLayouts,
