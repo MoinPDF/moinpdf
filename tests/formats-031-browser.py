@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 import zipfile
+import xml.etree.ElementTree as ET
 from urllib.request import urlopen
 import pymupdf
 from playwright.sync_api import sync_playwright, expect
@@ -31,6 +32,8 @@ with pymupdf.open() as pdf:
     page = pdf.new_page(width=300, height=400)
     page.insert_text((25, 40), 'Fictional format test 031')
     page.draw_rect(pymupdf.Rect(25, 80, 80, 130), color=(1, 0, 0), fill=(1, 0, 0))
+    for row, values in enumerate([['Kennung','Beschreibung','Betrag'],['001','Fiktives Buch','12,50'],['002','Fiktiver Stift','-2,00']]):
+        for x, value in zip([25,100,235], values): page.insert_text((x,200+row*30),value,fontsize=8)
     pdf.new_page(width=300, height=400)
     pdf.xref_set_key(pdf.pdf_catalog(), 'OpenAction', '<< /S /JavaScript /JS (globalThis.MOINPDF_EXECUTED=true;) >>')
     pdf.save(fixture)
@@ -94,6 +97,21 @@ with sync_playwright() as api:
                 data = json.loads(download('ai.json').read_text()); assert len(data) == 2 and data[0]['metadata']['page_number'] == 1 and data[1]['text'] == ''
                 overflow(); back(); choose('PDF-Text zu JSON & XML'); label('Ausgabeformat').select_option('xml'); button('XML exportieren').click()
                 assert '<documents schema="moinpdf-document/1">' in download('structure.xml').read_text()
+                overflow(); back(); choose('Tabelle zu Excel')
+                label('Oben (%)').fill('45'); label('Höhe (%)').fill('40'); label('Seitenbereich (leer = Vorschauseite)').fill('1-2')
+                expect(label('Spalten automatisch erkennen')).to_be_checked()
+                button('Tabelle erkennen').click()
+                cells=page.locator('.advanced-table input'); expect(cells).to_have_count(9)
+                expect(cells.nth(3)).to_have_value('001'); expect(cells.nth(4)).to_have_value('Fiktives Buch'); expect(cells.nth(5)).to_have_value('12,50')
+                cells.nth(4).click(); expect(page.locator('.advanced-stage canvas')).to_have_count(2)
+                overflow(); button('Excel-Datei erstellen').click()
+                with zipfile.ZipFile(download('table.xlsx')) as archive:
+                    root=ET.fromstring(archive.read('xl/worksheets/sheet1.xml')); ns={'s':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+                    assert root.find('.//s:c[@r="A2"]/s:is/s:t',ns).text=='001'
+                    assert root.find('.//s:c[@r="C2"]/s:v',ns).text=='12.5'
+                    assert root.find('.//s:c[@r="C3"]/s:v',ns).text=='-2'
+                label('Spalten automatisch erkennen').uncheck(); label('Spaltengrenzen ab linkem Seitenrand (%)').fill('27, 70')
+                button('Spalten neu aufteilen').click(); expect(cells).to_have_count(9); expect(cells.nth(4)).to_have_value('Fiktives Buch')
                 # Format selections remain available even when this static test host has no document server.
                 for tool, fmt in [('PDF zu Word', 'odt'), ('PDF zu PowerPoint', 'odp')]:
                     back(); choose(tool); label('Ausgabeformat').select_option(fmt); overflow()
@@ -101,7 +119,8 @@ with sync_playwright() as api:
                 page.locator('input[type=file]').first.set_input_files({'name': 'routing-only.wpd', 'mimeType': 'application/octet-stream', 'buffer': b'\xffWPCrouting-only'})
                 expect(page.get_by_role('heading', name=t('Office zu PDF'), exact=True)).to_be_visible()
                 expect(label('Verarbeitung')).to_have_count(0)
-                expect(page.get_by_text(t('Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.'))).to_be_visible()
+                expect(page.locator('.conversion-unavailable')).to_be_visible()
+                expect(button('PDF erstellen')).to_be_disabled()
                 overflow()
                 assert not errors, errors
                 reports.append({'browser': engine, 'language': 'en' if en else 'de', 'touch_emulation': en, 'status': 'passed'})
