@@ -4,6 +4,10 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Unreleased
+
+- Light mode uses a continuous green–turquoise–blue background on desktop, tablet and mobile for clearer contrast with light cards and input fields.
+
 ## 0.31.3 — 2026-11-10
 
 - Check uses a soft yellow palette. Category selection, tool cards and search icons share the same warm tone, adjusted for the light and dark themes.
