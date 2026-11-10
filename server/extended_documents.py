@@ -133,31 +133,25 @@ def form_detect(source,directory):
             for rectangle,label in zip(accepted,labels):
                 number=len(items)+1
                 if number>500:raise ValueError('Mehr als 500 mögliche Felder. Bitte einen kleineren Seitenbereich verwenden.')
-                name=label['name'] if label and label['name'] not in names else f'Erkannt_{number}'
-                while name in names:name+='_'
-                names.add(name);widget=fitz.Widget();widget.field_name=name
-                if label:widget.field_label=label['label']
                 checkbox=.7<=rectangle.width/rectangle.height<=1.3 and rectangle.height<=24
-                widget.field_type=fitz.PDF_WIDGET_TYPE_CHECKBOX if checkbox else fitz.PDF_WIDGET_TYPE_TEXT
-                widget.rect=rectangle;widget.text_font='Helv';widget.text_fontsize=10;widget.border_width=0
-                page.add_widget(widget)
-                items.append({'page':index+1,'name':name,'label':label['label'] if label else '', 'candidate':label['name'] if label else '',
-                    'label_source':label_source,'review':not label or name.startswith('Erkannt_'),
+                items.append({'page':index+1,'label':label['label'] if label else '', 'candidate':label['name'] if label else '',
+                    'label_source':label_source,
                     'type':'Checkbox' if checkbox else 'Textfeld','rectangle':list(rectangle)})
         # Repeated labels may refer to different people. Leave every such proposal
-        # generic instead of silently assigning the first one to a saved profile.
+        # generic. Choose final names before creating widgets: renaming an existing
+        # widget is not applied consistently by all supported PyMuPDF versions.
         from collections import Counter
         counts=Counter(item['candidate'] for item in items if item['candidate'])
         for number,item in enumerate(items,1):
             canonical=item.pop('candidate')
-            if canonical and counts[canonical]>1:
-                item['review']=True
-                if item['name']==canonical:
-                    page=pdf[item['page']-1]
-                    widget=next(w for w in page.widgets() if w.field_name==item['name'])
-                    name=f'Erkannt_{number}'
-                    while name in names:name+='_'
-                    names.add(name);widget.field_name=name;widget.update();item['name']=name
+            name=canonical if canonical and counts[canonical]==1 and canonical not in names else f'Erkannt_{number}'
+            while name in names:name+='_'
+            names.add(name);item['name']=name;item['review']=not canonical or name.startswith('Erkannt_')
+            page=pdf[item['page']-1];widget=fitz.Widget();widget.field_name=name
+            if item['label']:widget.field_label=item['label']
+            widget.field_type=fitz.PDF_WIDGET_TYPE_CHECKBOX if item['type']=='Checkbox' else fitz.PDF_WIDGET_TYPE_TEXT
+            widget.rect=fitz.Rect(item['rectangle']);widget.text_font='Helv';widget.text_fontsize=10;widget.border_width=0
+            page.add_widget(widget)
         if not items:raise ValueError('Keine leeren Kästchen oder Eingabelinien erkannt. Nutze „Formular erstellen“ für eigene Felder.')
         pdf.save(directory/'output.pdf',garbage=4,deflate=True)
     report(directory,'Erkannte Formularfelder',items,'Beschriftungen und leere Felder sind Vorschläge. Namen, Feldtypen und Positionen am Original prüfen; bestehende Einträge bleiben erhalten.')
