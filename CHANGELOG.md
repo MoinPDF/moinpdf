@@ -9,6 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.31.3 — 2026-11-10
+
+- „Prüfen“ erhält ein sanftes Gelb. Kategorieauswahl, Werkzeugkarten und Suchsymbole verwenden denselben warmen Farbton, abgestimmt auf das helle und dunkle Design.
+
 ## 0.31.2 — 2026-11-10
 
 - Jede Werkzeugkategorie erhält eine eigene Farbe: Prüfen kühles Grau, Umwandeln gedecktes Petrol, Seiten warmes Steingrau, Bearbeiten Rauchblau und Stapel Salbeigrün; der Schnellzugriff bleibt Grün.
