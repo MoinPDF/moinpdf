@@ -11,7 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## 0.31.2 — 2026-11-10
 
-- Jede Werkzeugkategorie erhält eine eigene Farbe: Prüfen Korallrot, Umwandeln Türkis, Seiten Gelb, Bearbeiten Hellblau und Stapel Violett; der Schnellzugriff bleibt Grün.
+- Jede Werkzeugkategorie erhält eine eigene Farbe: Prüfen kühles Grau, Umwandeln gedecktes Petrol, Seiten warmes Steingrau, Bearbeiten Rauchblau und Stapel Salbeigrün; der Schnellzugriff bleibt Grün.
 - Kategorie-Schaltflächen, Werkzeugkarten und Suchsymbole verwenden im hellen und dunklen Design dieselbe Zuordnung. Abweichende Sonderfarben einzelner Karten sind entfernt; die Kategorie bleibt auch beim Überfahren und Drücken sichtbar.
 
 ## 0.31.1 — 2026-11-09

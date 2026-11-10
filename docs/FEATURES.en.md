@@ -2,7 +2,7 @@
 
 ## Tool category colors
 
-Categories use distinct colors in both themes: Check coral red, Convert turquoise, Pages yellow, Edit light blue and Batch purple. Quick access is green; its tool cards retain their own category colors. The same mapping applies on the home page, in All tools and to search icons. Names and icons remain visible alongside the colors.
+Categories use distinct colors in both themes: Check cool gray, Convert muted teal, Pages warm stone gray, Edit smoky blue and Batch sage green. Quick access is green; its tool cards retain their own category colors. The same mapping applies on the home page, in All tools and to search icons. Names and icons remain visible alongside the colors.
 
 ## Formats and tools in 0.31.0
 

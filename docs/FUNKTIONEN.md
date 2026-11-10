@@ -2,7 +2,7 @@
 
 ## Farben der Werkzeugkategorien
 
-Kategorien sind in beiden Designs eindeutig zugeordnet: Prüfen Korallrot, Umwandeln Türkis, Seiten Gelb, Bearbeiten Hellblau und Stapel Violett. Der Schnellzugriff ist Grün; seine Werkzeugkarten behalten jeweils die Farbe ihrer eigenen Kategorie. Dieselbe Zuordnung gilt auf der Startseite, unter „Alle Werkzeuge“ und für Suchsymbole. Namen und Symbole bleiben zusätzlich sichtbar.
+Kategorien sind in beiden Designs eindeutig zugeordnet: Prüfen kühles Grau, Umwandeln gedecktes Petrol, Seiten warmes Steingrau, Bearbeiten Rauchblau und Stapel Salbeigrün. Der Schnellzugriff ist Grün; seine Werkzeugkarten behalten jeweils die Farbe ihrer eigenen Kategorie. Dieselbe Zuordnung gilt auf der Startseite, unter „Alle Werkzeuge“ und für Suchsymbole. Namen und Symbole bleiben zusätzlich sichtbar.
 
 ## Formate und Werkzeuge in 0.31.0
 

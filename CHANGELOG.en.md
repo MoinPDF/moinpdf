@@ -6,7 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## 0.31.2 — 2026-11-10
 
-- Each tool category has its own color: Check coral red, Convert turquoise, Pages yellow, Edit light blue and Batch purple; Quick access stays green.
+- Each tool category has its own color: Check cool gray, Convert muted teal, Pages warm stone gray, Edit smoky blue and Batch sage green; Quick access stays green.
 - Category buttons, tool cards and search icons share the same palette in light and dark themes. Individual card color overrides are removed, and category colors remain visible on hover and press.
 
 ## 0.31.1 — 2026-11-09
