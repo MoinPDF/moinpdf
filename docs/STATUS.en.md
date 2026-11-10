@@ -10,7 +10,7 @@ Form helper and receipt collection on A4 are integrated browser tools. Profile s
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 9 November 2026 · Version 0.31.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 10 November 2026 · Version 0.31.4. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 The light-mode background transitions from green through turquoise to blue on desktop, tablet and mobile. The richer gradient makes light cards, input fields and tool panels stand out more clearly.
 

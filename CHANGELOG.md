@@ -9,7 +9,7 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Noch nicht versioniert
+## 0.31.4 — 2026-11-10
 
 - Der Hintergrund im Light Mode erhält auf Desktop, Tablet und Smartphone einen durchgehenden Grün-Türkis-Blau-Verlauf für einen deutlicheren Kontrast zu den hellen Karten und Eingabefeldern.
 
