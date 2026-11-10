@@ -71,7 +71,7 @@ with tempfile.TemporaryDirectory() as temporary, sync_playwright() as api:
             expect(page.get_by_role('heading', name='Was möchtest du tun?', exact=True)).to_be_visible(timeout=30000)
             page.get_by_role('button', name='Zertifikatssignaturen', exact=True).click()
             page.get_by_label('Aktion', exact=True).select_option('sign')
-            page.get_by_label('Verarbeitung', exact=True).select_option('local')
+            expect(page.get_by_label('Verarbeitung', exact=True)).to_have_count(0)
             certificate_input = page.get_by_label('Zertifikat (.p12 oder .pfx)', exact=True)
             password_input = page.get_by_label('Zertifikatspasswort', exact=True)
             certificate_input.set_input_files(str(identity))

@@ -873,6 +873,22 @@ const fields: Record<string, z.ZodType> = {
   'SplitPanel.exclude': z.boolean(),
   'SplitPanel.parts': z.array(shape54).max(100000),
   'SplitPanel.page': z.number().finite(),
+  'TablePanel.automatic': z.boolean(),
+  'TablePanel.cellSources': z
+    .array(z.array(z.object({ rect: shape3.optional(), uncertain: z.boolean() })).max(100))
+    .max(10000),
+  'TablePanel.rowPages': z.array(z.number().int().nonnegative()).max(10000),
+  'TablePanel.analysedPages': z.array(z.number().int().nonnegative()).max(10000),
+  'TablePanel.merges': z
+    .array(
+      z.object({
+        row: z.number().int().nonnegative(),
+        column: z.number().int().nonnegative(),
+        columns: z.number().int().min(2).max(100),
+      }),
+    )
+    .max(10000),
+  'TablePanel.joinWrapped': z.boolean(),
   'TablePanel.page': z.number().finite(),
   'TablePanel.area': shape3,
   'TablePanel.boundaries': z.string().max(1000000),

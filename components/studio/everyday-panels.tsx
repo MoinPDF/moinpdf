@@ -18,6 +18,7 @@ import {
 } from '@/lib/everyday-model';
 import {
   readHelperForm,
+  detectHelperForm,
   exportHelperForm,
   receiptItems,
   exportReceipts,
@@ -37,6 +38,7 @@ import {
 } from './advanced-shared';
 import { FormCanvas } from './form-canvas';
 import { PagePreview } from './canvas';
+import { integratedDocumentServer } from '@/lib/document-server';
 import './everyday-tools.css';
 
 type Props = PanelProps & { invalidate: () => void };
@@ -269,7 +271,7 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
           <>
             <p>
               {ui(
-                'Vorhandene Textfelder erhalten passende Vorschläge. Auf Scans kannst du Angaben selbst platzieren. Bestehende Einträge werden nicht automatisch überschrieben.',
+                'Vorhandene Textfelder erhalten passende Vorschläge. Bei Scans können leere Felder und ihre Beschriftungen erkannt werden. Angaben lassen sich auch selbst platzieren; bestehende Einträge bleiben erhalten.',
               )}
             </p>
             <Button
@@ -284,6 +286,24 @@ export function FormHelperPanel({ source, run, busy, invalidate }: Props) {
             >
               {ui('Formularfelder laden')}
             </Button>
+            {integratedDocumentServer && (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={() =>
+                  void run(async (ctx) => {
+                    const next = await detectHelperForm(source, ctx);
+                    change(next);
+                    setSelected(next.fields[0]?.id || '');
+                    setMessage(
+                      'Erkannte Felder und Beschriftungen bitte am Original prüfen. Danach passende Angaben vorschlagen lassen.',
+                    );
+                  })
+                }
+              >
+                {ui('Felder und Beschriftungen erkennen')}
+              </Button>
+            )}
           </>
         ) : (
           <>

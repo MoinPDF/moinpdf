@@ -1,5 +1,12 @@
 # Features and limitations
 
+## Current improvements
+
+- Table extraction detects recurring column gaps per page, shows cell source locations, highlights uncertain values and preserves spanning headers in Excel. Nearby continuation lines can optionally be joined; manual boundaries remain available. Conflicting column counts require correction.
+- Form detection names empty boxes and input lines using unambiguous standard German and English labels, including OCR for scans. The form helper imports proposals for review while preserving existing entries. Detection requires the full installation, up to 50 pages and 500 new fields.
+- MoinPDF automatically selects suitable processing. Browser/own document server selectors and manual connection fields are removed.
+- The intro attempts sound automatically without a sound button. Browsers may still block autoplay; sound is never replayed after the intro ends or is skipped.
+
 ## Tool category colors
 
 Categories use distinct colors in both themes: Check soft yellow, Convert muted teal, Pages warm stone gray, Edit smoky blue and Batch sage green. Quick access is green; its tool cards retain their own category colors. The same mapping applies on the home page, in All tools and to search icons. Names and icons remain visible alongside the colors.
@@ -67,7 +74,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.31.2**
+**Current implementation limits · 0.31.4**
 
 | Capability | Value |
 | --- | --- |

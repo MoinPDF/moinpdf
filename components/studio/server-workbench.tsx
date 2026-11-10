@@ -38,7 +38,6 @@ import {
 } from './server-extra-fields';
 import { Text, Choice, Tick, PageStage, PageSelect } from './advanced-shared';
 import './conversion-workbench.css';
-import { ServerConnection } from './growth-panels';
 import { AudioWorkbench } from './audio-workbench';
 import { AccessibleEditor, initialAccessibleDocument } from './accessible-editor';
 import { validateAccessibleDocument } from '@/lib/accessible-document';
@@ -76,10 +75,6 @@ function StandardServerWorkbench({
 }: Props) {
   const { t } = useLanguage();
   const { tools } = useTools();
-  const [processing, setProcessing] = useToolDraftState(
-    'StandardServerWorkbench.processing:' + sources.map((s) => s.id).join(':') + tool,
-    'local',
-  );
   const [wordOutput, setWordOutput] = useToolDraftState(
     'StandardServerWorkbench.wordOutput:' + sources.map((s) => s.id).join(':') + tool,
     'layout',
@@ -89,8 +84,7 @@ function StandardServerWorkbench({
     tool === 'certificate-sign' ? 'validate' : 'create',
   );
   const [formatOutput, setFormatOutput] = useState(tool === 'pdf-word' ? 'docx' : 'pptx');
-  const [customBase, setCustomBase] = useState(''),
-    [serverToken, setServerToken] = useState('');
+  const serverToken = '';
   const [file, setFile] = useState<File | null>(initialFile || null);
   const specialOutput =
     (tool === 'pdf-word' && formatOutput !== 'docx') ||
@@ -111,18 +105,16 @@ function StandardServerWorkbench({
     initialWebsiteSettings,
   );
   const websiteMode = tool === 'html-pdf' && htmlInput === 'url';
-  const serverBase = websiteMode ? integratedWebsiteServer : integratedDocumentServer || customBase;
+  const serverBase = websiteMode ? integratedWebsiteServer : integratedDocumentServer;
   const serverOnlyOffice =
     tool === 'office-pdf' && /\.(wpd|wps|odg|pages|vsd|vsdx|pub)$/i.test(file?.name || '');
-  const localOffice = tool === 'office-pdf' && processing === 'local' && !serverOnlyOffice;
-  const localCertificate = tool === 'certificate-sign' && mode === 'sign' && processing === 'local';
-  const localWord =
-    tool === 'pdf-word' && !specialOutput && (!serverBase || processing === 'local');
-  const localOptimize = processing === 'local' && tool === 'optimize-pdf',
-    localMode = localWord || localOptimize || localOffice || localCertificate;
   const [capabilities, setCapabilities] = useState<ServerCapabilities | null>(null);
+  const localOffice =
+    tool === 'office-pdf' && !serverOnlyOffice && !capabilities?.capabilities.office;
+  const localWord = tool === 'pdf-word' && !specialOutput;
+  const localOptimize = tool === 'optimize-pdf';
   const [status, setStatus] = useState<'checking' | 'ready' | 'unavailable'>(
-    localMode ? 'ready' : 'checking',
+    serverBase ? 'checking' : 'ready',
   );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
@@ -149,6 +141,8 @@ function StandardServerWorkbench({
     'StandardServerWorkbench.signLevel:' + sources.map((s) => s.id).join(':') + tool,
     'basic',
   );
+  const localCertificate = tool === 'certificate-sign' && mode === 'sign' && signLevel === 'basic';
+  const localMode = localWord || localOptimize || localOffice || localCertificate;
   const [tagRepair, setTagRepair] = useState<TagRepair | null>(null);
   useEffect(() => setTagRepair(null), [sourceId, sources]);
   const [extra, setExtra] = useToolDraftState(
@@ -213,12 +207,9 @@ function StandardServerWorkbench({
     (tool !== 'certificate-sign' || mode !== 'sign' || !!cert);
 
   const checkConnection = useCallback(async () => {
-    if (localMode) {
-      setStatus('ready');
-      return;
-    }
     if (!serverBase) {
-      setStatus(localMode ? 'ready' : 'unavailable');
+      setCapabilities(null);
+      setStatus('ready');
       return;
     }
     connection.current?.abort();
@@ -237,7 +228,7 @@ function StandardServerWorkbench({
         setStatus('unavailable');
       }
     }
-  }, [localMode, serverBase, serverToken]);
+  }, [serverBase, serverToken]);
   useEffect(() => {
     void checkConnection();
     return () => {
@@ -259,9 +250,8 @@ function StandardServerWorkbench({
     if (initialFile) {
       setFile(initialFile);
       setHtmlInput('file');
-      if (/\.(wpd|wps|odg|pages|vsd|vsdx|pub)$/i.test(initialFile.name)) setProcessing('server');
     }
-  }, [initialFile, setHtmlInput, setProcessing]);
+  }, [initialFile, setHtmlInput]);
   useEffect(() => {
     onBusy(busy);
     return () => onBusy(false);
@@ -276,10 +266,8 @@ function StandardServerWorkbench({
     file,
     mode,
     profile,
-    processing,
     wordOutput,
     formatOutput,
-    customBase,
     serverToken,
     attachments,
     extra,
@@ -659,42 +647,15 @@ function StandardServerWorkbench({
               }
             />
           )}
-          {!localMode && !websiteMode && !integratedDocumentServer && (
-            <ServerConnection
-              base={customBase}
-              token={serverToken}
-              setBase={setCustomBase}
-              setToken={setServerToken}
-            />
-          )}
           {specialOutput && (
             <p className="fine-note">
-              {ui(
-                'Die Konvertierung erfolgt auf dem eigenen Dokumentenserver. Layout und bearbeitbare Inhalte bitte an der Ausgabe prüfen.',
-              )}
+              {ui('Layout und bearbeitbare Inhalte bitte an der Ausgabe prüfen.')}
             </p>
-          )}
-
-          {(['office-pdf', 'optimize-pdf'].includes(tool) ||
-            (tool === 'certificate-sign' && mode === 'sign')) && (
-            <Choice
-              label={ui('Verarbeitung')}
-              value={serverOnlyOffice ? 'server' : processing}
-              onChange={setProcessing}
-              items={
-                serverOnlyOffice
-                  ? [['server', 'Eigener Dokumentenserver']]
-                  : [
-                      ['local', 'Lokal im Browser'],
-                      ['server', 'Eigener Dokumentenserver'],
-                    ]
-              }
-            />
           )}
           {localOffice && (
             <p className="fine-note">
               {ui(
-                'Die Datei bleibt auf deinem Gerät. Beim ersten Start werden etwa 75 MB Programmdaten geladen. Mehr als 1 GB freier Arbeitsspeicher, HTTPS und ein aktueller Desktop-Browser werden benötigt. Höchstens 40 MB pro Office-Datei.',
+                'Beim ersten Öffnen werden zusätzliche Programmdaten geladen. Höchstens 40 MB pro Office-Datei.',
               )}
             </p>
           )}
@@ -703,12 +664,8 @@ function StandardServerWorkbench({
           )}
           {tool === 'office-pdf' ? (
             pick(
-              localOffice
-                ? 'Word, Excel, PowerPoint, OpenDocument oder RTF'
-                : 'Office, Pages, Visio, Publisher, WordPerfect, Works oder Draw',
-              localOffice
-                ? '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.rtf'
-                : '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.rtf,.pages,.vsd,.vsdx,.pub,.wpd,.wps,.odg',
+              'Office, Pages, Visio, Publisher, WordPerfect, Works oder Draw',
+              '.docx,.xlsx,.pptx,.doc,.xls,.ppt,.odt,.ods,.odp,.rtf,.pages,.vsd,.vsdx,.pub,.wpd,.wps,.odg',
               file,
               setFile,
             )
@@ -909,10 +866,8 @@ function StandardServerWorkbench({
             <WordExportOptions
               mode={wordOutput}
               local={localWord}
-              serverAvailable={!!serverBase}
               disabled={busy}
               onModeChange={setWordOutput}
-              onProcessingChange={setProcessing}
             />
           )}
           {tool === 'email-pdf' && (
@@ -1013,7 +968,7 @@ function StandardServerWorkbench({
               />
               {mode === 'sign' && (
                 <>
-                  {!localCertificate && (
+                  {
                     <Choice
                       label={ui('Signaturprofil')}
                       value={signLevel}
@@ -1025,14 +980,14 @@ function StandardServerWorkbench({
                         .map((level) => [
                           level,
                           {
-                            basic: 'PAdES-B: Zertifikatssignatur',
+                            basic: 'Einfache Zertifikatssignatur',
                             timestamp: 'PAdES-T: mit geprüftem Zeitstempel',
                             lt: 'PAdES-LT: mit eingebetteten Sperrnachweisen',
                             lta: 'PAdES-LTA: mit Langzeit-Zeitstempel',
                           }[level],
                         ])}
                     />
-                  )}
+                  }
                   {pick('Zertifikat (.p12 oder .pfx)', '.p12,.pfx', cert, setCert)}
                   <Text
                     label={ui('Zertifikatspasswort')}

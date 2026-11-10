@@ -76,11 +76,11 @@ export const guides = {
     "Unter „Schreibgeschützte Formularfelder freigeben“ kannst du einzelne oder alle angezeigten Felder wieder ausfüllbar machen. Vorhandene Werte und andere Feldregeln bleiben erhalten. Freigegebene Felder werden nicht festgeschrieben.",
     "Lege unter „Formularhelfer“ deine Angaben an. Ergänze eigene Bezeichnungen. Ein benanntes Profil wird erst über „Profil speichern“ lokal gespeichert; bestehende Profile lassen sich auswählen, kopieren oder löschen.",
     "Lade die Formularfelder und wähle „Angaben vorschlagen“. Nur eindeutige Bezeichnungen leerer Textfelder werden zugeordnet. Prüfe jedes Feld am Original, ordne Angaben manuell zu und korrigiere bei Bedarf den Feldinhalt.",
-    "Bei Scans: Angabe wählen und einen Bereich auf der Seite aufziehen oder „Bereich hinzufügen“ verwenden. Position und Größe lassen sich über Prozentwerte, Ziehgriffe und Schriftgröße anpassen.",
+    "Bei Scans oder Formularen ohne Felder zuerst „Felder und Beschriftungen erkennen“ wählen, sofern verfügbar. Vorschläge am Original prüfen und dann „Angaben vorschlagen“ verwenden. Angaben lassen sich weiterhin durch Aufziehen eines Bereichs selbst platzieren.",
     "Bestätige die Prüfung und erstelle die ausgefüllte PDF. Optional werden Formularwerte dauerhaft festgeschrieben. Prüfe die Ergebnisvorschau und lade die PDF herunter."
   ],
   "output": "Ausgefüllte PDF mit erhaltenen oder optional festgeschriebenen Formularfeldern. Auf Scans platzierte Angaben haben einen transparenten Hintergrund.",
-  "note": "Bis zu zehn lokale Profile mit je 30 Angaben und 500 Zeichen pro Angabe. Profile bleiben unverschlüsselt im Browser und werden nicht mit Projektdateien übertragen; bearbeitete Formularfelder gehören zum Arbeitsstand. Keine automatische Erkennung von Beschriftungen auf Scans. Vorhandene Werte, Checkboxen und Auswahlfelder bleiben bei Vorschlägen erhalten. Signierte PDFs und dynamische XFA-Formulare werden abgewiesen. Nicht unterstützte Zeichen und überlaufende neue Einträge werden vor dem Export gemeldet."
+  "note": "Bis zu zehn lokale Profile mit je 30 Angaben und 500 Zeichen pro Angabe. Profile bleiben unverschlüsselt im Browser und werden nicht mit Projektdateien übertragen; bearbeitete Formularfelder gehören zum Arbeitsstand. Leere Kästchen und Eingabelinien mit gut lesbaren deutschen oder englischen Standardbeschriftungen können erkannt werden. Bis 50 Seiten und 500 neue Felder. Mehrdeutige Beschriftungen bleiben zur manuellen Zuordnung offen; Freitextflächen und Handschrift werden nicht zuverlässig erkannt. Vorhandene Werte, Checkboxen und Auswahlfelder bleiben bei Vorschlägen erhalten. Signierte PDFs und dynamische XFA-Formulare werden abgewiesen. Nicht unterstützte Zeichen und überlaufende neue Einträge werden vor dem Export gemeldet."
 },
   "receipts-a4": {
   "input": "Fotos oder PDFs mit Kassenbons und Quittungen, gemeinsam im Arbeitsbereich geöffnet.",
@@ -350,7 +350,7 @@ export const guides = {
   ], 'ZIP mit aufeinanderfolgenden PDF-Teilen innerhalb des erreichbaren Limits.', 'Die Reihenfolge bleibt erhalten, Seiten werden nicht als Bilder neu komprimiert. Lesezeichen, Signaturen und interaktive Formularfunktionen werden nicht übernommen.'),
   'pdf-word': guide('Eine PDF mit Text oder gut lesbaren Scan-Seiten.', [
     'Wähle die Datei. Seiten ohne auslesbaren Text werden beim Word-Export automatisch per OCR erkannt.',
-    'Wähle „Aussehen möglichst erhalten“ für positionierte Textfelder oder „Text und Tabellen bearbeiten“ für Absätze und erkannte Tabellen. Unter „Weitere Optionen“ findest du „Nur Text als Absätze“ und, falls eingerichtet, den eigenen Dokumentenserver. Neue Exporte starten lokal auf deinem Gerät.',
+    'Wähle „Aussehen möglichst erhalten“ für positionierte Textfelder oder „Text und Tabellen bearbeiten“ für Absätze und erkannte Tabellen. Unter „Weitere Optionen“ findest du „Nur Text als Absätze“. MoinPDF wählt die Verarbeitung automatisch.',
     'Öffne die DOCX-Datei in Word und kontrolliere insbesondere Tabellen, Schriften, Absätze und Seitenumbrüche.'
   ], 'Bearbeitbare DOCX-Datei.', 'Im lokalen Layoutmodus bleiben Tabellenlinien im Seitenhintergrund. Der Fließtextmodus rekonstruiert unterstützte Rastertabellen und wiederkehrende Kopf-/Fußzeilen; nicht erkannte Tabellen bleiben Text, komplexe Grafiken können Bilder bleiben. Der Server verwendet pdf2docx für digitale Seiten und erzeugt aus Seiten ohne auslesbaren Text per OCR bearbeitbare Absätze. Seitenumbrüche, Lesereihenfolge und Schriften in jedem Modus prüfen.'),
   'email-pdf': guide('Eine gespeicherte EML-Datei oder eine Outlook-MSG-Datei.', [
@@ -380,8 +380,8 @@ export const guides = {
     'Erstelle die Teildokumente und prüfe Anfang und Ende jedes Abschnitts.'
   ], 'ZIP mit PDF-Abschnitten.', 'Die Erkennung kann Trennstellen übersehen oder zu viele finden. Bei Scans kann vor der Texttrennung OCR nötig sein. Für bereits bekannte Grenzen ist „In Abschnitte teilen“ einfacher.'),
   'table-export': guide('Eine PDF mit Tabellen auf einer oder mehreren Seiten; auslesbarer Text oder gut lesbare Scans.', [
-    'Wähle die Vorschauseite, markiere den Tabellenbereich und gib bei Bedarf einen Seitenbereich ein. Bereich und Spaltengrenzen gelten für alle gewählten Seiten.',
-    'Gib Spaltengrenzen in Prozent ab dem linken Seitenrand an; 35, 65 ergibt drei Spalten. Teile bei Bedarf neu auf und korrigiere Zeilen und Zellen, besonders Dezimalzeichen, negative Beträge und mehrzeilige Inhalte.',
+    'Wähle die Vorschauseite, markiere den Tabellenbereich und gib bei Bedarf einen Seitenbereich ein. Spalten werden für jede Seite automatisch erkannt; bei Scans OCR aktivieren.',
+    'Wähle Zellen aus, um ihre Fundstelle zu sehen. Prüfe gelb markierte Werte und verbundene Kopfzellen. Nahe Fortsetzungszeilen lassen sich optional verbinden. Bei abweichenden Spalten die automatische Erkennung ausschalten und Grenzen in Prozent eingeben, zum Beispiel 35, 65.',
     'Exportiere die geprüfte Tabelle als Excel oder CSV und kontrolliere sie in deiner Tabellenanwendung.'
   ], 'XLSX oder CSV mit den erkannten und korrigierten Werten.', 'Prüfe Kopfzeilen, Spaltentypen und Zahlenformat (Deutsch oder Englisch). Excel erhält erkennbare Zahlen und Datumswerte als echte Werte; führende Nullen, lange Kennungen und Formeln bleiben Text. Wiederholte Kopfzeilen können entfernt werden. Komplexe Tabellen und mehrzeilige Zellen benötigen weiterhin Kontrolle.'),
   'search-redact': guide('Eine PDF und die Begriffe oder Muster, die entfernt werden sollen.', [
@@ -447,9 +447,9 @@ export const guides = {
   ], 'Prüfbericht nach den installierten KoSIT-Regeln.', 'Die Validierung prüft technische Regeln der Rechnung. Sie ersetzt weder den Abgleich mit dem zugrunde liegenden Geschäftsvorfall noch eine Prüfung der Echtheit oder der tatsächlichen Leistung.'),
   'certificate-sign': guide('Eine PDF; zum Signieren zusätzlich ein PKCS#12-Zertifikat (.p12/.pfx) mit Passwort.', [
     'Wähle Signieren oder Signaturen prüfen. Für eine neue Signatur wähle das Zertifikat und gib dessen Passwort ein.',
-    'Starte die Verarbeitung. Nur im Servermodus werden PDF, Zertifikat mit privatem Schlüssel und Passwort für diesen Auftrag an den eigenen Dokumentenserver übertragen.',
+    'Starte die Signatur. Die einfache Signatur verarbeitet das Zertifikat auf dem Gerät. Erweiterte Signaturprofile übertragen PDF, Zertifikat mit privatem Schlüssel und Passwort für diesen Auftrag an den Dienst dieser Installation.',
     'Lade das Ergebnis herunter und prüfe Integrität, Vertrauen und Änderungsbefunde. Bearbeite eine fertig signierte Datei anschließend nicht weiter.'
-  ], 'Signierte PDF beziehungsweise Signatur-Prüfbericht.', 'Die Prüfung fragt den aktuellen Sperrstatus nicht ab und bestätigt keine qualifizierte elektronische Signatur. Wähle den Servermodus nur, wenn du dem eigenen Dokumentenserver auch dein Zertifikat anvertrauen möchtest.'),
+  ], 'Signierte PDF beziehungsweise Signatur-Prüfbericht.', 'Die Prüfung bestätigt keine qualifizierte elektronische Signatur. Prüfe vor erweiterten Signaturprofilen, ob du dem Betreiber dieser Installation dein Zertifikat mit privatem Schlüssel anvertrauen möchtest.'),
   'protect': guide('Eine vollständige PDF und ein neues Öffnungspasswort.', [
     'Wähle das Dokument und lege das Passwort sowie die angebotenen Berechtigungen fest.',
     'Erstelle die mit AES-256 geschützte Ausgabe.',
@@ -704,7 +704,7 @@ export const guides = {
 };
 
 // Local expansion: keep the established guide text and describe the additional mode explicitly.
-guides['office-pdf'].steps.unshift('Standardmäßig lokal im Browser konvertieren. Den eigenen Dokumentenserver bei Bedarf ausdrücklich auswählen.');
+guides['office-pdf'].steps.unshift('Datei auswählen und die Umwandlung starten. MoinPDF verwendet die in dieser Installation verfügbare Verarbeitung automatisch.');
 guides['office-pdf'].note = 'Lokal: Word, Excel, PowerPoint, OpenDocument und RTF bis 40 MB. Etwa 75 MB Programmdaten werden beim ersten Start geladen; benötigt HTTPS, isolierten Browser-Speicher und mehr als 1 GB freien Arbeitsspeicher. Nur Programmdaten werden zwischengespeichert. Schriften, Umbrüche, Bilder und Formeln nach dem Export kontrollieren. Pages, Visio und Publisher benötigen den Dokumentenserver.';
 guides['certificate-sign'].steps.unshift('Für eine einfache Zertifikatssignatur „Mit Zertifikat signieren“ und „Lokal im Browser“ auswählen.');
 guides['certificate-sign'].note += ' Im lokalen Modus bleiben Zertifikat und Passwort auf deinem Gerät. Unterstützt werden moderne PKCS#12-Dateien mit PBES2/AES und einem RSA-Schlüssel ab 2048 Bit. Bereits signierte PDFs und XFA werden abgewiesen. Die lokale CMS-Signatur enthält keinen Zeitstempel und bestätigt weder Vertrauenskette noch qualifizierten Status.';

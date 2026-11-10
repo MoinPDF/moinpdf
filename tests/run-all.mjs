@@ -48,6 +48,7 @@ const suites = [
   'bookmark-transfer',
   'security-invoice',
   'advanced-tools',
+  'table-layout',
   'size-split',
   'document-server',
   'conversion',

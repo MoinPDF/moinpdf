@@ -86,7 +86,7 @@ with sync_playwright() as api:
                 with zipfile.ZipFile(download('comic.cbz')) as z:
                     assert z.namelist() == ['0001.png', '0002.png']
                     assert z.read('0001.png').startswith(b'\x89PNG')
-                label('Comicformat').select_option('cbr'); expect(page.get_by_text(t('CBR benötigt einen eigenen Dokumentenserver mit separat installiertem und passend lizenziertem RAR-Konverter. CBZ wird lokal im Browser erstellt.'))).to_be_visible()
+                label('Comicformat').select_option('cbr'); expect(page.get_by_text(t('CBR ist nur mit eingerichtetem RAR-Konverter verfügbar. Alternativ CBZ auswählen.'))).to_be_visible()
                 overflow(); back(); choose('PDF-JavaScript anzeigen'); button('JavaScript anzeigen').click()
                 report = json.loads(download('scripts.json').read_text()); assert 'MOINPDF_EXECUTED' in report['scripts'][0]['code']
                 assert page.evaluate('globalThis.MOINPDF_EXECUTED') is None
@@ -100,8 +100,8 @@ with sync_playwright() as api:
                 back()
                 page.locator('input[type=file]').first.set_input_files({'name': 'routing-only.wpd', 'mimeType': 'application/octet-stream', 'buffer': b'\xffWPCrouting-only'})
                 expect(page.get_by_role('heading', name=t('Office zu PDF'), exact=True)).to_be_visible()
-                expect(label('Verarbeitung')).to_have_value('server')
-                assert label('Verarbeitung').locator('option').all_text_contents() == [t('Eigener Dokumentenserver')]
+                expect(label('Verarbeitung')).to_have_count(0)
+                expect(page.get_by_text(t('Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.'))).to_be_visible()
                 overflow()
                 assert not errors, errors
                 reports.append({'browser': engine, 'language': 'en' if en else 'de', 'touch_emulation': en, 'status': 'passed'})

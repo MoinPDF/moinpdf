@@ -11,3 +11,14 @@
 .paragraph-object-list span {
   overflow-wrap: anywhere;
 }
+
+.advanced-table td.table-cell-review input {
+  background: #fff1ba;
+  color: #292b22;
+  border-color: #bc9342;
+}
+.dark .advanced-table td.table-cell-review input {
+  background: #504323;
+  color: #fff4cf;
+  border-color: #b79a54;
+}

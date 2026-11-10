@@ -109,8 +109,7 @@ export const tools = [
   {
     id: 'pdf-comic',
     title: 'PDF zu Comicarchiv',
-    description:
-      'PDF-Seiten als CBZ mit JPEG- oder PNG-Bildern exportieren; CBR mit optionalem Serverkonverter.',
+    description: 'PDF-Seiten als Comicarchiv mit JPEG- oder PNG-Bildern exportieren.',
     icon: Images,
     group: 1,
     action: 'Comicarchiv erstellen',
@@ -629,8 +628,7 @@ export const tools = [
   {
     id: 'pdf-epub',
     title: 'PDF zu E-Book',
-    description:
-      'Auslesbaren Text als EPUB oder über den eigenen Server als AZW3 für Kindle exportieren.',
+    description: 'Auslesbaren Text als EPUB oder AZW3 für Kindle exportieren.',
     icon: BookOpen,
     group: 1,
     action: 'EPUB erstellen',
@@ -650,7 +648,7 @@ export const tools = [
     id: 'pdf-powerpoint',
     title: 'PDF zu PowerPoint',
     description:
-      'PDF-Seiten als PPTX-Folienbilder oder bearbeitbare Textobjekte exportieren; ODP über den eigenen Server.',
+      'PDF-Seiten als PPTX oder ODP mit Folienbildern oder bearbeitbaren Textobjekten exportieren.',
     icon: FileImage,
     group: 1,
     action: 'PowerPoint-Datei erstellen',
@@ -770,8 +768,7 @@ export const tools = [
   {
     id: 'pdf-word',
     title: 'PDF zu Word',
-    description:
-      'Eine bearbeitbare DOCX-Datei erstellen; RTF und ODT über den eigenen Server exportieren.',
+    description: 'Eine bearbeitbare DOCX-, RTF- oder ODT-Datei erstellen.',
     icon: FilePenLine,
     group: 1,
     action: 'Word-Datei erstellen',
@@ -930,7 +927,7 @@ export const tools = [
     id: 'office-pdf',
     title: 'Office zu PDF',
     description:
-      'Office-Dateien als PDF speichern; WordPerfect, Microsoft Works und ODG über den eigenen Server.',
+      'Office-Dateien als PDF speichern, einschließlich WordPerfect, Microsoft Works und ODG.',
     icon: FileInput,
     group: 1,
     action: 'PDF erstellen',

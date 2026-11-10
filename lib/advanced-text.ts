@@ -77,6 +77,8 @@ export async function textTargets(
       .map((w, i) => ({
         id: `ocr-${i}`,
         text: w.text,
+        confidence: w.confidence,
+        origin: 'ocr' as const,
         x: w.bbox.x0 / canvas.width,
         y: w.bbox.y0 / canvas.height,
         w: (w.bbox.x1 - w.bbox.x0) / canvas.width,

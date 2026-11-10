@@ -45,32 +45,11 @@ function candidate(
   const values = extractField(pages, { id: 'candidate', label: aliases[0], aliases, kind });
   return new Set(values.map((v) => v.value)).size === 1 ? values[0]?.value || '' : '';
 }
-export function ServerConnection({
-  base,
-  token,
-  setBase,
-  setToken,
-}: {
-  base: string;
-  token: string;
-  setBase: (s: string) => void;
-  setToken: (s: string) => void;
-}) {
-  return integratedDocumentServer ? (
-    <p className="fine-note">
-      {ui('Die Prüfung läuft auf dem Dokumentenserver dieser Installation.')}
+export function ProcessingAvailability() {
+  return integratedDocumentServer ? null : (
+    <p className="notice" role="status">
+      {ui('Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.')}
     </p>
-  ) : (
-    <details>
-      <summary>{ui('Eigenen Dokumentenserver verbinden')}</summary>
-      <Text label="Serveradresse" value={base} onChange={setBase} />
-      <Text label="API-Schlüssel" value={token} onChange={setToken} type="password" />
-      <p className="fine-note">
-        {ui(
-          'Erst der gestartete Serverauftrag überträgt die ausgewählten Daten an diese Adresse. Der Schlüssel wird nicht gespeichert.',
-        )}
-      </p>
-    </details>
   );
 }
 export function PortfolioPanel({
@@ -172,8 +151,8 @@ export function InvoiceCreatePanel({ source, sources, busy, run }: PanelProps) {
   const [draft, setDraft] = useState<InvoiceDraft>(blankInvoice),
     [profile, setProfile] = useState<'xrechnung' | 'zugferd'>('xrechnung'),
     [reviewed, setReviewed] = useState(false),
-    [base, setBase] = useState(integratedDocumentServer || ''),
-    [token, setToken] = useState(''),
+    [base] = useState(integratedDocumentServer || ''),
+    [token] = useState(''),
     [focus, setFocus] = useState<EvidenceRef>();
   const change = (next: InvoiceDraft) => {
     setDraft(next);
@@ -397,7 +376,7 @@ export function InvoiceCreatePanel({ source, sources, busy, run }: PanelProps) {
           value={reviewed}
           onChange={setReviewed}
         />
-        <ServerConnection base={base} token={token} setBase={setBase} setToken={setToken} />
+        <ProcessingAvailability />
         <Button
           disabled={busy || !reviewed || !base || (!integratedDocumentServer && !token)}
           onClick={() =>

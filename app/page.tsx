@@ -289,8 +289,7 @@ export default function Home() {
   );
 }
 function StartupEntrance() {
-  const { language } = useLanguage();
-  return <StartupAnimation language={language} />;
+  return <StartupAnimation />;
 }
 
 function WorkspaceShell() {

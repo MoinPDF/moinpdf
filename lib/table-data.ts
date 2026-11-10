@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import type { Rect } from './studio-engine';
+import type { TableMerge } from './table-layout';
 import type { TextTarget } from './editor-model';
 
 export function parseDelimited(input: string, delimiter?: string): string[][] {
@@ -81,6 +82,7 @@ const col = (index: number) => {
 };
 export type ColumnType = 'auto' | 'text' | 'number' | 'date';
 export type TableExportOptions = {
+  merges?: TableMerge[];
   columns?: ColumnType[];
   locale?: 'de' | 'en';
   headerRows?: number;
@@ -164,6 +166,21 @@ export async function makeXlsx(
   sheetName = 'Tabelle',
   options: TableExportOptions = {},
 ) {
+  const merges = (options.merges || []).filter(
+    (m) =>
+      Number.isInteger(m.row) &&
+      Number.isInteger(m.column) &&
+      Number.isInteger(m.columns) &&
+      m.row >= 0 &&
+      m.row < rows.length &&
+      m.column >= 0 &&
+      m.columns > 1 &&
+      m.column + m.columns <= (rows[m.row]?.length || 0) &&
+      rows[m.row].slice(m.column + 1, m.column + m.columns).every((v) => !v.trim()),
+  );
+  const mergeXml = merges.length
+    ? `<mergeCells count="${merges.length}">${merges.map((m) => `<mergeCell ref="${col(m.column)}${m.row + 1}:${col(m.column + m.columns - 1)}${m.row + 1}"/>`).join('')}</mergeCells>`
+    : '';
   const zip = new JSZip(),
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
   zip.file(
@@ -209,7 +226,7 @@ export async function makeXlsx(
             })
             .join('')}</row>`,
       )
-      .join('')}</sheetData></worksheet>`,
+      .join('')}</sheetData>${mergeXml}</worksheet>`,
   );
   // Explicit styles keep numeric/date semantics in Excel and LibreOffice.
   zip.file(

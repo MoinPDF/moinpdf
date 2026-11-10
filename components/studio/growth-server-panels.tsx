@@ -13,7 +13,7 @@ import {
   RectFields,
   type PanelProps,
 } from './advanced-shared';
-import { ServerConnection } from './growth-panels';
+import { ProcessingAvailability } from './growth-panels';
 import { integratedDocumentServer, runServerJob } from '@/lib/document-server';
 import { pdfBlob } from '@/lib/pdf-engine';
 import type { Rect } from '@/lib/studio-engine';
@@ -22,8 +22,8 @@ import { groupWords } from '@/lib/evidence-model';
 type HandLine = { page: number; rect: Rect; text: string; checked: boolean };
 export function HandwritingPanel({ source, busy, run }: PanelProps) {
   useLanguage();
-  const [base, setBase] = useState(integratedDocumentServer || ''),
-    [token, setToken] = useState(''),
+  const [base] = useState(integratedDocumentServer || ''),
+    [token] = useState(''),
     [page, setPage] = useState(0),
     [rect, setRect] = useState<Rect>({ x: 0.1, y: 0.1, w: 0.6, h: 0.06 }),
     [lines, setLines] = useState<HandLine[]>([]);
@@ -33,10 +33,10 @@ export function HandwritingPanel({ source, busy, run }: PanelProps) {
         <h2>{ui('Handschrift zeilenweise erkennen')}</h2>
         <p>
           {ui(
-            'Eine moderne deutsche Handschriftzeile markieren. Erkennung läuft auf dem eigenen Dokumentenserver. Historische Schrift, vollständige Seiten und mehrere Zeilen in einem Bereich werden nicht unterstützt.',
+            'Eine moderne deutsche Handschriftzeile markieren. Historische Schrift, vollständige Seiten und mehrere Zeilen in einem Bereich werden nicht unterstützt.',
           )}
         </p>
-        <ServerConnection base={base} token={token} setBase={setBase} setToken={setToken} />
+        <ProcessingAvailability />
         <RectFields rect={rect} onChange={setRect} />
         <Button
           disabled={busy || !base || (!integratedDocumentServer && !token) || lines.length >= 50}
@@ -161,8 +161,8 @@ export function HandwritingPanel({ source, busy, run }: PanelProps) {
 }
 export function PdfxPanel({ source, busy, run }: PanelProps) {
   useLanguage();
-  const [base, setBase] = useState(integratedDocumentServer || ''),
-    [token, setToken] = useState(''),
+  const [base] = useState(integratedDocumentServer || ''),
+    [token] = useState(''),
     [icc, setIcc] = useState<File>(),
     [trim, setTrim] = useState(0),
     [allow, setAllow] = useState(false),
@@ -175,7 +175,7 @@ export function PdfxPanel({ source, busy, run }: PanelProps) {
           'PDF/X-3:2002 mit eingebettetem CMYK-Profil und technischen Teilprüfungen. Keine vollständige ISO-Konformitätsprüfung. Die Druckerei muss Profil, Farben und Beschnitt freigeben.',
         )}
       </p>
-      <ServerConnection base={base} token={token} setBase={setBase} setToken={setToken} />
+      <ProcessingAvailability />
       <Field label="ICC-Druckerprofil (optional)">
         <input
           type="file"
