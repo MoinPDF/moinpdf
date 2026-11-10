@@ -1,27 +1,27 @@
 /* One distinct palette per category, shared by filters, cards and search results. */
 .moinpdf-shell {
-  --tool-check-ink: #69767d;
-  --tool-check-soft: #e6ebed;
-  --tool-convert-ink: #397c7a;
-  --tool-convert-soft: #dfefec;
-  --tool-pages-ink: #7a7165;
-  --tool-pages-soft: #eeeae4;
-  --tool-edit-ink: #547a99;
-  --tool-edit-soft: #e2ebf2;
-  --tool-batch-ink: #617d69;
-  --tool-batch-soft: #e4ece6;
+  --tool-check-ink: #5b6878;
+  --tool-check-soft: #e7ebef;
+  --tool-convert-ink: #277a77;
+  --tool-convert-soft: #d7eee8;
+  --tool-pages-ink: #7c6a59;
+  --tool-pages-soft: #efe9e3;
+  --tool-edit-ink: #3d709e;
+  --tool-edit-soft: #deeafb;
+  --tool-batch-ink: #5a784e;
+  --tool-batch-soft: #e4eedb;
 }
 .dark .moinpdf-shell {
-  --tool-check-ink: #b0bec5;
-  --tool-check-soft: #343e44;
-  --tool-convert-ink: #96c7c3;
-  --tool-convert-soft: #2d4140;
-  --tool-pages-ink: #c4bcaf;
-  --tool-pages-soft: #423e37;
-  --tool-edit-ink: #a6c2d7;
-  --tool-edit-soft: #303e4b;
-  --tool-batch-ink: #b2c8b8;
-  --tool-batch-soft: #354239;
+  --tool-check-ink: #c2c9d0;
+  --tool-check-soft: #41464c;
+  --tool-convert-ink: #89cdcb;
+  --tool-convert-soft: #244b4a;
+  --tool-pages-ink: #cec2b5;
+  --tool-pages-soft: #4b4540;
+  --tool-edit-ink: #a6c5ec;
+  --tool-edit-soft: #2c4060;
+  --tool-batch-ink: #b3cba1;
+  --tool-batch-soft: #3c4c37;
 }
 .moinpdf-shell [data-tool-tone='quick'] {
   --tool-ink: var(--harbor-light-ink);

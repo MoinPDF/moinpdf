@@ -163,7 +163,7 @@
 }
 .moinpdf-shell .tool-mosaic-copy small {
   display: block;
-  color: var(--ui-copy);
+  color: color-mix(in srgb, var(--ui-copy) 85%, var(--ui-heading));
   font-size: 13px;
   line-height: 1.55;
   overflow-wrap: break-word;
