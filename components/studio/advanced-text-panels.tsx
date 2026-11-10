@@ -454,7 +454,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               'Führende Nullen, lange Kennungen und Formeln bleiben Text. Nicht eindeutig erkennbare Werte werden unverändert übernommen.',
             )}
           </p>
-          <div className="advanced-grid">
+          <div className="advanced-grid table-source-grid">
             <div>
               <p className="fine-note">
                 {ui(

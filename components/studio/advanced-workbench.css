@@ -22,3 +22,19 @@
   color: #fff4cf;
   border-color: #b79a54;
 }
+
+.advanced-grid.table-source-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-width: 0;
+}
+.table-source-grid > * {
+  min-width: 0;
+}
+.table-source-grid .advanced-table-wrap {
+  max-width: 100%;
+}
+@media (max-width: 820px) {
+  .advanced-grid.table-source-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
