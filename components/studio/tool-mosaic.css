@@ -69,8 +69,8 @@
 }
 .moinpdf-shell.moinpdf-shell .mosaic-category[data-tool-tone]:where(:not([aria-pressed='true'])) {
   color: var(--ui-ink);
-  background: color-mix(in srgb, var(--tool-soft) 62%, var(--ui-surface));
-  border-color: color-mix(in srgb, var(--tool-ink) 20%, var(--ui-line));
+  background: color-mix(in srgb, var(--tool-soft) 75%, var(--ui-surface));
+  border-color: color-mix(in srgb, var(--tool-ink) 30%, var(--ui-line));
 }
 .moinpdf-shell.moinpdf-shell .mosaic-category[data-tool-tone] > svg {
   color: var(--tool-ink);
@@ -123,22 +123,6 @@
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
-}
-.moinpdf-shell .tool-mosaic-card[data-tool-id='merge'] {
-  --mosaic-ink: var(--tool-edit-ink);
-  --mosaic-soft: var(--tool-edit-soft);
-}
-.moinpdf-shell .tool-mosaic-card[data-tool-id='pdf-word'] {
-  --mosaic-ink: var(--tool-batch-ink);
-  --mosaic-soft: var(--tool-batch-soft);
-}
-.moinpdf-shell .tool-mosaic-card[data-tool-id='ocr'] {
-  --mosaic-ink: var(--tool-pages-ink);
-  --mosaic-soft: var(--tool-pages-soft);
-}
-.moinpdf-shell .tool-mosaic-card[data-tool-id='organize'] {
-  --mosaic-ink: var(--tool-convert-ink);
-  --mosaic-soft: var(--tool-convert-soft);
 }
 .moinpdf-shell .tool-mosaic-art {
   display: flex;
@@ -246,11 +230,11 @@
   min-height: 44px;
   margin: 4px 0 0;
 }
-/* Preserve the original green tool interaction palette, even over tinted cards. */
+/* Interaction feedback keeps the card's category color visible. */
 @media (hover: hover) and (pointer: fine) {
   .moinpdf-shell .tool-mosaic-card:hover:not(:disabled) {
     border-color: var(--harbor-light);
-    background: linear-gradient(145deg, var(--harbor-panel), var(--harbor-tile-end));
+    background: color-mix(in srgb, var(--mosaic-ink) 12%, var(--mosaic-soft));
     box-shadow:
       inset 0 1px 0 var(--harbor-edge-highlight),
       0 0 0 1px var(--harbor-light-line),
@@ -259,7 +243,7 @@
 }
 .moinpdf-shell .tool-mosaic-card:active:not(:disabled) {
   border-color: var(--harbor-light);
-  background: linear-gradient(145deg, var(--harbor-panel), var(--harbor-tile-end));
+  background: color-mix(in srgb, var(--mosaic-ink) 12%, var(--mosaic-soft));
 }
 .moinpdf-shell .tool-mosaic-card:focus-visible {
   outline: 2px solid var(--harbor-light-ink);

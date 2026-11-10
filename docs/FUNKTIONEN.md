@@ -1,5 +1,9 @@
 # Funktionen und Grenzen
 
+## Farben der Werkzeugkategorien
+
+Kategorien sind in beiden Designs eindeutig zugeordnet: Prüfen Korallrot, Umwandeln Türkis, Seiten Gelb, Bearbeiten Hellblau und Stapel Violett. Der Schnellzugriff ist Grün; seine Werkzeugkarten behalten jeweils die Farbe ihrer eigenen Kategorie. Dieselbe Zuordnung gilt auf der Startseite, unter „Alle Werkzeuge“ und für Suchsymbole. Namen und Symbole bleiben zusätzlich sichtbar.
+
 ## Formate und Werkzeuge in 0.31.0
 
 Der Katalog enthält 133 Werkzeuge. Neue Formate ergänzen vorhandene Konverter; sechs eigenständige Werkzeuge kommen hinzu.
@@ -63,7 +67,7 @@ Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF 
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.31.0**
+**Aktuelle Grenzen aus der Implementierung · 0.31.2**
 
 | Funktion | Wert |
 | --- | --- |

@@ -4,6 +4,11 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.31.2 — 2026-11-10
+
+- Each tool category has its own color: Check coral red, Convert turquoise, Pages yellow, Edit light blue and Batch purple; Quick access stays green.
+- Category buttons, tool cards and search icons share the same palette in light and dark themes. Individual card color overrides are removed, and category colors remain visible on hover and press.
+
 ## 0.31.1 — 2026-11-09
 
 - E-book import preserves SVG cover images in EPUB, MOBI and AZW3 after sanitization. A renamed XML reference could previously produce a white cover page; external image sources remain blocked.

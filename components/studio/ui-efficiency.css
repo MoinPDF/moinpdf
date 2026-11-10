@@ -39,12 +39,6 @@
   flex-direction: row;
   gap: 16px;
   align-items: center;
-  background: var(--ui-surface);
-}
-.moinpdf-shell.moinpdf-shell
-  .tool-mosaic-grid[data-mosaic-kind='quick']
-  > .tool-mosaic-card[data-tool-id='edit-text'] {
-  background: linear-gradient(130deg, var(--ui-surface), var(--harbor-light-soft));
 }
 .moinpdf-shell.moinpdf-shell .tool-mosaic-grid[data-mosaic-kind='quick'] .tool-mosaic-art {
   width: 44px;
