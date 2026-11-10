@@ -10,9 +10,9 @@ Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvor
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 9. November 2026 · Version 0.31.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 10. November 2026 · Version 0.31.4. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
-Der Hintergrund im Light Mode verwendet auf Desktop, Tablet und Smartphone ein dunkleres Mintgrün. Die grünen Verläufe liegen auf derselben dunkleren Grundfläche, sodass helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
+Der Hintergrund im Light Mode verläuft auf Desktop, Tablet und Smartphone von Grün über Türkis zu Blau. Der sattere Verlauf lässt helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
 
 Beim Öffnen oder Neuladen der App läuft einmalig eine 3,75 Sekunden lange Animation des Original-MoinPDF-Logos. Eine türkisgrüne Welle legt den Schriftzug frei, sanfte Wasserringe breiten sich aus und ein Lichtschein mit kurzen Glanzpunkten schließt die Animation ab. Der Schriftzug mit „Papierkram. Läuft.“ bleibt anschließend kurz klar sichtbar. Das Seemann-Video entfällt vollständig. Ein leises Wellenrauschen und zwei Glanztöne begleiten die Animation. Der Tonschalter schaltet den Effekt ein oder aus und merkt die Auswahl. Blockiert der Browser die automatische Wiedergabe, aktiviert ein Antippen des Tonschalters die verbleibenden Töne; später wird nichts nachgespielt. Der Arbeitsbereich lädt währenddessen weiter. Werkzeug- und Theme-Wechsel starten die Animation nicht erneut. Antippen außerhalb des Tonschalters, Escape oder Tab überspringen sie und stoppen den Ton. Bei reduzierter Bewegung entfallen Animation und Ton.
 

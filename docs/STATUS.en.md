@@ -10,9 +10,9 @@ Form helper and receipt collection on A4 are integrated browser tools. Profile s
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 9 November 2026 · Version 0.31.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 10 November 2026 · Version 0.31.4. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
-The light-mode background uses a darker mint green on desktop, tablet and mobile. Its soft green gradients share the same darker base, making light cards, input fields and tool panels stand out more clearly.
+The light-mode background transitions from green through turquoise to blue on desktop, tablet and mobile. The richer gradient makes light cards, input fields and tool panels stand out more clearly.
 
 Opening or reloading the app plays a single 3.75-second animation of the original MoinPDF logo. A turquoise-green wave reveals the lettering, gentle water ripples spread outward, and a sweep of light with brief sparkles completes the animation. The lettering and its tagline remain clearly visible for a short hold. The sailor video is removed entirely. A quiet wave whoosh and two chimes accompany the animation. The sound control enables or mutes the effect and remembers the preference. If the browser blocks autoplay, tapping the sound control enables the remaining sounds without replaying earlier cues. The workspace continues loading in parallel. Switching tools or themes does not replay the entrance. Tapping outside the sound control, Escape or Tab skips it and stops the audio. Reduced motion omits both animation and sound.
 

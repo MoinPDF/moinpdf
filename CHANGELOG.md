@@ -9,6 +9,10 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.31.4 — 2026-11-10
+
+- Der Hintergrund im Light Mode erhält auf Desktop, Tablet und Smartphone einen durchgehenden Grün-Türkis-Blau-Verlauf für einen deutlicheren Kontrast zu den hellen Karten und Eingabefeldern.
+
 ## 0.31.3 — 2026-11-10
 
 - „Prüfen“ erhält ein sanftes Gelb. Kategorieauswahl, Werkzeugkarten und Suchsymbole verwenden denselben warmen Farbton, abgestimmt auf das helle und dunkle Design.

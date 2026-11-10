@@ -2,53 +2,34 @@
 .moinpdf-shell.moinpdf-shell {
   --harbor-category-shadow: 0 2px 6px #163c310a, 0 5px 12px -8px #163c311f;
 }
-/* Give the banner soft green margins while keeping the central workspace light. */
+/* A continuous green-to-blue canvas separates the light cards on every screen. */
 :root:not(.dark) .moinpdf-shell.moinpdf-shell {
-  --harbor-side-strength: 18%;
-  --harbor-side-wash: 5%;
+  background-color: #80c3b8;
   background-image:
-    radial-gradient(
-      ellipse clamp(280px, 44vw, 900px) 680px at 0 360px,
-      color-mix(in srgb, var(--harbor-light) var(--harbor-side-strength), transparent),
-      transparent 100%
-    ),
-    radial-gradient(
-      ellipse clamp(280px, 44vw, 900px) 720px at 100% 420px,
-      color-mix(in srgb, var(--harbor-action-end) var(--harbor-side-strength), transparent),
-      transparent 100%
-    ),
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--harbor-light) var(--harbor-side-wash), transparent),
-      transparent 35% 65%,
-      color-mix(in srgb, var(--harbor-action-end) var(--harbor-side-wash), transparent)
-    );
+    radial-gradient(ellipse at 0 0, #b1e99b70, transparent 55%),
+    linear-gradient(115deg, #85ce9f 0%, #72c4b4 38%, #7abacd 72%, #7aaece 100%);
+}
+/* Small labels placed directly on the gradient need the full ink contrast. */
+:root:not(.dark)
+  .moinpdf-shell
+  :is(
+    .moinpdf-legal-footer,
+    .chooser-header,
+    .chooser-tools-heading,
+    .chooser-section-heading,
+    .workspace-context,
+    .workbench-header,
+    .studio-topbar
+  ) {
+  --ui-copy: var(--ui-ink);
+  --ui-muted: var(--ui-ink);
+  --muted-foreground: var(--ui-ink);
 }
 .dark .moinpdf-shell.moinpdf-shell {
   --harbor-category-shadow: 0 2px 6px #0003, 0 5px 12px -8px #0006;
   background-image: radial-gradient(ellipse at 50% 12%, #29d98008, transparent 52%);
 }
-/* A green base keeps the desktop canvas saturated between the soft light pools. */
 @media (min-width: 1001px) {
-  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
-    background-color: var(--harbor-page);
-    background-image:
-      radial-gradient(
-        ellipse 44vw 60vh at 0% 10%,
-        color-mix(in srgb, var(--harbor-light) 20%, transparent),
-        transparent 100%
-      ),
-      radial-gradient(
-        ellipse 44vw 62vh at 100% 70%,
-        color-mix(in srgb, var(--harbor-action-end) 30%, transparent),
-        transparent 100%
-      ),
-      radial-gradient(
-        ellipse 38vw 42vh at 0% 104%,
-        color-mix(in srgb, var(--brand-green) 20%, transparent),
-        transparent 100%
-      );
-  }
   /* Opaque light surfaces avoid stale blur/compositing tiles around navigation. */
   :root:not(.dark) .moinpdf-shell .app-toolbar,
   :root:not(.dark) .moinpdf-shell .chooser-search-dock {
@@ -314,10 +295,6 @@
   }
 }
 @media (max-width: 1000px) {
-  :root:not(.dark) .moinpdf-shell.moinpdf-shell {
-    --harbor-side-strength: 10%;
-    --harbor-side-wash: 3%;
-  }
   .harbor-tool-card {
     flex-direction: column;
     justify-content: center;
