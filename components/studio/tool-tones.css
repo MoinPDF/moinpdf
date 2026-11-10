@@ -1,7 +1,7 @@
 /* One distinct palette per category, shared by filters, cards and search results. */
 .moinpdf-shell {
-  --tool-check-ink: #5b6878;
-  --tool-check-soft: #e7ebef;
+  --tool-check-ink: #88713a;
+  --tool-check-soft: #f6efd5;
   --tool-convert-ink: #277a77;
   --tool-convert-soft: #d7eee8;
   --tool-pages-ink: #7c6a59;
@@ -12,8 +12,8 @@
   --tool-batch-soft: #e4eedb;
 }
 .dark .moinpdf-shell {
-  --tool-check-ink: #c2c9d0;
-  --tool-check-soft: #41464c;
+  --tool-check-ink: #e2d49d;
+  --tool-check-soft: #4d472e;
   --tool-convert-ink: #89cdcb;
   --tool-convert-soft: #244b4a;
   --tool-pages-ink: #cec2b5;
