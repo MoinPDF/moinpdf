@@ -1,5 +1,9 @@
 # Features and limitations
 
+## Tool category colors
+
+Categories use distinct colors in both themes: Check cool gray, Convert muted teal, Pages warm stone gray, Edit smoky blue and Batch sage green. Quick access is green; its tool cards retain their own category colors. The same mapping applies on the home page, in All tools and to search icons. Names and icons remain visible alongside the colors.
+
 ## Formats and tools in 0.31.0
 
 The catalogue contains 133 tools. New formats extend existing converters; six standalone tools are added.
@@ -63,7 +67,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.31.0**
+**Current implementation limits · 0.31.2**
 
 | Capability | Value |
 | --- | --- |

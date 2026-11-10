@@ -9,6 +9,11 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.31.2 — 2026-11-10
+
+- Jede Werkzeugkategorie erhält eine eigene Farbe: Prüfen kühles Grau, Umwandeln gedecktes Petrol, Seiten warmes Steingrau, Bearbeiten Rauchblau und Stapel Salbeigrün; der Schnellzugriff bleibt Grün.
+- Kategorie-Schaltflächen, Werkzeugkarten und Suchsymbole verwenden im hellen und dunklen Design dieselbe Zuordnung. Abweichende Sonderfarben einzelner Karten sind entfernt; die Kategorie bleibt auch beim Überfahren und Drücken sichtbar.
+
 ## 0.31.1 — 2026-11-09
 
 - E-Book-Import: SVG-Titelbilder in EPUB, MOBI und AZW3 bleiben nach der Sicherheitsbereinigung sichtbar. Eine umbenannte XML-Referenz konnte zuvor ein weißes Titelblatt erzeugen; externe Bildquellen bleiben gesperrt.

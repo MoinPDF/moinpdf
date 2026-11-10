@@ -1,27 +1,27 @@
-/* Quiet category accents, shared by filters, tool cards and search results. */
+/* One distinct palette per category, shared by filters, cards and search results. */
 .moinpdf-shell {
-  --tool-check-ink: #58734c;
-  --tool-check-soft: #eaf2e4;
-  --tool-convert-ink: #277a7c;
-  --tool-convert-soft: #e2f2f1;
-  --tool-pages-ink: #4b7193;
-  --tool-pages-soft: #e8eef7;
-  --tool-edit-ink: #367f61;
-  --tool-edit-soft: #e3f3e9;
-  --tool-batch-ink: #487d99;
-  --tool-batch-soft: #e6f3fb;
+  --tool-check-ink: #5b6878;
+  --tool-check-soft: #e7ebef;
+  --tool-convert-ink: #277a77;
+  --tool-convert-soft: #d7eee8;
+  --tool-pages-ink: #7c6a59;
+  --tool-pages-soft: #efe9e3;
+  --tool-edit-ink: #3d709e;
+  --tool-edit-soft: #deeafb;
+  --tool-batch-ink: #5a784e;
+  --tool-batch-soft: #e4eedb;
 }
 .dark .moinpdf-shell {
-  --tool-check-ink: #b4c9a1;
-  --tool-check-soft: #354334;
-  --tool-convert-ink: #8bcfcd;
-  --tool-convert-soft: #294445;
-  --tool-pages-ink: #a5bedf;
-  --tool-pages-soft: #303e51;
-  --tool-edit-ink: #9bd4b5;
-  --tool-edit-soft: #2c4439;
-  --tool-batch-ink: #abd9f2;
-  --tool-batch-soft: #2d4656;
+  --tool-check-ink: #c2c9d0;
+  --tool-check-soft: #41464c;
+  --tool-convert-ink: #89cdcb;
+  --tool-convert-soft: #244b4a;
+  --tool-pages-ink: #cec2b5;
+  --tool-pages-soft: #4b4540;
+  --tool-edit-ink: #a6c5ec;
+  --tool-edit-soft: #2c4060;
+  --tool-batch-ink: #b3cba1;
+  --tool-batch-soft: #3c4c37;
 }
 .moinpdf-shell [data-tool-tone='quick'] {
   --tool-ink: var(--harbor-light-ink);
@@ -56,8 +56,16 @@
   border-color: color-mix(in srgb, var(--tool-ink) 18%, var(--ui-line));
 }
 .moinpdf-shell.moinpdf-shell :is(.harbor-categories button, .chooser-category)[data-tool-tone] {
-  background: color-mix(in srgb, var(--tool-soft) 22%, var(--ui-surface));
-  border-color: color-mix(in srgb, var(--tool-ink) 16%, var(--ui-line));
+  background: color-mix(in srgb, var(--tool-soft) 75%, var(--ui-surface));
+  border-color: color-mix(in srgb, var(--tool-ink) 30%, var(--ui-line));
+}
+.moinpdf-shell.moinpdf-shell :is(.harbor-tool-card, .chooser-tool)[data-tool-tone] {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--tool-soft) 74%, var(--ui-surface)),
+    color-mix(in srgb, var(--tool-soft) 91%, var(--ui-surface))
+  );
+  border-color: color-mix(in srgb, var(--tool-ink) 30%, var(--ui-line));
 }
 .moinpdf-shell.moinpdf-shell .harbor-categories button[data-tool-tone] > svg {
   color: var(--tool-ink);
@@ -65,15 +73,15 @@
 .moinpdf-shell.moinpdf-shell
   :is(.harbor-categories button, .chooser-category)[data-tool-tone][aria-pressed='true'] {
   color: color-mix(in srgb, var(--tool-ink) 80%, var(--ui-heading));
-  background: color-mix(in srgb, var(--tool-soft) 75%, var(--ui-surface));
-  border-color: color-mix(in srgb, var(--tool-ink) 40%, var(--ui-line));
+  background: color-mix(in srgb, var(--tool-ink) 18%, var(--tool-soft));
+  border-color: color-mix(in srgb, var(--tool-ink) 80%, var(--ui-line));
 }
 @media (hover: hover) and (pointer: fine) {
   .moinpdf-shell.moinpdf-shell
     :is(.harbor-categories button, .chooser-category)[data-tool-tone]:hover:not(:disabled):not(
       [aria-pressed='true']
     ) {
-    background: color-mix(in srgb, var(--tool-soft) 55%, var(--ui-surface));
-    border-color: color-mix(in srgb, var(--tool-ink) 30%, var(--ui-line));
+    background: var(--tool-soft);
+    border-color: color-mix(in srgb, var(--tool-ink) 65%, var(--ui-line));
   }
 }
