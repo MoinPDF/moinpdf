@@ -41,3 +41,8 @@ assert(!(await changed.file('xl/worksheets/sheet1.xml').async('string')).include
 for(const [key,value] of Object.entries({cellSources:first.cells,rowPages:[0,0,0],analysedPages:[0],merges:headings.merges}))
  assert(toolDraftSchema.safeParse({['TablePanel.'+key+':fixture']:value}).success,`Persist ${key}`);
 console.log('PASS: automatic gutters, shifted pages, conservative repeated headers, multiline cells, uncertainty, source rectangles, XLSX merges and numeric values, edited merge safety, project restoration.');
+
+const {englishTranslator}=await import('./translation-test-utils.mjs');
+const translate=await englishTranslator();
+assert.equal(`${translate('Fundstelle')} 1 · ${translate('Seite')} 1`,'match 1 · Page 1');
+assert.equal(translate('Zellfundstelle'),'Cell source');

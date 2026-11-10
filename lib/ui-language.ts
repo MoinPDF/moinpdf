@@ -33,7 +33,7 @@ export const english: Record<string, string> = {
   'Eine Zelle auswählen, um ihre Fundstelle zu sehen. Gelb markierte Werte benötigen besondere Kontrolle.':
     'Select a cell to see its source location. Check values highlighted in yellow carefully.',
   'Fundstelle prüfen': 'Check source location',
-  Fundstelle: 'Source location',
+  Zellfundstelle: 'Cell source',
   'Zu viele Textstellen im Tabellenbereich. Bitte den Bereich verkleinern.':
     'Too many text items in the table area. Please select a smaller area.',
   'Die erkannten Spalten unterscheiden sich zwischen den Seiten. Bitte Spaltengrenzen manuell festlegen oder Seiten einzeln übernehmen.':

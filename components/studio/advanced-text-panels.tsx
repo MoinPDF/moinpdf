@@ -485,7 +485,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               <PageStage
                 source={source}
                 page={focus.page}
-                rects={[{ ...focus.rect, label: ui('Fundstelle') }]}
+                rects={[{ ...focus.rect, label: ui('Zellfundstelle') }]}
               />
             )}
           </div>
