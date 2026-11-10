@@ -6,7 +6,7 @@ export function browserOfficeUnavailable(): string | null {
   if (typeof window === 'undefined') return null;
   if (!globalThis.isSecureContext) return 'Lokales Office benötigt HTTPS oder localhost.';
   if (!globalThis.crossOriginIsolated || typeof SharedArrayBuffer === 'undefined')
-    return 'Lokales Office benötigt einen Browser mit isoliertem Arbeitsspeicher. Bitte diese Seite direkt öffnen oder den eigenen Dokumentenserver wählen.';
+    return 'Die Office-Umwandlung ist hier nicht verfügbar. Bitte MoinPDF direkt in einem aktuellen Browser öffnen.';
   if (typeof DecompressionStream === 'undefined')
     return 'Dieser Browser unterstützt die lokale Office-Laufzeit nicht.';
   return null;

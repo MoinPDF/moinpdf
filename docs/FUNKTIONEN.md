@@ -1,5 +1,12 @@
 # Funktionen und Grenzen
 
+## Aktuelle Erweiterungen
+
+- Tabellenübernahme erkennt wiederkehrende Spaltenabstände je Seite, bietet Zellfundstellen, markiert unsichere Werte und erhält mehrspaltige Überschriften in Excel. Nahe Fortsetzungszeilen können optional verbunden werden; manuelle Spaltengrenzen bleiben verfügbar. Bei widersprüchlichen Spaltenzahlen wird eine Korrektur verlangt.
+- Formularerkennung benennt leere Kästchen und Eingabelinien anhand eindeutiger deutscher und englischer Standardbeschriftungen, einschließlich OCR bei Scans. Der Formularhelfer übernimmt die Vorschläge zur Prüfung; bestehende Einträge bleiben erhalten. Erkennung benötigt die vollständige Installation, maximal 50 Seiten und 500 neue Felder.
+- MoinPDF wählt die passende Verarbeitung automatisch. Die Auswahl Browser/eigener Dokumentenserver und manuelle Verbindungsfelder entfallen.
+- Das Intro startet den Ton automatisch ohne Tonschalter. Browser können die automatische Audiowiedergabe weiterhin blockieren; nach Ende oder Überspringen wird kein Ton nachgeholt.
+
 ## Farben der Werkzeugkategorien
 
 Kategorien sind in beiden Designs eindeutig zugeordnet: Prüfen sanftes Gelb, Umwandeln gedecktes Petrol, Seiten warmes Steingrau, Bearbeiten Rauchblau und Stapel Salbeigrün. Der Schnellzugriff ist Grün; seine Werkzeugkarten behalten jeweils die Farbe ihrer eigenen Kategorie. Dieselbe Zuordnung gilt auf der Startseite, unter „Alle Werkzeuge“ und für Suchsymbole. Namen und Symbole bleiben zusätzlich sichtbar.
@@ -67,7 +74,7 @@ Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF 
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.31.2**
+**Aktuelle Grenzen aus der Implementierung · 0.31.4**
 
 | Funktion | Wert |
 | --- | --- |

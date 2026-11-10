@@ -1,6 +1,56 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  'Einfache Zertifikatssignatur': 'Basic certificate signature',
+  'Vorhandene Textfelder erhalten passende Vorschläge. Bei Scans können leere Felder und ihre Beschriftungen erkannt werden. Angaben lassen sich auch selbst platzieren; bestehende Einträge bleiben erhalten.':
+    'Existing text fields receive matching suggestions. Empty fields and labels can be detected in scans. You can also place values yourself; existing entries are preserved.',
+  'Erkannte Felder und Beschriftungen bitte am Original prüfen. Danach passende Angaben vorschlagen lassen.':
+    'Check detected fields and labels against the original, then request matching value suggestions.',
+
+  'Die Office-Umwandlung ist hier nicht verfügbar. Bitte MoinPDF direkt in einem aktuellen Browser öffnen.':
+    'Office conversion is unavailable here. Please open MoinPDF directly in an up-to-date browser.',
+  'CBR ist nur mit eingerichtetem RAR-Konverter verfügbar. Alternativ CBZ auswählen.':
+    'CBR requires a configured RAR converter. Alternatively, choose CBZ.',
+  'AZW3 übernimmt auslesbaren Text. Jede Seite muss Text enthalten; Bilder und Seitenlayout werden nicht übernommen.':
+    'AZW3 uses extractable text. Every page must contain text; images and page layout are not included.',
+  'Eine moderne deutsche Handschriftzeile markieren. Historische Schrift, vollständige Seiten und mehrere Zeilen in einem Bereich werden nicht unterstützt.':
+    'Select one line of modern German handwriting. Historical scripts, whole pages and multiple lines in a single region are not supported.',
+  'PDF-Seiten als Comicarchiv mit JPEG- oder PNG-Bildern exportieren.':
+    'Export PDF pages as a comic archive with JPEG or PNG images.',
+  'Auslesbaren Text als EPUB oder AZW3 für Kindle exportieren.':
+    'Export extractable text as EPUB or AZW3 for Kindle.',
+  'PDF-Seiten als PPTX oder ODP mit Folienbildern oder bearbeitbaren Textobjekten exportieren.':
+    'Export PDF pages as PPTX or ODP with slide images or editable text objects.',
+  'Eine bearbeitbare DOCX-, RTF- oder ODT-Datei erstellen.':
+    'Create an editable DOCX, RTF or ODT file.',
+  'Office-Dateien als PDF speichern, einschließlich WordPerfect, Microsoft Works und ODG.':
+    'Save Office files as PDF, including WordPerfect, Microsoft Works and ODG.',
+  'Spalten automatisch erkennen': 'Detect columns automatically',
+  'Nahe Fortsetzungszeilen zu einer Zelle verbinden':
+    'Join nearby continuation lines into one cell',
+  'Spalten werden je Seite aus wiederkehrenden Abständen erkannt. Bei abweichender Spaltenzahl manuelle Grenzen verwenden, zum Beispiel 35, 65. Markierte Zellen und verbundene Überschriften am Original prüfen.':
+    'Columns are detected from recurring gaps on each page. If column counts differ, use manual boundaries such as 35, 65. Check highlighted cells and merged headings against the original.',
+  'Eine Zelle auswählen, um ihre Fundstelle zu sehen. Gelb markierte Werte benötigen besondere Kontrolle.':
+    'Select a cell to see its source location. Check values highlighted in yellow carefully.',
+  'Fundstelle prüfen': 'Check source location',
+  Zellfundstelle: 'Cell source',
+  'Zu viele Textstellen im Tabellenbereich. Bitte den Bereich verkleinern.':
+    'Too many text items in the table area. Please select a smaller area.',
+  'Die erkannten Spalten unterscheiden sich zwischen den Seiten. Bitte Spaltengrenzen manuell festlegen oder Seiten einzeln übernehmen.':
+    'Detected column counts differ between pages. Set column boundaries manually or extract pages individually.',
+  'Maximal 100 Tabellenspalten.': 'Up to 100 table columns.',
+  'Maximal 10.000 Tabellenzeilen.': 'Up to 10,000 table rows.',
+  'Felder und Beschriftungen erkennen': 'Detect fields and labels',
+  'Formularfelder und Beschriftungen werden erkannt …': 'Detecting form fields and labels …',
+  'Die Formularerkennung hat eine unerwartete Seitenzahl geliefert.':
+    'Form detection returned an unexpected number of pages.',
+  'Layout und bearbeitbare Inhalte bitte an der Ausgabe prüfen.':
+    'Please check the layout and editable content in the output.',
+  'Beim ersten Öffnen werden zusätzliche Programmdaten geladen. Höchstens 40 MB pro Office-Datei.':
+    'Additional program data is downloaded on first use. Up to 40 MB per Office file.',
+  'Text, Tabellen und Bilder werden übernommen; komplexe Layouts können abweichen.':
+    'Text, tables and images are included; complex layouts may differ.',
+
   'Seiten ohne auslesbaren Text sind mit leerem Text enthalten. Bei Bedarf zuerst OCR ausführen.':
     'Pages without extractable text are included with empty text. Run OCR first if needed.',
   'AZW3 wird auf dem eigenen Dokumentenserver mit Calibre erstellt. Die PDF wird erst beim Start dorthin übertragen.':

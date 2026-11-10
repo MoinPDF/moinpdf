@@ -42,7 +42,7 @@ export type StartupSound = {
 /** Never queue a sound that could play after a blocked startup has disappeared. */
 export function createStartupSound(
   elapsed: () => number,
-  onActive: (active: boolean) => void,
+  onActive: (active: boolean) => void = () => {},
 ): StartupSound | null {
   const Audio =
     window.AudioContext ||
@@ -76,7 +76,7 @@ export function createStartupSound(
         context ??= new Audio({ latencyHint: 'interactive' });
         const current = context,
           request = ++generation;
-        // Calling resume synchronously also supports an explicit tap on the sound button.
+        // Request autoplay while the intro is active; a blocked request expires with it.
         void current
           .resume()
           .then(() => {

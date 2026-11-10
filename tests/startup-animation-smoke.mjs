@@ -188,23 +188,15 @@ try {
   assert.equal(starts.at(-1)[1], 1.2);
   tapped.dispose();
 
+  window.localStorage.setItem('moinpdf-startup-sound', 'off');
+  const beforeAutomatic = starts.length;
   await fresh();
-  let soundButton = document.querySelector('.moinpdf-startup-sound');
-  assert.equal(soundButton.getAttribute('aria-pressed'), 'true');
-  await act(async () => soundButton.click());
-  assert(visible(), 'Sound control does not dismiss the intro');
-  assert.equal(window.localStorage.getItem('moinpdf-startup-sound'), 'off');
-  await fresh();
-  soundButton = document.querySelector('.moinpdf-startup-sound');
-  assert.equal(soundButton.getAttribute('aria-pressed'), 'false', 'Mute preference survives reopening');
-  await act(async () => soundButton.click());
-  assert.equal(soundButton.getAttribute('aria-pressed'), 'true');
-  await act(async () => root.render(app('Open PDF', 'en')));
-  assert.equal(soundButton.getAttribute('aria-label'), 'Mute startup sound');
+  assert.equal(document.querySelector('.moinpdf-startup-sound'), null, 'No sound control is shown');
+  assert(starts.length > beforeAutomatic, 'Intro automatically attempts sound, ignoring obsolete mute preference');
   await act(async () => visible().click());
   assert.equal(contexts.at(-1).state, 'closed', 'Skipping closes the audio device immediately');
   window.localStorage.removeItem('moinpdf-startup-sound');
-  console.log('PASS: 3.75 s logo entrance, no video, original branding, parallel app mount, StrictMode, no replay, keyboard/tap skip, reduced motion, hydration, background-tab cleanup, synchronized audio, autoplay cancellation, mute preference and DE/EN sound controls.');
+  console.log('PASS: 3.75 s logo entrance, branding, StrictMode, no replay, keyboard/tap skip, reduced motion, background cleanup, automatic synchronized sound without a button, autoplay cancellation.');
 } finally {
   await act(async () => root.unmount());
   dom.window.close();

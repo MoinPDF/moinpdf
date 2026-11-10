@@ -1,4 +1,11 @@
 'use client';
+import './advanced-workbench.css';
+import {
+  analyseTableLayout,
+  combineTableLayouts,
+  type TableCellSource,
+  type TableMerge,
+} from '@/lib/table-layout';
 import { useToolDraftState } from './workspace-drafts';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from '@/components/studio/appearance';
@@ -17,13 +24,7 @@ import {
   type SplitPart,
   type RedactionHit,
 } from '@/lib/advanced-text';
-import {
-  makeXlsx,
-  csvText,
-  tableFromTargets,
-  joinTablePages,
-  type ColumnType,
-} from '@/lib/table-data';
+import { makeXlsx, csvText, type ColumnType } from '@/lib/table-data';
 import type { TextTarget } from '@/lib/editor-model';
 import type { Rect } from '@/lib/studio-engine';
 import {
@@ -198,6 +199,25 @@ export function SplitPanel({ source, busy, run }: PanelProps) {
 }
 export function TablePanel({ source, busy, run }: PanelProps) {
   useLanguage();
+  const [automatic, setAutomatic] = useToolDraftState('TablePanel.automatic:' + source.id, true);
+  const [joinWrapped, setJoinWrapped] = useToolDraftState(
+    'TablePanel.joinWrapped:' + source.id,
+    false,
+  );
+  const [cellSources, setCellSources] = useToolDraftState<TableCellSource[][]>(
+    'TablePanel.cellSources:' + source.id,
+    [],
+  );
+  const [rowPages, setRowPages] = useToolDraftState<number[]>(
+    'TablePanel.rowPages:' + source.id,
+    [],
+  );
+  const [analysedPages, setAnalysedPages] = useToolDraftState<number[]>(
+    'TablePanel.analysedPages:' + source.id,
+    [],
+  );
+  const [merges, setMerges] = useToolDraftState<TableMerge[]>('TablePanel.merges:' + source.id, []);
+  const [focus, setFocus] = useState<{ page: number; rect: Rect } | null>(null);
   const [page, setPage] = useToolDraftState('TablePanel.page:' + source.id + '', 0),
     [area, setArea] = useToolDraftState<Rect>('TablePanel.area:' + source.id + '', {
       x: 0.05,
@@ -205,10 +225,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
       w: 0.9,
       h: 0.9,
     }),
-    [boundaries, setBoundaries] = useToolDraftState(
-      'TablePanel.boundaries:' + source.id + '',
-      '35, 65',
-    ),
+    [boundaries, setBoundaries] = useToolDraftState('TablePanel.boundaries:' + source.id + '', ''),
     [ocr, setOcr] = useToolDraftState('TablePanel.ocr:' + source.id + '', false),
     [targets, setTargets] = useToolDraftState<TextTarget[][]>(
       'TablePanel.targets:' + source.id + '',
@@ -230,7 +247,11 @@ export function TablePanel({ source, busy, run }: PanelProps) {
     ),
     [tableNote, setTableNote] = useToolDraftState('TablePanel.tableNote:' + source.id + '', ''),
     [rows, setRows] = useToolDraftState<string[][]>('TablePanel.rows:' + source.id + '', []);
-  const split = (t: TextTarget[][], r = area, b = boundaries) => {
+  const split = (t: TextTarget[][], indices = analysedPages, r = area, b = boundaries) => {
+    setRows([]);
+    setCellSources([]);
+    setMerges([]);
+    setFocus(null);
     const edges = b
       .split(/[;,\s]+/)
       .filter(Boolean)
@@ -241,19 +262,23 @@ export function TablePanel({ source, busy, run }: PanelProps) {
     if (!Number.isInteger(headers) || headers < 0 || headers > 5)
       throw new Error('Bitte 0 bis 5 Kopfzeilen angeben.');
     const parts = t.map((items) =>
-      tableFromTargets(
-        items,
-        r,
-        edges.map((n) => n / 100),
-      ),
+      analyseTableLayout(items, r, {
+        boundaries: automatic ? undefined : edges.map((n) => n / 100),
+        headerRows: headers,
+        joinWrapped,
+      }),
     );
-    const combined = joinTablePages(parts, headers, repeatHeaders);
+    const combinedLayout = combineTableLayouts(parts, headers, repeatHeaders);
+    const combined = combinedLayout.rows;
     setRows(combined);
+    setCellSources(combinedLayout.cells);
+    setMerges(combinedLayout.merges);
+    setRowPages(combinedLayout.pages.map((i) => indices[i] ?? page));
     setColumnTypes((old) =>
       Array.from({ length: combined[0]?.length || 0 }, (_, i) => old[i] || 'auto'),
     );
     setTableNote(
-      `${t.length} Seiten ausgewertet; ${combined.length} Zeilen. ${parts.filter((rows) => !rows.length).length} Seiten ohne Tabellenwerte.`,
+      `${t.length} Seiten ausgewertet; ${combined.length} Zeilen. ${parts.filter((layout) => !layout.rows.length).length} Seiten ohne Tabellenwerte.`,
     );
   };
   return (
@@ -306,17 +331,35 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               setRows([]);
             }}
           />
-          <Text
-            label={ui('Spaltengrenzen ab linkem Seitenrand (%)')}
-            value={boundaries}
+          <Tick
+            label="Spalten automatisch erkennen"
+            value={automatic}
             onChange={(v) => {
-              setBoundaries(v);
+              setAutomatic(v);
               setRows([]);
             }}
           />
+          <Tick
+            label="Nahe Fortsetzungszeilen zu einer Zelle verbinden"
+            value={joinWrapped}
+            onChange={(v) => {
+              setJoinWrapped(v);
+              setRows([]);
+            }}
+          />
+          {!automatic && (
+            <Text
+              label={ui('Spaltengrenzen ab linkem Seitenrand (%)')}
+              value={boundaries}
+              onChange={(v) => {
+                setBoundaries(v);
+                setRows([]);
+              }}
+            />
+          )}
           <p className="fine-note">
             {ui(
-              'Beispiel: 35, 65 ergibt drei Spalten. Bereich und Spalten gelten für alle gewählten Seiten. Werte und Spaltentypen vor dem Export kontrollieren.',
+              'Spalten werden je Seite aus wiederkehrenden Abständen erkannt. Bei abweichender Spaltenzahl manuelle Grenzen verwenden, zum Beispiel 35, 65. Markierte Zellen und verbundene Überschriften am Original prüfen.',
             )}
           </p>
           <Button
@@ -341,7 +384,8 @@ export function TablePanel({ source, busy, run }: PanelProps) {
                   );
                 }
                 setTargets(collected);
-                split(collected);
+                setAnalysedPages(indices);
+                split(collected, indices);
                 if (!collected.some((t) => t.length))
                   throw new Error('Kein Text gefunden. Für einen Scan bitte OCR aktivieren.');
               })
@@ -411,7 +455,40 @@ export function TablePanel({ source, busy, run }: PanelProps) {
               'Führende Nullen, lange Kennungen und Formeln bleiben Text. Nicht eindeutig erkennbare Werte werden unverändert übernommen.',
             )}
           </p>
-          <EditTable rows={rows} onChange={setRows} />
+          <div className="advanced-grid table-source-grid">
+            <div>
+              <p className="fine-note">
+                {ui(
+                  'Eine Zelle auswählen, um ihre Fundstelle zu sehen. Gelb markierte Werte benötigen besondere Kontrolle.',
+                )}
+              </p>
+              <EditTable
+                rows={rows}
+                onChange={(next) => {
+                  if (next.length !== rows.length) {
+                    setCellSources([]);
+                    setMerges([]);
+                    setFocus(null);
+                  }
+                  setRows(next);
+                }}
+                cellNotes={cellSources.map((r) =>
+                  r.map((c) => (c.uncertain ? ui('Fundstelle prüfen') : '')),
+                )}
+                onFocusCell={(y, x) => {
+                  const rect = cellSources[y]?.[x]?.rect;
+                  setFocus(rect ? { page: rowPages[y] ?? page, rect } : null);
+                }}
+              />
+            </div>
+            {focus && (
+              <PageStage
+                source={source}
+                page={focus.page}
+                rects={[{ ...focus.rect, label: ui('Zellfundstelle') }]}
+              />
+            )}
+          </div>
           <div className="advanced-actions">
             <Button
               variant="outline"
@@ -426,7 +503,12 @@ export function TablePanel({ source, busy, run }: PanelProps) {
             </Button>
             <Button
               variant="outline"
-              onClick={() => setRows(rows.map((r) => r.slice(0, -1)))}
+              onClick={() => {
+                setRows(rows.map((r) => r.slice(0, -1)));
+                setMerges([]);
+                setCellSources([]);
+                setFocus(null);
+              }}
               disabled={(rows[0]?.length || 0) <= 1}
             >
               {ui('Letzte Spalte entfernen')}
@@ -442,6 +524,7 @@ export function TablePanel({ source, busy, run }: PanelProps) {
                     ),
                     locale,
                     headerRows: Number(headerRows),
+                    merges,
                   }),
                   filename: 'PDF-Tabelle.xlsx',
                   kind: 'data',

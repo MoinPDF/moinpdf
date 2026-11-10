@@ -1,5 +1,12 @@
 # Implementation status
 
+## Current improvements
+
+- Table extraction detects recurring column gaps per page, shows cell source locations, highlights uncertain values and preserves spanning headers in Excel. Nearby continuation lines can optionally be joined; manual boundaries remain available. Conflicting column counts require correction.
+- Form detection names empty boxes and input lines using unambiguous standard German and English labels, including OCR for scans. The form helper imports proposals for review while preserving existing entries. Detection requires the full installation, up to 50 pages and 500 new fields.
+- MoinPDF automatically selects suitable processing. Browser/own document server selectors and manual connection fields are removed.
+- The intro attempts sound automatically without a sound button. Browsers may still block autoplay; sound is never replayed after the intro ends or is skipped.
+
 New in 0.31.0: six additional tools and format options for text/data, PDF JSON, scanner effects, comics, JavaScript inspection, AI data, Office and Kindle files. The catalogue contains 133 tools. See [features and limits](FEATURES.en.md#formats-and-tools-in-0310).
 
 The next comparison gaps are covered: colors and background with presets/preview, selective unlocking of read-only form fields, text-preserving crop and single-PDF duplex collation. Limits: backgrounds sit behind opaque content; image color adjustments lose text/fields/links; CropBox only hides margins. Single-PDF duplex accepts up to 200 selected pages.
@@ -14,7 +21,7 @@ As of 10 November 2026 · Version 0.31.4. Earlier dated verification reports bel
 
 The light-mode background transitions from green through turquoise to blue on desktop, tablet and mobile. The richer gradient makes light cards, input fields and tool panels stand out more clearly.
 
-Opening or reloading the app plays a single 3.75-second animation of the original MoinPDF logo. A turquoise-green wave reveals the lettering, gentle water ripples spread outward, and a sweep of light with brief sparkles completes the animation. The lettering and its tagline remain clearly visible for a short hold. The sailor video is removed entirely. A quiet wave whoosh and two chimes accompany the animation. The sound control enables or mutes the effect and remembers the preference. If the browser blocks autoplay, tapping the sound control enables the remaining sounds without replaying earlier cues. The workspace continues loading in parallel. Switching tools or themes does not replay the entrance. Tapping outside the sound control, Escape or Tab skips it and stops the audio. Reduced motion omits both animation and sound.
+Opening or reloading the app plays a single 3.75-second animation of the original MoinPDF logo. A turquoise-green wave reveals the lettering, gentle water ripples spread outward, and a sweep of light with brief sparkles completes the animation. The lettering and its tagline remain clearly visible for a short hold. The sailor video is removed entirely. A quiet wave whoosh and two chimes accompany the animation. Sound starts automatically without a sound control. If the browser blocks autoplay, the intro remains silent; no sound is replayed later. The workspace continues loading in parallel. Switching tools or themes does not replay the entrance. Tapping, Escape or Tab skips it and stops the audio. Reduced motion omits both animation and sound.
 
 Since 0.22.0, Word export presents two goals: “Preserve appearance as closely as possible” and “Edit text and tables”. Text-only output and server selection are under “Other options”. Preflight groups notices by text location. Font comparison accounts for rotated geometry, Unicode tracking and horizontal scaling. Visible previews precede queued neighbours; additional OCR preparation pauses during input. Caret following accounts for horizontal scrolling and mobile viewport movement.
 

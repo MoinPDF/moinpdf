@@ -1,16 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { createStartupSound, type StartupSound } from '../../lib/startup-sound';
+import { createStartupSound } from '../../lib/startup-sound';
 
 export const STARTUP_DURATION_MS = 3750;
 
-export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }) {
+export function StartupAnimation() {
   const [visible, setVisible] = useState(true);
-  const [soundActive, setSoundActive] = useState(false);
-  const [soundAvailable, setSoundAvailable] = useState(false);
   const overlay = useRef<HTMLDivElement>(null);
-  const sound = useRef<StartupSound | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -24,21 +21,10 @@ export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }
     const remaining = Math.max(0, STARTUP_DURATION_MS - elapsed);
     const deadline = performance.now() + remaining;
     const started = deadline - STARTUP_DURATION_MS;
-    const audio = motion?.matches
-      ? null
-      : createStartupSound(() => performance.now() - started, setSoundActive);
-    sound.current = audio;
-    setSoundAvailable(Boolean(audio));
-    let playSound = true;
-    try {
-      playSound = window.localStorage.getItem('moinpdf-startup-sound') !== 'off';
-    } catch {
-      /* Optional preference. */
-    }
-    if (audio && playSound) audio.enable();
+    const audio = motion?.matches ? null : createStartupSound(() => performance.now() - started);
+    audio?.enable();
     const finish = () => {
       audio?.dispose();
-      sound.current = null;
       setVisible(false);
     };
     const timeout = window.setTimeout(finish, motion?.matches ? 0 : remaining);
@@ -57,7 +43,6 @@ export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }
     motion?.addEventListener?.('change', onMotion);
     return () => {
       audio?.dispose();
-      sound.current = null;
       window.clearTimeout(timeout);
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('visibilitychange', onReturn);
@@ -128,50 +113,6 @@ export function StartupAnimation({ language = 'de' }: { language?: 'de' | 'en' }
         <span className="startup-spray startup-spray-three" />
         <span className="startup-spray startup-spray-four" />
       </div>
-      {soundAvailable && (
-        <button
-          type="button"
-          className="moinpdf-startup-sound"
-          aria-pressed={soundActive}
-          aria-label={
-            language === 'en'
-              ? soundActive
-                ? 'Mute startup sound'
-                : 'Enable startup sound'
-              : soundActive
-                ? 'Startton ausschalten'
-                : 'Startton einschalten'
-          }
-          onClick={(event) => {
-            event.stopPropagation();
-            if (soundActive) sound.current?.mute();
-            else sound.current?.enable();
-            try {
-              window.localStorage.setItem('moinpdf-startup-sound', soundActive ? 'off' : 'on');
-            } catch {
-              /* Optional preference. */
-            }
-          }}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M11 4 6 8H3v8h3l5 4Z" />
-            {soundActive ? (
-              <path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" />
-            ) : (
-              <path d="m16 9 5 6m0-6-5 6" />
-            )}
-          </svg>
-          <span>{language === 'en' ? 'Sound' : 'Ton'}</span>
-        </button>
-      )}
     </div>
   );
 }

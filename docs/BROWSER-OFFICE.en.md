@@ -2,7 +2,7 @@
 
 [Deutsch](BROWSER-OFFICE.md) · **English** · [← README](../README.en.md)
 
-MoinPDF 0.11.0 introduced `@matbee/libreoffice-converter` 2.7.2 with LibreOffice/WASM. Word, Excel, PowerPoint, OpenDocument and RTF are processed in the browser by default. Pages, Visio and Publisher remain features of your own document server. A failed local job is not uploaded automatically.
+MoinPDF 0.11.0 introduced `@matbee/libreoffice-converter` 2.7.2 with LibreOffice/WASM. Without an integrated Office converter, Word, Excel, PowerPoint, OpenDocument and RTF are processed in the browser. Pages, Visio and Publisher remain features of your own document server. Processing is selected automatically according to file format and available components. A running local job does not switch its processing location after an error.
 
 The input limit is 40 MB. The runtime requires HTTPS or localhost, COOP/COEP, SharedArrayBuffer and DecompressionStream. It reserves 1 GiB of shared WASM memory; total requirements exceed 1 GB of free RAM. This mode is unreliable on mobile devices with little memory.
 

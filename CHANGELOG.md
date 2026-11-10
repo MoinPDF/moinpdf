@@ -9,6 +9,13 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## Noch nicht versioniert
+
+- Tabellenübernahme erkennt wiederkehrende Spaltenabstände je Seite, bietet Zellfundstellen, markiert unsichere Werte und erhält mehrspaltige Überschriften in Excel. Nahe Fortsetzungszeilen können optional verbunden werden; manuelle Spaltengrenzen bleiben verfügbar. Bei widersprüchlichen Spaltenzahlen wird eine Korrektur verlangt.
+- Formularerkennung benennt leere Kästchen und Eingabelinien anhand eindeutiger deutscher und englischer Standardbeschriftungen, einschließlich OCR bei Scans. Der Formularhelfer übernimmt die Vorschläge zur Prüfung; bestehende Einträge bleiben erhalten. Erkennung benötigt die vollständige Installation, maximal 50 Seiten und 500 neue Felder.
+- MoinPDF wählt die passende Verarbeitung automatisch. Die Auswahl Browser/eigener Dokumentenserver und manuelle Verbindungsfelder entfallen.
+- Das Intro startet den Ton automatisch ohne Tonschalter. Browser können die automatische Audiowiedergabe weiterhin blockieren; nach Ende oder Überspringen wird kein Ton nachgeholt.
+
 ## 0.31.4 — 2026-11-10
 
 - Der Hintergrund im Light Mode erhält auf Desktop, Tablet und Smartphone einen durchgehenden Grün-Türkis-Blau-Verlauf für einen deutlicheren Kontrast zu den hellen Karten und Eingabefeldern.

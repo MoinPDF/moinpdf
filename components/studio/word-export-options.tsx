@@ -1,22 +1,18 @@
 'use client';
 import { useEffect, useId, useState } from 'react';
 import { ui } from '@/lib/ui-language';
-import { Choice, Tick } from './advanced-shared';
+import { Tick } from './advanced-shared';
 
 export function WordExportOptions({
   mode,
   local,
-  serverAvailable,
   disabled,
   onModeChange,
-  onProcessingChange,
 }: {
   mode: string;
   local: boolean;
-  serverAvailable: boolean;
   disabled: boolean;
   onModeChange: (mode: string) => void;
-  onProcessingChange: (processing: string) => void;
 }) {
   const name = useId();
   const [advanced, setAdvanced] = useState(!local || mode === 'text');
@@ -62,11 +58,6 @@ export function WordExportOptions({
         </fieldset>
       )}
       <p className="fine-note" aria-live="polite">
-        {ui(
-          local
-            ? 'Die Word-Datei wird auf deinem Gerät erstellt.'
-            : 'Die Word-Datei wird auf deinem Dokumentenserver erstellt.',
-        )}{' '}
         {local && mode === 'text'
           ? ui('Nur Text ist ausgewählt. Bilder und Seitenlayout werden nicht übernommen.')
           : ui(
@@ -79,17 +70,6 @@ export function WordExportOptions({
         onToggle={(event) => setAdvanced(event.currentTarget.open)}
       >
         <summary>{ui('Weitere Optionen')}</summary>
-        {serverAvailable && (
-          <Choice
-            label={ui('Verarbeitung')}
-            value={local ? 'local' : 'server'}
-            onChange={onProcessingChange}
-            items={[
-              ['local', 'Lokal im Browser'],
-              ['server', 'Eigener Dokumentenserver'],
-            ]}
-          />
-        )}
         {local ? (
           <Tick
             label={ui('Nur Text als Absätze')}
@@ -98,9 +78,7 @@ export function WordExportOptions({
           />
         ) : (
           <p className="fine-note">
-            {ui(
-              'Mit „Word-Datei erstellen“ wird die ausgewählte PDF an deinen Dokumentenserver übertragen. Dieser übernimmt Text, Tabellen und Bilder; komplexe Layouts können abweichen.',
-            )}
+            {ui('Text, Tabellen und Bilder werden übernommen; komplexe Layouts können abweichen.')}
           </p>
         )}
         <p className="fine-note">

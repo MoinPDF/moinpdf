@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
 import { useLanguage } from './appearance';
 import { Field, Choice, Tick, NumberField, type PanelProps } from './advanced-shared';
-import { ServerConnection } from './growth-panels';
+import { ProcessingAvailability } from './growth-panels';
 import { integratedDocumentServer } from '@/lib/document-server';
 import { runFormatExport } from '@/lib/format-server';
 import { textImportDocument, textImportDefaults, type TextImportFormat } from '@/lib/text-import';
@@ -220,8 +220,8 @@ export function ComicPanel({ source, busy, run }: PanelProps) {
   const [format, setFormat] = useState('cbz'),
     [dpi, setDpi] = useState('150'),
     [imageFormat, setImageFormat] = useState('jpg');
-  const [base, setBase] = useState(integratedDocumentServer || ''),
-    [token, setToken] = useState('');
+  const base = integratedDocumentServer || '',
+    token = '';
   return (
     <section className="advanced-card">
       <Choice
@@ -252,10 +252,10 @@ export function ComicPanel({ source, busy, run }: PanelProps) {
         <>
           <p>
             {ui(
-              'CBR benötigt einen eigenen Dokumentenserver mit separat installiertem und passend lizenziertem RAR-Konverter. CBZ wird lokal im Browser erstellt.',
+              'CBR ist nur mit eingerichtetem RAR-Konverter verfügbar. Alternativ CBZ auswählen.',
             )}
           </p>
-          <ServerConnection base={base} token={token} setBase={setBase} setToken={setToken} />
+          <ProcessingAvailability />
         </>
       )}
       <Button

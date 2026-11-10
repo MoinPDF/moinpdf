@@ -190,5 +190,5 @@ for (mode of ['unresponsive', 'destroy-throws']) {
 }
 await assert.rejects(convertOfficeLocally(new File(['x'], 'bad.pub'), signal), /unterstützt/);
 globalThis.crossOriginIsolated = false;
-await assert.rejects(convertOfficeLocally(file, signal), /isoliertem/);
+await assert.rejects(convertOfficeLocally(file, signal), /hier nicht verfügbar/);
 console.log('PASS: Office integrity, no uploads, acknowledged self-close, slow shutdown, late cleanup acknowledgment, abort during initialization, ignored late ready, restart and bounded termination fallback.');

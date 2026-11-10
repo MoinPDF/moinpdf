@@ -391,34 +391,3 @@
     display: none;
   }
 }
-.moinpdf-startup-sound {
-  position: absolute;
-  right: max(20px, env(safe-area-inset-right));
-  bottom: max(20px, env(safe-area-inset-bottom));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 8px 14px;
-  border: 1px solid #416e5f60;
-  border-radius: 24px;
-  color: #244c3f;
-  background: #f4faf6b3;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.moinpdf-startup-sound svg {
-  width: 19px;
-  height: 19px;
-}
-.moinpdf-startup-sound:focus-visible {
-  outline: 3px solid #167454;
-  outline-offset: 3px;
-}
-.dark .moinpdf-startup-sound {
-  color: #dceee5;
-  background: #122824b3;
-  border-color: #a5d0bc66;
-}

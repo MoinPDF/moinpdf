@@ -20,10 +20,10 @@ const { createRoot } = await import('react-dom/client');
 const { WordExportOptions } = await import('../.cache/release-022/word-export-options.mjs');
 const root = createRoot(document.getElementById('root'));
 let mode, local;
-function Harness({initial='layout',server=false,disabled=false}) {
-  const [value,setValue]=useState(initial), [processing,setProcessing]=useState('local');
-  mode=value; local=processing==='local';
-  return h(WordExportOptions,{mode,local,serverAvailable:server,disabled,onModeChange:setValue,onProcessingChange:setProcessing});
+function Harness({initial='layout',automaticLocal=true,disabled=false}) {
+  const [value,setValue]=useState(initial);
+  mode=value; local=automaticLocal;
+  return h(WordExportOptions,{mode,local,disabled,onModeChange:setValue});
 }
 const click = async node => act(async () => node.click());
 try {
@@ -37,9 +37,11 @@ try {
   assert(!radios().some(r=>r.checked),'Text-only export never falsely claims to preserve layout');
   assert.match(document.querySelector('[role=status]')?.textContent || document.querySelector('[aria-live]').textContent,/Nur Text/);
   await click(radios()[0]);assert.equal(mode,'layout');assert(!document.querySelector('[type=checkbox]').checked);
-  await act(async()=>{const select=document.querySelector('select');select.value='server';select.dispatchEvent(new Event('change',{bubbles:true}));});
-  assert(!local);assert.equal(radios().length,0);assert(document.querySelector('details').open);
-  assert.match(document.body.textContent,/PDF an deinen Dokumentenserver übertragen/);
+  assert.equal(document.querySelectorAll('select').length,0,'No processing location selector');
+  await act(async()=>root.render(h(Harness,{key:'automatic',automaticLocal:false})));
+  assert(!local);assert.equal(radios().length,0);
+  assert.equal(document.querySelectorAll('select').length,0);
+  assert.match(document.body.textContent,/Text, Tabellen und Bilder/);
   await act(async()=>root.render(h(Harness,{key:'restore',initial:'text'})));
   assert(document.querySelector('details').open,'Restored text-only drafts expose their selected advanced option');
   assert.equal(document.querySelectorAll('select').length,0,'Hosted browser-only builds have no server switch');
@@ -47,4 +49,4 @@ try {
   assert(radios().every(r=>r.matches(':disabled')),'Conversion freezes the entire option group');
   await act(async()=>root.unmount());
 } finally { dom.window.close(); }
-console.log('PASS: two Word goals, advanced text-only/server choices, draft restoration and disabled conversion controls.');
+console.log('PASS: two Word goals, advanced text-only choice, automatic processing, draft restoration and disabled conversion controls.');

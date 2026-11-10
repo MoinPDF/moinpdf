@@ -278,9 +278,13 @@ export function PageStage({
 export function EditTable({
   rows,
   onChange,
+  cellNotes,
+  onFocusCell,
 }: {
   rows: string[][];
   onChange: (r: string[][]) => void;
+  cellNotes?: string[][];
+  onFocusCell?: (row: number, column: number) => void;
 }) {
   useLanguage();
   const [offset, setOffset] = useState(0);
@@ -313,9 +317,11 @@ export function EditTable({
               <tr key={y}>
                 <th>{y + 1}</th>
                 {Array.from({ length: columns }, (_, x) => (
-                  <td key={x}>
+                  <td key={x} className={cellNotes?.[y]?.[x] ? 'table-cell-review' : undefined}>
                     <input
                       aria-label={ui(`Zeile ${y + 1}, Spalte ${x + 1}`)}
+                      title={cellNotes?.[y]?.[x] || undefined}
+                      onFocus={() => onFocusCell?.(y, x)}
                       value={row[x] || ''}
                       onChange={(e) =>
                         onChange(

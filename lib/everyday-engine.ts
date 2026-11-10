@@ -1,6 +1,7 @@
 import { PDFDocument, PDFTextField, rgb } from 'pdf-lib';
 import { localFontBytes } from './local-font-bytes';
-import { pdfBlob, filenameStem, renderPageRegion, type Source } from './pdf-engine';
+import { pdfBlob, filenameStem, renderPageRegion, openSource, type Source } from './pdf-engine';
+import { integratedDocumentServer, runServerJob } from './document-server';
 import { readDocumentDraft, saveDocumentDraft, type DocumentDraft } from './document-tools';
 import { rejectSignedPdf } from './pdf-signature-guard';
 import { checkAbort, type RunContext, type ExportFile } from './advanced-types';
@@ -18,6 +19,49 @@ export async function readHelperForm(source: Source, ctx: RunContext) {
   if (draft.xfa)
     throw new Error('Bitte dynamische XFA-Formulare zuerst als normale PDF speichern.');
   return draft;
+}
+export async function detectHelperForm(source: Source, ctx: RunContext) {
+  const original = await readHelperForm(source, ctx);
+  if (!integratedDocumentServer)
+    throw new Error('Diese Funktion ist in dieser Ausgabe von MoinPDF nicht verfügbar.');
+  ctx.report({ percent: 10, label: 'Formularfelder und Beschriftungen werden erkannt …' });
+  const body = new FormData();
+  body.append(
+    'file',
+    new Blob([new Uint8Array(source.bytes)], { type: 'application/pdf' }),
+    source.name,
+  );
+  const result = await runServerJob(
+    integratedDocumentServer,
+    '',
+    '/v1/documents/form',
+    body,
+    ctx.signal,
+  );
+  checkAbort(ctx.signal);
+  const detected = await openSource(
+    new File([result.blob], 'Formularerkennung.pdf', { type: 'application/pdf' }),
+  );
+  try {
+    checkAbort(ctx.signal);
+    if (detected.pdf.numPages !== source.pdf.numPages)
+      throw new Error('Die Formularerkennung hat eine unerwartete Seitenzahl geliefert.');
+    const draft = await readDocumentDraft(detected, ctx.signal);
+    const names = new Set(original.fields.map((f) => f.name));
+    // Transfer proposals only. Save them against the unchanged original PDF.
+    const fields = draft.fields
+      .filter((f) => !names.has(f.name))
+      .map((f) => ({
+        ...f,
+        existing: false,
+        value: f.kind === 'checkbox' ? false : '',
+        initialValue: undefined,
+      }));
+    checkAbort(ctx.signal);
+    return { ...original, fields: [...original.fields, ...fields] };
+  } finally {
+    await detected.pdf.loadingTask.destroy();
+  }
 }
 export async function exportHelperForm(
   source: Source,

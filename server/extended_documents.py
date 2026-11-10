@@ -93,12 +93,14 @@ def orient(source,directory):
 def form_detect(source,directory):
     import cv2
     import numpy as np
+    from form_labels import page_words, assign_labels
     items=[]
     with open_pdf(source) as pdf:
         if len(pdf)>50:raise ValueError('Bitte höchstens 50 Seiten pro Formularerkennung verwenden.')
         names={widget.field_name for page in pdf for widget in page.widgets() or []}
         for index,page in enumerate(pdf):
             candidates=[];existing=[fitz.Rect(widget.rect) for widget in page.widgets() or []]
+            words,label_source=page_words(page,directory)
             for drawing in page.get_drawings():
                 for item in drawing['items']:
                     if item[0]=='re':candidates.append(fitz.Rect(item[1]))
@@ -106,7 +108,6 @@ def form_detect(source,directory):
                         first,last=item[1:3]
                         if abs(first.y-last.y)<1 and 35<abs(first.x-last.x)<page.rect.width*.9:
                             candidates.append(fitz.Rect(min(first.x,last.x),first.y-16,max(first.x,last.x),first.y))
-            # Rectangular outlines on scanned pages.
             if not candidates:
                 pix=page.get_pixmap(dpi=120,colorspace=fitz.csGRAY,alpha=False)
                 pixels=np.frombuffer(pix.samples,dtype=np.uint8).reshape(pix.height,pix.width)
@@ -115,27 +116,45 @@ def form_detect(source,directory):
                     polygon=cv2.approxPolyDP(contour,cv2.arcLength(contour,True)*.025,True)
                     if len(polygon)==4:
                         x,y,w,h=cv2.boundingRect(polygon)
-                        candidates.append(fitz.Rect(x,y,x+w,y+h)*fitz.Matrix(72/120,72/120)*page.derotation_matrix)
+                        rect=fitz.Rect(x,y,x+w,y+h)*fitz.Matrix(72/120,72/120)*page.derotation_matrix
+                        if rect.height<3 and rect.width>35:rect.y0=rect.y1-16
+                        candidates.append(rect)
             accepted=[]
-            for rectangle in candidates:
+            for rectangle in sorted(candidates,key=lambda r:(r.y0,r.x0,-r.get_area())):
                 w,h=rectangle.width,rectangle.height
                 if not (8<=h<=85 and 8<=w<=500 and w*h<page.mediabox.width*page.mediabox.height*.15):continue
                 if rectangle.is_empty or not page.mediabox.contains(rectangle):continue
-                if page.get_textbox(rectangle).strip():continue
+                interior=rectangle+fitz.Rect(1,1,-1,-1)
+                if any((interior & word[0]).get_area()>word[0].get_area()*.3 for word in words):continue
+                if page.get_textbox(interior).strip():continue
                 if any((rectangle & other).get_area() > min(rectangle.get_area(),other.get_area())*.6 for other in existing+accepted):continue
+                accepted.append(rectangle)
+            labels=assign_labels(accepted,words)
+            for rectangle,label in zip(accepted,labels):
                 number=len(items)+1
                 if number>500:raise ValueError('Mehr als 500 mögliche Felder. Bitte einen kleineren Seitenbereich verwenden.')
-                name=f'Erkannt_{number}'
-                while name in names:name+='_'
-                names.add(name);widget=fitz.Widget();widget.field_name=name
-                checkbox=.7<=w/h<=1.3 and h<=24
-                widget.field_type=fitz.PDF_WIDGET_TYPE_CHECKBOX if checkbox else fitz.PDF_WIDGET_TYPE_TEXT
-                widget.rect=rectangle;widget.text_font='Helv';widget.text_fontsize=10;widget.border_width=0
-                page.add_widget(widget);accepted.append(rectangle)
-                items.append({'page':index+1,'name':name,'type':'Checkbox' if checkbox else 'Textfeld','rectangle':list(rectangle)})
+                checkbox=.7<=rectangle.width/rectangle.height<=1.3 and rectangle.height<=24
+                items.append({'page':index+1,'label':label['label'] if label else '', 'candidate':label['name'] if label else '',
+                    'label_source':label_source,
+                    'type':'Checkbox' if checkbox else 'Textfeld','rectangle':list(rectangle)})
+        # Repeated labels may refer to different people. Leave every such proposal
+        # generic. Choose final names before creating widgets: renaming an existing
+        # widget is not applied consistently by all supported PyMuPDF versions.
+        from collections import Counter
+        counts=Counter(item['candidate'] for item in items if item['candidate'])
+        for number,item in enumerate(items,1):
+            canonical=item.pop('candidate')
+            name=canonical if canonical and counts[canonical]==1 and canonical not in names else f'Erkannt_{number}'
+            while name in names:name+='_'
+            names.add(name);item['name']=name;item['review']=not canonical or name.startswith('Erkannt_')
+            page=pdf[item['page']-1];widget=fitz.Widget();widget.field_name=name
+            if item['label']:widget.field_label=item['label']
+            widget.field_type=fitz.PDF_WIDGET_TYPE_CHECKBOX if item['type']=='Checkbox' else fitz.PDF_WIDGET_TYPE_TEXT
+            widget.rect=fitz.Rect(item['rectangle']);widget.text_font='Helv';widget.text_fontsize=10;widget.border_width=0
+            page.add_widget(widget)
         if not items:raise ValueError('Keine leeren Kästchen oder Eingabelinien erkannt. Nutze „Formular erstellen“ für eigene Felder.')
         pdf.save(directory/'output.pdf',garbage=4,deflate=True)
-    report(directory,'Erkannte Formularfelder',items,'Automatische Vorschläge: Namen, Feldtypen und Positionen im Werkzeug „Formular erstellen“ prüfen.')
+    report(directory,'Erkannte Formularfelder',items,'Beschriftungen und leere Felder sind Vorschläge. Namen, Feldtypen und Positionen am Original prüfen; bestehende Einträge bleiben erhalten.')
 
 
 def print_check(source,directory):

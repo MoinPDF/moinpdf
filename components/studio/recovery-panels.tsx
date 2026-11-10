@@ -1,5 +1,5 @@
 'use client';
-import { ServerConnection } from './growth-panels';
+import { ProcessingAvailability } from './growth-panels';
 import { integratedDocumentServer } from '@/lib/document-server';
 import { runFormatExport } from '@/lib/format-server';
 import { useToolDraftState } from './workspace-drafts';
@@ -92,8 +92,8 @@ export function ReadingPanel({
 }: PanelProps & { format: ReadingFormat }) {
   useLanguage();
   const [ebookFormat, setEbookFormat] = useState('epub'),
-    [base, setBase] = useState(integratedDocumentServer || ''),
-    [token, setToken] = useState('');
+    [base] = useState(integratedDocumentServer || ''),
+    [token] = useState('');
   const [title, setTitle] = useToolDraftState(
       'ReadingPanel.title:' + source.id + '',
       filenameStem(source.name),
@@ -116,10 +116,10 @@ export function ReadingPanel({
             <>
               <p className="fine-note">
                 {ui(
-                  'AZW3 wird auf dem eigenen Dokumentenserver mit Calibre erstellt. Die PDF wird erst beim Start dorthin übertragen.',
+                  'AZW3 übernimmt auslesbaren Text. Jede Seite muss Text enthalten; Bilder und Seitenlayout werden nicht übernommen.',
                 )}
               </p>
-              <ServerConnection base={base} token={token} setBase={setBase} setToken={setToken} />
+              <ProcessingAvailability />
             </>
           )}
         </>
