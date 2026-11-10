@@ -103,7 +103,7 @@ with sync_playwright() as api:
                 button('Tabelle erkennen').click()
                 cells=page.locator('.advanced-table input'); expect(cells).to_have_count(9)
                 expect(cells.nth(3)).to_have_value('001'); expect(cells.nth(4)).to_have_value('Fiktives Buch'); expect(cells.nth(5)).to_have_value('12,50')
-                cells.nth(4).click(); expect(page.locator('.advanced-stage canvas')).to_have_count(2)
+                cells.nth(4).click(); expect(page.locator('.advanced-rect').filter(has_text=t('Fundstelle'))).to_be_visible()
                 overflow(); button('Excel-Datei erstellen').click()
                 with zipfile.ZipFile(download('table.xlsx')) as archive:
                     root=ET.fromstring(archive.read('xl/worksheets/sheet1.xml')); ns={'s':'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
