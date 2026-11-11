@@ -1,7 +1,7 @@
 """Adaptive editor acceptance on the production build. Synthetic fixtures only.
 Run editor-adaptive-fixtures.mjs first. No external requests or document uploads.
 """
-import atexit,json,os,re,subprocess,sys,time,traceback
+import atexit,faulthandler,json,os,re,subprocess,sys,time,traceback
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import urlopen
@@ -27,7 +27,14 @@ if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
         except OSError:time.sleep(.1)
     else:raise RuntimeError('Production test server unavailable')
 report={'results':[],'limits':['Desktop engines and touch emulation, not physical devices or native Safari.']}
+current_case='';case_started=0
+def progress(stage):
+    current={'case':current_case,'stage':stage,'seconds':round(time.monotonic()-case_started,2)}
+    (out/'adaptive-progress.json').write_text(json.dumps(current,indent=2),encoding='utf8')
+    print('PROGRESS: '+json.dumps(current),flush=True)
+
 def panel(page,title):
+    progress('open-panel: '+title)
     if page.locator('.editor-advanced-workflows').get_by_text(title).count(): controls_ui.settings(page, advanced=True)
     options=page.locator('.editor-canvas-options')
     if options.get_by_text(title, exact=True).count() and options.get_attribute('open') is None: options.locator(':scope > summary').click()
@@ -41,11 +48,17 @@ def panel(page,title):
     return box
 
 def open_editor(page,name):
-    page.goto(origin);page.locator('input[type=file]').first.set_input_files(str((fixtures/(name+'.pdf')).resolve()))
+    progress('navigate')
+    page.goto(origin)
+    progress('import-fixture: '+name)
+    page.locator('input[type=file]').first.set_input_files(str((fixtures/(name+'.pdf')).resolve()))
+    progress('open-editor')
     page.locator('.chooser-tool').filter(has=page.get_by_text('PDF bearbeiten',exact=True)).click()
+    progress('wait-for-page-image')
     expect(page.locator('.editor-sheet > img')).to_be_visible(timeout=120000)
 
 def pick(page,text,first=False):
+    progress('select-original-text')
     controls_ui.canvas(page)
     target=page.get_by_role('button',name=re.compile(r'^(?:Text bearbeiten: |Tabellenzelle \d+, \d+: )'+re.escape(text)+r'$'))
     if first:target=target.first
@@ -53,31 +66,44 @@ def pick(page,text,first=False):
     field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True);expect(field).to_be_visible();return field
 
 def geometry(page,label,value):
+    progress('change-geometry: '+label)
     controls_ui.geometry(page,label,value)
 
 def save(page,name):
+    progress('start-export')
     controls_ui.canvas(page)
     page.get_by_role('button',name='Bearbeitete PDF erstellen',exact=True).click()
     link=page.get_by_role('link',name='PDF herunterladen',exact=True).first
+    progress('wait-for-verified-download')
     expect(link.or_(page.locator('.error-box'))).to_be_visible(timeout=240000)
     assert link.is_visible(),page.locator('.error-box').inner_text()
     (out/(name+'-verification.txt')).write_text(page.get_by_role('region',name='Exportprüfung und Vergleich').inner_text(),encoding='utf8')
+    progress('download')
     with page.expect_download() as task:link.click()
-    path=out/(name+'.pdf');task.value.save_as(path);return path
+    path=out/(name+'.pdf');task.value.save_as(path)
+    progress('independent-pdf-readback')
+    return path
 
 def same_page(a,ai,b,bi):
     pymupdf.TOOLS.store_shrink(100);x=a[ai].get_pixmap();pymupdf.TOOLS.store_shrink(100);y=b[bi].get_pixmap();assert (x.width,x.height,x.samples)==(y.width,y.height,y.samples),'Untouched page pixels changed'
 
 def auto_flow(page,name):
     open_editor(page,'flow');field=pick(page,'First paragraph.')
+    progress('edit-flow-text')
     text=' '.join(f'token{i:03}' for i in range(360));field.fill(text);geometry(page,'Objektbreite',240*25.4/72)
-    flow=panel(page,'Absatz über Seiten fortsetzen');flow.get_by_role('button',name='Absatzfluss vorschauen',exact=True).click()
+    flow=panel(page,'Absatz über Seiten fortsetzen')
+    progress('preview-flow')
+    flow.get_by_role('button',name='Absatzfluss vorschauen',exact=True).click()
+    progress('wait-for-flow-preview')
     expect(flow.locator('.editor-flow-preview')).to_be_visible(timeout=120000)
     assert re.search(r'Neue Fortsetzungsseiten:\s*[1-9]',flow.inner_text()),flow.inner_text()
+    progress('apply-flow')
     flow.get_by_role('button',name='Absatzfluss übernehmen',exact=True).click()
     expect(page.get_by_role('button',name='Rückgängig',exact=True)).to_be_enabled(timeout=120000)
+    progress('undo-flow')
     controls_ui.canvas(page)
     page.get_by_role('button',name='Rückgängig',exact=True).click();expect(page.locator('.editor-object.text .editor-text-content')).to_have_attribute('aria-label',text)
+    progress('redo-flow')
     page.get_by_role('button',name='Wiederholen',exact=True).click()
     file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'flow.pdf') as before:
@@ -288,6 +314,7 @@ def payroll(page,name):
 def execute(browser,name,width,callback):
     selected=os.environ.get('MOINPDF_BROWSER_CASES','').split(',')
     if selected!=[''] and name not in selected:return
+    progress('create-context')
     context=browser.new_context(viewport={'width':width,'height':1000},has_touch=width<600,accept_downloads=True,reduced_motion='reduce')
     context.tracing.start(screenshots=True,snapshots=True,sources=True)
     page=context.new_page();page.set_default_timeout(45000);errors=[];blocked=[];diagnostics=[]
@@ -302,12 +329,17 @@ def execute(browser,name,width,callback):
     try:result.update(**callback(page,name));assert not errors,errors;assert not blocked,blocked;result['status']='passed'
     except Exception as e:
         result.update(status='failed',error=str(e),traceback=traceback.format_exc(),page_errors=errors,blocked_requests=blocked,diagnostics=diagnostics);print(result['traceback'],flush=True)
+        (out/'adaptive-report.json').write_text(json.dumps({**report,'results':report['results']+[result]},ensure_ascii=False,indent=2),encoding='utf8')
+        progress('failure-diagnostics')
         try:page.screenshot(path=str(out/(name+'-failure.png')),full_page=True,timeout=10000);(out/(name+'-failure.txt')).write_text(page.locator('body').inner_text(timeout=5000),encoding='utf8')
         except Exception:pass
     finally:
+        progress('stop-tracing')
         if result.get('status')=='failed':context.tracing.stop(path=str(out/(name+'-trace.zip')))
         else:context.tracing.stop()
-        report['results'].append(result);(out/'adaptive-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8');context.close();print(result['status'].upper()+': '+name,flush=True)
+        report['results'].append(result);(out/'adaptive-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')
+        progress('close-context')
+        context.close();print(result['status'].upper()+': '+name,flush=True)
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
         cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight),('payroll',1440,payroll),('payroll-touch',390,payroll)]
@@ -319,7 +351,16 @@ with sync_playwright() as api:
             # canvas/GPU allocations from previous browser contexts. Within-case
             # editing, undo, export and retained-content assertions still share
             # their original context and remain unchanged.
+            current_case=engine+'-adaptive-'+suffix;case_started=time.monotonic()
+            # A stalled browser protocol call can outlive locator timeouts.
+            # Fail closed with its Python stack and the last persisted stage;
+            # keep every acceptance assertion and cover cleanup as well.
+            faulthandler.dump_traceback_later(600,exit=True)
+            progress('launch-browser')
             browser=getattr(api,engine).launch();report[engine]=browser.version
-            try:execute(browser,engine+'-adaptive-'+suffix,width,callback)
-            finally:browser.close()
+            try:execute(browser,current_case,width,callback)
+            finally:
+                progress('close-browser')
+                browser.close()
+                faulthandler.cancel_dump_traceback_later()
 raise SystemExit(0 if report['results'] and all(r['status']=='passed'for r in report['results'])else 1)
