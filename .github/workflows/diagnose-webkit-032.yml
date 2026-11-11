@@ -1,0 +1,54 @@
+name: Diagnose WebKit 0.32.0
+on:
+  push:
+    branches: [diagnose/webkit-032]
+permissions:
+  contents: read
+jobs:
+  flow:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Build the release source and synthetic fixture
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm install --frozen-lockfile
+          pnpm run build:selfhost
+          node tests/editor-adaptive-fixtures.mjs
+      - name: Prepare WebKit
+        run: |
+          bash scripts/ci-prepare-apt.sh
+          python -m pip install playwright==1.64.0 pymupdf==1.26.6
+          python -m playwright install --with-deps webkit
+      - name: Diagnose the complete adaptive-flow acceptance case
+        env:
+          MOINPDF_TEST_BROWSERS: webkit
+          MOINPDF_TEST_START_SERVER: '1'
+          MOINPDF_ADAPTIVE_CASES: flow
+        run: |
+          timeout --signal=TERM --kill-after=15s 8m python -u - <<'PY'
+          import faulthandler, runpy, sys, time
+          sys.path.insert(0, 'tests')
+          faulthandler.enable()
+          faulthandler.dump_traceback_later(120, repeat=True)
+          watched = {'auto_flow', 'open_editor', 'pick', 'geometry', 'panel', 'save', 'execute'}
+          def progress(frame, event, arg):
+              if event == 'line' and frame.f_code.co_filename.endswith('editor-adaptive-browser.py') and frame.f_code.co_name in watched:
+                  print(time.strftime('%H:%M:%S'), frame.f_code.co_name, frame.f_lineno, flush=True)
+              return progress
+          sys.settrace(progress)
+          runpy.run_path('tests/editor-adaptive-browser.py', run_name='__main__')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: webkit-flow-diagnostics-032
+          path: .cache/editor-browser/
+          retention-days: 7
