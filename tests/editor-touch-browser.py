@@ -40,11 +40,13 @@ def run(browser, engine):
     target = page.get_by_role('button', name='Text bearbeiten: MoinPDF 12345', exact=True)
     expect(target).to_be_visible(timeout=120000)
     viewport = page.locator('.editor-page-scroll')
-    viewport.evaluate('(e) => e.scrollIntoView({block:"center"})')
-    geometry = page.evaluate('''() => {
-      const v=document.querySelector('.editor-page-scroll').getBoundingClientRect(),
+    target.evaluate('(e) => e.scrollIntoView({block:"center"})')
+    geometry = target.evaluate('''(target) => {
+      const t=target.getBoundingClientRect(),
         p=document.querySelector('.editor-sheet').getBoundingClientRect();
-      const x=v.left+v.width/2, y=Math.max(v.top,100)+Math.min(100,v.height/3);
+      // The first finger lands on editable text, so this catches accidental
+      // selection before the second finger joins the gesture.
+      const x=t.left+t.width/2+35, y=t.top+t.height/2;
       return {x,y,px:(x-p.left)/p.width,py:(y-p.top)/p.height,width:p.width,scale:visualViewport.scale};
     }''')
     x, y = geometry['x'], geometry['y']
@@ -66,7 +68,7 @@ def run(browser, engine):
         page.wait_for_timeout(20)
     touches('touchEnd', [])
     expect(page.get_by_label('Zoom der PDF-Seite', exact=True)).to_have_value('200')
-    after = page.evaluate('''({px,py})=>{const p=document.querySelector('.editor-sheet').getBoundingClientRect();return {x:p.left+px*p.width,y:p.top+py*p.height,width:p.width,scale:visualViewport.scale}}''', geometry)
+    after = page.evaluate('''({px,py})=>{const p=document.querySelector('.editor-sheet').getBoundingClientRect(),v=document.querySelector('.editor-page-scroll');return {x:p.left+px*p.width,y:p.top+py*p.height,width:p.width,scale:visualViewport.scale,scrollLeft:v.scrollLeft,scrollTop:v.scrollTop,scrollWidth:v.scrollWidth,clientWidth:v.clientWidth,scrollHeight:v.scrollHeight,clientHeight:v.clientHeight}}''', geometry)
     assert abs(after['width']/geometry['width']-2) < .02, (geometry,after)
     assert abs(after['x']-x)<3 and abs(after['y']-y)<3, (geometry,after)
     assert abs(after['scale']-geometry['scale'])<.01, 'Browser chrome must not zoom with the document'
@@ -86,14 +88,22 @@ def run(browser, engine):
     with page.expect_download() as download: link.click()
     result = out / f'touch-{engine}.pdf'; download.value.save_as(result)
     with pymupdf.open(fixture) as before, pymupdf.open(result) as after:
-        def span(pdf, text):
-            return next(s for block in pdf[0].get_text('dict')['blocks'] if 'lines' in block for line in block['lines'] for s in line['spans'] if text in s['text'])
-        a, b = span(before, 'MoinPDF'), span(after, 'MoinPDF')
-        assert b['text'] == 'MoinPDF 54321', b
-        assert a['color'] == b['color'], (a,b)
-        assert abs(a['size']-b['size']) < .02, (a,b)
-        assert all(abs(u-v)<.2 for u,v in zip(a['origin'],b['origin'])), (a,b)
-        assert a['font'].split('+')[-1] == b['font'].split('+')[-1], (a,b)
+        def characters(pdf):
+            # Sparse PDF editing deliberately retains unchanged text objects;
+            # one visual line can therefore contain several PDF font spans.
+            spans=[s for block in pdf[0].get_text('rawdict')['blocks'] if 'lines' in block
+                   for line in block['lines'] for s in line['spans']
+                   if abs(s['origin'][1]-100)<.2]
+            spans.sort(key=lambda s:s['origin'][0])
+            return [(c,s) for s in spans for c in s['chars']]
+        original, saved = characters(before), characters(after)
+        assert ''.join(c['c'] for c,s in saved) == 'MoinPDF 54321', saved
+        assert len(original) == len(saved)
+        for (a,sa),(b,sb) in zip(original,saved):
+            assert sa['color'] == sb['color'], (sa,sb)
+            assert abs(sa['size']-sb['size']) < .02, (sa,sb)
+            assert all(abs(u-v)<.2 for u,v in zip(a['origin'],b['origin'])), (a,b)
+            assert sa['font'].split('+')[-1] == sb['font'].split('+')[-1], (sa,sb)
         assert '12345' not in after[0].get_text()
         assert 'Unchanged paragraph.' in after[0].get_text()
         assert before[1].get_pixmap().samples == after[1].get_pixmap().samples

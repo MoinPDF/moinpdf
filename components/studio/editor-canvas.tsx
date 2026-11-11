@@ -396,6 +396,8 @@ export function EditorCanvas({
       getZoom: () => viewportCallbacks.current.zoom,
       onZoom: (value) => flushSync(() => viewportCallbacks.current.onZoom?.(value)),
       onStart: () => {
+        scanSelection.current?.abort();
+        setMatchingScan(false);
         touchPick.current = null;
         start.current = null;
         drag.current = null;
@@ -643,7 +645,10 @@ export function EditorCanvas({
   };
   function down(e: PointerEvent<HTMLDivElement>) {
     if (disabled || showOriginal || !url || e.button !== 0) return;
-    if (e.pointerType === 'touch' && action !== 'replace-area' && action !== 'erase') return;
+    if (e.pointerType === 'touch' && action !== 'replace-area' && action !== 'erase') {
+      if (e.target === e.currentTarget) touchPick.current = { id: '', point: startPoint(e) };
+      return;
+    }
     const p = position(e);
     onSelect('');
     if (action !== 'replace-area' && action !== 'erase') return;
@@ -1419,11 +1424,24 @@ export function EditorCanvas({
               aspectRatio: `${dims.width}/${dims.height}`,
               touchAction: action === 'erase' || action === 'replace-area' ? 'none' : 'pan-x pan-y',
             }}
+            onPointerDownCapture={() => {
+              touchPick.current = null;
+            }}
             onPointerDown={down}
             onPointerMove={move}
             onPointerUp={up}
             onClick={(e) => {
-              if (!disabled && !showOriginal && e.target === e.currentTarget) onSelect('');
+              // Mouse selection can replace its target during pointerdown;
+              // Firefox then retargets the click to the sheet. Only an actual
+              // blank-space touch should deselect here (mouse uses down).
+              if (
+                !disabled &&
+                !showOriginal &&
+                e.target === e.currentTarget &&
+                touchPick.current?.id === ''
+              )
+                onSelect('');
+              touchPick.current = null;
             }}
             onPointerCancel={() => {
               touchPick.current = null;

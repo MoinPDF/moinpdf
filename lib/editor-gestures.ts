@@ -63,6 +63,9 @@ export function installEditorGestures({
       // preparation on every touchmove. Re-measure the centered page at its
       // actual new size, including the desktop maximum width.
       onZoom(Math.round(current.next));
+      // Restore the normal scroll container before assigning offsets. Gecko
+      // can rebuild it when overflow changes and otherwise discard the anchor.
+      delete viewport.dataset.editorGesturing;
       const bounds = page.getBoundingClientRect();
       viewport.scrollLeft += bounds.left + current.anchor.x * bounds.width - current.center.x;
       viewport.scrollTop += bounds.top + current.anchor.y * bounds.height - current.center.y;
