@@ -9,7 +9,7 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
-## Noch nicht versioniert
+## 0.32.0 — 2026-11-11
 
 - Tabellenübernahme erkennt wiederkehrende Spaltenabstände je Seite, bietet Zellfundstellen, markiert unsichere Werte und erhält mehrspaltige Überschriften in Excel. Nahe Fortsetzungszeilen können optional verbunden werden; manuelle Spaltengrenzen bleiben verfügbar. Bei widersprüchlichen Spaltenzahlen wird eine Korrektur verlangt.
 - Formularerkennung benennt leere Kästchen und Eingabelinien anhand eindeutiger deutscher und englischer Standardbeschriftungen, einschließlich OCR bei Scans. Der Formularhelfer übernimmt die Vorschläge zur Prüfung; bestehende Einträge bleiben erhalten. Erkennung benötigt die vollständige Installation, maximal 50 Seiten und 500 neue Felder.

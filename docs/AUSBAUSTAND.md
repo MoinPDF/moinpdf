@@ -13,17 +13,17 @@ Die nächsten Vergleichslücken sind geschlossen: Farben & Hintergrund mit Vorla
 
 „Kopf- und Fußzeilen bereinigen“ ergänzt Bearbeiten & bereinigen: wiederkehrende Randtexte, einzeln prüfbare Ausnahmen und manuelle Scan-Bereiche. Bedienung und Grenzen: [Funktionen](FUNKTIONEN.md#kopf--und-fußzeilen-bereinigen).
 
-Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvorschläge, manuelle Scan-Einträge, Belegzuschnitt, A4-Anordnung und Projektentwürfe sind im [Funktionsumfang](FUNKTIONEN.md#formularhelfer-und-belege-auf-a4) beschrieben; die Anleitung in der App enthält die einzelnen Arbeitsschritte. Keine automatische Beschriftungserkennung auf Scans.
+Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvorschläge, manuelle Scan-Einträge, Belegzuschnitt, A4-Anordnung und Projektentwürfe sind im [Funktionsumfang](FUNKTIONEN.md#formularhelfer-und-belege-auf-a4) beschrieben; die Anleitung in der App enthält die einzelnen Arbeitsschritte. In der vollständigen Installation kann die Formularerkennung Beschriftungen auf Scans per OCR vorschlagen; uneindeutige Zuordnungen bleiben manuell.
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 10. November 2026 · Version 0.31.4. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 11. November 2026 · Version 0.32.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 Der Hintergrund im Light Mode verläuft auf Desktop, Tablet und Smartphone von Grün über Türkis zu Blau. Der sattere Verlauf lässt helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
 
 Beim Öffnen oder Neuladen der App läuft einmalig eine 3,75 Sekunden lange Animation des Original-MoinPDF-Logos. Eine türkisgrüne Welle legt den Schriftzug frei, sanfte Wasserringe breiten sich aus und ein Lichtschein mit kurzen Glanzpunkten schließt die Animation ab. Der Schriftzug mit „Papierkram. Läuft.“ bleibt anschließend kurz klar sichtbar. Das Seemann-Video entfällt vollständig. Ein leises Wellenrauschen und zwei Glanztöne begleiten die Animation. Die Tonwiedergabe startet automatisch ohne Tonschalter. Blockiert der Browser Autoplay, bleibt das Intro stumm; später wird nichts nachgespielt. Der Arbeitsbereich lädt währenddessen weiter. Werkzeug- und Theme-Wechsel starten die Animation nicht erneut. Antippen, Escape oder Tab überspringen sie und stoppen den Ton. Bei reduzierter Bewegung entfallen Animation und Ton.
 
-Seit 0.22.0 stehen beim Word-Export zwei Ziele im Vordergrund: „Aussehen möglichst erhalten“ und „Text und Tabellen bearbeiten“. Text-only-Ausgabe und Serverwahl liegen unter „Weitere Optionen“. Die Vorprüfung bündelt Hinweise je Textstelle. Schriftvergleiche berücksichtigen gedrehte Geometrie, Unicode-Zeichenabstände und horizontale Skalierung. Sichtbare Vorschauen werden vor wartenden Nachbarseiten verarbeitet; zusätzliche OCR-Vorbereitung pausiert bei Eingaben. Die Cursorführung berücksichtigt horizontales Scrollen und Bewegungen des mobilen Sichtbereichs.
+Seit 0.22.0 stehen beim Word-Export zwei Ziele im Vordergrund: „Aussehen möglichst erhalten“ und „Text und Tabellen bearbeiten“. Die reine Textausgabe liegt unter „Weitere Optionen“; MoinPDF wählt die verfügbare Verarbeitung automatisch. Die Vorprüfung bündelt Hinweise je Textstelle. Schriftvergleiche berücksichtigen gedrehte Geometrie, Unicode-Zeichenabstände und horizontale Skalierung. Sichtbare Vorschauen werden vor wartenden Nachbarseiten verarbeitet; zusätzliche OCR-Vorbereitung pausiert bei Eingaben. Die Cursorführung berücksichtigt horizontales Scrollen und Bewegungen des mobilen Sichtbereichs.
 
 - Exportprüfungen haben begrenzte Wartezeiten, bleiben abbrechbar und starten nach einer Zeitüberschreitung höchstens einmal vollständig neu. Ungeprüfte Ausgaben bleiben gesperrt; die Bearbeitung bleibt für einen erneuten Versuch geöffnet.
 

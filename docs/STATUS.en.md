@@ -13,17 +13,17 @@ The next comparison gaps are covered: colors and background with presets/preview
 
 Clean up headers and footers adds recurring margin detection, individual exceptions and manual scan areas to Edit & clean up. See [Features](FEATURES.en.md#clean-up-headers-and-footers) for usage and limits.
 
-Form helper and receipt collection on A4 are integrated browser tools. Profile suggestions, manual scan entries, receipt crops, A4 layout and project drafts are described in [Features](FEATURES.en.md#form-helper-and-receipts-on-a4); the in-app manual provides the steps. Labels on scans are not detected automatically.
+Form helper and receipt collection on A4 are integrated browser tools. Profile suggestions, manual scan entries, receipt crops, A4 layout and project drafts are described in [Features](FEATURES.en.md#form-helper-and-receipts-on-a4); the in-app manual provides the steps. In the full installation, form detection can propose labels on scans using OCR; ambiguous assignments remain manual.
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 10 November 2026 · Version 0.31.4. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 11 November 2026 · Version 0.32.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 The light-mode background transitions from green through turquoise to blue on desktop, tablet and mobile. The richer gradient makes light cards, input fields and tool panels stand out more clearly.
 
 Opening or reloading the app plays a single 3.75-second animation of the original MoinPDF logo. A turquoise-green wave reveals the lettering, gentle water ripples spread outward, and a sweep of light with brief sparkles completes the animation. The lettering and its tagline remain clearly visible for a short hold. The sailor video is removed entirely. A quiet wave whoosh and two chimes accompany the animation. Sound starts automatically without a sound control. If the browser blocks autoplay, the intro remains silent; no sound is replayed later. The workspace continues loading in parallel. Switching tools or themes does not replay the entrance. Tapping, Escape or Tab skips it and stops the audio. Reduced motion omits both animation and sound.
 
-Since 0.22.0, Word export presents two goals: “Preserve appearance as closely as possible” and “Edit text and tables”. Text-only output and server selection are under “Other options”. Preflight groups notices by text location. Font comparison accounts for rotated geometry, Unicode tracking and horizontal scaling. Visible previews precede queued neighbours; additional OCR preparation pauses during input. Caret following accounts for horizontal scrolling and mobile viewport movement.
+Since 0.22.0, Word export presents two goals: “Preserve appearance as closely as possible” and “Edit text and tables”. Text-only output is under “Other options”; MoinPDF selects available processing automatically. Preflight groups notices by text location. Font comparison accounts for rotated geometry, Unicode tracking and horizontal scaling. Visible previews precede queued neighbours; additional OCR preparation pauses during input. Caret following accounts for horizontal scrolling and mobile viewport movement.
 
 - Export verification has bounded waits, remains cancellable and restarts the complete check at most once after a timeout. Unverified output stays blocked; the edit remains open for another attempt.
 
