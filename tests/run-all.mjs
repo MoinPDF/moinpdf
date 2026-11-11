@@ -35,6 +35,7 @@ const suites = [
   'editor-auto',
   'editor-worker',
   'editor-ui',
+  'editor-gestures',
   'editor-typography',
   'editor-scan-typography',
   'editor-comparison',

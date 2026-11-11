@@ -548,6 +548,7 @@ export const guides = {
     'Erstelle die Ausgabe und kontrolliere die Lesbarkeit, bevor du sie druckst.'
   ], 'PDF mit mehreren verkleinerten Dokumentseiten auf einem Ausgabeblatt.', 'Kleine Schrift wird entsprechend kleiner. Eine gefaltete Druckbroschüre benötigt eine andere Seitenreihenfolge; dafür gibt es „Broschüre erstellen“.'),
   'edit-text': guide('Eine PDF mit digitalem Text, vorhandener OCR-Ebene, gescannten Seiten oder einer Mischung daraus.', [
+    "Zoome mit zwei Fingern direkt in die PDF und verschiebe dabei den Ausschnitt. Hebe beide Finger ab und tippe anschließend auf die gewünschte Textstelle. Ein Finger scrollt; die Zoomauswahl bietet weiterhin Seitenbreite und 50–400 Prozent. Strg plus Mausrad beziehungsweise die Trackpad-Zoomgeste vergrößert um den Zeiger.",
     'Öffne „PDF bearbeiten“. Die automatische Auswahl erkennt Absätze und Tabellenzellen; Bilder bleiben direkt auswählbar. Unter „Auswahl anpassen“ kannst du einzelne Textstellen wählen. Scanbereiche werden lokal erkannt; Deutsch und Englisch sind vorausgewählt.',
     'Nach Auswahl von Text, Bild oder Tabellenzelle bietet die Aktionsleiste passende Befehle: Formatierung, Layout, Schriftvergleich, Tabellenbearbeitung oder Bildzuschnitt. Weitere Einstellungen bleiben über die jeweiligen Bereiche erreichbar.',
     'Klicke an die gewünschte Stelle im Text. Markiere Wörter für einzelne Schriftstile, Größen, Farben und Unterstreichungen; ohne Markierung gilt die Formatierung für das ganze Textfeld. Rückgängig und Wiederholen umfassen Text und Formatierung.',

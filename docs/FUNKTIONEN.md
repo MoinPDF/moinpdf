@@ -1,5 +1,11 @@
 # Funktionen und Grenzen
 
+## PDF bearbeiten: Touch und Formatierung
+
+Zweifinger-Zoom vergrößert die PDF zwischen 50 und 400 Prozent um den Berührungspunkt; die Geste kann den Ausschnitt gleichzeitig verschieben. Während der Geste wird die vorhandene Ansicht skaliert, anschließend scharf nachgeladen. Ein Finger scrollt, ein bewusstes Antippen öffnet den Text. Abgebrochene Gesten und das Abheben nur eines Fingers lösen keine Textänderung aus. Strg plus Mausrad beziehungsweise Trackpad-Zoom wird ebenfalls unterstützt.
+
+Smartphone-Autokorrektur und IME übernehmen beim Ersetzen die gespeicherten Schriftstile und Farben. Bereits geladene passende Schriften bleiben beim Tippen sichtbar; neue oder fehlende Zeichen werden erneut geprüft. PDF-Koordinaten, Schriftgröße, Laufweite und Farbe ändern sich durch Zoom nicht. Scanschriften bleiben Annäherungen; fehlende Originalzeichen benötigen weiterhin einen angezeigten Schriftersatz.
+
 ## Aktuelle Erweiterungen
 
 - Tabellenübernahme erkennt wiederkehrende Spaltenabstände je Seite, bietet Zellfundstellen, markiert unsichere Werte und erhält mehrspaltige Überschriften in Excel. Nahe Fortsetzungszeilen können optional verbunden werden; manuelle Spaltengrenzen bleiben verfügbar. Bei widersprüchlichen Spaltenzahlen wird eine Korrektur verlangt.

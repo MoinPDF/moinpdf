@@ -4033,6 +4033,17 @@ html:has(.editor-canvas-wrap) {
   max-height: min(76vh, 1000px);
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  overflow-anchor: none;
+  touch-action: pan-x pan-y;
+}
+.editor-page-scroll[data-editor-gesturing] {
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.editor-page-scroll[data-editor-gesturing] .editor-inline-input {
+  user-select: none;
+  -webkit-user-select: none;
 }
 .editor-inline-buttons [aria-pressed='mixed'] {
   border: 1px dashed var(--ui-teal);

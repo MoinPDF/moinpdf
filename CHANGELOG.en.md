@@ -4,6 +4,12 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## Next release
+
+- PDF editor: two-finger pinch zoom anchored to the touch midpoint, simultaneous panning and trackpad zoom. The preview remains visible during the gesture; scrolling and zooming do not activate text.
+- Mobile autocorrect retains stored formatting. Loaded matching fonts remain visible while typing as new text ranges are checked.
+- Added regressions for cancelled gestures, accidental selection, zoom limits and actual PDF export with original font, size, color and baseline.
+
 ## 0.32.0 — 2026-11-11
 
 - Table extraction detects recurring column gaps per page, shows cell source locations, highlights uncertain values and preserves spanning headers in Excel. Nearby continuation lines can optionally be joined; manual boundaries remain available. Conflicting column counts require correction.

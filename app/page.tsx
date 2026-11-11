@@ -2763,7 +2763,9 @@ function Studio() {
                             <span>
                               {isEditor
                                 ? toolId === 'edit-text'
-                                  ? ui('Textstelle auswählen oder einen Bereich ersetzen.')
+                                  ? ui(
+                                      'Textstelle auswählen und bearbeiten. Mit zwei Fingern ins Dokument zoomen.',
+                                    )
                                   : toolId === 'erase'
                                     ? ui('Rahmen um den zu entfernenden Inhalt ziehen.')
                                     : ui('Bild auswählen oder hier auf die Seite ziehen.')
@@ -2896,6 +2898,7 @@ function Studio() {
                               >
                                 <EditorCanvas
                                   zoom={zoom}
+                                  onZoom={setZoom}
                                   autoOcr={toolId === 'edit-text'}
                                   language={options.editorLanguage || 'deu+eng'}
                                   source={activeSource}
