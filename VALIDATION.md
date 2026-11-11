@@ -6,6 +6,14 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.32.0
+
+- 75 Engine-/DOM-Suiten einschließlich Tabellenübernahme, automatischer Verarbeitung und Intro. `table-layout-smoke.mjs` prüft verschobene Spalten, wiederholte Überschriften, Fortsetzungszeilen, unsichere Zellen, Fundstellen, echte XLSX-Ausgaben und Projektwiederherstellung.
+- `server.test_form_labels` prüft fiktive digitale und gescannte Formulare bei 0/90/180/270 Grad, unveränderte Seitenpixel und bestehende Werte sowie bearbeitbare neue Felder. Unsichere, qualifizierte oder mehrfach vorkommende Beschriftungen dürfen keine automatische Zuordnung auslösen.
+- `startup-animation-smoke.mjs` prüft automatische Tonwiedergabe, Autoplay-Blockierung, Überspringen, verspätete Initialisierung und reduzierte Bewegung. Die Browser- und Containerprüfungen bleiben für alle 133 Werkzeugansichten, DE/EN, mobile Layouts und echte Dokumentausgaben erforderlich.
+- Alle vier Verifikationsworkflows müssen für Pull Request und tatsächlichen `main`-Commit erfolgreich sein, einschließlich Chromium, Firefox, WebKit und der separaten nativen Safari-Prüfung. Danach folgen die vier Container für amd64/arm64 und der Release mit festen Digests. Der Community Store prüft Neuinstallation und Upgrade mit genau diesen Referenzen auf beiden Architekturen.
+- Der Prüfplan ist kein Erfolgsnachweis: Maßgeblich sind die abgeschlossenen Actions-Läufe des Release-Commits. Physische Smartphones und die konkrete Betreiberinstallation sind nicht durch diese Automatisierung abgedeckt.
+
 ## Prüfplan für 0.31.1
 
 - `server.test_recovery` prüft ein rein fiktives EPUB mit blauem SVG-Titelbild, relativer interner Bildreferenz und zwei XML-Präfixen. Die PDF muss das blaue Cover und den Folgetext enthalten; HTTP- und Dateisystemreferenzen werden weiterhin entfernt.
@@ -116,7 +124,7 @@ und erneuten Export. Maßgeblich bleibt der erfolgreiche Lauf des jeweiligen Com
 | Bereich | Umfang |
 | --- | --- |
 | Quellcode | TypeScript, ESLint ohne Warnungen, einheitliche Formatierung und Abhängigkeitsprüfung |
-| PDF-Engines und DOM | 74 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
+| PDF-Engines und DOM | 75 Suiten mit echten PDFs, unabhängigen Lesern, Text-, Pixel-, Formular-, Link- und Verschlüsselungsprüfungen |
 | Dokumentenserver | Tests für native Konverter, Authentifizierung, Größen- und Zeitgrenzen, Übersetzung, Bereinigung, Audio, Barrierefreiheit, Langzeitsignaturen und Upload-Parser |
 | Integration | Echte Office-Konvertierung, Deutsch/Englisch-Übersetzung, lokale Sprachausgabe, Neustart und erhaltene Modelle |
 | Oberfläche | Alle Werkzeugansichten auf Desktop und schmalen Touch-Ansichten, PDF-/EPUB-/Audio-Downloads |

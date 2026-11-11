@@ -4,6 +4,14 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification plan for 0.32.0
+
+- 75 engine/DOM suites include table extraction, automatic processing and the intro. `table-layout-smoke.mjs` checks shifted columns, repeated headers, continuation lines, uncertain cells, source locations, real XLSX output and project restoration.
+- `server.test_form_labels` checks fictional digital and scanned forms at 0/90/180/270 degrees, unchanged page pixels and existing values, and editable new fields. Uncertain, qualified or repeated labels must not trigger automatic assignment.
+- `startup-animation-smoke.mjs` checks automatic audio, autoplay blocking, skipping, delayed initialization and reduced motion. Browser and container verification remains required for all 133 tool views, German/English, mobile layouts and real document outputs.
+- All four verification workflows must pass for the pull request and actual `main` commit, including Chromium, Firefox, WebKit and the separate native Safari test. The four amd64/arm64 containers and release with immutable digests follow. The Community Store checks fresh installation and upgrades with exactly these references on both architectures.
+- This plan is not a pass report: completed Actions runs for the release commit provide the evidence. Physical smartphones and the operator's actual installation are outside this automated coverage.
+
 ## Verification plan for 0.31.1
 
 - `server.test_recovery` checks a fictional EPUB containing a blue SVG cover, a relative internal image reference and two XML prefixes. The PDF must retain the blue cover and following text; HTTP and filesystem references must still be removed.
@@ -96,7 +104,7 @@ run for the exact source commit remains authoritative.
 | Area | Scope |
 | --- | --- |
 | Source code | TypeScript, ESLint without warnings, consistent formatting and dependency audit |
-| PDF engines and DOM | 74 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
+| PDF engines and DOM | 75 suites using real PDFs, independent readers, and checks for text, pixels, forms, links and encryption |
 | Document server | Tests covering native converters, authentication, size/time limits, translation, cleanup, audio, accessibility, long-term signatures and upload parsers |
 | Integration | Real Office conversion, German/English translation, local speech generation, restart and preserved models |
 | Interface | All tool views on desktop and narrow touch viewports, PDF/EPUB/audio downloads |
