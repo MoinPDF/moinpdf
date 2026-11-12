@@ -82,6 +82,25 @@ export const editorRectsOverlap = (a: Rect, b: Rect) =>
   Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) *
     Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)) >
   0.0000001;
+/** Prefer actual text fragments over empty space inside another paragraph's box. */
+export function editorTargetAtPoint(targets: TextTarget[], x: number, y: number) {
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return undefined;
+  const contains = (r: Rect) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+  return targets
+    .filter(contains)
+    .map((target) => ({
+      target,
+      inkArea: Math.min(
+        ...(target.fragments || [target]).filter(contains).map((part) => part.w * part.h),
+      ),
+    }))
+    .sort(
+      (a, b) =>
+        a.inkArea - b.inkArea ||
+        a.target.w * a.target.h - b.target.w * b.target.h ||
+        a.target.id.localeCompare(b.target.id),
+    )[0]?.target;
+}
 export function editorImageCropBounds(rect: Rect, corners?: [number, number][], crop?: Rect): Rect {
   if (!crop) return rect;
   if (!corners || corners.length !== 3)
@@ -469,6 +488,10 @@ export function editorParagraphs(
     a.origin === b.origin &&
     a.invisible === b.invisible &&
     a.fill === b.fill &&
+    // These properties apply to an entire editable field, not individual runs.
+    // Joining different values would silently alter the neighbouring text.
+    Math.abs((a.tracking || 0) - (b.tracking || 0)) * Math.max(a.fontSize, b.fontSize) <= 0.04 &&
+    Math.abs((a.textScaleX || 1) - (b.textScaleX || 1)) <= 0.005 &&
     Math.abs(a.fontSize - b.fontSize) < Math.max(0.5, a.fontSize * 0.08);
   for (const target of sorted) {
     const previous = groups.at(-1),
@@ -479,6 +502,10 @@ export function editorParagraphs(
       Math.abs(baseline(last) - baseline(target)) <=
         Math.min(last.fontSize, target.fontSize) * 0.2 &&
       target.x >= last.x &&
+      (target.x - last.x - last.w) * width +
+        (last.insetScale || 0) * last.fontSize +
+        (target.insetScale || 0) * target.fontSize >=
+        -last.fontSize * 0.1 &&
       (target.x - last.x - last.w) * width < last.fontSize * 0.6
     )
       previous!.push(target);
@@ -575,9 +602,14 @@ export function editorParagraphs(
         !!last.bold === !!line.bold &&
         !tableRow(last) &&
         !tableRow(line) &&
-        Math.abs(last.x - line.x) * width < last.fontSize * 0.65 &&
-        gap >= 0.75 &&
+        Math.abs(last.x - line.x) * width <= Math.max(0.5, last.fontSize * 0.04) &&
+        gap >= 1 &&
         gap <= 1.65 &&
+        // A field has one line-height. Keep irregularly spaced lines separate
+        // instead of moving all later baselines to the first measured gap.
+        (group.length < 2 ||
+          Math.abs(baseline(line) - baseline(last) - (baseline(group[1]) - baseline(group[0]))) <=
+            Math.max(0.35, last.fontSize * 0.025)) &&
         last.w >= line.w * 0.65
       );
     });

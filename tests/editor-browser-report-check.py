@@ -11,6 +11,7 @@ EXPECTED = {
         'historical-scan', 'column-scan', 'rotated-scan', 'form-guard',
     ],
     'workflow-report.json': [
+        'workflow-repeated-input', 'workflow-repeated-input-touch',
         'workflow-text', 'workflow-touch', 'workflow-flow', 'workflow-images',
         'workflow-french', 'workflow-ocr-focus', 'workflow-ocr-focus-touch',
     ],

@@ -58,6 +58,7 @@ import {
   editorTextCollision,
   readTextTargets,
   editorSelectionTargets,
+  editorTargetAtPoint,
   type EditorAction,
   type TextTarget,
 } from '@/lib/editor-model';
@@ -741,6 +742,8 @@ export function EditorCanvas({
   }
   function pick(target: TextTarget, point?: Omit<EditorStartPoint, 'id'>) {
     if (disabled) return;
+    if (point?.pageX !== undefined && point.pageY !== undefined)
+      target = editorTargetAtPoint(available, point.pageX, point.pageY) || target;
     scanSelection.current?.abort();
     setMatchingScan(false);
     if (joining) {
@@ -903,6 +906,113 @@ export function EditorCanvas({
       .filter((m) => m.kind === 'text' && !m.textRotation)
       .map((mark) => ({ key: 'mark:' + mark.id, mark, existing: true })),
   ];
+  const selectionActions =
+    autoOcr && !showOriginal && !joining && (selectedText || selectedImage) ? (
+      <div
+        className="editor-selection-actions"
+        role="toolbar"
+        aria-label={ui('Aktionen für die Auswahl')}
+      >
+        <strong>
+          {ui(selectedText?.tableCell ? 'Tabellenzelle' : selectedText ? 'Textfeld' : 'Bild')}
+        </strong>
+        {selectedText && (
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => revealControls('.editor-inline-toolbar')}
+            >
+              {ui('Formatierung')}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => revealControls('.editor-layout-help')}
+            >
+              {ui('Layout anpassen')}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={disabled}
+              onClick={() => revealControls('.editor-font-alternatives')}
+            >
+              {ui('Schrift vergleichen')}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={disabled}
+              onPointerDown={(e) => e.preventDefault()}
+              onClick={() =>
+                setFormat(captureEditorFormat(selectedText, dims.width, source.id, textSelection))
+              }
+            >
+              {ui('Format aufnehmen')}
+            </Button>
+            {format && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled}
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() =>
+                  onPatch(selectedText.id, applyEditorFormat(format, dims.width, source.id))
+                }
+              >
+                {ui('Format übertragen')}
+              </Button>
+            )}
+            {selectedText.tableCell && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled}
+                onClick={() => revealControls('[data-editor-table]')}
+              >
+                {ui('Tabelle bearbeiten')}
+              </Button>
+            )}
+            {selectedText.sourceIsScan && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={disabled}
+                onClick={() => revealControls('.editor-ocr-review')}
+              >
+                {ui('OCR-Korrektur')}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={disabled || !selectedText.text}
+              onClick={() => onPatch(selectedText.id, { text: '', runs: [] })}
+            >
+              {ui('Textinhalt leeren')}
+            </Button>
+          </>
+        )}
+        {selectedImage && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={disabled}
+            onClick={() => revealControls('.editor-image-tools')}
+          >
+            {ui('Bild ersetzen oder zuschneiden')}
+          </Button>
+        )}
+        {selectedImage && (
+          <Button size="sm" variant="ghost" onClick={() => onSelect('')}>
+            {ui('Fertig')}
+          </Button>
+        )}
+      </div>
+    ) : null;
   return (
     <div
       ref={controlsRoot}
@@ -1244,6 +1354,7 @@ export function EditorCanvas({
             )
           }
           onSearch={() => openSearch(selectedText.id)}
+          actions={selectionActions}
         />
       )}
       {selectedText && autoOcr && searchId === selectedText.id && (
@@ -1308,110 +1419,7 @@ export function EditorCanvas({
           {showOriginal && ui('Originalansicht – deine Änderungen bleiben erhalten.')}
         </span>
       </div>
-      {autoOcr && !showOriginal && !joining && (selectedText || selectedImage) && (
-        <div
-          className="editor-selection-actions"
-          role="toolbar"
-          aria-label={ui('Aktionen für die Auswahl')}
-        >
-          <strong>
-            {ui(selectedText?.tableCell ? 'Tabellenzelle' : selectedText ? 'Textfeld' : 'Bild')}
-          </strong>
-          {selectedText && (
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={disabled}
-                onClick={() => revealControls('.editor-inline-toolbar')}
-              >
-                {ui('Formatierung')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={disabled}
-                onClick={() => revealControls('.editor-layout-help')}
-              >
-                {ui('Layout anpassen')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={disabled}
-                onClick={() => revealControls('.editor-font-alternatives')}
-              >
-                {ui('Schrift vergleichen')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={disabled}
-                onPointerDown={(e) => e.preventDefault()}
-                onClick={() =>
-                  setFormat(captureEditorFormat(selectedText, dims.width, source.id, textSelection))
-                }
-              >
-                {ui('Format aufnehmen')}
-              </Button>
-              {format && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={disabled}
-                  onPointerDown={(e) => e.preventDefault()}
-                  onClick={() =>
-                    onPatch(selectedText.id, applyEditorFormat(format, dims.width, source.id))
-                  }
-                >
-                  {ui('Format übertragen')}
-                </Button>
-              )}
-              {selectedText.tableCell && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={disabled}
-                  onClick={() => revealControls('[data-editor-table]')}
-                >
-                  {ui('Tabelle bearbeiten')}
-                </Button>
-              )}
-              {selectedText.sourceIsScan && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={disabled}
-                  onClick={() => revealControls('.editor-ocr-review')}
-                >
-                  {ui('OCR-Korrektur')}
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={disabled || !selectedText.text}
-                onClick={() => onPatch(selectedText.id, { text: '', runs: [] })}
-              >
-                {ui('Textinhalt leeren')}
-              </Button>
-            </>
-          )}
-          {selectedImage && (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={disabled}
-              onClick={() => revealControls('.editor-image-tools')}
-            >
-              {ui('Bild ersetzen oder zuschneiden')}
-            </Button>
-          )}
-          <Button size="sm" variant="ghost" onClick={() => onSelect('')}>
-            {ui('Fertig')}
-          </Button>
-        </div>
-      )}
+      {selectedImage && selectionActions}
       <div className="editor-page-scroll" ref={pageScroll}>
         <div
           className="canvas-holder"

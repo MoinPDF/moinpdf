@@ -7599,7 +7599,7 @@ html:has(.editor-canvas-wrap) {
   pointer-events: none;
 }
 .editor-touch-details {
-  display: none;
+  display: inline-flex;
 }
 .is-touch-mode .editor-touch-details {
   display: inline-flex;
@@ -7994,4 +7994,32 @@ html:has(.editor-canvas-wrap) {
   overflow: auto;
   overflow-wrap: anywhere;
   padding-left: 24px;
+}
+
+/* Keep the document close to the common formatting controls. */
+.editor-inline-toolbar:not(.show-touch-details) .editor-font-upload,
+.editor-inline-toolbar:not(.show-touch-details) .editor-selection-help {
+  display: none;
+}
+.editor-text-actions {
+  flex: 1 0 100%;
+  min-width: 0;
+  font-size: 12px;
+}
+.editor-text-actions > summary,
+.editor-font-evidence > summary {
+  cursor: pointer;
+  padding-block: 7px;
+}
+.editor-text-actions .editor-selection-actions {
+  position: static;
+  margin: 6px 0 0;
+  box-shadow: none;
+}
+.editor-font-evidence > summary span {
+  font-weight: 400;
+}
+.editor-font-evidence[open] {
+  max-height: 210px;
+  overflow: auto;
 }

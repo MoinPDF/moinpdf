@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import {
   Bold,
   Italic,
@@ -367,69 +367,89 @@ export function EditorFontStatus({
   const names = [...new Set(resolutions.map((r) => r.font.name))];
   const reasons = [...new Set(resolutions.map((r) => r.reason).filter(Boolean))];
   const originalName = context.mixed.has('originalFontName') ? '' : context.style.originalFontName;
+  const substituted = resolutions.some((r) => r.substituted);
+  const label = error
+    ? 'Schrift prüfen'
+    : pending
+      ? 'Schrift wird vorbereitet …'
+      : mark.sourceIsScan
+        ? 'Scan: Schrift angenähert'
+        : substituted
+          ? 'Ersatzschrift · bitte prüfen'
+          : resolutions.length && resolutions.every((r) => r.font.original)
+            ? 'Originalschrift wird verwendet'
+            : 'Verwendete Schrift';
   return (
     <div className="editor-font-status" aria-live="polite">
-      {mark.sourceIsScan && (
-        <p className="editor-ocr-warning">
-          {ui('Bei Scans wird die Schrift visuell angenähert. Bitte mit dem Original vergleichen.')}
-        </p>
-      )}
-      {mark.sourceIsScan && mark.scanMatch && (
-        <p className="editor-scan-match" role="status">
-          {ui(
-            editorScanMatchStatus(mark) === 'matched'
-              ? 'Schriftähnlichkeit: gute Annäherung'
-              : editorScanMatchStatus(mark) === 'changed'
-                ? 'Schriftähnlichkeit: Formatierung nach der Erkennung geändert'
-                : 'Schriftähnlichkeit: unsicher',
-          )}
-          {' · '}
-          {ui('Verglichene Originalstellen')}: {mark.scanMatch.samples}
-        </p>
-      )}
-      {originalName && (
-        <span>
-          {ui('Erkannte Schrift')}: <strong>{originalName}</strong>
-        </span>
-      )}
-      {error ? (
-        <p role="alert">{ui(error)}</p>
-      ) : resolution ? (
-        <>
-          <span>
+      <details className="editor-font-evidence">
+        <summary className={error || substituted || mark.sourceIsScan ? 'editor-ocr-warning' : ''}>
+          <strong>{ui(label)}</strong>
+          {!pending && !error && names.length > 0 && <span> · {names.join(', ')}</span>}
+        </summary>
+        {mark.sourceIsScan && (
+          <p className="editor-ocr-warning">
             {ui(
-              names.length > 1
-                ? 'Verwendete Schriften'
-                : resolution.font.original
-                  ? 'Originalschrift wird verwendet'
-                  : resolution.substituted
-                    ? 'Ersatzschrift'
-                    : 'Verwendete Schrift',
+              'Bei Scans wird die Schrift visuell angenähert. Bitte mit dem Original vergleichen.',
             )}
-            : <strong>{names.join(', ')}</strong>
+          </p>
+        )}
+        {mark.sourceIsScan && mark.scanMatch && (
+          <p className="editor-scan-match" role="status">
+            {ui(
+              editorScanMatchStatus(mark) === 'matched'
+                ? 'Schriftähnlichkeit: gute Annäherung'
+                : editorScanMatchStatus(mark) === 'changed'
+                  ? 'Schriftähnlichkeit: Formatierung nach der Erkennung geändert'
+                  : 'Schriftähnlichkeit: unsicher',
+            )}
+            {' · '}
+            {ui('Verglichene Originalstellen')}: {mark.scanMatch.samples}
+          </p>
+        )}
+        {originalName && (
+          <span>
+            {ui('Erkannte Schrift')}: <strong>{originalName}</strong>
           </span>
-          {reasons.map((reason) => (
-            <p key={reason} className="editor-ocr-warning">
-              {ui(reason!)}
-            </p>
-          ))}
-          {resolutions.length === 1 && resolution.widthDeviation !== undefined && (
+        )}
+        {error ? (
+          <p role="alert">{ui(error)}</p>
+        ) : resolution ? (
+          <>
             <span>
-              {ui('Abweichung der Textbreite')}: {Math.round(resolution.widthDeviation * 10) / 10}%
-              · {ui('am ursprünglichen Text gemessen')}
+              {ui(
+                names.length > 1
+                  ? 'Verwendete Schriften'
+                  : resolution.font.original
+                    ? 'Originalschrift wird verwendet'
+                    : resolution.substituted
+                      ? 'Ersatzschrift'
+                      : 'Verwendete Schrift',
+              )}
+              : <strong>{names.join(', ')}</strong>
             </span>
-          )}
-        </>
-      ) : pending ? (
-        <span>{ui('Schrift wird vorbereitet …')}</span>
-      ) : null}
-      {!mark.originalFontName && mark.sourceRect && (
-        <p>
-          {ui(
-            'Bei Scans sind Schriftart und Größe geschätzt. Bitte das Schriftbild am Original prüfen.',
-          )}
-        </p>
-      )}
+            {reasons.map((reason) => (
+              <p key={reason} className="editor-ocr-warning">
+                {ui(reason!)}
+              </p>
+            ))}
+            {resolutions.length === 1 && resolution.widthDeviation !== undefined && (
+              <span>
+                {ui('Abweichung der Textbreite')}: {Math.round(resolution.widthDeviation * 10) / 10}
+                % · {ui('am ursprünglichen Text gemessen')}
+              </span>
+            )}
+          </>
+        ) : pending ? (
+          <span>{ui('Schrift wird vorbereitet …')}</span>
+        ) : null}
+        {!mark.originalFontName && mark.sourceRect && !mark.sourceIsScan && (
+          <p>
+            {ui(
+              'Die PDF enthält keinen eindeutigen Schriftnamen. Bitte das Schriftbild am Original prüfen.',
+            )}
+          </p>
+        )}
+      </details>
     </div>
   );
 }
@@ -443,6 +463,7 @@ export function EditorInlineToolbar({
   selection,
   onFocusText,
   onSearch,
+  actions,
 }: {
   mark: Mark;
   source: Source;
@@ -453,6 +474,7 @@ export function EditorInlineToolbar({
   selection?: EditorSelection | null;
   onFocusText?: () => void;
   onSearch?: () => void;
+  actions?: ReactNode;
 }) {
   useLanguage();
   const [fontError, setFontError] = useState('');
@@ -767,6 +789,12 @@ export function EditorInlineToolbar({
       >
         {ui(details ? 'Weniger Textoptionen' : 'Mehr Textoptionen')}
       </Button>
+      {actions && (
+        <details className="editor-text-actions" key={mark.id}>
+          <summary>{ui('Textaktionen')}</summary>
+          {actions}
+        </details>
+      )}
       <EditorFontStatus mark={mark} source={source} selection={selection} />
       <small className="editor-selection-help">
         <strong>

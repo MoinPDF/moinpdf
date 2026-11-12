@@ -9,6 +9,14 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.34.0 — 2026-11-12
+
+- PDF bearbeiten: kompakte Formatleiste mit eingeklappten Textaktionen und Schriftinformationen. Die verwendete Originalschrift, Ersatzschrift oder Scan-Annäherung bleibt direkt sichtbar; ausführliche Begründungen und eigene Schriftdateien lassen sich bei Bedarf öffnen.
+- Automatische Absätze verbinden nur passend ausgerichtete Zeilen mit einheitlichen Grundlinienabständen, Zeichenabständen und horizontaler Skalierung. Einzüge, unregelmäßige Abstände und überlagerte Textobjekte bleiben getrennt und werden beim Bearbeiten nicht unbemerkt vereinheitlicht.
+- Bei überlappenden Auswahlrahmen erhält die tatsächlich angetippte Textstelle Vorrang vor leeren Bereichen eines größeren Absatzes.
+- Direkte Eingabe, Löschen und Ersetzen berücksichtigen die ursprüngliche Cursorposition. Wiederholte gleiche Zeichen an einer Formatgrenze übernehmen dadurch den richtigen Schriftstil; Autokorrektur und IME behalten ihre abgesicherte Rückfallbehandlung. Abgebrochene Eingaben erhalten unveränderte gemischte Formatierungen.
+- Ausblendende Meldungen fangen keine Berührungen mehr ab und können den Download-Knopf auf schmalen Bildschirmen nicht blockieren.
+
 ## 0.33.1 — 2026-11-12
 
 - PDF bearbeiten: Auswahl- und Ersetzungsbereiche berücksichtigen die tatsächlichen Buchstabenkonturen, auch wenn eine eingebettete Schrift fehlerhafte Höhenangaben enthält. Schmale Auswahlstreifen und dadurch fälschlich gemeldete zu kleine Textfelder werden vermieden; Originalschrift, Laufweite und Grundlinie bleiben erhalten.

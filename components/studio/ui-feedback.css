@@ -144,3 +144,9 @@
 .toaster[data-sonner-toaster][data-sonner-theme='light'] {
   --success-text: #08752f;
 }
+
+/* The outgoing toast and its enlarged hover area must not catch a tap on the
+   mobile download action while the notification is leaving the screen. */
+[data-sonner-toast][data-removed='true'] {
+  pointer-events: none;
+}

@@ -65,6 +65,13 @@ jobs:
       - name: Prepare native renderer diagnostics
         if: matrix.browser == 'webkit'
         run: sudo apt-get install --yes --no-install-recommends gdb
+      - name: Repeated-character input at mixed-format boundaries
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+          MOINPDF_TEST_START_SERVER: '1'
+          MOINPDF_BROWSER_CASES: ${{ matrix.browser }}-workflow-repeated-input,${{ matrix.browser }}-workflow-repeated-input-touch
+          DEBUG: pw:browser
+        run: python tests/editor-workflow-browser.py
       - name: Format import, PDF JSON roundtrip, comics, scanner and data exports
         env:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
