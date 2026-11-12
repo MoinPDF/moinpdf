@@ -316,6 +316,9 @@ export function replaceEditorInput(
   range?: { start: number; end: number; inputType?: string } | null,
 ): Partial<Mark> {
   const old = mark.text || '';
+  // A cancelled composition can report the original selected text again.
+  // No text change must never flatten the selection's mixed formatting.
+  if (text === old) return { text, runs: mark.runs };
   if (range) {
     let { start, end } = range;
     if (start === end && text.length < old.length) {

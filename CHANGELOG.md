@@ -14,7 +14,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - PDF bearbeiten: kompakte Formatleiste mit eingeklappten Textaktionen und Schriftinformationen. Die verwendete Originalschrift, Ersatzschrift oder Scan-Annäherung bleibt direkt sichtbar; ausführliche Begründungen und eigene Schriftdateien lassen sich bei Bedarf öffnen.
 - Automatische Absätze verbinden nur passend ausgerichtete Zeilen mit einheitlichen Grundlinienabständen, Zeichenabständen und horizontaler Skalierung. Einzüge, unregelmäßige Abstände und überlagerte Textobjekte bleiben getrennt und werden beim Bearbeiten nicht unbemerkt vereinheitlicht.
 - Bei überlappenden Auswahlrahmen erhält die tatsächlich angetippte Textstelle Vorrang vor leeren Bereichen eines größeren Absatzes.
-- Direkte Eingabe, Löschen und Ersetzen berücksichtigen die ursprüngliche Cursorposition. Wiederholte gleiche Zeichen an einer Formatgrenze übernehmen dadurch den richtigen Schriftstil; Autokorrektur und IME behalten ihre abgesicherte Rückfallbehandlung.
+- Direkte Eingabe, Löschen und Ersetzen berücksichtigen die ursprüngliche Cursorposition. Wiederholte gleiche Zeichen an einer Formatgrenze übernehmen dadurch den richtigen Schriftstil; Autokorrektur und IME behalten ihre abgesicherte Rückfallbehandlung. Abgebrochene Eingaben erhalten unveränderte gemischte Formatierungen.
 - Ausblendende Meldungen fangen keine Berührungen mehr ab und können den Download-Knopf auf schmalen Bildschirmen nicht blockieren.
 
 ## 0.33.1 — 2026-11-12

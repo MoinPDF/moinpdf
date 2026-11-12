@@ -88,6 +88,8 @@ try{
  const replaced={...repeatedStyles,...rich.replaceEditorInput(repeatedStyles,'AAA',{start:0,end:1,inputType:'insertReplacementText'})};
  assert.equal(rich.editorSegments(replaced)[0].end,2,'Replacing selected repeated text keeps its original style');
  assert.deepEqual(rich.replaceEditorInput(repeatedStyles,'Changed',{start:1,end:1,inputType:'insertReplacementText'}),rich.replaceEditorText(repeatedStyles,'Changed'),'Autocorrect outside a stale range falls back to a complete text diff');
+ const cancelled={...repeatedStyles,...rich.replaceEditorInput(repeatedStyles,'AA',{start:0,end:2,inputType:'insertCompositionText'})};
+ assert.deepEqual(rich.editorSegments(cancelled),rich.editorSegments(repeatedStyles),'Cancelled composition over a mixed-style selection leaves every original style unchanged');
  const emoji={...mark,text:'A😀B',runs:[{start:1,end:3,style:{bold:true}}]};assert.equal(rich.replaceEditorText(emoji,'A😀ZB').text,'A😀ZB');
  const output=await PDFDocument.create();await drawEditorText(output,output.addPage([500,700]),mark,500,700);
  const bytes=await output.save();await writeFile(folder+'/rich.pdf',bytes);const opened=await source(bytes);

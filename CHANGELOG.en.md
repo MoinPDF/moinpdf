@@ -9,7 +9,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - PDF editor: compact formatting toolbar with collapsed text actions and font evidence. The original font, substitute font or scan approximation remains visible; detailed explanations and custom font uploads are available on demand.
 - Automatic paragraphs join aligned lines only when baseline spacing, character spacing and horizontal scaling agree. Indents, irregular spacing and overprinted objects stay separate instead of being silently normalized during editing.
 - When selection boxes overlap, the text actually tapped takes precedence over empty space inside a larger paragraph.
-- Direct typing, deletion and replacement use the original caret range. Repeated identical characters at a formatting boundary inherit the intended font style; autocorrect and IME retain their guarded fallback.
+- Direct typing, deletion and replacement use the original caret range. Repeated identical characters at a formatting boundary inherit the intended font style; autocorrect and IME retain their guarded fallback. Cancelled input preserves unchanged mixed formatting.
 - Dismissing notifications no longer intercept taps or block the download action on narrow screens.
 
 ## 0.33.1 — 2026-11-12
