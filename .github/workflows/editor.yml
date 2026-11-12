@@ -56,7 +56,7 @@ jobs:
         timeout-minutes: 8
         run: |
           bash scripts/ci-prepare-apt.sh
-          python -m pip install playwright==1.64.0 pymupdf==1.26.6 icalendar==6.3.2
+          python -m pip install playwright==1.65.0 pymupdf==1.26.6 icalendar==6.3.2
           python -m playwright install --with-deps ${{ matrix.browser }}
       - name: Format import, PDF JSON roundtrip, comics, scanner and data exports
         env:
