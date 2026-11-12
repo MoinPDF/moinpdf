@@ -1,7 +1,7 @@
 """Mobile editor regression: real Chromium touch input; DOM gesture events in
 Firefox/WebKit. Independent PDF readback. This is not a physical-device test.
 """
-import atexit, json, os, re, subprocess, sys, time
+import atexit, json, os, re, struct, subprocess, sys, time
 from pathlib import Path
 from urllib.request import urlopen
 import pymupdf
@@ -30,6 +30,41 @@ if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
                 if response.status == 200: break
         except OSError: time.sleep(.1)
     else: raise RuntimeError('Production test server unavailable')
+
+def fixture_glyph(font, gid):
+    # This fixture uses simple TrueType glyphs. Subsets may omit the name/cmap
+    # tables and renumber glyphs, so compare the actual embedded glyph programs
+    # and advances using glyph IDs independently decoded from the PDF.
+    count = struct.unpack_from('>H', font, 4)[0]
+    tables = {font[12+16*i:16+16*i].decode(): struct.unpack_from('>II', font, 20+16*i)
+              for i in range(count)}
+    def table(name):
+        offset, size = tables[name]
+        return font[offset:offset+size]
+    head, loca, glyf, hhea, hmtx = [table(name) for name in ['head', 'loca', 'glyf', 'hhea', 'hmtx']]
+    long_offsets = struct.unpack_from('>h', head, 50)[0]
+    fmt, step, factor = ('>I', 4, 1) if long_offsets else ('>H', 2, 2)
+    start = struct.unpack_from(fmt, loca, gid*step)[0]*factor
+    end = struct.unpack_from(fmt, loca, (gid+1)*step)[0]*factor
+    metrics = struct.unpack_from('>H', hhea, 34)[0]
+    advance = struct.unpack_from('>H', hmtx, min(gid, metrics-1)*4)[0]
+    return glyf[start:end].rstrip(b'\x00'), advance, struct.unpack_from('>H', head, 18)[0]
+
+def verify_original_glyphs(before, after):
+    original_font = before[0].get_fonts()[0]
+    original_bytes = before.extract_font(original_font[0])[3]
+    title = before[0].get_texttrace()[0]
+    expected = {char[0]: fixture_glyph(original_bytes, char[1]) for char in title['chars']}
+    checked = 0
+    for span in after[0].get_texttrace():
+        if abs(span['size']-14) > .02: continue
+        base_name = original_font[3] if span['font'] == title['font'] else span['font']
+        ref = next(font[0] for font in after[0].get_fonts() if font[3] == base_name)
+        data = after.extract_font(ref)[3]
+        for codepoint, gid, origin, bbox in span['chars']:
+            assert fixture_glyph(data, gid) == expected[codepoint], (span['font'], chr(codepoint))
+            checked += 1
+    assert checked == len(title['chars']) == 13
 
 def run(browser, engine):
     context = browser.new_context(viewport={'width': 390, 'height': 844}, has_touch=True, accept_downloads=True, reduced_motion='reduce')
@@ -110,15 +145,7 @@ def run(browser, engine):
             # It changes the PDF resource name, not the underlying typeface.
             font_name = lambda name: re.sub(r'-\d+$', '', name.split('+')[-1])
             assert font_name(sa['font']) == font_name(sb['font']), (sa,sb)
-        original_face = pymupdf.Font(fontbuffer=before.extract_font(before[0].get_fonts()[0][0])[3])
-        for ref, ext, kind, base_name, resource, encoding in after[0].get_fonts():
-            if font_name(base_name) == font_name(original[0][1]['font']):
-                saved_face = pymupdf.Font(fontbuffer=after.extract_font(ref)[3])
-                assert saved_face.name == original_face.name, (saved_face.name, original_face.name)
-                used_chars = {c['c'] for c, span in saved if span['font'].split('+')[-1] == base_name.split('+')[-1]}
-                assert used_chars, base_name
-                for char in used_chars:
-                    assert abs(saved_face.glyph_advance(ord(char)) - original_face.glyph_advance(ord(char))) < .001
+        verify_original_glyphs(before, after)
         assert '12345' not in after[0].get_text()
         assert 'Unchanged paragraph.' in after[0].get_text()
         assert before[1].get_pixmap().samples == after[1].get_pixmap().samples
