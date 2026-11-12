@@ -95,7 +95,16 @@ def repeated_input(page,name):
     field=pick(page,'AA')
     expect(page.locator('.editor-text-actions')).not_to_have_attribute('open','')
     expect(page.locator('.editor-inline-toolbar .editor-font-evidence > summary')).to_contain_text('Originalschrift wird verwendet')
-    field.press('Home');field.press('ArrowRight');field.press('A')
+    # Home is the start of the current visual line. A narrow PDF text box can
+    # soft-wrap even two glyphs, so establish and verify a document-relative
+    # caret before exercising the ambiguous repeated-character insertion.
+    def caret():
+        return field.evaluate("root=>{const s=getSelection();if(!s?.rangeCount||!root.contains(s.focusNode))return null;const r=document.createRange();r.selectNodeContents(root);r.setEnd(s.focusNode,s.focusOffset);return {offset:r.toString().length,collapsed:s.isCollapsed};}")
+    field.press('Control+Home')
+    assert caret()=={'offset':0,'collapsed':True},caret()
+    field.press('ArrowRight')
+    assert caret()=={'offset':1,'collapsed':True},caret()
+    field.press('A')
     expect(field).to_have_text('AAA')
     def pieces():
         return field.locator('span[data-editor-style]').evaluate_all("nodes=>nodes.map(n=>({text:n.textContent,bold:getComputedStyle(n).fontWeight==='700',color:getComputedStyle(n).color}))")
