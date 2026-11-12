@@ -20,6 +20,8 @@ import type { Mark } from '@/lib/studio-engine';
 import { editorFontCatalog, type EditorFontChoice } from '@/lib/editor-font-catalog';
 import {
   loadEditorCssFont,
+  editorCssAscent,
+  editorCssDescent,
   resolveEditorFont,
   importEditorFont,
   type EditorFontResolution,
@@ -115,8 +117,7 @@ export function editorTextCss(
   const size = (mark.fontScale || 0.028) * width,
     lineHeight = mark.lineHeight || 1.25,
     scaleX = mark.textScaleX || 1;
-  const cssBaseline =
-    (lineHeight - (font?.ascent ?? 0.9) - (font?.descent ?? 0.2)) / 2 + (font?.ascent ?? 0.9);
+  const cssBaseline = (lineHeight - editorCssAscent - editorCssDescent) / 2 + editorCssAscent;
   const offset = ((mark.baselineScale ?? 0.9) - cssBaseline) * size,
     angle = (geometry.rotation * Math.PI) / 180;
   return {

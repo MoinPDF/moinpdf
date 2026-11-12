@@ -46,6 +46,7 @@ p.insert_font(fontname='MoinFixture', fontbuffer=damaged_font)
 p.insert_text((40,100),'MoinPDF 12345',fontname='MoinFixture',fontsize=14,color=(.2,.4,.6))
 p.insert_text((40,160),'Unchanged paragraph.',fontname='MoinFixture',fontsize=12)
 p = doc.new_page(width=400,height=560); p.insert_text((40,100),'UNCHANGED SECOND PAGE',fontsize=12)
+doc.subset_fonts()
 doc.save(metrics_fixture); doc.close()
 if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
     log = open(out / 'touch-http.log', 'w')
@@ -147,11 +148,35 @@ def run(browser, engine, zero_metrics=False):
     expect(page.get_by_label('Text direkt in der PDF bearbeiten', exact=True)).to_have_count(0)
     assert viewport.get_attribute('data-editor-gesturing') is None
     target.scroll_into_view_if_needed()
+    def prefix_ink_rows():
+        sheet = page.locator('.editor-sheet').bounding_box()
+        scale = sheet['width']/400
+        # Read actual painted blue pixels in the unchanged "MoinPDF" prefix.
+        # PDF-space coordinates come from the independently generated fixture.
+        png = page.screenshot(clip={'x':sheet['x']+40*scale,'y':sheet['y']+85*scale,
+                                    'width':52*scale,'height':22*scale})
+        pix = pymupdf.Pixmap(png); pixels = pix.samples
+        rows=[]
+        for y in range(pix.height):
+            for x in range(pix.width):
+                at=(y*pix.width+x)*pix.n; r,g,b=pixels[at:at+3]
+                if b>g+20 and g>r+20 and r<160: rows.append(y)
+        assert len(rows)>20, 'Expected visible blue original glyphs'
+        return min(rows),max(rows)
+    original_rows = prefix_ink_rows() if zero_metrics else None
     if cdp:
         box = target.bounding_box(); page.touchscreen.tap(box['x']+box['width']/2, box['y']+box['height']/2)
     else: target.click()
     field = page.get_by_label('Text direkt in der PDF bearbeiten', exact=True)
     expect(field).to_have_text('MoinPDF 12345')
+    if zero_metrics:
+        # S is deliberately missing from the original subset. Its replacement
+        # font must not shift the unchanged prefix while the field has focus.
+        field.fill('MoinPDF 54S21')
+        expect(field.locator('span')).to_have_count(3)
+        page.evaluate('() => document.fonts.ready')
+        rows=prefix_ink_rows()
+        assert all(abs(a-b)<=2 for a,b in zip(original_rows,rows)), (original_rows,rows)
     field.fill('MoinPDF 54321')
     expect(field).to_have_text('MoinPDF 54321')
     expect(page.get_by_text('Textfeld zu klein',exact=True)).to_have_count(0)

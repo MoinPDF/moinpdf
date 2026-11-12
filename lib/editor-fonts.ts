@@ -62,6 +62,10 @@ type SourceFonts = {
 const sources = new WeakMap<Source, SourceFonts>();
 const localFonts = new Map<string, Promise<EditorFont>>();
 const cssFonts = new WeakMap<EditorFont, Promise<void>>();
+// A shared CSS line box keeps mixed original/substitute spans on one baseline.
+// FontFace overrides affect browser layout only, never the embedded PDF bytes.
+export const editorCssAscent = 0.9;
+export const editorCssDescent = 0.2;
 const fontFinalizer =
   typeof FinalizationRegistry === 'function'
     ? new FinalizationRegistry<FontFace>((face) => {
@@ -577,8 +581,8 @@ export async function loadEditorCssFont(font: EditorFont, source?: Source) {
       const face = new FontFace(font.cssFamily, font.bytes.slice().buffer, {
         weight: font.bold ? '700' : '400',
         style: font.italic ? 'italic' : 'normal',
-        ascentOverride: `${Math.max(0, font.ascent) * 100}%`,
-        descentOverride: `${Math.max(0, font.descent) * 100}%`,
+        ascentOverride: `${editorCssAscent * 100}%`,
+        descentOverride: `${editorCssDescent * 100}%`,
         lineGapOverride: '0%',
       });
       await face.load();

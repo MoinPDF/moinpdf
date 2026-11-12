@@ -14,6 +14,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - PDF bearbeiten: Auswahl- und Ersetzungsbereiche berücksichtigen die tatsächlichen Buchstabenkonturen, auch wenn eine eingebettete Schrift fehlerhafte Höhenangaben enthält. Schmale Auswahlstreifen und dadurch fälschlich gemeldete zu kleine Textfelder werden vermieden; Originalschrift, Laufweite und Grundlinie bleiben erhalten.
 - Eingebettete Schriften mit gleichen Zeichenkonturen, aber unterschiedlichen Zeilenmaßen erhalten getrennte Browser-Schriftzuordnungen.
 - Der Zeilenabstand zusammengehöriger Textzeilen wird anhand ihrer Grundlinien bestimmt; unterschiedlich hohe Buchstaben verändern ihn nicht.
+- Original- und Ersatzschrift verwenden beim direkten Tippen gemeinsame Browser-Zeilenmaße, damit ein neu eingefügtes Ersatzzeichen die sichtbare Zeile nicht verschiebt.
 - Regressionen mit gezielt fehlerhaften Schriftmetriken prüfen Antippen, Überlauf, Originalzeichen, unveränderte Nachbartexte und den gerenderten PDF-Export.
 
 ## 0.33.0 — 2026-11-12

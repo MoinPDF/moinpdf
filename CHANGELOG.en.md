@@ -9,6 +9,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - PDF editor: selection and replacement areas include actual glyph outlines even when an embedded font reports faulty line heights. This prevents thin baseline-only selection strips and false text-box overflow while preserving original glyphs, advances and baseline.
 - Embedded fonts with identical outlines but different line metrics use separate browser font families.
 - Paragraph line spacing follows the original baselines, so differing glyph heights cannot change it.
+- Original and substitute fonts share browser line metrics during direct input, preventing a newly substituted character from shifting the visible line.
 - Regression fixtures with deliberately faulty font metrics check tapping, overflow, original glyphs, untouched neighboring text and rendered PDF output.
 
 ## 0.33.0 — 2026-11-12
