@@ -107,7 +107,10 @@ def repeated_input(page,name):
     field.press('A')
     expect(field).to_have_text('AAA')
     def pieces():
-        return field.locator('span[data-editor-style]').evaluate_all("nodes=>nodes.map(n=>({text:n.textContent,bold:getComputedStyle(n).fontWeight==='700',color:getComputedStyle(n).color}))")
+        # Query from the stable editing host rather than passing the live child
+        # collection across Playwright's Firefox execution worlds. Keep the
+        # computed-style assertions, including inherited font weight and colour.
+        return field.evaluate("root=>Array.from(root.querySelectorAll('span[data-editor-style]'),n=>{const css=getComputedStyle(n);return {text:n.textContent,bold:css.fontWeight==='700',color:css.color};})")
     typed=pieces()
     assert typed[0]['text']=='AA' and typed[0]['bold'],typed
     assert typed[-1]['text']=='A' and not typed[-1]['bold'],typed
