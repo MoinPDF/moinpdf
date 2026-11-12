@@ -94,7 +94,7 @@ def repeated_input(page,name):
     open_editor(page,repeated_fixture)
     field=pick(page,'AA')
     expect(page.locator('.editor-text-actions')).not_to_have_attribute('open','')
-    expect(page.locator('.editor-font-evidence > summary')).to_contain_text('Originalschrift wird verwendet')
+    expect(page.locator('.editor-inline-toolbar .editor-font-evidence > summary')).to_contain_text('Originalschrift wird verwendet')
     field.press('Home');field.press('ArrowRight');field.press('A')
     expect(field).to_have_text('AAA')
     def pieces():

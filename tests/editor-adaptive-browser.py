@@ -204,7 +204,7 @@ def repair(page,name):
     return {'scope':'damaged stream length repaired locally, visible notice, edited/reopened export, both other pages pixel identical'}
 
 def cff(page,name):
-    open_editor(page,'cff');field=pick(page,'A AΩ');field.fill('A Ω');expect(page.get_by_text(re.compile(r'^Originalschrift wird verwendet:')).first).to_be_visible(timeout=90000)
+    open_editor(page,'cff');field=pick(page,'A AΩ');field.fill('A Ω');expect(page.locator('.editor-inline-toolbar .editor-font-evidence > summary')).to_contain_text('Originalschrift wird verwendet',timeout=90000)
     file=save(page,name)
     with pymupdf.open(file) as d:assert d[0].get_text().strip()=='A Ω';assert not d[0].get_images()
     return {'scope':'original static CFF outline reuse and independently readable vector export'}
