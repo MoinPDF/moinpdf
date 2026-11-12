@@ -49,4 +49,26 @@ doc.querySelector('button').dispatchEvent(new dom.window.MouseEvent('click', { b
 const ordinaryWheel = new dom.window.WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 50 }); page.dispatchEvent(ordinaryWheel); assert(!ordinaryWheel.defaultPrevented);
 const wheel = new dom.window.WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 100, ctrlKey: true, clientX: 170, clientY: 190 }); page.dispatchEvent(wheel); assert(wheel.defaultPrevented); await new Promise(resolve => setTimeout(resolve, 160)); assert(zoom < 400 && zoom > 200);
 send('touchstart', [touch(1, 100, 160), touch(2, 200, 160)]); send('touchmove', [touch(1, 0, 160), touch(2, 300, 160)]); dispose(); await tick(); assert.equal(content.style.transform, ''); assert.equal(viewport.dataset.editorGesturing, undefined);
+// A compositor can retain the previous transformed size during the commit.
+// Use a controlled frame queue to prove reconciliation and cancellation rather
+// than relying on a timeout or jsdom's lack of asynchronous browser layout.
+const frames = new Map(); let nextFrame = 1, stale = false;
+globalThis.requestAnimationFrame = callback => { const id = nextFrame++; frames.set(id, callback); return id; };
+globalThis.cancelAnimationFrame = id => frames.delete(id);
+const paintFrame = () => { const callbacks = [...frames.values()]; frames.clear(); callbacks.forEach(callback => callback()); };
+zoom = 100; viewport.scrollLeft = 0; viewport.scrollTop = 0;
+page.getBoundingClientRect = () => ({ left: 20 - viewport.scrollLeft, top: 80 - viewport.scrollTop, width: 360 * (stale ? 1.5 : zoom / 100), height: 720 * (stale ? 1.5 : zoom / 100) });
+const settleDispose = installEditorGestures({ viewport, content, page, getZoom: () => zoom, onZoom: value => { zoom = value; stale = true; }, onStart: () => {} });
+send('touchstart', [touch(1, 100, 160), touch(2, 200, 160)]);
+send('touchmove', [touch(1, 50, 160), touch(2, 250, 160)]); send('touchend', []);
+stale = false; paintFrame(); paintFrame();
+bounds = page.getBoundingClientRect();
+assert(Math.abs(bounds.left + (130 / 360) * bounds.width - 150) < .01);
+assert(Math.abs(bounds.top + (80 / 720) * bounds.height - 160) < .01);
+assert.equal(frames.size, 0, 'Anchor correction ends after two frames');
+send('touchstart', [touch(1, 100, 160), touch(2, 200, 160)]);
+send('touchmove', [touch(1, 50, 160), touch(2, 250, 160)]); send('touchend', []);
+assert(frames.size > 0); send('touchstart', [touch(1, 100, 160)]);
+assert.equal(frames.size, 0, 'The next deliberate touch immediately stops anchoring');
+settleDispose();
 console.log('PASS: anchored pinch, pan, bounded zoom, cancellation, tap/scroll isolation, trackpad zoom and cleanup.');

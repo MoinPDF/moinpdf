@@ -9,6 +9,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - PDF editor: two-finger pinch zoom anchored to the touch midpoint, simultaneous panning and trackpad zoom. The preview remains visible during the gesture; scrolling and zooming do not activate text.
 - Mobile autocorrect retains stored formatting. Loaded matching fonts remain visible while typing as new text ranges are checked.
 - Added regressions for cancelled gestures, accidental selection, zoom limits and actual PDF export with original font, size, color and baseline.
+- Completing a zoom keeps the scroll container stable and reconciles delayed layout updates so the selected location stays under the fingers in Firefox and WebKit.
 
 ## 0.32.0 — 2026-11-11
 

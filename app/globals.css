@@ -4037,7 +4037,8 @@ html:has(.editor-canvas-wrap) {
   touch-action: pan-x pan-y;
 }
 .editor-page-scroll[data-editor-gesturing] {
-  overflow: hidden;
+  /* Keep the same scroll container throughout the gesture. Switching overflow
+     can make Gecko discard the final scroll offsets after layout. */
   user-select: none;
   -webkit-user-select: none;
 }

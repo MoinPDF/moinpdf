@@ -29,10 +29,15 @@ export function installEditorGestures({
 }) {
   let gesture: Gesture | undefined,
     frame = 0,
+    settleFrame = 0,
     wheelTimer: ReturnType<typeof setTimeout> | undefined,
     blocked = false,
     suppressClickUntil = 0,
     firstTouch: Point | undefined;
+  const stopSettling = () => {
+    cancelAnimationFrame(settleFrame);
+    settleFrame = 0;
+  };
   const clearTransform = () => {
     content.style.removeProperty('transform');
     content.style.removeProperty('transform-origin');
@@ -51,6 +56,7 @@ export function installEditorGestures({
     if (!frame) frame = requestAnimationFrame(paint);
   };
   const finish = (commit: boolean) => {
+    stopSettling();
     cancelAnimationFrame(frame);
     frame = 0;
     clearTimeout(wheelTimer);
@@ -62,18 +68,32 @@ export function installEditorGestures({
       // One full render after the gesture, rather than re-running PDF/font
       // preparation on every touchmove. Re-measure the centered page at its
       // actual new size, including the desktop maximum width.
-      onZoom(Math.round(current.next));
-      // Restore the normal scroll container before assigning offsets. Gecko
-      // can rebuild it when overflow changes and otherwise discard the anchor.
+      const zoom = Math.round(current.next);
+      onZoom(zoom);
       delete viewport.dataset.editorGesturing;
-      const bounds = page.getBoundingClientRect();
-      viewport.scrollLeft += bounds.left + current.anchor.x * bounds.width - current.center.x;
-      viewport.scrollTop += bounds.top + current.anchor.y * bounds.height - current.center.y;
+      const anchor = () => {
+        if (getZoom() !== zoom) return;
+        const bounds = page.getBoundingClientRect();
+        viewport.scrollLeft += bounds.left + current.anchor.x * bounds.width - current.center.x;
+        viewport.scrollTop += bounds.top + current.anchor.y * bounds.height - current.center.y;
+      };
+      anchor();
+      // WebKit can report the last composited transform until the next paint.
+      // Reconcile after layout settles, without re-rendering the PDF or keeping
+      // a follower that could fight the user's next scroll/gesture.
+      settleFrame = requestAnimationFrame(() => {
+        anchor();
+        settleFrame = requestAnimationFrame(() => {
+          settleFrame = 0;
+          anchor();
+        });
+      });
     }
     delete viewport.dataset.editorGesturing;
     if (current) suppressClickUntil = Date.now() + 500;
   };
   const start = (center: Point, distance: number, ids: number[]) => {
+    stopSettling();
     const bounds = page.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
     const zoom = getZoom();
@@ -105,6 +125,7 @@ export function installEditorGestures({
     };
   };
   const touchStart = (event: TouchEvent) => {
+    stopSettling();
     if (event.touches.length === 1 && !blocked) {
       firstTouch = { x: event.touches[0].clientX, y: event.touches[0].clientY };
       // A fresh deliberate tap is not a compatibility click from the last pinch.
@@ -156,6 +177,7 @@ export function installEditorGestures({
     }
   };
   const wheel = (event: WheelEvent) => {
+    stopSettling();
     if (!event.ctrlKey || blocked || (gesture && gesture.ids.length)) return;
     event.preventDefault();
     if (!gesture) start({ x: event.clientX, y: event.clientY }, 1, []);

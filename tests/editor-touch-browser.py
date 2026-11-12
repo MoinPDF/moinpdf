@@ -1,7 +1,7 @@
 """Mobile editor regression: real Chromium touch input; DOM gesture events in
 Firefox/WebKit. Independent PDF readback. This is not a physical-device test.
 """
-import atexit, json, os, subprocess, sys, time
+import atexit, json, os, re, subprocess, sys, time
 from pathlib import Path
 from urllib.request import urlopen
 import pymupdf
@@ -68,6 +68,9 @@ def run(browser, engine):
         page.wait_for_timeout(20)
     touches('touchEnd', [])
     expect(page.get_by_label('Zoom der PDF-Seite', exact=True)).to_have_value('200')
+    # Wait for the bounded compositor reconciliation, then assert the actual
+    # geometry. This does not replace or relax the anchor/scale assertions.
+    page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(resolve))))')
     after = page.evaluate('''({px,py})=>{const p=document.querySelector('.editor-sheet').getBoundingClientRect(),v=document.querySelector('.editor-page-scroll');return {x:p.left+px*p.width,y:p.top+py*p.height,width:p.width,scale:visualViewport.scale,scrollLeft:v.scrollLeft,scrollTop:v.scrollTop,scrollWidth:v.scrollWidth,clientWidth:v.clientWidth,scrollHeight:v.scrollHeight,clientHeight:v.clientHeight}}''', geometry)
     assert abs(after['width']/geometry['width']-2) < .02, (geometry,after)
     assert abs(after['x']-x)<3 and abs(after['y']-y)<3, (geometry,after)
@@ -103,7 +106,19 @@ def run(browser, engine):
             assert sa['color'] == sb['color'], (sa,sb)
             assert abs(sa['size']-sb['size']) < .02, (sa,sb)
             assert all(abs(u-v)<.2 for u,v in zip(a['origin'],b['origin'])), (a,b)
-            assert sa['font'].split('+')[-1] == sb['font'].split('+')[-1], (sa,sb)
+            # pdf-lib adds a numeric resource suffix when embedding a subset.
+            # It changes the PDF resource name, not the underlying typeface.
+            font_name = lambda name: re.sub(r'-\d+$', '', name.split('+')[-1])
+            assert font_name(sa['font']) == font_name(sb['font']), (sa,sb)
+        original_face = pymupdf.Font(fontbuffer=before.extract_font(before[0].get_fonts()[0][0])[3])
+        for ref, ext, kind, base_name, resource, encoding in after[0].get_fonts():
+            if font_name(base_name) == font_name(original[0][1]['font']):
+                saved_face = pymupdf.Font(fontbuffer=after.extract_font(ref)[3])
+                assert saved_face.name == original_face.name, (saved_face.name, original_face.name)
+                used_chars = {c['c'] for c, span in saved if span['font'].split('+')[-1] == base_name.split('+')[-1]}
+                assert used_chars, base_name
+                for char in used_chars:
+                    assert abs(saved_face.glyph_advance(ord(char)) - original_face.glyph_advance(ord(char))) < .001
         assert '12345' not in after[0].get_text()
         assert 'Unchanged paragraph.' in after[0].get_text()
         assert before[1].get_pixmap().samples == after[1].get_pixmap().samples

@@ -14,6 +14,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - PDF bearbeiten: Zweifinger-Zoom mit festem Bezug zur Fingerposition, gleichzeitiges Verschieben und Unterstützung für Trackpad-Zoom. Die Vorschau bleibt während der Geste sichtbar; Scrollen und Zoomen aktivieren keine Textstelle.
 - Smartphone-Autokorrektur erhält die gespeicherte Formatierung. Geladene passende Schriften bleiben beim Tippen sichtbar, während neue Textbereiche geprüft werden.
 - Zusätzliche Regressionen für Gestenabbrüche, versehentliche Auswahl, Zoomgrenzen und tatsächlichen PDF-Export mit Originalschrift, Schriftgröße, Farbe und Grundlinie.
+- Der Zoomabschluss behält den Scrollbereich bei und gleicht verzögerte Layout-Änderungen ab, damit die gewählte Stelle auch in Firefox und WebKit unter den Fingern bleibt.
 
 ## 0.32.0 — 2026-11-11
 
