@@ -177,9 +177,12 @@ def run(browser, engine, zero_metrics=False):
     field = page.get_by_label('Text direkt in der PDF bearbeiten', exact=True)
     expect(field).to_have_text('MoinPDF 12345')
     if zero_metrics:
-        # S is deliberately missing from the original subset. Its replacement
-        # font must not shift the unchanged prefix while the field has focus.
-        field.fill('MoinPDF 54S21')
+        # I is missing from the subset and narrower than the replaced digit.
+        # Keep the line fitting: intentional overflow/caret scrolling would
+        # test a different behavior than a fallback moving the baseline.
+        measure = pymupdf.Font(fontfile='public/vendor/editor-fonts/LiberationSans-Regular.ttf').text_length
+        assert measure('MoinPDF 54I21') < measure('MoinPDF 12345')
+        field.fill('MoinPDF 54I21')
         expect(field.locator('span')).to_have_count(3)
         page.evaluate('() => document.fonts.ready')
         rows=prefix_ink_rows()
