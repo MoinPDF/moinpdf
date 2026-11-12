@@ -1851,6 +1851,11 @@ function Studio() {
                   disabled={
                     !busy && (locked || !selected.length || !hasNeededEdit || documentIndex.ocrBusy)
                   }
+                  onPointerDown={(event) => {
+                    // Keep the active text selection until the click starts
+                    // export, including while the software keyboard closes.
+                    event.preventDefault();
+                  }}
                   onClick={() => (busy ? job.current?.abort() : void process())}
                 >
                   {busy ? <X size={21} /> : <Check size={21} />}
