@@ -148,19 +148,26 @@ def run(browser, engine, zero_metrics=False):
     expect(page.get_by_label('Text direkt in der PDF bearbeiten', exact=True)).to_have_count(0)
     assert viewport.get_attribute('data-editor-gesturing') is None
     target.scroll_into_view_if_needed()
+    prefix_capture = 0
     def prefix_ink_rows():
+        nonlocal prefix_capture
         sheet = page.locator('.editor-sheet').bounding_box()
         scale = sheet['width']/400
         # Read actual painted blue pixels in the unchanged "MoinPDF" prefix.
         # PDF-space coordinates come from the independently generated fixture.
         png = page.screenshot(clip={'x':sheet['x']+40*scale,'y':sheet['y']+85*scale,
                                     'width':52*scale,'height':22*scale})
+        (out / f'touch-{label}-prefix-{prefix_capture}.png').write_bytes(png)
+        prefix_capture += 1
         pix = pymupdf.Pixmap(png); pixels = pix.samples
         rows=[]
         for y in range(pix.height):
             for x in range(pix.width):
                 at=(y*pix.width+x)*pix.n; r,g,b=pixels[at:at+3]
-                if b>g+20 and g>r+20 and r<160: rows.append(y)
+                # The text is #336699 blended onto white: its two channel
+                # differences remain equal. Exclude the blue focus border,
+                # whose hue differs, without relaxing the baseline tolerance.
+                if b>g+20 and g>r+20 and abs((b-g)-(g-r))<10 and r<160: rows.append(y)
         assert len(rows)>20, 'Expected visible blue original glyphs'
         return min(rows),max(rows)
     original_rows = prefix_ink_rows() if zero_metrics else None
