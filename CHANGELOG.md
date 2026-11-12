@@ -15,6 +15,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 - Eingebettete Schriften mit gleichen Zeichenkonturen, aber unterschiedlichen Zeilenmaßen erhalten getrennte Browser-Schriftzuordnungen.
 - Der Zeilenabstand zusammengehöriger Textzeilen wird anhand ihrer Grundlinien bestimmt; unterschiedlich hohe Buchstaben verändern ihn nicht.
 - Original- und Ersatzschrift verwenden beim direkten Tippen gemeinsame Browser-Zeilenmaße, damit ein neu eingefügtes Ersatzzeichen die sichtbare Zeile nicht verschiebt.
+- Die Eingabefläche wächst mit der benötigten Zeilenhöhe, damit Chrome den Text beim Tippen nicht innerhalb des Feldes verschiebt. Die PDF-Position und der Ersetzungsbereich bleiben unverändert.
 - Regressionen mit gezielt fehlerhaften Schriftmetriken prüfen Antippen, Überlauf, Originalzeichen, unveränderte Nachbartexte und den gerenderten PDF-Export.
 
 ## 0.33.0 — 2026-11-12

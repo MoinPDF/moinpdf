@@ -125,7 +125,11 @@ export function editorTextCss(
     left: geometry.x - Math.sin(angle) * offset,
     top: geometry.y + Math.cos(angle) * offset,
     width: geometry.width / scaleX,
-    height: geometry.height + Math.abs(offset),
+    // A PDF ink box may be shorter than a CSS line box. A fixed height makes
+    // Chromium scroll the contenteditable internally to reveal its caret,
+    // moving otherwise correctly positioned glyphs after typing/autocorrect.
+    minHeight: geometry.height + Math.abs(offset),
+    height: 'auto',
     transformOrigin: 'top left',
     transform: `rotate(${geometry.rotation}deg) scaleX(${scaleX})`,
     padding: `0 ${(mark.insetScale || 0) * size}px`,

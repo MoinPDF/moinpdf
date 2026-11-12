@@ -10,6 +10,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 - Embedded fonts with identical outlines but different line metrics use separate browser font families.
 - Paragraph line spacing follows the original baselines, so differing glyph heights cannot change it.
 - Original and substitute fonts share browser line metrics during direct input, preventing a newly substituted character from shifting the visible line.
+- The input surface grows to fit its line box so Chrome does not internally scroll the text while typing. PDF placement and replacement bounds remain unchanged.
 - Regression fixtures with deliberately faulty font metrics check tapping, overflow, original glyphs, untouched neighboring text and rendered PDF output.
 
 ## 0.33.0 — 2026-11-12
