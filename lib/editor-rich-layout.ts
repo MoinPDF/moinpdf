@@ -1,6 +1,6 @@
 import type { Mark, EditorTextRun } from './studio-engine';
 import type { Source } from './pdf-engine';
-import { editorSegments, editorScriptMetrics } from './editor-rich-text';
+import { editorSegments, editorScriptMetrics, editorStyleKeys } from './editor-rich-text';
 import {
   resolveEditorFont,
   originalEditorFont,
@@ -12,6 +12,26 @@ export type PreparedEditorRun = EditorTextRun & {
   resolution: EditorFontResolution;
   listMarker?: EditorFontResolution;
 };
+/** Reuse already loaded, exact fonts while preparing a new text revision.
+ * Offsets are rebuilt from the new text; stale offsets must never truncate it.
+ * Unknown glyphs and automatic substitute fonts still wait for resolution. */
+export function reuseEditorRuns(mark: Mark, previous: Mark, runs: PreparedEditorRun[]) {
+  if (mark.id !== previous.id || mark.sourceIsScan || mark.customFont !== previous.customFont)
+    return undefined;
+  const output: PreparedEditorRun[] = [];
+  for (const run of editorSegments(mark)) {
+    const text = (mark.text || '').slice(run.start, run.end);
+    const ready = runs.find(
+      (candidate) =>
+        editorStyleKeys.every((key) => candidate.style[key] === run.style[key]) &&
+        !candidate.resolution.substituted &&
+        candidate.resolution.font.covers(text),
+    );
+    if (!ready) return undefined;
+    output.push({ ...ready, ...run });
+  }
+  return output.length ? output : undefined;
+}
 export const hasRichEditorLayout = (mark: Mark, runs: PreparedEditorRun[]) =>
   !!(
     mark.runs?.length ||

@@ -4,6 +4,14 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification plan for 0.33.0
+
+- `editor-gestures-smoke.mjs`: anchored zoom and pan, limits, cancellation, remaining fingers, compatibility-click suppression and trackpad zoom in a DOM harness.
+- `editor-ui-smoke.mjs`: autocorrect dropping styled DOM spans and visible font retention during delayed preparation.
+- `editor-touch-browser.py`: Chromium CDP touch input; Firefox/WebKit DOM gesture events. A 390-pixel viewport, deliberate-tap focus, zoom anchoring and actual PDF download. Independent readback checks text, font family, original glyph programs and metrics, size, color, baseline and an untouched second page. No physical devices; existing native Safari checks remain separate.
+- 76 engine/DOM suites and the existing complete browser, Docker and native Safari checks remain required. The mobile table workflow exports directly after editing text. Publication and Store upgrades use only the subsequently verified amd64/arm64 images.
+- Successful Actions runs for the exact commit are the execution evidence; this description alone is not.
+
 ## Verification plan for 0.32.0
 
 - 75 engine/DOM suites include table extraction, automatic processing and the intro. `table-layout-smoke.mjs` checks shifted columns, repeated headers, continuation lines, uncertain cells, source locations, real XLSX output and project restoration.

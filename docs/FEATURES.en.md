@@ -1,5 +1,11 @@
 # Features and limitations
 
+## PDF editor: touch and typography
+
+Two-finger pinch zoom scales the PDF from 50 to 400 percent around the touch midpoint and can pan the view at the same time. The existing view is transformed during the gesture; a sharp preview follows after completion. One finger scrolls; a deliberate tap opens text editing. Cancelled gestures and lifting only one finger do not create text edits. Ctrl plus mouse wheel and trackpad pinch are also supported.
+
+Mobile autocorrect and IME replacements retain the stored font styles and colors. Loaded matching fonts stay visible while typing; new or missing glyphs are checked again. Zoom never changes PDF coordinates, font size, tracking or color. Scan fonts remain approximations; missing original glyphs still require a disclosed substitute.
+
 ## Current improvements
 
 - Table extraction detects recurring column gaps per page, shows cell source locations, highlights uncertain values and preserves spanning headers in Excel. Nearby continuation lines can optionally be joined; manual boundaries remain available. Conflicting column counts require correction.
@@ -74,7 +80,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.32.0**
+**Current implementation limits · 0.33.0**
 
 | Capability | Value |
 | --- | --- |

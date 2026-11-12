@@ -4,14 +4,14 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import ts from 'typescript';
 import { JSDOM } from 'jsdom';
 const folder='.cache/editor-ui';await mkdir(folder,{recursive:true});
-for(const file of ['lib/editor-font-match.ts','lib/editor-tables.ts','lib/editor-workflow.ts','lib/editor-scan.ts','components/studio/editor-image-tools.tsx','lib/editor-blocks.ts','lib/editor-layout-plan.ts','components/studio/editor-block-tools.tsx','components/studio/editor-layout-outline.tsx','components/studio/editor-font-alternatives.tsx','lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/editor-dom.ts','components/studio/editor-text-search.tsx','components/studio/editor-rich-input.tsx','components/studio/editor-layout-help.tsx','components/studio/editor-ocr-review.tsx','lib/local-font-bytes.ts','components/studio/editor-canvas.tsx','components/studio/editor-typography.tsx','lib/editor-font-catalog.ts','lib/editor-model.ts','lib/editor-text-layer.ts','lib/ui-language.ts']) {
+for(const file of ['lib/editor-gestures.ts','lib/editor-font-match.ts','lib/editor-tables.ts','lib/editor-workflow.ts','lib/editor-scan.ts','components/studio/editor-image-tools.tsx','lib/editor-blocks.ts','lib/editor-layout-plan.ts','components/studio/editor-block-tools.tsx','components/studio/editor-layout-outline.tsx','components/studio/editor-font-alternatives.tsx','lib/editor-rich-text.ts','lib/editor-rich-layout.ts','lib/editor-dom.ts','components/studio/editor-text-search.tsx','components/studio/editor-rich-input.tsx','components/studio/editor-layout-help.tsx','components/studio/editor-ocr-review.tsx','lib/local-font-bytes.ts','components/studio/editor-canvas.tsx','components/studio/editor-typography.tsx','lib/editor-font-catalog.ts','lib/editor-model.ts','lib/editor-text-layer.ts','lib/ui-language.ts']) {
  const code=ts.transpileModule(await readFile(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText.replace(/(['"])(@\/[^'"]+|\.\/[^'"]+)\1/g,(_,q,p)=>q+'./'+p.split('/').at(-1)+'.mjs'+q);
  await writeFile(folder+'/'+file.split('/').at(-1).replace(/\.tsx?$/,'.mjs'),code);
 }
 await writeFile(folder+'/editor-table-panel.mjs','export const EditorTablePanel=()=>null;');
 await writeFile(folder+'/editor-ink-verification.mjs',`export let deferred=false;export const jobs=[];export const delay=value=>deferred=value;export const patch=()=>({canvas:{width:100,height:40,toDataURL:()=> 'data:image/png;base64,AA=='},x:-1,y:-1,width:50,height:20});export async function renderEditorScanText(plan,blur,signal){const job={plan,blur,signal};jobs.push(job);if(deferred)return new Promise(resolve=>job.resolve=resolve);return patch();}`);
 await writeFile(folder+'/editor-scan-typography.mjs',`export let deferred=false;export const jobs=[];export const delay=value=>deferred=value;export const refineEditorScanTypography=async(mark,source,page,width,height,signal)=>deferred?new Promise(resolve=>jobs.push({mark,signal,resolve})):mark;`);
-await writeFile(folder+'/editor-fonts.mjs',`export const importEditorFont=async()=>{throw Error('not used')};export const editorFontPage=async()=>({fonts:new Map(),runs:[]});export const originalEditorFont=()=>undefined;export let deferFonts=false;export const fontJobs=[];export const delayFonts=value=>deferFonts=value;export const loadEditorCssFont=async()=>{if(deferFonts)await new Promise(resolve=>fontJobs.push(resolve));};export let resolutions=0;export const resolveEditorFont=async(mark)=>(resolutions++,{font:{name:'Liberation Sans',cssFamily:'TestFont',ascent:.9,descent:.2,original:false,measureDescent:()=>.2,measure:(text,size)=>text.length*size*.5},substituted:false});`);
+await writeFile(folder+'/editor-fonts.mjs',`export const importEditorFont=async()=>{throw Error('not used')};export const editorFontPage=async()=>({fonts:new Map(),runs:[]});export const originalEditorFont=()=>undefined;export let deferFonts=false;export const fontJobs=[];export const delayFonts=value=>deferFonts=value;export const loadEditorCssFont=async()=>{if(deferFonts)await new Promise(resolve=>fontJobs.push(resolve));};export let resolutions=0;export const resolveEditorFont=async(mark)=>(resolutions++,{font:{name:'Liberation Sans',cssFamily:'TestFont',ascent:.9,descent:.2,original:false,covers:text=>!text.includes('🧪'),measureDescent:()=>.2,measure:(text,size)=>text.length*size*.5},substituted:false});`);
 await writeFile(folder+'/pdf-text.mjs','export const readPdfText=async()=>({items:[],styles:{}});');
 await writeFile(folder+'/appearance.mjs','export const useLanguage=()=>({});');
 await writeFile(folder+'/button.mjs',`import React from 'react';export function Button({variant,size,...props}){return React.createElement('button',props);}`);
@@ -37,8 +37,8 @@ const revoke=URL.revokeObjectURL,revoked=[];URL.revokeObjectURL=url=>{revoked.pu
 const {EditorCanvas}=await import('../.cache/editor-ui/editor-canvas.mjs'),{jobs}=await import('../.cache/editor-ui/editor-analysis.mjs');
 const root=createRoot(document.getElementById('root'));
 const source={id:'source',name:'fixture.pdf'},page={id:'p0',sourceId:'source',index:0,rotation:0,selected:true};
-const marks=[];let picked;
-const props={source,page,marks,action:'pick',selectedId:'',disabled:false,onMark:m=>picked=m,onPatch:()=>{},onSelect:()=>{},onDimensions:()=>{},autoOcr:true,language:'deu+eng'};
+const marks=[],selections=[];let picked;
+const props={source,page,marks,action:'pick',selectedId:'',disabled:false,onMark:m=>picked=m,onPatch:()=>{},onSelect:id=>selections.push(id),onDimensions:()=>{},onZoom:()=>{},autoOcr:true,language:'deu+eng'};
 const target={id:'word',text:'Rechnung',x:.1,y:.2,w:.2,h:.04,fontSize:15,family:'sans',origin:'ocr',confidence:60,rotation:90,fill:'#f2eee8'};
 const result={targets:[target],width:400,height:560,ocr:true,replaceTextLayer:false,uncertain:1};
 const click=async(button)=>act(async()=>button.dispatchEvent(new MouseEvent('click',{bubbles:true})));
@@ -51,6 +51,15 @@ try {
  previewMock.delayRenders(false);await act(async()=>previewMock.renderJobs[0].resolve(previewMock.renderedPage()));assert.notEqual(document.querySelector('.editor-sheet img').src,oldPreview);assert(revoked.includes(oldPreview),'Only the replaced preview URL is released');
  await act(async()=>jobs[0].options.onNative({...result,targets:[{...target,origin:'pdf',confidence:100}]}));
  assert(document.querySelector('[aria-label="Text bearbeiten: Rechnung"]'),'Existing text can be selected while OCR is running');
+ const sheet=document.querySelector('.editor-sheet');sheet.getBoundingClientRect=()=>({x:20,y:100,left:20,top:100,width:400,height:560,right:420,bottom:660});
+ const nativeTarget=document.querySelector('[aria-label="Text bearbeiten: Rechnung"]');
+ await act(async()=>nativeTarget.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,cancelable:true,button:0})));const selectionCount=selections.length;
+ await act(async()=>sheet.dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1})));assert.equal(selections.length,selectionCount,'Retargeted mouse click after selection must not clear it');picked=undefined;
+ const touchEvent=(element,type,points)=>{const event=new Event(type,{bubbles:true,cancelable:true});Object.defineProperty(event,'touches',{value:points.map(([x,y],i)=>({identifier:i+1,clientX:x,clientY:y}))});element.dispatchEvent(event);};
+ const pointerTouch=element=>{const event=new MouseEvent('pointerdown',{bubbles:true,cancelable:true,clientX:100,clientY:220,button:0});Object.defineProperty(event,'pointerType',{value:'touch'});element.dispatchEvent(event);};
+ await act(async()=>{pointerTouch(nativeTarget);touchEvent(nativeTarget,'touchstart',[[100,220]]);});assert.equal(picked,undefined,'First finger on PDF text does not begin editing');
+ await act(async()=>{touchEvent(nativeTarget,'touchstart',[[100,220],[180,220]]);touchEvent(nativeTarget,'touchend',[]);nativeTarget.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1}));});assert.equal(picked,undefined,'Pinch starting over text does not leave an accidental edit');
+ await act(async()=>{pointerTouch(nativeTarget);touchEvent(nativeTarget,'touchstart',[[100,220]]);touchEvent(nativeTarget,'touchend',[]);nativeTarget.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1}));});assert.equal(picked.text,'Rechnung','A fresh deliberate touch selects the original text');
  const hidden={...target,id:'hidden-small',text:'September',origin:'pdf',invisible:true,rotation:0};
  const copies=[hidden,{...hidden,id:'hidden-wide',w:.24,h:.05}];
  await act(async()=>jobs[0].options.onNative({...result,targets:copies}));
@@ -83,6 +92,10 @@ try {
  await act(async()=>jobs.at(-1).resolve(result));
  await click(scanHost.querySelector('[aria-label="Text bearbeiten: Rechnung"]'));
  const firstPick=scanMock.jobs.at(-1);
+ scanHost.querySelector('.editor-sheet').getBoundingClientRect=sheet.getBoundingClientRect;
+ await act(async()=>touchEvent(scanHost.querySelector('.editor-sheet'),'touchstart',[[100,220],[180,220]]));
+ assert(firstPick.signal.aborted,'Pinching cancels a pending scan-font selection before it can refocus the document');
+ await act(async()=>{touchEvent(scanHost.querySelector('.editor-sheet'),'touchend',[]);firstPick.resolve(firstPick.mark);});assert.equal(scanPicks.length,0);
  await click(scanHost.querySelector('[aria-label="Text bearbeiten: Rechnung"]'));
  assert(firstPick.signal.aborted,'A newer selection cancels the previous match');
  await act(async()=>firstPick.resolve(firstPick.mark));assert.equal(scanPicks.length,0);
@@ -144,6 +157,7 @@ try {
  await act(async()=>{const event=new Event('paste',{bubbles:true,cancelable:true});Object.defineProperty(event,'clipboardData',{value:{getData:type=>type==='text/plain'?'125,50 €':'<b>unsafe</b>'}});field.dispatchEvent(event);});
  assert.equal(current.text,'Netto 125,50 € brutto');assert(editorSegments(current).find(r=>r.start===6).style.italic,'Pasted replacement retains the selected word style');
  assert(!field.querySelector('b'),'Paste imports plain text only');
+ await setText('Netto 129,50 € brutto');assert(editorSegments(current).find(r=>r.start===6).style.italic,'Autocorrect replacing DOM spans retains the original styled range');assert.equal(editorSegments(current)[0].style.italic,false,'Autocorrect leaves surrounding text formatting unchanged');
  const italic=inlineHost.querySelector('[aria-label="Kursiv"]');assert.equal(italic.getAttribute('aria-pressed'),'mixed','The whole text box has visibly mixed formatting');
  await act(async()=>{setEditorDomSelection(field,6,14);document.dispatchEvent(new Event('selectionchange'));});
  assert.equal(italic.getAttribute('aria-pressed'),'true','Toolbar follows the selected styled range');
@@ -173,6 +187,7 @@ try {
  const inline=mark=>React.createElement(EditorInlineText,{mark,source,width:400,height:560,pageWidth:400,pageHeight:560,disabled:false,onPatch:()=>{},onDone:()=>{}});
  await act(async()=>delayedRoot.render(inline(small)));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,'SHORT');
  fontMock.delayFonts(true);const longer={...small,text:'ORIGINAL 4815'};await act(async()=>delayedRoot.render(inline(longer)));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,longer.text,'Pending fonts never apply previous shorter run ranges after undo');
+ assert.equal(inlineHost.querySelector('[contenteditable] span').style.fontFamily,'\"TestFont\"','Loaded matching font stays visible during text preparation');
  const newest={...small,text:'CURRENT TEXT RESTORED'};await act(async()=>delayedRoot.render(inline(newest)));await act(async()=>fontMock.fontJobs.splice(0).forEach(resolve=>resolve()));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,newest.text,'Older font completions cannot overwrite the newest text');fontMock.delayFonts(false);await act(async()=>delayedRoot.unmount());
  // Scan appearance is painted at physical PDF size, independently of display
  // zoom, while the transparent input retains caret, selection and typing.

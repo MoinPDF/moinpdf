@@ -26,7 +26,11 @@ import {
 } from '@/lib/editor-fonts';
 import { cssFont, editorMarkChanged, editorScanMatchStatus } from '@/lib/editor-model';
 import { editorTextGeometry } from '@/lib/editor-text-layer';
-import { prepareEditorRuns, type PreparedEditorRun } from '@/lib/editor-rich-layout';
+import {
+  prepareEditorRuns,
+  reuseEditorRuns,
+  type PreparedEditorRun,
+} from '@/lib/editor-rich-layout';
 import { editorLayoutPlan } from '@/lib/editor-layout-plan';
 import { editorScanBlur } from '@/lib/editor-scan';
 import { renderEditorScanText } from '@/lib/editor-ink-verification';
@@ -91,9 +95,14 @@ export function useEditorTypography(mark?: Mark, source?: Source) {
   }, [source, mark]);
   // Resolved run offsets belong to one exact text/style revision. Applying a
   // shorter previous revision while fonts load would truncate undo/redo text.
-  return mark?.kind === 'text' && (value.preparedMark !== mark || value.preparedSource !== source)
-    ? { pending: true, error: '', resolution: undefined, runs: undefined }
-    : value;
+  if (mark?.kind === 'text' && (value.preparedMark !== mark || value.preparedSource !== source)) {
+    const runs =
+      value.preparedSource === source && value.preparedMark && value.runs
+        ? reuseEditorRuns(mark, value.preparedMark, value.runs)
+        : undefined;
+    return { pending: true, error: '', resolution: runs?.[0]?.resolution, runs };
+  }
+  return value;
 }
 export function editorTextCss(
   mark: Mark,

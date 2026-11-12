@@ -9,6 +9,7 @@ import { EditorTablePanel } from './editor-table-panel';
 import { editorTableSegments } from '@/lib/editor-tables';
 import type { NativeObject } from '@/lib/native-pdf';
 import { editorTargetMark } from '@/lib/editor-blocks';
+import { installEditorGestures } from '@/lib/editor-gestures';
 import { refineEditorScanTypography } from '@/lib/editor-scan-typography';
 import {
   captureEditorFormat,
@@ -193,6 +194,7 @@ export function EditorCanvas({
   autoOcr = false,
   language = 'deu+eng',
   zoom = 100,
+  onZoom,
 }: {
   source: Source;
   page: PageItem;
@@ -212,6 +214,7 @@ export function EditorCanvas({
   autoOcr?: boolean;
   language?: string;
   zoom?: number;
+  onZoom?: (zoom: number) => void;
 }) {
   useLanguage();
   const controlsRoot = useRef<HTMLDivElement | null>(null);
@@ -344,9 +347,15 @@ export function EditorCanvas({
     const element = pageScroll.current,
       ratio = zoom / previousZoom.current;
     previousZoom.current = zoom;
-    if (element && ratio !== 1) {
+    if (element && ratio !== 1 && !element.dataset.editorGesturing) {
+      const pageWidth =
+        element.querySelector<HTMLElement>('.editor-sheet')?.getBoundingClientRect().width || 0;
+      const oldMargin = Math.max(0, (element.clientWidth - pageWidth / ratio) / 2),
+        newMargin = Math.max(0, (element.clientWidth - pageWidth) / 2);
       element.scrollLeft =
-        (element.scrollLeft + element.clientWidth / 2) * ratio - element.clientWidth / 2;
+        (element.scrollLeft + element.clientWidth / 2 - oldMargin) * ratio +
+        newMargin -
+        element.clientWidth / 2;
       element.scrollTop =
         (element.scrollTop + element.clientHeight / 2) * ratio - element.clientHeight / 2;
     }
@@ -371,6 +380,33 @@ export function EditorCanvas({
   const host = useRef<HTMLDivElement>(null),
     start = useRef<{ x: number; y: number } | null>(null),
     drag = useRef<{ mark: Mark; point: { x: number; y: number }; resize: boolean } | null>(null);
+  const touchPick = useRef<{ id: string; point: Omit<EditorStartPoint, 'id'> } | null>(null);
+  const viewportCallbacks = useRef({ zoom, onZoom });
+  viewportCallbacks.current = { zoom, onZoom };
+  const canZoom = !!onZoom && !disabled;
+  useEffect(() => {
+    const viewport = pageScroll.current,
+      sheet = host.current,
+      content = sheet?.parentElement;
+    if (!canZoom || !viewport || !sheet || !content) return;
+    return installEditorGestures({
+      viewport,
+      content,
+      page: sheet,
+      getZoom: () => viewportCallbacks.current.zoom,
+      onZoom: (value) => flushSync(() => viewportCallbacks.current.onZoom?.(value)),
+      onStart: () => {
+        scanSelection.current?.abort();
+        setMatchingScan(false);
+        touchPick.current = null;
+        start.current = null;
+        drag.current = null;
+        setDraft(null);
+        setMoving(null);
+        setGuides([]);
+      },
+    });
+  }, [canZoom, page.id, action, showOriginal]);
   const physicalRemovals = marks
     .filter(editorMarkChanged)
     .filter((m) => editorRemovalRects(m).length);
@@ -609,6 +645,10 @@ export function EditorCanvas({
   };
   function down(e: PointerEvent<HTMLDivElement>) {
     if (disabled || showOriginal || !url || e.button !== 0) return;
+    if (e.pointerType === 'touch' && action !== 'replace-area' && action !== 'erase') {
+      if (e.target === e.currentTarget) touchPick.current = { id: '', point: startPoint(e) };
+      return;
+    }
     const p = position(e);
     onSelect('');
     if (action !== 'replace-area' && action !== 'erase') return;
@@ -1384,10 +1424,27 @@ export function EditorCanvas({
               aspectRatio: `${dims.width}/${dims.height}`,
               touchAction: action === 'erase' || action === 'replace-area' ? 'none' : 'pan-x pan-y',
             }}
+            onPointerDownCapture={() => {
+              touchPick.current = null;
+            }}
             onPointerDown={down}
             onPointerMove={move}
             onPointerUp={up}
+            onClick={(e) => {
+              // Mouse selection can replace its target during pointerdown;
+              // Firefox then retargets the click to the sheet. Only an actual
+              // blank-space touch should deselect here (mouse uses down).
+              if (
+                !disabled &&
+                !showOriginal &&
+                e.target === e.currentTarget &&
+                touchPick.current?.id === ''
+              )
+                onSelect('');
+              touchPick.current = null;
+            }}
             onPointerCancel={() => {
+              touchPick.current = null;
               start.current = null;
               drag.current = null;
               setDraft(null);
@@ -1459,12 +1516,22 @@ export function EditorCanvas({
                       onPointerDown={(e) => {
                         e.stopPropagation();
                         if (e.button === 0 && !disabled) {
+                          if (e.pointerType === 'touch') {
+                            touchPick.current = { id: t.id, point: startPoint(e) };
+                            return;
+                          }
                           e.preventDefault();
                           flushSync(() => pick(t, startPoint(e)));
                         }
                       }}
                       onClick={(e) => {
+                        e.stopPropagation();
                         if (e.detail === 0) pick(t);
+                        else if (touchPick.current?.id === t.id) {
+                          const point = touchPick.current.point;
+                          touchPick.current = null;
+                          flushSync(() => pick(t, point));
+                        }
                       }}
                     />
                   ))}
@@ -1522,7 +1589,7 @@ export function EditorCanvas({
                     className={`page-mark editor-object ${m.kind} ${joining && joinedKeys.includes('mark:' + m.id) ? 'is-joining' : ''} ${selectedId === m.id ? 'is-selected' : ''}`}
                     style={{
                       ...box(m),
-                      touchAction: m.kind === 'text' ? 'pan-y' : 'none',
+                      touchAction: m.kind === 'text' ? 'pan-x pan-y' : 'none',
                       background: m.kind === 'erase' ? m.fill || '#ffffff' : undefined,
                     }}
                     tabIndex={disabled ? -1 : 0}
@@ -1540,12 +1607,19 @@ export function EditorCanvas({
                         toggleJoin('mark:' + m.id);
                         return;
                       }
-                      onSelect(m.id);
+                      if (touchPick.current?.id === m.id && selectedId !== m.id)
+                        setInitialPoint({ id: m.id, ...touchPick.current.point });
+                      touchPick.current = null;
+                      flushSync(() => onSelect(m.id));
                     }}
                     onPointerDown={(e) => {
                       if (disabled) return;
                       if (m.kind === 'text') {
                         e.stopPropagation();
+                        if (e.pointerType === 'touch') {
+                          touchPick.current = { id: m.id, point: startPoint(e) };
+                          return;
+                        }
                         if (joining) {
                           e.preventDefault();
                           return;

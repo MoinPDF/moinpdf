@@ -17,6 +17,7 @@ import {
   insertEditorFragment,
   editorSelectionStyle,
   replaceEditorRange,
+  replaceEditorText,
   type EditorSelection,
 } from '@/lib/editor-rich-text';
 import {
@@ -401,6 +402,7 @@ export function EditorRichInput({
       reveal();
     };
     const down = (e: PointerEvent) => {
+      if (input.current?.closest('[data-editor-gesturing]')) return;
       if (!input.current?.contains(e.target as Node)) {
         pause();
         return;
@@ -413,6 +415,7 @@ export function EditorRichInput({
       }
     };
     const move = (e: PointerEvent) => {
+      if (input.current?.closest('[data-editor-gesturing]')) return;
       if (touch) {
         followCaret = true;
         position = { x: e.clientX, y: e.clientY };
@@ -424,6 +427,12 @@ export function EditorRichInput({
       setMagnifier(null);
     };
     const root = input.current;
+    const pageViewport = root?.closest('.editor-page-scroll');
+    const gesture = () => {
+      pause();
+      up();
+    };
+    pageViewport?.addEventListener('moinpdf:editor-gesture', gesture);
     root?.addEventListener('keydown', resume, true);
     root?.addEventListener('beforeinput', resume);
     root?.addEventListener('focus', resume);
@@ -440,6 +449,7 @@ export function EditorRichInput({
     if (canvas) resize?.observe(canvas);
     return () => {
       cancelAnimationFrame(frame);
+      pageViewport?.removeEventListener('moinpdf:editor-gesture', gesture);
       root?.removeEventListener('keydown', resume, true);
       root?.removeEventListener('beforeinput', resume);
       root?.removeEventListener('focus', resume);
@@ -473,14 +483,10 @@ export function EditorRichInput({
       setRepair((value) => value + 1);
       return;
     }
-    onPatch(
-      mark.id,
-      {
-        text: value.text,
-        runs: mark.runs?.length ? editorSegments({ ...mark, ...value }) : undefined,
-      },
-      'typing',
-    );
+    // Mobile autocorrect and IME can replace or merge our styled spans. Read
+    // their text, then apply the actual replacement to the authoritative PDF
+    // styles instead of trusting the browser's newly created DOM wrappers.
+    onPatch(mark.id, replaceEditorText(mark, value.text), 'typing');
     remember();
   }
   return (

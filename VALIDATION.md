@@ -6,6 +6,14 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.33.0
+
+- `editor-gestures-smoke.mjs`: Ankerpunkt, gemeinsames Zoomen/Verschieben, Grenzen, Abbruch, Restfinger, Klickunterdrückung und Trackpad-Zoom im DOM-Prüfstand.
+- `editor-ui-smoke.mjs`: verlorene DOM-Formatspannen bei Autokorrektur und sichtbarer Schrifterhalt während verzögerter Schriftvorbereitung.
+- `editor-touch-browser.py`: Chromium mit CDP-Toucheingaben; Firefox/WebKit mit DOM-Gestenereignissen. 390-Pixel-Ansicht, Fokus erst nach Antippen, Zoom-Anker und tatsächlicher PDF-Download. Unabhängiges Rücklesen prüft Text, Schriftfamilie, Original-Zeichenprogramme und -Metriken, Größe, Farbe, Grundlinie und eine unveränderte zweite Seite. Keine physischen Geräte; die vorhandene native Safari-Prüfung ist davon getrennt.
+- 76 Engine-/DOM-Suiten sowie die bestehende vollständige Browser-, Docker- und native Safari-Prüfung bleiben erforderlich. Der mobile Tabellenablauf exportiert unmittelbar nach der Textbearbeitung. Veröffentlichung und Store-Upgrade verwenden ausschließlich die anschließend geprüften amd64-/arm64-Images.
+- Maßgeblich sind die erfolgreichen Actions-Läufe des jeweiligen Commits. Diese Beschreibung ist kein Ausführungsnachweis.
+
 ## Prüfplan für 0.32.0
 
 - 75 Engine-/DOM-Suiten einschließlich Tabellenübernahme, automatischer Verarbeitung und Intro. `table-layout-smoke.mjs` prüft verschobene Spalten, wiederholte Überschriften, Fortsetzungszeilen, unsichere Zellen, Fundstellen, echte XLSX-Ausgaben und Projektwiederherstellung.

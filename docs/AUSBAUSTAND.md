@@ -17,7 +17,7 @@ Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvor
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 11. November 2026 · Version 0.32.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 12. November 2026 · Version 0.33.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 Der Hintergrund im Light Mode verläuft auf Desktop, Tablet und Smartphone von Grün über Türkis zu Blau. Der sattere Verlauf lässt helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
 

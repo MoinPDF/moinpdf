@@ -40,6 +40,7 @@ jobs:
           node tests/editor-resilience-smoke.mjs
           node tests/release-022-smoke.mjs
           node tests/editor-ui-smoke.mjs
+          node tests/editor-gestures-smoke.mjs
           node tests/editor-workflow-smoke.mjs
           node tests/editor-adaptive-smoke.mjs
           node tests/editor-adaptive-fixtures.mjs
@@ -67,6 +68,11 @@ jobs:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
           MOINPDF_TEST_START_SERVER: '1'
         run: python tests/growth-030-browser.py
+      - name: Mobile pinch, tap isolation and original typography after export
+        env:
+          MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
+          MOINPDF_TEST_START_SERVER: '1'
+        run: python tests/editor-touch-browser.py
       - name: Document checklist, dates, three versions, quality and recurring logos
         env:
           MOINPDF_TEST_BROWSERS: ${{ matrix.browser }}
