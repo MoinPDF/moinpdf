@@ -18,6 +18,35 @@ p.insert_text((40, 160), 'Unchanged paragraph.', fontname='MoinFixture', fontsiz
 p = doc.new_page(width=400, height=560)
 p.insert_text((40, 100), 'UNCHANGED SECOND PAGE', fontsize=12)
 doc.save(fixture); doc.close()
+# Independently generated embedded TrueType font with valid outlines but zero
+# line metrics. Recompute table/font checksums, keeping glyph programs intact.
+damaged_font = bytearray(Path('public/vendor/editor-fonts/LiberationSans-Regular.ttf').read_bytes())
+table_count = struct.unpack_from('>H', damaged_font, 4)[0]
+head_offset = None
+def checksum(data):
+    padded = bytes(data) + b'\x00' * (-len(data) % 4)
+    return sum(struct.unpack('>'+'I'*(len(padded)//4), padded)) & 0xffffffff
+for i in range(table_count):
+    entry = 12+16*i
+    tag = damaged_font[entry:entry+4].decode()
+    offset, size = struct.unpack_from('>II', damaged_font, entry+8)
+    if tag == 'hhea':
+        struct.pack_into('>hh', damaged_font, offset+4, 0, 0)
+    elif tag == 'OS/2':
+        for at in [68,70,74,76]: struct.pack_into('>H', damaged_font, offset+at, 0)
+    elif tag == 'head':
+        head_offset = offset
+        struct.pack_into('>I', damaged_font, offset+8, 0)
+    struct.pack_into('>I', damaged_font, entry+4, checksum(damaged_font[offset:offset+size]))
+assert head_offset is not None
+struct.pack_into('>I', damaged_font, head_offset+8, (0xb1b0afba-checksum(damaged_font)) & 0xffffffff)
+metrics_fixture = out / 'touch-zero-metrics.pdf'
+doc = pymupdf.open(); p = doc.new_page(width=400, height=560)
+p.insert_font(fontname='MoinFixture', fontbuffer=damaged_font)
+p.insert_text((40,100),'MoinPDF 12345',fontname='MoinFixture',fontsize=14,color=(.2,.4,.6))
+p.insert_text((40,160),'Unchanged paragraph.',fontname='MoinFixture',fontsize=12)
+p = doc.new_page(width=400,height=560); p.insert_text((40,100),'UNCHANGED SECOND PAGE',fontsize=12)
+doc.save(metrics_fixture); doc.close()
 if os.environ.get('MOINPDF_TEST_START_SERVER') == '1':
     log = open(out / 'touch-http.log', 'w')
     server = subprocess.Popen([sys.executable, 'tests/text-browser-server.py'], stdout=log, stderr=subprocess.STDOUT)
@@ -66,14 +95,19 @@ def verify_original_glyphs(before, after):
             checked += 1
     assert checked == len(title['chars']) == 13
 
-def run(browser, engine):
+def run(browser, engine, zero_metrics=False):
+    input_fixture = metrics_fixture if zero_metrics else fixture
+    label = engine + ('-zero-metrics' if zero_metrics else '')
     context = browser.new_context(viewport={'width': 390, 'height': 844}, has_touch=True, accept_downloads=True, reduced_motion='reduce')
     page = context.new_page(); page.set_default_timeout(60000)
     page.goto(origin)
-    page.locator('input[type=file]').first.set_input_files(str(fixture.resolve()))
+    page.locator('input[type=file]').first.set_input_files(str(input_fixture.resolve()))
     page.locator('.chooser-tool').filter(has=page.get_by_text('PDF bearbeiten', exact=True)).click()
     target = page.get_by_role('button', name='Text bearbeiten: MoinPDF 12345', exact=True)
     expect(target).to_be_visible(timeout=120000)
+    if zero_metrics:
+        relative_height = target.evaluate('(e)=>e.getBoundingClientRect().height/document.querySelector(".editor-sheet").getBoundingClientRect().height*560')
+        assert relative_height > 10, 'Zero line metrics must not collapse the clickable glyph body'
     viewport = page.locator('.editor-page-scroll')
     target.evaluate('(e) => e.scrollIntoView({block:"center"})')
     geometry = target.evaluate('''(target) => {
@@ -120,12 +154,13 @@ def run(browser, engine):
     expect(field).to_have_text('MoinPDF 12345')
     field.fill('MoinPDF 54321')
     expect(field).to_have_text('MoinPDF 54321')
+    expect(page.get_by_text('Textfeld zu klein',exact=True)).to_have_count(0)
     page.get_by_role('button', name='Bearbeitete PDF erstellen', exact=True).click()
     link = page.get_by_role('link', name='PDF herunterladen', exact=True).first
     expect(link).to_be_visible(timeout=240000)
     with page.expect_download() as download: link.click()
-    result = out / f'touch-{engine}.pdf'; download.value.save_as(result)
-    with pymupdf.open(fixture) as before, pymupdf.open(result) as after:
+    result = out / f'touch-{label}.pdf'; download.value.save_as(result)
+    with pymupdf.open(input_fixture) as before, pymupdf.open(result) as after:
         def characters(pdf):
             # Sparse PDF editing deliberately retains unchanged text objects;
             # one visual line can therefore contain several PDF font spans.
@@ -149,15 +184,17 @@ def run(browser, engine):
         assert '12345' not in after[0].get_text()
         assert 'Unchanged paragraph.' in after[0].get_text()
         assert before[1].get_pixmap().samples == after[1].get_pixmap().samples
-    page.screenshot(path=str(out / f'touch-{engine}.png'))
+    page.screenshot(path=str(out / f'touch-{label}.png'))
     context.close()
-    return {'engine':engine,'touch_input':'CDP touch input' if cdp else 'DOM gesture simulation','zoom':200,'anchor':'preserved','export':'text, original font, size, color, baseline and untouched second page checked'}
+    return {'engine':engine,'zero_metrics':zero_metrics,'touch_input':'CDP touch input' if cdp else 'DOM gesture simulation','zoom':200,'anchor':'preserved','export':'text, original font, size, color, baseline and untouched second page checked'}
 
 report=[]
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
         browser=getattr(api,engine).launch()
-        try: report.append(run(browser,engine))
+        try:
+            report.append(run(browser,engine))
+            report.append(run(browser,engine,True))
         finally: browser.close()
 (out / 'touch-report.json').write_text(json.dumps(report,indent=2),encoding='utf8')
 print('PASS: '+json.dumps(report),flush=True)

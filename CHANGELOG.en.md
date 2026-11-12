@@ -4,6 +4,12 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.33.1 — 2026-11-12
+
+- PDF editor: selection and replacement areas include actual glyph outlines even when an embedded font reports faulty line heights. This prevents thin baseline-only selection strips and false text-box overflow while preserving original glyphs, advances and baseline.
+- Embedded fonts with identical outlines but different line metrics use separate browser font families.
+- Regression fixtures with deliberately faulty font metrics check tapping, overflow, original glyphs, untouched neighboring text and rendered PDF output.
+
 ## 0.33.0 — 2026-11-12
 
 - PDF editor: two-finger pinch zoom anchored to the touch midpoint, simultaneous panning and trackpad zoom. The preview remains visible during the gesture; scrolling and zooming do not activate text.

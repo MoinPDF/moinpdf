@@ -15,7 +15,7 @@ type Glyph = {
   id: number;
   advanceWidth: number;
   path: { commands: unknown[] };
-  bbox: { minY: number };
+  bbox: { minY: number; maxY: number };
 };
 type Face = {
   unitsPerEm: number;
@@ -40,6 +40,7 @@ export type EditorFont = {
   original: boolean;
   covers: (text: string) => boolean;
   measure: (text: string, size: number) => number;
+  measureAscent: (text: string) => number;
   measureDescent: (text: string) => number;
 };
 export type EditorFontDescriptor = {
@@ -96,13 +97,28 @@ async function makeFont(
   bytes: Uint8Array,
   metadata: Omit<
     EditorFont,
-    'bytes' | 'covers' | 'measure' | 'measureDescent' | 'ascent' | 'descent'
+    'bytes' | 'covers' | 'measure' | 'measureAscent' | 'measureDescent' | 'ascent' | 'descent'
   >,
 ): Promise<EditorFont> {
   const face = await fontFace(bytes);
   const coverage = new Set(face.characterSet.filter((code) => face.glyphForCodePoint(code).id > 0));
-  const descents = new Map<number, number>(),
+  const bounds = new Map<number, { ascent: number; descent: number }>(),
     advances = new Map<number, number>();
+  const measureExtent = (text: string, side: 'ascent' | 'descent') =>
+    significant(text).reduce((maximum, ch) => {
+      if (/\s/u.test(ch)) return maximum;
+      const code = ch.codePointAt(0)!;
+      let extent = bounds.get(code);
+      if (!extent) {
+        const { minY, maxY } = face.glyphForCodePoint(code).bbox;
+        extent = {
+          ascent: Math.max(0, (Number.isFinite(maxY) ? maxY : face.ascent) / face.unitsPerEm),
+          descent: Math.max(0, -(Number.isFinite(minY) ? minY : face.descent) / face.unitsPerEm),
+        };
+        if (bounds.size < 8192) bounds.set(code, extent);
+      }
+      return Math.max(maximum, extent[side]);
+    }, 0);
   const advance = (code: number) => {
     let value = advances.get(code);
     if (value === undefined) {
@@ -116,22 +132,10 @@ async function makeFont(
     bytes,
     ascent: face.ascent / face.unitsPerEm,
     descent: Math.abs(face.descent / face.unitsPerEm),
-    // Font-wide descenders can exceed the PDF's line metrics even when the
-    // edited word has no descenders. Measure the actual glyph outlines.
-    measureDescent: (text) =>
-      significant(text).reduce((maximum, ch) => {
-        if (/\s/u.test(ch)) return maximum;
-        const code = ch.codePointAt(0)!;
-        let descent = descents.get(code);
-        if (descent === undefined) {
-          const minimum = face.glyphForCodePoint(code).bbox.minY;
-          descent = Number.isFinite(minimum)
-            ? Math.max(0, -minimum / face.unitsPerEm)
-            : Math.abs(face.descent / face.unitsPerEm);
-          descents.set(code, descent);
-        }
-        return Math.max(maximum, descent);
-      }, 0),
+    // The visible outlines remain usable even when the embedded font's line
+    // metrics are zero/truncated. Do not change the glyphs or their advances.
+    measureAscent: (text) => measureExtent(text, 'ascent'),
+    measureDescent: (text) => measureExtent(text, 'descent'),
     covers: (text) => significant(text).every((ch) => coverage.has(ch.codePointAt(0)!)),
     measure: (text, size) =>
       (significant(text).reduce((w, ch) => w + advance(ch.codePointAt(0)!), 0) / face.unitsPerEm) *
@@ -205,7 +209,9 @@ async function originalFont(
   return makeFont(bytes, {
     ...metadata,
     id,
-    cssFamily: 'MoinOriginal' + fingerprint + '_' + fontFingerprint(bytes, ['cmap']),
+    // Equal outlines with different line metrics must not share a CSS face.
+    cssFamily:
+      'MoinOriginal' + fingerprint + '_' + fontFingerprint(bytes, ['cmap', 'hhea', 'OS/2', 'head']),
     original: true,
   });
 }
