@@ -19,6 +19,7 @@ for (const name of ['editor-rich-text','editor-rich-layout','editor-verification
 }
 await writeFile(folder + '/native-pdf.mjs', editorNativeAdapter);
 const { readTextTargets, editorParagraphs, editorMarkSignature, editorMarkChanged, editorTextCollision, wrapEditorText } = await import('../.cache/editor-typography/editor-model.mjs');
+const { editorTargetMark } = await import('../.cache/editor-typography/editor-blocks.mjs');
 const { resolveEditorFont, originalEditorFont } = await import('../.cache/editor-typography/editor-fonts.mjs');
 const { prepareEditorRuns } = await import('../.cache/editor-typography/editor-rich-layout.mjs');
 const { drawEditorText, layoutEditorText } = await import('../.cache/editor-typography/editor-text-layer.mjs');
@@ -98,6 +99,15 @@ try {
     const a=ink(await render(expected),[60,130,270,120]), b=ink(await render(edited),[60,130,270,120]);
     const difference=a.reduce((n,v,i)=>n+(v!==b[i]),0), total=a.reduce((n,v)=>n+v,0);
     assert(difference/total<.035,`Replacing text with bad line metrics leaves no old glyphs or baseline drift (${difference/total})`);
+    const paragraph=editorParagraphs(geometry.targets,400,560).find(p=>p.text.startsWith('Max Beispiel'));
+    assert(paragraph?.text.includes('\n'));
+    assert(Math.abs(paragraph.lineHeight-1.25)<1e-8,'Paragraph spacing follows baselines even when glyph tops differ');
+    const paragraphMark={...editorTargetMark(paragraph,0,400,'address'),text:paragraph.text.replace('Beispiel','Spiel'),runs:undefined};
+    const paragraphResult=await run(s,[paragraphMark]);
+    const paragraphOutput=await source(await paragraphResult.blob.arrayBuffer());
+    const paragraphInk=ink(await render(paragraphOutput),[60,130,270,120]);
+    const paragraphDifference=a.reduce((n,v,i)=>n+(v!==paragraphInk[i]),0);
+    assert(paragraphDifference/total<.035,`Editing a whole address preserves every line's baseline (${paragraphDifference/total})`);
   }
   const cataloguePdf = await PDFDocument.create(), sampleText = 'ÄÖÜ äöü ß € 2026', catalogueNames = [];
   for (const choice of editorFontCatalog) for (const bold of [false,true]) for (const italic of [false,true]) {

@@ -546,7 +546,7 @@ export function editorParagraphs(
         ? {
             lineHeight: Math.max(
               1,
-              Math.min(3, ((parts[1].y - parts[0].y) * height) / parts[0].fontSize),
+              Math.min(3, (baseline(parts[1]) - baseline(parts[0])) / parts[0].fontSize),
             ),
           }
         : {}),
@@ -561,7 +561,7 @@ export function editorParagraphs(
     lines.some(
       (peer) =>
         peer !== line &&
-        Math.abs(peer.y - line.y) * height < line.fontSize * 0.3 &&
+        Math.abs(baseline(peer) - baseline(line)) < line.fontSize * 0.3 &&
         (peer.x >= line.x + line.w || line.x >= peer.x + peer.w),
     );
   for (const line of lines) {
@@ -569,7 +569,7 @@ export function editorParagraphs(
     // Require one unambiguous predecessor; table rows remain independent.
     const candidates = paragraphs.filter((group) => {
       const last = group.at(-1)!;
-      const gap = ((line.y - last.y) * height) / last.fontSize;
+      const gap = (baseline(line) - baseline(last)) / last.fontSize;
       return (
         same(last, line) &&
         !!last.bold === !!line.bold &&
