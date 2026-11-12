@@ -2,6 +2,10 @@
 
 ## PDF editor: touch and typography
 
+The formatting toolbar shows font, size, bold/italic/underline and colour. Less frequent commands such as font comparison and format copying are under “Text actions”; custom font uploads are under “More text options”. The compact font status distinguishes original fonts, substitutes and scan approximations; tap it for the explanation. Perfect recognition cannot be guaranteed for scans, missing characters or incomplete PDF font metadata.
+
+Lines with different indents, baseline gaps, character spacing or horizontal scales remain separate text fields. Editing one therefore does not silently reposition neighbouring lines. Regular paragraphs can still be edited together. Where selection boxes overlap, text at the actual touch point takes precedence. Repeated identical letters at a formatting boundary retain the style associated with the actual caret position during typing and deletion.
+
 Two-finger pinch zoom scales the PDF from 50 to 400 percent around the touch midpoint and can pan the view at the same time. The existing view is transformed during the gesture; a sharp preview follows after completion. One finger scrolls; a deliberate tap opens text editing. Cancelled gestures and lifting only one finger do not create text edits. Ctrl plus mouse wheel and trackpad pinch are also supported.
 
 Mobile autocorrect and IME replacements retain the stored font styles and colors. Loaded matching fonts stay visible while typing; new or missing glyphs are checked again. Zoom never changes PDF coordinates, font size, tracking or color. Scan fonts remain approximations; missing original glyphs still require a disclosed substitute.
@@ -82,7 +86,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.33.1**
+**Current implementation limits · 0.34.0**
 
 | Capability | Value |
 | --- | --- |

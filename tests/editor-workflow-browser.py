@@ -50,6 +50,15 @@ with pymupdf.open() as doc:
     p.insert_text((50,640),'KEEP PAGE ONE',fontname='Body',fontsize=12)
     p=doc.new_page(width=600,height=500);p.insert_font(fontname='Body',fontfile=str(font));p.insert_text((50,100),'FLOW END',fontname='Body',fontsize=12);p.insert_text((50,450),'KEEP PAGE TWO',fontname='Body',fontsize=12)
     doc.save(fixture)
+repeated_fixture=out/'repeated-format-boundary.pdf'
+with pymupdf.open() as doc:
+    p=doc.new_page(width=500,height=700)
+    p.insert_font(fontname='Body',fontfile=str(font));p.insert_font(fontname='Strong',fontfile=str(bold))
+    advance=pymupdf.Font(fontfile=str(bold)).text_length('A',fontsize=16)
+    p.insert_text((50,100),'A',fontname='Strong',fontsize=16,color=(.8,0,0))
+    p.insert_text((50+advance,100),'A',fontname='Body',fontsize=16)
+    p.insert_text((50,180),'UNTOUCHED',fontname='Body',fontsize=12)
+    doc.save(repeated_fixture)
 report={'results':[],'limits':['Public and synthetic documents, no private customer documents.','Touch emulation and narrow viewports, not physical touch devices or native Safari.']}
 
 def open_editor(page,path=fixture):
@@ -81,6 +90,28 @@ def export(page,name):
     file=out/(name+'.pdf');task.value.save_as(file)
     return file
 
+def repeated_input(page,name):
+    open_editor(page,repeated_fixture)
+    field=pick(page,'AA')
+    expect(page.locator('.editor-text-actions')).not_to_have_attribute('open','')
+    expect(page.locator('.editor-font-evidence > summary')).to_contain_text('Originalschrift wird verwendet')
+    field.press('Home');field.press('ArrowRight');field.press('A')
+    expect(field).to_have_text('AAA')
+    def pieces():
+        return field.locator('span[data-editor-style]').evaluate_all("nodes=>nodes.map(n=>({text:n.textContent,bold:getComputedStyle(n).fontWeight==='700',color:getComputedStyle(n).color}))")
+    typed=pieces()
+    assert typed[0]['text']=='AA' and typed[0]['bold'],typed
+    assert typed[-1]['text']=='A' and not typed[-1]['bold'],typed
+    field.press('ArrowLeft');field.press('Backspace')
+    expect(field).to_have_text('AA')
+    deleted=pieces()
+    assert deleted[0]['text']=='A' and deleted[0]['bold'],deleted
+    assert deleted[-1]['text']=='A' and not deleted[-1]['bold'],deleted
+    page.locator('.editor-text-actions > summary').click()
+    expect(page.get_by_role('toolbar',name='Aktionen für die Auswahl')).to_be_visible()
+    page.locator('.editor-text-actions > summary').click()
+    return {'typed':typed,'deleted':deleted,'compact_actions':True}
+
 def text_table(page,name):
     open_editor(page)
     pick(page,'Alpha beta gamma delta epsilon').fill('Alpha beta delta delta epsilon')
@@ -91,6 +122,7 @@ def text_table(page,name):
     page.get_by_role('button',name='Bearbeitete Ansicht',exact=True).click()
     expect(page.locator('.editor-object').filter(has_text='Alpha beta delta delta epsilon')).to_have_count(1)
     pick(page,'FORMAT SOURCE')
+    page.locator('.editor-text-actions > summary').click()
     page.get_by_role('toolbar',name='Aktionen für die Auswahl',exact=True).get_by_role('button',name='Format aufnehmen',exact=True).click()
     page.get_by_role('toolbar',name='Text direkt formatieren',exact=True).get_by_role('button',name='Fertig',exact=True).click()
     page.locator('summary').filter(has_text=re.compile('^Auswahl anpassen$')).click()
@@ -98,6 +130,7 @@ def text_table(page,name):
     page.get_by_role('button',name='Tabellenzelle 1, 1: R1C1',exact=True).click()
     field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True);field.fill('EDIT')
     field.press('Tab');expect(field).to_have_text('R1C2');field.fill('OTHER')
+    page.locator('.editor-text-actions > summary').click()
     page.get_by_role('toolbar',name='Aktionen für die Auswahl',exact=True).get_by_role('button',name='Format übertragen',exact=True).click()
     expect(page.get_by_role('toolbar',name='Text direkt formatieren').get_by_role('button',name='Fett',exact=True)).to_have_attribute('aria-pressed','true')
     field.press('Shift+Tab');expect(field).to_have_text('EDIT')
@@ -270,6 +303,8 @@ def execute(browser,name,width,callback):
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
         browser=getattr(api,engine).launch();report[engine]=browser.version
+        execute(browser,engine+'-workflow-repeated-input',1440,repeated_input)
+        execute(browser,engine+'-workflow-repeated-input-touch',390,repeated_input)
         execute(browser,engine+'-workflow-text',1440,text_table)
         execute(browser,engine+'-workflow-touch',390,text_table)
         execute(browser,engine+'-workflow-flow',1440,flow)

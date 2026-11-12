@@ -78,6 +78,16 @@ try{
  let parts=rich.editorSegments(mark);assert.equal(parts[0].style.bold,false);assert.equal(parts[1].style.bold,true);assert.equal(parts[2].style.bold,false);assert.equal(parts[1].style.color,'#cc0000');
  assert.equal(mark.bold,false,'Formatting a selection never changes the whole field');
  assert.equal(rich.replaceEditorRange(mark,6,12,'987,65').text,'Netto 987,65 € brutto');mark={...mark,...rich.replaceEditorMatches(mark,rich.findEditorText(mark.text,'123,45'),'987,65')};assert.equal(mark.text,'Netto 987,65 € brutto');assert.equal(rich.editorSegments(mark)[1].style.bold,true);
+ // Text-only diffs cannot locate an inserted/deleted repeated character.
+ const repeatedStyles={...mark,text:'AA',bold:false,runs:[{start:0,end:1,style:{bold:true,color:'#cc0000'}},{start:1,end:2,style:{bold:false,color:'#000000'}}]};
+ const typed={...repeatedStyles,...rich.replaceEditorInput(repeatedStyles,'AAA',{start:1,end:1,inputType:'insertText'})};
+ assert.equal(rich.editorSegments(typed)[0].end,2,'Insertion at a repeated-character boundary inherits the intended left-hand style');
+ assert.equal(rich.editorSegments(typed)[1].style.bold,false,'Following original character keeps its formatting');
+ const backspaced={...repeatedStyles,...rich.replaceEditorInput(repeatedStyles,'A',{start:1,end:1,inputType:'deleteContentBackward'})};
+ assert.equal(rich.editorSegments(backspaced)[0].style.bold,false,'Backspace removes the selected original character, not an identical neighbour');
+ const replaced={...repeatedStyles,...rich.replaceEditorInput(repeatedStyles,'AAA',{start:0,end:1,inputType:'insertReplacementText'})};
+ assert.equal(rich.editorSegments(replaced)[0].end,2,'Replacing selected repeated text keeps its original style');
+ assert.deepEqual(rich.replaceEditorInput(repeatedStyles,'Changed',{start:1,end:1,inputType:'insertReplacementText'}),rich.replaceEditorText(repeatedStyles,'Changed'),'Autocorrect outside a stale range falls back to a complete text diff');
  const emoji={...mark,text:'A😀B',runs:[{start:1,end:3,style:{bold:true}}]};assert.equal(rich.replaceEditorText(emoji,'A😀ZB').text,'A😀ZB');
  const output=await PDFDocument.create();await drawEditorText(output,output.addPage([500,700]),mark,500,700);
  const bytes=await output.save();await writeFile(folder+'/rich.pdf',bytes);const opened=await source(bytes);
@@ -96,6 +106,37 @@ try{
  const {editorMarkChanged,editorTextCollision,editorRemovalRects}=await import('../.cache/editor-rich/editor-model.mjs');
  const columnTargets=[0,1].flatMap(row=>[0,1].map(col=>({id:`col-${row}-${col}`,text:`Column ${col} line ${row}`,x:.05+col*.5,y:.1+row*.024,w:.4,h:.02,fontSize:12,family:'sans',origin:'pdf'})));
  const columns=editorParagraphs(columnTargets,500,700);assert.equal(columns.length,2);assert(columns.every(c=>c.text.includes('line 0\n')&&c.text.includes('line 1')),'Interleaved extraction follows each column without merging columns');
+ const baseLine={...columnTargets[0],x:.1,y:.1,w:.3};
+ const nextLine={...baseLine,id:'next',y:.12};
+ assert.equal(editorParagraphs([baseLine,nextLine,{...nextLine,id:'wide-gap',y:.148}],500,700).length,2,'Irregular baseline gaps are not flattened');
+ assert.equal(editorParagraphs([baseLine,{...nextLine,x:.108}],500,700).length,2,'An indentation remains at its original x position');
+ assert.equal(editorParagraphs([baseLine,{...nextLine,tracking:.05}],500,700).length,2,'Different character spacing cannot share a field');
+ assert.equal(editorParagraphs([baseLine,{...nextLine,textScaleX:1.1}],500,700).length,2,'Different horizontal scales cannot share a field');
+ assert.equal(editorParagraphs([baseLine,{...baseLine,id:'overprint',x:.12}],500,700,'line').length,2,'Overprinted objects are not concatenated');
+ const {editorTargetAtPoint}=await import('../.cache/editor-rich/editor-model.mjs');
+ const broad={...baseLine,id:'broad',w:.8,h:.3,fragments:[{...baseLine,h:.02},{...baseLine,y:.38,h:.02}]};
+ const inset={...baseLine,id:'inset',x:.6,y:.2,w:.1,h:.02};
+ for(const order of [[inset,broad],[broad,inset]])assert.equal(editorTargetAtPoint(order,.65,.21)?.id,'inset','Actual text wins over empty paragraph bounds regardless of paint order');
+ assert.equal(editorTargetAtPoint([broad,inset],.15,.11)?.id,'broad');
+ assert.equal(editorTargetAtPoint([broad,inset],.99,.99),undefined);
+ assert.equal(editorTargetAtPoint([broad],NaN,.1),undefined);
+ // Real PDF extraction and re-export must preserve irregular baselines/indents.
+ const geometryPdf=await PDFDocument.create(),geometryPage=geometryPdf.addPage([500,700]);
+ const geometryFont=await geometryPdf.embedFont(StandardFonts.Helvetica);
+ for(const [i,y] of [620,606,587,573].entries())geometryPage.drawText('Line '+(i+1),{x:i===3?54:50,y,size:12,font:geometryFont});
+ const geometrySource=await source(await geometryPdf.save());
+ const originalLines=(await readTextTargets(geometrySource,pageOf(geometrySource))).targets;
+ const geometryGroups=editorParagraphs(originalLines,500,700);
+ assert.equal(geometryGroups.length,3,'Only equally spaced and aligned lines share an editing field');
+ const geometryOutput=await PDFDocument.create(),geometryOutPage=geometryOutput.addPage([500,700]);
+ for(const [i,t] of geometryGroups.entries())await drawEditorText(geometryOutput,geometryOutPage,{...editorTargetMark(t,0,500,'g'+i),text:t.text.replace('Line 1','Line 0')},500,700,geometrySource);
+ const geometryOutSource=await source(await geometryOutput.save());
+ const outputLines=editorParagraphs((await readTextTargets(geometryOutSource,pageOf(geometryOutSource))).targets,500,700,'line');
+ for(const line of originalLines.filter(t=>!t.text.includes('1'))){
+  const after=outputLines.find(t=>t.text===line.text);assert(after,'Unedited neighbouring line remains present: '+JSON.stringify({line:line.text,output:outputLines.map(t=>t.text)}));
+  assert(Math.abs(after.x-line.x)*500<.6,'Neighbouring indentation remains unchanged');
+  assert(Math.abs((after.y-line.y)*700+(after.baselineScale||.9)*after.fontSize-(line.baselineScale||.9)*line.fontSize)<.6,'Neighbouring baseline remains unchanged');
+ }
  const blocks=columnTargets.filter(t=>t.x===.05).map((t,i)=>editorTargetMark(t,0,500,'b'+i));
  blocks[1].bold=true;blocks[1].color='#cc0000';
  const joined=joinEditorBlocks(blocks,500,700,'joined');assert.equal(joined.text,blocks.map(b=>b.text).join('\n'));assert.equal(editorRemovalRects(joined).length,2);assert(rich.editorSegments(joined).at(-1).style.bold);assert(editorMarkChanged(joined));

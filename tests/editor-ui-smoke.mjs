@@ -113,6 +113,9 @@ try {
  const handle=comparisonHost.querySelector('.editor-move-handle'),editField=comparisonHost.querySelector('[contenteditable=true]');
  assert(handle&&editField);
  const selectionActions=comparisonHost.querySelector('[aria-label="Aktionen für die Auswahl"]');assert(selectionActions,'Selecting text exposes contextual actions');
+ assert(!comparisonHost.querySelector('.editor-text-actions').open,'Advanced text actions start collapsed');
+ assert(!comparisonHost.querySelector('.editor-font-evidence').open,'Font evidence starts compact while its summary remains visible');
+ await click(comparisonHost.querySelector('.editor-text-actions > summary'));
  let scrolled;HTMLElement.prototype.scrollIntoView=function(){scrolled=this;};
  await click([...selectionActions.querySelectorAll('button')].find(b=>b.textContent==='Layout anpassen'));
  assert(comparisonHost.querySelector('.editor-layout-help').open);assert.equal(scrolled,comparisonHost.querySelector('.editor-layout-help'));
@@ -170,6 +173,21 @@ try {
  await setText('Ein längerer Absatz mit mehreren Zeilen. '.repeat(6));assert.equal(current.h,.08,'Typing keeps the layout stable until an explicit layout adjustment');
  await act(async()=>field.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',ctrlKey:true,bubbles:true})));assert.equal(done,1);
  const layoutMark=current;
+ // The real beforeinput/input sequence preserves the intended format when
+ // adjacent equal letters make a text-only diff choose a different position.
+ await setText('AA');
+ await act(async()=>{field.focus();setEditorDomSelection(field,0,1);document.dispatchEvent(new Event('selectionchange'));field.dispatchEvent(new KeyboardEvent('keydown',{key:'b',ctrlKey:true,bubbles:true,cancelable:true}));});
+ const firstStyle=editorSegments(current)[0].style.bold;
+ assert.notEqual(firstStyle,editorSegments(current).at(-1).style.bold);
+ await act(async()=>{
+  setEditorDomSelection(field,1);document.dispatchEvent(new Event('selectionchange'));
+  field.dispatchEvent(new InputEvent('beforeinput',{bubbles:true,inputType:'insertText',data:'A'}));
+  field.textContent='AAA';setEditorDomSelection(field,2);
+  field.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText',data:'A'}));
+ });
+ assert.equal(current.text,'AAA');assert.equal(editorSegments(current)[0].end,2);
+ assert.equal(editorSegments(current)[0].style.bold,firstStyle);
+ assert.equal(window.getSelection().anchorOffset,2,'Typing retains the active insertion point');
  // Rich HTML is inert, offers an explicit choice, and cannot silently change clipboard text.
  await setText('Placeholder');
  await act(async()=>{setEditorDomSelection(field,0,11);document.dispatchEvent(new Event('selectionchange'));const event=new Event('paste',{bubbles:true,cancelable:true});Object.defineProperty(event,'clipboardData',{value:{getData:type=>type==='text/plain'?'Red H2O':'<p><b style="color:rgb(204,0,0)">Red</b> H<sub>2</sub>O<script>bad()</script><img src="https://invalid.test/x" onerror="bad()"></p>'}});field.dispatchEvent(event);});

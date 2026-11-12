@@ -1,6 +1,11 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  Textaktionen: 'Text actions',
+  'Scan: Schrift angenähert': 'Scan: approximate font',
+  'Ersatzschrift · bitte prüfen': 'Substitute font · please check',
+  'Die PDF enthält keinen eindeutigen Schriftnamen. Bitte das Schriftbild am Original prüfen.':
+    'The PDF does not provide an unambiguous font name. Compare the appearance with the original.',
   'Einfache Zertifikatssignatur': 'Basic certificate signature',
   'Vorhandene Textfelder erhalten passende Vorschläge. Bei Scans können leere Felder und ihre Beschriftungen erkannt werden. Angaben lassen sich auch selbst platzieren; bestehende Einträge bleiben erhalten.':
     'Existing text fields receive matching suggestions. Empty fields and labels can be detected in scans. You can also place values yourself; existing entries are preserved.',

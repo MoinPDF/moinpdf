@@ -308,6 +308,37 @@ export function replaceEditorText(mark: Mark, text: string): Partial<Mark> {
   if (start && /[\uDC00-\uDFFF]/.test(old[start] || text[start])) start--;
   return replaceEditorRange(mark, start, end, text.slice(start, nextEnd));
 }
+/** Identical adjacent characters make a text-only diff ambiguous. Use the
+ * browser's pre-edit range when it explains the complete resulting text. */
+export function replaceEditorInput(
+  mark: Mark,
+  text: string,
+  range?: { start: number; end: number; inputType?: string } | null,
+): Partial<Mark> {
+  const old = mark.text || '';
+  if (range) {
+    let { start, end } = range;
+    if (start === end && text.length < old.length) {
+      const removed = old.length - text.length;
+      if (range.inputType?.endsWith('Backward')) start -= removed;
+      else if (range.inputType?.endsWith('Forward')) end += removed;
+    }
+    const insertedLength = text.length - old.length + end - start;
+    if (
+      Number.isSafeInteger(start) &&
+      Number.isSafeInteger(end) &&
+      start >= 0 &&
+      end >= start &&
+      end <= old.length &&
+      insertedLength >= 0 &&
+      text.slice(0, start) === old.slice(0, start) &&
+      text.slice(start + insertedLength) === old.slice(end)
+    )
+      return replaceEditorRange(mark, start, end, text.slice(start, start + insertedLength));
+  }
+  // Autocorrect and some IMEs replace text outside the reported selection.
+  return replaceEditorText(mark, text);
+}
 export function applyEditorPatch(
   mark: Mark,
   patch: Partial<Mark>,

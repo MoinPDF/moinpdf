@@ -17,12 +17,13 @@ import {
   insertEditorFragment,
   editorSelectionStyle,
   replaceEditorRange,
-  replaceEditorText,
+  replaceEditorInput,
   type EditorSelection,
 } from '@/lib/editor-rich-text';
 import {
   editorCaretAtPoint,
   editorDomSelection,
+  editorDomOffset,
   readEditorDom,
   parseEditorClipboard,
   setEditorDomSelection,
@@ -97,6 +98,13 @@ export function EditorRichInput({
     after: string;
   } | null>(null);
   const input = useRef<HTMLDivElement>(null),
+    inputIntent = useRef<{
+      id: string;
+      text: string;
+      start: number;
+      end: number;
+      inputType: string;
+    } | null>(null),
     composing = useRef(false),
     signature = useRef(''),
     activeId = useRef(''),
@@ -111,6 +119,33 @@ export function EditorRichInput({
     const s = editorDomSelection(root);
     if (s) latest.current.onSelection?.({ id: latest.current.mark.id, start: s.start, end: s.end });
   };
+  useEffect(() => {
+    const root = input.current;
+    if (!root) return;
+    const before = (event: InputEvent) => {
+      if (composing.current) return;
+      const target = event.getTargetRanges?.()[0];
+      const range =
+        target && root.contains(target.startContainer) && root.contains(target.endContainer)
+          ? {
+              start: editorDomOffset(root, target.startContainer, target.startOffset),
+              end: editorDomOffset(root, target.endContainer, target.endOffset),
+            }
+          : editorDomSelection(root);
+      inputIntent.current =
+        range && range.start !== null && range.end !== null
+          ? {
+              start: range.start,
+              end: range.end,
+              id: latest.current.mark.id,
+              text: latest.current.mark.text || '',
+              inputType: event.inputType,
+            }
+          : null;
+    };
+    root.addEventListener('beforeinput', before);
+    return () => root.removeEventListener('beforeinput', before);
+  }, []);
   useLayoutEffect(() => {
     const root = input.current;
     if (!root || composing.current) return;
@@ -486,7 +521,17 @@ export function EditorRichInput({
     // Mobile autocorrect and IME can replace or merge our styled spans. Read
     // their text, then apply the actual replacement to the authoritative PDF
     // styles instead of trusting the browser's newly created DOM wrappers.
-    onPatch(mark.id, replaceEditorText(mark, value.text), 'typing');
+    const intent = inputIntent.current;
+    inputIntent.current = null;
+    onPatch(
+      mark.id,
+      replaceEditorInput(
+        mark,
+        value.text,
+        intent?.id === mark.id && intent.text === (mark.text || '') ? intent : null,
+      ),
+      'typing',
+    );
     remember();
   }
   return (
@@ -586,6 +631,10 @@ export function EditorRichInput({
         }}
         onDrop={(e) => e.preventDefault()}
         onCompositionStart={() => {
+          const range = input.current ? editorDomSelection(input.current) : null;
+          inputIntent.current = range
+            ? { ...range, id: mark.id, text: mark.text || '', inputType: 'insertCompositionText' }
+            : null;
           composing.current = true;
         }}
         onCompositionEnd={(e) => {
