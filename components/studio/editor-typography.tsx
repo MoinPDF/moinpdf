@@ -20,6 +20,8 @@ import type { Mark } from '@/lib/studio-engine';
 import { editorFontCatalog, type EditorFontChoice } from '@/lib/editor-font-catalog';
 import {
   loadEditorCssFont,
+  editorCssAscent,
+  editorCssDescent,
   resolveEditorFont,
   importEditorFont,
   type EditorFontResolution,
@@ -115,8 +117,7 @@ export function editorTextCss(
   const size = (mark.fontScale || 0.028) * width,
     lineHeight = mark.lineHeight || 1.25,
     scaleX = mark.textScaleX || 1;
-  const cssBaseline =
-    (lineHeight - (font?.ascent ?? 0.9) - (font?.descent ?? 0.2)) / 2 + (font?.ascent ?? 0.9);
+  const cssBaseline = (lineHeight - editorCssAscent - editorCssDescent) / 2 + editorCssAscent;
   const offset = ((mark.baselineScale ?? 0.9) - cssBaseline) * size,
     angle = (geometry.rotation * Math.PI) / 180;
   return {
@@ -124,7 +125,11 @@ export function editorTextCss(
     left: geometry.x - Math.sin(angle) * offset,
     top: geometry.y + Math.cos(angle) * offset,
     width: geometry.width / scaleX,
-    height: geometry.height + Math.abs(offset),
+    // A PDF ink box may be shorter than a CSS line box. A fixed height makes
+    // Chromium scroll the contenteditable internally to reveal its caret,
+    // moving otherwise correctly positioned glyphs after typing/autocorrect.
+    minHeight: geometry.height + Math.abs(offset),
+    height: 'auto',
     transformOrigin: 'top left',
     transform: `rotate(${geometry.rotation}deg) scaleX(${scaleX})`,
     padding: `0 ${(mark.insetScale || 0) * size}px`,

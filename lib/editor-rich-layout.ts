@@ -250,7 +250,9 @@ export function richEditorLayout(
       line.size = Math.max(line.size, nominal);
       line.ascent = Math.max(
         line.ascent,
-        piece.run.resolution.font.ascent * piece.size - piece.shift,
+        // Match the ink-based descent calculation: a substitute's larger
+        // font-wide ascender must not move an otherwise fitting PDF line.
+        piece.run.resolution.font.measureAscent(piece.text) * piece.size - piece.shift,
       );
       line.descent = Math.max(
         line.descent,

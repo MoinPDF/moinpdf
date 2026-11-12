@@ -328,13 +328,24 @@ export async function readTextTargets(
       metricFont = originalEditorFont(source, typography?.fonts.get(part.fontName)?.originalId),
       // Some valid standard Type-1 and CFF fonts expose NaN PDF.js metrics.
       // Their normalized font program provides finite units-based metrics.
-      ascent =
+      declaredAscent =
         Number.isFinite(style?.ascent) && style.ascent >= 0
           ? style.ascent
           : (metricFont?.ascent ?? 0.85),
-      descent = Number.isFinite(style?.descent)
+      declaredDescent = Number.isFinite(style?.descent)
         ? Math.abs(style.descent)
         : (metricFont?.descent ?? 0.2),
+      // Broken font headers can report zero/tiny line metrics while drawing
+      // perfectly valid glyphs. Include their actual ink in hit/removal areas;
+      // keep the baseline and advances exactly where the PDF placed them.
+      ascent = Math.max(
+        declaredAscent,
+        metricFont?.measureAscent(part.str) ?? (declaredAscent + declaredDescent < 0.1 ? 0.85 : 0),
+      ),
+      descent = Math.max(
+        declaredDescent,
+        metricFont?.measureDescent(part.str) ?? (declaredAscent + declaredDescent < 0.1 ? 0.2 : 0),
+      ),
       pad = Math.max(0.8, fontSize * 0.08);
     const px = v[0] * t[4] + v[2] * t[5] + v[4],
       baseline = v[1] * t[4] + v[3] * t[5] + v[5];
@@ -535,7 +546,7 @@ export function editorParagraphs(
         ? {
             lineHeight: Math.max(
               1,
-              Math.min(3, ((parts[1].y - parts[0].y) * height) / parts[0].fontSize),
+              Math.min(3, (baseline(parts[1]) - baseline(parts[0])) / parts[0].fontSize),
             ),
           }
         : {}),
@@ -550,7 +561,7 @@ export function editorParagraphs(
     lines.some(
       (peer) =>
         peer !== line &&
-        Math.abs(peer.y - line.y) * height < line.fontSize * 0.3 &&
+        Math.abs(baseline(peer) - baseline(line)) < line.fontSize * 0.3 &&
         (peer.x >= line.x + line.w || line.x >= peer.x + peer.w),
     );
   for (const line of lines) {
@@ -558,7 +569,7 @@ export function editorParagraphs(
     // Require one unambiguous predecessor; table rows remain independent.
     const candidates = paragraphs.filter((group) => {
       const last = group.at(-1)!;
-      const gap = ((line.y - last.y) * height) / last.fontSize;
+      const gap = (baseline(line) - baseline(last)) / last.fontSize;
       return (
         same(last, line) &&
         !!last.bold === !!line.bold &&

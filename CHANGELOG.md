@@ -9,6 +9,15 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.33.1 — 2026-11-12
+
+- PDF bearbeiten: Auswahl- und Ersetzungsbereiche berücksichtigen die tatsächlichen Buchstabenkonturen, auch wenn eine eingebettete Schrift fehlerhafte Höhenangaben enthält. Schmale Auswahlstreifen und dadurch fälschlich gemeldete zu kleine Textfelder werden vermieden; Originalschrift, Laufweite und Grundlinie bleiben erhalten.
+- Eingebettete Schriften mit gleichen Zeichenkonturen, aber unterschiedlichen Zeilenmaßen erhalten getrennte Browser-Schriftzuordnungen.
+- Der Zeilenabstand zusammengehöriger Textzeilen wird anhand ihrer Grundlinien bestimmt; unterschiedlich hohe Buchstaben verändern ihn nicht.
+- Original- und Ersatzschrift verwenden beim direkten Tippen gemeinsame Browser-Zeilenmaße, damit ein neu eingefügtes Ersatzzeichen die sichtbare Zeile nicht verschiebt.
+- Die Eingabefläche wächst mit der benötigten Zeilenhöhe, damit Chrome den Text beim Tippen nicht innerhalb des Feldes verschiebt. Die PDF-Position und der Ersetzungsbereich bleiben unverändert.
+- Regressionen mit gezielt fehlerhaften Schriftmetriken prüfen Antippen, Überlauf, Originalzeichen, unveränderte Nachbartexte und den gerenderten PDF-Export.
+
 ## 0.33.0 — 2026-11-12
 
 - PDF bearbeiten: Zweifinger-Zoom mit festem Bezug zur Fingerposition, gleichzeitiges Verschieben und Unterstützung für Trackpad-Zoom. Die Vorschau bleibt während der Geste sichtbar; Scrollen und Zoomen aktivieren keine Textstelle.

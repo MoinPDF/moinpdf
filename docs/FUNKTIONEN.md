@@ -6,6 +6,8 @@ Zweifinger-Zoom vergrößert die PDF zwischen 50 und 400 Prozent um den Berühru
 
 Smartphone-Autokorrektur und IME übernehmen beim Ersetzen die gespeicherten Schriftstile und Farben. Bereits geladene passende Schriften bleiben beim Tippen sichtbar; neue oder fehlende Zeichen werden erneut geprüft. PDF-Koordinaten, Schriftgröße, Laufweite und Farbe ändern sich durch Zoom nicht. Scanschriften bleiben Annäherungen; fehlende Originalzeichen benötigen weiterhin einen angezeigten Schriftersatz.
 
+Bei eingebetteten Schriften mit fehlerhaften Höhenangaben werden Auswahl und Ersetzungsbereich zusätzlich anhand der tatsächlichen Buchstabenkonturen berechnet. Die Grundlinie, Schriftgröße und Zeichenabstände bleiben erhalten. Bereits gespeicherte, manuell veränderte Textfeldgrenzen werden nicht automatisch überschrieben; betroffene Textstellen können nach dem Verwerfen der Änderung neu ausgewählt werden.
+
 ## Aktuelle Erweiterungen
 
 - Tabellenübernahme erkennt wiederkehrende Spaltenabstände je Seite, bietet Zellfundstellen, markiert unsichere Werte und erhält mehrspaltige Überschriften in Excel. Nahe Fortsetzungszeilen können optional verbunden werden; manuelle Spaltengrenzen bleiben verfügbar. Bei widersprüchlichen Spaltenzahlen wird eine Korrektur verlangt.
@@ -80,7 +82,7 @@ Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF 
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.33.0**
+**Aktuelle Grenzen aus der Implementierung · 0.33.1**
 
 | Funktion | Wert |
 | --- | --- |
