@@ -193,7 +193,9 @@ def font_preview(page,name):
     page.locator('.editor-text-actions > summary').click()
     page.get_by_role('button',name='Schrift vergleichen',exact=True).click()
     page.get_by_role('button',name='Passende Ersatzschriften vergleichen',exact=True).click()
-    choice=page.locator('.editor-font-alternative-grid article').first
+    # Use a different family: a matching DejaVu Sans preview would not detect
+    # accidental substitution when independently inspecting the saved font.
+    choice=page.locator('.editor-font-alternative-grid article').filter(has_not=page.get_by_text('DejaVu Sans',exact=True)).first
     expect(choice).to_be_visible(timeout=120000)
     choice.get_by_role('button',name='Auf der Seite vergleichen',exact=True).click()
     expect(page.locator('[data-editor-font-preview="true"]')).to_be_visible()
