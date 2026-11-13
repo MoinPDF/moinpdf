@@ -6,6 +6,15 @@ import { renderPageRegion } from './pdf-engine';
 import { editorFontPage, originalEditorFont } from './editor-fonts';
 
 type Pixels = { width: number; height: number; data: Uint8ClampedArray };
+/** Separators and currency symbols do not turn a short amount into reliable
+ * font evidence. Numeric/date fields need independently agreeing neighbours. */
+export function editorScanNeedsReferences(text: string) {
+  const sample = text.normalize('NFC').replace(/\b(?:EUR|USD|GBP|CHF|JPY)\b/giu, '');
+  const letters = sample.match(/\p{L}/gu) || [];
+  const digits = sample.match(/\p{N}/gu) || [];
+  return letters.length + digits.length < 3 || (!letters.length && !!digits.length);
+}
+
 export type EditorInkSignature = {
   mask: Uint8Array;
   aspect: number;

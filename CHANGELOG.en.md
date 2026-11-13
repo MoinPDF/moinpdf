@@ -4,6 +4,16 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.35.0 — 2026-11-13
+
+- PDF editor: compare local substitute fonts directly on the page before applying them. The preview changes neither saved edits nor PDF output; font changes retain tracking and horizontal scaling.
+- Numeric, amount and date fields in scans require at least two independently matching neighbouring samples for automatic typography refinement. Punctuation and currency codes no longer count as additional font evidence.
+- Short final lines stay within an established paragraph column. Adjacent columns and short table-like rows remain separate.
+- “Fit rows to content” expands undersized rows of recognised vector tables after explicit preview. Multiline and merged cells are supported; font sizes, column widths and original text ownership are preserved. Page boundaries and neighbouring content constrain application.
+- Paragraph-flow previews include the original first page with unchanged images, other columns and marginal text; continuation pages remain visibly new blank pages.
+- When the on-screen keyboard opens or pans, the caret follows the actual visible part of the inner document scroll area. Manual scrolling and control interactions retain priority.
+- Expanded real-PDF, unapplied font-preview, multicolumn paragraph, numeric-consensus and keyboard-geometry checks. Physical iPhone/iPad/Android testing remains separately pending.
+
 ## 0.34.0 — 2026-11-12
 
 - PDF editor: compact formatting toolbar with collapsed text actions and font evidence. The original font, substitute font or scan approximation remains visible; detailed explanations and custom font uploads are available on demand.

@@ -142,6 +142,18 @@ try {
  assert.equal(JSON.stringify(comparisonMark),comparisonBefore,'Comparison does not mutate or discard edits');
  await click([...comparisonHost.querySelectorAll('button')].find(b=>b.textContent==='Bearbeitete Ansicht'));
  assert.equal(comparisonHost.querySelector('[contenteditable]').textContent,'Edited cell');
+ const changesBeforePreview=nudges.length;
+ await click([...comparisonHost.querySelectorAll('button')].find(b=>b.textContent==='Passende Ersatzschriften vergleichen'));
+ const alternatives=comparisonHost.querySelectorAll('.editor-font-alternative-grid article');
+ assert(alternatives.length>0);
+ await click([...alternatives[0].querySelectorAll('button')].find(b=>b.textContent==='Auf der Seite vergleichen'));
+ assert(comparisonHost.querySelector('[data-editor-font-preview="true"]'));
+ assert.match(comparisonHost.textContent,/noch nicht übernommen/);
+ assert.equal(nudges.length,changesBeforePreview,'In-place comparison never commits an edit');
+ assert.equal(JSON.stringify(comparisonMark),comparisonBefore);
+ await click([...comparisonHost.querySelectorAll('.editor-font-preview-note button')][0]);
+ assert(!comparisonHost.querySelector('[data-editor-font-preview]'));
+ assert.equal(comparisonHost.querySelector('[contenteditable]').textContent,'Edited cell');
  await act(async()=>comparisonRoot.unmount());
  const inlineHost=document.createElement('div');document.body.append(inlineHost);const inlineRoot=createRoot(inlineHost);
  let current={...picked,text:'Original',textRotation:0,w:.6,h:.08,baselineScale:.9,fontScale:15/400};const patches=[];let done=0,selection=null;
@@ -275,6 +287,17 @@ try {
  await act(async()=>{setEditorDomSelection(caretField,9,1);caretField.dispatchEvent(new KeyboardEvent('keydown',{key:'Shift',bubbles:true}));await new Promise(resolve=>setTimeout(resolve,15));});
  assert.equal(caretHost.scrollLeft,88,'A wide backward selection reveals the active left edge, not its right anchor');
  assert.deepEqual(editorDomSelection(caretField),{anchor:9,focus:1,start:1,end:9},'Geometry measurement never changes selection direction or range');
+ // Keyboard shrink and viewport pan must scroll the inner page, even when its
+ // layout box still extends beneath the keyboard. Focus/selection stay intact.
+ let outerScrolls=0;window.scrollBy=()=>outerScrolls++;
+ caretHost.scrollTop=0;
+ Range.prototype.getBoundingClientRect=()=>({left:100,right:102,top:420-caretHost.scrollTop,bottom:438-caretHost.scrollTop,width:2,height:18});
+ Object.assign(viewport,{offsetTop:20,height:260});
+ await act(async()=>{caretField.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));viewport.dispatchEvent(new Event('resize'));await new Promise(resolve=>setTimeout(resolve,15));});
+ assert(caretHost.scrollTop>=170,'The caret moves above the reduced visual viewport');
+ assert.equal(outerScrolls,0,'The keyboard does not unnecessarily move the outer workbench');
+ assert.equal(document.activeElement,caretField);
+ assert.deepEqual(editorDomSelection(caretField),{anchor:9,focus:1,start:1,end:9});
  await act(async()=>caretRoot.unmount());Range.prototype.getBoundingClientRect=oldRangeRect;delete window.visualViewport;
  const prefetchHost=document.createElement('div');document.body.append(prefetchHost);const prefetchRoot=createRoot(prefetchHost),prefetchSource={...source,id:'prefetch',pdf:{numPages:3}};
  Object.defineProperty(navigator,'deviceMemory',{value:8,configurable:true});let visibility='visible';Object.defineProperty(document,'visibilityState',{get:()=>visibility,configurable:true});

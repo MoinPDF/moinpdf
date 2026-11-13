@@ -7,6 +7,7 @@ const {
   changeEditorTableModel, recognizeEditorTable, editorTableCellRect, setEditorTableRowHeight,
   insertEditorTableRow, editorTableSegments, validateEditorTable,
   validateEditorTableOriginal,
+  fitEditorTableRows,
 }=await import('../.cache/editor-tables/editor-tables.mjs');
 
 let cases = 0;
@@ -40,6 +41,32 @@ const prototype = inspect(headers, { texts: [
   { id: 'line-1', rect: { x: 25, y: 65, w: 65, h: 8 } },
   { id: 'line-2', rect: { x: 25, y: 76, w: 65, h: 8 } },
 ] });
+
+test('content fitting grows only necessary rows and keeps provenance', () => {
+  const before = JSON.stringify(prototype);
+  const heights = Object.fromEntries(prototype.cells.map(c => [c.id, 18]));
+  const cell = prototype.cells.find(c => c.row === 1 && c.column === 0);
+  heights[cell.id] = 74;
+  const fitted = fitEditorTableRows(prototype, heights);
+  assert.deepEqual(fitted.rows, [30, 60, 134, 164]);
+  assert.deepEqual(fitted.columns, prototype.columns);
+  assert.equal(fitted.original, prototype.original);
+  assert.equal(JSON.stringify(prototype), before);
+  assert.equal(fitEditorTableRows(fitted, heights), fitted, 'Repeated fitting does not grow again');
+  assert.throws(() => fitEditorTableRows(prototype, heights, {obstacles: [{x:20,y:150,w:240,h:20}]}), /collides/);
+  assert.throws(() => fitEditorTableRows(prototype, {}), /measurements/);
+  assert.throws(() => fitEditorTableRows(prototype, {...heights, [cell.id]: NaN}), /measurements/);
+});
+test('content fitting measures vertically merged cells against their complete span', () => {
+  const table = inspect(grid({ absent: ['h:1:0'] }));
+  const heights = Object.fromEntries(table.cells.map(c => [c.id, 18]));
+  const cell = table.cells.find(c => c.rowSpan === 2);
+  heights[cell.id] = 80;
+  const fitted = fitEditorTableRows(table, heights);
+  assert.equal(editorTableCellRect(fitted, cell).h, 80);
+  assert.equal(fitted.rows[1], table.rows[1]);
+  assert.equal(fitted.rows.at(-1), 140);
+});
 
 test('recognizes a complete 3-by-3 grid and bounds', () => {
   const table = inspect();

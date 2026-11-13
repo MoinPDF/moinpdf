@@ -9,6 +9,16 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.35.0 — 2026-11-13
+
+- PDF bearbeiten: lokale Ersatzschriften lassen sich vor der Übernahme direkt auf der Seite vergleichen. Die Vorschau verändert weder den Arbeitsstand noch den PDF-Export; Zeichenabstände und horizontale Skalierung bleiben beim Schriftwechsel erhalten.
+- Zahlen, Beträge und Datumsangaben in Scans benötigen für eine automatische Schriftanpassung mindestens zwei unabhängig passende Nachbarstellen. Satzzeichen und Währungskürzel gelten nicht mehr als zusätzliche Schriftevidenz.
+- Kurze Schlusszeilen bleiben Teil eines bereits eindeutig erkannten Absatzes in ihrer Spalte. Benachbarte Spalten und kurze tabellenartige Zeilen werden weiterhin getrennt gehalten.
+- „Zeilen an Inhalt anpassen“ vergrößert zu kleine Zeilen erkannter Rastertabellen nach einer ausdrücklichen Vorschau. Mehrzeilige und verbundene Zellen werden berücksichtigt; Schriftgrößen, Spaltenbreiten und ursprüngliche Textzuordnung bleiben erhalten. Seitenränder und Nachbarinhalte begrenzen die Übernahme.
+- Die Absatzfluss-Vorschau zeigt auf der Ausgangsseite auch das Original mit unveränderten Bildern, anderen Spalten und Randtexten; Fortsetzungsseiten bleiben als neue leere Seiten erkennbar.
+- Beim Öffnen oder Verschieben der Bildschirmtastatur folgt der Cursor dem tatsächlich sichtbaren Ausschnitt des inneren Dokumentbereichs. Manuelles Scrollen und Bedienaktionen behalten Vorrang.
+- Erweiterte Prüfungen für echte PDF-Ausgaben, Schriftvorschau ohne Übernahme, mehrspaltige Absätze, Betragsreferenzen und Tastaturgeometrie. Physische iPhone-/iPad-/Android-Prüfungen bleiben gesondert offen.
+
 ## 0.34.0 — 2026-11-12
 
 - PDF bearbeiten: kompakte Formatleiste mit eingeklappten Textaktionen und Schriftinformationen. Die verwendete Originalschrift, Ersatzschrift oder Scan-Annäherung bleibt direkt sichtbar; ausführliche Begründungen und eigene Schriftdateien lassen sich bei Bedarf öffnen.

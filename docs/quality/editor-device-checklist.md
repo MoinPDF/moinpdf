@@ -81,3 +81,12 @@ Weiterhin offen auf physischen Geräten / Still pending on physical devices:
 - [ ] Während der Erkennung einer längeren PDF schreiben, Text auswählen und rückgängig machen; anschließend Datei über die native Speichern-/Teilen-Oberfläche sichern. / While recognizing a longer PDF, type, select text and undo; then save using the native save/share surface.
 
 Automatisierte DOM- und Touch-Viewport-Prüfungen sind kein Nachweis dieser physischen Gerätefälle. / Automated DOM and touch-viewport checks do not establish these physical-device cases.
+
+## 0.35.0 acceptance (pending on physical devices)
+
+- [ ] On iPhone/iPad/Android at 200–400% zoom, open/pan/close the keyboard, type and select backwards. The caret stays visible without moving unrelated controls; manual scrolling takes priority.
+- [ ] Compare a substitute font on the actual page, close the preview, and export with a preview still open. Only explicitly applied formatting may appear in the saved PDF.
+- [ ] Add four lines to a recognised table cell, preview “Fit rows to content”, apply, undo/redo and save. Confirm font size, neighbouring cells and the next page in another viewer.
+- [ ] Edit a short last line in a two-column paragraph. Check that the other column and nearby image remain unchanged in the exported PDF.
+
+No physical-device result is claimed by the DOM, desktop-browser or touch-emulation checks.

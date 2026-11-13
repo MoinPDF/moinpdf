@@ -164,6 +164,52 @@ def table_rows(page,name):
         same_page(before,1,after,1)
     return {'scope':'merged header, repeated row height, inserted multiline row, Tab/Shift+Tab, atomic undo/redo and actual vector export'}
 
+def table_fit(page,name):
+    open_editor(page,'table')
+    grid=panel(page,'Tabelle bearbeiten')
+    grid.get_by_role('button',name='Tabellenraster prüfen',exact=True).click()
+    expect(grid.get_by_label('Tabelle',exact=True)).to_be_visible(timeout=120000)
+    def fit():
+        grid.get_by_role('button',name='Zeilen an Inhalt anpassen',exact=True).click()
+        expect(grid.locator('.editor-table-proposal')).to_be_visible(timeout=120000)
+        grid.get_by_role('button',name='Tabellenänderung übernehmen',exact=True).click()
+        expect(grid.locator('.editor-table-proposal')).to_have_count(0)
+    fit();controls_ui.canvas(page)
+    field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True)
+    expect(field).to_have_text('MERGED HEADING');field.press('Tab');expect(field).to_have_text('A1')
+    replacement='First item\nSecond item\nThird item\nFourth item'
+    field.fill(replacement);grid=panel(page,'Tabelle bearbeiten');fit()
+    file=save(page,name)
+    with pymupdf.open(file) as after,pymupdf.open(fixtures/'table.pdf') as before:
+        content=after[0].get_text()
+        for text in [*replacement.split('\n'),'MERGED HEADING','B1','A2','B2','TABLE FOOTER']:assert content.count(text)==1,(text,content)
+        spans=[s for b in after[0].get_text('dict')['blocks'] if 'lines' in b for l in b['lines'] for s in l['spans'] if 'item' in s['text']]
+        assert len(spans)==4 and all(abs(s['size']-12)<.02 for s in spans)
+        assert not after[0].get_images();same_page(before,1,after,1)
+    return {'scope':'content-driven row growth, unchanged font size/column widths, neighbouring cells, real vector PDF and unchanged second page'}
+
+def font_preview(page,name):
+    open_editor(page,'table');field=pick(page,'MERGED HEADING');field.fill('NEW HEADING')
+    page.locator('.editor-text-actions > summary').click()
+    page.get_by_role('button',name='Schrift vergleichen',exact=True).click()
+    page.get_by_role('button',name='Passende Ersatzschriften vergleichen',exact=True).click()
+    choice=page.locator('.editor-font-alternative-grid article').first
+    expect(choice).to_be_visible(timeout=120000)
+    choice.get_by_role('button',name='Auf der Seite vergleichen',exact=True).click()
+    expect(page.locator('[data-editor-font-preview="true"]')).to_be_visible()
+    expect(page.locator('.editor-font-preview-note')).to_contain_text('noch nicht übernommen')
+    # Exporting a preview must retain the committed original font, even when
+    # the preview has not been closed manually.
+    file=save(page,name)
+    with pymupdf.open(file) as after,pymupdf.open(fixtures/'table.pdf') as before:
+        def spans(doc):return [s for b in doc[0].get_text('dict')['blocks'] if 'lines'in b for l in b['lines'] for s in l['spans']]
+        original=next(s for s in spans(before) if s['text']=='MERGED HEADING')
+        edited=next(s for s in spans(after) if s['text']=='NEW HEADING')
+        assert edited['font']==original['font'] and abs(edited['size']-original['size'])<.02
+        assert abs(edited['origin'][0]-original['origin'][0])<.1
+        same_page(before,1,after,1)
+    return {'scope':'temporary on-page font comparison cannot enter the saved PDF; original font, size and untouched second page preserved'}
+
 def forms(page,name):
     open_editor(page,'form');pick(page,'Original heading').fill('Edited heading');file=save(page,name)
     with pymupdf.open(file) as after,pymupdf.open(fixtures/'form.pdf') as before:
@@ -342,7 +388,7 @@ def execute(browser,name,width,callback):
         context.close();print(result['status'].upper()+': '+name,flush=True)
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
-        cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight),('payroll',1440,payroll),('payroll-touch',390,payroll)]
+        cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('table-fit',1440,table_fit),('table-fit-touch',390,table_fit),('font-preview-touch',390,font_preview),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight),('payroll',1440,payroll),('payroll-touch',390,payroll)]
         if engine=='webkit':cases.append(('high-scan-bitmap-loss',390,high_scan_bitmap_loss))
         selected=os.environ.get('MOINPDF_ADAPTIVE_CASES','').split(',')
         for suffix,width,callback in cases:

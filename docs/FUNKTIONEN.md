@@ -2,6 +2,14 @@
 
 ## PDF bearbeiten: Touch und Formatierung
 
+Mit „Auf der Seite vergleichen“ wird eine Ersatzschrift vorübergehend an der ausgewählten Stelle angezeigt. „Schriftvorschau schließen“ kehrt zur bisherigen Bearbeitung zurück; erst „Diese Schrift verwenden“ übernimmt den Vorschlag. Eine nicht übernommene Vorschau wird nicht exportiert. Vorhandene Zeichenabstände und horizontale Skalierung bleiben erhalten.
+
+Beträge, Datumsangaben und kurze Zahlentexte in Scans benötigen mindestens zwei passende Nachbarstellen für die automatische Schriftanpassung. Fehlen sie, bleibt die bisherige Annäherung erhalten und lässt sich manuell vergleichen. Kurze Schlusszeilen werden an bereits eindeutig erkannte Spaltenabsätze angehängt, ohne benachbarte Spalten zusammenzuführen.
+
+Unter „Tabelle bearbeiten“ bestimmt „Zeilen an Inhalt anpassen“ die nötigen Höhen aller erkannten Rasterzellen. Die Vorschau vergrößert nur zu kleine Zeilen; Schriftgrößen und Spaltenbreiten bleiben erhalten. Auch verbundene Zellen werden berücksichtigt. Erst „Tabellenänderung übernehmen“ ändert das Dokument; Rückgängig stellt den vorherigen Stand wieder her. Passt die Tabelle nicht auf die Seite oder würde sie Nachbarinhalte überdecken, wird die Übernahme abgelehnt. Beliebige Tabellen über mehrere Seiten und dynamischer Umfluss um Bilder sind weiterhin nicht unterstützt.
+
+Die Absatzfluss-Vorschau zeigt auf der ersten Seite das Original mit den vorgeschlagenen Textänderungen. Andere Spalten, Bilder und Fußzeilen bleiben dadurch zur Orientierung sichtbar. Bei Bildschirmtastatur und vergrößerter Ansicht berücksichtigt die Cursorführung den tatsächlich sichtbaren inneren Dokumentbereich. Das ersetzt keine Prüfung auf einem physischen Smartphone.
+
 Die Formatleiste zeigt Schriftart, Größe, Fett/Kursiv/Unterstreichen und Farbe. Seltenere Befehle wie Schriftvergleich und Formatübertragung stehen unter „Textaktionen“, eigene Schriftdateien unter „Mehr Textoptionen“. Die kompakte Schriftinformation unterscheidet Originalschrift, Ersatzschrift und Scan-Annäherung; Antippen öffnet die Begründung. Eine perfekte Erkennung lässt sich bei Scans, fehlenden Zeichen oder unvollständigen PDF-Schriftdaten nicht zusichern.
 
 Zeilen mit unterschiedlichen Einzügen, Grundlinienabständen, Zeichenabständen oder Textbreiten-Skalierungen bleiben eigenständige Textstellen. So verändert eine Korrektur nicht unbemerkt die Position benachbarter Zeilen. Gleichmäßig angeordnete Absätze bleiben zusammen bearbeitbar. Bei überlappenden Auswahlrahmen wird die Textstelle unter dem Berührungspunkt bevorzugt. Wiederholte gleiche Buchstaben an einer Formatgrenze behalten beim Tippen und Löschen den zur tatsächlichen Cursorposition gehörenden Stil.
@@ -86,7 +94,7 @@ Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF 
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.34.0**
+**Aktuelle Grenzen aus der Implementierung · 0.35.0**
 
 | Funktion | Wert |
 | --- | --- |

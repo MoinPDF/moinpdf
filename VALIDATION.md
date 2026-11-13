@@ -6,6 +6,13 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.35.0
+
+- Bestehende Tests erweitert: echte Scanbeträge mit und ohne passende Nachbarstellen; kurze Schlusszeilen in zwei Spalten; vorübergehende Schriftvorschau ohne Änderung des Arbeitsstands; verkleinerter und verschobener mobiler Sichtbereich mit unverändertem Fokus und Auswahl.
+- Tabellenprüfungen messen mehrzeilige und vertikal verbundene Zellen, unveränderte Schriftgröße und Spaltenbreite, Abbruch, Kollisionen, Wiederholbarkeit und unveränderliche Originalzuordnung. Tatsächliche PDF-Ausgaben werden unabhängig gelesen; unveränderte Folgeseiten werden pixelgenau verglichen.
+- Die Editor-Browsermatrix ergänzt `table-fit`, `table-fit-touch` und `font-preview-touch` mit echten Downloads. Der Berichtsprüfer verlangt diese Fälle für Chromium, Firefox und WebKit. Die bisherigen nativen Safari-, Docker-, Sprach- und Release-Prüfungen bleiben erforderlich.
+- Dieser Plan belegt keine Ausführung. Maßgeblich sind erfolgreiche Prüfungen des tatsächlichen Release-Commits. Physische Smartphones stehen hier nicht zur Verfügung; ihre Abnahme bleibt ausdrücklich offen.
+
 ## Prüfplan für 0.33.0
 
 - `editor-gestures-smoke.mjs`: Ankerpunkt, gemeinsames Zoomen/Verschieben, Grenzen, Abbruch, Restfinger, Klickunterdrückung und Trackpad-Zoom im DOM-Prüfstand.

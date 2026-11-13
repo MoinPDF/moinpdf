@@ -290,6 +290,31 @@ try {
  const tsrc=await source(await td.save(),'vector-table.pdf'),tpage=pageOf(tsrc),tpages=[tpage,{...tpage,id:'table-next',index:1}];
  await writeFile(folder+'/table-original.pdf',tsrc.bytes);
  const tables=await readEditorTables(tsrc,tpage,[],signal);assert.equal(tables.length,1,'Native vector grid is recognized');let table=tables[0];assert.equal(table.cells[0].columnSpan,2);
+ // An overflowing cell becomes a complete, independently readable PDF after
+ // one explicit fit proposal; neighbours, fonts and untouched pages survive.
+ const fittedSeed=await changeEditorTable(tsrc,tpage,[],table,{kind:'fit-content'},signal);
+ const fitText='First item\nSecond item\nThird item\nFourth item';
+ const fitMarks=fittedSeed.add.map(m=>m.text==='A1'?{...m,text:fitText,runs:undefined}:m);
+ const fitBefore=JSON.stringify(fitMarks);
+ const fittedTable=await changeEditorTable(tsrc,tpage,fitMarks,table,{kind:'fit-content'},signal);
+ assert.equal(JSON.stringify(fitMarks),fitBefore,'The fitting preview never mutates live edits');
+ const fittedGrid=fittedTable.add.find(m=>m.nativeTable).nativeTable;
+ assert(fittedGrid.rows[2]-fittedGrid.rows[1]>40);
+ assert.deepEqual(fittedGrid.columns,table.columns);
+ const fittedCell=fittedTable.add.find(m=>m.text===fitText);
+ assert.equal(fittedCell.fontScale,fitMarks.find(m=>m.text===fitText).fontScale);
+ const fitResult=await runStudioJob('edit-text',[tsrc],tpages,options,{marks:{p0:fittedTable.add},crops:{}},()=>{},signal);
+ assert.equal(fitResult.editorVerification.status,'passed');
+ const fitOutput=await source(await fitResult.blob.arrayBuffer());
+ const fitOutputText=await text(fitOutput);
+ assert.match((await (await fitOutput.pdf.getPage(2)).getTextContent()).items.map(t=>t.str).join(' '),/TABLE UNCHANGED PAGE/);
+ for(const value of [...fitText.split('\n'),'B1','A2','B2','TABLE FOOTER']) assert.equal(fitOutputText.split(value).length-1,1,value+' survives row fitting once');
+ const fitOriginalPage=await renderPage(tsrc,tpages[1],600),fitSecondPage=await renderPage(fitOutput,{...tpages[1],sourceId:fitOutput.id},600);
+ assert.deepEqual(fitOriginalPage.canvas.toBuffer('image/png'),fitSecondPage.canvas.toBuffer('image/png'),'Fitting leaves the other page pixel-identical');
+ fitOriginalPage.canvas.width=fitOriginalPage.canvas.height=fitSecondPage.canvas.width=fitSecondPage.canvas.height=0;
+ const hugeFit=fitMarks.map(m=>m.text===fitText?{...m,text:Array(60).fill('Too much content').join('\n')}:m);
+ await assert.rejects(()=>changeEditorTable(tsrc,tpage,hugeFit,table,{kind:'fit-content'},signal),/outside|collid/);
+ await assert.rejects(()=>changeEditorTable(tsrc,tpage,fitMarks,table,{kind:'fit-content'},AbortSignal.abort()),{name:'AbortError'});
  const columnDeletion=await changeEditorTable(tsrc,tpage,[],table,{kind:'delete-column',column:1},signal);
  const deletedColumnResult=await runStudioJob('edit-text',[tsrc],tpages,options,{marks:{p0:columnDeletion.add},crops:{}},()=>{},signal);
  const deletedColumnText=await text(await source(await deletedColumnResult.blob.arrayBuffer()));

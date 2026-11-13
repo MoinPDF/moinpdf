@@ -5,7 +5,12 @@ import { editorStyle } from './editor-rich-text';
 import { editorMarkSignature, editorScanStyleKey, editorRectsOverlap } from './editor-model';
 import { editorFontCatalog } from './editor-font-catalog';
 import { resolveEditorFont, type EditorFont } from './editor-fonts';
-import { compareEditorFontShape, editorInkSignature, sampleEditorFont } from './editor-font-match';
+import {
+  compareEditorFontShape,
+  editorInkSignature,
+  sampleEditorFont,
+  editorScanNeedsReferences,
+} from './editor-font-match';
 import { matchEditorScanEdges } from './editor-scan';
 import { prepareEditorLayout } from './editor-layout-plan';
 import { paintEditorPlan } from './editor-ink-verification';
@@ -25,12 +30,13 @@ export async function refineEditorScanTypography(
 ): Promise<Mark> {
   signal.throwIfAborted();
   const text = mark.originalText || mark.text || '';
+  const needsReferences = editorScanNeedsReferences(text);
   if (
     !mark.sourceIsScan ||
     !mark.sourceRect ||
     ((mark.textRotation || 0) % 90 && !mark.textAspect) ||
     !text.trim() ||
-    (text.trim().length < 3 && references.length < 2) ||
+    (needsReferences && references.length < 2) ||
     text.length > 120 ||
     text.includes('\n') ||
     // A line with mixed formatting needs per-run evidence, not one guessed face.
@@ -127,6 +133,7 @@ export async function refineEditorScanTypography(
         image.canvas.width = image.canvas.height = 0;
       }
     }
+    if (needsReferences && peers.length < 2) return mark;
     const choices = editorFontCatalog;
     const candidates: {
       choice: (typeof editorFontCatalog)[number];
@@ -207,7 +214,7 @@ export async function refineEditorScanTypography(
     });
     const best = candidates[0];
     if (!best || best.score > 0.55) return mark;
-    if (text.trim().length < 3 && best.support < 2) return mark;
+    if (needsReferences && best.support < 2) return mark;
     const otherStyle = candidates.find(
       (c) => c.font.bold !== best.font.bold || c.font.italic !== best.font.italic,
     );
