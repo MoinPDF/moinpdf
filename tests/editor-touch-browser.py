@@ -151,12 +151,27 @@ def run(browser, engine, zero_metrics=False):
     prefix_capture = 0
     def prefix_ink_rows():
         nonlocal prefix_capture
-        sheet = page.locator('.editor-sheet').bounding_box()
-        scale = sheet['width']/400
         # Read actual painted blue pixels in the unchanged "MoinPDF" prefix.
         # PDF-space coordinates come from the independently generated fixture.
-        png = page.screenshot(clip={'x':sheet['x']+40*scale,'y':sheet['y']+85*scale,
-                                    'width':52*scale,'height':22*scale})
+        # Screenshot preparation can yield to the caret's queued scroll frame.
+        # Keep the crop anchored to the same PDF coordinates by accepting only
+        # a capture with unchanged sheet geometry. This retries viewport motion,
+        # never a failed glyph/baseline comparison.
+        page.evaluate('() => document.fonts.ready')
+        capture_geometry = []
+        for attempt in range(5):
+            page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+            sheet = page.locator('.editor-sheet').bounding_box()
+            scale = sheet['width']/400
+            png = page.screenshot(clip={'x':sheet['x']+40*scale,'y':sheet['y']+85*scale,
+                                        'width':52*scale,'height':22*scale})
+            after_capture = page.locator('.editor-sheet').bounding_box()
+            capture_geometry.append({'before':sheet, 'after':after_capture})
+            if all(abs(sheet[key]-after_capture[key]) < .1 for key in ('x','y','width','height')):
+                break
+        else:
+            raise AssertionError(('PDF viewport must settle before measuring glyphs',capture_geometry))
+        (out / f'touch-{label}-prefix-{prefix_capture}-geometry.json').write_text(json.dumps(capture_geometry,indent=2))
         (out / f'touch-{label}-prefix-{prefix_capture}.png').write_bytes(png)
         prefix_capture += 1
         pix = pymupdf.Pixmap(png); pixels = pix.samples
