@@ -13,11 +13,14 @@ import {
   validateEditorTableOriginal,
   editorTableCellRect,
   changeEditorTableModel,
+  fitEditorTableRows,
   type EditorTableOperation,
   type EditorTable,
   type TablePath,
   type TableRect,
 } from './editor-tables';
+
+export type EditorTableWorkspaceOperation = EditorTableOperation | { kind: 'fit-content' };
 
 export const tableRect = (table: EditorTable): Rect => ({
   x: table.columns[0] / table.pageWidth,
@@ -179,13 +182,14 @@ export async function changeEditorTable(
   page: PageItem,
   marks: Mark[],
   table: EditorTable,
-  operation: EditorTableOperation,
+  operation: EditorTableWorkspaceOperation,
   signal: AbortSignal,
 ) {
   const state = await context(source, page, signal);
   validateEditorTableOriginal(table, state.paths);
-  const guarded = obstacles(table, state.objects, state.targets, marks),
-    next = changeEditorTableModel(table, operation, { obstacles: guarded });
+  const guarded = obstacles(table, state.objects, state.targets, marks);
+  const fitting = operation.kind === 'fit-content';
+  let next = fitting ? table : changeEditorTableModel(table, operation, { obstacles: guarded });
   const removed = new Set<string>(
       marks
         .filter((m) => m.nativeTable?.id === table.id || m.tableCell?.tableId === table.id)
@@ -193,6 +197,7 @@ export async function changeEditorTable(
     ),
     cellMarks: Mark[] = [];
   const requiredHeights: Record<string, number> = {};
+  const cellOffsets = new Map<string, { left: number; top: number }>();
   for (const cell of next.cells) {
     const oldCell = table.cells.find((c) => c.id === cell.id),
       oldRect = oldCell && editorTableCellRect(table, oldCell),
@@ -261,13 +266,14 @@ export async function changeEditorTable(
             };
     const left = oldRect ? Math.max(2, mark.x * state.width - oldRect.x) : 3,
       top = oldRect ? Math.max(2, mark.y * state.height - oldRect.y) : 3;
+    cellOffsets.set(cell.id, { left, top });
     const positioned: Mark = {
       ...mark,
       id: cell.id,
       x: (rect.x + left) / state.width,
       y: (rect.y + top) / state.height,
       w: (rect.w - left - 3) / state.width,
-      h: (rect.h - top - 3) / state.height,
+      h: (fitting ? Math.max(1, rect.h - top - 3) : rect.h - top - 3) / state.height,
       originalState: undefined,
       flow: undefined,
       changeGroup: table.id,
@@ -276,9 +282,24 @@ export async function changeEditorTable(
     delete positioned.nativeTextSlice; // Transient export plans are never persisted.
     if (positioned.w <= 0 || positioned.h <= 0) throw new Error('Die Tabellenzeile ist zu klein.');
     const layout = await prepareEditorLayout(positioned, state.width, state.height, source);
-    if (layout.overflow) throw new Error('Der Zellentext passt nicht in die gewählte Zellengröße.');
+    if (layout.overflow && !fitting)
+      throw new Error('Der Zellentext passt nicht in die gewählte Zellengröße.');
     requiredHeights[cell.id] = top + layout.requiredHeight + 3;
     cellMarks.push(positioned);
+  }
+  if (fitting) {
+    next = fitEditorTableRows(table, requiredHeights, { obstacles: guarded });
+    for (const mark of cellMarks) {
+      signal.throwIfAborted();
+      const cell = next.cells.find((c) => c.id === mark.id)!;
+      const rect = editorTableCellRect(next, cell);
+      const { top } = cellOffsets.get(cell.id)!;
+      mark.y = (rect.y + top) / state.height;
+      mark.h = (rect.h - top - 3) / state.height;
+      const layout = await prepareEditorLayout(mark, state.width, state.height, source);
+      if (mark.h <= 0 || layout.overflow)
+        throw new Error('Der Zellentext passt nicht in die gewählte Zellengröße.');
+    }
   }
   if (next.removedTextIds?.length) {
     const targets = next.removedTextIds.map((id) => state.targets.find((t) => t.id === id));

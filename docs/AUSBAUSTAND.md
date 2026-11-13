@@ -1,5 +1,15 @@
 # Ausbau nach dem Funktionsvergleich
 
+## Editor-Verbesserungen in 0.35.0
+
+Mit „Auf der Seite vergleichen“ wird eine Ersatzschrift vorübergehend an der ausgewählten Stelle angezeigt. „Schriftvorschau schließen“ kehrt zur bisherigen Bearbeitung zurück; erst „Diese Schrift verwenden“ übernimmt den Vorschlag. Eine nicht übernommene Vorschau wird nicht exportiert. Vorhandene Zeichenabstände und horizontale Skalierung bleiben erhalten.
+
+Beträge, Datumsangaben und kurze Zahlentexte in Scans benötigen mindestens zwei passende Nachbarstellen für die automatische Schriftanpassung. Fehlen sie, bleibt die bisherige Annäherung erhalten und lässt sich manuell vergleichen. Kurze Schlusszeilen werden an bereits eindeutig erkannte Spaltenabsätze angehängt, ohne benachbarte Spalten zusammenzuführen.
+
+Unter „Tabelle bearbeiten“ bestimmt „Zeilen an Inhalt anpassen“ die nötigen Höhen aller erkannten Rasterzellen. Die Vorschau vergrößert nur zu kleine Zeilen; Schriftgrößen und Spaltenbreiten bleiben erhalten. Auch verbundene Zellen werden berücksichtigt. Erst „Tabellenänderung übernehmen“ ändert das Dokument; Rückgängig stellt den vorherigen Stand wieder her. Passt die Tabelle nicht auf die Seite oder würde sie Nachbarinhalte überdecken, wird die Übernahme abgelehnt. Beliebige Tabellen über mehrere Seiten und dynamischer Umfluss um Bilder sind weiterhin nicht unterstützt.
+
+Die Absatzfluss-Vorschau zeigt auf der ersten Seite das Original mit den vorgeschlagenen Textänderungen. Andere Spalten, Bilder und Fußzeilen bleiben dadurch zur Orientierung sichtbar. Bei Bildschirmtastatur und vergrößerter Ansicht berücksichtigt die Cursorführung den tatsächlich sichtbaren inneren Dokumentbereich. Das ersetzt keine Prüfung auf einem physischen Smartphone.
+
 ## Aktuelle Erweiterungen
 
 - Tabellenübernahme erkennt wiederkehrende Spaltenabstände je Seite, bietet Zellfundstellen, markiert unsichere Werte und erhält mehrspaltige Überschriften in Excel. Nahe Fortsetzungszeilen können optional verbunden werden; manuelle Spaltengrenzen bleiben verfügbar. Bei widersprüchlichen Spaltenzahlen wird eine Korrektur verlangt.
@@ -17,7 +27,7 @@ Formularhelfer und Belege auf A4 sind als Browserwerkzeuge integriert. Profilvor
 
 **Deutsch** · [English](STATUS.en.md) · [← README](../README.md)
 
-Stand: 12. November 2026 · Version 0.33.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
+Stand: 13. November 2026 · Version 0.35.0. Frühere, datierte Prüfberichte weiter unten beschreiben ihren jeweiligen historischen Stand. Aktueller Prüfumfang und verbleibende Grenzen stehen in [VALIDATION.md](../VALIDATION.md).
 
 Der Hintergrund im Light Mode verläuft auf Desktop, Tablet und Smartphone von Grün über Türkis zu Blau. Der sattere Verlauf lässt helle Karten, Eingabefelder und Werkzeugbereiche deutlicher hervortreten.
 

@@ -391,20 +391,31 @@ export function EditorRichInput({
                 toolbarBox.top <= box.top + 2
                   ? toolbarBox.height + 12
                   : 12;
-            const top = box.top + inset,
-              bottom = box.bottom - 12;
+            // The keyboard can shrink/pan the visual viewport without changing
+            // this nested scrollport's layout box. Reveal inside their shared
+            // visible area first, so the page itself does not jump past controls.
+            const top = Math.max(box.top + inset, (viewport?.offsetTop || 0) + 12),
+              bottom = Math.min(
+                box.bottom - 12,
+                (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight) - 12,
+              ),
+              left = Math.max(box.left + 12, (viewport?.offsetLeft || 0) + 12),
+              right = Math.min(
+                box.right - 12,
+                (viewport?.offsetLeft || 0) + (viewport?.width || window.innerWidth) - 12,
+              );
             if (vertical && bottom > top) {
               if (rect.bottom > bottom) parent.scrollTop += rect.bottom - bottom;
               else if (rect.top < top) parent.scrollTop -= top - rect.top;
             }
-            if (horizontal && box.width > 24) {
-              if (rect.right > box.right - 12) parent.scrollLeft += rect.right - box.right + 12;
-              else if (rect.left < box.left + 12) parent.scrollLeft -= box.left + 12 - rect.left;
+            if (horizontal && right > left) {
+              if (rect.right > right) parent.scrollLeft += rect.right - right;
+              else if (rect.left < left) parent.scrollLeft -= left - rect.left;
             }
           }
           const rect = range.getBoundingClientRect(),
-            top = (viewport?.offsetTop || 0) + 100,
-            bottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight) - 64;
+            top = (viewport?.offsetTop || 0) + 12,
+            bottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight) - 12;
           if (bottom > top && typeof window.scrollBy === 'function') {
             if (rect.bottom > bottom)
               window.scrollBy({ top: rect.bottom - bottom, behavior: 'instant' });

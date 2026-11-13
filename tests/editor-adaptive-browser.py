@@ -1,7 +1,7 @@
 """Adaptive editor acceptance on the production build. Synthetic fixtures only.
 Run editor-adaptive-fixtures.mjs first. No external requests or document uploads.
 """
-import atexit,faulthandler,json,os,re,subprocess,sys,time,traceback
+import atexit,faulthandler,json,os,re,struct,subprocess,sys,time,traceback
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import urlopen
@@ -163,6 +163,81 @@ def table_rows(page,name):
         assert any(abs(y-155)<.05 for y in ys) and any(abs(y-200)<.05 for y in ys) and not any(abs(y-140)<.05 for y in ys),ys
         same_page(before,1,after,1)
     return {'scope':'merged header, repeated row height, inserted multiline row, Tab/Shift+Tab, atomic undo/redo and actual vector export'}
+
+def table_fit(page,name):
+    open_editor(page,'table')
+    grid=panel(page,'Tabelle bearbeiten')
+    grid.get_by_role('button',name='Tabellenraster prüfen',exact=True).click()
+    expect(grid.get_by_label('Tabelle',exact=True)).to_be_visible(timeout=120000)
+    def fit():
+        grid.get_by_role('button',name='Zeilen an Inhalt anpassen',exact=True).click()
+        expect(grid.locator('.editor-table-proposal')).to_be_visible(timeout=120000)
+        grid.get_by_role('button',name='Tabellenänderung übernehmen',exact=True).click()
+        expect(grid.locator('.editor-table-proposal')).to_have_count(0)
+    fit();controls_ui.canvas(page)
+    field=page.get_by_label('Text direkt in der PDF bearbeiten',exact=True)
+    expect(field).to_have_text('MERGED HEADING');field.press('Tab');expect(field).to_have_text('A1')
+    replacement='First item\nSecond item\nThird item\nFourth item'
+    field.fill(replacement);grid=panel(page,'Tabelle bearbeiten');fit()
+    file=save(page,name)
+    with pymupdf.open(file) as after,pymupdf.open(fixtures/'table.pdf') as before:
+        content=after[0].get_text()
+        for text in [*replacement.split('\n'),'MERGED HEADING','B1','A2','B2','TABLE FOOTER']:assert content.count(text)==1,(text,content)
+        spans=[s for b in after[0].get_text('dict')['blocks'] if 'lines' in b for l in b['lines'] for s in l['spans'] if 'item' in s['text']]
+        assert len(spans)==4 and all(abs(s['size']-12)<.02 for s in spans)
+        assert not after[0].get_images();same_page(before,1,after,1)
+    return {'scope':'content-driven row growth, unchanged font size/column widths, neighbouring cells, real vector PDF and unchanged second page'}
+
+def font_glyph(font,gid):
+    # Read actual TrueType outlines and advances. PDF subset/resource names may
+    # change without changing a typeface, and subsets may renumber glyphs.
+    count=struct.unpack_from('>H',font,4)[0]
+    tables={font[12+16*i:16+16*i].decode():struct.unpack_from('>II',font,20+16*i) for i in range(count)}
+    def table(name):
+        offset,size=tables[name];return font[offset:offset+size]
+    head,loca,glyf,hhea,hmtx=[table(n) for n in ['head','loca','glyf','hhea','hmtx']]
+    fmt,step,factor=('>I',4,1) if struct.unpack_from('>h',head,50)[0] else ('>H',2,2)
+    start=struct.unpack_from(fmt,loca,gid*step)[0]*factor
+    end=struct.unpack_from(fmt,loca,(gid+1)*step)[0]*factor
+    metrics=struct.unpack_from('>H',hhea,34)[0]
+    advance=struct.unpack_from('>H',hmtx,min(gid,metrics-1)*4)[0]
+    return glyf[start:end].rstrip(b'\x00'),advance,struct.unpack_from('>H',head,18)[0]
+
+def font_preview(page,name):
+    open_editor(page,'table');field=pick(page,'MERGED HEADING');field.fill('NEW HEADING')
+    page.locator('.editor-text-actions > summary').click()
+    page.get_by_role('button',name='Schrift vergleichen',exact=True).click()
+    page.get_by_role('button',name='Passende Ersatzschriften vergleichen',exact=True).click()
+    # Use a different family: a matching DejaVu Sans preview would not detect
+    # accidental substitution when independently inspecting the saved font.
+    choice=page.locator('.editor-font-alternative-grid article').filter(has_not=page.get_by_text('DejaVu Sans',exact=True)).first
+    expect(choice).to_be_visible(timeout=120000)
+    choice.get_by_role('button',name='Auf der Seite vergleichen',exact=True).click()
+    expect(page.locator('[data-editor-font-preview="true"]')).to_be_visible()
+    expect(page.locator('.editor-font-preview-note')).to_contain_text('noch nicht übernommen')
+    # Exporting a preview must retain the committed original font, even when
+    # the preview has not been closed manually.
+    file=save(page,name)
+    with pymupdf.open(file) as after,pymupdf.open(fixtures/'table.pdf') as before:
+        def spans(doc):return [s for b in doc[0].get_text('dict')['blocks'] if 'lines'in b for l in b['lines'] for s in l['spans']]
+        original=next(s for s in spans(before) if s['text']=='MERGED HEADING')
+        edited=next(s for s in spans(after) if s['text']=='NEW HEADING')
+        font_name=lambda name:re.sub(r'-\d+$','',name.split('+')[-1])
+        assert font_name(edited['font'])==font_name(original['font']),(original,edited)
+        assert abs(edited['size']-original['size'])<.02 and edited['color']==original['color']
+        assert all(abs(a-b)<.1 for a,b in zip(edited['origin'],original['origin']))
+        def font_bytes(doc,name):
+            ref=next(f[0] for f in doc[0].get_fonts() if f[3]==name)
+            return doc.extract_font(ref)[3]
+        original_bytes=font_bytes(before,original['font']);saved_bytes=font_bytes(after,edited['font'])
+        original_font=pymupdf.Font(fontbuffer=original_bytes)
+        chars=[c for span in after[0].get_texttrace() if span['font']==edited['font'] for c in span['chars']]
+        assert ''.join(chr(c[0]) for c in chars)=='NEW HEADING'
+        for codepoint,gid,origin,bbox in chars:
+            source_gid=original_font.has_glyph(codepoint)
+            assert source_gid and font_glyph(saved_bytes,gid)==font_glyph(original_bytes,source_gid),(edited['font'],chr(codepoint))
+        same_page(before,1,after,1)
+    return {'scope':'temporary on-page font comparison cannot enter the saved PDF; original font, size and untouched second page preserved'}
 
 def forms(page,name):
     open_editor(page,'form');pick(page,'Original heading').fill('Edited heading');file=save(page,name)
@@ -342,7 +417,7 @@ def execute(browser,name,width,callback):
         context.close();print(result['status'].upper()+': '+name,flush=True)
 with sync_playwright() as api:
     for engine in os.environ.get('MOINPDF_TEST_BROWSERS','chromium,firefox,webkit').split(','):
-        cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight),('payroll',1440,payroll),('payroll-touch',390,payroll)]
+        cases=[('flow',1440,auto_flow),('table',1440,table_rows),('table-touch',390,table_rows),('table-fit',1440,table_fit),('table-fit-touch',390,table_fit),('font-preview-touch',390,font_preview),('form',1440,forms),('angle',390,angle),('nested',1440,nested),('repair',1440,repair),('cff',1440,cff),('high-scan',390,high_scan),('preflight',1440,preflight),('payroll',1440,payroll),('payroll-touch',390,payroll)]
         if engine=='webkit':cases.append(('high-scan-bitmap-loss',390,high_scan_bitmap_loss))
         selected=os.environ.get('MOINPDF_ADAPTIVE_CASES','').split(',')
         for suffix,width,callback in cases:

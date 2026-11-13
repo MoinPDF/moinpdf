@@ -2,8 +2,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Source, PageItem } from '@/lib/pdf-engine';
 import type { Mark } from '@/lib/studio-engine';
-import type { EditorTable, EditorTableOperation } from '@/lib/editor-tables';
-import { readEditorTables, changeEditorTable } from '@/lib/editor-table-workspace';
+import type { EditorTable } from '@/lib/editor-tables';
+import {
+  readEditorTables,
+  changeEditorTable,
+  type EditorTableWorkspaceOperation,
+} from '@/lib/editor-table-workspace';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
 export function EditorTablePanel({
@@ -105,7 +109,7 @@ export function EditorTablePanel({
       if (!c.signal.aborted) setBusy(false);
     }
   }
-  async function preview(operation: EditorTableOperation) {
+  async function preview(operation: EditorTableWorkspaceOperation) {
     if (!table) return;
     ctrl.current?.abort();
     const c = new AbortController();
@@ -202,6 +206,18 @@ export function EditorTablePanel({
           >
             {ui('Zeilenhöhe vorschauen')}
           </Button>
+          <Button
+            variant="outline"
+            disabled={disabled || busy}
+            onClick={() => void preview({ kind: 'fit-content' })}
+          >
+            {ui('Zeilen an Inhalt anpassen')}
+          </Button>
+          <p className="fine-note">
+            {ui(
+              'Zu kleine Zeilen werden in der Vorschau vergrößert. Schriftgrößen und Spaltenbreiten bleiben erhalten; benachbarte Inhalte dürfen nicht überdeckt werden.',
+            )}
+          </p>
           <Button
             variant="outline"
             disabled={disabled || busy}

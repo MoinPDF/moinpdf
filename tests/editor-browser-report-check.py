@@ -17,6 +17,7 @@ EXPECTED = {
     ],
     'adaptive-report.json': [
         'adaptive-flow', 'adaptive-table', 'adaptive-table-touch', 'adaptive-form',
+        'adaptive-table-fit', 'adaptive-table-fit-touch', 'adaptive-font-preview-touch',
         'adaptive-angle', 'adaptive-nested', 'adaptive-repair', 'adaptive-cff',
         'adaptive-high-scan', 'adaptive-preflight',
         'adaptive-payroll', 'adaptive-payroll-touch',

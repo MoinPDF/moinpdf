@@ -104,6 +104,24 @@ try {
  assert.equal(editorScanMatchStatus({...numberFit,fontScale:numberFit.fontScale*1.5}),'changed','Manual formatting cannot reuse stale similarity evidence');
  const numberDoc=await PDFDocument.create();await drawEditorText(numberDoc,numberDoc.addPage([W,H]),{...numberFit,text:'18'},W,H,peerScan);
  const numberOutput=await source(await numberDoc.save());assert((await readTextTargets(numberOutput,pageOf(numberOutput))).targets.some(t=>t.text==='18'));
+ // Punctuation and currency must not make a numeric field appear rich in
+ // font evidence. Only matching nearby samples can establish its scan style.
+ const {editorScanNeedsReferences}=await import('../.cache/editor-scan-typography/editor-font-match.mjs');
+ for(const value of ['12','12,00','1.234,56 €','01.11.2026','1,234.50 USD']) assert(editorScanNeedsReferences(value),value);
+ assert(!editorScanNeedsReferences('September'));
+ const amountDoc=await PDFDocument.create();amountDoc.registerFontkit(fontkit);
+ const amountFont=await amountDoc.embedFont(await readFile('public'+fontFile('dejavu-sans').path));
+ const amountPage=amountDoc.addPage([W,H]);
+ for(const [t,y] of [['September',155],['Gehaltsabrechnung',130],['12,00',105]]) amountPage.drawText(t,{font:amountFont,x:45,y,size});
+ const amountNative=await source(await amountDoc.save()),amountRaster=await renderPage(amountNative,pageOf(amountNative),1600,signal);
+ const amountScanDoc=await PDFDocument.create();amountScanDoc.addPage([W,H]).drawImage(await amountScanDoc.embedPng(amountRaster.canvas.toBuffer('image/png')),{x:0,y:0,width:W,height:H});
+ const amountScan=await source(await amountScanDoc.save());
+ const amountMarks=(await readTextTargets(amountNative,pageOf(amountNative))).targets.map(t=>editorTargetMark({...t,origin:'ocr',originalFontId:undefined,fontName:undefined},0,W,t.id));
+ const amount=amountMarks.find(m=>m.text==='12,00');assert(amount);
+ assert.equal(await refineEditorScanTypography(amount,amountScan,pageOf(amountScan),W,H,signal),amount,'An isolated amount is not confidently restyled');
+ const amountFit=await refineEditorScanTypography(amount,amountScan,pageOf(amountScan),W,H,signal,amountMarks);
+ assert.equal(amountFit.fontChoice,'dejavu-sans');assert(amountFit.scanMatch.samples>=3);assert(!editorMarkChanged(amountFit));
+ amountRaster.canvas.width=amountRaster.canvas.height=0;
  // A right-angle scan keeps its original direction and physical baseline.
  const rotatedDoc=await PDFDocument.create();rotatedDoc.registerFontkit(fontkit);
  const rotatedFont=await rotatedDoc.embedFont(await readFile('public'+fontFile('dejavu-sans').path));

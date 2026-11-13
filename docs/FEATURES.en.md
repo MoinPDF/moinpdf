@@ -2,6 +2,14 @@
 
 ## PDF editor: touch and typography
 
+“Compare on the page” temporarily displays a substitute font at the selected location. “Close font preview” returns to the current edit; only “Use this font” applies the choice. Unapplied previews are never exported. Existing tracking and horizontal scaling are preserved.
+
+Amounts, dates and short numeric scan text require at least two matching neighbouring samples for automatic font refinement. Without those samples, the current approximation remains available for manual comparison. Short final lines join an established paragraph column without merging adjacent columns.
+
+Under “Edit table”, “Fit rows to content” measures the required heights of recognised vector-table cells. The preview only expands undersized rows and retains font sizes and column widths, including merged cells. Only “Apply table change” changes the document; Undo restores the previous state. Page overflow or collisions with neighbouring content prevent application. Arbitrary tables spanning multiple pages and dynamic text wrapping around images remain unsupported.
+
+Paragraph-flow previews show the original first page with the proposed text edits, keeping other columns, images and footers visible for orientation. Caret tracking accounts for the actual visible inner document area when the keyboard opens or the view is zoomed. This does not replace physical smartphone testing.
+
 The formatting toolbar shows font, size, bold/italic/underline and colour. Less frequent commands such as font comparison and format copying are under “Text actions”; custom font uploads are under “More text options”. The compact font status distinguishes original fonts, substitutes and scan approximations; tap it for the explanation. Perfect recognition cannot be guaranteed for scans, missing characters or incomplete PDF font metadata.
 
 Lines with different indents, baseline gaps, character spacing or horizontal scales remain separate text fields. Editing one therefore does not silently reposition neighbouring lines. Regular paragraphs can still be edited together. Where selection boxes overlap, text at the actual touch point takes precedence. Repeated identical letters at a formatting boundary retain the style associated with the actual caret position during typing and deletion.
@@ -86,7 +94,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.34.0**
+**Current implementation limits · 0.35.0**
 
 | Capability | Value |
 | --- | --- |

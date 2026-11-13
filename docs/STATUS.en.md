@@ -1,5 +1,15 @@
 # Implementation status
 
+## Editor improvements in 0.35.0
+
+“Compare on the page” temporarily displays a substitute font at the selected location. “Close font preview” returns to the current edit; only “Use this font” applies the choice. Unapplied previews are never exported. Existing tracking and horizontal scaling are preserved.
+
+Amounts, dates and short numeric scan text require at least two matching neighbouring samples for automatic font refinement. Without those samples, the current approximation remains available for manual comparison. Short final lines join an established paragraph column without merging adjacent columns.
+
+Under “Edit table”, “Fit rows to content” measures the required heights of recognised vector-table cells. The preview only expands undersized rows and retains font sizes and column widths, including merged cells. Only “Apply table change” changes the document; Undo restores the previous state. Page overflow or collisions with neighbouring content prevent application. Arbitrary tables spanning multiple pages and dynamic text wrapping around images remain unsupported.
+
+Paragraph-flow previews show the original first page with the proposed text edits, keeping other columns, images and footers visible for orientation. Caret tracking accounts for the actual visible inner document area when the keyboard opens or the view is zoomed. This does not replace physical smartphone testing.
+
 ## Current improvements
 
 - Table extraction detects recurring column gaps per page, shows cell source locations, highlights uncertain values and preserves spanning headers in Excel. Nearby continuation lines can optionally be joined; manual boundaries remain available. Conflicting column counts require correction.
@@ -17,7 +27,7 @@ Form helper and receipt collection on A4 are integrated browser tools. Profile s
 
 [Deutsch](AUSBAUSTAND.md) · **English** · [← README](../README.en.md)
 
-As of 12 November 2026 · Version 0.33.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
+As of 13 November 2026 · Version 0.35.0. Earlier dated verification reports below describe their respective historical state. See [VALIDATION.en.md](../VALIDATION.en.md) for the current verification scope and remaining limitations.
 
 The light-mode background transitions from green through turquoise to blue on desktop, tablet and mobile. The richer gradient makes light cards, input fields and tool panels stand out more clearly.
 

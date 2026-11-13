@@ -591,6 +591,20 @@ export function editorParagraphs(
         Math.abs(baseline(peer) - baseline(line)) < line.fontSize * 0.3 &&
         (peer.x >= line.x + line.w || line.x >= peer.x + peer.w),
     );
+  const continuesColumn = (group: TextTarget[], line: TextTarget) => {
+    if (group.length < 2 || !group.some((p) => p.w * width >= p.fontSize * 14)) return false;
+    const left = Math.min(line.x, ...group.map((p) => p.x));
+    const right = Math.max(line.x + line.w, ...group.map((p) => p.x + p.w));
+    // A short last line may finish a proven paragraph. It must not pull a
+    // full-width heading or text from the neighbouring column into that field.
+    return !lines.some(
+      (peer) =>
+        peer !== line &&
+        Math.abs(baseline(peer) - baseline(line)) < line.fontSize * 0.3 &&
+        peer.x < right &&
+        peer.x + peer.w > left,
+    );
+  };
   for (const line of lines) {
     // Follow the same column even when extraction interleaves left/right rows.
     // Require one unambiguous predecessor; table rows remain independent.
@@ -600,8 +614,8 @@ export function editorParagraphs(
       return (
         same(last, line) &&
         !!last.bold === !!line.bold &&
-        !tableRow(last) &&
-        !tableRow(line) &&
+        (!tableRow(last) || continuesColumn(group, last)) &&
+        (!tableRow(line) || continuesColumn(group, line)) &&
         Math.abs(last.x - line.x) * width <= Math.max(0.5, last.fontSize * 0.04) &&
         gap >= 1 &&
         gap <= 1.65 &&

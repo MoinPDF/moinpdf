@@ -267,6 +267,17 @@ export function EditorCanvas({
   ]);
   const [initialPoint, setInitialPoint] = useState<EditorStartPoint | null>(null);
   const [textSelection, setTextSelection] = useState<EditorSelection | null>(null);
+  const [fontPreview, setFontPreview] = useState<{ original: Mark; candidate: Mark } | null>(null);
+  useEffect(() => {
+    setFontPreview(null);
+  }, [source, page, selectedId, textSelection?.start, textSelection?.end, disabled, showOriginal]);
+  const previewMark =
+    !disabled && !showOriginal && fontPreview?.original === marks.find((m) => m.id === selectedId)
+      ? fontPreview?.candidate
+      : undefined;
+  const previewMarks = previewMark
+    ? marks.map((m) => (m.id === previewMark.id ? previewMark : m))
+    : marks;
   const [selectionRequest, setSelectionRequest] = useState<EditorSelection | null>(null);
   const [joining, setJoining] = useState(false);
   const [joinedKeys, setJoinedKeys] = useState<string[]>([]);
@@ -408,7 +419,7 @@ export function EditorCanvas({
       },
     });
   }, [canZoom, page.id, action, showOriginal]);
-  const physicalRemovals = marks
+  const physicalRemovals = previewMarks
     .filter(editorMarkChanged)
     .filter((m) => editorRemovalRects(m).length);
   const imageChanges = marks.filter((m) => m.nativeImage && editorMarkChanged(m));
@@ -426,19 +437,20 @@ export function EditorCanvas({
       ),
     )
       ? JSON.stringify([
-          ...(tableChanges.length ? marks.filter((m) => m.kind === 'text') : physicalRemovals).map(
-            (m) => ({
-              id: m.id,
-              kind: m.kind,
-              x: m.x,
-              y: m.y,
-              w: m.w,
-              h: m.h,
-              tableCell: m.tableCell,
-              sourceRect: m.sourceRect,
-              sourceRects: m.sourceRects,
-            }),
-          ),
+          ...(tableChanges.length
+            ? previewMarks.filter((m) => m.kind === 'text')
+            : physicalRemovals
+          ).map((m) => ({
+            id: m.id,
+            kind: m.kind,
+            x: m.x,
+            y: m.y,
+            w: m.w,
+            h: m.h,
+            tableCell: m.tableCell,
+            sourceRect: m.sourceRect,
+            sourceRects: m.sourceRects,
+          })),
           ...imageChanges,
           ...tableChanges,
         ])
@@ -833,7 +845,7 @@ export function EditorCanvas({
   const displayed = marks
       .filter((m) => !m.tableCell?.deleted)
       .map((m) => (moving?.id === m.id ? moving : m)),
-    removals = displayed.filter((m) => m.kind === 'erase' || m.sourceRect);
+    removals = previewMarks.filter((m) => m.kind === 'erase' || m.sourceRect);
   const lines = useMemo(
     () => editorParagraphs(targets, dims.width, dims.height, 'line'),
     [targets, dims.width, dims.height],
@@ -1421,6 +1433,21 @@ export function EditorCanvas({
       </div>
       {selectedImage && selectionActions}
       <div className="editor-page-scroll" ref={pageScroll}>
+        {previewMark && (
+          <div role="status" className="editor-font-preview-note">
+            <span>{ui('Schriftvorschau – noch nicht übernommen')}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setFontPreview(null);
+                setSelectionRequest(textSelection);
+              }}
+            >
+              {ui('Schriftvorschau schließen')}
+            </Button>
+          </div>
+        )}
         <div
           className="canvas-holder"
           style={{ width: `${zoom}%`, maxWidth: `${(720 * zoom) / 100}px` }}
@@ -1594,6 +1621,7 @@ export function EditorCanvas({
                 ].map((m) => (
                   <div
                     key={m.id}
+                    data-editor-font-preview={previewMark?.id === m.id || undefined}
                     className={`page-mark editor-object ${m.kind} ${joining && joinedKeys.includes('mark:' + m.id) ? 'is-joining' : ''} ${selectedId === m.id ? 'is-selected' : ''}`}
                     style={{
                       ...box(m),
@@ -1672,7 +1700,15 @@ export function EditorCanvas({
                       }
                     }}
                   >
-                    {selectedId === m.id && m.kind === 'text' && autoOcr && !joining ? (
+                    {previewMark?.id === m.id ? (
+                      <MarkContent
+                        mark={previewMark}
+                        width={displayWidth}
+                        height={(displayWidth * dims.height) / dims.width}
+                        pageWidth={dims.width}
+                        source={source}
+                      />
+                    ) : selectedId === m.id && m.kind === 'text' && autoOcr && !joining ? (
                       <EditorInlineText
                         mark={m}
                         source={source}
@@ -1811,6 +1847,17 @@ export function EditorCanvas({
             selection={textSelection}
             disabled={disabled}
             onPatch={onPatch}
+            previewMark={previewMark}
+            onPreview={(candidate) => {
+              flushSync(() =>
+                setFontPreview(candidate ? { original: selectedText, candidate } : null),
+              );
+              if (candidate)
+                host.current
+                  ?.querySelector<HTMLElement>('[data-editor-font-preview="true"]')
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+              else setSelectionRequest(textSelection);
+            }}
           />
           {selectedText.sourceRect && (
             <details className="editor-font-compare">

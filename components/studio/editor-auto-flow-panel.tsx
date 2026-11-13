@@ -4,11 +4,20 @@ import type { Source, PageItem } from '@/lib/pdf-engine';
 import type { Edits } from '@/lib/studio-engine';
 import type { AutoFlowPlan, AutoFlowPagePlan } from '@/lib/editor-auto-flow';
 import { prepareEditorAutoWorkspace } from '@/lib/editor-auto-workspace';
-import { MarkContent } from './editor-canvas';
+import { MarkLayers } from './editor-canvas';
+import { PagePreview } from './canvas';
 import { Button } from '@/components/ui/button';
 import { ui } from '@/lib/ui-language';
 
-function FlowMiniature({ slot, source }: { slot: AutoFlowPagePlan; source: Source }) {
+function FlowMiniature({
+  slot,
+  source,
+  page,
+}: {
+  slot: AutoFlowPagePlan;
+  source: Source;
+  page: PageItem;
+}) {
   const root = useRef<HTMLDivElement>(null),
     [width, setWidth] = useState(280);
   useEffect(() => {
@@ -31,29 +40,18 @@ function FlowMiniature({ slot, source }: { slot: AutoFlowPagePlan; source: Sourc
         border: '1px solid #ccc',
       }}
     >
-      {slot.chunks
-        .filter((c) => !c.deletionOnly)
-        .map((c) => (
-          <div
-            key={c.mark.id}
-            style={{
-              position: 'absolute',
-              left: `${c.mark.x * 100}%`,
-              top: `${c.mark.y * 100}%`,
-              width: `${c.mark.w * 100}%`,
-              height: `${c.mark.h * 100}%`,
-              outline: '1px dashed #0f766e',
-            }}
-          >
-            <MarkContent
-              mark={c.mark}
-              width={width}
-              height={height}
-              pageWidth={slot.width}
-              source={source}
-            />
-          </div>
-        ))}
+      {!slot.blank && (
+        <div style={{ position: 'absolute', inset: 0 }}>
+          <PagePreview source={source} page={page} resolution={600} />
+        </div>
+      )}
+      <MarkLayers
+        marks={slot.chunks.map((c) => c.mark)}
+        width={width}
+        height={height}
+        pageWidth={slot.width}
+        source={source}
+      />
     </div>
   );
 }
@@ -177,7 +175,7 @@ export function EditorAutoFlowPanel({
               <strong>
                 {ui('Seite')} {pages.findIndex((p) => p.id === pageId) + 1 + slot.slot}
               </strong>
-              {source && <FlowMiniature slot={slot} source={source} />}
+              {source && page && <FlowMiniature slot={slot} source={source} page={page} />}
               {slot.chunks
                 .filter((c) => !c.deletionOnly)
                 .map((c) => (

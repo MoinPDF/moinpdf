@@ -1,6 +1,12 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  'Zeilen an Inhalt anpassen': 'Fit rows to content',
+  'Zu kleine Zeilen werden in der Vorschau vergrößert. Schriftgrößen und Spaltenbreiten bleiben erhalten; benachbarte Inhalte dürfen nicht überdeckt werden.':
+    'The preview expands rows that are too small. Font sizes and column widths are preserved; neighbouring content must not be covered.',
+  'Auf der Seite vergleichen': 'Compare on the page',
+  'Schriftvorschau schließen': 'Close font preview',
+  'Schriftvorschau – noch nicht übernommen': 'Font preview – not yet applied',
   Textaktionen: 'Text actions',
   'Scan: Schrift angenähert': 'Scan: approximate font',
   'Ersatzschrift · bitte prüfen': 'Substitute font · please check',

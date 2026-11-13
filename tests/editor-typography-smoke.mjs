@@ -212,6 +212,12 @@ try {
   const paragraph=editorParagraphs([line,{...line,id:'b',y:.12,text:'second line'}],500,700);assert.equal(paragraph.length,1);assert.equal(paragraph[0].text,'First line of a paragraph\nsecond line');assert.equal(paragraph[0].fragments.length,2);
   assert.equal(editorParagraphs([line,{...line,id:'b',y:.12,text:'Heading',bold:true}],500,700).length,2);
   assert.equal(editorParagraphs([line,{...line,id:'b',x:.65}],500,700).length,2);
+  const columnLines=[];
+  for(const [x,prefix] of [[.05,'left'],[.55,'right']]) for(let i=0;i<3;i++) columnLines.push({...line,id:prefix+i,x,y:.1+i*.02,w:i===2?.12:.38,text:prefix+' line '+i});
+  const columnParagraphs=editorParagraphs(columnLines,500,700);
+  assert.equal(columnParagraphs.length,2,'Short last lines stay in their established paragraph column');
+  for(const prefix of ['left','right']) assert(columnParagraphs.some(p=>p.text===`${prefix} line 0\n${prefix} line 1\n${prefix} line 2`));
+  assert.equal(editorParagraphs(columnLines.map(t=>({...t,w:.12})),500,700).length,6,'Short table-like rows are not silently joined');
   const enlarged={...markFor(line),text:'Longer',h:.2};assert(editorTextCollision(enlarged,[enlarged],[line,{...line,id:'b',y:.22}]));
   assert(!editorTextCollision({...enlarged,y:.4},[{...enlarged,y:.4}],[line,{...line,id:'b',y:.22}]));
   assert.deepEqual(wrapEditorText('A  B\nC',100,s=>s.length*10),['A  B','C']);

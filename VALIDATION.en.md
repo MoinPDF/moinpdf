@@ -4,6 +4,13 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification plan for 0.35.0
+
+- Existing tests now cover real scanned amounts with/without independently agreeing neighbours; short final lines in two columns; temporary font comparison without changing edits; and a reduced/panned mobile visual viewport while retaining focus and selection.
+- Table checks measure multiline and vertically merged cells, unchanged font size/column widths, cancellation, collisions, idempotence and immutable original ownership. Actual PDF outputs are independently read and untouched following pages are compared pixel-for-pixel.
+- The editor browser matrix adds `table-fit`, `table-fit-touch` and `font-preview-touch` with real downloads. Report validation requires these cases in Chromium, Firefox and WebKit. Existing native Safari, Docker, language and release checks remain required.
+- This plan is not an execution record; successful runs of the actual release commit provide evidence. Physical smartphones are unavailable here and their acceptance remains explicitly pending.
+
 ## Verification plan for 0.33.0
 
 - `editor-gestures-smoke.mjs`: anchored zoom and pan, limits, cancellation, remaining fingers, compatibility-click suppression and trackpad zoom in a DOM harness.

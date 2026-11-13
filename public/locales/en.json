@@ -6748,5 +6748,12 @@
   "Textaktionen": "Text actions",
   "Scan: Schrift angenähert": "Scan: approximate font",
   "Ersatzschrift · bitte prüfen": "Substitute font · please check",
-  "Die PDF enthält keinen eindeutigen Schriftnamen. Bitte das Schriftbild am Original prüfen.": "The PDF does not provide an unambiguous font name. Compare the appearance with the original."
+  "Die PDF enthält keinen eindeutigen Schriftnamen. Bitte das Schriftbild am Original prüfen.": "The PDF does not provide an unambiguous font name. Compare the appearance with the original.",
+  "Mit „Auf der Seite vergleichen“ prüfst du eine Ersatzschrift direkt im Dokument. „Schriftvorschau schließen“ beendet den Vergleich; erst „Diese Schrift verwenden“ übernimmt die Änderung. Vorschauen werden nicht exportiert. Bei Scanbeträgen benötigt die automatische Schriftanpassung zwei passende Nachbarstellen.": "Use “Compare on the page” to inspect a substitute font in the document. “Close font preview” ends the comparison; only “Use this font” applies it. Previews are not exported. Automatic scan-amount typography requires two matching neighbouring samples.",
+  "Unter „Tabelle bearbeiten“ kannst du mit „Zeilen an Inhalt anpassen“ mehrzeilige Zelltexte einpassen. Prüfe die Vorschau und übernimm sie ausdrücklich. Schriftgrößen und Spaltenbreiten bleiben erhalten; bei Kollisionen oder Seitenüberlauf wird die Änderung abgelehnt.": "Under “Edit table”, use “Fit rows to content” for multiline cell text. Review the preview and apply it explicitly. Font sizes and column widths are retained; collisions and page overflow prevent the change.",
+  "Zeilen an Inhalt anpassen": "Fit rows to content",
+  "Zu kleine Zeilen werden in der Vorschau vergrößert. Schriftgrößen und Spaltenbreiten bleiben erhalten; benachbarte Inhalte dürfen nicht überdeckt werden.": "The preview expands rows that are too small. Font sizes and column widths are preserved; neighbouring content must not be covered.",
+  "Auf der Seite vergleichen": "Compare on the page",
+  "Schriftvorschau schließen": "Close font preview",
+  "Schriftvorschau – noch nicht übernommen": "Font preview – not yet applied"
 }

@@ -8023,3 +8023,20 @@ html:has(.editor-canvas-wrap) {
   max-height: 210px;
   overflow: auto;
 }
+
+.editor-font-preview-note {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  color: var(--card-foreground);
+  font-size: 0.85rem;
+}

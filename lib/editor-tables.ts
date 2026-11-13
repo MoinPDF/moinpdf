@@ -591,6 +591,35 @@ export function validateEditorTableOriginal(table: EditorTable, actual: readonly
   }
 }
 
+/** Grow only the rows that need space, including vertically merged cells.
+ * Build a complete proposal before checking neighbouring content; never mutate
+ * a live table or reduce its font size to make overflowing text fit. */
+export function fitEditorTableRows(
+  table: EditorTable,
+  requiredHeights: Record<string, number>,
+  guard: TableGuard = {},
+): EditorTable {
+  validateEditorTable(table);
+  if (
+    Object.keys(requiredHeights).some((id) => !table.cells.some((c) => c.id === id)) ||
+    table.cells.some((c) => !Number.isFinite(requiredHeights[c.id]) || requiredHeights[c.id] < 0)
+  )
+    fail('Missing or invalid cell content measurements.');
+  let next = table;
+  for (const cell of [...table.cells].sort(
+    (a, b) => a.rowSpan - b.rowSpan || a.row - b.row || a.column - b.column,
+  )) {
+    const available = next.rows[cell.row + cell.rowSpan] - next.rows[cell.row];
+    const extra = Math.max(0, requiredHeights[cell.id] - available);
+    if (extra > 0) {
+      const row = cell.row + cell.rowSpan - 1;
+      next = setEditorTableRowHeight(next, row, next.rows[row + 1] - next.rows[row] + extra);
+    }
+  }
+  validateEditorTable(next, { ...guard, requiredHeights });
+  return next;
+}
+
 export type EditorTableOperation =
   | { kind: 'height' | 'insert'; row: number; height: number }
   | { kind: 'width' | 'insert-column'; column: number; width: number }

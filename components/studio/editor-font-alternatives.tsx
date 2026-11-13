@@ -63,6 +63,8 @@ export function EditorFontAlternatives({
   selection,
   disabled,
   onPatch,
+  previewMark,
+  onPreview,
 }: {
   mark: Mark;
   source: Source;
@@ -72,6 +74,8 @@ export function EditorFontAlternatives({
   selection?: EditorSelection | null;
   disabled: boolean;
   onPatch: EditorPatch;
+  previewMark?: Mark | null;
+  onPreview?: (mark: Mark | null) => void;
 }) {
   const [alternatives, setAlternatives] = useState<Alternative[]>([]),
     [pending, setPending] = useState(false),
@@ -130,8 +134,6 @@ export function EditorFontAlternatives({
               const patch: Partial<Mark> = {
                 fontChoice: f.id,
                 fontFamily: f.family,
-                tracking: 0,
-                textScaleX: 1,
               };
               const candidate = { ...mark, ...applyEditorPatch(mark, patch, selection) };
               ctrl.signal.throwIfAborted();
@@ -226,7 +228,23 @@ export function EditorFontAlternatives({
                   size="sm"
                   variant="outline"
                   disabled={disabled}
-                  onClick={() => onPatch(mark.id, a.patch)}
+                  aria-pressed={previewMark === a.mark}
+                  onClick={() => onPreview?.(previewMark === a.mark ? null : a.mark)}
+                >
+                  {ui(
+                    previewMark === a.mark
+                      ? 'Schriftvorschau schließen'
+                      : 'Auf der Seite vergleichen',
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={disabled}
+                  onClick={() => {
+                    onPreview?.(null);
+                    onPatch(mark.id, a.patch);
+                  }}
                 >
                   {ui('Diese Schrift verwenden')}
                 </Button>
