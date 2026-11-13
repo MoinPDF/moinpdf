@@ -1,7 +1,7 @@
 """Adaptive editor acceptance on the production build. Synthetic fixtures only.
 Run editor-adaptive-fixtures.mjs first. No external requests or document uploads.
 """
-import atexit,faulthandler,json,os,re,subprocess,sys,time,traceback
+import atexit,faulthandler,json,os,re,struct,subprocess,sys,time,traceback
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import urlopen
@@ -188,6 +188,21 @@ def table_fit(page,name):
         assert not after[0].get_images();same_page(before,1,after,1)
     return {'scope':'content-driven row growth, unchanged font size/column widths, neighbouring cells, real vector PDF and unchanged second page'}
 
+def font_glyph(font,gid):
+    # Read actual TrueType outlines and advances. PDF subset/resource names may
+    # change without changing a typeface, and subsets may renumber glyphs.
+    count=struct.unpack_from('>H',font,4)[0]
+    tables={font[12+16*i:16+16*i].decode():struct.unpack_from('>II',font,20+16*i) for i in range(count)}
+    def table(name):
+        offset,size=tables[name];return font[offset:offset+size]
+    head,loca,glyf,hhea,hmtx=[table(n) for n in ['head','loca','glyf','hhea','hmtx']]
+    fmt,step,factor=('>I',4,1) if struct.unpack_from('>h',head,50)[0] else ('>H',2,2)
+    start=struct.unpack_from(fmt,loca,gid*step)[0]*factor
+    end=struct.unpack_from(fmt,loca,(gid+1)*step)[0]*factor
+    metrics=struct.unpack_from('>H',hhea,34)[0]
+    advance=struct.unpack_from('>H',hmtx,min(gid,metrics-1)*4)[0]
+    return glyf[start:end].rstrip(b'\x00'),advance,struct.unpack_from('>H',head,18)[0]
+
 def font_preview(page,name):
     open_editor(page,'table');field=pick(page,'MERGED HEADING');field.fill('NEW HEADING')
     page.locator('.editor-text-actions > summary').click()
@@ -207,8 +222,20 @@ def font_preview(page,name):
         def spans(doc):return [s for b in doc[0].get_text('dict')['blocks'] if 'lines'in b for l in b['lines'] for s in l['spans']]
         original=next(s for s in spans(before) if s['text']=='MERGED HEADING')
         edited=next(s for s in spans(after) if s['text']=='NEW HEADING')
-        assert edited['font']==original['font'] and abs(edited['size']-original['size'])<.02
-        assert abs(edited['origin'][0]-original['origin'][0])<.1
+        font_name=lambda name:re.sub(r'-\d+$','',name.split('+')[-1])
+        assert font_name(edited['font'])==font_name(original['font']),(original,edited)
+        assert abs(edited['size']-original['size'])<.02 and edited['color']==original['color']
+        assert all(abs(a-b)<.1 for a,b in zip(edited['origin'],original['origin']))
+        def font_bytes(doc,name):
+            ref=next(f[0] for f in doc[0].get_fonts() if f[3]==name)
+            return doc.extract_font(ref)[3]
+        original_bytes=font_bytes(before,original['font']);saved_bytes=font_bytes(after,edited['font'])
+        original_font=pymupdf.Font(fontbuffer=original_bytes)
+        chars=[c for span in after[0].get_texttrace() if span['font']==edited['font'] for c in span['chars']]
+        assert ''.join(chr(c[0]) for c in chars)=='NEW HEADING'
+        for codepoint,gid,origin,bbox in chars:
+            source_gid=original_font.has_glyph(codepoint)
+            assert source_gid and font_glyph(saved_bytes,gid)==font_glyph(original_bytes,source_gid),(edited['font'],chr(codepoint))
         same_page(before,1,after,1)
     return {'scope':'temporary on-page font comparison cannot enter the saved PDF; original font, size and untouched second page preserved'}
 
