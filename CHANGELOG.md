@@ -9,6 +9,16 @@ Images tragen zusätzlich den Quellcode-Commit, veröffentlichte Container einen
 Die Einträge beschreiben den jeweiligen historischen Versionsstand. Aktuelle
 Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
+## 0.36.0 — 2026-11-18
+
+- Handy-Scans per QR-Code in die aktuelle PC-Sitzung übertragen. AES-GCM verschlüsselt Datei und Dateiname vor dem Senden; getrennte Sender-/Empfängerrechte, 15 Minuten Laufzeit, bis 20 Dateien mit jeweils 10 MB. Erfolg wird erst nach der Übernahme am PC bestätigt; fehlgeschlagene Sendungen können wiederholt werden.
+- Formular erstellen: echte ResetForm-/SubmitForm-Schaltflächen sowie Drucken mit fest vorgegebenem Reader-JavaScript. XFDF-Senden verlangt eine HTTPS-Adresse. Leere digitale Signaturfelder können für die spätere Unterschrift im PDF-Reader platziert werden; sie erzeugen selbst keine Signatur.
+- Metadaten um bis zu 50 eigene Schlüssel/Werte ergänzen oder gezielt entfernen. Standardnamen und doppelte Namen werden abgewiesen; Unicode-Werte bleiben erhalten.
+- Lokaler Bildimport für GIF (Standbild), RGB-/Graustufen-JPEG-2000 einschließlich JP2/JPX/J2K, JPEG XR und P1–P7 (PNM/PBM/PGM/PPM/PAM). Neue Spezialdecoder laufen mit Abbruch, Größenprüfung und 40-Megapixel-Grenze im Worker.
+- Eigenständiger RFC-3161-Dokumentzeitstempel über FreeTSA, ohne persönliches Zertifikat. Nur der SHA-256-Prüfwert verlässt das Gerät. CMS-Signatur, Zertifikatsbindung, Zeitstempelzweck, Nonce und Prüfwert werden geprüft. Vertrauenskette, Widerruf und qualifizierter Status sind nicht bestätigt; bereits signierte PDFs und XFA werden abgewiesen.
+- Neue Tests mit fiktiven echten PDF-/Bilddateien, unabhängiger OpenSSL-Zeitstempelprüfung, verschlüsselter Übertragung, getrennten Rechten, Wiederholung, Bestätigung und Ablauf. Deutsche und englische Anleitungen sowie Datenschutzhinweise ergänzt; 135 Werkzeuge.
+- Abhängigkeitsupdates einschließlich Caddy 2.11.8, pypdf 7.0.1, aktueller Pydantic-Bibliotheken, jsdom 31. PDF.js bleibt wegen des überschrittenen Browser-Bundlebudgets auf 6.4.299. fake-indexeddb bleibt wegen eines reproduzierbaren Transaktionsfehlers im Großdokument-Test auf 6.2.5.
+
 ## 0.35.0 — 2026-11-13
 
 - PDF bearbeiten: lokale Ersatzschriften lassen sich vor der Übernahme direkt auf der Seite vergleichen. Die Vorschau verändert weder den Arbeitsstand noch den PDF-Export; Zeichenabstände und horizontale Skalierung bleiben beim Schriftwechsel erhalten.

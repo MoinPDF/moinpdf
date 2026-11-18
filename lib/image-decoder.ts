@@ -1,6 +1,6 @@
 export function decodeSpecialImage(
   bytes: Uint8Array,
-  kind: 'heic' | 'psd',
+  kind: 'heic' | 'psd' | 'pnm' | 'jp2' | 'jxr',
   signal?: AbortSignal,
 ): Promise<{ width: number; height: number; rgba: Uint8ClampedArray }> {
   return new Promise((resolve, reject) => {

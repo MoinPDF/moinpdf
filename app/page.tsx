@@ -999,6 +999,10 @@ function Studio() {
       window.removeEventListener('blur', reset);
     };
   }, [addFiles, choosingTool, writerOpen]);
+  useEffect(() => {
+    if (new URLSearchParams(location.hash.slice(1)).has('moin-transfer'))
+      chooseTool('scan-transfer');
+  }, []);
   function chooseTool(id: WorkspaceTool) {
     if (locked) return;
     if (
@@ -1664,6 +1668,7 @@ function Studio() {
             'invoice-create',
             'pdf-portfolio',
             'camera-scan',
+            'scan-transfer',
             'office-pdf',
             'email-pdf',
             'html-pdf',

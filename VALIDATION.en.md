@@ -4,6 +4,10 @@
 
 The version number is in [package.json](package.json). A successful run provides evidence only for the commit shown in that run, not for later changes or arbitrary documents.
 
+## Verification plan for 0.36.0
+
+`release-036-smoke.mjs` checks real signature fields/actions at four page rotations, seven PNM variants, separate transfer capabilities, AES-GCM tampering, acknowledgement, retry, expiry and independently OpenSSL-verified PDF timestamps. `image-decoders-smoke.mjs` reads fixed fictional JPEG 2000, JPEG XR and PNM files and checks output, cancellation and worker cleanup. `extra-tools-smoke.mjs` checks Unicode metadata and reserved/duplicate names. Existing browser, Docker and Safari checks remain required; physical smartphone checks remain separate and pending. Successful Actions runs of the release commit provide execution evidence.
+
 ## Verification plan for 0.35.0
 
 - Existing tests now cover real scanned amounts with/without independently agreeing neighbours; short final lines in two columns; temporary font comparison without changing edits; and a reduced/panned mobile visual viewport while retaining focus and selection.

@@ -1,5 +1,13 @@
 import { readPdfText } from './pdf-text';
-import { PDFDocument, PDFName, PDFDict, StandardFonts, rgb, type PDFPage } from 'pdf-lib';
+import {
+  PDFDocument,
+  PDFName,
+  PDFDict,
+  PDFHexString,
+  StandardFonts,
+  rgb,
+  type PDFPage,
+} from 'pdf-lib';
 import {
   extractPageText,
   selectRange,
@@ -563,6 +571,43 @@ export async function runExtraPdfTool(
     ])
       if (text.length > 1000)
         throw new Error('Metadaten dürfen je Feld höchstens 1.000 Zeichen enthalten.');
+    const custom = options.metaCustom || [];
+    if (custom.length > 50) throw new Error('Höchstens 50 eigene Metadatenfelder.');
+    const reserved = new Set([
+      'title',
+      'author',
+      'subject',
+      'keywords',
+      'creator',
+      'producer',
+      'creationdate',
+      'moddate',
+      'trapped',
+    ]);
+    const names = new Set<string>();
+    for (const entry of custom) {
+      const name = entry.name.trim();
+      if (
+        !name ||
+        name.length > 64 ||
+        /[\x00-\x1f\x7f]/.test(name) ||
+        reserved.has(name.toLowerCase()) ||
+        names.has(name)
+      )
+        throw new Error(
+          'Eigene Feldnamen müssen eindeutig sein und dürfen keine Standardfelder überschreiben.',
+        );
+      if (entry.value.length > 1000)
+        throw new Error('Metadaten dürfen je Feld höchstens 1.000 Zeichen enthalten.');
+      names.add(name);
+    }
+    doc.setTitle(options.metaTitle);
+    const info = doc.context.lookup(doc.context.trailerInfo.Info, PDFDict);
+    for (const entry of custom) {
+      const key = PDFName.of(entry.name.trim());
+      if (entry.remove) info.delete(key);
+      else info.set(key, PDFHexString.fromText(entry.value));
+    }
     doc.catalog.delete(PDFName.of('Metadata'));
     doc.setTitle(options.metaTitle);
     doc.setAuthor(options.metaAuthor);

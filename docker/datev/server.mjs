@@ -1,9 +1,11 @@
+import { timestampHandler } from './timestamp.mjs';
 import { createServer } from 'node:http';
 import { timingSafeEqual, createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
 import { Readable } from 'node:stream';
 import { createDatevHandler } from './handler.mjs';
+import { createTransferHandler, memoryTransferStore } from './transfer.mjs';
 
 const hash = (value) => createHash('sha256').update(value).digest();
 export function createDatevServer(env = process.env, requestOpenAI = fetch) {
@@ -16,6 +18,7 @@ export function createDatevServer(env = process.env, requestOpenAI = fetch) {
     },
     requestOpenAI,
   );
+  const transfer=createTransferHandler(memoryTransferStore());
   return createServer({ requestTimeout: 15000, headersTimeout: 10000 }, async (req, res) => {
     const controller = new AbortController();
     res.once('close', () => controller.abort());
@@ -27,12 +30,12 @@ export function createDatevServer(env = process.env, requestOpenAI = fetch) {
         method: req.method,
         headers: req.headers,
         signal: controller.signal,
-        ...(req.method === 'POST' && { body: Readable.toWeb(req), duplex: 'half' }),
+        ...(['POST','PUT'].includes(req.method) && { body: Readable.toWeb(req), duplex: 'half' }),
       });
-      const response = await handle(request);
+      const response = await (url.pathname==='/api/timestamp'?timestampHandler:url.pathname.startsWith('/api/transfer')?transfer:handle)(request);
       if (res.destroyed) return;
       res.writeHead(response.status, Object.fromEntries(response.headers));
-      res.end(await response.text());
+      res.end(Buffer.from(await response.arrayBuffer()));
     } catch {
       if (!res.destroyed) {
         res.writeHead(400, { 'Cache-Control': 'no-store' });

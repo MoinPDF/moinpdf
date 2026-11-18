@@ -74,7 +74,7 @@ with sync_playwright() as api:
                     with pymupdf.open(download(fmt + '.pdf')) as pdf: assert 'Fictional' in ''.join(p.get_text() for p in pdf)
                     overflow()
                 back(); page.locator('input[type=file]').first.set_input_files(str(fixture.resolve()))
-                expect(page.locator('.chooser-tool')).to_have_count(133)
+                expect(page.locator('.chooser-tool')).to_have_count(135)
                 choose('PDF & JSON umwandeln'); button('PDF-Struktur exportieren').click()
                 exported = download('pdf.json'); assert json.loads(exported.read_text())['qpdf'][0]['jsonversion'] == 2
                 label('Richtung').select_option('import'); label('PDF-JSON-Datei').set_input_files(str(exported.resolve()))

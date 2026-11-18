@@ -1,4 +1,6 @@
 export const advancedToolIds = [
+  'scan-transfer',
+  'pdf-timestamp',
   'text-pdf',
   'pdf-json',
   'scan-effect',

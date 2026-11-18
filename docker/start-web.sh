@@ -23,7 +23,4 @@ if [ -n "${MOINPDF_PASSWORD:-}" ]; then
     printf 'basic_auth {\n  {$MOINPDF_USERNAME} {$MOINPDF_PASSWORD_HASH}\n}\n' > /tmp/access.caddy
 fi
 unset MOINPDF_PASSWORD
-if [ "${MOINPDF_DATEV_ENABLED:-}" != 1 ]; then
-    exec node /opt/datev/web.mjs
-fi
-exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+exec node /opt/datev/web.mjs

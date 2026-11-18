@@ -83,7 +83,7 @@ export const furtherReading = `
 <section class="docs-section" id="grenzen" aria-labelledby="title-grenzen">
   <div class="docs-section-heading"><span class="docs-section-number">06</span><div><p class="docs-eyebrow">Planbar arbeiten</p><h2 id="title-grenzen">Formate, Grenzen und Ergebnisqualität</h2></div></div>
   <div class="docs-table-wrap" tabindex="0" role="region" aria-label="Dateiformate und Eingabegrenzen"><table><thead><tr><th scope="col">Bereich</th><th scope="col">Unterstützung / Grenze</th></tr></thead><tbody>
-    <tr><th scope="row">Gemeinsamer PDF-Arbeitsbereich</th><td>PDF sowie JPG, PNG, WebP, BMP, TIFF, SVG, HEIC/HEIF und PSD; maximal ${capability.sourceMiB} MB Quelldateien und ${capability.activePages} Seiten insgesamt. Rechnungs-XML öffnet den Rechnungsarbeitsplatz.</td></tr>
+    <tr><th scope="row">Gemeinsamer PDF-Arbeitsbereich</th><td>PDF sowie JPG, PNG, GIF, WebP, BMP, TIFF, SVG, HEIC/HEIF, PSD, JPEG 2000, JPEG XR und PNM; maximal ${capability.sourceMiB} MB Quelldateien und ${capability.activePages} Seiten insgesamt. Rechnungs-XML öffnet den Rechnungsarbeitsplatz.</td></tr>
     <tr><th scope="row">Office-Konvertierung</th><td>DOC, DOCX, XLS, XLSX, PPT, PPTX, ODT, ODS, ODP und RTF lokal im Browser bis 40 MB pro Datei; alternativ mit Dokumentenserver. Pages, Visio und Publisher benötigen den Dokumentenserver.</td></tr>
     <tr><th scope="row">Weitere Eingabeformate</th><td>EML/MSG für E-Mails, HTML/HTM für gespeicherte Webseiten und ungeschützte EPUB-Dateien für E-Books.</td></tr>
     <tr><th scope="row">E-Book zu PDF</th><td>Bis 40 MB und 200 Ausgabeseiten. Keine verschlüsselten EPUB-Inhalte.</td></tr>

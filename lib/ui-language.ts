@@ -1,6 +1,60 @@
 export type Language = 'de' | 'en';
 
 export const english: Record<string, string> = {
+  Aktionsschaltfläche: 'Action button',
+  'Digitales Signaturfeld': 'Digital signature field',
+  Beschriftung: 'Label',
+  Formularaktion: 'Form action',
+  'Formular zurücksetzen': 'Reset form',
+  'Formular senden': 'Submit form',
+  'HTTPS-Empfangsadresse': 'HTTPS submission address',
+  'Leeres Feld für eine spätere digitale Unterschrift im PDF-Reader. Es wird noch keine Signatur erzeugt.':
+    'Empty field for a later digital signature in a PDF reader. No signature is created yet.',
+  'Die Aktion wird erst im PDF-Reader ausgeführt. Senden übermittelt Formularwerte an die angegebene Adresse. Drucken benötigt JavaScript-Unterstützung des Readers.':
+    'The action runs in the PDF reader. Submit sends form values to the specified address. Printing requires JavaScript support in the reader.',
+  'Eigene Metadatenfelder': 'Custom metadata fields',
+  'Eigener Feldname': 'Custom field name',
+  'Eigener Feldwert': 'Custom field value',
+  'Dieses Feld aus der PDF entfernen': 'Remove this field from the PDF',
+  'Zeile entfernen': 'Remove row',
+  'Metadatenfeld hinzufügen': 'Add metadata field',
+  'Scan an den PC senden': 'Send scan to the PC',
+  'Scans vom Smartphone empfangen': 'Receive smartphone scans',
+  '15 Minuten, bis zu 20 Dateien mit jeweils 10 MB. Dateien werden vor dem Senden verschlüsselt. Den QR-Link nur auf dem eigenen Smartphone öffnen. Beide Geräte benötigen diese MoinPDF-Adresse und gegebenenfalls dieselbe Anmeldung.':
+    '15 minutes, up to 20 files of 10 MB each. Files are encrypted before sending. Open the QR link only on your own phone. Both devices need access to this MoinPDF address and, if required, the same login.',
+  'QR-Verbindung erstellen': 'Create QR connection',
+  'Scan auswählen': 'Select scan',
+  'Übertragung wiederholen': 'Retry transfer',
+  'QR-Code für Scanübertragung': 'QR code for scan transfer',
+  'QR-Code mit der Smartphone-Kamera öffnen. Dieses Fenster geöffnet lassen.':
+    'Open the QR code with your phone camera. Keep this window open.',
+  'Scan übernehmen': 'Accept scan',
+  'Verbindung schließen': 'Close connection',
+  'QR-Code konnte nicht erstellt werden.': 'Could not create the QR code.',
+  'Am PC empfangen und bestätigt.': 'Received and confirmed on the PC.',
+  'Datei empfangen. Bitte am PC übernehmen.': 'File received. Please accept it on the PC.',
+  'Gesendet. Warte auf Bestätigung am PC …': 'Sent. Waiting for confirmation on the PC …',
+  'Datei übernommen. Weitere Scans können gesendet werden.':
+    'File accepted. More scans can now be sent.',
+  'PDF mit Zeitstempel versehen': 'Add a PDF timestamp',
+  'Erstellt einen RFC-3161-Dokumentzeitstempel ohne persönliches Signaturzertifikat. Nur der SHA-256-Prüfwert wird an FreeTSA gesendet; die PDF bleibt im Browser.':
+    'Creates an RFC 3161 document timestamp without a personal signing certificate. Only the SHA-256 digest is sent to FreeTSA; the PDF stays in your browser.',
+  'Geprüft werden Signatur, Zertifikatsbindung, Verwendungszweck, Prüfwert und Anfragezuordnung. Vertrauen in die Zertifikatskette und Widerruf werden nicht bestätigt. Bereits signierte PDFs und XFA bleiben unverändert und werden abgewiesen.':
+    'Checks the signature, certificate binding, timestamping purpose, digest and request match. Certificate chain trust and revocation are not confirmed. Already signed PDFs and XFA are left unchanged and rejected.',
+  'Zeitstempel erstellt: ': 'Timestamp created: ',
+  'Zeitstempel anfordern': 'Request timestamp',
+  'Die Verbindung ist abgelaufen. Bitte einen neuen QR-Code öffnen.':
+    'The connection expired. Please open a new QR code.',
+  'Am PC wartet noch eine Datei auf Bestätigung.':
+    'A file is still waiting for confirmation on the PC.',
+  'Die Datei oder die Anzahl der Übertragungen ist zu groß.':
+    'The file or transfer count exceeds the limit.',
+  'Die Übertragung ist gerade nicht erreichbar. Bitte erneut versuchen.':
+    'The transfer service is unavailable. Please retry.',
+  'Bitte eine Datei mit höchstens 10 MB verwenden.': 'Please use a file no larger than 10 MB.',
+  'Signaturfelder und Aktionsschaltflächen müssen interaktiv bleiben. Bitte Felder fixieren ausschalten.':
+    'Signature fields and action buttons must remain interactive. Please turn off field flattening.',
+
   'Zeilen an Inhalt anpassen': 'Fit rows to content',
   'Zu kleine Zeilen werden in der Vorschau vergrößert. Schriftgrößen und Spaltenbreiten bleiben erhalten; benachbarte Inhalte dürfen nicht überdeckt werden.':
     'The preview expands rows that are too small. Font sizes and column widths are preserved; neighbouring content must not be covered.',

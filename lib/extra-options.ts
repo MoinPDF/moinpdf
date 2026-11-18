@@ -47,6 +47,7 @@ export type ExtraOptions = {
   metaAuthor: string;
   metaSubject: string;
   metaKeywords: string;
+  metaCustom?: { name: string; value: string; remove?: boolean }[];
   removeLinks: boolean;
   overlayOpacity: number;
   overlayLayer: 'front' | 'back';
@@ -73,6 +74,7 @@ export const extraDefaults: ExtraOptions = {
   metaAuthor: '',
   metaSubject: '',
   metaKeywords: '',
+  metaCustom: [],
   removeLinks: false,
   overlayOpacity: 40,
   overlayLayer: 'front',

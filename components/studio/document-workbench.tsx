@@ -92,7 +92,9 @@ export function DocumentWorkbench({
   const [loading, setLoading] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
-    [creating, setCreating] = useState<'text' | 'multiline' | 'checkbox' | 'dropdown' | null>(null),
+    [creating, setCreating] = useState<
+      'text' | 'multiline' | 'checkbox' | 'dropdown' | 'button' | 'signature' | null
+    >(null),
     [flatten, setFlatten] = useState(false);
   const [output, setOutput] = useState<JobResult | null>(null),
     [outputUrl, setOutputUrl] = useState(''),
@@ -570,6 +572,8 @@ export function DocumentWorkbench({
                   ['multiline', 'Textbereich', List],
                   ['checkbox', 'Checkbox', CheckSquare],
                   ['dropdown', 'Auswahlliste', List],
+                  ['signature', 'Digitales Signaturfeld', ShieldCheck],
+                  ['button', 'Aktionsschaltfläche', ClipboardPen],
                 ] as const
               ).map(([kind, label, Icon]) => (
                 <Button
@@ -1055,6 +1059,66 @@ export function DocumentWorkbench({
                         {fieldValue(selectedField)}
                         {design && !selectedField.existing && (
                           <>
+                            {selectedField.kind === 'signature' && (
+                              <p className="fine-note">
+                                {ui(
+                                  'Leeres Feld für eine spätere digitale Unterschrift im PDF-Reader. Es wird noch keine Signatur erzeugt.',
+                                )}
+                              </p>
+                            )}
+                            {selectedField.kind === 'button' && (
+                              <>
+                                <label className="field">
+                                  <span>{ui('Beschriftung')}</span>
+                                  <Input
+                                    aria-label={ui('Beschriftung')}
+                                    value={String(selectedField.value)}
+                                    maxLength={80}
+                                    disabled={locked}
+                                    onChange={(e) =>
+                                      patchField(selectedField.id, { value: e.target.value })
+                                    }
+                                  />
+                                </label>
+                                {select(
+                                  'Formularaktion',
+                                  selectedField.action?.kind || 'reset',
+                                  [
+                                    ['reset', 'Formular zurücksetzen'],
+                                    ['submit', 'Formular senden'],
+                                    ['print', 'Drucken'],
+                                  ],
+                                  (v) =>
+                                    patchField(selectedField.id, {
+                                      action: {
+                                        kind: v as 'reset' | 'submit' | 'print',
+                                        url: selectedField.action?.url,
+                                      },
+                                    }),
+                                )}
+                                {selectedField.action?.kind === 'submit' && (
+                                  <label className="field">
+                                    <span>{ui('HTTPS-Empfangsadresse')}</span>
+                                    <Input
+                                      aria-label={ui('HTTPS-Empfangsadresse')}
+                                      type="url"
+                                      maxLength={2048}
+                                      value={selectedField.action.url || ''}
+                                      onChange={(e) =>
+                                        patchField(selectedField.id, {
+                                          action: { kind: 'submit', url: e.target.value },
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                )}
+                                <p className="fine-note">
+                                  {ui(
+                                    'Die Aktion wird erst im PDF-Reader ausgeführt. Senden übermittelt Formularwerte an die angegebene Adresse. Drucken benötigt JavaScript-Unterstützung des Readers.',
+                                  )}
+                                </p>
+                              </>
+                            )}
                             {selectedField.kind === 'dropdown' && (
                               <label className="field">
                                 <span>{ui('Optionen · eine pro Zeile')}</span>

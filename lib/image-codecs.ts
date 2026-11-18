@@ -85,7 +85,7 @@ export function validateSvg(text: string) {
       )
         throw new Error('Die SVG enthält aktive oder externe Inhalte.');
 }
-export async function imageFilePdf(file: File, bytes: Uint8Array) {
+export async function imageFilePdf(file: File, bytes: Uint8Array, signal?: AbortSignal) {
   const pdf = await PDFDocument.create();
   const add = async (canvas: HTMLCanvasElement) => {
     const jpg = await pdf.embedJpg(canvas.toDataURL('image/jpeg', 0.94)),
@@ -101,10 +101,20 @@ export async function imageFilePdf(file: File, bytes: Uint8Array) {
   const tiff =
     (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 42) ||
     (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[3] === 42);
-  const special = /\.psd$/i.test(file.name) ? 'psd' : /\.hei[cf]$/i.test(file.name) ? 'heic' : null;
+  const special = /\.(pbm|pgm|ppm|pam|pnm)$/i.test(file.name)
+    ? 'pnm'
+    : /\.(jp2|jpx|j2k|j2c)$/i.test(file.name)
+      ? 'jp2'
+      : /\.(jxr|wdp|hdp)$/i.test(file.name)
+        ? 'jxr'
+        : /\.psd$/i.test(file.name)
+          ? 'psd'
+          : /\.hei[cf]$/i.test(file.name)
+            ? 'heic'
+            : null;
   if (special) {
     const { decodeSpecialImage } = await import('./image-decoder');
-    const image = await decodeSpecialImage(bytes, special);
+    const image = await decodeSpecialImage(bytes, special, signal);
     const full = document.createElement('canvas'),
       small = document.createElement('canvas');
     try {
@@ -175,6 +185,7 @@ export async function imageFilePdf(file: File, bytes: Uint8Array) {
     if (svg) validateSvg(new TextDecoder().decode(bytes));
     const known =
       svg ||
+      ['GIF87a', 'GIF89a'].includes(new TextDecoder().decode(bytes.slice(0, 6))) ||
       (bytes[0] === 0x89 && bytes[1] === 0x50) ||
       (bytes[0] === 0xff && bytes[1] === 0xd8) ||
       (bytes[0] === 0x42 && bytes[1] === 0x4d) ||
@@ -182,7 +193,7 @@ export async function imageFilePdf(file: File, bytes: Uint8Array) {
         new TextDecoder().decode(bytes.slice(8, 12)) === 'WEBP');
     if (!known)
       throw new Error(
-        'Unterstützt werden PDF, Rechnungs-XML, JPG, PNG, WebP, BMP, TIFF, HEIC, PSD und eigenständige SVG.',
+        'Unterstützt werden PDF, Rechnungs-XML, JPG, PNG, GIF, WebP, BMP, TIFF, HEIC, PSD, JPEG 2000, JPEG XR, PNM und eigenständige SVG.',
       );
     const url = URL.createObjectURL(
         svg ? new Blob([bytes.slice()], { type: 'image/svg+xml' }) : file,
@@ -207,5 +218,6 @@ export async function imageFilePdf(file: File, bytes: Uint8Array) {
       canvas.width = canvas.height = 0;
     }
   }
+  signal?.throwIfAborted();
   return new Uint8Array(await pdf.save());
 }

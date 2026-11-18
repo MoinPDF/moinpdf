@@ -1,5 +1,14 @@
 # Funktionen und Grenzen
 
+## Ergänzungen in 0.36.0
+
+- **Handy-Scans übertragen:** am PC eine QR-Verbindung erstellen, am Smartphone öffnen, Datei auswählen oder Kamera-Scanner verwenden, dann am PC übernehmen. Laufzeit 15 Minuten; 20 Dateien zu jeweils 10 MB. Beide Geräte benötigen Zugriff auf dieselbe Adresse und gegebenenfalls Anmeldung. Kamera und Verschlüsselung benötigen HTTPS oder localhost. Nur nach Empfangsbestätigung meldet das Smartphone Erfolg. Dateien und Namen werden mit AES-GCM verschlüsselt; der Schlüssel bleibt im URL-Fragment. Empfangsrechte stehen nicht im QR-Link. Nach Bestätigung wird der Inhalt gelöscht; nach Ablauf ist kein Abruf möglich. Verbliebene verschlüsselte Dateien werden bei der nächsten Anfrage bereinigt. Selbst gehostete Übertragungen liegen nur im Arbeitsspeicher und enden auch bei einem Neustart.
+- **Formularaktionen und Signaturfelder:** in „Formular erstellen“ platzierbar. Zurücksetzen löscht Formularwerte, Senden übermittelt XFDF an die gewählte HTTPS-Adresse, Drucken verwendet eine feste Reader-JavaScript-Aktion. Reader-Unterstützung und Freigaben können abweichen. Leere Signaturfelder sind noch keine Unterschrift. Diese Felder bleiben interaktiv; Fixieren wird verhindert. Bereits digital signierte PDFs dürfen nicht umgeschrieben werden.
+- **Eigene Metadaten:** bis 50 eindeutige Namen mit höchstens 64 Zeichen und Werten bis 1.000 Zeichen. Standardnamen sind reserviert. Einträge lassen sich ausdrücklich entfernen; Unicode bleibt erhalten. Die Funktion schreibt PDF-Info-Metadaten, kein eigenes XMP-Schema.
+- **Bildimport:** GIF als Standbild; JPEG 2000 (JP2/JPX/J2K/J2C) mit RGB/Graustufen; JPEG XR (JXR/WDP/HDP); P1–P7 einschließlich PBM/PGM/PPM/PAM mit 8-/16-Bit-Abtastwerten. Bis 40 Megapixel für Spezialformate, 90 Sekunden Decoderfrist, abbrechbarer Worker. Nicht unterstützte Farbräume oder beschädigte Daten werden abgewiesen.
+- **PDF-Zeitstempel:** RFC-3161-Dokumentzeitstempel über FreeTSA; kein persönliches Zertifikat nötig. Die PDF bleibt lokal, nur die SHA-256-Anfrage wird übertragen. Der Token wird kryptografisch mit Anfrage, Zertifikatsbindung und Verwendungszweck geprüft. Vertrauenskette, Widerruf und qualifizierter Status sind nicht bestätigt. Internet erforderlich, bis 80 MB; bereits signierte PDFs und XFA bleiben unverändert und werden abgewiesen. Nachträgliche Bearbeitung kann den Zeitstempel ungültig machen.
+
+
 ## PDF bearbeiten: Touch und Formatierung
 
 Mit „Auf der Seite vergleichen“ wird eine Ersatzschrift vorübergehend an der ausgewählten Stelle angezeigt. „Schriftvorschau schließen“ kehrt zur bisherigen Bearbeitung zurück; erst „Diese Schrift verwenden“ übernimmt den Vorschlag. Eine nicht übernommene Vorschau wird nicht exportiert. Vorhandene Zeichenabstände und horizontale Skalierung bleiben erhalten.
@@ -94,7 +103,7 @@ Zeitraum, Anfangs- und Endsaldo, Auszugsnummer, Währung und IBAN liest MoinPDF 
 Farben & Hintergrund ändern bietet eigene Text-/Hintergrundfarben mit Texterhalt sowie Helligkeit, Kontrast und Sättigung als Bildausgabe. Vorschau, Vorlagen und Projektentwürfe sind enthalten. Der Formularhelfer gibt ausgewählte schreibgeschützte Felder frei und erhält ihre Werte. Zuschneiden kann nur den sichtbaren Bereich ändern; versteckte Inhalte bleiben dabei in der Datei. Abwechselnd zusammenfügen sortiert auch Vorder-/Rückseitenblöcke innerhalb einer PDF mit Trennstelle und Reihenfolgevorschau.
 
 <!-- generated-capabilities:start -->
-**Aktuelle Grenzen aus der Implementierung · 0.35.0**
+**Aktuelle Grenzen aus der Implementierung · 0.36.0**
 
 | Funktion | Wert |
 | --- | --- |

@@ -4,6 +4,16 @@
 
 MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version is in `package.json`; the interface reads it from there. Docker image tags also include the source commit, and published containers have a fixed digest. Entries below describe each release at the time; see [Implementation status](docs/STATUS.en.md) for current capabilities.
 
+## 0.36.0 — 2026-11-18
+
+- Transfer phone scans into the current PC session using a QR code. AES-GCM encrypts files and filenames before sending; separate send/receive capabilities, 15-minute lifetime, up to 20 files of 10 MB each. Success appears only after acceptance on the PC; failed sends can be retried.
+- Create form: real ResetForm/SubmitForm buttons and printing through fixed reader JavaScript. XFDF submission requires HTTPS. Place empty digital signature fields for later signing in a PDF reader; these do not create a signature themselves.
+- Add or selectively remove up to 50 custom metadata names/values. Reserved and duplicate names are rejected; Unicode values are preserved.
+- Local GIF still-frame, RGB/grayscale JPEG 2000 (JP2/JPX/J2K), JPEG XR and P1–P7 (PNM/PBM/PGM/PPM/PAM) import. New specialist decoders run in cancellable workers with dimension validation and a 40-megapixel limit.
+- Standalone RFC 3161 document timestamps through FreeTSA without a personal certificate. Only the SHA-256 digest leaves the device. CMS signature, certificate binding, timestamping purpose, nonce and digest are checked. Chain trust, revocation and qualified status are not confirmed; signed PDFs and XFA are rejected.
+- Fictional real PDF/image fixtures, independent OpenSSL timestamp verification, encrypted transfer, capability separation, retry, acknowledgement and expiry tests. German/English manuals and privacy information updated; 135 tools.
+- Dependency updates include Caddy 2.11.8, pypdf 7.0.1, current Pydantic packages, jsdom 31. PDF.js stays at 6.4.299 because the update exceeds the browser bundle budget. fake-indexeddb stays at 6.2.5 because 6.2.7 reproducibly fails the large-document transaction regression.
+
 ## 0.35.0 — 2026-11-13
 
 - PDF editor: compare local substitute fonts directly on the page before applying them. The preview changes neither saved edits nor PDF output; font changes retain tracking and horizontal scaling.

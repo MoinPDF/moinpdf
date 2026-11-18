@@ -1,5 +1,14 @@
 # Features and limitations
 
+## Additions in 0.36.0
+
+- **Transfer phone scans:** create a QR connection on the PC, open it on the phone, select a file or use the camera scanner, then accept it on the PC. 15 minutes; 20 files of 10 MB each. Both devices need the same address and any required login. Camera and encryption need HTTPS or localhost. Only acknowledgement on the PC produces a success message. AES-GCM encrypts files and filenames; the key remains in the URL fragment. The QR link grants no retrieval rights. Acknowledged content is deleted, and expired sessions deny retrieval. Remaining encrypted files are cleaned up on the next request. Self-hosted transfers stay in memory and also end on restart.
+- **Form actions and signature fields:** place them using Create form. Reset clears values, Submit sends XFDF to the configured HTTPS URL, Print uses fixed reader JavaScript. Reader support and permission prompts differ. Empty signature fields are not signatures. These fields must remain interactive; flattening is rejected. Digitally signed PDFs must not be rewritten.
+- **Custom metadata:** up to 50 unique names of 64 characters and values of 1,000 characters. Standard names are reserved. Explicit removal and Unicode values are supported. This writes PDF Info metadata, not a custom XMP schema.
+- **Image import:** GIF still frames; RGB/grayscale JPEG 2000 (JP2/JPX/J2K/J2C); JPEG XR (JXR/WDP/HDP); P1–P7 including PBM/PGM/PPM/PAM with 8-/16-bit samples. Specialist formats allow 40 megapixels and a 90-second cancellable worker deadline. Unsupported color spaces and corrupt data are rejected.
+- **PDF timestamp:** RFC 3161 document timestamp through FreeTSA; no personal certificate. The PDF remains local; only its SHA-256 request is transmitted. Cryptographic verification checks the request, certificate binding and purpose. Chain trust, revocation and qualified status are not confirmed. Requires internet, up to 80 MB; signed PDFs and XFA remain unchanged and are rejected. Subsequent editing can invalidate the timestamp.
+
+
 ## PDF editor: touch and typography
 
 “Compare on the page” temporarily displays a substitute font at the selected location. “Close font preview” returns to the current edit; only “Use this font” applies the choice. Unapplied previews are never exported. Existing tracking and horizontal scaling are preserved.
@@ -94,7 +103,7 @@ MoinPDF reads the period, opening and closing balances, statement number, curren
 Change colors & background offers custom text/background colors with text preservation, plus brightness, contrast and saturation as image output. It includes previews, presets and saved project drafts. Form helper unlocks selected read-only fields while keeping their values. Cropping can change only the visible area; hidden content remains in the file. Interleave also collates front/back blocks within one PDF, with a split position and page-order preview.
 
 <!-- generated-capabilities:start -->
-**Current implementation limits · 0.35.0**
+**Current implementation limits · 0.36.0**
 
 | Capability | Value |
 | --- | --- |
