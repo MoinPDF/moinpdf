@@ -1,7 +1,7 @@
 import type { ServerTool, AdvancedTool } from './advanced-types';
 
 export const documentAccept =
-  '.pdf,.xml,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,.svg,.heic,.heif,.psd,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf,.pages,.vsd,.vsdx,.pub,.eml,.msg,.html,.htm,.epub,.fb2,.cbz,.xps,.oxps,.mobi,.azw3,.cbr,.wpd,.wps,.odg,.md,.markdown,.txt,.csv,.json';
+  '.pdf,.xml,.gif,.jp2,.jpx,.j2k,.j2c,.jxr,.wdp,.hdp,.pnm,.pbm,.pgm,.ppm,.pam,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,.svg,.heic,.heif,.psd,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf,.pages,.vsd,.vsdx,.pub,.eml,.msg,.html,.htm,.epub,.fb2,.cbz,.xps,.oxps,.mobi,.azw3,.cbr,.wpd,.wps,.odg,.md,.markdown,.txt,.csv,.json';
 
 // Route the original file straight to its converter, without requiring a PDF first.
 export function conversionToolForFile(name: string): ServerTool | AdvancedTool | null {

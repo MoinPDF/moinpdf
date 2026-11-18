@@ -2,6 +2,7 @@ import {
   PDFDocument,
   PDFForm,
   PDFTextField,
+  PDFButton,
   PDFCheckBox,
   PDFDropdown,
   PDFRadioGroup,
@@ -33,7 +34,8 @@ export const documentToolIds = ['fill-form', 'create-form', 'bookmarks'] as cons
 export type DocumentTool = (typeof documentToolIds)[number];
 export const isDocumentTool = (id: string): id is DocumentTool =>
   (documentToolIds as readonly string[]).includes(id);
-export type FieldKind = 'text' | 'checkbox' | 'dropdown' | 'radio' | 'list' | 'unsupported';
+export type FieldKind =
+  'text' | 'checkbox' | 'dropdown' | 'radio' | 'list' | 'button' | 'signature' | 'unsupported';
 export type FieldRect = { x: number; y: number; w: number; h: number };
 export type FieldWidget = { page: number; rect: FieldRect; option?: string };
 export type FormField = {
@@ -54,6 +56,7 @@ export type FormField = {
   multiple?: boolean;
   deleted?: boolean;
   fontSize: number;
+  action?: { kind: 'reset' | 'submit' | 'print'; url?: string };
 };
 export type Bookmark = {
   id: string;
@@ -79,6 +82,8 @@ export type DocumentHistory = {
 };
 export type DocumentSessions = Record<string, DocumentHistory>;
 export const fieldLabels: Record<FieldKind, string> = {
+  button: 'Aktionsschaltfläche',
+  signature: 'Digitales Signaturfeld',
   text: 'Textfeld',
   checkbox: 'Checkbox',
   dropdown: 'Auswahlliste',
@@ -193,8 +198,10 @@ export async function readDocumentDraft(
       options = field.getOptions();
       value = field.getSelected();
       multiple = field.isMultiselect();
-    } else if (field instanceof PDFSignature && field.acroField.dict.get(PDFName.of('V')))
-      signed = true;
+    } else if (field instanceof PDFSignature) {
+      if (field.acroField.dict.get(PDFName.of('V'))) signed = true;
+      else kind = 'signature';
+    }
     fields.push({
       id: uid(),
       name: field.getName(),
@@ -260,13 +267,22 @@ export async function readDocumentDraft(
 }
 export function newFormField(
   fields: FormField[],
-  kind: 'text' | 'checkbox' | 'dropdown',
+  kind: 'text' | 'checkbox' | 'dropdown' | 'button' | 'signature',
   page: number,
   rect: FieldRect,
   multiline = false,
 ): FormField {
   let index = 1;
-  const stem = kind === 'text' ? 'Textfeld' : kind === 'checkbox' ? 'Checkbox' : 'Auswahl';
+  const stem =
+    kind === 'signature'
+      ? 'Signatur'
+      : kind === 'button'
+        ? 'Aktion'
+        : kind === 'text'
+          ? 'Textfeld'
+          : kind === 'checkbox'
+            ? 'Checkbox'
+            : 'Auswahl';
   while (fields.some((f) => f.name === `${stem}_${index}`)) index++;
   return {
     id: uid(),
@@ -280,6 +296,7 @@ export function newFormField(
     readOnly: false,
     multiline,
     fontSize: 12,
+    ...(kind === 'button' ? { value: 'Zurücksetzen', action: { kind: 'reset' as const } } : {}),
   };
 }
 export function bookmarkSubtreeEnd(items: Bookmark[], index: number) {
@@ -417,6 +434,12 @@ export async function saveDocumentDraft(
 ): Promise<JobResult> {
   check(signal);
   const doc = await PDFDocument.load(source.bytes, { updateMetadata: false });
+  if (draft.fields.some((f) => !f.existing && ['button', 'signature'].includes(f.kind)))
+    (await import('./pdf-signature-guard')).rejectSignedPdf(doc);
+  if (flatten && draft.fields.some((f) => !f.deleted && ['button', 'signature'].includes(f.kind)))
+    throw new Error(
+      'Signaturfelder und Aktionsschaltflächen müssen interaktiv bleiben. Bitte Felder fixieren ausschalten.',
+    );
   const unlockNames = new Set(appearance?.unlockReadOnly || []);
   if (unlockNames.size) {
     (await import('./pdf-signature-guard')).rejectSignedPdf(doc);
@@ -461,15 +484,20 @@ export async function saveDocumentDraft(
       if (unlock) form.getField(item.name).disableReadOnly();
       const changed =
         !item.existing || JSON.stringify(item.value) !== JSON.stringify(item.initialValue);
-      if (item.existing && (!changed || item.kind === 'unsupported' || (item.readOnly && !unlock)))
+      if (
+        item.existing &&
+        (!changed || ['unsupported', 'signature'].includes(item.kind) || (item.readOnly && !unlock))
+      )
         continue;
       const field = item.existing
         ? form.getField(item.name)
-        : item.kind === 'text'
-          ? form.createTextField(item.name)
-          : item.kind === 'checkbox'
-            ? form.createCheckBox(item.name)
-            : form.createDropdown(item.name);
+        : item.kind === 'button'
+          ? form.createButton(item.name)
+          : item.kind === 'text' || item.kind === 'signature'
+            ? form.createTextField(item.name)
+            : item.kind === 'checkbox'
+              ? form.createCheckBox(item.name)
+              : form.createDropdown(item.name);
       if (!item.existing) {
         item.required ? field.enableRequired() : field.disableRequired();
         if (field instanceof PDFTextField) {
@@ -529,7 +557,28 @@ export async function saveDocumentDraft(
           field instanceof PDFCheckBox
         )
           field.addToPage(doc.getPage(widget.page), fieldAppearance);
+        if (field instanceof PDFButton)
+          field.addToPage(
+            String(item.value || item.name),
+            doc.getPage(widget.page),
+            fieldAppearance,
+          );
         field.acroField.getWidgets().at(-1)!.setRectangle(rect);
+        if (item.kind === 'signature') {
+          // Use a real /Sig field with a blank appearance; never add a /V value.
+          field.acroField.dict.set(PDFName.of('FT'), PDFName.of('Sig'));
+          field.acroField.dict.delete(PDFName.of('V'));
+          field.acroField.dict.delete(PDFName.of('DV'));
+          field.acroField.dict.delete(PDFName.of('DA'));
+          continue;
+        }
+        if (item.kind === 'button') {
+          const { formButtonAction } = await import('./form-actions');
+          const action = formButtonAction(doc, item.action || { kind: 'reset' });
+          for (const widget of field.acroField.getWidgets())
+            widget.dict.set(PDFName.of('A'), action);
+          continue;
+        }
         if (field instanceof PDFTextField) {
           if (!Number.isFinite(item.fontSize) || item.fontSize < 6 || item.fontSize > 48)
             throw new Error('Schriftgröße: 6 bis 48 pt.');

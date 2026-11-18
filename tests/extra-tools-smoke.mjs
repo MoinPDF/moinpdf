@@ -6,7 +6,7 @@ import {createRequire} from 'node:module';
 import {dirname} from 'node:path';
 import ts from 'typescript';
 import JSZip from 'jszip';
-import {PDFDocument,PDFName,PDFDict,StandardFonts,rgb} from 'pdf-lib';
+import {PDFDocument,PDFName,PDFDict,PDFHexString,StandardFonts,rgb} from 'pdf-lib';
 const require=createRequire(import.meta.url),pdfRequire=createRequire(require.resolve('pdfjs-dist/package.json'));
 const {createCanvas,DOMMatrix,Path2D,ImageData}=pdfRequire('@napi-rs/canvas');
 Object.assign(globalThis,{DOMMatrix,Path2D,ImageData,document:{createElement(name){assert.equal(name,'canvas');return createCanvas(1,1);}}});
@@ -25,6 +25,7 @@ async function source(bytes,name){const data=new Uint8Array(bytes),pdf=await pdf
 const items=s=>Array.from({length:s.pdf.numPages},(_,index)=>({id:s.id+index,sourceId:s.id,index,rotation:0,selected:true}));
 async function create(name,count){const doc=await PDFDocument.create(),font=await doc.embedFont(StandardFonts.Helvetica);doc.setTitle('Testtitel '+name);doc.setAuthor('Testautor');for(let i=0;i<count;i++){const page=doc.addPage([200,300]);page.drawText(name+'-'+(i+1),{font,size:16,x:20,y:260});page.drawRectangle({x:40,y:60,width:100,height:80,color:rgb(1,0,0)});}return doc;}
 const da=await create('A',8),db=await create('B',3);
+da.context.lookup(da.context.trailerInfo.Info,PDFDict).set(PDFName.of('Löschen'),PDFHexString.fromText('Old value'));
 da.getPage(0).node.addAnnot(da.context.register(da.context.obj({Type:'Annot',Subtype:'Text',Rect:[10,10,20,20],Contents:'Note'})));
 da.getPage(0).node.addAnnot(da.context.register(da.context.obj({Type:'Annot',Subtype:'Link',Rect:[25,10,35,20]})));
 await da.attach(new TextEncoder().encode('<invoice>TEST</invoice>'),'../factur-x.xml',{mimeType:'application/xml'});
@@ -53,7 +54,9 @@ try{
  const inverted=await from(await execute('invert',[ap[0]]));const inv=(await renderPage(inverted,items(inverted)[0],600)).canvas;assert.deepEqual([...inv.getContext('2d').getImageData(inv.width*.5,inv.height*.65,1,1).data].slice(0,3),[0,255,255]);
  const stamp=await from(await execute('stamp',[ap[0]],{stampDate:'2026-10-05'}));assert.match(await text(stamp),/A-1/);assert.match(await text(stamp),/GEPRÜFT/);assert.match(await text(stamp),/05.10.2026/);
  await assert.rejects(()=>execute('stamp',[ap[0]],{stampText:''}),/Stempeltext/);
- const meta=await execute('edit-metadata',[ap[0]],{metaTitle:'Neuer Titel',metaAuthor:'Testautor',metaSubject:'Test',metaKeywords:'eins, zwei'}),metaPdf=await PDFDocument.load(await meta.blob.arrayBuffer());assert.equal(metaPdf.getTitle(),'Neuer Titel');assert.equal(metaPdf.getAuthor(),'Testautor');assert.equal(metaPdf.getSubject(),'Test');assert.equal(metaPdf.getKeywords(),'eins zwei');
+ const meta=await execute('edit-metadata',[ap[0]],{metaTitle:'Neuer Titel',metaAuthor:'Testautor',metaSubject:'Test',metaKeywords:'eins, zwei',metaCustom:[{name:'Projekt',value:'Moin – Test ✓'},{name:'Löschen',value:'',remove:true}]}),metaPdf=await PDFDocument.load(await meta.blob.arrayBuffer());assert.equal(metaPdf.getTitle(),'Neuer Titel');assert.equal(metaPdf.getAuthor(),'Testautor');assert.equal(metaPdf.getSubject(),'Test');assert.equal(metaPdf.getKeywords(),'eins zwei');
+ const customInfo=metaPdf.context.lookup(metaPdf.context.trailerInfo.Info,PDFDict);assert.equal(customInfo.get(PDFName.of('Projekt')).decodeText(),'Moin – Test ✓');assert(!customInfo.has(PDFName.of('Löschen')));
+ for(const metaCustom of [[{name:'Title',value:'override'}],[{name:'',value:'empty'}],[{name:'Same',value:'1'},{name:'Same',value:'2'}]])await assert.rejects(()=>execute('edit-metadata',[ap[0]],{metaCustom}),/Feldnamen/);
  const comments=await execute('remove-annotations',[ap[0]]),clean=await PDFDocument.load(await comments.blob.arrayBuffer()),annots=clean.getPage(0).node.Annots();assert.equal(annots.size(),1);assert(!clean.context.enumerateIndirectObjects().some(([,o])=>o instanceof PDFDict&&o.get(PDFName.of('Subtype'))?.toString()==='/Text'),'Removed comment dictionaries must not remain as orphan objects');assert.equal(annots.lookup(0,PDFDict).get(PDFName.of('Subtype')).toString(),'/Link');
  const allAnnots=await execute('remove-annotations',[ap[0]],{removeLinks:true});assert.equal((await PDFDocument.load(await allAnnots.blob.arrayBuffer())).getPage(0).node.Annots().size(),0);
  const overlay=await from(await execute('overlay',[...ap.slice(0,2),...bp]));assert.equal(overlay.pdf.numPages,2);assert.match(await text(overlay,0),/A-1.*B-1/);assert.match(await text(overlay,1),/A-2.*B-1/);

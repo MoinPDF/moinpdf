@@ -77,6 +77,25 @@ export const groups = [
 ];
 export const tools = [
   {
+    id: 'scan-transfer',
+    title: 'Handy-Scans übertragen',
+    description: 'Scans per QR-Code verschlüsselt vom Smartphone in die PC-Sitzung übertragen.',
+    icon: QrCode,
+    group: 1,
+    action: 'Verbindung öffnen',
+    fresh: true,
+  },
+  {
+    id: 'pdf-timestamp',
+    title: 'PDF-Zeitstempel',
+    description:
+      'Einen geprüften RFC-3161-Dokumentzeitstempel ohne persönliches Zertifikat einbetten.',
+    icon: ShieldCheck,
+    group: 0,
+    action: 'Zeitstempel anfordern',
+    fresh: true,
+  },
+  {
     id: 'text-pdf',
     title: 'Text & Daten zu PDF',
     description:

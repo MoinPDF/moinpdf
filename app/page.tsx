@@ -1606,6 +1606,10 @@ function Studio() {
     },
   };
   useEffect(() => {
+    if (new URLSearchParams(location.hash.slice(1)).has('moin-transfer'))
+      agentActions.current.chooseTool('scan-transfer');
+  }, []);
+  useEffect(() => {
     const context = (
       document as unknown as {
         modelContext?: {
@@ -1664,6 +1668,7 @@ function Studio() {
             'invoice-create',
             'pdf-portfolio',
             'camera-scan',
+            'scan-transfer',
             'office-pdf',
             'email-pdf',
             'html-pdf',

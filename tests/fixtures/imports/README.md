@@ -1,0 +1,1 @@
+Synthetic 8 × 6 RGB color tiles generated for MoinPDF tests. No personal or third-party image data. JPEG 2000/GIF/PNM encoded with Pillow; JPEG XR encoded with the open-source JxrEncApp. These fixtures are covered by the repository license.

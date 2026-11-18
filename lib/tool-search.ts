@@ -2,6 +2,8 @@ import { tools, type WorkspaceTool } from './tool-catalog';
 
 // Local intent matching. No document contents or search text leave the browser.
 const aliases: Record<WorkspaceTool, string[]> = {
+  'scan-transfer': ['Smartphone PC QR Scan Transfer Handy'],
+  'pdf-timestamp': ['RFC 3161 TSA Zeitstempel Timestamp'],
   'text-pdf': ['Markdown zu PDF', 'TXT zu PDF', 'CSV zu PDF', 'XML zu PDF'],
   'pdf-json': ['JSON zu PDF', 'PDF zu JSON', 'QPDF JSON'],
   'scan-effect': ['Scannereffekt', 'Scanner effect', 'PDF wie gescannt'],

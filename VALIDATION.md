@@ -6,6 +6,10 @@ Die Versionsnummer steht in [package.json](package.json). Ein erfolgreicher
 Prüflauf belegt ausschließlich den dort angezeigten Commit, keine späteren
 Änderungen oder beliebigen Dokumente.
 
+## Prüfplan für 0.36.0
+
+`release-036-smoke.mjs` prüft echte Signaturfelder und Aktionen auf vier Seitendrehungen, sieben PNM-Varianten, getrennte Übertragungsrechte, AES-GCM-Manipulation, Bestätigung, Wiederholung, Ablauf und einen unabhängig mit OpenSSL verifizierten PDF-Zeitstempel. `image-decoders-smoke.mjs` liest feste fiktive JPEG-2000-, JPEG-XR- und PNM-Dateien und prüft Ausgabe, Abbruch sowie Worker-Freigabe. `extra-tools-smoke.mjs` prüft Unicode-Metadaten und reservierte/doppelte Namen. Die bisherigen Browser-, Docker- und Safari-Prüfungen bleiben erforderlich; physische Smartphone-Prüfungen sind gesondert offen. Erfolgreiche Actions-Läufe des Release-Commits sind der Ausführungsnachweis.
+
 ## Prüfplan für 0.35.0
 
 - Bestehende Tests erweitert: echte Scanbeträge mit und ohne passende Nachbarstellen; kurze Schlusszeilen in zwei Spalten; vorübergehende Schriftvorschau ohne Änderung des Arbeitsstands; verkleinerter und verschobener mobiler Sichtbereich mit unverändertem Fokus und Auswahl.

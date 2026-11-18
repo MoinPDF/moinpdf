@@ -18,7 +18,7 @@ import { ui } from '@/lib/ui-language';
 
 import { useLanguage, useTools } from '@/components/studio/appearance';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import './evidence-workbench.css';
 import './century-workbench.css';
 import {
@@ -67,6 +67,13 @@ import {
   ReconcilePanel,
   CommentExportPanel,
 } from './evidence-panels';
+
+const ScanTransferPanel = lazy(() =>
+  import('./scan-transfer-panel').then((m) => ({ default: m.ScanTransferPanel })),
+);
+const TimestampPanel = lazy(() =>
+  import('./timestamp-panel').then((m) => ({ default: m.TimestampPanel })),
+);
 
 export function AdvancedWorkbench({
   tool,
@@ -211,15 +218,19 @@ export function AdvancedWorkbench({
           <span className="device-tag">
             <ShieldCheck size={14} />
             {ui(
-              [
-                'invoice-create',
-                'handwriting-ocr',
-                'pdfx-create',
-                'pdf-comic',
-                'pdf-epub',
-              ].includes(tool)
-                ? 'BROWSER / EIGENER DOKUMENTENSERVER'
-                : 'LOKAL AUF DEINEM GERÄT',
+              tool === 'scan-transfer'
+                ? 'VERSCHLÜSSELTE ÜBERTRAGUNG'
+                : tool === 'pdf-timestamp'
+                  ? 'NUR PRÜFWERT ÜBERTRAGEN'
+                  : [
+                        'invoice-create',
+                        'handwriting-ocr',
+                        'pdfx-create',
+                        'pdf-comic',
+                        'pdf-epub',
+                      ].includes(tool)
+                    ? 'BROWSER / EIGENER DOKUMENTENSERVER'
+                    : 'LOKAL AUF DEINEM GERÄT',
             )}
           </span>
         </div>
@@ -287,7 +298,11 @@ export function AdvancedWorkbench({
         }}
         key={`${tool}-${multi ? 'all' : source?.id || 'camera'}-${sources.map((s) => s.id).join(':')}`}
       >
-        {tool === 'text-pdf' ? (
+        {tool === 'scan-transfer' ? (
+          <Suspense fallback={null}>
+            <ScanTransferPanel busy={busy} run={run} />
+          </Suspense>
+        ) : tool === 'text-pdf' ? (
           <TextImportPanel busy={busy} run={run} initialFile={initialFile} />
         ) : tool === 'pdf-json' ? (
           <PdfJsonPanel source={source} busy={busy} run={run} initialFile={initialFile} />
@@ -305,6 +320,11 @@ export function AdvancedWorkbench({
           <div className="advanced-empty">{ui('Bitte zuerst eine PDF öffnen.')}</div>
         ) : (
           <>
+            {tool === 'pdf-timestamp' && (
+              <Suspense fallback={null}>
+                <TimestampPanel {...props} />
+              </Suspense>
+            )}
             {tool === 'scan-effect' && <ScanEffectPanel {...props} />}
             {tool === 'pdf-comic' && <ComicPanel {...props} />}
             {tool === 'pdf-javascript' && <JavaScriptPanel {...props} />}

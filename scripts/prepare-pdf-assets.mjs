@@ -30,13 +30,15 @@ let copyright='';
 const originalLog=console.log;
 try{console.log=s=>{copyright+=s+'\n';};const qpdf=await require('@neslinesli93/qpdf-wasm')({});qpdf.callMain(['--copyright']);}finally{console.log=originalLog;}
 await (await import('node:fs/promises')).writeFile(path.join(out,'licenses','qpdf-COPYRIGHT.txt'),copyright);
-for (const name of ['@tiptap/core', '@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-text-style', '@tiptap/extension-text-align', '@tiptap/extension-image', '@tiptap/extension-table', '@tiptap/extension-placeholder', 'pdfmake', 'harfbuzzjs', 'bidi-js', 'pkijs', 'asn1js', '@embedpdf/pdfium', 'utif', '@bwip-js/browser', '@zxing/library', 'pdfjs-dist', 'tesseract.js', 'pdf-lib', '@pdf-lib/fontkit', 'jszip', 'docx', '@fontsource-variable/manrope', '@fontsource-variable/space-grotesk', ...['deu','eng','fra','spa','ita','por','nld','pol','ces','dan','swe','nor','fin','tur','ukr','rus','ara','chi_sim','jpn','kor','hin'].map(l=>'@tesseract.js-data/'+l)]) {
+for (const name of ['@discourse/jxr', '@tiptap/core', '@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-text-style', '@tiptap/extension-text-align', '@tiptap/extension-image', '@tiptap/extension-table', '@tiptap/extension-placeholder', 'pdfmake', 'harfbuzzjs', 'bidi-js', 'pkijs', 'asn1js', '@embedpdf/pdfium', 'utif', '@bwip-js/browser', '@zxing/library', 'pdfjs-dist', 'tesseract.js', 'pdf-lib', '@pdf-lib/fontkit', 'jszip', 'docx', '@fontsource-variable/manrope', '@fontsource-variable/space-grotesk', ...['deu','eng','fra','spa','ita','por','nld','pol','ces','dan','swe','nor','fin','tur','ukr','rus','ara','chi_sim','jpn','kor','hin'].map(l=>'@tesseract.js-data/'+l)]) {
   const dir = path.resolve('node_modules', name);
   for (const file of await readdir(dir)) {
     if (/^(LICENSE|OFL|NOTICE)(\.|$)/i.test(file)) await copyFile(path.join(dir,file),path.join(out,'licenses',`${name.replaceAll('/', '-')}-${file}`));
   }
 }
 await mkdir(path.join(out,'images'),{recursive:true});
+await copyFile(path.join(pdf,'image_decoders/pdf.image_decoders.mjs'),path.join(out,'images/pdf.image_decoders.mjs'));
+await cp('node_modules/@discourse/jxr',path.join(out,'images/jxr'),{recursive:true,dereference:true});
 for(const file of ['libheif.js','libheif.wasm'])await copyFile(path.join('node_modules/libheif-js/libheif-wasm',file),path.join(out,'images',file));
 await copyFile('node_modules/ag-psd/dist/bundle.js',path.join(out,'images/ag-psd.js'));
 await copyFile('node_modules/ag-psd/LICENSE',path.join(out,'licenses/ag-psd-LICENSE'));

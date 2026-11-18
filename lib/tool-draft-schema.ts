@@ -160,6 +160,8 @@ const shape16: z.ZodType = z.lazy(() =>
         z.literal('dropdown'),
         z.literal('radio'),
         z.literal('list'),
+        z.literal('button'),
+        z.literal('signature'),
         z.literal('unsupported'),
       ]),
       value: z.string().max(1000000),
@@ -306,6 +308,14 @@ const shape35: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
+const shape37: z.ZodType = z.lazy(() =>
+  z
+    .object({
+      kind: z.union([z.literal('reset'), z.literal('submit'), z.literal('print')]),
+      url: z.union([z.undefined(), z.string().max(1000000)]).optional(),
+    })
+    .strict(),
+);
 const shape34: z.ZodType = z.lazy(() =>
   z
     .object({
@@ -317,6 +327,8 @@ const shape34: z.ZodType = z.lazy(() =>
         z.literal('dropdown'),
         z.literal('radio'),
         z.literal('list'),
+        z.literal('button'),
+        z.literal('signature'),
         z.literal('unsupported'),
       ]),
       value: z.union([
@@ -345,10 +357,11 @@ const shape34: z.ZodType = z.lazy(() =>
       multiple: z.union([z.undefined(), z.literal(false), z.literal(true)]).optional(),
       deleted: z.union([z.undefined(), z.literal(false), z.literal(true)]).optional(),
       fontSize: z.number().finite(),
+      action: z.union([z.undefined(), shape37]).optional(),
     })
     .strict(),
 );
-const shape37: z.ZodType = z.lazy(() =>
+const shape38: z.ZodType = z.lazy(() =>
   z
     .object({
       id: z.string().max(1000000),
@@ -365,7 +378,7 @@ const shape33: z.ZodType = z.lazy(() =>
   z
     .object({
       fields: z.array(shape34).max(100000),
-      bookmarks: z.array(shape37).max(100000),
+      bookmarks: z.array(shape38).max(100000),
       signed: z.boolean(),
       xfa: z.boolean(),
       originalBookmarkCount: z.number().finite(),
@@ -373,7 +386,7 @@ const shape33: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape38: z.ZodType = z.lazy(() =>
+const shape39: z.ZodType = z.lazy(() =>
   z
     .object({
       id: z.string().max(1000000),
@@ -388,12 +401,12 @@ const shape38: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape39: z.ZodType = z.lazy(() =>
+const shape40: z.ZodType = z.lazy(() =>
   z
     .object({ margin: z.number().finite(), gap: z.number().finite(), numbers: z.boolean() })
     .strict(),
 );
-const shape40: z.ZodType = z.lazy(() =>
+const shape41: z.ZodType = z.lazy(() =>
   z
     .object({
       mode: z.union([z.literal('native'), z.literal('raster')]),
@@ -407,7 +420,7 @@ const shape40: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape41: z.ZodType = z.lazy(() =>
+const shape42: z.ZodType = z.lazy(() =>
   z
     .object({
       top: z.number().finite(),
@@ -418,7 +431,7 @@ const shape41: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape42: z.ZodType = z.lazy(() =>
+const shape43: z.ZodType = z.lazy(() =>
   z
     .object({
       id: z.string().max(1000000),
@@ -432,7 +445,7 @@ const shape42: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape44: z.ZodType = z.lazy(() =>
+const shape45: z.ZodType = z.lazy(() =>
   z
     .object({
       id: z.string().max(1000000),
@@ -453,7 +466,7 @@ const shape44: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape45: z.ZodType = z.lazy(() =>
+const shape46: z.ZodType = z.lazy(() =>
   z
     .object({
       id: z.string().max(1000000),
@@ -466,16 +479,16 @@ const shape45: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape43: z.ZodType = z.lazy(() =>
+const shape44: z.ZodType = z.lazy(() =>
   z
     .object({
-      pages: z.array(shape44).max(100000),
-      documents: z.array(shape45).max(100000),
+      pages: z.array(shape45).max(100000),
+      documents: z.array(shape46).max(100000),
       excluded: z.array(z.string().max(1000000)).max(100000),
     })
     .strict(),
 );
-const shape47: z.ZodType = z.lazy(() =>
+const shape48: z.ZodType = z.lazy(() =>
   z
     .object({
       field: z.union([z.literal('text'), z.literal('filename'), z.literal('pages')]),
@@ -489,7 +502,7 @@ const shape47: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape48: z.ZodType = z.lazy(() =>
+const shape49: z.ZodType = z.lazy(() =>
   z
     .object({
       kind: z.union([
@@ -521,7 +534,7 @@ const shape48: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape46: z.ZodType = z.lazy(() =>
+const shape47: z.ZodType = z.lazy(() =>
   z
     .object({
       kind: z.union([
@@ -550,20 +563,8 @@ const shape46: z.ZodType = z.lazy(() =>
       ]),
       text: z.union([z.undefined(), z.string().max(1000000)]).optional(),
       number: z.union([z.undefined(), z.number().finite()]).optional(),
-      condition: z.union([z.undefined(), shape47]).optional(),
-      otherwise: z.union([z.undefined(), shape48]).optional(),
-    })
-    .strict(),
-);
-const shape50: z.ZodType = z.lazy(() =>
-  z
-    .object({
-      id: z.string().max(1000000),
-      x: z.number().finite(),
-      y: z.number().finite(),
-      type: z.literal('action'),
-      action: shape48,
-      next: z.string().max(1000000),
+      condition: z.union([z.undefined(), shape48]).optional(),
+      otherwise: z.union([z.undefined(), shape49]).optional(),
     })
     .strict(),
 );
@@ -573,10 +574,9 @@ const shape51: z.ZodType = z.lazy(() =>
       id: z.string().max(1000000),
       x: z.number().finite(),
       y: z.number().finite(),
-      type: z.literal('condition'),
-      condition: shape47,
-      yes: z.string().max(1000000),
-      no: z.string().max(1000000),
+      type: z.literal('action'),
+      action: shape49,
+      next: z.string().max(1000000),
     })
     .strict(),
 );
@@ -586,21 +586,34 @@ const shape52: z.ZodType = z.lazy(() =>
       id: z.string().max(1000000),
       x: z.number().finite(),
       y: z.number().finite(),
+      type: z.literal('condition'),
+      condition: shape48,
+      yes: z.string().max(1000000),
+      no: z.string().max(1000000),
+    })
+    .strict(),
+);
+const shape53: z.ZodType = z.lazy(() =>
+  z
+    .object({
+      id: z.string().max(1000000),
+      x: z.number().finite(),
+      y: z.number().finite(),
       type: z.literal('end'),
     })
     .strict(),
 );
-const shape49: z.ZodType = z.lazy(() =>
+const shape50: z.ZodType = z.lazy(() =>
   z
     .object({
       version: z.literal(2),
       name: z.string().max(1000000),
       entry: z.string().max(1000000),
-      nodes: z.array(z.union([shape50, shape51, shape52])).max(100000),
+      nodes: z.array(z.union([shape51, shape52, shape53])).max(100000),
     })
     .strict(),
 );
-const shape53: z.ZodType = z.lazy(() =>
+const shape54: z.ZodType = z.lazy(() =>
   z
     .object({
       hasText: z.boolean(),
@@ -612,12 +625,20 @@ const shape53: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape54: z.ZodType = z.lazy(() =>
+const shape55: z.ZodType = z.lazy(() =>
   z
     .object({ name: z.string().max(1000000), pages: z.array(z.number().finite()).max(100000) })
     .strict(),
 );
+const shape56: z.ZodType = z.lazy(() =>
+  z.object({ rect: z.union([z.undefined(), shape3]).optional(), uncertain: z.boolean() }).strict(),
+);
 const shape57: z.ZodType = z.lazy(() =>
+  z
+    .object({ row: z.number().finite(), column: z.number().finite(), columns: z.number().finite() })
+    .strict(),
+);
+const shape60: z.ZodType = z.lazy(() =>
   z
     .object({
       fontScale: z.union([z.undefined(), z.number().finite()]).optional(),
@@ -658,10 +679,10 @@ const shape57: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape56: z.ZodType = z.lazy(() =>
-  z.object({ start: z.number().finite(), end: z.number().finite(), style: shape57 }).strict(),
+const shape59: z.ZodType = z.lazy(() =>
+  z.object({ start: z.number().finite(), end: z.number().finite(), style: shape60 }).strict(),
 );
-const shape55: z.ZodType = z.lazy(() =>
+const shape58: z.ZodType = z.lazy(() =>
   z
     .object({
       x: z.number().finite(),
@@ -689,23 +710,23 @@ const shape55: z.ZodType = z.lazy(() =>
       tracking: z.union([z.undefined(), z.number().finite()]).optional(),
       textScaleX: z.union([z.undefined(), z.number().finite()]).optional(),
       lineHeight: z.union([z.undefined(), z.number().finite()]).optional(),
-      fragments: z.union([z.undefined(), z.array(shape55).max(100000)]).optional(),
-      runs: z.union([z.undefined(), z.array(shape56).max(100000)]).optional(),
+      fragments: z.union([z.undefined(), z.array(shape58).max(100000)]).optional(),
+      runs: z.union([z.undefined(), z.array(shape59).max(100000)]).optional(),
     })
     .strict(),
 );
-const shape58: z.ZodType = z.lazy(() =>
+const shape61: z.ZodType = z.lazy(() =>
   z
     .object({
       id: z.string().max(1000000),
       page: z.number().finite(),
       text: z.string().max(1000000),
-      rects: z.array(shape55).max(100000),
+      rects: z.array(shape58).max(100000),
       selected: z.boolean(),
     })
     .strict(),
 );
-const shape59: z.ZodType = z.lazy(() =>
+const shape62: z.ZodType = z.lazy(() =>
   z
     .object({
       id: z.string().max(1000000),
@@ -718,8 +739,8 @@ const shape59: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape60: z.ZodType = z.lazy(() => z.record(z.string().max(2000), z.number().finite()));
-const shape61: z.ZodType = z.lazy(() =>
+const shape63: z.ZodType = z.lazy(() => z.record(z.string().max(2000), z.number().finite()));
+const shape64: z.ZodType = z.lazy(() =>
   z
     .object({
       paper: z.string().max(1000000),
@@ -729,7 +750,7 @@ const shape61: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape63: z.ZodType = z.lazy(() =>
+const shape66: z.ZodType = z.lazy(() =>
   z
     .object({
       kind: z.union([z.literal('h1'), z.literal('h2'), z.literal('h3'), z.literal('p')]),
@@ -737,7 +758,7 @@ const shape63: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape64: z.ZodType = z.lazy(() =>
+const shape67: z.ZodType = z.lazy(() =>
   z
     .object({
       kind: z.literal('figure'),
@@ -746,7 +767,7 @@ const shape64: z.ZodType = z.lazy(() =>
     })
     .strict(),
 );
-const shape62: z.ZodType = z.lazy(() =>
+const shape65: z.ZodType = z.lazy(() =>
   z
     .object({
       title: z.string().max(1000000),
@@ -759,11 +780,11 @@ const shape62: z.ZodType = z.lazy(() =>
         z.literal('nl-NL'),
         z.literal('pl-PL'),
       ]),
-      blocks: z.array(z.union([shape63, shape64])).max(100000),
+      blocks: z.array(z.union([shape66, shape67])).max(100000),
     })
     .strict(),
 );
-const shape65: z.ZodType = z.lazy(() =>
+const shape68: z.ZodType = z.lazy(() =>
   z
     .object({
       confidence: z.number().finite(),
@@ -849,20 +870,20 @@ const fields: Record<string, z.ZodType> = {
   'DocumentDatesPanel.events': z.array(shape32).max(100000),
   'DocumentDatesPanel.note': z.string().max(1000000),
   'FormHelperPanel.draft': z.union([z.null(), shape33]),
-  'ReceiptsPanel.items': z.array(shape38).max(100000),
-  'ReceiptsPanel.options': shape39,
-  'DocumentColorsPanel.options': shape40,
-  'HeaderFooterPanel.settings': shape41,
-  'HeaderFooterPanel.hits': z.array(shape42).max(100000),
-  'KlarSchiffPanel.plan': shape43,
+  'ReceiptsPanel.items': z.array(shape39).max(100000),
+  'ReceiptsPanel.options': shape40,
+  'DocumentColorsPanel.options': shape41,
+  'HeaderFooterPanel.settings': shape42,
+  'HeaderFooterPanel.hits': z.array(shape43).max(100000),
+  'KlarSchiffPanel.plan': shape44,
   'KlarSchiffPanel.stage': z.union([z.literal(2), z.literal(1), z.literal(3)]),
   'KlarSchiffPanel.format': z.union([z.literal('pdf'), z.literal('zip')]),
-  'WorkflowPanel.steps': z.array(shape46).max(100000),
+  'WorkflowPanel.steps': z.array(shape47).max(100000),
   'WorkflowPanel.name': z.string().max(1000000),
-  'WorkflowPanel.graph': z.union([z.null(), shape49]),
+  'WorkflowPanel.graph': z.union([z.null(), shape50]),
   'WorkflowPanel.graphView': z.boolean(),
   'RenamePanel.template': z.string().max(1000000),
-  'RenamePanel.rows': z.array(shape53).max(100000),
+  'RenamePanel.rows': z.array(shape54).max(100000),
   'SplitPanel.mode': z.union([
     z.literal('text'),
     z.literal('bookmarks'),
@@ -871,29 +892,19 @@ const fields: Record<string, z.ZodType> = {
   ]),
   'SplitPanel.query': z.string().max(1000000),
   'SplitPanel.exclude': z.boolean(),
-  'SplitPanel.parts': z.array(shape54).max(100000),
+  'SplitPanel.parts': z.array(shape55).max(100000),
   'SplitPanel.page': z.number().finite(),
   'TablePanel.automatic': z.boolean(),
-  'TablePanel.cellSources': z
-    .array(z.array(z.object({ rect: shape3.optional(), uncertain: z.boolean() })).max(100))
-    .max(10000),
-  'TablePanel.rowPages': z.array(z.number().int().nonnegative()).max(10000),
-  'TablePanel.analysedPages': z.array(z.number().int().nonnegative()).max(10000),
-  'TablePanel.merges': z
-    .array(
-      z.object({
-        row: z.number().int().nonnegative(),
-        column: z.number().int().nonnegative(),
-        columns: z.number().int().min(2).max(100),
-      }),
-    )
-    .max(10000),
   'TablePanel.joinWrapped': z.boolean(),
+  'TablePanel.cellSources': z.array(z.array(shape56).max(100000)).max(100000),
+  'TablePanel.rowPages': z.array(z.number().finite()).max(100000),
+  'TablePanel.analysedPages': z.array(z.number().finite()).max(100000),
+  'TablePanel.merges': z.array(shape57).max(100000),
   'TablePanel.page': z.number().finite(),
   'TablePanel.area': shape3,
   'TablePanel.boundaries': z.string().max(1000000),
   'TablePanel.ocr': z.boolean(),
-  'TablePanel.targets': z.array(z.array(shape55).max(100000)).max(100000),
+  'TablePanel.targets': z.array(z.array(shape58).max(100000)).max(100000),
   'TablePanel.pageRange': z.string().max(1000000),
   'TablePanel.headerRows': z.string().max(1000000),
   'TablePanel.repeatHeaders': z.boolean(),
@@ -908,10 +919,10 @@ const fields: Record<string, z.ZodType> = {
   'RedactPanel.email': z.boolean(),
   'RedactPanel.iban': z.boolean(),
   'RedactPanel.ocr': z.boolean(),
-  'RedactPanel.hits': z.array(shape58).max(100000),
+  'RedactPanel.hits': z.array(shape61).max(100000),
   'RedactPanel.page': z.number().finite(),
   'RedactPanel.searched': z.boolean(),
-  'LinksPanel.links': z.array(shape59).max(100000),
+  'LinksPanel.links': z.array(shape62).max(100000),
   'LinksPanel.loaded': z.boolean(),
   'LinksPanel.selected': z.string().max(1000000),
   'LinksPanel.page': z.number().finite(),
@@ -921,21 +932,20 @@ const fields: Record<string, z.ZodType> = {
   'CoverPanel.entries': z.string().max(1000000),
   'MailMergePanel.rows': z.array(z.array(z.string().max(1000000)).max(100000)).max(100000),
   'MailMergePanel.fields': z.array(shape34).max(100000),
-  'MailMergePanel.mapping': shape60,
+  'MailMergePanel.mapping': shape63,
   'MailMergePanel.nameColumn': z.number().finite(),
   'MailMergePanel.flatten': z.boolean(),
-  'StandardServerWorkbench.processing': z.string().max(1000000),
   'StandardServerWorkbench.wordOutput': z.string().max(1000000),
   'StandardServerWorkbench.mode': z.string().max(1000000),
   'StandardServerWorkbench.htmlInput': z.string().max(1000000),
   'StandardServerWorkbench.websiteUrl': z.string().max(1000000),
-  'StandardServerWorkbench.websiteSettings': shape61,
+  'StandardServerWorkbench.websiteSettings': shape64,
   'StandardServerWorkbench.profile': z.string().max(1000000),
   'StandardServerWorkbench.uaMode': z.string().max(1000000),
   'StandardServerWorkbench.uaProfile': z.string().max(1000000),
-  'StandardServerWorkbench.uaDocument': shape62,
+  'StandardServerWorkbench.uaDocument': shape65,
   'StandardServerWorkbench.signLevel': z.string().max(1000000),
-  'StandardServerWorkbench.extra': shape65,
+  'StandardServerWorkbench.extra': shape68,
   'StandardServerWorkbench.attachments': z.boolean(),
   'ScanSplitPanel.gap': z.number().finite(),
 };

@@ -5,6 +5,17 @@ export const englishTools: Record<
   WorkspaceTool,
   { title: string; description: string; action: string }
 > = {
+  'scan-transfer': {
+    title: 'Transfer phone scans',
+    description:
+      'Transfer scans from a phone into the PC session using an encrypted QR connection.',
+    action: 'Open connection',
+  },
+  'pdf-timestamp': {
+    title: 'PDF timestamp',
+    description: 'Embed a verified RFC 3161 document timestamp without a personal certificate.',
+    action: 'Request timestamp',
+  },
   'text-pdf': {
     title: 'Text & data to PDF',
     description:

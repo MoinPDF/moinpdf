@@ -437,6 +437,74 @@ export function ExtraSettings({
               />
             </label>
           ))}
+          <fieldset className="field">
+            <legend>{ui('Eigene Metadatenfelder')}</legend>
+            {(options.metaCustom || []).map((entry, index) => (
+              <div key={index} className="field">
+                <Input
+                  aria-label={ui('Eigener Feldname')}
+                  placeholder={ui('Eigener Feldname')}
+                  value={entry.name}
+                  maxLength={64}
+                  disabled={locked}
+                  onChange={(e) =>
+                    onChange({
+                      metaCustom: options.metaCustom!.map((x, i) =>
+                        i === index ? { ...x, name: e.target.value } : x,
+                      ),
+                    })
+                  }
+                />
+                <Input
+                  aria-label={ui('Eigener Feldwert')}
+                  placeholder={ui('Eigener Feldwert')}
+                  value={entry.value}
+                  maxLength={1000}
+                  disabled={locked || entry.remove}
+                  onChange={(e) =>
+                    onChange({
+                      metaCustom: options.metaCustom!.map((x, i) =>
+                        i === index ? { ...x, value: e.target.value } : x,
+                      ),
+                    })
+                  }
+                />
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={!!entry.remove}
+                    disabled={locked}
+                    onChange={(e) =>
+                      onChange({
+                        metaCustom: options.metaCustom!.map((x, i) =>
+                          i === index ? { ...x, remove: e.target.checked } : x,
+                        ),
+                      })
+                    }
+                  />
+                  {ui('Dieses Feld aus der PDF entfernen')}
+                </label>
+                <button
+                  type="button"
+                  disabled={locked}
+                  onClick={() =>
+                    onChange({ metaCustom: options.metaCustom!.filter((_, i) => i !== index) })
+                  }
+                >
+                  {ui('Zeile entfernen')}
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              disabled={locked || (options.metaCustom?.length || 0) >= 50}
+              onClick={() =>
+                onChange({ metaCustom: [...(options.metaCustom || []), { name: '', value: '' }] })
+              }
+            >
+              {ui('Metadatenfeld hinzufügen')}
+            </button>
+          </fieldset>
           <p className="fine-note">
             {ui(
               'Diese Angaben gelten für die neu erstellte PDF. Leere Felder werden geleert. Die sichtbaren Dokumentinhalte ändern sich dadurch nicht.',

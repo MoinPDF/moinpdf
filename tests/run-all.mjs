@@ -45,7 +45,7 @@ const suites = [
   'editor-adaptive',
   'editor-resilience',
   'extra-tools',
-  'document-tools',
+  'release-036',
   'bookmark-transfer',
   'security-invoice',
   'advanced-tools',

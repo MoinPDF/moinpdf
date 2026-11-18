@@ -452,6 +452,18 @@ const options = z
     metaAuthor: short,
     metaSubject: short,
     metaKeywords: short,
+    metaCustom: z
+      .array(
+        z
+          .object({
+            name: z.string().max(64),
+            value: z.string().max(1000),
+            remove: z.boolean().optional(),
+          })
+          .strict(),
+      )
+      .max(50)
+      .optional(),
     removeLinks: z.boolean(),
     overlayOpacity: z.number().finite().min(0).max(100),
     overlayLayer: z.enum(['front', 'back']),

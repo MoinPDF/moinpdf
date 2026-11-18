@@ -6,11 +6,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-co
     && rm -rf /var/lib/apt/lists/*
 RUN npm install --global pnpm@11.25.0
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY vendor/picomatch ./vendor/picomatch
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run typecheck && pnpm run typecheck:selfhost && pnpm run build:selfhost
 
-FROM caddy:2.11.7-alpine
+FROM caddy:2.11.8-alpine
 ARG MOINPDF_UID=10001
 # We use unprivileged container ports. Remove the upstream binary's file
 # capability so it can execute with cap_drop: ALL and no-new-privileges.

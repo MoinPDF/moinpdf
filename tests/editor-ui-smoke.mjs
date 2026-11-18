@@ -217,7 +217,7 @@ try {
  const inline=mark=>React.createElement(EditorInlineText,{mark,source,width:400,height:560,pageWidth:400,pageHeight:560,disabled:false,onPatch:()=>{},onDone:()=>{}});
  await act(async()=>delayedRoot.render(inline(small)));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,'SHORT');
  fontMock.delayFonts(true);const longer={...small,text:'ORIGINAL 4815'};await act(async()=>delayedRoot.render(inline(longer)));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,longer.text,'Pending fonts never apply previous shorter run ranges after undo');
- assert.equal(inlineHost.querySelector('[contenteditable] span').style.fontFamily,'\"TestFont\"','Loaded matching font stays visible during text preparation');
+ assert.equal(inlineHost.querySelector('[contenteditable] span').style.fontFamily.replace(/^[\"']|[\"']$/g,''),'TestFont','Loaded matching font stays visible during text preparation');
  const newest={...small,text:'CURRENT TEXT RESTORED'};await act(async()=>delayedRoot.render(inline(newest)));await act(async()=>fontMock.fontJobs.splice(0).forEach(resolve=>resolve()));assert.equal(inlineHost.querySelector('[contenteditable]').textContent,newest.text,'Older font completions cannot overwrite the newest text');fontMock.delayFonts(false);await act(async()=>delayedRoot.unmount());
  // Scan appearance is painted at physical PDF size, independently of display
  // zoom, while the transparent input retains caret, selection and typing.

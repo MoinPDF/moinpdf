@@ -71,4 +71,15 @@ const heicPdf=await PDFDocument.load(await imageFilePdf(new File([heic],'image.h
 await assert.rejects(()=>decodeSpecialImage(psd,'psd',AbortSignal.abort()),/Abgebrochen/);
 const controller=new AbortController();const work=decodeSpecialImage(heic,'heic',controller.signal);controller.abort();await assert.rejects(()=>work,/Abgebrochen/);
 assert.equal(workers,0,'Every success, decoder error and cancellation terminates its worker');
+for(const kind of ['jp2','jxr','pnm']){
+ const bytes=new Uint8Array(await readFile('tests/fixtures/imports/fictional.'+kind)),copy=bytes.slice();
+ const decoded=await decodeSpecialImage(bytes,kind);
+ assert.equal(decoded.width,8);assert.equal(decoded.height,6);assert.equal(decoded.rgba.length,8*6*4);
+ assert(decoded.rgba.some((v,i)=>i%4!==3&&v!==255));
+ assert.deepEqual(bytes,copy);
+ const pdf=await PDFDocument.load(await imageFilePdf(new File([bytes],'fictional.'+kind),bytes));assert.equal(pdf.getPageCount(),1);
+ await assert.rejects(()=>decodeSpecialImage(bytes.slice(0,18),kind));
+ await assert.rejects(()=>decodeSpecialImage(bytes,kind,AbortSignal.abort()));
+}
+assert.equal(workers,0,'All new decoder workers are terminated');
 console.log('PASS: module and shipped browser-bundle PSD decoders; raw/RLE RGB and grayscale pixels, layered RGBA composite, PDF import, unchanged inputs, malformed/unsupported-file rejection; primary HEIC, pixel limits and worker cleanup/cancellation.');

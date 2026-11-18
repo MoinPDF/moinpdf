@@ -27,6 +27,25 @@ self.onmessage = async ({data}) => {
         const primary=images.find(image=>image.is_primary())||images[0],width=primary.get_width(),height=primary.get_height();check(width,height);
         output=await new Promise((resolve,reject)=>primary.display({width,height,data:new Uint8ClampedArray(width*height*4)},value=>value?resolve(value):reject(new Error('HEIC-Bilddaten konnten nicht decodiert werden.'))));
       } finally {for(const image of images)image.free();}
+    } else if(data.kind==='pnm'){
+      output=(await import('./pnm-decode.mjs')).decodePnm(bytes);
+    } else if(data.kind==='jp2'){
+      const {JpxImage}=await import('/vendor/images/pdf.image_decoders.mjs');
+      const {width,height,componentsCount}=JpxImage.parseImageProperties(bytes);check(width,height);
+      if(![1,3].includes(componentsCount))throw new Error('JPEG 2000: nicht unterstützte Farbkanäle.');
+      JpxImage.setOptions({useWasm:true,useWorkerFetch:true,wasmUrl:'/vendor/pdf/wasm/'});
+      const pixels=await JpxImage.instance.decode(bytes,{numComponents:componentsCount});
+      if(pixels.length!==width*height*componentsCount)throw new Error('Unvollständige Bilddaten.');
+      const rgba=new Uint8ClampedArray(width*height*4);for(let p=0,i=0;p<pixels.length;p+=componentsCount,i+=4){rgba[i]=pixels[p];rgba[i+1]=pixels[p+(componentsCount===1?0:1)];rgba[i+2]=pixels[p+(componentsCount===1?0:2)];rgba[i+3]=255;}output={width,height,data:rgba};
+    } else if(data.kind==='jxr'){
+      // Validate TIFF-like JPEG XR dimensions before invoking the WASM decoder.
+      const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+      if(bytes.length<8||view.getUint32(0,true)!==0x01bc4949)throw new Error('Ungültige JPEG-XR-Datei.');
+      const ifd=view.getUint32(4,true);if(ifd+2>bytes.length)throw new Error('Ungültige JPEG-XR-Datei.');
+      const count=view.getUint16(ifd,true);if(count>512||ifd+2+count*12>bytes.length)throw new Error('Ungültige JPEG-XR-Datei.');
+      let w=0,h=0;for(let n=0;n<count;n++){const p=ifd+2+n*12,tag=view.getUint16(p,true);if(tag===0xbc80||tag===0xbc81){const type=view.getUint16(p+2,true);if(view.getUint32(p+4,true)!==1||![3,4].includes(type))throw new Error('Ungültige JPEG-XR-Bildgröße.');const value=type===3?view.getUint16(p+8,true):view.getUint32(p+8,true);if(tag===0xbc80)w=value;else h=value;}}
+      check(w,h);const {default:decode}=await import('/vendor/images/jxr/decode.js');output=await decode(bytes.buffer);
+      if(output.width!==w||output.height!==h)throw new Error('JPEG-XR-Bildgröße stimmt nicht überein.');
     } else throw new Error('Unbekanntes Bildformat.');
     check(output.width,output.height);
     if(output.data.length!==output.width*output.height*4)throw new Error('Unvollständige Bilddaten.');

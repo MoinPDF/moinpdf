@@ -792,3 +792,28 @@ guides["pdf-word"].steps.push("Als Ausgabeformat zusätzlich RTF oder ODT wähle
 guides["pdf-powerpoint"].steps.push("Als Ausgabeformat zusätzlich ODP wählen. Der gewählte Bild- oder Bearbeitungsmodus wird übernommen; die Konvertierung benötigt LibreOffice auf dem eigenen Server.");
 guides["pdf-epub"].steps.push("EPUB wird lokal erstellt. AZW3 benötigt den eigenen Dokumentenserver; jede Seite muss Text enthalten. Bilder und ursprüngliches Layout werden bei dieser Textausgabe nicht übernommen.");
 guides["structured-export"].steps.push("JSON oder XML als Ausgabeformat wählen. XML verwendet das Schema moinpdf-document/1 mit Dokumenten, Seiten und Textpositionen; ursprüngliche XML-Daten werden nicht rekonstruiert.");
+
+Object.assign(guides, {
+  "scan-transfer": {
+    "input": "Eine geöffnete PC-Sitzung und ein Smartphone mit Zugriff auf dieselbe MoinPDF-Adresse.",
+    "steps": [
+      "Am PC „QR-Verbindung erstellen“ wählen und den QR-Code mit der Smartphone-Kamera öffnen.",
+      "Am Smartphone ein Foto oder eine PDF wählen oder mit dem Kamera-Scanner aufnehmen und senden.",
+      "Am PC die empfangene Datei mit „Scan übernehmen“ bestätigen. Erst danach zeigt das Smartphone den erfolgreichen Empfang. Ergebnis bei Bedarf im Arbeitsbereich weiterverwenden."
+    ],
+    "output": "Eine PDF im Ergebnisbereich der aktuellen PC-Sitzung.",
+    "note": "15 Minuten, höchstens 20 Dateien mit jeweils 10 MB. Beide Geräte müssen dieselbe Adresse erreichen und erforderlichenfalls angemeldet sein. Der QR-Link enthält nur Senderrechte und den Verschlüsselungsschlüssel im URL-Fragment. Dateien werden vor dem Senden verschlüsselt; Kameraaufnahmen benötigen HTTPS. Nach Bestätigung wird der Inhalt gelöscht, nach Ablauf ist er nicht mehr abrufbar. Verbliebene verschlüsselte Dateien werden bei der nächsten Anfrage bereinigt."
+  },
+  "pdf-timestamp": {
+    "input": "Eine noch nicht digital signierte PDF bis 80 MB ohne XFA.",
+    "steps": [
+      "Die vollständige PDF öffnen und „PDF-Zeitstempel“ wählen.",
+      "Die Hinweise zum Zeitstempeldienst prüfen und „Zeitstempel anfordern“ starten. Nur der SHA-256-Prüfwert wird an FreeTSA übertragen.",
+      "Die neue PDF herunterladen und den Dokumentzeitstempel in einem geeigneten PDF-Reader prüfen."
+    ],
+    "output": "Eine PDF mit eingebettetem RFC-3161-Dokumentzeitstempel.",
+    "note": "Kein persönliches Zertifikat nötig. Signatur, Prüfwert, Nonce, Zeitstempelzweck und Zertifikatsbindung werden geprüft; Vertrauenskette, Widerruf und qualifizierter Status werden nicht bestätigt. Internetzugriff erforderlich. Bereits signierte PDFs werden nicht umgeschrieben."
+  }
+});
+guides['create-form'].steps.push("Zusätzlich können leere digitale Signaturfelder und Aktionsschaltflächen für Zurücksetzen, XFDF-Senden an eine HTTPS-Adresse oder Drucken platziert werden. Die Aktionen laufen erst im PDF-Reader. Diese Felder dürfen nicht fixiert werden.");
+guides['edit-metadata'].steps.push("Unter „Eigene Metadatenfelder“ können bis zu 50 eindeutige Namen mit Werten ergänzt oder gezielt entfernt werden. Namen: höchstens 64 Zeichen; Werte: 1.000 Zeichen. Standardfelder sind reserviert.");
