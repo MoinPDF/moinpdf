@@ -6,6 +6,7 @@ MoinPDF uses semantic version numbers (`MAJOR.MINOR.PATCH`). The central version
 
 ## 0.36.0 — 2026-11-18
 
+- Security fixes: OpenTelemetry API 1.45.2 and a locally maintained safeguard for repeated Picomatch wildcard patterns, with deadline-bounded regression tests. No security advisories are suppressed.
 - Transfer phone scans into the current PC session using a QR code. AES-GCM encrypts files and filenames before sending; separate send/receive capabilities, 15-minute lifetime, up to 20 files of 10 MB each. Success appears only after acceptance on the PC; failed sends can be retried.
 - Create form: real ResetForm/SubmitForm buttons and printing through fixed reader JavaScript. XFDF submission requires HTTPS. Place empty digital signature fields for later signing in a PDF reader; these do not create a signature themselves.
 - Add or selectively remove up to 50 custom metadata names/values. Reserved and duplicate names are rejected; Unicode values are preserved.

@@ -14,6 +14,8 @@ allowBuilds:
   unrs-resolver: true
 # Security floors for optional transitive peers retained by pnpm's resolver.
 overrides:
+  # CVE-2026-112366: locally maintained fix with regression tests and no ignored advisories.
+  picomatch: file:vendor/picomatch
   # GHSA-g3hv-75wg-m249. The installed v10 consumers use minimatch()/Minimatch.match(),
   # which v11 retains; do not override older majors with a different API.
   'minimatch@>=10.0.0 <11.0.1': 11.0.1

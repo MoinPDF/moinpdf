@@ -11,6 +11,7 @@ Funktionen und Grenzen stehen im [Ausbaustand](docs/AUSBAUSTAND.md).
 
 ## 0.36.0 — 2026-11-18
 
+- Sicherheitskorrekturen: OpenTelemetry API 1.45.2 und eine lokal gepflegte Absicherung wiederholter Wildcard-Muster in Picomatch mit zeitlich begrenzten Regressionstests. Keine Sicherheitsmeldungen werden ausgeblendet.
 - Handy-Scans per QR-Code in die aktuelle PC-Sitzung übertragen. AES-GCM verschlüsselt Datei und Dateiname vor dem Senden; getrennte Sender-/Empfängerrechte, 15 Minuten Laufzeit, bis 20 Dateien mit jeweils 10 MB. Erfolg wird erst nach der Übernahme am PC bestätigt; fehlgeschlagene Sendungen können wiederholt werden.
 - Formular erstellen: echte ResetForm-/SubmitForm-Schaltflächen sowie Drucken mit fest vorgegebenem Reader-JavaScript. XFDF-Senden verlangt eine HTTPS-Adresse. Leere digitale Signaturfelder können für die spätere Unterschrift im PDF-Reader platziert werden; sie erzeugen selbst keine Signatur.
 - Metadaten um bis zu 50 eigene Schlüssel/Werte ergänzen oder gezielt entfernen. Standardnamen und doppelte Namen werden abgewiesen; Unicode-Werte bleiben erhalten.

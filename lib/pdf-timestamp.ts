@@ -75,8 +75,8 @@ export async function verifyTimestamp(reply: ArrayBuffer, request: TimeStampReq,
   const entry = ((values?.[0] as asn1.Sequence)?.valueBlock.value[0] as asn1.Sequence)?.valueBlock
     .value;
   if (!entry?.length) throw new Error('Der Zeitstempel enthält keine Zertifikatsbindung.');
-  let digestAlgorithm = ess!.type.endsWith('.12') ? 'SHA-1' : 'SHA-256',
-    certificateHash = entry[0];
+  const digestAlgorithm = ess!.type.endsWith('.12') ? 'SHA-1' : 'SHA-256';
+  let certificateHash = entry[0];
   if (certificateHash instanceof asn1.Sequence) {
     const alg = new AlgorithmIdentifier({ schema: certificateHash });
     if (alg.algorithmId !== SHA256) throw new Error('Nicht unterstützte Zertifikatsbindung.');

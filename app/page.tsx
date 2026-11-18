@@ -999,10 +999,6 @@ function Studio() {
       window.removeEventListener('blur', reset);
     };
   }, [addFiles, choosingTool, writerOpen]);
-  useEffect(() => {
-    if (new URLSearchParams(location.hash.slice(1)).has('moin-transfer'))
-      chooseTool('scan-transfer');
-  }, []);
   function chooseTool(id: WorkspaceTool) {
     if (locked) return;
     if (
@@ -1609,6 +1605,10 @@ function Studio() {
       commit({ pages: pages.map((p, i) => ({ ...p, selected: s.has(i) })), edits });
     },
   };
+  useEffect(() => {
+    if (new URLSearchParams(location.hash.slice(1)).has('moin-transfer'))
+      agentActions.current.chooseTool('scan-transfer');
+  }, []);
   useEffect(() => {
     const context = (
       document as unknown as {

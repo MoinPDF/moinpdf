@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  picomatch: file:vendor/picomatch
   minimatch@>=10.0.0 <11.0.1: 11.0.1
   esbuild@>=0.27.3 <0.28.1: 0.28.1
   fast-uri@>=3.0.0 <3.1.9: 3.1.9
@@ -285,6 +286,9 @@ importers:
       jsdom:
         specifier: ^31.0.0
         version: 31.0.0(@napi-rs/canvas@1.1.0)(@noble/hashes@2.4.0)
+      picomatch:
+        specifier: file:vendor/picomatch
+        version: '@moinpdf/picomatch@file:vendor/picomatch'
       prettier:
         specifier: 3.9.10
         version: 3.9.10
@@ -788,6 +792,10 @@ packages:
 
   '@keyv/serialize@1.1.1':
     resolution: {integrity: sha512-dXn3FZhPv0US+7dtJsIi2R+c7qWYiReoEh5zUntWCf4oSpMNib8FDhSoed6m3QyZdx5hK7iLFkYk3rNxwt8vTA==}
+
+  '@moinpdf/picomatch@file:vendor/picomatch':
+    resolution: {directory: vendor/picomatch, type: directory}
+    engines: {node: '>=12'}
 
   '@napi-rs/canvas-android-arm64@1.1.0':
     resolution: {integrity: sha512-mKrSmRyhWK4q699Q1xthbZIZi7JBvLtsRNnOZAeFaLPOFT1yo8y82aRC2nNZbXTGJXU7fVDONgGQPr0vo3kerw==}
@@ -2642,6 +2650,7 @@ packages:
 
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
+    version: 6.5.0
     engines: {node: '>=12.0.0'}
     peerDependencies:
       picomatch: ^3 || ^4
@@ -3041,10 +3050,6 @@ packages:
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
-
-  picomatch@4.0.7:
-    resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
-    engines: {node: '>=12'}
 
   pkijs@4.0.1:
     resolution: {integrity: sha512-hs6jHBg+Y9ZZ9r5w2CHnKXkGPOr3qWfkLfnZGlbNkP2hceGZ6EgjnTS7tqwbugHXx5mCqoSf4TUH2nu1diirnA==}
@@ -3959,6 +3964,8 @@ snapshots:
       keyv: 5.6.0
 
   '@keyv/serialize@1.1.1': {}
+
+  '@moinpdf/picomatch@file:vendor/picomatch': {}
 
   '@napi-rs/canvas-android-arm64@1.1.0':
     optional: true
@@ -5791,9 +5798,9 @@ snapshots:
   fast-uri@3.1.9:
     optional: true
 
-  fdir@6.5.0(picomatch@4.0.7):
+  fdir@6.5.0(@moinpdf/picomatch@file:vendor/picomatch):
     optionalDependencies:
-      picomatch: 4.0.7
+      picomatch: '@moinpdf/picomatch@file:vendor/picomatch'
 
   fflate@0.8.3: {}
 
@@ -6143,8 +6150,6 @@ snapshots:
       xmldoc: 2.0.3
 
   picocolors@1.1.1: {}
-
-  picomatch@4.0.7: {}
 
   pkijs@4.0.1(asn1js@4.0.0):
     dependencies:
@@ -6536,8 +6541,8 @@ snapshots:
 
   tinyglobby@0.2.17:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.7)
-      picomatch: 4.0.7
+      fdir: 6.5.0(@moinpdf/picomatch@file:vendor/picomatch)
+      picomatch: '@moinpdf/picomatch@file:vendor/picomatch'
 
   tldts-core@7.4.18: {}
 
@@ -6680,7 +6685,7 @@ snapshots:
   vite@8.3.6(@types/node@22.19.19)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.47.1)(tsx@4.22.1):
     dependencies:
       lightningcss: 1.33.0
-      picomatch: 4.0.7
+      picomatch: '@moinpdf/picomatch@file:vendor/picomatch'
       postcss: 8.5.32
       rolldown: 1.2.16
       tinyglobby: 0.2.17

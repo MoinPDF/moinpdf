@@ -135,6 +135,7 @@ jobs:
         run: |
           docker build --target build -t moinpdf-browser-tests .
           docker run --rm moinpdf-browser-tests pnpm run typecheck
+          docker run --rm moinpdf-browser-tests pnpm run test:dependencies
           docker run --rm moinpdf-browser-tests pnpm audit
           docker run --rm moinpdf-browser-tests pnpm run lint
           docker run --rm moinpdf-browser-tests pnpm run format:check
