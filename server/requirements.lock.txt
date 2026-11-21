@@ -1,7 +1,7 @@
 # Tested Python 3.12 environment; update intentionally.
 annotated-doc==0.0.5
 annotated-types==0.8.0
-anyio==4.15.1
+anyio==4.16.0
 asn1crypto==1.5.1
 beautifulsoup4==4.15.0
 certifi==2026.10.19
